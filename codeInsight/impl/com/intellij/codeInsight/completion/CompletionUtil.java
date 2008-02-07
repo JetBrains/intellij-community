@@ -154,8 +154,8 @@ public class CompletionUtil {
     }
   }
 
-  private static boolean hasNonSoftReference(CompletionContext context) {
-    return isNonSoftReference(context.file.findReferenceAt(context.startOffset));
+  private static boolean hasNonSoftReference(final PsiFile file, final int startOffset) {
+    return isNonSoftReference(file.findReferenceAt(startOffset));
   }
 
   private static boolean isNonSoftReference(final PsiReference reference) {
@@ -167,9 +167,9 @@ public class CompletionUtil {
     return reference != null && !reference.isSoft();
   }
 
-  public static CompletionData getCompletionDataByElement(PsiElement element, CompletionContext context) {
+  public static CompletionData getCompletionDataByElement(PsiElement element, final PsiFile file, final int startOffset) {
     CompletionData wordCompletionData = null;
-    if (!hasNonSoftReference(context)) {
+    if (!hasNonSoftReference(file, startOffset)) {
       ASTNode textContainer = element != null ? element.getNode() : null;
       while (textContainer != null) {
         final IElementType elementType = textContainer.getElementType();
@@ -179,7 +179,7 @@ public class CompletionUtil {
         textContainer = textContainer.getTreeParent();
       }
     }
-    final CompletionData completionDataByElementInner = getCompletionDataByElementInner(element, context.file);
+    final CompletionData completionDataByElementInner = getCompletionDataByElementInner(element, file);
     if (wordCompletionData != null) return new CompositeCompletionData(completionDataByElementInner, wordCompletionData);
     return completionDataByElementInner;
   }

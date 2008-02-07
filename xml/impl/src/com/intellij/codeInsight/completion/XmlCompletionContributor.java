@@ -9,7 +9,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.QueryResultSet;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
@@ -26,8 +25,8 @@ public class XmlCompletionContributor extends CompletionContributor{
     registrar.extendClassNameCompletion(PlatformPatterns.psiElement(XmlTokenType.XML_NAME)).
       dependingOn(JavaCompletionContributor.JAVA_LEGACY).
       withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
-      public void addCompletions(@NotNull final CompletionParameters parameters, final MatchingContext matchingContext, @NotNull final QueryResultSet<LookupElement> result) {
-        result.clear();
+      public void addCompletions(@NotNull final CompletionParameters parameters, final MatchingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
+        result.clearResults();
         CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         final PsiElement element = parameters.getPosition();
         final XmlTag parent = (XmlTag)element.getParent();
@@ -44,21 +43,19 @@ public class XmlCompletionContributor extends CompletionContributor{
           result.addAllElements(set);
         } else {
 
-          if (pos >= 0) {
-            context.setPrefix(prefix.substring(pos + 1));
-          }
+          result.setPrefixMatcher(pos >= 0 ? prefix.substring(pos + 1) : prefix);
 
-          final XmlFile file = (XmlFile)context.file;
+          final XmlFile file = (XmlFile)parameters.getOriginalFile();
           final XmlExtension extension = XmlExtension.getExtension(file);
           final Set<String> names = extension.getAvailableTagNames(file, parent);
           if (names.isEmpty()) {
             return;
           }
           for (String name : names) {
-            final LookupItem item = new LookupItem<String>(name, name);
-            final XmlTagInsertHandler insertHandler = new ExtendedTagInsertHandler(name, namespacePrefix);
-            item.setAttribute(LookupItem.INSERT_HANDLER_ATTR, insertHandler);
-            if (context.prefixMatches(name)) {
+            if (result.getPrefixMatcher().prefixMatches(name)) {
+              final LookupItem item = new LookupItem<String>(name, name);
+              final XmlTagInsertHandler insertHandler = new ExtendedTagInsertHandler(name, namespacePrefix);
+              item.setAttribute(LookupItem.INSERT_HANDLER_ATTR, insertHandler);
               final Set<String> namespaces = extension.getNamespacesByTagName(name, file);
               if (namespaces.size() > 0) {
                 item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " (" + namespaces.iterator().next() + ")");

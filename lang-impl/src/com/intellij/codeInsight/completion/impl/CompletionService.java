@@ -6,22 +6,18 @@ package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.MatchingContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PrioritizedQueryExecutor;
 import com.intellij.util.PrioritizedQueryFactory;
-import com.intellij.util.Processor;
 import com.intellij.util.QueryResultSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * @author peter
@@ -59,28 +55,12 @@ public class CompletionService {
     for (final CompletionPlaceImpl<LookupElement, CompletionParameters> place : providers.getValues()) {
       final MatchingContext matchingContext = new MatchingContext();
       if (place.myPlace.accepts(parameters.getPosition(), matchingContext)) {
-        final Condition<LookupElement> condition = new Condition<LookupElement>() {
-          public boolean value(final LookupElement lookupElement) {
-            CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-            final LookupItem ret = (LookupItem)lookupElement;
-            final boolean itemCaseInsensitive = Boolean.TRUE.equals(ret.getAttribute(LookupItem.CASE_INSENSITIVE));
-            final boolean result = CompletionUtil.checkName(ret, context, itemCaseInsensitive);
-            //todo dirty hack
-            if (result && itemCaseInsensitive) {
-              final String currentString = ret.getLookupString();
-              final String newString = CompletionVariantPeerImpl.handleCaseInsensitiveVariant(context.getPrefix(), currentString);
-              ret.setLookupString(newString);
-              if (ret.getObject().equals(currentString)) {
-                ret.setObject(newString);
-              }
-            }
-            return result;
-          }
-        };
+        final CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
+        final PrefixMatcher matcher = new CamelHumpMatcher(context.getPrefix());
 
         list.add(new PrioritizedQueryExecutor<LookupElement, CompletionParameters>() {
           public void execute(final CompletionParameters queryParameters, final QueryResultSet<LookupElement> resultSet) {
-            place.myProvider.addCompletions(queryParameters, matchingContext, new ConditionedResultSet(condition, resultSet));
+            place.myProvider.addCompletions(queryParameters, matchingContext, new CompletionResultSetImpl(matcher, resultSet, context));
           }
 
           public String toString() {
@@ -139,36 +119,4 @@ public class CompletionService {
     }
   }
 
-  private static class ConditionedResultSet implements QueryResultSet<LookupElement> {
-    private final Condition<LookupElement> myCondition;
-    private final QueryResultSet<LookupElement> myResultSet;
-
-    public ConditionedResultSet(final Condition<LookupElement> condition, final QueryResultSet<LookupElement> resultSet) {
-      myCondition = condition;
-      myResultSet = resultSet;
-    }
-
-    public QueryResultSet<LookupElement> addElement(@NotNull final LookupElement lookupElement) {
-      if (myCondition.value(lookupElement)) {
-        myResultSet.addElement(lookupElement);
-      }
-      return this;
-    }
-
-    public QueryResultSet<LookupElement> addAllElements(@NotNull final Collection<? extends LookupElement> lookupElements) {
-      for (final LookupElement lookupElement : lookupElements) {
-        addElement(lookupElement);
-      }
-      return this;
-    }
-
-    public QueryResultSet<LookupElement> clear() {
-      myResultSet.clear();
-      return this;
-    }
-
-    public void processResults(final Processor<LookupElement> lookupElementProcessor) {
-      myResultSet.processResults(lookupElementProcessor);
-    }
-  }
 }

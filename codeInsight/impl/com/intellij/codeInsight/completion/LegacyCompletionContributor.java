@@ -13,7 +13,6 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.QueryResultSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -30,20 +29,20 @@ public class LegacyCompletionContributor extends CompletionContributor{
   public void registerCompletionProviders(final CompletionRegistrar registrar) {
     final PsiElementPattern.Capture<PsiElement> everywhere = PlatformPatterns.psiElement();
     registrar.extendBasicCompletion(everywhere).withId(LEGACY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
-      public void addCompletions(@NotNull final CompletionParameters parameters, final MatchingContext matchingContext, @NotNull final QueryResultSet<LookupElement> result) {
+      public void addCompletions(@NotNull final CompletionParameters parameters, final MatchingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
         CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-        final PsiFile file = context.file;
-        final PsiElement lastElement = file.findElementAt(context.startOffset - 1);
+        final PsiFile file = parameters.getOriginalFile();
+        final int offset = context.startOffset;
+        final PsiElement lastElement = file.findElementAt(offset - 1);
         PsiElement insertedElement = parameters.getPosition();
-        CompletionData completionData = CompletionUtil.getCompletionDataByElement(lastElement, context);
-        context.setPrefix(insertedElement, context.startOffset, completionData);
+        CompletionData completionData = CompletionUtil.getCompletionDataByElement(lastElement, file, context.startOffset);
+        result.setPrefixMatcher(completionData == null ? CompletionData.findPrefixStatic(insertedElement, offset) : completionData.findPrefix(insertedElement, offset));
         if (completionData == null) {
           // some completion data may depend on prefix
-          completionData = CompletionUtil.getCompletionDataByElement(lastElement, context);
+          completionData = CompletionUtil.getCompletionDataByElement(lastElement, file, context.startOffset);
         }
 
         if (completionData == null) return;
-        if (insertedElement == null) return;
 
         final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
         final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(context.offset);

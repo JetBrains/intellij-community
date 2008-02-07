@@ -203,7 +203,7 @@ public class CompletionVariant {
       else if (comp instanceof ContextGetter) {
         final Object[] elements = ((ContextGetter)comp).get(position, context);
         for (Object element : elements) {
-          myPeer.addLookupItem(set, ce.myTailType, element, context);
+          myPeer.addLookupItem(set, ce.myTailType, element, context, context.file);
         }
       }
       // TODO: KeywordChooser -> ContextGetter

@@ -5,19 +5,29 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public class CompletionParameters {
   private final PsiElement myPosition;
+  private final PsiFile myOriginalFile;
 
-  public CompletionParameters(final PsiElement position) {
+  public CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile) {
     myPosition = position;
+    myOriginalFile = originalFile;
   }
 
+  @NotNull
   public PsiElement getPosition() {
     return myPosition;
+  }
+
+  @NotNull
+  public PsiFile getOriginalFile() {
+    return myOriginalFile;
   }
 
   public boolean equals(final Object o) {

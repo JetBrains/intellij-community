@@ -2,6 +2,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TextStartFilter;
@@ -150,17 +151,17 @@ public class HtmlCompletionData extends XmlCompletionData {
     return false;
   }
 
-  public CompletionVariant[] findVariants(PsiElement position, CompletionContext context) {
-    CompletionVariant[] variants = super.findVariants(position, context);
+  public CompletionVariant[] findVariants(PsiElement position, final PsiFile file) {
+    CompletionVariant[] variants = super.findVariants(position, file);
 
     if (ourStyleCompletionData!=null && isStyleContext(position)) {
-      final CompletionVariant[] styleVariants = ourStyleCompletionData.findVariants(position, context);
+      final CompletionVariant[] styleVariants = ourStyleCompletionData.findVariants(position, file);
 
       variants = ArrayUtil.mergeArrays(variants,styleVariants, CompletionVariant.class);
     }
 
     if (ourScriptCompletionData!=null && isScriptContext(position)) {
-      final CompletionVariant[] scriptVariants = ourScriptCompletionData.findVariants(position, context);
+      final CompletionVariant[] scriptVariants = ourScriptCompletionData.findVariants(position, file);
 
       variants = ArrayUtil.mergeArrays(variants,scriptVariants, CompletionVariant.class);
     }

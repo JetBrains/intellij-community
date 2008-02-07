@@ -74,8 +74,8 @@ public class CompletionData {
     myCompletionVariants.add(variant);
   }
 
-  public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, PsiElement position){
-    final CompletionVariant[] variants = findVariants(position, context);
+  public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, @NotNull PsiElement position){
+    final CompletionVariant[] variants = findVariants(position, context.file);
     boolean hasApplicableVariants = false;
 
     for (CompletionVariant variant : variants) {
@@ -91,7 +91,7 @@ public class CompletionData {
   }
 
   public void addKeywordVariants(Set<CompletionVariant> set, CompletionContext context, PsiElement position){
-    set.addAll(Arrays.asList(findVariants(position, context)));
+    set.addAll(Arrays.asList(findVariants(position, context.file)));
   }
 
   public static void completeKeywordsBySet(Set<LookupItem> set, Set<CompletionVariant> variants, CompletionContext context, PsiElement position){
@@ -104,11 +104,11 @@ public class CompletionData {
     return findPrefixStatic(insertedElement, offsetInFile);
   }
 
-  public CompletionVariant[] findVariants(final PsiElement position, final CompletionContext context){
+  public CompletionVariant[] findVariants(final PsiElement position, final PsiFile file){
     final List<CompletionVariant> variants = new ArrayList<CompletionVariant>();
     PsiElement scope = position;
     if(scope == null){
-      scope = context.file;
+      scope = file;
     }
     while (scope != null) {
       boolean breakFlag = false;
