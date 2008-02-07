@@ -85,12 +85,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   public void prepareRenaming() {
-    for(RenamePsiElementProcessor processor: Extensions.getExtensions(RenamePsiElementProcessor.EP_NAME)) {
-      if (processor.canProcessElement(myPrimaryElement)) {
-        processor.prepareRenaming(myPrimaryElement, myNewName, myAllRenames);
-        break;
-      }
-    }
+    final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(myPrimaryElement);
+    processor.prepareRenaming(myPrimaryElement, myNewName, myAllRenames);
   }
 
   private String getHelpID() {

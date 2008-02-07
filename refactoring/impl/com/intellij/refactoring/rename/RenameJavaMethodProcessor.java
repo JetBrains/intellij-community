@@ -12,6 +12,8 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.Collection;
 
+import org.jetbrains.annotations.NotNull;
+
 public class RenameJavaMethodProcessor extends RenamePsiElementProcessor {
   public boolean canProcessElement(final PsiElement element) {
     return element instanceof PsiMethod;
@@ -50,6 +52,7 @@ public class RenameJavaMethodProcessor extends RenamePsiElementProcessor {
     listener.elementRenamed(method);
   }
 
+  @NotNull
   public Collection<PsiReference> findReferences(final PsiElement element) {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(element.getProject());
     return MethodReferencesSearch.search((PsiMethod)element, projectScope, true).findAll();

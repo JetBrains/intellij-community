@@ -12,7 +12,6 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.*;
@@ -38,19 +37,9 @@ public class RenameUtil {
 
     PsiManager manager = element.getManager();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-    RenamePsiElementProcessor theProcessor = null;
+    RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
 
-    Collection<PsiReference> refs = null;
-    for(RenamePsiElementProcessor processor: Extensions.getExtensions(RenamePsiElementProcessor.EP_NAME)) {
-      if (processor.canProcessElement(element)) {
-        theProcessor = processor;
-        refs = processor.findReferences(element);
-        break;
-      }
-    }
-    if (refs == null) {
-      refs = ReferencesSearch.search(element).findAll();
-    }
+    Collection<PsiReference> refs = processor.findReferences(element);
     for (PsiReference ref : refs) {
       PsiElement referenceElement = ref.getElement();
       result.add(new MoveRenameUsageInfo(referenceElement, ref, ref.getRangeInElement().getStartOffset(),
@@ -68,7 +57,7 @@ public class RenameUtil {
                                                                                     ? NonCodeSearchDescriptionLocation.NON_JAVA
                                                                                     : NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
       if (stringToSearch != null) {
-        final String stringToReplace = getStringToReplace(element, newName, false, theProcessor);
+        final String stringToReplace = getStringToReplace(element, newName, false, processor);
         TextOccurrencesUtil.UsageInfoFactory factory = new NonCodeUsageInfoFactory(element, stringToReplace);
         TextOccurrencesUtil.addUsagesInStringsAndComments(element, stringToSearch, result, factory);
       }
@@ -81,11 +70,11 @@ public class RenameUtil {
                                                                                     : NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
 
       if (stringToSearch != null) {
-        final String stringToReplace = getStringToReplace(element, newName, true, theProcessor);
+        final String stringToReplace = getStringToReplace(element, newName, true, processor);
         addTextOccurence(element, result, projectScope, stringToSearch, stringToReplace);
 
-        if (theProcessor != null) {
-          Pair<String, String> additionalStringToSearch = theProcessor.getTextOccurrenceSearchStrings(element, newName);
+        if (processor != null) {
+          Pair<String, String> additionalStringToSearch = processor.getTextOccurrenceSearchStrings(element, newName);
           if (additionalStringToSearch != null) {
             addTextOccurence(element, result, projectScope, additionalStringToSearch.first, additionalStringToSearch.second);
           }
@@ -160,14 +149,8 @@ public class RenameUtil {
   public static void doRename(final PsiElement element, String newName, UsageInfo[] usages, final Project project,
                               RefactoringElementListener listener) {
     try {
-      for(RenamePsiElementProcessor processor: Extensions.getExtensions(RenamePsiElementProcessor.EP_NAME)) {
-        if (processor.canProcessElement(element)) {
-          processor.renameElement(element, newName, usages, listener);
-          return;
-        }
-      }
-
-      doRenameGenericNamedElement(element, newName, usages, listener);
+      RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
+      processor.renameElement(element, newName, usages, listener);
     }
     catch (final IncorrectOperationException e) {
       // may happen if the file or package cannot be renamed. e.g. locked by another application
