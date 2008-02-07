@@ -34,7 +34,7 @@ public class XExpressionEvaluationDialog extends EvaluationDialogBase {
     return myExpressionComboBox;
   }
 
-  protected void startEvaluation(final XDebuggerEvaluator.XEvaluationCallback callback) {
+  public void startEvaluation(final XDebuggerEvaluator.XEvaluationCallback callback) {
     myExpressionComboBox.saveTextInHistory();
     String expression = myExpressionComboBox.getText();
     getEvaluator().evaluate(expression, callback);

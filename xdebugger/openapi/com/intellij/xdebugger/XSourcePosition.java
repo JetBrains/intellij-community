@@ -17,6 +17,7 @@
 package com.intellij.xdebugger;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -27,6 +28,7 @@ public interface XSourcePosition {
 
   int getOffset();
 
+  @NotNull
   VirtualFile getFile();
 
 }

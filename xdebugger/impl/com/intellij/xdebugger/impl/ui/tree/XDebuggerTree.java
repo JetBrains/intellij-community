@@ -6,13 +6,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.Tree;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeRoot;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author nik
@@ -23,6 +25,7 @@ public class XDebuggerTree extends Tree implements DataProvider {
   private final Project myProject;
   private final XDebuggerEditorsProvider myEditorsProvider;
   private final XSourcePosition mySourcePosition;
+  private final List<XDebuggerTreeListener> myListeners = new ArrayList<XDebuggerTreeListener>();
 
   public XDebuggerTree(final @NotNull Project project, final XDebuggerEditorsProvider editorsProvider, final XSourcePosition sourcePosition) {
     myProject = project;
@@ -35,8 +38,16 @@ public class XDebuggerTree extends Tree implements DataProvider {
     setShowsRootHandles(true);
   }
 
-  public <Root extends XDebuggerTreeNode & XDebuggerTreeRoot> void setRoot(Root node) {
-    myTreeModel.setRoot(node);
+  public void addTreeListener(@NotNull XDebuggerTreeListener listener) {
+    myListeners.add(listener);
+  }
+
+  public void removeTreeListener(@NotNull XDebuggerTreeListener listener) {
+    myListeners.remove(listener);
+  }
+
+  public void setRoot(XValueContainerNode<?> root) {
+    myTreeModel.setRoot(root);
   }
 
   @Nullable 
@@ -66,8 +77,22 @@ public class XDebuggerTree extends Tree implements DataProvider {
     return null;
   }
 
-  public void rebuild() {
-    XDebuggerTreeRoot root = (XDebuggerTreeRoot)myTreeModel.getRoot();
-    root.rebuildNodes();
+  public void rebuildAndRestore(final DebuggerTreeState treeState) {
+    XValueContainerNode<?> root = (XValueContainerNode<?>)myTreeModel.getRoot();
+    root.clearChildren();
+    treeState.restoreState(this);
+    repaint();
+  }
+
+  public void childrenLoaded(final @NotNull XValueContainerNode<?> node, final @NotNull List<XValueContainerNode<?>> children) {
+    for (XDebuggerTreeListener listener : myListeners) {
+      listener.childrenLoaded(node, children);
+    }
+  }
+
+  public void nodeLoaded(final @NotNull XValueNodeImpl node, final @NotNull String name, final @NotNull String value) {
+    for (XDebuggerTreeListener listener : myListeners) {
+      listener.nodeLoaded(node, name, value);
+    }
   }
 }

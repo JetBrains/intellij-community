@@ -7,7 +7,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 
 /**
  * @author nik
@@ -35,7 +35,7 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
     return myExpressionEditor.getEditorComponent();
   }
 
-  protected TreeNode[] getNodePath() {
+  protected TreePath getNodePath() {
     return myNode.getPath();
   }
 

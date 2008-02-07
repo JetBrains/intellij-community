@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
@@ -38,7 +37,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
 
   public abstract JComponent getEditorComponent();
 
-  protected abstract TreeNode[] getNodePath();
+  protected abstract TreePath getNodePath();
 
   protected abstract JTree getTree();
 
@@ -221,7 +220,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
   private Rectangle getEditorBounds() {
     final JTree tree = getTree();
     Rectangle bounds = tree.getVisibleRect();
-    Rectangle nodeBounds = tree.getPathBounds(new TreePath(getNodePath()));
+    Rectangle nodeBounds = tree.getPathBounds(getNodePath());
     if (bounds == null || nodeBounds == null) {
       return null;
     }

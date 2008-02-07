@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.impl.ui.tree.TreeInplaceEditor;
 
 import javax.swing.*;
-import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 
 public abstract class DebuggerTreeInplaceEditor extends TreeInplaceEditor {
   private final DebuggerTreeNodeImpl myNode;
@@ -21,8 +21,8 @@ public abstract class DebuggerTreeInplaceEditor extends TreeInplaceEditor {
     myNode = node;
   }
 
-  protected TreeNode[] getNodePath() {
-    return myNode.getPath();
+  protected TreePath getNodePath() {
+    return new TreePath(myNode.getPath());
   }
 
   protected JTree getTree() {

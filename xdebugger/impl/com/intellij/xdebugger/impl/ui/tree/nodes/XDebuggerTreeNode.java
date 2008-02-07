@@ -8,21 +8,21 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * @author nik
  */
 public abstract class XDebuggerTreeNode implements TreeNode {
   protected final XDebuggerTree myTree;
-  private TreeNode myParent;
+  private XDebuggerTreeNode myParent;
   private boolean myLeaf;
   protected final SimpleColoredText myText = new SimpleColoredText();
   private Icon myIcon;
-  private TreeNode[] myPath;
+  private TreePath myPath;
 
   protected XDebuggerTreeNode(final XDebuggerTree tree, final XDebuggerTreeNode parent, final boolean leaf) {
     myParent = parent;
@@ -95,16 +95,16 @@ public abstract class XDebuggerTreeNode implements TreeNode {
     return myTree;
   }
 
-  public TreeNode[] getPath() {
+  public TreePath getPath() {
     if (myPath == null) {
-      List<TreeNode> nodes = new ArrayList<TreeNode>();
-      TreeNode node = this;
-      while (node != null) {
-        nodes.add(node);
-        node = node.getParent();
+      TreePath path;
+      if (myParent == null) {
+        path = new TreePath(this);
       }
-      Collections.reverse(nodes);
-      myPath = nodes.toArray(new TreeNode[nodes.size()]);
+      else {
+        path = myParent.getPath().pathByAddingChild(this);
+      }
+      myPath = path;
     }
     return myPath;
   }

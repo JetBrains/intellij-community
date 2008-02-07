@@ -39,12 +39,13 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
 
   public void doOKAction() {
     myExpressionEditor.saveTextInHistory();
+    final DebuggerTreeState treeState = new DebuggerTreeState(myTree);
     myNode.setValueModificationStarted();
     myModifier.setValue(myExpressionEditor.getText(), new XValueModifier.XModificationCallback() {
       public void valueModified() {
         DebuggerUIUtil.invokeLater(new Runnable() {
           public void run() {
-            myTree.rebuild();
+            myTree.rebuildAndRestore(treeState);
           }
         });
       }
@@ -52,7 +53,7 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
       public void errorOccured(@NotNull final String errorMessage) {
         DebuggerUIUtil.invokeLater(new Runnable() {
           public void run() {
-            myTree.rebuild();
+            myTree.rebuildAndRestore(treeState);
             //todo[nik] show hint instead
             Messages.showErrorDialog(myTree, errorMessage);
           }

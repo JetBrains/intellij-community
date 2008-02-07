@@ -42,6 +42,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         myText.append(value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setLeaf(!hasChildren);
         fireNodeChanged();
+        myTree.nodeLoaded(XValueNodeImpl.this, name, value);
       }
     });
   }

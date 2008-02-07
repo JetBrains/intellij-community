@@ -7,6 +7,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
@@ -17,8 +18,8 @@ import java.util.List;
  * @author nik
  */
 public abstract class XValueContainerNode<ValueContainer extends XValueContainer> extends XDebuggerTreeNode implements XCompositeNode, TreeNode {
-  private List<XValueContainerNode> myChildren;
-  private List<MessageTreeNode> myTemporaryChildren;
+  private List<XValueContainerNode<?>> myChildren;
+  private List<MessageTreeNode> myMessageChildren;
   protected final ValueContainer myValueContainer;
 
   protected XValueContainerNode(XDebuggerTree tree, final XDebuggerTreeNode parent, ValueContainer valueContainer) {
@@ -28,22 +29,40 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   private void loadChildren() {
-    if (myChildren != null || myTemporaryChildren != null) return;
+    if (myChildren != null || myMessageChildren != null) return;
 
     myValueContainer.computeChildren(this);
     if (myChildren == null) {
-      myTemporaryChildren = Collections.singletonList(MessageTreeNode.createLoadingMessage(myTree, this));
+      myMessageChildren = Collections.singletonList(createLoadingMessageNode());
     }
+  }
+
+  protected MessageTreeNode createLoadingMessageNode() {
+    return MessageTreeNode.createLoadingMessage(myTree, this);
   }
 
   public void setChildren(final List<XValue> children) {
     DebuggerUIUtil.invokeLater(new Runnable() {
       public void run() {
-        myChildren = new ArrayList<XValueContainerNode>();
+        myChildren = new ArrayList<XValueContainerNode<?>>();
         for (XValue child : children) {
           myChildren.add(new XValueNodeImpl(myTree, XValueContainerNode.this, child));
         }
-        myTemporaryChildren = null;
+        fireNodeChildrenChanged();
+        myTree.childrenLoaded(XValueContainerNode.this, myChildren);
+      }
+    });
+  }
+
+  public void clearChildren() {
+    myMessageChildren = null;
+    myChildren = null;
+  }
+
+  public void setErrorMessage(final @NotNull String errorMessage) {
+    DebuggerUIUtil.invokeLater(new Runnable() {
+      public void run() {
+        myMessageChildren = Collections.singletonList(MessageTreeNode.createErrorMessage(myTree, XValueContainerNode.this, errorMessage));
         fireNodeChildrenChanged();
       }
     });
@@ -55,7 +74,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     if (myChildren != null) {
       return myChildren;
     }
-    return myTemporaryChildren;
+    return myMessageChildren;
   }
 
   public ValueContainer getValueContainer() {
@@ -63,7 +82,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   @Nullable
-  public List<XValueContainerNode> getLoadedChildren() {
+  public List<XValueContainerNode<?>> getLoadedChildren() {
     return myChildren;
   }
 }

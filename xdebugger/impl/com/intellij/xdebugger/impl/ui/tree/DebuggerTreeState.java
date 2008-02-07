@@ -1,13 +1,12 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.TreePath;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,21 +17,29 @@ import java.util.Map;
 public class DebuggerTreeState {
   private NodeInfo myRootInfo;
 
-  public DebuggerTreeState(XDebuggerTree tree) {
+  public DebuggerTreeState(@NotNull XDebuggerTree tree) {
     myRootInfo = new NodeInfo("", "");
     ApplicationManager.getApplication().assertIsDispatchThread();
     addChildren(tree, myRootInfo, ((XDebuggerTreeNode)tree.getTreeModel().getRoot()));
   }
 
+  public void restoreState(@NotNull XDebuggerTree tree) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    DebuggerTreeRestorer restorer = new DebuggerTreeRestorer(tree);
+    restorer.restoreChildren(((XDebuggerTreeNode)tree.getTreeModel().getRoot()), myRootInfo);
+  }
+
+
   private static void addChildren(final XDebuggerTree tree, final NodeInfo nodeInfo, final XDebuggerTreeNode treeNode) {
-    if (treeNode instanceof XValueContainerNode && tree.isExpanded(new TreePath(treeNode.getPath()))) {
-      List<XValueContainerNode> children = ((XValueContainerNode<?>)treeNode).getLoadedChildren();
+    if (treeNode instanceof XValueContainerNode<?> && tree.isExpanded(treeNode.getPath())) {
+      List<XValueContainerNode<?>> children = ((XValueContainerNode<?>)treeNode).getLoadedChildren();
       if (children != null) {
         nodeInfo.myExpanded = true;
         for (XValueContainerNode child : children) {
-          NodeInfo node = createNode(child);
-          if (node != null) {
-            nodeInfo.addChild(node);
+          NodeInfo childInfo = createNode(child);
+          if (childInfo != null) {
+            nodeInfo.addChild(childInfo);
+            addChildren(tree, childInfo, child);
           }
         }
       }
@@ -68,6 +75,23 @@ public class DebuggerTreeState {
         myChidlren = new HashMap<String, NodeInfo>();
       }
       myChidlren.put(child.myName, child);
+    }
+
+    public boolean isExpanded() {
+      return myExpanded;
+    }
+
+    public String getName() {
+      return myName;
+    }
+
+    public String getValue() {
+      return myValue;
+    }
+
+    @Nullable
+    public NodeInfo getChild(@NotNull String name) {
+      return myChidlren != null ? myChidlren.get(name) : null;
     }
   }
 }
