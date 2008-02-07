@@ -80,8 +80,8 @@ public class DefaultXmlExtension extends XmlExtension {
     return doGuess((XmlTag)element, element.getContainingFile());
   }
 
-  public static Set<String> doGuess(final XmlTag element, final PsiFile psiFile) {
-    final String[] strings = CreateNSDeclarationIntentionFix.guessNamespace(psiFile, element.getName());
+  public static Set<String> doGuess(final XmlTag tag, final PsiFile psiFile) {
+    final String[] strings = CreateNSDeclarationIntentionFix.guessNamespace(psiFile, tag.getLocalName());
     return new HashSet<String>(Arrays.asList(strings));
   }
 
