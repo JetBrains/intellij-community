@@ -151,6 +151,8 @@
 
     <!-- Refactor -->
     <group id="RefactoringMenu" popup="true">
+      <action id="RenameElement" class="com.intellij.refactoring.actions.RenameElementAction"/>
+      <separator/>
       <action id="Move" class="com.intellij.refactoring.actions.MoveAction"/>
       <action id="CopyElement" class="com.intellij.ide.actions.CopyElementAction"/>
       <action id="CloneElement" class="com.intellij.ide.actions.CloneElementAction"/>

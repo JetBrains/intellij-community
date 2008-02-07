@@ -32,6 +32,7 @@ public class RenameHandlerRegistry {
     }
     return myDefaultElementRenameHandler.isAvailableOnDataContext(dataContext);
   }
+
   public RenameHandler getRenameHandler(DataContext dataContext) {
     for (RenameHandler renameHandler : Extensions.getExtensions(RenameHandler.EP_NAME)) {
       if (renameHandler.isRenaming(dataContext)) return renameHandler;

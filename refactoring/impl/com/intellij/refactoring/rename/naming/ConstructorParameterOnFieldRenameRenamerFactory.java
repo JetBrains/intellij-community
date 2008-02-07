@@ -1,4 +1,4 @@
-package com.intellij.refactoring.rename;
+package com.intellij.refactoring.rename.naming;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;

@@ -15,8 +15,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiWritableMetaData;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -60,9 +58,11 @@ public class PsiElementRenameHandler implements RenameHandler {
 
   static boolean canRename(PsiElement element, Project project) {
     final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
-    if (element instanceof XmlTag && !(((XmlTag)element).getMetaData() instanceof PsiWritableMetaData) ||
-        !(element instanceof PsiNamedElement || element instanceof XmlAttributeValue ||
-          (element instanceof PsiMetaOwner && ((PsiMetaOwner)element).getMetaData() != null))) {
+
+    boolean hasRenameProcessor = (RenamePsiElementProcessor.forElement(element) != RenamePsiElementProcessor.DEFAULT);
+    boolean hasWritableMetaData = element instanceof PsiMetaOwner && ((PsiMetaOwner) element).getMetaData() instanceof PsiWritableMetaData;
+
+    if (!hasRenameProcessor && !hasWritableMetaData && !(element instanceof PsiNamedElement)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol"));
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);

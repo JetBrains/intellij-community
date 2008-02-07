@@ -252,12 +252,10 @@
     </group>
 
     <group id="RefactoringMenu1">
-      <action id="RenameElement" class="com.intellij.refactoring.actions.RenameElementAction"/>
       <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction"/>
       <action id="MakeStatic" class="com.intellij.refactoring.actions.MakeStaticAction"/>
       <action id="ConvertToInstanceMethod" class="com.intellij.refactoring.actions.ConvertToInstanceMethodAction"/>
-      <separator/>
-      <add-to-group group-id="RefactoringMenu" anchor="first"/>
+      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="RenameElement"/>
     </group>
 
     <group id="RefactoringMenu2">

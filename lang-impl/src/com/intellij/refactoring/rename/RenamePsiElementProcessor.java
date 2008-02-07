@@ -108,7 +108,7 @@ public abstract class RenamePsiElementProcessor {
     return element;
   }
 
-  private static RenamePsiElementProcessor DEFAULT = new RenamePsiElementProcessor() {
+  public static RenamePsiElementProcessor DEFAULT = new RenamePsiElementProcessor() {
     public boolean canProcessElement(final PsiElement element) {
       return true;
     }
