@@ -342,12 +342,28 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
   }
 
   public DynamicPropertyVirtual replaceDynamicProperty(DynamicPropertyVirtual oldProperty, DynamicPropertyVirtual newProperty) {
-    //TODO: simplify
-    removeDynamicProperty(oldProperty);
-    addDynamicProperty(newProperty);
+    if (!oldProperty.getModuleName().equals(newProperty.getModuleName())
+        || !oldProperty.getContainingClassQualifiedName().equals(oldProperty.getContainingClassQualifiedName())) return null;
 
-    fireChange();
+    replaceDynamicProperty(oldProperty.getModuleName(), oldProperty.getContainingClassQualifiedName(), oldProperty.getPropertyName(), newProperty.getPropertyName());
     return newProperty;
+  }
+
+  /*
+  * Changes dynamic property
+  */
+  public String replaceDynamicProperty(String moduleName, String className, String oldPropertyName, String newPropertyName) {
+    final Element rootElement = getRootElement(moduleName);
+    final Element oldDynamicProperty = findConcreteDynamicProperty(rootElement, className, oldPropertyName);
+
+    if (oldDynamicProperty == null) return oldPropertyName;
+
+    oldDynamicProperty.setAttribute(PROPERTY_NAME_ATTRIBUTE, newPropertyName);
+
+    writeXMLTree(moduleName, rootElement);
+    fireChange();
+
+    return newPropertyName;
   }
 
   /*

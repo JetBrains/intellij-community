@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorTextField;
@@ -40,6 +41,8 @@ public class DynamicPropertyDialog extends DialogWrapper {
   private JComboBox myTypeComboBox;
   private JLabel myClassLabel;
   private JLabel myTypeLabel;
+  private JPanel myTypeStatusPanel;
+  private JLabel myTypeStatusLabel;
   private final DynamicPropertiesManager myDynamicPropertiesManager;
   private final Project myProject;
   private final DynamicProperty myDynamicProperty;
@@ -58,9 +61,28 @@ public class DynamicPropertyDialog extends DialogWrapper {
 
     setUpTypeComboBox();
     setUpContainingClassComboBox();
+    setUpStatusLabel();
 
     myTypeLabel.setLabelFor(myTypeComboBox);
     myClassLabel.setLabelFor(myClassComboBox);
+  }
+
+  private void setUpStatusLabel() {
+    myTypeStatusLabel.setHorizontalTextPosition(SwingConstants.RIGHT);
+    
+    final GrTypeElement typeElement = getEnteredTypeName();
+    if (typeElement == null) {
+      setStatusTextAndIcon(IconLoader.getIcon("/compiler/warning.png"), GroovyInspectionBundle.message("no.type.specified"));
+      return;
+    }
+
+    final PsiType type = typeElement.getType();
+    setStatusTextAndIcon(IconLoader.getIcon("/compiler/information.png"), GroovyInspectionBundle.message("resolved.type.status", type.getPresentableText()));
+  }
+
+  private void setStatusTextAndIcon(final Icon icon, final String text) {
+    myTypeStatusLabel.setIcon(icon);
+    myTypeStatusLabel.setText(text);
   }
 
 
@@ -165,6 +187,13 @@ public class DynamicPropertyDialog extends DialogWrapper {
 
     } else {
       setOKActionEnabled(true);
+
+      final PsiType type = typeElement.getType();
+      if (type instanceof PsiClassType && ((PsiClassType) type).resolve() == null) {
+        setStatusTextAndIcon(IconLoader.getIcon("/compiler/warning.png"), GroovyInspectionBundle.message("unresolved.type.status", type.getPresentableText()));
+      } else {
+        setStatusTextAndIcon(IconLoader.getIcon("/compiler/information.png"), GroovyInspectionBundle.message("resolved.type.status", type.getPresentableText()));
+      }
     }
   }
 
@@ -224,10 +253,20 @@ public class DynamicPropertyDialog extends DialogWrapper {
         type = TypesUtil.boxPrimitiveType(type, typeElement.getManager(), myProject.getAllScope());
       }
 
-      myDynamicProperty.setType(type.getCanonicalText());
+      final String typeQualifiedName = type.getCanonicalText();
+
+      if (typeQualifiedName != null) {
+        myDynamicProperty.setType(typeQualifiedName);
+      } else {
+        myDynamicProperty.setType(type.getPresentableText());
+      }
     }
     myDynamicProperty.setContainingClass(getEnteredContaningClass().getContainingClass());
-    myDynamicPropertiesManager.addDynamicProperty(new DynamicPropertyVirtual(myDynamicProperty.getPropertyName(), myDynamicProperty.getContainingClassQualifiedName(), myDynamicProperty.getModuleName(), myDynamicProperty.getTypeName()));
+    myDynamicPropertiesManager.addDynamicProperty(new DynamicPropertyVirtual(
+        myDynamicProperty.getPropertyName(),
+        myDynamicProperty.getContainingClassQualifiedName(),
+        myDynamicProperty.getModuleName(),
+        myDynamicProperty.getTypeName()));
 
     super.doOKAction();
   }

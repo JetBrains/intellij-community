@@ -103,9 +103,14 @@ public abstract class DynamicPropertiesManager implements ProjectComponent {
   public abstract void removeDynamicChangeListener(DynamicPropertyChangeListener listener);
 
   /*
-  * Changes dynamic property type
+  * Changes dynamic property
   */
   public abstract DynamicPropertyVirtual replaceDynamicProperty(DynamicPropertyVirtual oldProperty, DynamicPropertyVirtual newProperty);
+
+  /*
+  * Changes dynamic property
+  */
+  public abstract String replaceDynamicProperty(String moduleName, String className, String oldPropertyName, String newPropertyName);
 
   /*
   * Changes dynamic property type

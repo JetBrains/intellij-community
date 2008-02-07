@@ -15,29 +15,27 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.util.ui.treetable.TreeTable;
-import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
+import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
+import com.intellij.util.ui.treetable.TreeTable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.tree.DPClassNode;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.tree.DPPropertyNode;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPContainingClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPPropertyElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.tree.DPClassNode;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.tree.DPPropertyNode;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -96,11 +94,9 @@ public class GrDynamicImplicitVariableImpl extends GrImplicitVariableImpl implem
         if (!(myScope instanceof GrReferenceExpression)) return;
 
         final GrReferenceExpression refExpression = (GrReferenceExpression) myScope;
-        final PsiType type = refExpression.getQualifierExpression().getType();
+        final PsiClass expression = QuickfixUtil.findTargetClass(refExpression);
 
-        if (type == null) return;
-
-        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DPClassNode(new DPContainingClassElement(type.getCanonicalText())));
+        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DPClassNode(new DPContainingClassElement(expression.getQualifiedName())));
         if (classNode == null) return;
 
         final DefaultMutableTreeNode desiredNode = TreeUtil.findNodeWithObject(classNode, new DPPropertyNode(new DPPropertyElement(myNameIdentifier.getText())));
@@ -137,5 +133,11 @@ public class GrDynamicImplicitVariableImpl extends GrImplicitVariableImpl implem
   @NotNull
   public SearchScope getUseScope() {
     return myScope.getProject().getAllScope();
+  }
+
+  public GrReferenceExpression getContainingClassElement() {
+    if (myScope == null || !(myScope instanceof GrReferenceExpression)) return null;
+
+    return ((GrReferenceExpression) myScope);
   }
 }

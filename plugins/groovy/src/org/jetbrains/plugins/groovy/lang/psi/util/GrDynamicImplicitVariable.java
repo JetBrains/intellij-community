@@ -17,9 +17,11 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 /**
  * @author ilyas
  */
 public interface GrDynamicImplicitVariable extends GrImplicitVariable, ItemPresentation, NavigationItem {
+  public GrReferenceExpression getContainingClassElement();
 }
