@@ -182,6 +182,21 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
 
   @NotNull
+  public <K> Collection<K> getAllKeys(final String indexId) {
+    try {
+      checkRebuild(indexId);
+      indexUnsavedDocuments();
+      final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
+      return index != null? index.getAllKeys() : Collections.<K>emptyList();
+    }
+    catch (StorageException e) {
+      requestRebuild(indexId);
+      LOG.error(e);
+    }
+    return Collections.emptyList();
+  }
+  
+  @NotNull
   public <K, V> List<V> getData(final String indexId, K dataKey, Project project) {
     return getData(indexId, dataKey, project, null);
   }

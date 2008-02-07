@@ -44,6 +44,10 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     myBackendStorage.flush();
   }
 
+  public Collection<Key> getKeys() throws StorageException {
+    return myBackendStorage.getKeys();
+  }
+
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
     if (!myBufferingEnabled.get()) {
       myBackendStorage.addValue(key, inputId, value);

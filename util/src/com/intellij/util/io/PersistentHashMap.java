@@ -5,6 +5,7 @@ import com.intellij.util.io.storage.Storage;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
+import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
@@ -80,7 +81,19 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     }
   }
 
-  
+  public Collection<Key> allKeys() throws IOException {
+    return getAllDataObjects(new DataFilter() {
+      public boolean accept(final int id) {
+        try {
+          return readValueId(id) != NULL_ID;
+        }
+        catch (IOException ignored) {
+        }
+        return true;
+      }
+    });
+  }
+
   public synchronized Value get(Key key) throws IOException {
     final int id = tryEnumerate(key);
     if (id == NULL_ID) {

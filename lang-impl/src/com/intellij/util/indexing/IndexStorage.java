@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Flushable;
+import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
@@ -21,5 +22,7 @@ public interface IndexStorage<Key, Value> extends Flushable{
   @NotNull
   ValueContainer<Value> read(Key key) throws StorageException;
 
+  Collection<Key> getKeys() throws StorageException;
+  
   void close() throws StorageException;
 }

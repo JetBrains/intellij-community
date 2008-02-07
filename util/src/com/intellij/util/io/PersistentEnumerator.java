@@ -18,11 +18,15 @@ package com.intellij.util.io;
 import com.intellij.openapi.Forceable;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.containers.ShareableKey;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author max
@@ -150,6 +154,32 @@ public class PersistentEnumerator<Data> implements Forceable {
     }
 
     return id;
+  }
+
+  public interface DataFilter {
+    boolean accept(int id);
+  }
+  
+  public synchronized Collection<Data> getAllDataObjects(@Nullable final DataFilter filter) throws IOException {
+    final List<Data> values = new ArrayList<Data>();
+    collectDataObjects(FIRST_VECTOR_OFFSET, SLOTS_PER_FIRST_VECTOR, values, filter);
+    return values;
+  }
+  
+  private void collectDataObjects(final int vectorStart, final int slotsCount, Collection<Data> values, final DataFilter filter) throws IOException {
+    for (int slotIdx = 0; slotIdx < slotsCount; slotIdx++) {
+      final int vector = myStorage.getInt(vectorStart + slotIdx * 4);
+      if (vector < 0) {
+        for (int record = -vector; record != 0; record = nextCanditate(record)) {
+          if (filter == null || filter.accept(record)) {
+            values.add(valueOf(record));
+          }
+        }
+      }
+      else if (vector > 0) {
+        collectDataObjects(vector, SLOTS_PER_VECTOR, values, filter);
+      }
+    }
   }
 
   private int enumerateImpl(final Data value, final boolean saveNewValue) throws IOException {

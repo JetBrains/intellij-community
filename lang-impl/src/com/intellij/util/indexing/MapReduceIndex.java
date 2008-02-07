@@ -6,10 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -84,6 +81,18 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
   public Lock getWriteLock() {
     return myLock.writeLock();
+  }
+
+  public Collection<Key> getAllKeys() throws StorageException {
+    final Lock lock = getReadLock();
+    lock.lock();
+    try {
+      return myStorage.getKeys();
+    }
+    finally {
+      lock.unlock();
+      scheduleFlush();
+    }
   }
 
   @NotNull

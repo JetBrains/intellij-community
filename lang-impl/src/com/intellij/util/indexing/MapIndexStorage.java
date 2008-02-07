@@ -10,6 +10,7 @@ import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.util.Collection;
 import java.util.Iterator;
 
 /**
@@ -89,6 +90,15 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     FileUtil.delete(myStorageFile);
     try {
       myMap = new PersistentHashMap<Key,ValueContainerImpl<Value>>(myStorageFile, myKeyDescriptor, myValueContainerExternalizer);
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
+    }
+  }
+
+  public Collection<Key> getKeys() throws StorageException {
+    try {
+      return myMap.allKeys();
     }
     catch (IOException e) {
       throw new StorageException(e);
