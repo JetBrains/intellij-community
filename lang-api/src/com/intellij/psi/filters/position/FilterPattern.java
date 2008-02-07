@@ -6,12 +6,10 @@ package com.intellij.psi.filters.position;
 
 import com.intellij.patterns.ObjectPattern;
 import com.intellij.patterns.InitialPatternCondition;
-import com.intellij.patterns.MatchingContext;
-import com.intellij.patterns.TraverseContext;
+import com.intellij.util.ProcessingContext;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -21,7 +19,7 @@ public class FilterPattern extends ObjectPattern<Object,FilterPattern> {
 
   public FilterPattern(@Nullable final ElementFilter filter) {
     super(new InitialPatternCondition<Object>(Object.class) {
-      public boolean accepts(@Nullable final Object o, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return filter == null ||
                o != null &&
                filter.isClassAcceptable(o.getClass()) &&

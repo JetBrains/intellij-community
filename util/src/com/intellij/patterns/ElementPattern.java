@@ -4,6 +4,7 @@
 package com.intellij.patterns;
 
 import org.jetbrains.annotations.Nullable;
+import com.intellij.util.ProcessingContext;
 
 /**
  * @see StandardPatterns and its extenders
@@ -14,7 +15,7 @@ public interface ElementPattern<T> {
 
   boolean accepts(@Nullable Object o);
 
-  boolean accepts(@Nullable Object o, final MatchingContext matchingContext);
+  boolean accepts(@Nullable Object o, final ProcessingContext context);
 
   ElementPatternCondition<T> getCondition();
 }

@@ -6,8 +6,8 @@ package com.intellij.patterns;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -36,7 +36,7 @@ public class PsiJavaPatterns extends StandardPatterns{
 
   public static PsiJavaElementPattern.Capture<PsiLiteralExpression> literalExpression() {
     return new PsiJavaElementPattern.Capture<PsiLiteralExpression>(new InitialPatternCondition<PsiLiteralExpression>(PsiLiteralExpression.class) {
-      public boolean accepts(@Nullable final Object o, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof PsiLiteralExpression;
       }
     });

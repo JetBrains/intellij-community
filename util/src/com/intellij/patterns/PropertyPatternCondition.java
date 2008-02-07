@@ -7,6 +7,7 @@ package com.intellij.patterns;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ProcessingContext;
 
 /**
  * @author peter
@@ -22,8 +23,8 @@ public abstract class PropertyPatternCondition<T,P> extends PatternCondition<T>{
   @Nullable
   public abstract P getPropertyValue(@NotNull Object o);
 
-  public final boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+  public final boolean accepts(@NotNull final T t, final ProcessingContext context) {
     final P value = getPropertyValue(t);
-    return myPropertyPattern.getCondition().accepts(value, matchingContext, traverseContext);
+    return myPropertyPattern.getCondition().accepts(value, context);
   }
 }

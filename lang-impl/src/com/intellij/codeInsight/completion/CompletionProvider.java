@@ -4,7 +4,7 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.patterns.MatchingContext;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,6 +12,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class CompletionProvider<T, V extends CompletionParameters> {
 
-  public abstract void addCompletions(@NotNull V parameters, final MatchingContext context, @NotNull CompletionResultSet<T> result);
+  public abstract void addCompletions(@NotNull V parameters, final ProcessingContext context, @NotNull CompletionResultSet<T> result);
 
 }

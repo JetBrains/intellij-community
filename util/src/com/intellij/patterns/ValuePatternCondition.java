@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 
+import com.intellij.util.ProcessingContext;
+
 /**
  * @author peter
  */
@@ -24,7 +26,7 @@ public class ValuePatternCondition<T> extends PatternCondition<T>{
     return myValues;
   }
 
-  public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+  public boolean accepts(@NotNull final T t, final ProcessingContext context) {
     return myValues.contains(t);
   }
 

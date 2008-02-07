@@ -12,6 +12,7 @@ import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.Processor;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,8 +32,7 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
    */
   public PsiMethodPattern withParameters(@NonNls final String... types) {
     return with(new PatternCondition<PsiMethod>("withParameters") {
-      public boolean accepts(@NotNull final PsiMethod psiMethod,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final PsiMethod psiMethod, final ProcessingContext context) {
         final PsiParameterList parameterList = psiMethod.getParameterList();
         int dotsIndex = -1;
         while (++dotsIndex <types.length) {
@@ -62,8 +62,7 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
 
   public PsiMethodPattern definedInClass(final ElementPattern pattern) {
     return with(new PatternCondition<PsiMethod>("definedInClass") {
-      public boolean accepts(@NotNull final PsiMethod psiMethod,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final PsiMethod psiMethod, final ProcessingContext context) {
         if (pattern.accepts(psiMethod.getContainingClass())) {
           return true;
         }
@@ -84,8 +83,7 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
 
   public PsiMethodPattern constructor(final boolean isConstructor) {
     return with(new PatternCondition<PsiMethod>("constructor") {
-      public boolean accepts(@NotNull final PsiMethod method,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final PsiMethod method, final ProcessingContext context) {
         return method.isConstructor() == isConstructor;
       }
     });
@@ -94,8 +92,7 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
 
   public PsiMethodPattern withThrowsList(final ElementPattern<?> pattern) {
     return with(new PatternCondition<PsiMethod>("withThrowsList") {
-      public boolean accepts(@NotNull final PsiMethod method,
-                             final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final PsiMethod method, final ProcessingContext context) {
         return pattern.accepts(method.getThrowsList());
       }
     });

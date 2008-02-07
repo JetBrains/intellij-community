@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 
+import com.intellij.util.ProcessingContext;
+
 /**
  * @author peter
  */
@@ -51,20 +53,20 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
 
   public Self withChildren(@NotNull final ElementPattern<Collection<ParentType>> pattern) {
     return with(new PatternCondition<T>("withChildren") {
-      public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return pattern.getCondition().accepts(Arrays.asList(getChildren(t)), matchingContext, traverseContext);
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+        return pattern.getCondition().accepts(Arrays.asList(getChildren(t)), context);
       }
     });
   }
 
   public Self isFirstAcceptedChild(@NotNull final ElementPattern<? super ParentType> pattern) {
     return with(new PatternCondition<T>("isFirstAcceptedChild") {
-      public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         final ParentType parent = getParent(t);
         if (parent != null) {
           final ParentType[] children = getChildren(parent);
           for (ParentType child : children) {
-            if (pattern.getCondition().accepts(child, matchingContext, traverseContext)) {
+            if (pattern.getCondition().accepts(child, context)) {
               return child == t;
             }
           }
@@ -80,13 +82,13 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
   }
   public Self withSuperParent(final int level, @NotNull final ElementPattern<? extends ParentType> pattern) {
     return with(new PatternCondition<T>("withSuperParent") {
-      public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         ParentType parent = t;
         for (int i = 0; i < level; i++) {
           if (parent == null) return false;
           parent = getParent(parent);
         }
-        return pattern.getCondition().accepts(parent, matchingContext, traverseContext);
+        return pattern.getCondition().accepts(parent, context);
       }
     });
   }
@@ -101,10 +103,10 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
 
   public Self inside(final boolean strict, @NotNull final ElementPattern<? extends ParentType> pattern) {
     return with(new PatternCondition<T>("inside") {
-      public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         ParentType element = strict ? getParent(t) : t;
         while (element != null) {
-          if (pattern.getCondition().accepts(element, matchingContext, traverseContext)) return true;
+          if (pattern.getCondition().accepts(element, context)) return true;
           element = getParent(element);
         }
         return false;

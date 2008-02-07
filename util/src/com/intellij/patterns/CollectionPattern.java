@@ -10,14 +10,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.intellij.util.ProcessingContext;
+
 /**
  * @author peter
  */
 public class CollectionPattern<T> extends ObjectPattern<Collection<T>, CollectionPattern<T>> {
   protected CollectionPattern() {
     super(new InitialPatternCondition(Collection.class) {
-      public boolean accepts(@Nullable final Object o,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof Collection;
       }
     });
@@ -25,9 +26,9 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
 
   public CollectionPattern<T> all(final ElementPattern<? extends T> pattern) {
     return with(new PatternCondition<Collection<T>>("all") {
-      public boolean accepts(@NotNull final Collection<T> collection, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final Collection<T> collection, final ProcessingContext context) {
         for (final T t : collection) {
-          if (!pattern.getCondition().accepts(t, matchingContext, traverseContext)) return false;
+          if (!pattern.getCondition().accepts(t, context)) return false;
         }
         return true;
       }
@@ -36,9 +37,9 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
 
   public CollectionPattern<T> atLeastOne(final ElementPattern<? extends T> pattern) {
     return with(new PatternCondition<Collection<T>>("atLeastOne") {
-      public boolean accepts(@NotNull final Collection<T> collection, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final Collection<T> collection, final ProcessingContext context) {
         for (final T t : collection) {
-          if (pattern.getCondition().accepts(t, matchingContext, traverseContext)) return true;
+          if (pattern.getCondition().accepts(t, context)) return true;
         }
         return false;
       }
@@ -47,23 +48,23 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
 
   public CollectionPattern<T> filter(final ElementPattern<? extends T> elementPattern, final ElementPattern<Collection<T>> continuationPattern) {
     return with(new PatternCondition<Collection<T>>("filter") {
-      public boolean accepts(@NotNull final Collection<T> collection, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final Collection<T> collection, final ProcessingContext context) {
         List<T> filtered = new ArrayList<T>();
         for (final T t : collection) {
-          if (elementPattern.getCondition().accepts(t, matchingContext, traverseContext)) {
+          if (elementPattern.getCondition().accepts(t, context)) {
             filtered.add(t);
           }
         }
-        return continuationPattern.getCondition().accepts(filtered, matchingContext, traverseContext);
+        return continuationPattern.getCondition().accepts(filtered, context);
       }
     });
   }
 
   public CollectionPattern<T> first(final ElementPattern<? extends T> elementPattern) {
     return with(new PatternCondition<Collection<T>>("first") {
-      public boolean accepts(@NotNull final Collection<T> collection, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final Collection<T> collection, final ProcessingContext context) {
         return !collection.isEmpty() &&
-               elementPattern.getCondition().accepts(collection.iterator().next(), matchingContext, traverseContext);
+               elementPattern.getCondition().accepts(collection.iterator().next(), context);
       }
     });
   }
@@ -78,8 +79,7 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
 
   public CollectionPattern<T> atLeast(final int size) {
     return with(new PatternCondition<Collection<T>>("atLeast") {
-      public boolean accepts(@NotNull final Collection<T> ts,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final Collection<T> ts, final ProcessingContext context) {
         return ts.size() >= size;
       }
     });
@@ -87,7 +87,7 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
 
   public CollectionPattern<T> size(final int size) {
     return with(new PatternCondition<Collection<T>>("size") {
-      public boolean accepts(@NotNull final Collection<T> collection, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final Collection<T> collection, final ProcessingContext context) {
         return size == collection.size();
       }
     });
@@ -95,7 +95,7 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
 
   public CollectionPattern<T> last(final ElementPattern elementPattern) {
     return with(new PatternCondition<Collection<T>>("last") {
-      public boolean accepts(@NotNull final Collection<T> collection, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final Collection<T> collection, final ProcessingContext context) {
         if (collection.isEmpty()) {
           return false;
         }
@@ -103,7 +103,7 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
         for (final T t : collection) {
           last = t;
         }
-        return elementPattern.getCondition().accepts(last, matchingContext, traverseContext);
+        return elementPattern.getCondition().accepts(last, context);
       }
     });
   }

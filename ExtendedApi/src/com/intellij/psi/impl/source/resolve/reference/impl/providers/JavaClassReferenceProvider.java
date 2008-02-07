@@ -10,7 +10,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
-import com.intellij.patterns.MatchingContext;
+import com.intellij.util.ProcessingContext;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +64,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     return getReferencesByElement(element);
   }
 

@@ -6,6 +6,7 @@ package com.intellij.patterns;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,7 +63,7 @@ public abstract class PatternCondition<T> {
     builder.append("]");
   }
 
-  public abstract boolean accepts(@NotNull T t, final MatchingContext matchingContext, @NotNull TraverseContext traverseContext);
+  public abstract boolean accepts(@NotNull T t, final ProcessingContext context);
 
   @NonNls
   public String toString() {

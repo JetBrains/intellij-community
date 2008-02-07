@@ -17,7 +17,7 @@ import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.patterns.MatchingContext;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -217,7 +217,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     final List<PsiReference> result = PsiReferenceListSpinAllocator.alloc();
     try {
       for (final PsiReferenceProvider provider : providers) {
-        result.addAll(Arrays.asList(provider.getReferencesByElement(this, new MatchingContext())));
+        result.addAll(Arrays.asList(provider.getReferencesByElement(this, new ProcessingContext())));
       }
       return myReferences = result.toArray(new PsiReference[result.size()]);
     }

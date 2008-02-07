@@ -20,7 +20,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.patterns.MatchingContext;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +49,7 @@ public class FormReferenceProvider extends PsiReferenceProvider implements Proje
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final MatchingContext matchingContext) {
+  public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
     if (element instanceof PsiPlainTextFile) {
       final PsiPlainTextFile plainTextFile = (PsiPlainTextFile) element;
       if (plainTextFile.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {

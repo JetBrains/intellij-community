@@ -5,6 +5,7 @@
 package com.intellij.patterns;
 
 import com.intellij.psi.PsiNameValuePair;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +19,7 @@ public class PsiNameValuePairPattern extends PsiElementPattern<PsiNameValuePair,
 
   public PsiNameValuePairPattern withName(@NotNull @NonNls final String requiredName) {
     return with(new PatternCondition<PsiNameValuePair>("withName") {
-      public boolean accepts(@NotNull final PsiNameValuePair psiNameValuePair, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final PsiNameValuePair psiNameValuePair, final ProcessingContext context) {
         String actualName = psiNameValuePair.getName();
         return requiredName.equals(actualName) || actualName == null && "value".equals(requiredName);
       }

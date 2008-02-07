@@ -4,6 +4,7 @@
 package com.intellij.patterns;
 
 import org.jetbrains.annotations.NotNull;
+import com.intellij.util.ProcessingContext;
 
 /**
  * @author peter
@@ -16,16 +17,14 @@ public class CharPattern extends ObjectPattern<Character, CharPattern> {
 
   public CharPattern javaIdentifierPart() {
     return with(new PatternCondition<Character>("javaIdentifierPart") {
-      public boolean accepts(@NotNull final Character character,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
         return Character.isJavaIdentifierPart(character.charValue());
       }
     });
   }
   public CharPattern whitespace() {
     return with(new PatternCondition<Character>("whitespace") {
-      public boolean accepts(@NotNull final Character character,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
         return Character.isWhitespace(character.charValue());
       }
     });

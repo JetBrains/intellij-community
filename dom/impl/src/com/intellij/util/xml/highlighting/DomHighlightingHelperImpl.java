@@ -36,7 +36,7 @@ import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import com.intellij.xml.XmlBundle;
-import com.intellij.patterns.MatchingContext;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,7 +116,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
         return checkExtendClass(element, (PsiClass)valueObject, extend.value(), extend.instantiatable(), extend.canBeDecorator(), holder);
       }
       else {
-        final PsiReference[] references = myProvider.getReferencesByElement(DomUtil.getValueElement(element), new MatchingContext());
+        final PsiReference[] references = myProvider.getReferencesByElement(DomUtil.getValueElement(element), new ProcessingContext());
         for (PsiReference reference : references) {
           if (reference instanceof JavaClassReference) {
             final PsiReferenceProvider psiReferenceProvider = ((JavaClassReference)reference).getProvider();
@@ -197,7 +197,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     final XmlElement valueElement = DomUtil.getValueElement(element);
     if (valueElement != null && !isSoftReference(element)) {
       final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
-      final PsiReference[] psiReferences = myProvider.getReferencesByElement(valueElement, new MatchingContext());
+      final PsiReference[] psiReferences = myProvider.getReferencesByElement(valueElement, new ProcessingContext());
       GenericDomValueReference domReference = null;
       for (final PsiReference reference : psiReferences) {
         if (reference instanceof GenericDomValueReference) {

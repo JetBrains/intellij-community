@@ -4,7 +4,7 @@
 package com.intellij.patterns;
 
 import com.intellij.psi.PsiField;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -13,8 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public class PsiFieldPattern extends PsiMemberPattern<PsiField, PsiFieldPattern>{
   public PsiFieldPattern() {
     super(new InitialPatternCondition<PsiField>(PsiField.class) {
-      public boolean accepts(@Nullable final Object o,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof PsiField;
       }
     });

@@ -5,6 +5,7 @@ package com.intellij.patterns;
 
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,8 +15,7 @@ import org.jetbrains.annotations.Nullable;
 public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue<T>, GenericDomValuePattern<T>>{
   protected GenericDomValuePattern() {
     super(new InitialPatternCondition(GenericDomValue.class) {
-      public boolean accepts(@Nullable final Object o,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof GenericDomValue;
       }
     });
@@ -23,8 +23,7 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
 
   protected GenericDomValuePattern(final Class<T> aClass) {
     super(new InitialPatternCondition(aClass) {
-      public boolean accepts(@Nullable final Object o,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof GenericDomValue && aClass.equals(DomUtil.getGenericValueParameter(((GenericDomValue)o).getDomElementType()));
       }
 
@@ -33,8 +32,8 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
 
   public GenericDomValuePattern<T> withStringValue(final ElementPattern pattern) {
     return with(new PatternCondition<GenericDomValue<T>>("withStringValue") {
-      public boolean accepts(@NotNull final GenericDomValue<T> genericDomValue, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return pattern.getCondition().accepts(genericDomValue.getStringValue(), matchingContext, traverseContext);
+      public boolean accepts(@NotNull final GenericDomValue<T> genericDomValue, final ProcessingContext context) {
+        return pattern.getCondition().accepts(genericDomValue.getStringValue(), context);
       }
 
     });
@@ -46,8 +45,8 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
 
   public GenericDomValuePattern<T> withValue(final ElementPattern pattern) {
     return with(new PatternCondition<GenericDomValue<T>>("withValue") {
-      public boolean accepts(@NotNull final GenericDomValue<T> genericDomValue, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return pattern.getCondition().accepts(genericDomValue.getValue(), matchingContext, traverseContext);
+      public boolean accepts(@NotNull final GenericDomValue<T> genericDomValue, final ProcessingContext context) {
+        return pattern.getCondition().accepts(genericDomValue.getValue(), context);
       }
     });
   }

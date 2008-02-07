@@ -6,6 +6,7 @@ package com.intellij.patterns;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,7 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
 
   public Self withNamespace(final ElementPattern<String> namespace) {
     return with(new PatternCondition<T>("withNamespace") {
-      public boolean accepts(@NotNull final T s, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final T s, final ProcessingContext context) {
         return namespace.accepts(getNamespace(s));
       }
     });
@@ -48,8 +49,7 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
   public static class XmlAttributePattern extends XmlNamedElementPattern<XmlAttribute, XmlAttributePattern> {
     protected XmlAttributePattern() {
       super(new InitialPatternCondition<XmlAttribute>(XmlAttribute.class) {
-        public boolean accepts(@Nullable final Object o,
-                                  final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+        public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
           return o instanceof XmlAttribute;
         }
       });

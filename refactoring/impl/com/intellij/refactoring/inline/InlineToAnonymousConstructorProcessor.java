@@ -14,6 +14,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -150,7 +151,7 @@ class InlineToAnonymousConstructorProcessor {
     for(PsiElement child: body.getChildren()) {
       if (child instanceof PsiStatement) {
         PsiStatement stmt = (PsiStatement) child;
-        MatchingContext context = new MatchingContext();
+        ProcessingContext context = new ProcessingContext();
         if (ourAssignmentPattern.accepts(stmt, context)) {
           PsiAssignmentExpression expression = context.get(ourAssignmentKey);
           if (!processAssignmentInConstructor(expression)) {
@@ -289,7 +290,7 @@ class InlineToAnonymousConstructorProcessor {
     if (statements.length == 0) {
       return;
     }
-    MatchingContext context = new MatchingContext();
+    ProcessingContext context = new ProcessingContext();
     if (!ourSuperCallPattern.accepts(statements[0], context)) {
       return;
     }

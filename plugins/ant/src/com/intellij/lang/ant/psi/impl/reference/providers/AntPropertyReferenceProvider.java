@@ -14,7 +14,7 @@ import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.patterns.MatchingContext;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +23,7 @@ import java.util.List;
 public class AntPropertyReferenceProvider extends PsiReferenceProvider {
 
   @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     final AntStructuredElement antElement = (AntStructuredElement)element;
     final XmlTag sourceElement = antElement.getSourceElement();
     final XmlAttribute[] attributes = sourceElement.getAttributes();

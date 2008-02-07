@@ -7,6 +7,7 @@ package com.intellij.patterns;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.util.xml.NanoXmlUtil;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -21,7 +22,7 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
 
   public VirtualFilePattern ofType(final FileType type) {
     return with(new PatternCondition<VirtualFile>("ofType") {
-      public boolean accepts(@NotNull final VirtualFile virtualFile, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
         return type.equals(virtualFile.getFileType());
       }
     });
@@ -29,21 +30,20 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
 
   public VirtualFilePattern withName(final ElementPattern namePattern) {
     return with(new PatternCondition<VirtualFile>("withName") {
-      public boolean accepts(@NotNull final VirtualFile virtualFile,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return namePattern.getCondition().accepts(virtualFile.getName(), matchingContext, traverseContext);
+      public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
+        return namePattern.getCondition().accepts(virtualFile.getName(), context);
       }
     });
   }
 
   public VirtualFilePattern xmlWithRootTag(final ElementPattern tagNamePattern) {
     return with(new PatternCondition<VirtualFile>("xmlWithRootTag") {
-      public boolean accepts(@NotNull final VirtualFile virtualFile, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
         try {
           NanoXmlUtil.RootTagNameBuilder rootTagNameBuilder = new NanoXmlUtil.RootTagNameBuilder();
           NanoXmlUtil.parse(virtualFile.getInputStream(), rootTagNameBuilder);
           String tagName = rootTagNameBuilder.getResult();
-          return tagName != null && tagNamePattern.getCondition().accepts(tagName, matchingContext, traverseContext);
+          return tagName != null && tagNamePattern.getCondition().accepts(tagName, context);
         }
         catch (IOException e) {
           return false;

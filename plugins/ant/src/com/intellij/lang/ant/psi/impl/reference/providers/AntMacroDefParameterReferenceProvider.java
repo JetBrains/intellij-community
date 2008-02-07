@@ -12,7 +12,7 @@ import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.patterns.MatchingContext;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -20,7 +20,7 @@ import java.util.List;
 public class AntMacroDefParameterReferenceProvider extends PsiReferenceProvider {
 
   @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     if (!(element instanceof AntStructuredElement)) {
       return PsiReference.EMPTY_ARRAY;
     }

@@ -5,7 +5,7 @@
 package com.intellij.patterns;
 
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -21,10 +21,10 @@ public class ElementPatternCondition<T> {
     myInitialCondition = startCondition;
   }
 
-  public boolean accepts(@Nullable Object o, final MatchingContext matchingContext, @NotNull TraverseContext traverseContext) {
-    if (!myInitialCondition.accepts(o, matchingContext, traverseContext)) return false;
+  public boolean accepts(@Nullable Object o, final ProcessingContext context) {
+    if (!myInitialCondition.accepts(o, context)) return false;
     for (final PatternCondition<? super T> condition : myConditions) {
-      if (!condition.accepts((T)o, matchingContext, traverseContext)) return false;
+      if (!condition.accepts((T)o, context)) return false;
     }
     return true;
   }

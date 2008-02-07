@@ -7,6 +7,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,11 +49,11 @@ public class DomElementPattern<T extends DomElement,Self extends DomElementPatte
 
   public Self withChild(@NonNls @NotNull final String localName, final ElementPattern pattern) {
     return with(new PatternCondition<T>("withChild") {
-      public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         for (final AbstractDomChildrenDescription description : t.getGenericInfo().getChildrenDescriptions()) {
           if (!(description instanceof DomChildrenDescription) || localName.equals(((DomChildrenDescription)description).getXmlElementName())) {
             for (final DomElement element : description.getValues(t)) {
-              if (localName.equals(element.getXmlElementName()) && pattern.getCondition().accepts(element, matchingContext, traverseContext)) {
+              if (localName.equals(element.getXmlElementName()) && pattern.getCondition().accepts(element, context)) {
                 return true;
               }
             }

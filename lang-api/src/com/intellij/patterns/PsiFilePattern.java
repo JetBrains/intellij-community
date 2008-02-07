@@ -2,6 +2,7 @@ package com.intellij.patterns;
 
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,9 +20,9 @@ public class PsiFilePattern<T extends PsiFile, Self extends PsiFilePattern<T, Se
 
   public Self withParentDirectoryName(final StringPattern namePattern) {
     return with(new PatternCondition<T>("withParentDirectoryName") {
-      public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         PsiDirectory directory = t.getContainingDirectory();
-        return directory != null && namePattern.getCondition().accepts(directory.getName(), matchingContext, traverseContext);
+        return directory != null && namePattern.getCondition().accepts(directory.getName(), context);
       }
     });
   }

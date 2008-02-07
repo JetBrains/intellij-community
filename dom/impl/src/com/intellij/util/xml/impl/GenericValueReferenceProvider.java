@@ -16,8 +16,8 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.*;
-import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +36,7 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
   }
 
   @NotNull
-  public final PsiReference[] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull final MatchingContext matchingContext) {
+  public final PsiReference[] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull final ProcessingContext context) {
 
     if (psiElement == null) {
       return PsiReference.EMPTY_ARRAY;

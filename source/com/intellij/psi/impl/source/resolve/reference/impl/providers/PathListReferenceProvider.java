@@ -20,9 +20,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProviderBase;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ProcessingContext;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.CharFilter;
-import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public class PathListReferenceProvider extends PsiReferenceProviderBase {
 
   @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     return getReferencesByElement(element);
   }
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element) {

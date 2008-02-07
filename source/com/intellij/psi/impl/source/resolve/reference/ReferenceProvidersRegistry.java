@@ -22,10 +22,7 @@ import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.ReflectionCache;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,9 +48,9 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
   private final ConcurrentMap<Class,NamedObjectProviderBinding> myNamedBindingsMap = new ConcurrentWeakHashMap<Class, NamedObjectProviderBinding>();
   private final Map<ReferenceProviderType,PsiReferenceProvider> myReferenceTypeToProviderMap = new ConcurrentHashMap<ReferenceProviderType, PsiReferenceProvider>(5);
 
-  private static final Comparator<Trinity<PsiReferenceProvider,MatchingContext,Double>> PRIORITY_COMPARATOR = new Comparator<Trinity<PsiReferenceProvider, MatchingContext, Double>>() {
-    public int compare(final Trinity<PsiReferenceProvider, MatchingContext, Double> o1,
-                       final Trinity<PsiReferenceProvider, MatchingContext, Double> o2) {
+  private static final Comparator<Trinity<PsiReferenceProvider,ProcessingContext,Double>> PRIORITY_COMPARATOR = new Comparator<Trinity<PsiReferenceProvider, ProcessingContext, Double>>() {
+    public int compare(final Trinity<PsiReferenceProvider, ProcessingContext, Double> o1,
+                       final Trinity<PsiReferenceProvider, ProcessingContext, Double> o2) {
       return o2.getThird().compareTo(o1.getThird());
     }
   };
@@ -324,23 +321,23 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
 
   @Deprecated
   public List<PsiReferenceProvider> getProvidersByElement(@NotNull PsiElement element, @NotNull Class clazz) {
-    final List<Trinity<PsiReferenceProvider, MatchingContext, Double>> list = getPairsByElement(element, clazz);
+    final List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> list = getPairsByElement(element, clazz);
     final ArrayList<PsiReferenceProvider> providers = new ArrayList<PsiReferenceProvider>(list.size());
-    for (Trinity<PsiReferenceProvider, MatchingContext, Double> trinity : list) {
+    for (Trinity<PsiReferenceProvider, ProcessingContext, Double> trinity : list) {
       providers.add(trinity.getFirst());
     }
     return providers;
   }
 
   @NotNull
-  private List<Trinity<PsiReferenceProvider,MatchingContext,Double>> getPairsByElement(@NotNull PsiElement element, @NotNull Class clazz) {
+  private List<Trinity<PsiReferenceProvider,ProcessingContext,Double>> getPairsByElement(@NotNull PsiElement element, @NotNull Class clazz) {
     assert ReflectionCache.isInstance(element, clazz);
 
     final SimpleProviderBinding simpleBinding = myBindingsMap.get(clazz);
     final NamedObjectProviderBinding namedBinding = myNamedBindingsMap.get(clazz);
     if (simpleBinding == null && namedBinding == null) return Collections.emptyList();
 
-    List<Trinity<PsiReferenceProvider,MatchingContext,Double>> ret = new SmartList<Trinity<PsiReferenceProvider,MatchingContext,Double>>();
+    List<Trinity<PsiReferenceProvider,ProcessingContext,Double>> ret = new SmartList<Trinity<PsiReferenceProvider,ProcessingContext,Double>>();
     if (simpleBinding != null) {
       simpleBinding.addAcceptableReferenceProviders(element, ret);
     }
@@ -354,13 +351,13 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
     assert context.isValid() : "Invalid context: " + context;
 
     PsiReference[] result = PsiReference.EMPTY_ARRAY;
-    final List<Trinity<PsiReferenceProvider, MatchingContext, Double>> providers = getInstance(context.getProject()).getPairsByElement(context, clazz);
+    final List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> providers = getInstance(context.getProject()).getPairsByElement(context, clazz);
     if (providers.isEmpty()) {
       return result;
     }
     Collections.sort(providers, PRIORITY_COMPARATOR);
     final Double maxPriority = providers.get(0).getThird();
-    next: for (Trinity<PsiReferenceProvider, MatchingContext, Double> trinity : providers) {
+    next: for (Trinity<PsiReferenceProvider, ProcessingContext, Double> trinity : providers) {
       final PsiReference[] refs = trinity.getFirst().getReferencesByElement(context, trinity.getSecond());
       if (trinity.getThird().equals(maxPriority)) {
         result = ArrayUtil.mergeArrays(

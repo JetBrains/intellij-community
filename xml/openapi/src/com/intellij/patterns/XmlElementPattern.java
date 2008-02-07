@@ -5,6 +5,7 @@ package com.intellij.patterns;
 
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,8 +24,7 @@ public class XmlElementPattern<T extends XmlElement,Self extends XmlElementPatte
   public static class Capture extends XmlElementPattern<XmlElement, Capture> {
     protected Capture() {
       super(new InitialPatternCondition<XmlElement>(XmlElement.class) {
-        public boolean accepts(@Nullable final Object o,
-                                  final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+        public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
           return o instanceof XmlElement;
         }
       });
@@ -34,8 +34,7 @@ public class XmlElementPattern<T extends XmlElement,Self extends XmlElementPatte
   public static class XmlTextPattern extends XmlElementPattern<XmlText, XmlTextPattern> {
     public XmlTextPattern() {
       super(new InitialPatternCondition<XmlText>(XmlText.class) {
-        public boolean accepts(@Nullable final Object o,
-                                  final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+        public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
           return o instanceof XmlText;
         }
       });

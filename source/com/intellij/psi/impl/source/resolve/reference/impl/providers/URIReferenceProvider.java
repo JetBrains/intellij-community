@@ -17,7 +17,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ArrayUtil;
-import com.intellij.patterns.MatchingContext;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +87,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     final String text = element.getText();
     String s = StringUtil.stripQuotesAroundValue(text);
     final PsiElement parent = element.getParent();

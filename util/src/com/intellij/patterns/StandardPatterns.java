@@ -5,6 +5,7 @@ package com.intellij.patterns;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,9 +30,8 @@ public class StandardPatterns {
 
   public static <T> ElementPattern save(final Key<T> key) {
     return new ObjectPattern.Capture<T>(new InitialPatternCondition(Object.class) {
-      public boolean accepts(@Nullable final Object o,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        matchingContext.put(key, (T)o);
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+        context.put(key, (T)o);
         return true;
       }
 
@@ -56,9 +56,8 @@ public class StandardPatterns {
 
   public static ElementPattern get(@NotNull @NonNls final String key) {
     return new ObjectPattern.Capture(new InitialPatternCondition(Object.class) {
-      public boolean accepts(@Nullable final Object o,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return Comparing.equal(o, matchingContext.get(key));
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+        return Comparing.equal(o, context.get(key));
       }
 
       public void append(@NonNls final StringBuilder builder, final String indent) {
@@ -73,10 +72,9 @@ public class StandardPatterns {
 
   public static <E> ElementPattern<E> or(final ElementPattern<? extends E>... patterns) {
     return new ObjectPattern.Capture<E>(new InitialPatternCondition(Object.class) {
-      public boolean accepts(@Nullable final Object o,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         for (final ElementPattern pattern : patterns) {
-          if (pattern.getCondition().accepts(o, matchingContext, traverseContext)) return true;
+          if (pattern.getCondition().accepts(o, context)) return true;
         }
         return false;
       }
@@ -97,10 +95,9 @@ public class StandardPatterns {
 
   public static <E> ElementPattern and(final ElementPattern... patterns) {
     return new ObjectPattern.Capture<E>(new InitialPatternCondition(Object.class) {
-      public boolean accepts(@Nullable final Object o,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         for (final ElementPattern pattern : patterns) {
-          if (!pattern.getCondition().accepts(o, matchingContext, traverseContext)) return false;
+          if (!pattern.getCondition().accepts(o, context)) return false;
         }
         return true;
       }
@@ -120,9 +117,8 @@ public class StandardPatterns {
 
   public static <E> ElementPattern not(final ElementPattern pattern) {
     return new ObjectPattern.Capture<E>(new InitialPatternCondition(Object.class) {
-      public boolean accepts(@Nullable final Object o,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return !pattern.getCondition().accepts(o, matchingContext, traverseContext);
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+        return !pattern.getCondition().accepts(o, context);
       }
 
       public void append(@NonNls final StringBuilder builder, final String indent) {
@@ -134,9 +130,8 @@ public class StandardPatterns {
 
   public static <T> ObjectPattern.Capture<T> optional(final ElementPattern pattern) {
     return new ObjectPattern.Capture<T>(new InitialPatternCondition(Object.class) {
-      public boolean accepts(@Nullable final Object o,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        pattern.getCondition().accepts(o, matchingContext, traverseContext);
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+        pattern.getCondition().accepts(o, context);
         return true;
       }
     });

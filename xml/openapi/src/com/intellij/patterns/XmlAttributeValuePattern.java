@@ -5,6 +5,7 @@ package com.intellij.patterns;
 
 import com.intellij.psi.xml.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -15,8 +16,7 @@ import org.jetbrains.annotations.NonNls;
 public class XmlAttributeValuePattern extends XmlElementPattern<XmlAttributeValue,XmlAttributeValuePattern>{
   protected XmlAttributeValuePattern() {
     super(new InitialPatternCondition<XmlAttributeValue>(XmlAttributeValue.class) {
-      public boolean accepts(@Nullable final Object o,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof XmlAttributeValue;
       }
     });

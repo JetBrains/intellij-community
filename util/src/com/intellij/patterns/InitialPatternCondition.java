@@ -4,8 +4,8 @@
  */
 package com.intellij.patterns;
 
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -22,7 +22,7 @@ public abstract class InitialPatternCondition<T> {
     return myAcceptedClass;
   }
 
-  public boolean accepts(@Nullable Object o, final MatchingContext matchingContext, @NotNull TraverseContext traverseContext) {
+  public boolean accepts(@Nullable Object o, final ProcessingContext context) {
     return myAcceptedClass.isInstance(o);
   }
 

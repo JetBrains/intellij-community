@@ -13,7 +13,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
-import com.intellij.patterns.MatchingContext;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +31,7 @@ public class AntSingleTargetReferenceProvider extends PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     String attributeName = ourTypesToAttributeNames.get(element.getClass());
     if( attributeName == null) {
       return PsiReference.EMPTY_ARRAY;

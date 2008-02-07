@@ -4,6 +4,7 @@
 package com.intellij.patterns;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,18 +18,18 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
 
   public PsiClassPattern inheritorOf(final boolean strict, final PsiClassPattern pattern) {
     return with(new PatternCondition<PsiClass>("inheritorOf") {
-      public boolean accepts(@NotNull PsiClass psiClass, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return isInheritor(strict ? psiClass.getSuperClass() : psiClass, pattern, matchingContext, traverseContext);
+      public boolean accepts(@NotNull PsiClass psiClass, final ProcessingContext context) {
+        return isInheritor(strict ? psiClass.getSuperClass() : psiClass, pattern, context);
       }
     });
   }
 
-  private static boolean isInheritor(PsiClass psiClass, ElementPattern pattern, final MatchingContext matchingContext, final TraverseContext context) {
+  private static boolean isInheritor(PsiClass psiClass, ElementPattern pattern, final ProcessingContext matchingContext) {
     if (psiClass == null) return false;
-    if (pattern.getCondition().accepts(psiClass, matchingContext, context)) return true;
-    if (isInheritor(psiClass.getSuperClass(), pattern, matchingContext, context)) return true;
+    if (pattern.getCondition().accepts(psiClass, matchingContext)) return true;
+    if (isInheritor(psiClass.getSuperClass(), pattern, matchingContext)) return true;
     for (final PsiClass aClass : psiClass.getInterfaces()) {
-      if (isInheritor(aClass, pattern, matchingContext, context)) return true;
+      if (isInheritor(aClass, pattern, matchingContext)) return true;
     }
     return false;
   }
@@ -44,7 +45,7 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
 
   public PsiClassPattern isInterface() {
     return with(new PatternCondition<PsiClass>("isInterface") {
-      public boolean accepts(@NotNull final PsiClass psiClass, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
         return psiClass.isInterface();
       }
     });
@@ -52,8 +53,7 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
 
   public PsiClassPattern withQualifiedName(@NonNls @NotNull final String qname) {
     return with(new PatternCondition<PsiClass>("withQualifiedName") {
-      public boolean accepts(@NotNull final PsiClass psiClass,
-                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
         return qname.equals(psiClass.getQualifiedName());
       }
     });

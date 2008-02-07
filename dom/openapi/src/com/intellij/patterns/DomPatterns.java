@@ -8,6 +8,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,13 +38,13 @@ public class DomPatterns {
 
   public static XmlElementPattern.Capture withDom(final ElementPattern pattern) {
     return new XmlElementPattern.Capture().with(new PatternCondition<XmlElement>("withDom") {
-      public boolean accepts(@NotNull final XmlElement xmlElement, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final XmlElement xmlElement, final ProcessingContext context) {
         final DomManager manager = DomManager.getDomManager(xmlElement.getProject());
         if (xmlElement instanceof XmlAttribute) {
-          return pattern.getCondition().accepts(manager.getDomElement((XmlAttribute)xmlElement), matchingContext, traverseContext);
+          return pattern.getCondition().accepts(manager.getDomElement((XmlAttribute)xmlElement), context);
         }
         if (xmlElement instanceof XmlTag) {
-          return pattern.getCondition().accepts(manager.getDomElement((XmlTag)xmlElement), matchingContext, traverseContext);
+          return pattern.getCondition().accepts(manager.getDomElement((XmlTag)xmlElement), context);
         }
         return false;
       }

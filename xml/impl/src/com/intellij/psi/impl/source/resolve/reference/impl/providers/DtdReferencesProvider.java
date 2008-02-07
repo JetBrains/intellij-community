@@ -16,13 +16,13 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -256,7 +256,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     XmlElement nameElement = null;
 
     if (element instanceof XmlDoctype) {

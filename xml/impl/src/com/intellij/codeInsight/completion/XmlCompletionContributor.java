@@ -2,8 +2,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.patterns.MatchingContext;
 import com.intellij.patterns.PlatformPatterns;
+import com.intellij.util.ProcessingContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlFile;
@@ -25,7 +25,7 @@ public class XmlCompletionContributor extends CompletionContributor{
     registrar.extendClassNameCompletion(PlatformPatterns.psiElement(XmlTokenType.XML_NAME)).
       dependingOn(JavaCompletionContributor.JAVA_LEGACY).
       withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
-      public void addCompletions(@NotNull final CompletionParameters parameters, final MatchingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
+      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
         result.clearResults();
         CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         final PsiElement element = parameters.getPosition();

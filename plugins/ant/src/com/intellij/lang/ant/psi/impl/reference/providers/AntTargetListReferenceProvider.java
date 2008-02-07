@@ -10,7 +10,7 @@ import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.patterns.MatchingContext;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -18,7 +18,7 @@ import java.util.List;
 public class AntTargetListReferenceProvider extends PsiReferenceProvider {
 
   @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     final AntTarget target = (AntTarget)element;
     final XmlAttribute attr = target.getSourceElement().getAttribute("depends", null);
     if (attr == null) {

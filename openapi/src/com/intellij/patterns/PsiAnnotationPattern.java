@@ -4,6 +4,7 @@
 package com.intellij.patterns;
 
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,8 +18,8 @@ public class PsiAnnotationPattern extends PsiElementPattern<PsiAnnotation, PsiAn
 
   public PsiAnnotationPattern qName(final ElementPattern pattern) {
     return with(new PatternCondition<PsiAnnotation>("qName") {
-      public boolean accepts(@NotNull final PsiAnnotation psiAnnotation, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return pattern.getCondition().accepts(psiAnnotation.getQualifiedName(), matchingContext, traverseContext);
+      public boolean accepts(@NotNull final PsiAnnotation psiAnnotation, final ProcessingContext context) {
+        return pattern.getCondition().accepts(psiAnnotation.getQualifiedName(), context);
       }
     });
   }

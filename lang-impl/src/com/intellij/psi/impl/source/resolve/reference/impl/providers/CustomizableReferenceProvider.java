@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.patterns.MatchingContext;
+import com.intellij.util.ProcessingContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NonNls;
@@ -44,5 +44,5 @@ public interface CustomizableReferenceProvider {
   @Nullable Map<CustomizationKey,Object> getOptions();
 
   @NotNull
-  public abstract PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext);
+  public abstract PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext matchingContext);
 }

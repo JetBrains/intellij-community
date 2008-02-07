@@ -9,10 +9,10 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.MatchingContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PrioritizedQueryExecutor;
 import com.intellij.util.PrioritizedQueryFactory;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.QueryResultSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,14 +53,14 @@ public class CompletionService {
     final ArrayList<PrioritizedQueryExecutor<LookupElement, CompletionParameters>> list =
       new ArrayList<PrioritizedQueryExecutor<LookupElement, CompletionParameters>>();
     for (final CompletionPlaceImpl<LookupElement, CompletionParameters> place : providers.getValues()) {
-      final MatchingContext matchingContext = new MatchingContext();
-      if (place.myPlace.accepts(parameters.getPosition(), matchingContext)) {
+      final ProcessingContext processingContext = new ProcessingContext();
+      if (place.myPlace.accepts(parameters.getPosition(), processingContext)) {
         final CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         final PrefixMatcher matcher = new CamelHumpMatcher(CompletionData.findPrefixStatic(parameters.getPosition(), context.startOffset));
 
         list.add(new PrioritizedQueryExecutor<LookupElement, CompletionParameters>() {
           public void execute(final CompletionParameters queryParameters, final QueryResultSet<LookupElement> resultSet) {
-            place.myProvider.addCompletions(queryParameters, matchingContext, new CompletionResultSetImpl(matcher, resultSet, context));
+            place.myProvider.addCompletions(queryParameters, processingContext, new CompletionResultSetImpl(matcher, resultSet, context));
           }
 
           public String toString() {

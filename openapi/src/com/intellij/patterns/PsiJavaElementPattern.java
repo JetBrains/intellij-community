@@ -5,6 +5,7 @@
 package com.intellij.patterns;
 
 import com.intellij.psi.*;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +45,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
   
   public Self nameIdentifierOf(final ElementPattern<? extends PsiMember> pattern) {
     return with(new PatternCondition<T>("nameIdentifierOf") {
-      public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         if (!(t instanceof PsiIdentifier)) return false;
 
         final PsiElement parent = t.getParent();
@@ -52,14 +53,14 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
         if (parent instanceof PsiMethod && t != ((PsiMethod) parent).getNameIdentifier()) return false;
         if (parent instanceof PsiVariable && t != ((PsiVariable) parent).getNameIdentifier()) return false;
 
-        return pattern.getCondition().accepts(parent, matchingContext, traverseContext);
+        return pattern.getCondition().accepts(parent, context);
       }
     });
   }
 
   public Self methodCallParameter(final int index, final ElementPattern<? extends PsiMethod> methodPattern) {
     return with(new PatternCondition<T>("methodCallParameter") {
-      public boolean accepts(@NotNull final T literal, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
         final PsiElement parent = literal.getParent();
         if (parent instanceof PsiExpressionList) {
           final PsiExpressionList psiExpressionList = (PsiExpressionList)parent;
@@ -71,7 +72,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
             final JavaResolveResult[] results = ((PsiMethodCallExpression)element).getMethodExpression().multiResolve(true);
             for (JavaResolveResult result : results) {
               final PsiElement psiElement = result.getElement();
-              if (methodPattern.getCondition().accepts(psiElement, matchingContext, traverseContext)) {
+              if (methodPattern.getCondition().accepts(psiElement, context)) {
                 return true;
               }
             }

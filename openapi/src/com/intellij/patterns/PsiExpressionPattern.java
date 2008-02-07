@@ -7,6 +7,7 @@ package com.intellij.patterns;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,19 +20,19 @@ public class PsiExpressionPattern<T extends PsiExpression, Self extends PsiExpre
 
   public Self ofType(@NotNull final ElementPattern pattern) {
     return with(new PatternCondition<T>("ofType") {
-      public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return pattern.getCondition().accepts(t.getType(), matchingContext, traverseContext);
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+        return pattern.getCondition().accepts(t.getType(), context);
       }
     });
   }
 
   public Self methodCall(final ElementPattern methodPattern) {
     return with(new PatternCondition<T>("methodCall") {
-      public boolean accepts(@NotNull final T element, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final T element, final ProcessingContext context) {
         if (element instanceof PsiMethodCallExpression) {
           final JavaResolveResult[] results = ((PsiMethodCallExpression)element).getMethodExpression().multiResolve(true);
           for (JavaResolveResult result : results) {
-            if (methodPattern.getCondition().accepts(result.getElement(), matchingContext, traverseContext)) {
+            if (methodPattern.getCondition().accepts(result.getElement(), context)) {
               return true;
             }
           }

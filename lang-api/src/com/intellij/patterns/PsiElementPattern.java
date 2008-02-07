@@ -11,6 +11,7 @@ import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,7 +65,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   public Self equalTo(@NotNull final T o) {
     return with(new PatternCondition<T>("equalTo") {
-      public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         return t.getManager().areElementsEquivalent(t, o);
       }
 
@@ -73,7 +74,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   public Self withElementType(final ElementPattern<IElementType> pattern) {
     return with(new PatternCondition<T>("withElementType") {
-      public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         final ASTNode node = t.getNode();
         return node != null && pattern.accepts(node.getElementType());
       }
@@ -99,7 +100,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   public Self afterLeafSkipping(@NotNull final ElementPattern skip, @NotNull final ElementPattern pattern) {
     return with(new PatternCondition<T>("afterLeafSkipping") {
-      public boolean accepts(@NotNull T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull T t, final ProcessingContext context) {
         PsiElement element = t;
         while (true) {
           final int offset = element.getTextRange().getStartOffset();
@@ -107,8 +108,8 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
           element = element.getContainingFile().findElementAt(offset - 1);
           if (element == null) return false;
-          if (!skip.getCondition().accepts(element, matchingContext, traverseContext)) {
-            return pattern.getCondition().accepts(element, matchingContext, traverseContext);
+          if (!skip.getCondition().accepts(element, context)) {
+            return pattern.getCondition().accepts(element, context);
           }
         }
       }
@@ -122,8 +123,8 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   private PatternCondition<T> _withText(final ElementPattern pattern) {
     return new PatternCondition<T>("_withText") {
-      public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return pattern.getCondition().accepts(t.getText(), matchingContext, traverseContext);
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+        return pattern.getCondition().accepts(t.getText(), context);
       }
 
     };

@@ -120,13 +120,13 @@ public class PatchHunk {
 
   private int findStartLine(final List<String> lines) throws ApplyPatchException {
     int totalContextLines = countContextLines();
-    if (getLinesMatchingContext(lines, myStartLineBefore) == totalContextLines) {
+    if (getLinesProcessingContext(lines, myStartLineBefore) == totalContextLines) {
       return myStartLineBefore;
     }
     int maxContextStartLine = -1;
     int maxContextLines = 0;
     for(int i=0;i< lines.size(); i++) {
-      int contextLines = getLinesMatchingContext(lines, i);
+      int contextLines = getLinesProcessingContext(lines, i);
       if (contextLines == totalContextLines) {
         return i;
       }
@@ -151,7 +151,7 @@ public class PatchHunk {
     return count;
   }
 
-  private int getLinesMatchingContext(final List<String> lines, int startLine) {
+  private int getLinesProcessingContext(final List<String> lines, int startLine) {
     int count = 0;
     for(PatchLine line: myLines) {
       PatchLine.Type type = line.getType();

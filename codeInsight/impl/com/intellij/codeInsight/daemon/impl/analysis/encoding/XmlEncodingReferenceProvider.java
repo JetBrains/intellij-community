@@ -8,7 +8,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlChildRole;
-import com.intellij.patterns.MatchingContext;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +20,7 @@ public class XmlEncodingReferenceProvider extends PsiReferenceProvider {
   @NonNls private static final String CHARSET_PREFIX = "charset=";
 
   @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     LOG.assertTrue(element instanceof XmlAttributeValue);
     XmlAttributeValue value = (XmlAttributeValue)element;
 

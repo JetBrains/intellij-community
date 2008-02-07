@@ -7,12 +7,12 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.patterns.MatchingContext;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -29,7 +29,7 @@ public class LegacyCompletionContributor extends CompletionContributor{
   public void registerCompletionProviders(final CompletionRegistrar registrar) {
     final PsiElementPattern.Capture<PsiElement> everywhere = PlatformPatterns.psiElement();
     registrar.extendBasicCompletion(everywhere).withId(LEGACY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
-      public void addCompletions(@NotNull final CompletionParameters parameters, final MatchingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
+      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
         CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         final PsiFile file = parameters.getOriginalFile();
         final int startOffset = context.startOffset;

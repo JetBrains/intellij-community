@@ -5,6 +5,7 @@
 package com.intellij.patterns;
 
 import org.jetbrains.annotations.NotNull;
+import com.intellij.util.ProcessingContext;
 
 /**
  * @author peter
@@ -21,7 +22,7 @@ public class CaseInsensitiveValuePatternCondition extends PatternCondition<Strin
     return myValues;
   }
 
-  public boolean accepts(@NotNull final String str, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+  public boolean accepts(@NotNull final String str, final ProcessingContext context) {
     for (final String value : myValues) {
       if (str.equalsIgnoreCase(value)) return true;
     }

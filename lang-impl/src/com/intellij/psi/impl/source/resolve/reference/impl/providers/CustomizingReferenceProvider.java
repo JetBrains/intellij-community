@@ -1,9 +1,9 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.patterns.MatchingContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,9 +33,9 @@ public class CustomizingReferenceProvider extends PsiReferenceProvider implement
   }
   
   @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     myProvider.setOptions(myOptions);
-    final PsiReference[] referencesByElement = myProvider.getReferencesByElement(element, matchingContext);
+    final PsiReference[] referencesByElement = myProvider.getReferencesByElement(element, context);
     myProvider.setOptions(null);
     return referencesByElement;
   }

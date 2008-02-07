@@ -4,7 +4,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.MatchingContext;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,9 +31,9 @@ public class SimpleProviderBinding implements ProviderBinding {
     myProviderPairs.add(Trinity.create(provider, pattern, priority == null ? ReferenceProvidersRegistry.DEFAULT_PRIORITY : priority));
   }
 
-  public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<Trinity<PsiReferenceProvider, MatchingContext, Double>> list) {
+  public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> list) {
     for(Trinity<PsiReferenceProvider,ElementPattern,Double> trinity:myProviderPairs) {
-      final MatchingContext context = new MatchingContext();
+      final ProcessingContext context = new ProcessingContext();
       if (trinity.second.accepts(position, context)) {
         list.add(Trinity.create(trinity.first, context, trinity.third));
       }

@@ -5,6 +5,7 @@ package com.intellij.patterns;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,7 +22,7 @@ public class IElementTypePattern extends ObjectPattern<IElementType, IElementTyp
 
   public IElementTypePattern tokenSet(@NotNull final TokenSet tokenSet){
     return with(new PatternCondition<IElementType>("tokenSet") {
-      public boolean accepts(@NotNull final IElementType type, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+      public boolean accepts(@NotNull final IElementType type, final ProcessingContext context) {
         return tokenSet.contains(type);
       }
     });
