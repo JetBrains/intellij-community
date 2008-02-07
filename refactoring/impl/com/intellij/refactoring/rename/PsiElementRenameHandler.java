@@ -1,21 +1,20 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiWritableMetaData;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.RefactoringBundle;
@@ -32,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PsiElementRenameHandler implements RenameHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.PsiElementRenameHandler");
+
+  public static final ExtensionPointName<Condition<PsiElement>> VETO_RENAME_CONDITION_EP = ExtensionPointName.create("com.intellij.vetoRenameCondition");
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = getElement(dataContext);
@@ -99,10 +100,12 @@ public class PsiElementRenameHandler implements RenameHandler {
   public boolean isAvailableOnDataContext(DataContext dataContext) {
     final PsiElement element = getElement(dataContext);
 
-    if (element == null || (element instanceof PsiAntElement && !((PsiAntElement)element).canRename())) return false;
+    if (element instanceof SyntheticElement) return false;
+    for(Condition<PsiElement> condition: Extensions.getExtensions(VETO_RENAME_CONDITION_EP)) {
+      if (condition.value(element)) return false;
+    }
 
-    return !(element instanceof JspClass) && !(element instanceof JspHolderMethod) &&
-           (!(element instanceof PsiJavaFile) || PsiUtil.isInJspFile(element));
+    return true;
   }
 
   @Nullable

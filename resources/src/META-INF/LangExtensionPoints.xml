@@ -212,5 +212,6 @@
   <extensionPoint name="renamePsiElementProcessor" interface="com.intellij.refactoring.rename.RenamePsiElementProcessor"/>
   <extensionPoint name="automaticRenamerFactory" interface="com.intellij.refactoring.rename.naming.AutomaticRenamerFactory"/>
   <extensionPoint name="nameSuggestionProvider" interface="com.intellij.refactoring.rename.NameSuggestionProvider"/>
+  <extensionPoint name="vetoRenameCondition" interface="com.intellij.openapi.util.Condition"/>
 
 </extensionPoints>

@@ -25,6 +25,7 @@
     <lang.commenter language="ANT" implementationClass="com.intellij.lang.xml.XmlCommenter"/>
     <lang.psiStructureViewFactory language="ANT" implementationClass="com.intellij.lang.ant.AntStructureViewBuilderFactory"/>
     <highlightRangeExtension implementation="com.intellij.lang.ant.AntHighlightRangeExtension"/>
+    <vetoRenameCondition implementation="com.intellij.lang.ant.refactoring.AntVetoRenameCondition"/>
   </extensions>
 
   <application-components>
