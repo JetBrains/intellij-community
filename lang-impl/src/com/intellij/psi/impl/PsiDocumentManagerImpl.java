@@ -343,6 +343,9 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
   }
 
+  @SuppressWarnings({"ALL"})
+  private ASTNode myTreeElementBeingReparsedSoItWontBeCollected;
+
   protected boolean commit(final Document document, final PsiFile file) {
     document.putUserData(TEMP_TREE_IN_DOCUMENT_KEY, null);
 
@@ -356,7 +359,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
           SmartPointerManagerImpl.synchronizePointers(file);
         }
 
-        ASTNode treeElement = ((PsiFileImpl)file).calcTreeElement(); // Lock up in local variable so gc wont collect it.
+        myTreeElementBeingReparsedSoItWontBeCollected = ((PsiFileImpl)file).calcTreeElement();
 
         if (textBlock.isEmpty()) return false ; // if tree was just loaded above textBlock will be cleared by contentsLoaded
 
@@ -384,7 +387,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       textBlock.unlock();
       textBlock.clear();
     }
-    finally{
+    finally {
+      myTreeElementBeingReparsedSoItWontBeCollected = null;
       myIsCommitInProgress = false;
     }
     //checkConsistency(file, document);
