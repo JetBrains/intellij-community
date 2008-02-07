@@ -42,7 +42,7 @@ public class EnumMacro implements Macro{
 
     for (Expression param : params) {
       Result object = param.calculateResult(context);
-      LookupItemUtil.addLookupItem(set, object.toString(), "");
+      LookupItemUtil.addLookupItem(set, object.toString());
     }
     return set.toArray(new LookupItem[set.size()]);
   }

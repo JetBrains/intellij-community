@@ -39,7 +39,7 @@ public class XmlCompletionContributor extends CompletionContributor{
 
         if (reference != null && namespace.length() > 0 && parentDescriptor != null && !(parentDescriptor instanceof AnyXmlElementDescriptor)) {
           final Set<LookupItem> set = new HashSet<LookupItem>();
-          new XmlCompletionData().completeReference(reference, set, context, element, result.getPrefixMatcher(), context.file, context.offset);
+          new XmlCompletionData().completeReference(reference, set, element, result.getPrefixMatcher(), context.file, context.offset);
           result.addAllElements(set);
         } else {
 

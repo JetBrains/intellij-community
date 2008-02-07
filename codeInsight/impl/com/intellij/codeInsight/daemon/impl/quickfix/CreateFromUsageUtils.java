@@ -768,7 +768,7 @@ public class CreateFromUsageUtils {
         }
 
         names.add(name);
-        LookupItemUtil.addLookupItem(set, name, "");
+        LookupItemUtil.addLookupItem(set, name);
       }
 
       String[] suggestedNames = ExpressionUtil.getNames(context);
@@ -781,7 +781,7 @@ public class CreateFromUsageUtils {
           }
 
           if (!names.contains(name)) {
-            LookupItemUtil.addLookupItem(set, name, "");
+            LookupItemUtil.addLookupItem(set, name);
           }
         }
       }

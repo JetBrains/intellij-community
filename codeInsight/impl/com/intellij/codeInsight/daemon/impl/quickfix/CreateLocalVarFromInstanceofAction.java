@@ -294,7 +294,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
 
     Set<LookupItem> itemSet = new LinkedHashSet<LookupItem>();
     for (String name : uniqueNames) {
-      LookupItemUtil.addLookupItem(itemSet, name, "");
+      LookupItemUtil.addLookupItem(itemSet, name);
     }
     final LookupItem[] lookupItems = itemSet.toArray(new LookupItem[itemSet.size()]);
     final Result result = uniqueNames.isEmpty() ? null : new TextResult(uniqueNames.get(0));

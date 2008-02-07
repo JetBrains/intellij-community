@@ -188,13 +188,13 @@ public class HtmlCompletionData extends XmlCompletionData {
     return isStyleTag(PsiTreeUtil.getParentOfType(position, XmlTag.class, false));
   }
 
-  public void addKeywordVariants(Set<CompletionVariant> set, CompletionContext context, PsiElement position) {
-    super.addKeywordVariants(set, context, position);
+  public void addKeywordVariants(Set<CompletionVariant> set, PsiElement position, final PsiFile file) {
+    super.addKeywordVariants(set, position, file);
 
     if (ourStyleCompletionData!=null && isStyleContext(position)) {
-      ourStyleCompletionData.addKeywordVariants(set, context, position);
+      ourStyleCompletionData.addKeywordVariants(set, position, file);
     } else if (ourScriptCompletionData!=null && isScriptContext(position)) {
-      ourScriptCompletionData.addKeywordVariants(set, context, position);
+      ourScriptCompletionData.addKeywordVariants(set, position, file);
     }
   }
 

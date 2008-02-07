@@ -21,7 +21,7 @@ public abstract class VariableTypeMacroBase implements Macro {
     if (vars == null || vars.length < 2) return null;
     Set<LookupItem> set = new LinkedHashSet<LookupItem>();
     for (PsiElement element : vars) {
-      LookupItemUtil.addLookupItem(set, element, "");
+      LookupItemUtil.addLookupItem(set, element);
     }
     return set.toArray(new LookupItem[set.size()]);
   }

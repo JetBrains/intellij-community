@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -249,20 +250,20 @@ public class CompletionUtil {
   }
 
 
-  public static LookupItemPreferencePolicy completeVariableNameForRefactoring(Project project,
-                                                                              Set<LookupItem> set,
-                                                                              String prefix,
-                                                                              PsiType varType,
-                                                                              VariableKind varKind) {
+  public static LookupItemPreferencePolicy completeVariableNameForRefactoring(Project project, Set<LookupItem> set, String prefix, PsiType varType, VariableKind varKind) {
+    return completeVariableNameForRefactoring(project, set, new CamelHumpMatcher(prefix), varType, varKind);
+  }
+  public static LookupItemPreferencePolicy completeVariableNameForRefactoring(Project project, Set<LookupItem> set, PrefixMatcher matcher, PsiType varType, VariableKind varKind) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(varKind, null, null, varType);
     final String[] suggestedNames = suggestedNameInfo.names;
-    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNames, prefix), suggestedNameInfo);
+    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNames, matcher), suggestedNameInfo);
 
     if (set.isEmpty() && PsiType.VOID != varType) {
       // use suggested names as suffixes
       final String requiredSuffix = codeStyleManager.getSuffixByVariableKind(varKind);
+      final String prefix = matcher.getPrefix();
       final boolean isMethodPrefix = prefix.startsWith(IS_PREFIX) || prefix.startsWith(GET_PREFIX) || prefix.startsWith(SET_PREFIX);
       if (varKind != VariableKind.STATIC_FINAL_FIELD || isMethodPrefix) {
         for (int i = 0; i < suggestedNames.length; i++) {
@@ -275,7 +276,7 @@ public class CompletionUtil {
         }
       };
 
-      tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, prefix), suggestedNameInfo);
+      tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, matcher), suggestedNameInfo);
     }
     return new NamePreferencePolicy(suggestedNameInfo);
   }
@@ -316,7 +317,7 @@ public class CompletionUtil {
         longestOverlap = prefix.length();
       }
 
-      suggestedName = "" + Character.toUpperCase(suggestedName.charAt(0)) + suggestedName.substring(1);
+      suggestedName = String.valueOf(Character.toUpperCase(suggestedName.charAt(0))) + suggestedName.substring(1);
       final int overlap = getOverlap(suggestedName, prefix);
 
       if (overlap < longestOverlap) continue;

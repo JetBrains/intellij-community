@@ -44,7 +44,7 @@ public class GuessElementTypeMacro implements Macro {
     if (types == null || types.length < 2) return null;
     Set<LookupItem> set = new LinkedHashSet<LookupItem>();
     for (PsiType type : types) {
-      LookupItemUtil.addLookupItem(set, type, "");
+      LookupItemUtil.addLookupItem(set, type);
     }
     return set.toArray(new LookupItem[set.size()]);
   }

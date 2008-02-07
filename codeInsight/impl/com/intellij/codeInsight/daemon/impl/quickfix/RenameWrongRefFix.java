@@ -110,7 +110,7 @@ public class RenameWrongRefFix implements IntentionAction {
     if (!qualified && !(myRefExpr.getParent() instanceof PsiMethodCallExpression)) {
       PsiVariable[] vars = CreateFromUsageUtils.guessMatchingVariables(myRefExpr);
       for (PsiVariable var : vars) {
-        LookupItemUtil.addLookupItem(items, var.getName(), "");
+        LookupItemUtil.addLookupItem(items, var.getName());
       }
     } else {
       class MyScopeProcessor extends BaseScopeProcessor {
@@ -150,7 +150,7 @@ public class RenameWrongRefFix implements IntentionAction {
       myRefExpr.processVariants(processor);
       PsiElement[] variants = processor.getVariants();
       for (PsiElement variant : variants) {
-        LookupItemUtil.addLookupItem(items, ((PsiNamedElement)variant).getName(), "");
+        LookupItemUtil.addLookupItem(items, ((PsiNamedElement)variant).getName());
       }
     }
 

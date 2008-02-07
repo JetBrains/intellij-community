@@ -1,8 +1,8 @@
 package com.intellij.refactoring.rename;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
-import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -80,7 +80,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
         List<String> suggestedNames = new ArrayList<String>();
         getSuggestedNames(element, nameSuggestionContext, suggestedNames);
         for (String suggestedName : suggestedNames) {
-          LookupItemUtil.addLookupItem(set, suggestedName, "");
+          LookupItemUtil.addLookupItem(set, suggestedName);
         }
       }
 

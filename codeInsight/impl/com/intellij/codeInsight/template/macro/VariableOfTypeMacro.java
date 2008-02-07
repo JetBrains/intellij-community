@@ -43,7 +43,7 @@ public class VariableOfTypeMacro implements Macro {
     if (vars == null || vars.length < 2) return null;
     final Set<LookupItem> set = new LinkedHashSet<LookupItem>();
     for (PsiElement var : vars) {
-      LookupItemUtil.addLookupItem(set, var, "");
+      LookupItemUtil.addLookupItem(set, var);
     }
     return set.toArray(new LookupItem[set.size()]);
   }

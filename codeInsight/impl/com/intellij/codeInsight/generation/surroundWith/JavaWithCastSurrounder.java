@@ -42,7 +42,7 @@ class JavaWithCastSurrounder extends JavaExpressionSurrounder {
 
     Set<LookupItem> itemSet = new LinkedHashSet<LookupItem>();
     for (PsiType type : suggestedTypes) {
-      LookupItemUtil.addLookupItem(itemSet, type, "");
+      LookupItemUtil.addLookupItem(itemSet, type);
     }
     final LookupItem[] lookupItems = itemSet.toArray(new LookupItem[itemSet.size()]);
 

@@ -116,7 +116,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
     if (reference != null) {
       final Object[] variants = reference.getVariants();
       for (Object variant : variants) {
-        LookupItemUtil.addLookupItem(set, variant, "");
+        LookupItemUtil.addLookupItem(set, variant);
       }
 
       LookupItem[] lookupItems = set.toArray(new LookupItem[set.size()]);

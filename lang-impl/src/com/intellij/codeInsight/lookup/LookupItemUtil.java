@@ -2,6 +2,8 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,10 +14,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,12 +33,15 @@ public class LookupItemUtil{
   }
 
   @Nullable
-  public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, String prefix) {
-    return addLookupItem(set, object, prefix, TailType.UNKNOWN);
+  public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object) {
+    return addLookupItem(set, object, new CamelHumpMatcher(""));
+  }
+  public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, PrefixMatcher matcher) {
+    return addLookupItem(set, object, matcher, TailType.UNKNOWN);
   }
 
   @Nullable
-  private static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, String prefix, TailType tailType) {
+  private static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, PrefixMatcher matcher, TailType tailType) {
     if (object instanceof PsiType) {
       PsiType psiType = (PsiType)object;
       for (final LookupItem lookupItem : set) {
@@ -52,7 +57,7 @@ public class LookupItemUtil{
     }
     LookupItem item = objectToLookupItem(object);
     String text = item.getLookupString();
-    if (CompletionUtil.startsWith(text, prefix)) {
+    if (matcher.prefixMatches(item)) {
       item.setLookupString(text);
       if (tailType != TailType.UNKNOWN) {
         item.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, tailType);
@@ -62,11 +67,11 @@ public class LookupItemUtil{
     return null;
   }
 
-  public static List<LookupItem> addLookupItems(Set<LookupItem> set, Object[] objects, String prefix) {
+  public static List<LookupItem> addLookupItems(Set<LookupItem> set, Object[] objects, PrefixMatcher matcher) {
     final ArrayList<LookupItem> list = new ArrayList<LookupItem>(objects.length);
     for (Object object : objects) {
       LOG.assertTrue(object != null, "Lookup item can't be null!");
-      ContainerUtil.addIfNotNull(addLookupItem(set, object, prefix), list);
+      ContainerUtil.addIfNotNull(addLookupItem(set, object, matcher), list);
     }
     return list;
   }

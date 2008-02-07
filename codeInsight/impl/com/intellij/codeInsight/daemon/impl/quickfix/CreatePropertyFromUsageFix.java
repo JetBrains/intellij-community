@@ -101,14 +101,14 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     public FieldExpression(PsiField field, PsiClass aClass, PsiType[] expectedTypes) {
       String fieldName = field.getName();
       Set<LookupItem> set = new LinkedHashSet<LookupItem>();
-      LookupItemUtil.addLookupItem(set, field, "");
+      LookupItemUtil.addLookupItem(set, field);
       PsiField[] fields = aClass.getFields();
       for (PsiField otherField : fields) {
         if (!fieldName.equals(otherField.getName())) {
           PsiType otherType = otherField.getType();
           for (PsiType type : expectedTypes) {
             if (type.equals(otherType)) {
-              LookupItemUtil.addLookupItem(set, otherField, "");
+              LookupItemUtil.addLookupItem(set, otherField);
             }
           }
         }

@@ -96,7 +96,7 @@ public class DescendantClassesEnumMacro implements Macro {
 
     for (PsiClass object : classes) {
       final String name = isShortName ? object.getName() : object.getQualifiedName();
-      if (name != null && name.length() > 0) LookupItemUtil.addLookupItem(set, name, "");
+      if (name != null && name.length() > 0) LookupItemUtil.addLookupItem(set, name);
     }
 
     return set.toArray(new LookupItem[set.size()]);
