@@ -69,49 +69,13 @@ public class SuppressActionWrapper extends ActionGroup {
   }
 
   @NotNull
-  public AnAction[] getChildren(@Nullable final AnActionEvent e) {
+  public SuppressTreeAction[] getChildren(@Nullable final AnActionEvent e) {
     final SuppressIntentionAction[] suppressActions = myTool.getSuppressActions();
-    if (suppressActions == null || suppressActions.length == 0) return AnAction.EMPTY_ARRAY;
-    final AnAction[] actions = new AnAction[suppressActions.length];
+    if (suppressActions == null || suppressActions.length == 0) return new SuppressTreeAction[0];
+    final SuppressTreeAction[] actions = new SuppressTreeAction[suppressActions.length];
     for (int i = 0; i < suppressActions.length; i++) {
       final SuppressIntentionAction suppressAction = suppressActions[i];
-      actions[i] = new AnAction(suppressAction.getText()) {
-        public void actionPerformed(final AnActionEvent e) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-                public void run() {
-                  for (InspectionTreeNode node : myNodesToSuppress) {
-                    final Pair<PsiElement, CommonProblemDescriptor> content = getContentToSuppress(node);
-                    if (content.first == null) break;
-                    final PsiElement element = content.first;
-                    if (!suppress(element, suppressAction)) break;
-                  }
-                  final Set<GlobalInspectionContextImpl> globalInspectionContexts = myManager.getRunningContexts();
-                  for (GlobalInspectionContextImpl context : globalInspectionContexts) {
-                    context.refreshViews();
-                  }
-                }
-              }, getTemplatePresentation().getText(), null);
-            }
-          });
-        }
-
-        public void update(final AnActionEvent e) {
-          super.update(e);
-          boolean available = false;
-          for (InspectionTreeNode node : myNodesToSuppress) {
-            final Pair<PsiElement, CommonProblemDescriptor> content = getContentToSuppress(node);
-            if (content.first == null) continue;
-            final PsiElement element = content.first;
-            if (suppressAction.isAvailable(myProject, null, element)) {
-              available = true;
-              break;
-            }
-          }
-          if (!available) e.getPresentation().setVisible(false);
-        }
-      };
+      actions[i] = new SuppressTreeAction(suppressAction);
     }
     return actions;
   }
@@ -163,5 +127,52 @@ public class SuppressActionWrapper extends ActionGroup {
     }
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : refElement != null ? refElement.getElement() : null;
     return Pair.create(element, descriptor);
+  }
+
+  public class SuppressTreeAction extends AnAction {
+    private final SuppressIntentionAction mySuppressAction;
+
+    public SuppressTreeAction(final SuppressIntentionAction suppressAction) {
+      super(suppressAction.getText());
+      mySuppressAction = suppressAction;
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+            public void run() {
+              for (InspectionTreeNode node : myNodesToSuppress) {
+                final Pair<PsiElement, CommonProblemDescriptor> content = getContentToSuppress(node);
+                if (content.first == null) break;
+                final PsiElement element = content.first;
+                if (!suppress(element, mySuppressAction)) break;
+              }
+              final Set<GlobalInspectionContextImpl> globalInspectionContexts = myManager.getRunningContexts();
+              for (GlobalInspectionContextImpl context : globalInspectionContexts) {
+                context.refreshViews();
+              }
+            }
+          }, getTemplatePresentation().getText(), null);
+        }
+      });
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      if (!isAvailable()) e.getPresentation().setVisible(false);
+    }
+
+    public boolean isAvailable() {
+      for (InspectionTreeNode node : myNodesToSuppress) {
+        final Pair<PsiElement, CommonProblemDescriptor> content = getContentToSuppress(node);
+        if (content.first == null) continue;
+        final PsiElement element = content.first;
+        if (mySuppressAction.isAvailable(myProject, null, element)) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 }

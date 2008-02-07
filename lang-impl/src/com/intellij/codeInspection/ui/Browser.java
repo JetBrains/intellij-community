@@ -195,11 +195,16 @@ public class Browser extends JPanel {
                   invokeLocalFix(actionNumber);
                 }
               } else if (ref.startsWith("suppress:")){
-                final AnAction[] actions = new SuppressActionWrapper(myView.getProject(), getTool(), myView.getTree().getSelectionPaths()).getChildren(null);
-                if (actions != null && actions.length > 0) {
+                final SuppressActionWrapper.SuppressTreeAction[] suppressTreeActions =
+                  new SuppressActionWrapper(myView.getProject(), getTool(), myView.getTree().getSelectionPaths()).getChildren(null);
+                final List<AnAction> activeActions = new ArrayList<AnAction>();
+                for (SuppressActionWrapper.SuppressTreeAction suppressTreeAction : suppressTreeActions) {
+                  if (suppressTreeAction.isAvailable()) activeActions.add(suppressTreeAction);
+                }
+                if (!activeActions.isEmpty()) {
                   int actionNumber = Integer.parseInt(ref.substring("suppress:".length()));
-                  if (actionNumber > -1 && actions.length > actionNumber) {
-                    actions[actionNumber].actionPerformed(null);
+                  if (actionNumber > -1 && activeActions.size() > actionNumber) {
+                    activeActions.get(actionNumber).actionPerformed(null);
                   }
                 }
               }
@@ -305,23 +310,31 @@ public class Browser extends JPanel {
     if (tool != null) {
       final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
       if (key != null){//dummy entry points
-        final AnAction[] suppressActions = new SuppressActionWrapper(myView.getProject(), tool, myView.getTree().getSelectionPaths()).getChildren(null);
-        if (suppressActions != null && suppressActions.length > 0) {
-          int idx = 0;
-          @NonNls String font = "<font style=\"font-family:verdana;\" size = \"3\">";
-          buf.append(font);
-          @NonNls final String br = "<br>";
-          buf.append(br).append(br);
-          HTMLComposerImpl.appendHeading(buf, InspectionsBundle.message("inspection.export.results.suppress"));
-          for (AnAction suppressAction : suppressActions) {
-            buf.append(br);
-            HTMLComposer.appendAfterHeaderIndention(buf);
-            @NonNls final String href = "<a HREF=\"file://bred.txt#suppress:" + idx + "\">" + suppressAction.getTemplatePresentation().getText() + "</a>";
-            buf.append(href);
-            idx++;
+        final SuppressActionWrapper.SuppressTreeAction[] suppressActions = new SuppressActionWrapper(myView.getProject(), tool, myView.getTree().getSelectionPaths()).getChildren(null);
+        if (suppressActions.length > 0) {
+          final List<AnAction> activeSuppressActions = new ArrayList<AnAction>();
+          for (SuppressActionWrapper.SuppressTreeAction suppressAction : suppressActions) {
+            if (suppressAction.isAvailable()) {
+              activeSuppressActions.add(suppressAction);
+            }
           }
-          @NonNls String closeFont = "</font>";
-          buf.append(closeFont);
+          if (!activeSuppressActions.isEmpty()) {
+            int idx = 0;
+            @NonNls String font = "<font style=\"font-family:verdana;\" size = \"3\">";
+            buf.append(font);
+            @NonNls final String br = "<br>";
+            buf.append(br).append(br);
+            HTMLComposerImpl.appendHeading(buf, InspectionsBundle.message("inspection.export.results.suppress"));
+            for (AnAction suppressAction : activeSuppressActions) {
+              buf.append(br);
+              HTMLComposer.appendAfterHeaderIndention(buf);
+              @NonNls final String href = "<a HREF=\"file://bred.txt#suppress:" + idx + "\">" + suppressAction.getTemplatePresentation().getText() + "</a>";
+              buf.append(href);
+              idx++;
+            }
+            @NonNls String closeFont = "</font>";
+            buf.append(closeFont);
+          }
         }
       }
     }
