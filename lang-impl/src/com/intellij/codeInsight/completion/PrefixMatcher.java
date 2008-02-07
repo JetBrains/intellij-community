@@ -9,11 +9,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public interface PrefixMatcher {
+public abstract class PrefixMatcher {
 
-  boolean prefixMatches(@NotNull LookupElement element);
+  public abstract boolean prefixMatches(@NotNull LookupElement element);
 
-  boolean prefixMatches(@NotNull String name);
+  public abstract boolean prefixMatches(@NotNull String name);
 
-  @NotNull String getPrefix();
+  @NotNull
+  public abstract String getPrefix();
 }
