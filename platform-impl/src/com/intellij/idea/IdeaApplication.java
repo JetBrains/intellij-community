@@ -152,8 +152,6 @@ public class IdeaApplication {
             mySplash.dispose();
             mySplash = null; // Allow GC collect the splash window
           }
-
-          PluginManager.reportPluginError();
         }
       }, ModalityState.NON_MODAL);
 
@@ -178,6 +176,12 @@ public class IdeaApplication {
           if (myPerformProjectLoad) {
             loadProject();
           }
+
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              PluginManager.reportPluginError();
+            }
+          });
         }
       }, ModalityState.NON_MODAL);
     }

@@ -489,8 +489,9 @@ public class PluginManagerMain {
           public boolean value(final PluginId pluginId) {
             if (!installedPluginsModel.isEnabled(pluginId)) {
               absent.add(pluginId);
+              return false;
             }
-            return false;
+            return true;
           }
         });
         if (!absent.isEmpty()) {
