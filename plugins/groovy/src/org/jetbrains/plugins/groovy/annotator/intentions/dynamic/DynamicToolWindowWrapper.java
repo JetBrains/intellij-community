@@ -455,15 +455,6 @@ public class DynamicToolWindowWrapper {
       return true;
     }
 
-//    public void setValue(DefaultMutableTreeNode node, DPPropertyTypeElement value) {
-//      final Object userObject = node.getUserObject();
-//      if (userObject != null && (userObject instanceof DPPropertyNode)){
-//        oldUserObject = ((DPPropertyNode) userObject);
-//      }
-//
-//      node.setUserObject(value);
-//    }
-
     public DPPropertyTypeElement valueOf(DefaultMutableTreeNode treeNode) {
       Object userObject = treeNode.getUserObject();
 
