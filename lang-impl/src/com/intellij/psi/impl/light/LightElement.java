@@ -2,7 +2,6 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -16,14 +15,16 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class LightElement extends PsiElementBase {
   protected final PsiManager myManager;
+  private final Language myLanguage;
 
-  protected LightElement(PsiManager manager) {
+  protected LightElement(PsiManager manager, final Language language) {
     myManager = manager;
+    myLanguage = language;
   }
 
   @NotNull
   public Language getLanguage() {
-    return StdFileTypes.JAVA.getLanguage();
+    return myLanguage;
   }
 
   public PsiManager getManager(){

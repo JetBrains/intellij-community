@@ -2,6 +2,7 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,7 +14,7 @@ public class LightReferenceParameterList extends LightElement implements PsiRefe
 
   public LightReferenceParameterList(PsiManager manager,
                                      PsiTypeElement[] referenceElements) {
-    super(manager);
+    super(manager, StdFileTypes.JAVA.getLanguage());
     myTypeElements = referenceElements;
     myText = calculateText();
   }

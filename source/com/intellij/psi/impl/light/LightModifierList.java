@@ -2,11 +2,12 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import org.jetbrains.annotations.NotNull;
 
 public class LightModifierList extends LightElement implements PsiModifierList{
   public LightModifierList(PsiManager manager){
-    super(manager);
+    super(manager, StdFileTypes.JAVA.getLanguage());
   }
 
   public boolean hasModifierProperty(@NotNull String name){

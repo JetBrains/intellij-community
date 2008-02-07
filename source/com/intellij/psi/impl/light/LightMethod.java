@@ -11,6 +11,7 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,7 +25,7 @@ public class LightMethod extends LightElement implements PsiMethod {
   private PsiClass myContainingClass;
 
   public LightMethod(PsiManager manager, PsiMethod method, PsiClass containingClass) {
-    super(manager);
+    super(manager, StdFileTypes.JAVA.getLanguage());
     myMethod = method;
     myContainingClass = containingClass;
   }

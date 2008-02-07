@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +15,7 @@ public class LightTypeElement extends LightElement implements PsiTypeElement {
   private final PsiType myType;
 
   public LightTypeElement(PsiManager manager, PsiType type) {
-    super(manager);
+    super(manager, StdFileTypes.JAVA.getLanguage());
     type = PsiUtil.convertAnonymousToBaseType(type);
     myType = type;
   }

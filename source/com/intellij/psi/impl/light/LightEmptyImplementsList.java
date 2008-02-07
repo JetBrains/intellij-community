@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -8,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class LightEmptyImplementsList extends LightElement implements PsiReferenceList {
   public LightEmptyImplementsList(PsiManager manager) {
-    super(manager);
+    super(manager, StdFileTypes.JAVA.getLanguage());
   }
 
   public String toString() {

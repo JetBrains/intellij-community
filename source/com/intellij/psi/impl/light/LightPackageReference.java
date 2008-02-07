@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -12,13 +13,13 @@ public class LightPackageReference extends LightElement implements PsiJavaCodeRe
   private final PsiPackage myRefPackage;
 
   public LightPackageReference(PsiManager manager, PsiPackage refPackage) {
-    super(manager);
+    super(manager, StdFileTypes.JAVA.getLanguage());
     myPackageName = null;
     myRefPackage = refPackage;
   }
 
   public LightPackageReference(PsiManager manager, String packageName) {
-    super(manager);
+    super(manager, StdFileTypes.JAVA.getLanguage());
     myPackageName = packageName;
     myRefPackage = null;
   }

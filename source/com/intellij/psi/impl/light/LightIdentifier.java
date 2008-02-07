@@ -2,6 +2,7 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,7 +12,7 @@ public class LightIdentifier extends LightElement implements PsiIdentifier, PsiJ
   private String myText;
 
   public LightIdentifier(PsiManager manager, String text) {
-    super(manager);
+    super(manager, StdFileTypes.JAVA.getLanguage());
     myText = text;
   }
 

@@ -6,6 +6,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,7 +22,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   protected boolean myWritable;
 
   public LightVariableBase(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
-    super(manager);
+    super(manager, StdFileTypes.JAVA.getLanguage());
     myModifierList = new LightModifierList(myManager);
     myNameIdentifier = nameIdentifier;
     myWritable = writable;

@@ -5,6 +5,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,7 +15,7 @@ public class LightKeyword extends LightElement implements PsiKeyword, PsiJavaTok
   private String myText;
 
   public LightKeyword(PsiManager manager, String text) {
-    super(manager);
+    super(manager, StdFileTypes.JAVA.getLanguage());
     myText = text;
   }
 
