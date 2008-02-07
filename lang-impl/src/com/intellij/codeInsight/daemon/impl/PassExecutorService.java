@@ -54,6 +54,7 @@ public abstract class PassExecutorService {
   }
 
   public void submitPasses(Map<FileEditor, HighlightingPass[]> passesMap, DaemonProgressIndicator updateProgress, final int jobPriority) {
+    log(updateProgress, null, "---------------------------------------------");
     int id = 1;
 
     // (doc, passId) -> created pass
@@ -136,9 +137,6 @@ public abstract class PassExecutorService {
         }
       }
     }
-
-    log(updateProgress, null, "---------------------starting------------------------ "+threadsToStartCountdown.get());
-    
     for (ScheduledPass freePass : freePasses) {
       submit(freePass);
     }
@@ -292,28 +290,37 @@ public abstract class PassExecutorService {
         }
       },myUpdateProgress);
 
+      boolean hasMoreWorkTodo = myThreadsToStartCountdown.decrementAndGet() != 0;
       if (!myUpdateProgress.isCanceled()) {
-        applyInformationToEditors(myFileEditors, myPass, myUpdateProgress, myThreadsToStartCountdown);
+        applyInformationToEditors(myFileEditors, myPass, myUpdateProgress);
         for (ScheduledPass successor : mySuccessorsOnCompletion) {
           int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
           if (predecessorsToRun == 0) {
             submit(successor);
           }
         }
+        if (!hasMoreWorkTodo) {
+          log(myUpdateProgress, myPass, "Stopping ");
+          myUpdateProgress.stopIfRunning();
+        }
+        else {
+          log(myUpdateProgress, myPass, "Pass finished but there are passes in the queue");
+        }
       }
+      log(myUpdateProgress, myPass, "Finished ");
     }
+
   }
 
-  protected void applyInformationToEditors(final List<FileEditor> fileEditors, final TextEditorHighlightingPass pass, final DaemonProgressIndicator updateProgress,
-                                           final AtomicInteger threadsToStartCountdown) {
+  protected void applyInformationToEditors(final List<FileEditor> fileEditors, final TextEditorHighlightingPass pass, final DaemonProgressIndicator updateProgress) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (updateProgress.isCanceled()) {
+      log(updateProgress, pass, " is canceled during apply, sorry");
+      return;
+    }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (isDisposed() || myProject.isDisposed()) return;
-        if (updateProgress.isCanceled()) {
-          log(updateProgress, pass, " is canceled during apply, sorry");
-          return;
-        }
         boolean applied = false;
         for (final FileEditor fileEditor : fileEditors) {
           LOG.assertTrue(fileEditor != null);
@@ -326,17 +333,10 @@ public abstract class PassExecutorService {
             afterApplyInformationToEditor(pass, fileEditor, updateProgress);
           }
         }
-        if (threadsToStartCountdown.decrementAndGet() == 0) {
-          log(updateProgress, pass, "Stopping ");
-          updateProgress.stopIfRunning();
-        }
-        else {
-          log(updateProgress, pass, "Finished but there are passes in the queue: "+threadsToStartCountdown.get());
-        }
       }
     }, ModalityState.stateForComponent(fileEditors.get(0).getComponent()));
   }
-  
+
   protected boolean isDisposed() {
     return isDisposed;
   }
