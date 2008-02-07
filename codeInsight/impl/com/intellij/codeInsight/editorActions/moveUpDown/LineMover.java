@@ -16,9 +16,23 @@ class LineMover extends Mover {
   }
 
   protected boolean checkAvailable(Editor editor, PsiFile file) {
-    final SelectionModel selectionModel = editor.getSelectionModel();
+    LineRange range = getLineRangeFromSelection(editor);
+
+    final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
+    if (range.startLine == 0 && !isDown) return false;
+    if (range.endLine >= maxLine && isDown) return false;
+
+    toMove = range;
+    int nearLine = isDown ? range.endLine : range.startLine - 1;
+    toMove2 = new LineRange(nearLine, nearLine+1);
+    //insertOffset = editor.logicalPositionToOffset(new LogicalPosition(nearLine, 0));
+    return true;
+  }
+
+  protected static LineRange getLineRangeFromSelection(final Editor editor) {
     final int startLine;
     final int endLine;
+    final SelectionModel selectionModel = editor.getSelectionModel();
     LineRange range;
     if (selectionModel.hasSelection()) {
       startLine = editor.offsetToLogicalPosition(selectionModel.getSelectionStart()).line;
@@ -31,16 +45,7 @@ class LineMover extends Mover {
       endLine = startLine+1;
       range = new LineRange(startLine, endLine);
     }
-
-    final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
-    if (range.startLine == 0 && !isDown) return false;
-    if (range.endLine >= maxLine && isDown) return false;
-
-    toMove = range;
-    int nearLine = isDown ? range.endLine : range.startLine - 1;
-    toMove2 = new LineRange(nearLine, nearLine+1);
-    //insertOffset = editor.logicalPositionToOffset(new LogicalPosition(nearLine, 0));
-    return true;
+    return range;
   }
 
   protected static Pair<PsiElement, PsiElement> getElementRange(Editor editor, PsiFile file, final LineRange range) {

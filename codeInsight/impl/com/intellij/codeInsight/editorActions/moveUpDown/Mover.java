@@ -19,6 +19,7 @@ abstract class Mover {
   protected LineRange toMove2; // can be null if the move is illegal
   protected RangeMarker range1;
   protected RangeMarker range2;
+  protected boolean indentSource;
 
   protected Mover(final boolean isDown) {
     this.isDown = isDown;
@@ -88,10 +89,20 @@ abstract class Mover {
       restoreSelection(editor, selectionStart, selectionEnd, start, range2.getStartOffset());
     }
 
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    final int line1 = editor.offsetToLogicalPosition(range2.getStartOffset()).line;
-    final int line2 = editor.offsetToLogicalPosition(range2.getEndOffset()).line;
     caretModel.moveToOffset(range2.getStartOffset() + caretRelativePos);
+    indentLinesIn(editor, file, document, project, range2);
+    if (indentSource) {
+      indentLinesIn(editor, file, document, project, range1);
+    }
+
+    afterMove(editor, file);
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  private static void indentLinesIn(final Editor editor, final PsiFile file, final Document document, final Project project, RangeMarker range) {
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    int line1 = editor.offsetToLogicalPosition(range.getStartOffset()).line;
+    int line2 = editor.offsetToLogicalPosition(range.getEndOffset()).line;
 
     if (PsiUtil.isInJspFile(file)) {
       // This version is slow because of each moved line cause commit
@@ -105,24 +116,18 @@ abstract class Mover {
       }
     }
     else {
-      int realLine1 = line1;
-      int realLine2 = line2;
-
-      while (!lineContainsNonSpaces(document, realLine1) && realLine1 <= line2) realLine1++;
-      while (!lineContainsNonSpaces(document, realLine2) && realLine2 > realLine1) realLine2--;
+      while (!lineContainsNonSpaces(document, line1) && line1 <= line2) line1++;
+      while (!lineContainsNonSpaces(document, line2) && line2 > line1) line2--;
 
       try {
         final FileViewProvider provider = file.getViewProvider();
         PsiFile rootToAdjustIndentIn = provider.getPsi(provider.getBaseLanguage());
-        codeStyleManager.adjustLineIndent(rootToAdjustIndentIn, new TextRange(document.getLineStartOffset(realLine1), document.getLineStartOffset(realLine2)));
+        codeStyleManager.adjustLineIndent(rootToAdjustIndentIn, new TextRange(document.getLineStartOffset(line1), document.getLineStartOffset(line2)));
       }
       catch (IncorrectOperationException ex) {
         throw new RuntimeException(ex);
       }
     }
-
-    afterMove(editor, file);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
   protected static int getLineStartSafeOffset(final Document document, int line) {

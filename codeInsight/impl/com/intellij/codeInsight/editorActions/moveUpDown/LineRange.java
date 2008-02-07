@@ -30,4 +30,4 @@ class LineRange {
   public String toString() {
     return "line range: ["+startLine+"-"+endLine+"]";
   }
-  }
+}
