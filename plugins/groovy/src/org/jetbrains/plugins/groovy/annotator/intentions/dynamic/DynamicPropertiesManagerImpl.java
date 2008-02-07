@@ -350,6 +350,22 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
     return newProperty;
   }
 
+  /*
+  * Changes dynamic property type
+  */
+  public String replaceClassName(String moduleName, String oldClassName, String newClassName) {
+    final Element rootElement = getRootElement(moduleName);
+    final Element oldClassElement = findDynamicPropertyClassElement(rootElement, oldClassName);
+    if (oldClassElement == null) return oldClassName;
+
+    oldClassElement.setAttribute(CONTAINIG_CLASS_TYPE_ATTRIBUTE, newClassName);
+
+    writeXMLTree(moduleName, rootElement);
+    fireChange();
+
+    return newClassName;
+  }
+
   public void fireChange() {
     for (DynamicPropertyChangeListener listener : myListeners) {
       listener.dynamicPropertyChange();
