@@ -52,7 +52,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   @NotNull private final XmlTag myTag;
   private final String myNamespacePrefix;
   @Nullable private final PsiElement myElement;
-  private XmlFile myFile;
+  private final XmlFile myFile;
 
   public CreateNSDeclarationIntentionFix(@NotNull final XmlTag tag, @NotNull final String namespacePrefix) {
     this(tag, namespacePrefix, null);
@@ -69,7 +69,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
   @NotNull
   public String getText() {
-    final String alias = StringUtil.capitalize(XmlExtension.getExtension(myFile).getNamespaceAlias());
+    final String alias = StringUtil.capitalize(XmlExtension.getExtension(myFile).getNamespaceAlias(myFile));
     return XmlErrorMessages.message("create.namespace.declaration.quickfix", alias);
   }
 
@@ -96,7 +96,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     return true;
   }
 
-  private static String[] guessNamespace(final PsiFile file, String name) {
+  public static String[] guessNamespace(final PsiFile file, String name) {
     final Set<String> possibleUris = new LinkedHashSet<String>();
     final ExternalUriProcessor processor = new ExternalUriProcessor() {
       public void process(@NotNull String ns, final String url) {
@@ -113,13 +113,8 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
     String[] namespaces;
-    final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider((XmlFile)file);
-    if (provider == null) {
-      namespaces = guessNamespace(file, myElement == null ? myTag.getLocalName() : myElement.getText());
-    } else {
-      final Set<String> strings = provider.getAvailableNamespaces((XmlFile)file);
-      namespaces = strings.toArray(new String[strings.size()]);
-    }
+    final Set<String> set = XmlExtension.getExtension((XmlFile)file).guessUnboundNamespaces(myElement == null ? myTag : myElement);
+    namespaces = set.toArray(new String[set.size()]);
     Arrays.sort(namespaces);
 
     runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(
@@ -145,7 +140,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   private String getTitle() {
-    return XmlErrorMessages.message("select.namespace.title", StringUtil.capitalize(XmlExtension.getExtension(myFile).getNamespaceAlias()));
+    return XmlErrorMessages.message("select.namespace.title", StringUtil.capitalize(XmlExtension.getExtension(myFile).getNamespaceAlias(myFile)));
   }
 
   public boolean startInWriteAction() {

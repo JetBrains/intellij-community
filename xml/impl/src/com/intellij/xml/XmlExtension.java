@@ -3,6 +3,7 @@ package com.intellij.xml;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -18,7 +19,7 @@ public abstract class XmlExtension {
 
   private static final ExtensionPointName<XmlExtension> EP_NAME = new ExtensionPointName<XmlExtension>("com.intellij.xml.xmlExtension");
 
-  private static final XmlExtension DEFAULT_EXTENSION = new DefaultXmlExtension();
+  protected static final XmlExtension DEFAULT_EXTENSION = new DefaultXmlExtension();
 
   public static XmlExtension getExtension(XmlFile file) {
     for (XmlExtension extension : Extensions.getExtensions(EP_NAME)) {
@@ -36,6 +37,9 @@ public abstract class XmlExtension {
   @NotNull
   public abstract Set<String> getNamespacesByTagName(@NotNull final String tagName, @NotNull final XmlFile context);
 
+  @NotNull
+  public abstract Set<String> guessUnboundNamespaces(@NotNull PsiElement element);
+
   public static interface Runner<P, T extends Throwable> {
     void run(P param) throws T;
   }
@@ -46,7 +50,7 @@ public abstract class XmlExtension {
                                                     @Nullable final String nsPrefix,
                                                     @Nullable Runner<String, IncorrectOperationException> runAfter) throws IncorrectOperationException;
 
-  public String getNamespaceAlias() {
+  public String getNamespaceAlias(@NotNull final XmlFile file) {
     return XmlBundle.message("namespace.alias");
   }
 }
