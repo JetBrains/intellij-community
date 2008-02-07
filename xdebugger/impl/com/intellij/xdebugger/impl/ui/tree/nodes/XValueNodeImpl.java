@@ -21,6 +21,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private String myName;
   private String myValue;
   @NonNls private static final String EQ_TEXT = " = ";
+  private boolean myChanged;
 
   public XValueNodeImpl(XDebuggerTree tree, final XDebuggerTreeNode parent, final XValue value) {
     super(tree, parent, value);
@@ -36,15 +37,30 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         myName = name;
         myValue = value;
 
-        myText.clear();
-        myText.append(name, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
-        myText.append(EQ_TEXT, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        myText.append(value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        updateText();
         setLeaf(!hasChildren);
         fireNodeChanged();
         myTree.nodeLoaded(XValueNodeImpl.this, name, value);
       }
     });
+  }
+
+  private void updateText() {
+    myText.clear();
+    myText.append(myName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
+    myText.append(EQ_TEXT, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    myText.append(myValue, myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  }
+
+  public void markChanged() {
+    if (myChanged) return;
+
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myChanged = true;
+    if (myName != null && myValue != null) {
+      updateText();
+      fireNodeChanged();
+    }
   }
 
   @Nullable

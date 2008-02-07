@@ -13,8 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author nik
@@ -25,7 +25,7 @@ public class XDebuggerTree extends Tree implements DataProvider {
   private final Project myProject;
   private final XDebuggerEditorsProvider myEditorsProvider;
   private final XSourcePosition mySourcePosition;
-  private final List<XDebuggerTreeListener> myListeners = new ArrayList<XDebuggerTreeListener>();
+  private final List<XDebuggerTreeListener> myListeners = new CopyOnWriteArrayList<XDebuggerTreeListener>();
 
   public XDebuggerTree(final @NotNull Project project, final XDebuggerEditorsProvider editorsProvider, final XSourcePosition sourcePosition) {
     myProject = project;

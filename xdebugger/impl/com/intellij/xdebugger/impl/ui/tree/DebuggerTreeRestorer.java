@@ -5,9 +5,9 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 /**
  * @author nik
@@ -47,31 +47,50 @@ public class DebuggerTreeRestorer implements XDebuggerTreeListener {
         myNode2ParentState.put(node, parentInfo);
       }
       else {
-        doRestoreNode(treeNode, parentInfo, nodeName);
+        doRestoreNode(node, parentInfo, nodeName, nodeValue);
       }
     }
   }
 
-  private void doRestoreNode(final XValueContainerNode<?> treeNode, final DebuggerTreeState.NodeInfo parentInfo, final String nodeName) {
+  private void doRestoreNode(final XValueNodeImpl treeNode, final DebuggerTreeState.NodeInfo parentInfo, final String nodeName,
+                             final String nodeValue) {
     DebuggerTreeState.NodeInfo childInfo = parentInfo.getChild(nodeName);
     if (childInfo != null) {
+      if (!childInfo.getValue().equals(nodeValue)) {
+        treeNode.markChanged();
+      }
       restoreChildren(treeNode, childInfo);
     }
   }
 
   public void nodeLoaded(@NotNull final XValueNodeImpl node, final String name, final String value) {
-    DebuggerTreeState.NodeInfo parentInfo = myNode2ParentState.get(node);
+    DebuggerTreeState.NodeInfo parentInfo = myNode2ParentState.remove(node);
     if (parentInfo != null) {
-      doRestoreNode(node, parentInfo, name);
+      doRestoreNode(node, parentInfo, name, value);
+    }
+    disposeIfFinished();
+  }
+
+  private void disposeIfFinished() {
+    if (myNode2ParentState.isEmpty() && myNode2State.isEmpty()) {
+      dispose();
     }
   }
 
   public void childrenLoaded(@NotNull final XValueContainerNode<?> node, @NotNull final List<XValueContainerNode<?>> children) {
-    DebuggerTreeState.NodeInfo nodeInfo = myNode2State.get(node);
+    DebuggerTreeState.NodeInfo nodeInfo = myNode2State.remove(node);
     if (nodeInfo != null) {
       for (XValueContainerNode<?> child : children) {
         restoreNode(child, nodeInfo);
       }
     }
+    disposeIfFinished();
   }
+
+  private void dispose() {
+    myNode2ParentState.clear();
+    myNode2State.clear();
+    myTree.removeTreeListener(this);
+  }
+
 }
