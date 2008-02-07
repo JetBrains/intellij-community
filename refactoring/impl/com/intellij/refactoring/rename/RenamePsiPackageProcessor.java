@@ -1,12 +1,12 @@
 package com.intellij.refactoring.rename;
 
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -14,6 +14,8 @@ import java.util.Map;
  * @author yole
  */
 public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
+  private final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenamePsiPackageProcessor");
+
   public boolean canProcessElement(final PsiElement element) {
     return element instanceof PsiPackage;
   }
@@ -52,5 +54,21 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
         allRenames.put(directory, newName);
       }
     }
+  }
+
+  @Nullable
+  public Runnable getPostRenameCallback(final PsiElement element, final String newName, final RefactoringElementListener listener) {
+    final Project project = element.getProject();
+    final PsiPackage psiPackage = (PsiPackage)element;
+    final String newQualifiedName = RenameUtil.getQualifiedNameAfterRename(psiPackage.getQualifiedName(), newName);
+    return new Runnable() {
+      public void run() {
+        final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(newQualifiedName);
+        if (aPackage == null) {
+          LOG.error("Package cannot be found: "+newQualifiedName+"; listener="+listener);
+        }
+        listener.elementRenamed(aPackage);
+      }
+    };
   }
 }

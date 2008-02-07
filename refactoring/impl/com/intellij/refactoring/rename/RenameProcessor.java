@@ -5,10 +5,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -257,7 +258,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
     }
 
-    List<Pair<String, RefactoringElementListener>> listenersForPackages = new ArrayList<Pair<String,RefactoringElementListener>>();
+    List<Runnable> postRenameCallbacks = new ArrayList<Runnable>();
 
     for (Map.Entry<PsiElement, String> entry : myAllRenames.entrySet()) {
       PsiElement element = entry.getKey();
@@ -265,22 +266,14 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
       final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
       RenameUtil.doRename(element, newName, extractUsagesForElement(element, usages), myProject, elementListener);
-      if (element instanceof PsiPackage) {
-        final PsiPackage psiPackage = (PsiPackage)element;
-        final String newQualifiedName = RenameUtil.getQualifiedNameAfterRename(psiPackage.getQualifiedName(), newName);
-        listenersForPackages.add(Pair.create(newQualifiedName, elementListener));
+      Runnable postRenameCallback = RenamePsiElementProcessor.forElement(element).getPostRenameCallback(element, newName, elementListener);
+      if (postRenameCallback != null) {
+        postRenameCallbacks.add(postRenameCallback);
       }
     }
 
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
-    for (Pair<String, RefactoringElementListener> pair : listenersForPackages) {
-      String qualifiedName = pair.getFirst();
-      RefactoringElementListener listener = pair.getSecond();
-      final PsiPackage aPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(qualifiedName);
-      if (aPackage == null) {
-        LOG.error("Package cannot be found: "+qualifiedName+"; listener="+listener);
-      }
-      listener.elementRenamed(aPackage);
+    for(Runnable runnable: postRenameCallbacks) {
+      runnable.run();
     }
 
     List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<NonCodeUsageInfo>();

@@ -64,4 +64,9 @@ public abstract class RenamePsiElementProcessor {
       return true;
     }
   };
+
+  @Nullable
+  public Runnable getPostRenameCallback(final PsiElement element, final String newName, final RefactoringElementListener elementListener) {
+    return null;
+  }
 }
