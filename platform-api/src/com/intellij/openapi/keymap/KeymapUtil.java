@@ -105,7 +105,7 @@ public class KeymapUtil {
     else if (MouseEvent.BUTTON3 == button) {
       buttonNum = 3;
     }
-    else if (-1 == button) {
+    else if (MouseEvent.NOBUTTON == button || -1 == button) {
       buttonNum = 0;
       // do nothing
     }
