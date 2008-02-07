@@ -1,4 +1,3 @@
-
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.diagnostic.Logger;
