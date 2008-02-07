@@ -68,7 +68,7 @@ public class ChunkExtractor {
     });
     myColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
 
-    final int absoluteStartOffset =  getStartOffset(myRangeMarkers);
+    final int absoluteStartOffset = getStartOffset(myRangeMarkers);
 
     myDocument = PsiDocumentManager.getInstance(myElement.getProject()).getDocument(myElement.getContainingFile());
     myLineNumber = myDocument.getLineNumber(absoluteStartOffset);
@@ -79,11 +79,12 @@ public class ChunkExtractor {
     LOG.assertTrue(!rangeMarkers.isEmpty());
     int minStart = Integer.MAX_VALUE;
     for (RangeMarker rangeMarker : rangeMarkers) {
+      if (!rangeMarker.isValid()) continue;
       final int startOffset = rangeMarker.getStartOffset();
       if (startOffset < minStart) minStart = startOffset;
     }
 
-    return minStart;
+    return minStart == Integer.MAX_VALUE ? 0 : minStart;
   }
 
   public TextChunk[] extractChunks() {

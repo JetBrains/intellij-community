@@ -55,7 +55,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
   private List<RangeMarker> myRangeMarkers = new ArrayList<RangeMarker>();
   private TextChunk[] myTextChunks;
   private final UsagePresentation myUsagePresentation;
-  private String myPlainText;
 
   public UsageInfo2UsageAdapter(final UsageInfo usageInfo) {
     myUsageInfo = usageInfo;
