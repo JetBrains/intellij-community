@@ -307,10 +307,12 @@
 
     <group id="XDebugger.Actions">
       <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction"/>
+      <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction"/>
     </group>
 
     <group id="XDebugger.Evaluation.Dialog.Popup">
       <reference ref="XDebugger.SetValue"/>
+      <reference ref="XDebugger.CopyValue"/>
     </group>
 
     <group id="WelcomeScreen.QuickStart">

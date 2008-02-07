@@ -24,4 +24,6 @@ public interface XDebuggerActions {
   @NonNls String EVALUATE_EXPRESSION = "EvaluateExpression";
 
   @NonNls String EVALUATE_DIALOG_POPUP_GROUP = "XDebugger.Evaluation.Dialog.Popup";
+
+  @NonNls String SET_VALUE = "XDebugger.SetValue";
 }
