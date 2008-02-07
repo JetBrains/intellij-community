@@ -124,6 +124,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
   }
 
   public void select(Object element, VirtualFile file, boolean requestFocus) {
+    if (file == null) return;
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
     if (psiFile == null) return;
     if (!(element instanceof PsiElement)) return;
