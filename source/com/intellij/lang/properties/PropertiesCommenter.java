@@ -10,10 +10,6 @@ public class PropertiesCommenter implements Commenter {
     return "#";
   }
 
-  public boolean isLineCommentPrefixOnZeroColumn() {
-    return true;
-  }
-
   public String getBlockCommentPrefix() {
     return null;
   }

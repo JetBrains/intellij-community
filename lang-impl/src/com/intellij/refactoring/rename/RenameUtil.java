@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
@@ -19,9 +20,12 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageNamesValidation;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.io.File;
 
 public class RenameUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameUtil");
@@ -257,6 +261,26 @@ public class RenameUtil {
       PsiDocumentManager.getInstance(project).commitDocument(document);
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean isValidName(final Project project, final PsiElement psiElement, final String newName) {
+    if (newName == null || newName.length() == 0) {
+      return false;
+    }
+    final Condition<String> inputValidator = RenameInputValidatorRegistry.getInstance().getInputValidator(psiElement);
+    if (inputValidator != null) {
+      return inputValidator.value(newName);
+    }
+    if (psiElement instanceof PsiFile || psiElement instanceof PsiDirectory) {
+      return newName.indexOf(File.separatorChar) < 0 && newName.indexOf('/') < 0;
+    }
+
+    PsiFile f = psiElement.getContainingFile();
+    Language language = f == null ? null : f.getLanguageDialect();
+    if (language == null) language = psiElement.getLanguage();
+
+    return LanguageNamesValidation.INSTANCE.forLanguage(language).isIdentifier(newName.trim(), project);
   }
 
   private static class UsageOffset implements Comparable<UsageOffset> {

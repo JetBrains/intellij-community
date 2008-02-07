@@ -5,9 +5,14 @@ import com.intellij.lang.CompositeLanguage;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import com.intellij.psi.impl.source.xml.behavior.CDATAOnAnyEncodedPolicy;
 import com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy;
+import com.intellij.psi.filters.OrFilter;
+import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.xml.*;
+import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,6 +26,25 @@ import org.jetbrains.annotations.NotNull;
 public class XMLLanguage extends CompositeLanguage {
   protected static final CDATAOnAnyEncodedPolicy CDATA_ON_ANY_ENCODED_POLICY = new CDATAOnAnyEncodedPolicy();
   protected static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
+
+  static {
+    RenameInputValidatorRegistry.getInstance().registerInputValidator(
+      new OrFilter(new ClassFilter(XmlTag.class), new ClassFilter(XmlAttribute.class),
+                   new ClassFilter(XmlElementDecl.class), new ClassFilter(XmlAttributeDecl.class)),
+      new Condition<String>() {
+        public boolean value(final String s) {
+          return s.trim().matches("([\\d\\w\\_\\.\\-]+:)?[\\d\\w\\_\\.\\-]+");
+        }
+      });
+
+    RenameInputValidatorRegistry.getInstance().registerInputValidator(
+      new ClassFilter(XmlAttributeValue.class),
+      new Condition<String>() {
+        public boolean value(final String s) {
+          return true;
+        }
+      });
+  }
 
   public XMLLanguage() {
     this("XML", "text/xml");

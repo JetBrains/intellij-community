@@ -15,7 +15,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
@@ -265,6 +264,6 @@ public class RenameDialog extends RefactoringDialog {
 
   protected boolean areButtonsValid() {
     final String newName = getNewName();
-    return RefactoringUtil.isValidName(myProject, myPsiElement, newName);
+    return RenameUtil.isValidName(myProject, myPsiElement, newName);
   }
 }

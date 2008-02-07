@@ -2,14 +2,9 @@ package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageNamesValidation;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -42,10 +37,8 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.psi.xml.*;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -54,7 +47,6 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 
 public class RefactoringUtil {
@@ -159,38 +151,6 @@ public class RefactoringUtil {
 
       return name;
     }
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static boolean isValidName(final Project project, final PsiElement psiElement, final String newName) {
-    if (newName == null || newName.length() == 0) {
-      return false;
-    }
-    final Condition<String> inputValidator = RenameInputValidatorRegistry.getInstance().getInputValidator(psiElement);
-    if (inputValidator != null) {
-      return inputValidator.value(newName);
-    }
-    if (psiElement instanceof PsiFile || psiElement instanceof PsiDirectory) {
-      return newName.indexOf(File.separatorChar) < 0 && newName.indexOf('/') < 0;
-    }
-    if (psiElement instanceof XmlTag ||
-        psiElement instanceof XmlAttribute ||
-        psiElement instanceof XmlElementDecl ||
-        psiElement instanceof XmlAttributeDecl) {
-      return newName.trim().matches("([\\d\\w\\_\\.\\-]+:)?[\\d\\w\\_\\.\\-]+");
-    }
-    if (psiElement instanceof XmlAttributeValue) {
-      return true; // ask meta data
-    }
-    if (psiElement instanceof Property) {
-      return true;
-    }
-
-    PsiFile f = psiElement.getContainingFile();
-    Language language = f == null ? null : f.getLanguageDialect();
-    if (language == null) language = psiElement.getLanguage();
-
-    return LanguageNamesValidation.INSTANCE.forLanguage(language).isIdentifier(newName.trim(), project);
   }
 
   //order of usages accross different files is irrelevant

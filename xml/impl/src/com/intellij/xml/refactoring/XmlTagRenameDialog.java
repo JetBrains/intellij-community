@@ -21,9 +21,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -186,6 +186,6 @@ public class XmlTagRenameDialog extends RefactoringDialog {
 
   protected boolean areButtonsValid() {
     final String newName = getNewName();
-    return RefactoringUtil.isValidName(myProject, myTag, newName);
+    return RenameUtil.isValidName(myProject, myTag, newName);
   }
 }
