@@ -1,5 +1,6 @@
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -20,6 +21,9 @@ public class IndexingStamp {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerDirectoryTimestamp");
   
   private static final Map<String, FileAttribute> ourAttributes = new HashMap<String, FileAttribute>();
+
+  private IndexingStamp() {
+  }
 
   public static boolean isFileIndexed(VirtualFile file, String indexName, final long indexCreationStamp) {
     try {
@@ -44,23 +48,27 @@ public class IndexingStamp {
     }
   }
 
-  public static void update(VirtualFile file, String indexName, final long indexCreationStamp) {
-    try {
-      if (file instanceof NewVirtualFile && file.isValid()) {
-        final DataOutputStream stream = getAttribute(indexName).writeAttribute(file);
+  public static void update(final VirtualFile file, final String indexName, final long indexCreationStamp) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
         try {
-          stream.writeLong(indexCreationStamp);
+          if (file instanceof NewVirtualFile && file.isValid()) {
+            final DataOutputStream stream = getAttribute(indexName).writeAttribute(file);
+            try {
+              stream.writeLong(indexCreationStamp);
+            }
+            finally {
+              stream.close();
+            }
+          }
         }
-        finally {
-          stream.close();
+        catch (IOException e) {
+          LOG.info(e);
         }
       }
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
+    });
   }
-  
+
   @NotNull
   private static FileAttribute getAttribute(String indexName) {
     FileAttribute attrib = ourAttributes.get(indexName);

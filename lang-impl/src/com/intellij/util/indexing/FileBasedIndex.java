@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -80,6 +82,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   private List<IndexableFileSet> myIndexableSets = new CopyOnWriteArrayList<IndexableFileSet>();
   private Set<String> myRequiresRebuild = Collections.synchronizedSet(new HashSet<String>());
+
+  private ExecutorService myInvalidationService = ConcurrencyUtil.newSingleScheduledThreadExecutor("FileBasedIndex.InvalidationQueue");
 
   public static interface InputFilter {
     boolean acceptInput(VirtualFile file);
@@ -605,7 +609,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       invalidateIndex(file, tasks);
       if (tasks.size() > 0) {
         adjustInvalidateTasksCount(+1);
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        myInvalidationService.submit(new Runnable() {
           public void run() {
             try {
               for (Runnable task : tasks) {
