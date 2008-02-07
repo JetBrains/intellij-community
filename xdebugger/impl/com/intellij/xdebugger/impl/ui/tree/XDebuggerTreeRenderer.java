@@ -1,7 +1,7 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.xdebugger.impl.ui.tree.nodes.TreeNodeBase;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 
 import javax.swing.*;
 
@@ -16,7 +16,7 @@ public class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
                                     final boolean leaf,
                                     final int row,
                                     final boolean hasFocus) {
-    TreeNodeBase node = (TreeNodeBase)value;
+    XDebuggerTreeNode node = (XDebuggerTreeNode)value;
     node.getText().appendToComponent(this);
     setIcon(node.getIcon());
   }

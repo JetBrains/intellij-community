@@ -323,7 +323,7 @@ public class SetValueAction extends DebuggerAction {
     comboBox.selectAll();
     editorPanel.add(comboBox);
 
-    final InplaceEditor editor = new InplaceEditor(node) {
+    final DebuggerTreeInplaceEditor editor = new DebuggerTreeInplaceEditor(node) {
       public JComponent createInplaceEditorComponent() {
         return editorPanel;
       }

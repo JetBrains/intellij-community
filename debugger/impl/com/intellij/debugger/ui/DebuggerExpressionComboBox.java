@@ -161,7 +161,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   public DebuggerExpressionComboBox(Project project, PsiElement context, @NonNls String recentsId, final CodeFragmentFactory factory) {
     super(project, context, recentsId, factory);
     myComboBox = new ComboBox(-1);
-    // Have to turn this off because when used in InplaceEditor, the combobox popup is hidden on every change of selection
+    // Have to turn this off because when used in DebuggerTreeInplaceEditor, the combobox popup is hidden on every change of selection
     // See comment to SynthComboBoxUI.FocusHandler.focusLost()
     myComboBox.setLightWeightPopupEnabled(false);
     setLayout(new BorderLayout());

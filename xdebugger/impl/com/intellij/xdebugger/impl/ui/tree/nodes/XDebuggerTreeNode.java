@@ -1,62 +1,86 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.frame.XValueContainer;
-import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.ui.SimpleColoredText;
+import com.intellij.util.enumeration.EmptyEnumeration;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.TreeNode;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author nik
  */
-public abstract class XDebuggerTreeNode<ValueContainer extends XValueContainer> extends TreeNodeBase implements XCompositeNode, TreeNode {
-  private final XDebuggerTree myTree;
-  private List<XDebuggerTreeNode> myChildren;
-  private List<LoadingMessageTreeNode> myTemporaryChildren;
-  protected final ValueContainer myValueContainer;
+public abstract class XDebuggerTreeNode implements TreeNode {
+  protected final XDebuggerTree myTree;
+  private TreeNode myParent;
+  private boolean myLeaf;
+  protected final SimpleColoredText myText = new SimpleColoredText();
+  private Icon myIcon;
+  private TreeNode[] myPath;
 
-  protected XDebuggerTreeNode(XDebuggerTree tree, final TreeNodeBase parent, ValueContainer valueContainer) {
-    super(parent, true);
+  protected XDebuggerTreeNode(final XDebuggerTree tree, final XDebuggerTreeNode parent, final boolean leaf) {
+    myParent = parent;
+    myLeaf = leaf;
     myTree = tree;
-    myValueContainer = valueContainer;
-    myText.append(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
   }
 
-  private void loadChildren() {
-    if (myChildren != null || myTemporaryChildren != null) return;
+  public TreeNode getChildAt(final int childIndex) {
+    if (isLeaf()) return null;
+    return getChildren().get(childIndex);
+  }
 
-    myValueContainer.computeChildren(this);
-    if (myChildren == null) {
-      myTemporaryChildren = Collections.singletonList(new LoadingMessageTreeNode(this));
+  public int getChildCount() {
+    return isLeaf() ? 0 : getChildren().size();
+  }
+
+  public TreeNode getParent() {
+    return myParent;
+  }
+
+  public int getIndex(final TreeNode node) {
+    if (isLeaf()) return -1;
+    return getChildren().indexOf(node);
+  }
+
+  public boolean getAllowsChildren() {
+    return true;
+  }
+
+  public boolean isLeaf() {
+    return myLeaf;
+  }
+
+  public Enumeration children() {
+    if (isLeaf()) {
+      return EmptyEnumeration.INSTANCE;
     }
+    return Collections.enumeration(getChildren());
   }
 
-  public void setChildren(final List<XValue> children) {
-    DebuggerUIUtil.invokeLater(new Runnable() {
-      public void run() {
-        myChildren = new ArrayList<XDebuggerTreeNode>();
-        for (XValue child : children) {
-          myChildren.add(new XValueNodeImpl(myTree, XDebuggerTreeNode.this, child));
-        }
-        myTemporaryChildren = null;
-        fireNodeChildrenChanged();
-      }
-    });
+  protected abstract List<? extends TreeNode> getChildren();
+
+  protected void setIcon(final Icon icon) {
+    myIcon = icon;
   }
 
-  protected List<? extends TreeNode> getChildren() {
-    loadChildren();
+  public void setLeaf(final boolean leaf) {
+    myLeaf = leaf;
+  }
 
-    if (myChildren != null) {
-      return myChildren;
-    }
-    return myTemporaryChildren;
+  @NotNull
+  public SimpleColoredText getText() {
+    return myText;
+  }
+
+  @Nullable
+  public Icon getIcon() {
+    return myIcon;
   }
 
   protected void fireNodeChanged() {
@@ -65,5 +89,23 @@ public abstract class XDebuggerTreeNode<ValueContainer extends XValueContainer> 
 
   protected void fireNodeChildrenChanged() {
     myTree.getTreeModel().nodeStructureChanged(this);
+  }
+
+  public XDebuggerTree getTree() {
+    return myTree;
+  }
+
+  public TreeNode[] getPath() {
+    if (myPath == null) {
+      List<TreeNode> nodes = new ArrayList<TreeNode>();
+      TreeNode node = this;
+      while (node != null) {
+        nodes.add(node);
+        node = node.getParent();
+      }
+      Collections.reverse(nodes);
+      myPath = nodes.toArray(new TreeNode[nodes.size()]);
+    }
+    return myPath;
   }
 }

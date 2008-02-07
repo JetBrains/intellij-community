@@ -305,6 +305,14 @@
       <reference ref="UnsplitAll"/>
     </group>
 
+    <group id="XDebugger.Actions">
+      <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction"/>
+    </group>
+
+    <group id="XDebugger.Evaluation.Dialog.Popup">
+      <reference ref="XDebugger.SetValue"/>
+    </group>
+
     <group id="WelcomeScreen.QuickStart">
     </group>
 

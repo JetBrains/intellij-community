@@ -459,59 +459,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
   }
 
-  /*
-  private class BuildThreadGroupCommand extends BuildNodeCommand {
-    public BuildThreadGroupCommand(DebuggerTreeNodeImpl node) {
-      super(node);
-    }
-
-    public void threadAction() {
-      ThreadGroupDescriptorImpl groupDescriptor = (ThreadGroupDescriptorImpl)getNode().getDescriptor();
-      ThreadGroupReferenceProxyImpl threadGroup = groupDescriptor.getThreadGroupReference();
-
-      List<ThreadReferenceProxyImpl> threads = new ArrayList<ThreadReferenceProxyImpl>(threadGroup.threads());
-      Collections.sort(threads, ThreadReferenceProxyImpl.ourComparator);
-
-      EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
-
-      boolean showCurrent = ThreadsViewSettings.getInstance().SHOW_CURRENT_THREAD;
-
-      for (final ThreadGroupReferenceProxyImpl group : threadGroup.threadGroups()) {
-        if (group != null) {
-          DebuggerTreeNodeImpl threadNode =
-            myNodeManager.createNode(myNodeManager.getThreadGroupDescriptor(groupDescriptor, group), evaluationContext);
-
-          if (showCurrent && ((ThreadGroupDescriptorImpl)threadNode.getDescriptor()).isCurrent()) {
-            myChildren.add(0, threadNode);
-          }
-          else {
-            myChildren.add(threadNode);
-          }
-        }
-      }
-
-      ArrayList<DebuggerTreeNodeImpl> threadNodes = new ArrayList<DebuggerTreeNodeImpl>();
-
-      for (ThreadReferenceProxyImpl thread : threads) {
-        if (thread != null) {
-          DebuggerTreeNodeImpl threadNode =
-            myNodeManager.createNode(myNodeManager.getThreadDescriptor(groupDescriptor, thread), evaluationContext);
-          if (showCurrent && ((ThreadDescriptorImpl)threadNode.getDescriptor()).isCurrent()) {
-            threadNodes.add(0, threadNode);
-          }
-          else {
-            threadNodes.add(threadNode);
-          }
-        }
-      }
-
-      myChildren.addAll(threadNodes);
-
-      updateUI(true);
-    }
-  }
-  */
-
   private class BuildValueNodeCommand extends BuildNodeCommand implements ChildrenBuilder {
     public BuildValueNodeCommand(DebuggerTreeNodeImpl node) {
       super(node);

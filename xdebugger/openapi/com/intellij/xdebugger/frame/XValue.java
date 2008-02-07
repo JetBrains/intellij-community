@@ -8,10 +8,27 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class XValue extends XValueContainer {
 
+  /**
+   * Start computing presentation of the value in the debugger tree and call {@link XValueNode#setPresentation(String, javax.swing.Icon, String, String, boolean)}
+   * when computation is finished.
+   * @param node node.
+   */
   public abstract void computePresentation(@NotNull XValueNode node);
 
+
+  /**
+   * @return expression which evaluates to the current value
+   */
   @Nullable
-  public String getExpression() {
+  public String getEvaluationExpression() {
+    return null;
+  }
+
+  /**
+   * @return {@link com.intellij.xdebugger.frame.XValueModifier} instance which can be used to modify the value
+   */
+  @Nullable
+  public XValueModifier getModifier() {
     return null;
   }
 }

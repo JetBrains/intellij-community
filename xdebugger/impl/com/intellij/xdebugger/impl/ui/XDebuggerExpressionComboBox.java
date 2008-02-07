@@ -1,6 +1,7 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.EditorComboBoxEditor;
@@ -44,6 +45,14 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
 
   public JComponent getComponent() {
     return myComboBox;
+  }
+
+  public Editor getEditor() {
+    return myEditor.getEditor();
+  }
+
+  public JComponent getEditorComponent() {
+    return (JComponent)myEditor.getEditorComponent();
   }
 
   public void setEnabled(boolean enable) {

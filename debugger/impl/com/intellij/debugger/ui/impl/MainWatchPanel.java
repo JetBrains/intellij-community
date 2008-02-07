@@ -15,7 +15,7 @@ import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.InplaceEditor;
+import com.intellij.debugger.ui.impl.watch.DebuggerTreeInplaceEditor;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.DataManager;
@@ -146,7 +146,7 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
     comboBox.setText(((WatchItemDescriptor)node.getDescriptor()).getEvaluationText());
     comboBox.selectAll();
 
-    InplaceEditor editor = new InplaceEditor(node) {
+    DebuggerTreeInplaceEditor editor = new DebuggerTreeInplaceEditor(node) {
       public JComponent createInplaceEditorComponent() {
         return comboBox;
       }

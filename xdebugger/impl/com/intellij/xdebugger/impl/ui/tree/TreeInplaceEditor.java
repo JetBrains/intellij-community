@@ -1,17 +1,13 @@
-/*
- * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
- * Use is subject to license terms.
- */
-package com.intellij.debugger.ui.impl.watch;
+package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentListener;
 import com.intellij.execution.ui.RunContentManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -19,17 +15,20 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.List;
 
-public abstract class InplaceEditor implements AWTEventListener{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.InplaceEditor");
-  private final DebuggerTreeNodeImpl myNode;
+/**
+ * @author nik
+ */
+public abstract class TreeInplaceEditor implements AWTEventListener {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.DebuggerTreeInplaceEditor");
   private JComponent myInplaceEditorComponent;
-  private final java.util.List<Runnable> myRemoveActions = new ArrayList<Runnable>();
-
+  private final List<Runnable> myRemoveActions = new ArrayList<Runnable>();
 
   protected abstract JComponent createInplaceEditorComponent();
 
@@ -38,6 +37,10 @@ public abstract class InplaceEditor implements AWTEventListener{
   public abstract Editor getEditor();
 
   public abstract JComponent getEditorComponent();
+
+  protected abstract TreeNode[] getNodePath();
+
+  protected abstract JTree getTree();
 
   public void doOKAction() {
     remove();
@@ -58,27 +61,16 @@ public abstract class InplaceEditor implements AWTEventListener{
 
     myInplaceEditorComponent = null;
 
-    final DebuggerTree tree = myNode.getTree();
+    final JTree tree = getTree();
     tree.repaint();
     tree.requestFocus();
   }
 
-  private Project getProject() {
-    return myNode.getTree().getProject();
-  }
+  protected abstract Project getProject();
 
-  public InplaceEditor(DebuggerTreeNodeImpl node) {
-    myNode = node;
-  }
-
-  public DebuggerTreeNodeImpl getNode() {
-    return myNode;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void show() {
     LOG.assertTrue(myInplaceEditorComponent == null, "editor is not released");
-    final DebuggerTree tree = myNode.getTree();
+    final JTree tree = getTree();
     final JRootPane rootPane = tree.getRootPane();
     if (rootPane == null) {
       return;
@@ -115,12 +107,13 @@ public abstract class InplaceEditor implements AWTEventListener{
 
     final ComponentAdapter componentListener = new ComponentAdapter() {
       public void componentResized(ComponentEvent e) {
-        DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+        final Project project = getProject();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            if (!isShown()) {
+            if (!isShown() || project == null || project.isDisposed()) {
               return;
             }
-            JTree tree = myNode.getTree();
+            JTree tree = getTree();
             JLayeredPane layeredPane = tree.getRootPane().getLayeredPane();
             Rectangle bounds = getEditorBounds();
             if (bounds == null) {
@@ -178,13 +171,13 @@ public abstract class InplaceEditor implements AWTEventListener{
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         if (!isShown()) return;
-        defaultToolkit.addAWTEventListener(InplaceEditor.this, AWTEvent.MOUSE_EVENT_MASK);
+        defaultToolkit.addAWTEventListener(TreeInplaceEditor.this, AWTEvent.MOUSE_EVENT_MASK);
       }
     });
 
     myRemoveActions.add(new Runnable() {
       public void run() {
-        defaultToolkit.removeAWTEventListener(InplaceEditor.this);
+        defaultToolkit.removeAWTEventListener(TreeInplaceEditor.this);
       }
     });
   }
@@ -202,8 +195,7 @@ public abstract class InplaceEditor implements AWTEventListener{
 
     final Lookup activeLookup = LookupManager.getInstance(getEditor().getProject()).getActiveLookup();
     if (activeLookup != null){
-      final DebuggerTree tree = myNode.getTree();
-      final JLayeredPane layeredPane = tree.getRootPane().getLayeredPane();
+      final JLayeredPane layeredPane = getTree().getRootPane().getLayeredPane();
       final Point layeredPoint = SwingUtilities.convertPoint(sourceComponent, originalPoint, layeredPane);
       if (activeLookup.getBounds().contains(layeredPoint)){
         return; //mouse click inside lookup
@@ -227,9 +219,9 @@ public abstract class InplaceEditor implements AWTEventListener{
 
   @Nullable
   private Rectangle getEditorBounds() {
-    final DebuggerTree tree = myNode.getTree();
+    final JTree tree = getTree();
     Rectangle bounds = tree.getVisibleRect();
-    Rectangle nodeBounds = tree.getPathBounds(new TreePath(myNode.getPath()));
+    Rectangle nodeBounds = tree.getPathBounds(new TreePath(getNodePath()));
     if (bounds == null || nodeBounds == null) {
       return null;
     }

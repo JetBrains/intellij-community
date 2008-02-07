@@ -4,10 +4,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
+import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,10 +22,10 @@ public class XExpressionEvaluationDialog extends EvaluationDialogBase {
 
   public XExpressionEvaluationDialog(@NotNull final Project project, XDebuggerEditorsProvider editorsProvider, XSuspendContext suspendContext,
                                      final @Nullable XSourcePosition sourcePosition) {
-    super(project, XDebuggerBundle.message("xdebugger.dialog.title.evaluate.expression"), suspendContext);
+    super(project, XDebuggerBundle.message("xdebugger.dialog.title.evaluate.expression"), editorsProvider, suspendContext, sourcePosition);
     getInputPanel().add(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.expression")), BorderLayout.WEST);
     myExpressionComboBox = new XDebuggerExpressionComboBox(project, editorsProvider, "evaluateExpression", sourcePosition);
-    myExpressionComboBox.getComboBox().setMinimumAndPreferredWidth(200);
+    myExpressionComboBox.getComboBox().setMinimumAndPreferredWidth(250);
     getInputPanel().add(myExpressionComboBox.getComponent(), BorderLayout.CENTER);
     myExpressionComboBox.selectAll();
   }
@@ -34,10 +34,10 @@ public class XExpressionEvaluationDialog extends EvaluationDialogBase {
     return myExpressionComboBox;
   }
 
-  protected XValue doEvaluate() {
+  protected void startEvaluation(final XDebuggerEvaluator.XEvaluationCallback callback) {
     myExpressionComboBox.saveTextInHistory();
     String expression = myExpressionComboBox.getText();
-    return getEvaluator().evaluate(expression);
+    getEvaluator().evaluate(expression, callback);
   }
 
 }
