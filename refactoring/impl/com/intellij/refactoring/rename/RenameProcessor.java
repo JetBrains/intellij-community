@@ -189,7 +189,9 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       result.addAll(usagesList);
 
       for(AutomaticRenamerFactory factory: myRenamerFactories) {
-        myRenamers.add(factory.createRenamer(element, newName, usagesList));
+        if (factory.isApplicable(element)) {
+          myRenamers.add(factory.createRenamer(element, newName, usagesList));
+        }
       }
 
       for(AutomaticRenamerFactory factory: Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
@@ -290,7 +292,9 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     final ArrayList<UsageInfo> extractedUsages = new ArrayList<UsageInfo>(usages.length);
     for (UsageInfo usage : usages) {
       LOG.assertTrue(usage instanceof MoveRenameUsageInfo);
-      if (usage.getReference() instanceof LightElement) continue; //filter out implicit references (e.g. from derived class to super class' default constructor)
+      if (usage.getReference() instanceof LightElement) {
+        continue; //filter out implicit references (e.g. from derived class to super class' default constructor)
+      }
 
       MoveRenameUsageInfo usageInfo = (MoveRenameUsageInfo)usage;
       if (element.equals(usageInfo.getReferencedElement())) {
