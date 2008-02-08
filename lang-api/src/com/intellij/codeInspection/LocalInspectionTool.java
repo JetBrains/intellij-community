@@ -42,7 +42,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
      * @param file       to check.
      * @param manager    InspectionManager to ask for ProblemDescriptor's from.
      * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
-     * @return <code>null</code> if no problems found or not applicable at field level.
+     * @return <code>null</code> if no problems found or not applicable at fiel level.
      */
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
