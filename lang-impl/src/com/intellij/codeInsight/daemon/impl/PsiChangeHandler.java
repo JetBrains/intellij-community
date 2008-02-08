@@ -1,19 +1,21 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
-import com.intellij.lang.xml.XmlFileViewProvider;
+import com.intellij.codeInsight.daemon.ChangeLocalityDetector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiChangeHandler extends PsiTreeChangeAdapter {
+  private static final ExtensionPointName<ChangeLocalityDetector> EP_NAME = ExtensionPointName.create("com.intellij.daemon.changeLocalityDetector");
+
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
 
@@ -80,53 +82,48 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
       }, ModalityState.stateForComponent(editor.getComponent()));
     }
 
+    final FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
+
     PsiFile file = child.getContainingFile();
     if (file == null || file instanceof PsiCompiledElement) {
-      myDaemonCodeAnalyzer.getFileStatusMap().markAllFilesDirty();
+      fileStatusMap.markAllFilesDirty();
       return;
     }
+
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
     if (document == null) return;
 
     // optimization
     if (whitespaceOptimizationAllowed && UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document)) {
       if (child instanceof PsiWhiteSpace || child instanceof PsiComment) {
-        myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirty(document, child);
+        fileStatusMap.markFileScopeDirty(document, child);
         return;
       }
     }
 
-    if (file instanceof XmlFile) {
-      // TODO: Hackery. Need an API for language plugin developers to define dirty scope for their changes.
-      final FileViewProvider provider = file.getViewProvider();
-      if (provider instanceof XmlFileViewProvider && ((XmlFileViewProvider)provider).getLanguageExtensions().length > 0) {
-        myDaemonCodeAnalyzer.getFileStatusMap().markAllFilesDirty();
-        return;
-      }
-    }
-    // change in e.g. sciptlet may lead to error in any other place
-    Language language = file.getLanguage();
-    if (language == StdLanguages.JSPX || language == StdLanguages.JSP) {
-      myDaemonCodeAnalyzer.getFileStatusMap().markAllFilesDirty();
-      return;
-    }
-
-    // optimization:
-    PsiElement parent = child;
+    PsiElement element = child;
     while (true) {
-      if (parent instanceof PsiFile || parent instanceof PsiDirectory) {
-        myDaemonCodeAnalyzer.getFileStatusMap().markAllFilesDirty();
+      if (element instanceof PsiFile || element instanceof PsiDirectory) {
+        fileStatusMap.markAllFilesDirty();
         return;
       }
-      PsiElement pparent = parent.getParent();
 
-      if (parent instanceof PsiCodeBlock && pparent instanceof PsiMethod && !((PsiMethod)pparent).isConstructor() &&
-          pparent.getParent()instanceof PsiClass && !(pparent.getParent()instanceof PsiAnonymousClass)) {
-        // do not use this optimization for constructors and class initializers - to update non-initialized fields
-        myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirty(document, pparent);
+      final PsiElement scope = getChangeHighlightingScope(element);
+      if (scope != null) {
+        fileStatusMap.markFileScopeDirty(document, scope);
         return;
       }
-      parent = pparent;
+
+      element = element.getParent();
     }
+  }
+
+  @Nullable
+  private static PsiElement getChangeHighlightingScope(PsiElement element) {
+    for (ChangeLocalityDetector detector : Extensions.getExtensions(EP_NAME)) {
+      final PsiElement scope = detector.getChangeHighlightingDirtyScopeFor(element);
+      if (scope != null) return scope;
+    }
+    return null;
   }
 }

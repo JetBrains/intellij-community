@@ -43,6 +43,9 @@
   <extensionPoint name="implicitUsageProvider"
                   interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider"/>
 
+  <extensionPoint name="daemon.changeLocalityDetector"
+                  interface="com.intellij.codeInsight.daemon.ChangeLocalityDetector"/>
+
   <extensionPoint name="languageInjector"
                   interface="com.intellij.psi.LanguageInjector"/>
   <extensionPoint name="concatenationAwareInjector"
