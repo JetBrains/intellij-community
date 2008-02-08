@@ -33,7 +33,7 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public class TemplateDataElementType extends IFileElementType {
+public class TemplateDataElementType extends IFileElementType implements ITemplateDataElementType {
   private final IElementType myTemplateElementType;
   private final IElementType myOuterElementType;
 
