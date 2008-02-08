@@ -499,15 +499,16 @@ public class PluginManagerMain {
                                        StringUtil.join(absent, new Function<PluginId, String>() {
                                          public String fun(final PluginId pluginId) {
                                            final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(pluginId);
-                                           LOG.assertTrue(ideaPluginDescriptor != null);
-                                           return "\"" + ideaPluginDescriptor.getName() + "\"";
+                                           return "\"" + (ideaPluginDescriptor != null ? ideaPluginDescriptor.getName() : pluginId.getIdString()) + "\"";
                                          }
                                        }, ", "), absent.size()));
         }
       }
     }
     if (buf.length() > 0) {
-      @NonNls final String message = "<html><body><ul>" + buf.toString() + "</ul></body></html>";
+      @NonNls final String message = "<html><body><ul>" + buf.toString() + "</ul>" +
+                                     "Changes won't be applied." +
+                                     "</body></html>";
       Messages.showErrorDialog(main, message);
       return false;
     }
