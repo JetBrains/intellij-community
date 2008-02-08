@@ -28,12 +28,13 @@ class RepositoryContentHandler extends DefaultHandler {
   @NonNls public static final String URL = "url";
   @NonNls public static final String IDEA_VERSION = "idea-version";
   @NonNls public static final String SINCE_BUILD = "since-build";
+  @NonNls private static final String UNTIL_BUILD = "until-build";
   @NonNls public static final String CHNAGE_NOTES = "change-notes";
   @NonNls private static final String DEPENDS = "depends";
   @NonNls private static final String DOWNLOADS = "downloads";
   @NonNls private static final String SIZE = "size";
-  @NonNls private static final String DATE = "date";
 
+  @NonNls private static final String DATE = "date";
   private PluginNode currentPlugin;
   private String currentValue;
   private ArrayList<IdeaPluginDescriptor> plugins;
@@ -62,6 +63,7 @@ class RepositoryContentHandler extends DefaultHandler {
     }
     else if (qName.equals(IDEA_VERSION)) {
       currentPlugin.setSinceBuild(atts.getValue(SINCE_BUILD));
+      currentPlugin.setUntilBuild(atts.getValue(UNTIL_BUILD));
     }
     else if (qName.equals(VENDOR)) {
       currentPlugin.setVendorEmail(atts.getValue(EMAIL));

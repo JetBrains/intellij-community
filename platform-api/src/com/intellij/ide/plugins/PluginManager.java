@@ -293,7 +293,7 @@ public class PluginManager {
   public static boolean isIncompatible(final IdeaPluginDescriptor descriptor) {
     final String buildNumber = getBuildNumber();
     if (buildNumber != null) {
-      final String sinceBuild = ((IdeaPluginDescriptorImpl)descriptor).getSinceBuild();
+      final String sinceBuild = descriptor.getSinceBuild();
       try {
         Integer.parseInt(sinceBuild);
         if (sinceBuild.compareToIgnoreCase(buildNumber) > 0) {
@@ -304,7 +304,7 @@ public class PluginManager {
         //skip invalid numbers
       }
 
-      final String untilBuild = ((IdeaPluginDescriptorImpl)descriptor).getUntilBuild();
+      final String untilBuild = descriptor.getUntilBuild();
       try {
         Integer.parseInt(untilBuild);
         if (untilBuild.compareToIgnoreCase(buildNumber) < 0) {

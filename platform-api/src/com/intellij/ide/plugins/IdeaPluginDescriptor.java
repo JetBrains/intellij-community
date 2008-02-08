@@ -74,4 +74,8 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
   boolean getUseIdeaClassLoader();
 
   String getDownloads();
+
+  String getSinceBuild();
+
+  String getUntilBuild();
 }

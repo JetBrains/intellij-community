@@ -31,6 +31,7 @@ public class PluginNode implements IdeaPluginDescriptor {
   private String vendor;
   private String description;
   private String sinceBuild;
+  private String untilBuild;
   private String changeNotes;
   private String downloads;
   private String category;
@@ -282,5 +283,13 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   public boolean getUseIdeaClassLoader() {
     return false;
+  }
+
+  public String getUntilBuild() {
+    return untilBuild;
+  }
+
+  public void setUntilBuild(final String untilBuild) {
+    this.untilBuild = untilBuild;
   }
 }
