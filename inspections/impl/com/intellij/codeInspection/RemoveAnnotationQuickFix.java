@@ -1,8 +1,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
@@ -31,7 +31,7 @@ public class RemoveAnnotationQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (myAnnotation.isPhysical()) {
       try {
-        if (!CodeInsightUtil.preparePsiElementForWrite(myAnnotation)) return;
+        if (!CodeInsightUtilBase.preparePsiElementForWrite(myAnnotation)) return;
         myAnnotation.delete();
       }
       catch (IncorrectOperationException e) {

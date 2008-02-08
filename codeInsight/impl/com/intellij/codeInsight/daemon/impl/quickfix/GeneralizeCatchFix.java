@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -67,7 +67,7 @@ public class GeneralizeCatchFix implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtil.prepareFileForWrite(myElement.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myElement.getContainingFile())) return;
     PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
     PsiTypeElement type = factory.createTypeElement(myUnhandledException);
     myCatchParameter.getTypeElement().replace(type);

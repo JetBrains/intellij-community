@@ -5,7 +5,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -43,7 +43,7 @@ public class SimplifyBooleanExpressionAction implements IntentionAction{
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiExpression expression = getExpressionToSimplify(editor, file);
     SimplifyBooleanExpressionFix.simplifyExpression(expression);
   }

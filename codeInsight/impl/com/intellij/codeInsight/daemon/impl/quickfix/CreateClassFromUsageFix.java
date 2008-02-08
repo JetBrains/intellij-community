@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -32,7 +32,7 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final PsiJavaCodeReferenceElement element = getRefElement();
     assert element != null;
-    if (!CodeInsightUtil.preparePsiElementForWrite(element)) return;
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
     final String superClassName = getSuperClassName(element);
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {

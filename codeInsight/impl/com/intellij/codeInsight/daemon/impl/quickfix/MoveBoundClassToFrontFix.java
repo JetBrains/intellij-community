@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -34,7 +34,7 @@ public class MoveBoundClassToFrontFix extends ExtendsListFix {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtil.prepareFileForWrite(myClass.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
     PsiReferenceList extendsList = myClass.getExtendsList();
     if (extendsList == null) return;
     try {

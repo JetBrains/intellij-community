@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,7 +28,7 @@ public class OptimizeImportsFix implements IntentionAction{
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return;
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
     try{
       JavaCodeStyleManager.getInstance(project).optimizeImports(file);

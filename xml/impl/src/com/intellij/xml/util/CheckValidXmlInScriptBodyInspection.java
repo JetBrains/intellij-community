@@ -11,7 +11,7 @@
 package com.intellij.xml.util;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.lexer.Lexer;
@@ -165,7 +165,7 @@ public class CheckValidXmlInScriptBodyInspection extends BaseJavaLocalInspection
     }
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor problemDescriptor) {
-      if ( !CodeInsightUtil.prepareFileForWrite(psiFile)) return;
+      if ( !CodeInsightUtilBase.prepareFileForWrite(psiFile)) return;
       final TextRange range = psiElement.getTextRange();
       OpenFileDescriptor descriptor = new OpenFileDescriptor(
         project,

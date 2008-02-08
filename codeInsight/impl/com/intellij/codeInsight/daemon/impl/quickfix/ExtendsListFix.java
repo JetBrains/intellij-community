@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -80,7 +80,7 @@ public class ExtendsListFix implements IntentionAction, LocalQuickFix {
   }
 
   protected void invokeImpl () {
-    if (!CodeInsightUtil.prepareFileForWrite(myClass.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
     PsiReferenceList extendsList = !(myClass instanceof PsiTypeParameter) &&
                                    myClass.isInterface() != myClassToExtendFrom.isInterface() ?
                                    myClass.getImplementsList() : myClass.getExtendsList();

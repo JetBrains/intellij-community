@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -59,7 +59,7 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
   public void invoke(Project project, Editor editor, PsiFile file) {
 
     try {
-      if (!CodeInsightUtil.prepareFileForWrite(file)) { return; }
+      if (!CodeInsightUtilBase.prepareFileForWrite(file)) { return; }
 
       int offset = editor.getCaretModel().getOffset();
 

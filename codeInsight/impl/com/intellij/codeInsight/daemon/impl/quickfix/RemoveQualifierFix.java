@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReferenceExpression;
@@ -46,7 +46,7 @@ public class RemoveQualifierFix implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     myQualifier.delete();
     myExpression.bindToElement(myResolved);
   }

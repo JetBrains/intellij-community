@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -43,7 +43,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
     PsiClass aClass = getField().getContainingClass();
     PsiMethod[] constructors = aClass.getConstructors();

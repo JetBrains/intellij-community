@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -60,7 +60,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     PsiParameter myParameter = CreateFieldFromParameterAction.findParameterAtCursor(file, editor);
-    if (!CodeInsightUtil.prepareFileForWrite(myParameter.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myParameter.getContainingFile())) return;
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     try {

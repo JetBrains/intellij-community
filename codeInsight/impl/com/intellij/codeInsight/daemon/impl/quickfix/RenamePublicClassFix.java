@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,7 +44,7 @@ public class RenamePublicClassFix implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     LOG.assertTrue (file == myClass.getContainingFile());
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     VirtualFile vFile = file.getVirtualFile();
     String newName = vFile.getNameWithoutExtension();
     RenameProcessor processor = new RenameProcessor(project, myClass, newName, false, false);

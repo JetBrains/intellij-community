@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -141,7 +141,7 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     if (assignment == null) return;
     PsiField field = getAssignedField(assignment);
     if (field == null) return;
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
     ArrayList<PsiAssignmentExpression> assignments = new ArrayList<PsiAssignmentExpression>();
     if (!isInitializedWithSameExpression(field, assignment, assignments)) return;

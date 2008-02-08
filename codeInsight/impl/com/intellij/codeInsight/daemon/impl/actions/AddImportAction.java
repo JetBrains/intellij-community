@@ -1,7 +1,7 @@
 
 package com.intellij.codeInsight.daemon.impl.actions;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -100,7 +100,7 @@ public class AddImportAction implements QuestionAction {
     if (!ref.getElement().isValid() || !targetClass.isValid() || ref.resolve() == targetClass) {
       return;
     }
-    if (!CodeInsightUtil.preparePsiElementForWrite(ref.getElement())){
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(ref.getElement())){
       return;
     }
 

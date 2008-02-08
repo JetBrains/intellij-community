@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -63,7 +63,7 @@ public class WrapExpressionFix implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiMethod wrapper = findWrapper(myExpression.getType(), myExpectedType);
     PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
     @NonNls String methodCallText = "Foo." + wrapper.getName() + "()";

@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -44,7 +44,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   private AnAction createUnwrapAction(final Unwrapper u, final PsiElement el, final Editor ed, final Project p) {
     return new AnAction(u.getDescription(el)) {
       public void actionPerformed(AnActionEvent e) {
-        if (!CodeInsightUtil.prepareFileForWrite(el.getContainingFile())) return;
+        if (!CodeInsightUtilBase.prepareFileForWrite(el.getContainingFile())) return;
 
         CommandProcessor.getInstance().executeCommand(p, new Runnable() {
           public void run() {

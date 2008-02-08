@@ -5,7 +5,7 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -105,7 +105,7 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
             }
 
             public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-              if (!CodeInsightUtil.prepareFileForWrite(tag.getContainingFile())) {
+              if (!CodeInsightUtilBase.prepareFileForWrite(tag.getContainingFile())) {
                 return;
               }
 

@@ -4,7 +4,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -58,7 +58,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
     final PsiElement resolved = refExpr.resolve();

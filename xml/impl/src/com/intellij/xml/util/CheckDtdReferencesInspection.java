@@ -5,7 +5,7 @@
 package com.intellij.xml.util;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInsight.template.Template;
@@ -110,7 +110,7 @@ public class CheckDtdReferencesInspection extends BaseJavaLocalInspectionTool {
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiFile containingFile = element.getContainingFile();
-      if (!CodeInsightUtil.prepareFileForWrite(containingFile)) return;
+      if (!CodeInsightUtilBase.prepareFileForWrite(containingFile)) return;
 
       @NonNls String prefixToInsert = "";
       @NonNls String suffixToInsert = "";

@@ -7,7 +7,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,7 +43,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtil.prepareFileForWrite(variable.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(variable.getContainingFile())) return;
 
     if (variable instanceof PsiField) {
       deferField((PsiField)variable);

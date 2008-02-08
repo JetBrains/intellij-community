@@ -1,7 +1,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,7 +47,7 @@ public class MoveToPackageFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    if (!CodeInsightUtil.prepareFileForWrite(myFile)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myFile)) return;
 
     try {
       String packageName = myTargetPackage.getQualifiedName();

@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -25,7 +25,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToCatchFix");
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     int offset = editor.getCaretModel().getOffset();
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();

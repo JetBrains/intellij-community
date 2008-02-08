@@ -2,7 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -39,7 +39,7 @@ public class RemoveUnusedParameterFix implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtil.prepareFileForWrite(myParameter.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myParameter.getContainingFile())) return;
     removeReferences(myParameter);
   }
 

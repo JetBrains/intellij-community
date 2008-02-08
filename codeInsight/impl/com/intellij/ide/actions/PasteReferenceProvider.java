@@ -20,7 +20,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +55,7 @@ public class PasteReferenceProvider implements PasteProvider {
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(editor.getProject());
     documentManager.commitDocument(editor.getDocument());
     final PsiFile file = documentManager.getPsiFile(editor.getDocument());
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
     final Project project = editor.getProject();
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {

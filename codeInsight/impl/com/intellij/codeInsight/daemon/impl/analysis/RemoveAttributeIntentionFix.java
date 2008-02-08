@@ -2,7 +2,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
@@ -42,7 +42,7 @@ class RemoveAttributeIntentionFix implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiElement next = findNextAttribute(myAttribute);
     myAttribute.delete();
 

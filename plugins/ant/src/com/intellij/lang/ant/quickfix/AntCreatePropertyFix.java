@@ -1,6 +1,6 @@
 package com.intellij.lang.ant.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.misc.AntPsiUtil;
@@ -76,7 +76,7 @@ public class AntCreatePropertyFix extends BaseIntentionAction {
       final XmlTag projectTag = element.getAntProject().getSourceElement();
       XmlTag propTag = projectTag.createChildTag(AntFileImpl.PROPERTY, projectTag.getNamespace(), null, false);
       propTag.setAttribute(AntFileImpl.NAME_ATTR, name);
-      if (CodeInsightUtil.preparePsiElementForWrite(projectTag)) {
+      if (CodeInsightUtilBase.preparePsiElementForWrite(projectTag)) {
         result = (Navigatable)((anchor == null) ? projectTag.add(propTag) : projectTag.addBefore(propTag, anchor.getSourceElement()));
       }
     }

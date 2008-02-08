@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,7 +33,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
   }
 
   public void invoke(final Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -69,10 +69,10 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         public void run() {
-          if (!CodeInsightUtil.prepareFileForWrite(targetMethod.getContainingFile())) return;
+          if (!CodeInsightUtilBase.prepareFileForWrite(targetMethod.getContainingFile())) return;
           if (processSuperMethods) {
             for (PsiMethod superMethod : superMethods) {
-              if (!CodeInsightUtil.prepareFileForWrite(superMethod.getContainingFile())) return;
+              if (!CodeInsightUtilBase.prepareFileForWrite(superMethod.getContainingFile())) return;
             }
           }
 

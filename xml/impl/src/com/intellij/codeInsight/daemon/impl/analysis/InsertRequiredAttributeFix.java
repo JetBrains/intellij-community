@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -67,7 +67,7 @@ public class InsertRequiredAttributeFix implements IntentionAction {
   }
 
   public void invoke(final Project project, final Editor editor, PsiFile file) {
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(myTag);
     boolean indirectSyntax = false;
 

@@ -4,7 +4,7 @@
  */
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -361,7 +361,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     }
 
     private void doFix() {
-      if (!CodeInsightUtil.prepareFileForWrite(parentTag.getContainingFile())) return;
+      if (!CodeInsightUtilBase.prepareFileForWrite(parentTag.getContainingFile())) return;
 
       try {
         parentTag.add(parentTag.createChildTag(tagName, tagNamespace, "",false));

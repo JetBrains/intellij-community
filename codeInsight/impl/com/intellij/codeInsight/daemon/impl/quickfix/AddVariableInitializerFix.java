@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,7 +40,7 @@ public class AddVariableInitializerFix implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtil.prepareFileForWrite(myVariable.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
 
     String initializerText = suggestInitializer();
     PsiElementFactory factory = JavaPsiFacade.getInstance(myVariable.getProject()).getElementFactory();

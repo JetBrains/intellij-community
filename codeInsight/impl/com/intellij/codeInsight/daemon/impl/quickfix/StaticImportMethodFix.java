@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -99,7 +99,7 @@ public class StaticImportMethodFix implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     if (candidates.size() == 1) {
       final PsiMethod toImport = candidates.get(0);
       doImport(toImport);

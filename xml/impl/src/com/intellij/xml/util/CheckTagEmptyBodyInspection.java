@@ -4,7 +4,7 @@
 
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -89,7 +89,7 @@ public class CheckTagEmptyBodyInspection extends BaseJavaLocalInspectionTool {
 
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
         final PsiElement tag = descriptor.getPsiElement();
-      if (!CodeInsightUtil.prepareFileForWrite(tag.getContainingFile())) {
+      if (!CodeInsightUtilBase.prepareFileForWrite(tag.getContainingFile())) {
         return;
       }
 

@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
@@ -48,7 +48,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
-    if (!CodeInsightUtil.prepareFileForWrite(myClass.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
     PsiClass baseClass = myClass.getSuperClass();
     PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, myClass, PsiSubstitutor.EMPTY);
     LOG.assertTrue(baseClass != null);

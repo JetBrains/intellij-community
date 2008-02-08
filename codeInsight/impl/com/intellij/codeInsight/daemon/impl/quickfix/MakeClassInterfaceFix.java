@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -35,7 +35,7 @@ public class MakeClassInterfaceFix implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtil.preparePsiElementForWrite(myClass)) return;
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(myClass)) return;
     try {
       final PsiReferenceList extendsList = myMakeInterface? myClass.getExtendsList() : myClass.getImplementsList();
       final PsiReferenceList implementsList = myMakeInterface? myClass.getImplementsList() : myClass.getExtendsList();

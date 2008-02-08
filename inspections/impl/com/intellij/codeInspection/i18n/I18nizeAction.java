@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.lang.StdLanguages;
@@ -153,10 +153,10 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
     dialog.show();
     if (!dialog.isOK()) return;
 
-    if (!CodeInsightUtil.prepareFileForWrite(psiFile)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(psiFile)) return;
     final Collection<PropertiesFile> propertiesFiles = dialog.getAllPropertiesFiles();
     for (PropertiesFile file : propertiesFiles) {
-      if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+      if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable(){

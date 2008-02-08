@@ -4,7 +4,7 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -106,9 +106,9 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
     if (!dialog.isOK()) return;
     final Collection<PropertiesFile> propertiesFiles = dialog.getAllPropertiesFiles();
 
-    if (!CodeInsightUtil.preparePsiElementForWrite(literalExpression)) return;
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(literalExpression)) return;
     for (PropertiesFile file : propertiesFiles) {
-      if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+      if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     }
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable(){

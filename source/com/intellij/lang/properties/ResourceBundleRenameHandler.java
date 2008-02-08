@@ -3,7 +3,7 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -91,7 +91,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
     private boolean doRename(final String inputString) {
       final List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
       for (PropertiesFile propertiesFile : propertiesFiles) {
-        if (!CodeInsightUtil.prepareFileForWrite(propertiesFile)) return false;
+        if (!CodeInsightUtilBase.prepareFileForWrite(propertiesFile)) return false;
       }
 
       final RenameProcessor renameProcessor = new RenameProcessor(myProject, null);

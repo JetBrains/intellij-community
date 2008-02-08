@@ -1,7 +1,7 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -190,7 +190,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     if(classToBind != null){
       final PsiClass aClass = FormEditingUtil.findClassToBind(editor.getModule(), classToBind);
       if(aClass != null && aClass.findFieldByName(insertedComponent.getBinding(), true) == null) {
-        if (!CodeInsightUtil.preparePsiElementForWrite(aClass)) {
+        if (!CodeInsightUtilBase.preparePsiElementForWrite(aClass)) {
           return;
         }
         ApplicationManager.getApplication().runWriteAction(

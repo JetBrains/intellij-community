@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -120,7 +120,7 @@ public class ModifierFix implements IntentionAction {
         }));
     }
 
-    if (!CodeInsightUtil.prepareFileForWrite(myModifierList.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myModifierList.getContainingFile())) return;
 
     if (!modifierLists.isEmpty()) {
       if (Messages.showYesNoDialog(project,

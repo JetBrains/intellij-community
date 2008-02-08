@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -570,7 +570,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     }
 
     public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-      if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+      if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
       final XmlTag rootTag = myTargetFile.getDocument().getRootTag();
 

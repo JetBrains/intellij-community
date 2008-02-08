@@ -2,7 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -47,7 +47,7 @@ public class RemoveNewQualifierFix implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtil.prepareFileForWrite(expression.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(expression.getContainingFile())) return;
     PsiJavaCodeReferenceElement classReference = expression.getClassReference();
     expression.getQualifier().delete();
     if (aClass != null && classReference != null) {

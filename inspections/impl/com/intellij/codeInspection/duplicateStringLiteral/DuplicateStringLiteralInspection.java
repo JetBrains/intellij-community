@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.duplicateStringLiteral;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
@@ -228,7 +228,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         }
 
         public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-          if (!CodeInsightUtil.prepareFileForWrite(originalExpression.getContainingFile())) return;
+          if (!CodeInsightUtilBase.prepareFileForWrite(originalExpression.getContainingFile())) return;
           try {
             final PsiReferenceExpression reference = createReferenceTo(constant, originalExpression);
             if (reference != null) {

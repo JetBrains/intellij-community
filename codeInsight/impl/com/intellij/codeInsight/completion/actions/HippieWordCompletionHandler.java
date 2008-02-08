@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.completion.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -36,7 +36,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
   }
 
   public void invoke(Project project, final Editor editor, PsiFile file) {
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     final CharSequence charsSequence = editor.getDocument().getCharsSequence();
 
     final CompletionData data = computeData(editor, charsSequence);

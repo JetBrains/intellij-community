@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -32,7 +32,7 @@ public class ImplementMethodsFix implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtil.prepareFileForWrite(myClass.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
     OverrideImplementUtil.chooseAndImplementMethods(project, editor, myClass);
   }
 

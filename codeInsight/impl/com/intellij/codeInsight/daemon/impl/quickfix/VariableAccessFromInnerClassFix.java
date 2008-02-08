@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -78,8 +78,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtil.prepareFileForWrite(myClass.getContainingFile())) return;
-    if (!CodeInsightUtil.prepareFileForWrite(myVariable.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
     try {
       switch (myFixType) {
         case MAKE_FINAL:

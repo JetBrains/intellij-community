@@ -1,6 +1,6 @@
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInspection.*;
 import com.intellij.concurrency.JobUtil;
 import com.intellij.lang.ASTNode;
@@ -142,7 +142,7 @@ public class UnusedPropertyInspection extends LocalInspectionTool implements Cus
 
     public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
       final PsiFile file = element.getContainingFile();
-      if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+      if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
       final Property property = PsiTreeUtil.getParentOfType(element, Property.class);
       LOG.assertTrue(property != null);
@@ -178,7 +178,7 @@ public class UnusedPropertyInspection extends LocalInspectionTool implements Cus
 
     public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
       final PsiFile file = element.getContainingFile();
-      if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+      if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
       @NonNls final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
 

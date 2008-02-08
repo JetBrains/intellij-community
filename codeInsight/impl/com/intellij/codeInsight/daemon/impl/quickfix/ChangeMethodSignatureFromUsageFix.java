@@ -7,8 +7,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
@@ -117,11 +117,11 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) {
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
     final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod(myTargetMethod, RefactoringBundle.message("to.refactor"));
     if (method == null) return;
-    if (!CodeInsightUtil.prepareFileForWrite(method.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(method.getContainingFile())) return;
 
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method);

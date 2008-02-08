@@ -9,7 +9,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -112,7 +112,7 @@ public class ImplementAbstractMethodHandler {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             try {
-              CodeInsightUtil.prepareFileForWrite(psiClass.getContainingFile());
+              CodeInsightUtilBase.prepareFileForWrite(psiClass.getContainingFile());
               OverrideImplementUtil.overrideOrImplement(psiClass, myMethod);
             }
             catch (IncorrectOperationException e) {

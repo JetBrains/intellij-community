@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.wrongPackageStatement;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -43,7 +43,7 @@ public class AdjustPackageNameFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    if (!CodeInsightUtil.prepareFileForWrite(myFile)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myFile)) return;
 
     try {
       PsiElementFactory factory = JavaPsiFacade.getInstance(myFile.getProject()).getElementFactory();

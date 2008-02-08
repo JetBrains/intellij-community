@@ -8,7 +8,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NonNls;
@@ -42,7 +42,7 @@ public class XmlErrorQuickFixProvider implements ErrorQuickFixProvider {
         }
 
         public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-          if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+          if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
           final int textOffset = element.getTextOffset();
           editor.getDocument().replaceString(textOffset,textOffset + 1,AMP_ENTITY);
         }

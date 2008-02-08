@@ -9,6 +9,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -99,7 +100,7 @@ public class ImportClassFix implements HintAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         List<PsiClass> classesToImport = getClassesToImport();

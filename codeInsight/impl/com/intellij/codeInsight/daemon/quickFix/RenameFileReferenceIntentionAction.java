@@ -5,7 +5,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
@@ -59,7 +59,7 @@ class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickF
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     myFileReference.handleElementRename(myExistingElementName);
   }
 

@@ -4,7 +4,7 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -55,7 +55,7 @@ public class RenameTagBeginOrEndIntentionAction implements LocalQuickFix {
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     if (myTarget.isValid()) {
-      if (!CodeInsightUtil.prepareFileForWrite(myTarget.getContainingFile())) {
+      if (!CodeInsightUtilBase.prepareFileForWrite(myTarget.getContainingFile())) {
         return;
       }
 

@@ -1,7 +1,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
@@ -38,7 +38,7 @@ class RemovePropertyFix implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     myProperty.delete();
   }
 

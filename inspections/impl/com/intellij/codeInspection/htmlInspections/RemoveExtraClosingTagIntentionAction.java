@@ -4,7 +4,7 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -39,7 +39,7 @@ public class RemoveExtraClosingTagIntentionAction implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    if (!CodeInsightUtil.prepareFileForWrite(myXmlToken.getContainingFile())) {
+    if (!CodeInsightUtilBase.prepareFileForWrite(myXmlToken.getContainingFile())) {
       return;
     }
 

@@ -1,6 +1,6 @@
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
@@ -98,7 +98,7 @@ public class PropertiesAnnotator implements Annotator {
               }
 
               public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-                if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+                if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
                 int offset = annotation.getStartOffset();
                 if (property.getContainingFile().getText().charAt(offset) == '\\') {
                   editor.getDocument().deleteString(offset, offset+1);

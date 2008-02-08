@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
@@ -43,7 +43,7 @@ public class AccessStaticViaInstanceFix implements LocalQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (!myExpression.isValid() || !myMember.isValid()) return;
-    if (!CodeInsightUtil.prepareFileForWrite(myExpression.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myExpression.getContainingFile())) return;
     PsiClass containingClass = myMember.getContainingClass();
     if (containingClass == null) return;
     try {

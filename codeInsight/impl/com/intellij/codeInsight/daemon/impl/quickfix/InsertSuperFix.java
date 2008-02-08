@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -38,7 +38,7 @@ public class InsertSuperFix implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtil.prepareFileForWrite(myConstructor.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myConstructor.getContainingFile())) return;
     try {
       PsiStatement superCall =
         JavaPsiFacade.getInstance(myConstructor.getProject()).getElementFactory().createStatementFromText("super();",null);

@@ -2,7 +2,7 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -46,7 +46,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       return;
     }
 
-    if (!CodeInsightUtil.preparePsiElementForWrite(file)) return;
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
 
     Collections.sort(array, new Comparator<TemplateImpl>() {
       public int compare(TemplateImpl o1, TemplateImpl o2) {

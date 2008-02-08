@@ -2,7 +2,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -110,7 +110,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
 
   private static void invoke(final Project project, Editor editor, PsiFile file, boolean isInteractive) {
     final PsiParameter myParameter = findParameterAtCursor(file, editor);
-    if (!CodeInsightUtil.prepareFileForWrite(myParameter.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myParameter.getContainingFile())) return;
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     final PsiType type = getType(myParameter);

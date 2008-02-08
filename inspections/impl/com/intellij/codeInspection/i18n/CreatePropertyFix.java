@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -137,7 +137,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
                                     @NotNull final String key,
                                     @NotNull final String value) {
     for (PropertiesFile selectedFile : selectedPropertiesFiles) {
-      if (!CodeInsightUtil.prepareFileForWrite(selectedFile)) return;
+      if (!CodeInsightUtilBase.prepareFileForWrite(selectedFile)) return;
     }
     UndoUtil.markPsiFileForUndo(psiElement.getContainingFile());
 

@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -50,7 +50,7 @@ public class MoveCatchUpFix implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtil.prepareFileForWrite(myCatchSection.getContainingFile())) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myCatchSection.getContainingFile())) return;
     try {
       PsiTryStatement statement = myCatchSection.getTryStatement();
       statement.addBefore(myCatchSection, myMoveBeforeSection);
