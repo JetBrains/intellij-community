@@ -11,6 +11,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -94,7 +96,21 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   protected void checkStorageIntegrity() {
     if (!ApplicationManagerEx.getApplicationEx().isInternal()) return;
-    StorageChecker.checkIntegrity(myStorage);
+
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      indicator.pushState();
+      indicator.setText("Checking integrity of the local history");
+    }
+
+    try {
+      StorageChecker.checkIntegrity(myStorage);
+    }
+    finally {
+      if (indicator != null) {
+        indicator.popState();
+      }
+    }
   }
 
   protected void initService() {

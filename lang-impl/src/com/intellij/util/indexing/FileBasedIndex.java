@@ -14,6 +14,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -707,9 +708,11 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   private class UnindexedFilesFinder implements CollectingContentIterator {
     private final List<VirtualFile> myFiles = new ArrayList<VirtualFile>();
     private final Collection<String> myIndexIds;
+    private final ProgressIndicator myProgressIndicator;
 
     public UnindexedFilesFinder(final Collection<String> indexIds) {
       myIndexIds = indexIds;
+      myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
     }
 
     public List<VirtualFile> getFiles() {
@@ -723,6 +726,12 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
             myFiles.add(file);
             break;
           }
+        }
+      }
+      else {
+        if (myProgressIndicator != null) {
+          myProgressIndicator.setText("Scanning files to index");
+          myProgressIndicator.setText2(file.getPresentableUrl());
         }
       }
       return true;
