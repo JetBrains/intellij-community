@@ -103,10 +103,12 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     int ret = orderEntry2.compareTo(orderEntry1);
     if (ret != 0) return ret;
     //prefer file which is closer to our module
-    for (Module module : myModules) {
-      ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-      ret = fileIndex.isInContent(file1) ? fileIndex.isInContent(file2) ? 0 : 1 : fileIndex.isInContent(file2) ? -1 : 0;
-      if (ret != 0) return ret;
+    if (myModules != null) {
+      for (Module module : myModules) {
+        ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
+        ret = fileIndex.isInContent(file1) ? fileIndex.isInContent(file2) ? 0 : 1 : fileIndex.isInContent(file2) ? -1 : 0;
+        if (ret != 0) return ret;
+      }
     }
     return 0;
   }
