@@ -734,7 +734,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   public boolean init(final boolean updateWholeFile, final PsiFile file) {
     if (!(file instanceof XmlFile))
-      return false;
+      return true;
     if (updateWholeFile) {
       final XmlRefCountHolder countHolder = XmlRefCountHolder.getInstance((XmlFile)file);
       countHolder.clear();
