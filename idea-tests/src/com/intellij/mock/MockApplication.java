@@ -183,7 +183,7 @@ public class MockApplication extends MockComponentManager implements Application
   public void invokeLater(Runnable runnable) {
   }
 
-  public void invokeLater(Runnable runnable, ModalityState state) {
+  public void invokeLater(Runnable runnable, @NotNull ModalityState state) {
   }
 
   @NotNull
@@ -191,7 +191,7 @@ public class MockApplication extends MockComponentManager implements Application
     throw new UnsupportedOperationException();
   }
 
-  public void invokeAndWait(Runnable runnable, ModalityState modalityState) {
+  public void invokeAndWait(Runnable runnable, @NotNull ModalityState modalityState) {
   }
 
   public long getStartTime() {
