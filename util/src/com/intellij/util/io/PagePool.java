@@ -58,10 +58,12 @@ public class PagePool {
   private final TreeMap<PoolPageKey, FinalizationRequest> myFinalizationQueue = new TreeMap<PoolPageKey, FinalizationRequest>();
 
   private final Object lock = new Object();
-  private final Object finalizationQueueSemaphore = new Object();
-  private final Object finalizationLock = new Object();
-
+  private final Object finalizationMonitor = new Object();
   private final PoolPageKey keyInstance = new PoolPageKey(null, -1);
+
+  private PoolPageKey lastFinalizedKey = null;
+  private Thread myFinalizerThread;
+
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int hits = 0;
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int cache_misses = 0;
@@ -97,7 +99,6 @@ public class PagePool {
       if (request != null) {
         page = request.page;
         finalization_queue_hits++;
-        page.setFinalizationId(0);
         toProtectedQueue(page);
         return page;
       }
@@ -177,58 +178,38 @@ public class PagePool {
     return hasFlushes;
   }
 
-  private PoolPageKey lastFinalizedKey = null;
-
   private void scheduleFinalization(final Page page) {
-    boolean wakeUpFinalizer = false;
+    final int curFinalizationId;
     synchronized (lock) {
-      if (page.isDirty()) {
-        if (myFinalizerThread == null) {
-          myFinalizerThread = new Thread(new FinalizationThreadWorker(), FINALIZER_THREAD_NAME);
-          myFinalizerThread.start();
-        }
+      curFinalizationId = ++finalizationId;
+    }
 
-        final int curFinalizationId = ++finalizationId;
-        page.setFinalizationId(curFinalizationId);
+    final FinalizationRequest request = page.prepareForFinalization(curFinalizationId);
+    if (request == null) return;
 
-        final FinalizationRequest request = new FinalizationRequest(page, curFinalizationId);
+    boolean wakeUpFinalizer = false;
 
-        myFinalizationQueue.put(keyForPage(page), request);
-        if (myFinalizationQueue.size() > 5000) {
-          flushFinalizationQueue();
-        }
-        else {
-          wakeUpFinalizer = true;
-        }
+    synchronized (lock) {
+      if (myFinalizerThread == null) {
+        myFinalizerThread = new Thread(new FinalizationThreadWorker(), FINALIZER_THREAD_NAME);
+        myFinalizerThread.start();
+      }
+
+      myFinalizationQueue.put(keyForPage(page), request);
+      if (myFinalizationQueue.size() > 5000) {
+        flushFinalizationQueue();
       }
       else {
-        page.recycle();
+        wakeUpFinalizer = true;
       }
     }
 
     if (wakeUpFinalizer) {
-      synchronized (finalizationLock) {
-        finalizationLock.notifyAll();
+      synchronized (finalizationMonitor) {
+        finalizationMonitor.notifyAll();
       }
     }
   }
-
-  private static class FinalizationRequest {
-    public final Page page;
-    public final long finalizationId;
-
-    private FinalizationRequest(final Page page, final long finalizationId) {
-      this.page = page;
-      this.finalizationId = finalizationId;
-    }
-
-    @Override
-    public String toString() {
-      return "FinalizationRequest[page = " + page + ", finalizationId = " + finalizationId + "]";
-    }
-  }
-
-  private Thread myFinalizerThread;
 
   private class FinalizationThreadWorker implements Runnable {
     public void run() {
@@ -242,9 +223,9 @@ public class PagePool {
             Thread.sleep(5);
           }
           else {
-            synchronized (finalizationLock) {
+            synchronized (finalizationMonitor) {
               try {
-                finalizationLock.wait(10);
+                finalizationMonitor.wait(10);
               }
               catch (InterruptedException e) {
                 throw new RuntimeException(e);
@@ -269,10 +250,6 @@ public class PagePool {
         myFinalizationQueue.remove(page.getKey());
       }
       page.recycleIfFinalizationIdIsEqualTo(request.finalizationId);
-
-      synchronized (finalizationQueueSemaphore) {
-        finalizationQueueSemaphore.notifyAll();
-      }
     }
   }
 

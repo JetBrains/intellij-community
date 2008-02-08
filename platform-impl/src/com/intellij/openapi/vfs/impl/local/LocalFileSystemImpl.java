@@ -710,6 +710,10 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return new BufferedInputStream(new FileInputStream(convertToIOFile(file)));
   }
 
+  public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
+    return FileUtil.adaptiveLoadBytes(new FileInputStream(convertToIOFile(file)));
+  }
+
   public long getTimeStamp(final VirtualFile file) {
     return convertToIOFile(file).lastModified();
   }

@@ -239,8 +239,10 @@ public class Storage implements Disposable, Forceable {
   }
 
   public void writeBytes(int record, byte[] bytes) {
-    dropRecordCache(record);
-    doWriteBytes(record, bytes);
+    synchronized (lock) {
+      dropRecordCache(record);
+      doWriteBytes(record, bytes);
+    }
   }
 
   private void doWriteBytes(final int record, final byte[] bytes) {
@@ -294,6 +296,10 @@ public class Storage implements Disposable, Forceable {
   }
 
   public AppenderStream appendStream(int record) {
+    synchronized (lock) {
+      myRecordsTable.markDirty();
+    }
+
     synchronized (myAppendersLock) {
       return myAppendersCache.get(record);
     }
@@ -305,8 +311,10 @@ public class Storage implements Disposable, Forceable {
   }
 
   public byte[] readBytes(int record) {
-    dropRecordCache(record);
-    return doReadBytes(record);
+    synchronized (lock) {
+      dropRecordCache(record);
+      return doReadBytes(record);
+    }
   }
 
   private byte[] doReadBytes(final int record) {
@@ -323,8 +331,8 @@ public class Storage implements Disposable, Forceable {
   }
 
   public void deleteRecord(int record) {
-    dropRecordCache(record);
     synchronized (lock) {
+      dropRecordCache(record);
       myRecordsTable.deleteRecord(record);
     }
   }

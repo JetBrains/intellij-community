@@ -142,6 +142,10 @@ public class MockLocalFileSystem extends LocalFileSystem {
     return null;
   }
 
+  public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
+    return new byte[0];
+  }
+
   public long getLength(final VirtualFile file) {
     return 0;
   }

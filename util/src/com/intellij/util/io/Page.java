@@ -41,11 +41,14 @@ public class Page {
   private final RandomAccessDataFile owner;
   private final PoolPageKey myKey;
 
-  private volatile ByteBuffer buf;
-  private volatile boolean read = false;
-  private volatile boolean dirty = false;
-  private volatile int myFinalizationId;
-  private volatile BitSet myWriteMask;
+  private ByteBuffer buf;
+  private boolean read = false;
+  private boolean dirty = false;
+  private int myFinalizationId;
+  private BitSet myWriteMask;
+
+  private static class PageLock {}
+  private final PageLock lock = new PageLock();
 
   public Page(RandomAccessDataFile owner, long offset) {
     this.owner = owner;
@@ -123,7 +126,7 @@ public class Page {
   }
 
   public void flush() {
-    synchronized (owner) {
+    synchronized (lock) {
       if (dirty) {
         int start = 0;
         int end = PAGE_SIZE;
@@ -150,15 +153,17 @@ public class Page {
   }
 
   public ByteBuffer getBuf() {
-    if (buf == null) {
-      synchronized (ourBufferPool) {
-        buf = ourBufferPool.alloc();
+    synchronized (lock) {
+      if (buf == null) {
+        synchronized (ourBufferPool) {
+          buf = ourBufferPool.alloc();
+        }
       }
+      return buf;
     }
-    return buf;
   }
 
-  public void recycle() {
+  private void recycle() {
     if (buf != null) {
       synchronized (ourBufferPool) {
         ourBufferPool.recycle(buf);
@@ -176,7 +181,7 @@ public class Page {
   }
 
   public int put(long index, byte[] bytes, int off, int length) {
-    synchronized (owner) {
+    synchronized (lock) {
       myFinalizationId = 0;
       ensureReadOrWriteMaskExists();
 
@@ -195,7 +200,7 @@ public class Page {
   }
 
   public int get(long index, byte[] bytes, int off, int length) {
-    synchronized (owner) {
+    synchronized (lock) {
       myFinalizationId = 0;
       ensureRead();
 
@@ -210,16 +215,22 @@ public class Page {
     }
   }
 
-  public boolean isDirty() {
-    return dirty;
+  @Nullable
+  public FinalizationRequest prepareForFinalization(int finalizationId) {
+    synchronized (lock) {
+      if (dirty) {
+        myFinalizationId = finalizationId;
+        return new FinalizationRequest(this, finalizationId);
+      }
+      else {
+        recycle();
+        return null;
+      }
+    }
   }
 
   public RandomAccessDataFile getOwner() {
     return owner;
-  }
-
-  public void setFinalizationId(final int curFinalizationId) {
-    myFinalizationId = curFinalizationId;
   }
 
   public PoolPageKey getKey() {
@@ -227,7 +238,7 @@ public class Page {
   }
 
   public boolean flushIfFinalizationIdIsEqualTo(final long finalizationId) {
-    synchronized (owner) {
+    synchronized (lock) {
       if (myFinalizationId == finalizationId) {
         flush();
         return true;
@@ -238,7 +249,7 @@ public class Page {
   }
 
   public boolean recycleIfFinalizationIdIsEqualTo(final long finalizationId) {
-    synchronized (owner) {
+    synchronized (lock) {
       if (myFinalizationId == finalizationId) {
         recycle();
         return true;
@@ -249,6 +260,8 @@ public class Page {
 
   @Override
   public String toString() {
-    return "Page[" + owner + ", dirty: " + isDirty() + ", offset=" + offset + "]";
+    synchronized (lock) {
+      return "Page[" + owner + ", dirty: " + dirty + ", offset=" + offset + "]";
+    }
   }
 }

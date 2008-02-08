@@ -60,7 +60,7 @@ class RecordsTable implements Disposable, Forceable {
     }
   }
 
-  private void markDirty() {
+  public void markDirty() {
     if (!myIsDirty) {
       myIsDirty = true;
       myStorage.putInt(HEADER_MAGIC_OFFSET, CONNECTED_MAGIC);

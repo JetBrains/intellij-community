@@ -254,10 +254,14 @@ public class JarHandler implements FileSystemInterface {
   }
 
   public InputStream getInputStream(final VirtualFile file) throws IOException {
+    return new ByteArrayInputStream(contentsToByteArray(file));
+  }
+
+  public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
     synchronized (lock) {
       final ZipEntry entry = convertToEntry(file);
       if (entry == null) {
-        return new ByteArrayInputStream(new byte[0]);
+        return new byte[0];
       }
 
       final ZipFile zip = getZip();
@@ -272,7 +276,7 @@ public class JarHandler implements FileSystemInterface {
         nativeStream.close();
       }
 
-      return new ByteArrayInputStream(result.toByteArray());
+      return result.toByteArray();
     }
   }
 

@@ -46,6 +46,8 @@ public interface FileSystemInterface {
   void renameFile(final Object requestor, VirtualFile file, String newName) throws IOException;
   VirtualFile copyFile(final Object requestor, VirtualFile file, VirtualFile newParent, final String copyName) throws IOException;
 
+  byte[] contentsToByteArray(final VirtualFile file) throws IOException;
+
   InputStream getInputStream(VirtualFile file) throws IOException;
   OutputStream getOutputStream(VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException;
 

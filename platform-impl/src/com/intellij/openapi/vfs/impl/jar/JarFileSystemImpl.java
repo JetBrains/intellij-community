@@ -186,6 +186,10 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return getHandler(file).getInputStream(file);
   }
 
+  public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
+    return getHandler(file).contentsToByteArray(file);
+  }
+
   public long getLength(final VirtualFile file) {
     return getHandler(file).getLength(file);
   }

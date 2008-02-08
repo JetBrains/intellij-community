@@ -327,6 +327,67 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     processEvent(new VFilePropertyChangeEvent(requestor, file, VirtualFile.PROP_NAME, file.getName(), newName, false));
   }
 
+  public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
+    InputStream contentStream = null;
+    boolean reloadFromDelegate;
+    synchronized (INPUT_LOCK) {
+      reloadFromDelegate = mustReloadContent(file) || (contentStream = FILE_CONTENT.readAttribute(file)) == null;
+    }
+
+    if (reloadFromDelegate) {
+      final NewVirtualFileSystem delegate = getDelegate(file);
+      final byte[] content = delegate.contentsToByteArray(file);
+
+      synchronized (INPUT_LOCK) {
+        if (content.length <= FILE_LENGTH_TO_CACHE_THRESHOULD) {
+          DataOutputStream sink = FILE_CONTENT.writeAttribute(file);
+          try {
+            FileUtil.copy(new ByteArrayInputStream(content), sink);
+          }
+          finally {
+            sink.close();
+          }
+
+          myRecords.setLength(getFileId(file), content.length);
+          setFlag(file, MUST_RELOAD_CONTENT, false);
+        }
+      }
+
+      return content;
+    }
+    else {
+      return FileUtil.loadBytes(contentStream, (int)file.getLength());
+    }
+
+  }
+
+  private ReplicatorInputStream createReplicator(final VirtualFile file, final InputStream nativeStream, final long len) {
+    final ByteArrayOutputStream cache = new ByteArrayOutputStream((int)len);
+    return new ReplicatorInputStream(nativeStream, cache) {
+      public void close() throws IOException {
+        super.close();
+
+        synchronized (INPUT_LOCK) {
+          if (getBytesRead() == len) {
+            DataOutputStream sink = FILE_CONTENT.writeAttribute(file);
+            try {
+              FileUtil.copy(new ByteArrayInputStream(cache.toByteArray()), sink);
+            }
+            finally {
+              sink.close();
+            }
+
+            myRecords.setLength(getFileId(file), len);
+            setFlag(file, MUST_RELOAD_CONTENT, false);
+          }
+          else {
+            setFlag(file, MUST_RELOAD_CONTENT, true);
+          }
+        }
+      }
+    };
+  }
+
   public InputStream getInputStream(final VirtualFile file) throws IOException {
     synchronized (INPUT_LOCK) {
       InputStream contentStream;
@@ -337,31 +398,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
         if (len > FILE_LENGTH_TO_CACHE_THRESHOULD) return nativeStream;
 
-        final ByteArrayOutputStream cache = new ByteArrayOutputStream((int)len);
-        return new ReplicatorInputStream(nativeStream, cache) {
-          public void close() throws IOException {
-            super.close();
-
-            synchronized (INPUT_LOCK) {
-              if (getBytesRead() == len) {
-                DataOutputStream sink = FILE_CONTENT.writeAttribute(file);
-                try {
-                  FileUtil.copy(new ByteArrayInputStream(cache.toByteArray()), sink);
-                }
-                finally {
-                  sink.close();
-                }
-
-                myRecords.setLength(getFileId(file), len);
-
-                setFlag(file, MUST_RELOAD_CONTENT, false);
-              }
-              else {
-                setFlag(file, MUST_RELOAD_CONTENT, true);
-              }
-            }
-          }
-        };
+        return createReplicator(file, nativeStream, len);
       }
       else {
         return contentStream;
