@@ -37,10 +37,14 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection
                 "synchronization.on.local.variable.or.method.parameter.display.name");
     }
 
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
     @NotNull
     protected String buildErrorString(Object... infos) {
         final Boolean localVariable = (Boolean)infos[0];
-        if (localVariable) {
+        if (localVariable.booleanValue()) {
             return InspectionGadgetsBundle.message(
                     "synchronization.on.local.variable.problem.descriptor");
         } else {
@@ -100,7 +104,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection
                 // different class, probably different thread.
                 return;
             }
-            registerStatementError(statement, localVariable);
+            registerError(referenceExpression, Boolean.valueOf(localVariable));
         }
     }
 }

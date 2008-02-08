@@ -582,6 +582,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerJdk5SpecificInspections() {
+        m_inspectionClasses.add(CollectionsFieldAccessReplaceableByMethodCallInspection .class);
         m_inspectionClasses.add(ForCanBeForeachInspection.class);
         m_inspectionClasses.add(EnumerationCanBeIterationInspection.class);
         m_inspectionClasses.add(IndexOfReplaceableByContainsInspection.class);
@@ -827,6 +828,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(SafeLockInspection.class);
         m_inspectionClasses.add(SignalWithoutCorrespondingAwaitInspection.class);
         m_inspectionClasses.add(SleepWhileHoldingLockInspection.class);
+        m_inspectionClasses.add(SynchronizationOnLocalVariableOrMethodParameterInspection .class);
         m_inspectionClasses.add(SynchronizeOnLockInspection.class);
         m_inspectionClasses.add(SynchronizeOnNonFinalFieldInspection.class);
         m_inspectionClasses.add(SynchronizedOnLiteralObjectInspection.class);

@@ -29,7 +29,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;import java.text.MessageFormat;
+import org.jetbrains.annotations.Nullable;
 
 public class CollectionsFieldAccessReplaceableByMethodCallInspection
         extends BaseInspection {
@@ -59,7 +59,7 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
         @NotNull
         public String getName() {
             // todo parameterize!
-            return "replace with Collections.emptyList()";
+            return "Replace with Collections.emptyList()";
         }
 
         protected void doFix(Project project, ProblemDescriptor descriptor)
