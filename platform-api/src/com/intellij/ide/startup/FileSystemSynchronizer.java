@@ -255,33 +255,35 @@ public class FileSystemSynchronizer {
     public void put(VirtualFile file) throws InterruptedException {
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
-      FileContent content;
-      synchronized (this) {
-        content = new FileContent(file);
-        if (file.isValid()) {
-          try {
-            if (content.getLength() < SIZE_THRESHOLD) {
+      FileContent content = new FileContent(file);
+
+      if (file.isValid()) {
+        try {
+          final long contentLength = content.getLength();
+          if (contentLength < SIZE_THRESHOLD) {
+            synchronized (this) {
               while (totalSize > SIZE_THRESHOLD) {
                 if (indicator != null) indicator.checkCanceled();
                 wait(300);
               }
-
-              totalSize += content.getBytes().length;
+              totalSize += contentLength;
             }
-          }
-          catch (IOException e) {
-            content.setEmptyContent();
-          }
-          catch(ProcessCanceledException e) {
-            throw e;
-          }
-          catch (Throwable e) {
-            LOG.error(e);
+
+            content.getBytes(); // Reads the content bytes and caches them.
           }
         }
-        else {
+        catch (IOException e) {
           content.setEmptyContent();
         }
+        catch(ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
+      else {
+        content.setEmptyContent();
       }
 
       put(content);
@@ -295,10 +297,7 @@ public class FileSystemSynchronizer {
         try {
           final VirtualFile file = result.getVirtualFile();
           if (file == null || !file.isValid() || result.getLength() >= SIZE_THRESHOLD) return result;
-          totalSize -= result.getBytes().length;
-        }
-        catch (IOException e) {
-          LOG.error(e);
+          totalSize -= result.getLength();
         }
         finally {
           notifyAll();
