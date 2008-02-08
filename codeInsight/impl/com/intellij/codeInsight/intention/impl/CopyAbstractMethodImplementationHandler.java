@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -110,7 +111,9 @@ public class CopyAbstractMethodImplementationHandler {
           final PsiCodeBlock body = overriddenMethod.getBody();
           final PsiCodeBlock sourceBody = sourceMethod.getBody();
           assert body != null && sourceBody != null;
-          body.replace(sourceBody.copy());
+          ChangeContextUtil.encodeContextInfo(sourceBody, true);
+          final PsiElement newBody = body.replace(sourceBody.copy());
+          ChangeContextUtil.decodeContextInfo(newBody, psiClass, null);
 
           PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(mySourceClass, psiClass, PsiSubstitutor.EMPTY);
           PsiElement anchor = OverrideImplementUtil.getDefaultAnchorToOverrideOrImplement(psiClass, sourceMethod, substitutor);
