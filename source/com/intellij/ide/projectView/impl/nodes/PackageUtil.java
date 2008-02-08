@@ -36,7 +36,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.TreeViewUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
@@ -174,15 +173,6 @@ public class PackageUtil {
 
     return children;
   }
-
-  public static boolean projectContainsFile(final Project project, VirtualFile file, boolean isLibraryElement) {
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
-    for (Module module : modules) {
-      if (ModuleUtil.moduleContainsFile(module, file, isLibraryElement)) return true;
-    }
-    return false;
-  }
-
 
   public static String getNodeName(final ViewSettings settings, final PsiPackage aPackage, final PsiPackage parentPackageInTree, String defaultShortName,
                             boolean isFQNameShown) {

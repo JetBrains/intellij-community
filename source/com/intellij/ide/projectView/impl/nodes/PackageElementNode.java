@@ -81,7 +81,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     PackageElement element = getValue();
     final Module module = element == null ? null : element.getModule();
     if (module == null) {
-      return PackageUtil.projectContainsFile(getProject(), file, isLibraryElement());
+      return ModuleUtil.projectContainsFile(getProject(), file, isLibraryElement());
     }
     else {
       return ModuleUtil.moduleContainsFile(module, file, isLibraryElement());

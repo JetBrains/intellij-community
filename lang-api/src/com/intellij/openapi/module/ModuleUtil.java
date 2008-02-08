@@ -38,6 +38,14 @@ import java.util.*;
 public class ModuleUtil {
   public static final Key<Module> KEY_MODULE = new Key<Module>("Module");
 
+  public static boolean projectContainsFile(final Project project, VirtualFile file, boolean isLibraryElement) {
+    final Module[] modules = ModuleManager.getInstance(project).getModules();
+    for (Module module : modules) {
+      if (moduleContainsFile(module, file, isLibraryElement)) return true;
+    }
+    return false;
+  }
+
   public interface ModuleVisitor {
     /**
      *
