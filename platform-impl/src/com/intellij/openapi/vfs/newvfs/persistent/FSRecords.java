@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.MappedFile;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.Storage;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -151,7 +152,7 @@ public class FSRecords implements Disposable, Forceable {
       myFlashingFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
         int lastModCount = 0;
         public void run() {
-          if (lastModCount == ourLocalModificationCount) {
+          if (lastModCount == ourLocalModificationCount && !HeavyProcessLatch.INSTANCE.isRunning()) {
             force();
           }
           lastModCount = ourLocalModificationCount;

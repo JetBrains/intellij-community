@@ -2,6 +2,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Alarm;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,16 +25,18 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private final Alarm myFlushAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private final Runnable myFlushRequest = new Runnable() {
     public void run() {
-      final Lock lock = getWriteLock();
-      lock.lock();
-      try {
-        myStorage.flush();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      finally {
-        lock.unlock();
+      if (!HeavyProcessLatch.INSTANCE.isRunning()) {
+        final Lock lock = getWriteLock();
+        lock.lock();
+        try {
+          myStorage.flush();
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+        finally {
+          lock.unlock();
+        }
       }
     }
   };

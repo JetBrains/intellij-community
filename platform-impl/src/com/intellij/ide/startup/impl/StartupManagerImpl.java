@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.PagePool;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -77,15 +78,21 @@ public class StartupManagerImpl extends StartupManagerEx {
     ApplicationManager.getApplication().runReadAction(
       new Runnable() {
         public void run() {
-          runActivities(myPreStartupActivities);
-          myFileSystemSynchronizer.setCancelable(true);
-          myFileSystemSynchronizer.execute();
-          myFileSystemSynchronizer = null;
-          myStartupActivityRunning = true;
-          runActivities(myActivities);
+          HeavyProcessLatch.INSTANCE.processStarted();
+          try {
+            runActivities(myPreStartupActivities);
+            myFileSystemSynchronizer.setCancelable(true);
+            myFileSystemSynchronizer.execute();
+            myFileSystemSynchronizer = null;
+            myStartupActivityRunning = true;
+            runActivities(myActivities);
 
-          myStartupActivityRunning = false;
-          myStartupActivityPassed = true;
+            myStartupActivityRunning = false;
+            myStartupActivityPassed = true;
+          }
+          finally {
+            HeavyProcessLatch.INSTANCE.processFinished();
+          }
         }
       }
     );
