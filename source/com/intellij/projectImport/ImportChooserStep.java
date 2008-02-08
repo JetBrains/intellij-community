@@ -16,8 +16,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 
 public class ImportChooserStep extends ProjectImportWizardStep {
   private final StepSequence mySequence;
@@ -53,7 +53,10 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     myPanel.add(myUpdateCurrentProject, BorderLayout.SOUTH);
     myList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
-        mySequence.setType(((ProjectImportProvider)myList.getSelectedValue()).getId());
+        final ProjectImportProvider provider = (ProjectImportProvider)myList.getSelectedValue();
+        if (provider != null) {
+          mySequence.setType(provider.getId());
+        }
       }
     });
     myList.setSelectedIndex(0);
