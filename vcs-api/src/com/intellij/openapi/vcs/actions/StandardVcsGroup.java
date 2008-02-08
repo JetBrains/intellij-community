@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class StandardVcsGroup extends DefaultActionGroup {
   public abstract AbstractVcs getVcs(Project project);
@@ -31,15 +32,17 @@ public abstract class StandardVcsGroup extends DefaultActionGroup {
     Presentation presentation = e.getPresentation();
 
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    presentation.setVisible(project != null &&
-                            ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(getVcsName(project)));
+    final String vcsName = getVcsName(project);
+    presentation.setVisible(project != null && vcsName != null &&
+                            ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(vcsName));
     presentation.setEnabled(presentation.isVisible());
   }
 
+  @Nullable
   @NonNls
   public String getVcsName(Project project) {
     final AbstractVcs vcs = getVcs(project);
-    assert vcs != null: getClass().getName() + " couldn't find VCS";
-    return vcs.getName();
+    // if the parent group was customized and then the plugin was disabled, we could have an action group with no VCS
+    return vcs != null ? vcs.getName() : null;
   }
 }
