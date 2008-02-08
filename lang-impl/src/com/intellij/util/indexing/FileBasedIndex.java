@@ -44,8 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -81,7 +80,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   private List<IndexableFileSet> myIndexableSets = new CopyOnWriteArrayList<IndexableFileSet>();
   private Set<String> myRequiresRebuild = Collections.synchronizedSet(new HashSet<String>());
 
-  private ExecutorService myInvalidationService = ConcurrencyUtil.newSingleScheduledThreadExecutor("FileBasedIndex.InvalidationQueue");
+  private ExecutorService myInvalidationService = ConcurrencyUtil.newSingleThreadExecutor("FileBasedIndex.InvalidationQueue");
   private final VirtualFileManagerEx myVfManager;
 
   public static interface InputFilter {
@@ -564,8 +563,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   private final class ChangedFilesUpdater extends VirtualFileAdapter implements CacheUpdater{
     private final Set<VirtualFile> myFileToUpdate = Collections.synchronizedSet(new HashSet<VirtualFile>());
-    private int myInvalidateTasksInProgress = 0;
-    private final Object myLock = new Object();
+    private BlockingQueue<RunnableFuture<?>> myFutureInvalidations = new LinkedBlockingQueue<RunnableFuture<?>>();
     // No need to react on movement events since files stay valid, their ids don't change and all associated attributes remain intact.
 
     public void fileCreated(final VirtualFileEvent event) {
@@ -598,30 +596,15 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     private void scheduleInvalidation(final VirtualFile file) {
-      final List<Runnable> tasks = new ArrayList<Runnable>();
-      invalidateIndex(file, tasks);
-      if (tasks.size() > 0) {
-        adjustInvalidateTasksCount(+1);
-        myInvalidationService.submit(new Runnable() {
-          public void run() {
-            try {
-              for (Runnable task : tasks) {
-                task.run();
-              }
-            }
-            finally {
-              adjustInvalidateTasksCount(-1);
-            }
-          }
-        });
-      }
+      // todo: submit tasks inside invalidateIndex() method
+     invalidateIndex(file);
     }
     
-    private void invalidateIndex(final VirtualFile file, final List<Runnable> tasks) {
+    private void invalidateIndex(final VirtualFile file) {
       if (file.isDirectory()) {
         if (!(file instanceof NewVirtualFile) || ManagingFS.getInstance().areChildrenLoaded(file)) {
           for (VirtualFile child : file.getChildren()) {
-            invalidateIndex(child, tasks);
+            invalidateIndex(child);
           }
         }
       }
@@ -636,7 +619,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
         if (toUpdate.size() > 0) {
           includeToUpdateSet(file);
           final FileContent fc = new FileContent(file, loadContent(file));
-          tasks.add(new Runnable() {
+          final RunnableFuture<?> future = (RunnableFuture<?>)myInvalidationService.submit(new Runnable() {
             public void run() {
               for (String indexId : toUpdate) {
                 try {
@@ -648,28 +631,18 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
               }
             }
           });
+          myFutureInvalidations.offer(future);
         }
       }
     }
 
-    private void adjustInvalidateTasksCount(int delta) {
-      synchronized (myLock) {
-        myInvalidateTasksInProgress += delta;
-        if (myInvalidateTasksInProgress == 0) {
-          myLock.notifyAll();
-        }
-      }
-    }
-    
     private void ensureAllInvalidateTasksCompleted() {
-      synchronized (myLock) {
-        while (myInvalidateTasksInProgress != 0) {
-          try {
-            myLock.wait();
-          }
-          catch (InterruptedException ignored) {
-          }
+      while (true) {
+        final RunnableFuture<?> future = myFutureInvalidations.poll();
+        if (future == null) {
+          return;
         }
+        future.run(); // force the task run if it is has not been run yet
       }
     }
 
