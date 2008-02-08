@@ -35,7 +35,7 @@ public abstract class EvaluationDialogBase extends DialogWrapper {
     setTitle(title);
     setOKButtonText(XDebuggerBundle.message("xdebugger.button.evaluate"));
     setCancelButtonText(XDebuggerBundle.message("xdebugger.evaluate.dialog.close"));
-    myTreePanel = new XDebuggerTreePanel(project, editorsProvider, sourcePosition, XDebuggerActions.EVALUATE_DIALOG_POPUP_GROUP);
+    myTreePanel = new XDebuggerTreePanel(project, editorsProvider, sourcePosition, XDebuggerActions.EVALUATE_DIALOG_TREE_POPUP_GROUP);
     myResultPanel.add(myTreePanel.getMainPanel(), BorderLayout.CENTER);
     init();
   }
@@ -55,7 +55,7 @@ public abstract class EvaluationDialogBase extends DialogWrapper {
   protected void evaluate() {
     final XDebuggerTree tree = myTreePanel.getTree();
     final EvaluatingExpressionRootNode root = new EvaluatingExpressionRootNode(this, tree);
-    tree.setRoot(root);
+    tree.setRoot(root, false);
     myResultPanel.invalidate();
     getInputEditor().selectAll();
   }

@@ -46,7 +46,8 @@ public class XDebuggerTree extends Tree implements DataProvider {
     myListeners.remove(listener);
   }
 
-  public void setRoot(XValueContainerNode<?> root) {
+  public void setRoot(XValueContainerNode<?> root, final boolean rootVisible) {
+    setRootVisible(rootVisible);
     myTreeModel.setRoot(root);
   }
 
