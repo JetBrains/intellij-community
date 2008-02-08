@@ -22,45 +22,33 @@ import java.util.ArrayList;
 /**
  * @author peter
  */
-public class CompletionService {
+public class CompletionService implements CompletionRegistrar{
   private final PartiallyOrderedSet<String,CompletionPlaceImpl<LookupElement, CompletionParameters>> myBasicCompletionProviders = new PartiallyOrderedSet<String, CompletionPlaceImpl<LookupElement, CompletionParameters>>();
   private final PartiallyOrderedSet<String,CompletionPlaceImpl<LookupElement, CompletionParameters>> mySmartCompletionProviders = new PartiallyOrderedSet<String, CompletionPlaceImpl<LookupElement, CompletionParameters>>();
   private final PartiallyOrderedSet<String,CompletionPlaceImpl<LookupElement, CompletionParameters>> myClassNameCompletionProviders = new PartiallyOrderedSet<String, CompletionPlaceImpl<LookupElement, CompletionParameters>>();
 
   public CompletionService() {
     for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
-      contributor.registerCompletionProviders(new CompletionRegistrar() {
-        public CompletionPlace<LookupElement, CompletionParameters> extendBasicCompletion(final ElementPattern<? extends PsiElement> place) {
-          return new CompletionPlaceImpl<LookupElement, CompletionParameters>(place, myBasicCompletionProviders);
-        }
-
-        public CompletionPlace<LookupElement, CompletionParameters> extendSmartCompletion(final ElementPattern<? extends PsiElement> place) {
-          return new CompletionPlaceImpl<LookupElement, CompletionParameters>(place, mySmartCompletionProviders);
-        }
-
-        public CompletionPlace<LookupElement, CompletionParameters> extendClassNameCompletion(final ElementPattern<? extends PsiElement> place) {
-          return new CompletionPlaceImpl<LookupElement, CompletionParameters>(place, myClassNameCompletionProviders);
-        }
-      });
+      contributor.registerCompletionProviders(this);
     }
   }
 
-  public PrioritizedQueryFactory<LookupElement, CompletionParameters> getBasicCompletionQueryFactory(final CompletionParameters queryParameters) {
-    return createFactory(myBasicCompletionProviders, queryParameters);
+  public CompletionPlace<LookupElement, CompletionParameters> extend(final CompletionType type,
+                                                                                   final ElementPattern<? extends PsiElement> place) {
+    return new CompletionPlaceImpl<LookupElement,CompletionParameters>(place, getProviderSet(type));
   }
 
-  private static PrioritizedQueryFactory<LookupElement, CompletionParameters> createFactory(final PartiallyOrderedSet<String, CompletionPlaceImpl<LookupElement, CompletionParameters>> providers, final CompletionParameters parameters) {
-    final ArrayList<PrioritizedQueryExecutor<LookupElement, CompletionParameters>> list =
-      new ArrayList<PrioritizedQueryExecutor<LookupElement, CompletionParameters>>();
-    for (final CompletionPlaceImpl<LookupElement, CompletionParameters> place : providers.getValues()) {
+  public PrioritizedQueryFactory<LookupElement, CompletionParameters> getQueryFactory(CompletionType type, final CompletionParameters queryParameters) {
+    final ArrayList<PrioritizedQueryExecutor<LookupElement, CompletionParameters>> list = new ArrayList<PrioritizedQueryExecutor<LookupElement, CompletionParameters>>();
+    for (final CompletionPlaceImpl<LookupElement, CompletionParameters> place : getProviderSet(type).getValues()) {
       final ProcessingContext processingContext = new ProcessingContext();
-      if (place.myPlace.accepts(parameters.getPosition(), processingContext)) {
-        final CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-        final PrefixMatcher matcher = new CamelHumpMatcher(CompletionData.findPrefixStatic(parameters.getPosition(), context.startOffset));
+      if (place.myPlace.accepts(queryParameters.getPosition(), processingContext)) {
+        final CompletionContext context = queryParameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
+        final PrefixMatcher matcher = new CamelHumpMatcher(CompletionData.findPrefixStatic(queryParameters.getPosition(), context.startOffset));
 
         list.add(new PrioritizedQueryExecutor<LookupElement, CompletionParameters>() {
-          public void execute(final CompletionParameters queryParameters, final QueryResultSet<LookupElement> resultSet) {
-            place.myProvider.addCompletions(queryParameters, processingContext, new CompletionResultSetImpl(matcher, resultSet, context));
+          public void execute(final CompletionParameters parameters1, final QueryResultSet<LookupElement> resultSet) {
+            place.myProvider.addCompletions(parameters1, processingContext, new CompletionResultSetImpl(matcher, resultSet, context));
           }
 
           public String toString() {
@@ -72,12 +60,13 @@ public class CompletionService {
     return new PrioritizedQueryFactory<LookupElement, CompletionParameters>(list);
   }
 
-  public PrioritizedQueryFactory<LookupElement, CompletionParameters> getSmartCompletionQueryFactory(final CompletionParameters queryParameters) {
-    return createFactory(mySmartCompletionProviders, queryParameters);
-  }
-
-  public PrioritizedQueryFactory<LookupElement, CompletionParameters> getClassNameCompletionQueryFactory(final CompletionParameters queryParameters) {
-    return createFactory(myClassNameCompletionProviders, queryParameters);
+  private PartiallyOrderedSet<String,CompletionPlaceImpl<LookupElement, CompletionParameters>> getProviderSet(CompletionType type) {
+    switch (type) {
+      case BASIC: return myBasicCompletionProviders;
+      case SMART: return mySmartCompletionProviders;
+      case CLASS_NAME: return myClassNameCompletionProviders;
+    }
+    throw new AssertionError(type);
   }
 
   public static CompletionService getCompletionService() {

@@ -4,7 +4,7 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.codeInsight.completion.scope.CompletionProcessor;
+import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
@@ -79,8 +79,8 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
             }
 
             public void processVariants(final PsiScopeProcessor processor) {
-              if (processor instanceof CompletionProcessor) {
-                ((CompletionProcessor)processor).setCompletionElements(getVariants());
+              if (processor instanceof JavaCompletionProcessor) {
+                ((JavaCompletionProcessor)processor).setCompletionElements(getVariants());
               } else {
                 super.processVariants(processor);
               }

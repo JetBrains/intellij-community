@@ -5,7 +5,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionVariantPeerImpl;
-import com.intellij.codeInsight.completion.scope.CompletionProcessor;
+import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -83,13 +83,13 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   public void processVariants(final PsiScopeProcessor processor) {
-    if (processor instanceof CompletionProcessor) {
+    if (processor instanceof JavaCompletionProcessor) {
       final Map<CustomizableReferenceProvider.CustomizationKey, Object> options = getOptions();
       if (options != null &&
           (JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(options) != null ||
           JavaClassReferenceProvider.NOT_INTERFACE.getBooleanValue(options) ||
           JavaClassReferenceProvider.CONCRETE.getBooleanValue(options))) {
-        ((CompletionProcessor)processor).setCompletionElements(getVariants());
+        ((JavaCompletionProcessor)processor).setCompletionElements(getVariants());
         return;
       }
     }

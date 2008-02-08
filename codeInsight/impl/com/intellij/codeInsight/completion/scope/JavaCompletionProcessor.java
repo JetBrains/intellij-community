@@ -20,7 +20,7 @@ import java.util.*;
  * Time: 16:13:27
  * To change this template use Options | File Templates.
  */
-public class CompletionProcessor extends BaseScopeProcessor
+public class JavaCompletionProcessor extends BaseScopeProcessor
  implements ElementClassHint{
   private final PrefixMatcher myMatcher;
   private boolean myStatic = false;
@@ -34,7 +34,7 @@ public class CompletionProcessor extends BaseScopeProcessor
   private PsiType myQualifierType = null;
   private PsiClass myQualifierClass = null;
 
-  private CompletionProcessor(PrefixMatcher matcher, PsiElement element, List<CompletionElement> container, ElementFilter filter){
+  private JavaCompletionProcessor(PrefixMatcher matcher, PsiElement element, List<CompletionElement> container, ElementFilter filter){
     mySettings = CodeInsightSettings.getInstance();
     myMatcher = matcher;
     myResults = container;
@@ -66,7 +66,7 @@ public class CompletionProcessor extends BaseScopeProcessor
     }
   }
 
-  public CompletionProcessor(PrefixMatcher matcher, PsiElement element, ElementFilter filter){
+  public JavaCompletionProcessor(PrefixMatcher matcher, PsiElement element, ElementFilter filter){
     this(matcher, element, new ArrayList<CompletionElement>(), filter);
   }
 
