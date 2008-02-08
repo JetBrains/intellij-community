@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,12 +33,20 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection
 
     @Nls @NotNull
     public String getDisplayName() {
-        return "Synchronization on local variable";
+        return InspectionGadgetsBundle.message(
+                "synchronization.on.local.variable.or.method.parameter.display.name");
     }
 
     @NotNull
     protected String buildErrorString(Object... infos) {
-        return "Synchronization on local variable <code>#ref</code>";
+        final Boolean localVariable = (Boolean)infos[0];
+        if (localVariable) {
+            return InspectionGadgetsBundle.message(
+                    "synchronization.on.local.variable.problem.descriptor");
+        } else {
+            return InspectionGadgetsBundle.message(
+                    "synchronization.on.method.parameter.problem.descriptor");
+        }
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -62,11 +71,13 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection
             if (referenceExpression.isQualified()) {
                 return;
             }
+            boolean localVariable = false;
             final PsiElement target = referenceExpression.resolve();
             if (target instanceof PsiLocalVariable) {
                 if (!reportLocalVariables) {
                     return;
                 }
+                localVariable = true;
             } else if (target instanceof PsiParameter) {
                 final PsiParameter parameter = (PsiParameter) target;
                 final PsiElement scope = parameter.getDeclarationScope();
@@ -78,6 +89,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection
                     if (!reportLocalVariables) {
                         return;
                     }
+                    localVariable = true;
                 }
             } else {
                 return;
@@ -88,7 +100,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection
                 // different class, probably different thread.
                 return;
             }
-            registerStatementError(statement, target);
+            registerStatementError(statement, localVariable);
         }
     }
 }

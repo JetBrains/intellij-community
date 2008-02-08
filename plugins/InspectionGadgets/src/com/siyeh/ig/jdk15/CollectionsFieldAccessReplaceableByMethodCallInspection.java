@@ -26,22 +26,25 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.InspectionGadgetsFix;import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;import java.text.MessageFormat;
 
 public class CollectionsFieldAccessReplaceableByMethodCallInspection
         extends BaseInspection {
 
     @Nls @NotNull
     public String getDisplayName() {
-        return "Collections.EMPTY_* field access replaceable with Collections.empty*() method call";
+        return InspectionGadgetsBundle.message(
+                "collections.field.access.replaceable.by.method.call.display.name");
     }
 
     @NotNull
     protected String buildErrorString(Object... infos) {
-        return "<code>#ref</code> replaceable by Collections." + infos[0];
+        return InspectionGadgetsBundle.message(
+                "collections.field.access.replaceable.by.method.call.problem.descriptor",
+                infos[0]);
     }
 
     @Nullable
