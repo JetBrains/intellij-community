@@ -6,7 +6,10 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInsight.daemon.impl.analysis.*;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
@@ -40,7 +43,6 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
@@ -112,7 +114,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           elementSet.addAll(elements);
         }
 
-        XmlHighlightVisitor.checkDuplicates(myRefCountHolder.getPossiblyDuplicateElementsMap(), myRefCountHolder, highlights);
         collectHighlights(elementSet, highlights);
 
         myHighlights = highlights;
@@ -204,12 +205,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         for (PsiImportStatementBase statement : imports) {
           final HighlightInfo highlightInfo = processImport(statement);
           if (highlightInfo != null) array.add(highlightInfo);
-        }
-      }
-      else if (element instanceof XmlAttributeValue) {
-        final HighlightInfo info = XmlHighlightVisitor.checkIdRefAttrValue((XmlAttributeValue)element, myRefCountHolder);
-        if (info != null) {
-          array.add(info);
         }
       }
     }

@@ -1,16 +1,15 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -30,17 +29,16 @@ public class RefCountHolder {
   private final BidirectionalMap<PsiReference,PsiElement> myLocalRefsMap = new BidirectionalMap<PsiReference, PsiElement>();
 
   private final Map<PsiNamedElement, Boolean> myDclsUsedMap = new ConcurrentHashMap<PsiNamedElement, Boolean>();
-  private final Map<String, XmlAttribute> myXmlId2AttributeMap = new ConcurrentHashMap<String, XmlAttribute>();
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new ConcurrentHashMap<PsiReference, PsiImportStatementBase>();
   private final Set<PsiNamedElement> myUsedElements = new ConcurrentHashSet<PsiNamedElement>();
   private final Map<PsiElement,Boolean> myPossiblyDuplicateElements = new ConcurrentHashMap<PsiElement, Boolean>();
   private final AtomicInteger myState = new AtomicInteger(State.VIRGIN);
 
-  private static class State {
-    public static final int VIRGIN = 0;                   // just created or cleared
-    public static final int BEING_WRITTEN_BY_GHP = 1;     // general highlighting pass is storing references during analysis
-    public static final int READY = 2;                    // may be used for higlighting unused stuff
-    public static final int BEING_USED_BY_PHP = 3;        // post highlighting pass is retrieving info
+  private interface State {
+    int VIRGIN = 0;                   // just created or cleared
+    int BEING_WRITTEN_BY_GHP = 1;     // general highlighting pass is storing references during analysis
+    int READY = 2;                    // may be used for higlighting unused stuff
+    int BEING_USED_BY_PHP = 3;        // post highlighting pass is retrieving info
   }
 
   private static final Key<RefCountHolder> REF_COUND_HOLDER_IN_FILE_KEY = Key.create("REF_COUND_HOLDER_IN_FILE_KEY");
@@ -63,7 +61,6 @@ public class RefCountHolder {
     myLocalRefsMap.clear();
     myImportStatements.clear();
     myDclsUsedMap.clear();
-    myXmlId2AttributeMap.clear();
     myUsedElements.clear();
     myPossiblyDuplicateElements.clear();
   }
@@ -89,14 +86,6 @@ public class RefCountHolder {
     if(typeByPsiElement != null && context != null) {
       StatisticsManager.getInstance().incNameUseCount(typeByPsiElement, context, dcl.getName());
     }
-  }
-
-  public void registerAttributeWithId(@NotNull String id, XmlAttribute attr) {
-    myXmlId2AttributeMap.put(id,attr);
-  }
-
-  public XmlAttribute getAttributeById(String id) {
-    return myXmlId2AttributeMap.get(id);
   }
 
   public void registerReference(@NotNull PsiJavaReference ref, JavaResolveResult resolveResult) {
@@ -245,24 +234,11 @@ public class RefCountHolder {
     return false;
   }
 
-  public boolean analyzeAndStoreReferences(Runnable analyze) {
-    if (!startAnalyzing()) return false;
-
-    boolean success = false;
-    try {
-      analyze.run();
-      success = true;
-    }
-    finally {
-      finishAnalyzing(success);
-    }
-    return true;
-  }
-
   public boolean startAnalyzing() {
     myState.compareAndSet(State.READY, State.VIRGIN);
     return myState.compareAndSet(State.VIRGIN, State.BEING_WRITTEN_BY_GHP);
   }
+
   public void finishAnalyzing(boolean finishedSuccessfully) {
     int newState = finishedSuccessfully ? State.READY : State.VIRGIN;
 

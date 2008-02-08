@@ -24,7 +24,7 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlAttributeValue;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +42,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private RefCountHolder myRefCountHolder;
 
-  private final XmlHighlightVisitor myXmlVisitor = new XmlHighlightVisitor();
   // map codeBlock->List of PsiReferenceExpression of uninitailized final variables
   private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
   // map codeBlock->List of PsiReferenceExpression of extra initailization of final variable
@@ -111,7 +110,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     myRefCountHolder = refCountHolder;
-    myXmlVisitor.setRefCountHolder(refCountHolder);
     return success;
   }
 
@@ -150,22 +148,21 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     mySingleImportedClasses.clear();
     mySingleImportedFields.clear();
     myParameterIsReassigned.clear();
-    myXmlVisitor.clearResult();
 
     myRefCountHolder = null;
-    myXmlVisitor.setRefCountHolder(null);
 
     assert !released;
     released = true;
   }
 
-  @Override public void visitElement(PsiElement element) {
-    if (element instanceof XmlElement) {
-      element.accept(myXmlVisitor);
-
-      List<HighlightInfo> result = myXmlVisitor.getResult();
-      myHolder.addAll(result);
-      myXmlVisitor.clearResult();
+  public void visitElement(final PsiElement element) {
+    if (element instanceof XmlAttributeValue) {
+      for (PsiReference reference : element.getReferences()) {
+        if(reference instanceof PsiJavaReference && myRefCountHolder != null){
+          final PsiJavaReference psiJavaReference = (PsiJavaReference)reference;
+          myRefCountHolder.registerReference(psiJavaReference, psiJavaReference.advancedResolve(false));
+        }        
+      }
     }
   }
 

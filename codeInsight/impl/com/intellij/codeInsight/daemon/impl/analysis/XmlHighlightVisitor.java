@@ -1,10 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.*;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.RefCountHolder;
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.quickFix.TagFileQuickFixProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -14,8 +11,8 @@ import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.idea.LoggerFactory;
 import com.intellij.jsp.impl.JspElementDescriptor;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -47,7 +44,6 @@ import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
@@ -56,13 +52,13 @@ import java.util.*;
 /**
  * @author Mike                                  
  */
-public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.ValidationHost {
+public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightVisitor, Validator.ValidationHost {
   private static final Logger LOG = LoggerFactory.getInstance().getLoggerInstance(
     "com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor"
   );
   public static final Key<String> DO_NOT_VALIDATE_KEY = Key.create("do not validate");
   private List<HighlightInfo> myResult;
-  private RefCountHolder myRefCountHolder;
+  @Nullable private XmlRefCountHolder myRefCountHolder;
 
   private static boolean ourDoJaxpTesting;
 
@@ -72,16 +68,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
   @NonNls private static final String IMPORT_ATTR_NAME = "import";
   @NonNls private static final String XML = "xml";
 
-  public void setRefCountHolder(RefCountHolder refCountHolder) {
-    myRefCountHolder = refCountHolder;
-  }
-
   public List<HighlightInfo> getResult() {
     return myResult;
-  }
-
-  public void clearResult() {
-    myResult = null;
   }
 
   private void addElementsForTag(XmlTag tag,
@@ -613,7 +601,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
     }
 
     PsiReference[] refs = null;
-    final RefCountHolder refCountHolder = myRefCountHolder;  // To make sure it doesn't get null in multi-threaded envir.
+    final XmlRefCountHolder refCountHolder = myRefCountHolder;  // To make sure it doesn't get null in multi-threaded envir.
 
     if (refCountHolder != null && value.getUserData(DO_NOT_VALIDATE_KEY) == null) {
       if (attributeDescriptor.hasIdType()) {
@@ -634,65 +622,10 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
   }
 
   private static boolean doAddValueWithIdType(final XmlAttributeValue value,
-                                       final RefCountHolder refCountHolder, boolean soft) {
+                                       final XmlRefCountHolder refCountHolder, boolean soft) {
     refCountHolder.registerPossiblyDuplicateElement(value, soft ? Boolean.TRUE: Boolean.FALSE);
 
     return false;
-  }
-
-  private static boolean isSoftContext(@NotNull final XmlAttribute attr) {
-    final XmlAttributeDescriptor xmlAttributeDescriptor = attr.getDescriptor();
-    assert xmlAttributeDescriptor != null;
-    if (xmlAttributeDescriptor.hasIdType()) return false;
-    final XmlAttributeValue element = attr.getValueElement();
-    assert element != null;
-    PsiReference reference = element.getReference();
-    return reference != null && reference.isSoft();
-  }
-
-  @Nullable
-  public static HighlightInfo checkIdRefAttrValue(XmlAttributeValue value, RefCountHolder holder) {
-    if (!(value.getParent() instanceof XmlAttribute) || holder==null) return null;
-    XmlAttribute attribute = (XmlAttribute)value.getParent();
-
-    XmlTag tag = attribute.getParent();
-
-    XmlElementDescriptor elementDescriptor = tag.getDescriptor();
-    if (elementDescriptor == null) return null;
-    XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
-    if (attributeDescriptor == null) return null;
-
-    if (attributeDescriptor.hasIdRefType() &&
-        tag.getParent().getUserData(DO_NOT_VALIDATE_KEY) == null
-       ) {
-      String unquotedValue = getUnquotedValue(value, tag);
-      if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue, value)) {
-        XmlAttribute xmlAttribute = holder.getAttributeById(unquotedValue);
-        if (xmlAttribute == null && tag instanceof HtmlTag) {
-          xmlAttribute = holder.getAttributeById(StringUtil.stripQuotesAroundValue(value.getText()));
-        }
-
-        if (xmlAttribute == null || !xmlAttribute.isValid()) {
-          return HighlightInfo.createHighlightInfo(
-            HighlightInfoType.WRONG_REF,
-            value,
-            XmlErrorMessages.message("invalid.id.reference")
-          );
-        }
-      }
-    }
-
-    return null;
-  }
-
-  private static String getUnquotedValue(XmlAttributeValue value, XmlTag tag) {
-    String unquotedValue = StringUtil.stripQuotesAroundValue(value.getText());
-
-    if (tag instanceof HtmlTag) {
-      unquotedValue = unquotedValue.toLowerCase();
-    }
-
-    return unquotedValue;
   }
 
   private void checkReferences(PsiElement value) {
@@ -721,10 +654,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
           addToResults(info);
           if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
         }
-      }
-      if(reference instanceof PsiJavaReference && myRefCountHolder != null){
-        final PsiJavaReference psiJavaReference = (PsiJavaReference)reference;
-        myRefCountHolder.registerReference(psiJavaReference, psiJavaReference.advancedResolve(false));
       }
     }
   }
@@ -791,67 +720,47 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
     parent.putUserData(DO_NOT_VALIDATE_KEY, "");
   }
 
-  private static void processAttributeValue(@NotNull XmlAttributeValue value, boolean soft, @NotNull final RefCountHolder refCountHolder,
-                                            @NotNull final List<HighlightInfo> highlights) {
-    final PsiElement parent = value.getParent();
-    if (!(parent instanceof XmlAttribute)) return;
-    XmlAttribute attribute = (XmlAttribute)parent;
-    XmlTag tag = attribute.getParent();
-    if (tag == null) return;
-
-    final String unquotedValue = getUnquotedValue(value, tag);
-
-    if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue, value)) {
-      final XmlAttribute attributeById = refCountHolder.getAttributeById(unquotedValue);
-
-      if (attributeById == null ||
-          !attributeById.isValid() ||
-          attributeById == attribute ||
-          soft ||
-          isSoftContext(attributeById)
-         ) {
-        if (!soft || attributeById == null) refCountHolder.registerAttributeWithId(unquotedValue,attribute);
-      } else {
-        final XmlAttributeValue valueElement = attributeById.getValueElement();
-
-        if (valueElement != null && getUnquotedValue(valueElement, tag).equals(unquotedValue)) {
-          if (tag.getParent().getUserData(DO_NOT_VALIDATE_KEY) == null) {
-            highlights.add(
-              HighlightInfo.createHighlightInfo(
-                HighlightInfoType.WRONG_REF,
-                value,
-                XmlErrorMessages.message("duplicate.id.reference")
-              )
-            );
-            highlights.add(
-              HighlightInfo.createHighlightInfo(
-                HighlightInfoType.WRONG_REF,
-                valueElement,
-                XmlErrorMessages.message("duplicate.id.reference")
-              )
-            );
-          }
-        } else {
-          // attributeById previously has that id so reregister new one
-          refCountHolder.registerAttributeWithId(unquotedValue,attribute);
-        }
-      }
-    }
+  public boolean suitableForFile(final PsiFile file) {
+    return file instanceof XmlFile;
   }
 
-  public static void checkDuplicates(@NotNull final Map<PsiElement, Boolean> possiblyDuplicatedElementsMap,
-                                     @NotNull final RefCountHolder refCountHolder,
-                                     @NotNull final List<HighlightInfo> highlights) {
-    for (Iterator<Map.Entry<PsiElement, Boolean>> iterator = possiblyDuplicatedElementsMap.entrySet().iterator(); iterator.hasNext();) {
-      Map.Entry<PsiElement, Boolean> entry = iterator.next();
-      final XmlAttributeValue value = (XmlAttributeValue)entry.getKey();
+  public void visit(final PsiElement element, final HighlightInfoHolder holder) {
+    element.accept(this);
 
-      if (value.isValid()) {
-        processAttributeValue(value, entry.getValue().booleanValue(), refCountHolder, highlights);
-      }
-      else {
-        iterator.remove();
-      }
+    List<HighlightInfo> result = getResult();
+    holder.addAll(result);
+    myResult = null;
+  }
+
+  public boolean init(final boolean updateWholeFile, final PsiFile file) {
+    if (!(file instanceof XmlFile))
+      return false;
+    if (updateWholeFile) {
+      final XmlRefCountHolder countHolder = XmlRefCountHolder.getInstance((XmlFile)file);
+      countHolder.clear();
+      myRefCountHolder = countHolder;
     }
+    else {
+      myRefCountHolder = null;
+    }
+    return true;
+  }
+
+  public void cleanup(final boolean finishedSuccessfully, final PsiFile file) {
+    myResult = null;
+  }
+
+  public HighlightVisitor clone() {
+    return new XmlHighlightVisitor();
+  }
+
+  public static String getUnquotedValue(XmlAttributeValue value, XmlTag tag) {
+    String unquotedValue = StringUtil.stripQuotesAroundValue(value.getText());
+
+    if (tag instanceof HtmlTag) {
+      unquotedValue = unquotedValue.toLowerCase();
+    }
+
+    return unquotedValue;
   }
 }
