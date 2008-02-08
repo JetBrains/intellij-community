@@ -99,13 +99,18 @@ public abstract class InspectionRVContentProvider {
           if (packageNode.getChildCount() > 0) {
             InspectionModuleNode moduleNode = moduleNodes.get(moduleName);
             if (moduleNode == null) {
-              final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleName);
-              if (module != null) {
-                moduleNode = new InspectionModuleNode(module);
-                moduleNodes.put(moduleName, moduleNode);
-              }
-              else { //module content was removed ?
-                continue;
+              if (moduleName != null) {
+                final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleName);
+                if (module != null) {
+                  moduleNode = new InspectionModuleNode(module);
+                  moduleNodes.put(moduleName, moduleNode);
+                }
+                else { //module content was removed ?
+                  continue;
+                }
+              } else {
+                content.addAll(packageNodes.values());
+                break;
               }
             }
             if (packageNode.getPackageName() != null) {
