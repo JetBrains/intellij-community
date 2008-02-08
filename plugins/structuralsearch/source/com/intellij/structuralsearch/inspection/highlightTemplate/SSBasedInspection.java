@@ -17,10 +17,13 @@ package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.MatchResult;
@@ -37,6 +40,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -79,7 +83,7 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     Project project = file.getProject();
-
+    if (compiledConfigurations == null) return null;
     Collection<Pair<MatchResult,Configuration>> matches = new Matcher(project).findMatchesInFile(compiledConfigurations, file);
 
     List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
@@ -123,22 +127,33 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
     return new SSBasedInspectionOptions(myConfigurations){
       public void configurationsChanged(final SearchContext searchContext) {
         super.configurationsChanged(searchContext);
-        precompileConfigurations();
+        precompileConfigurations(searchContext.getProject());
       }
     }.getComponent();
   }
 
-  // must be inside event dispatch
-  private void precompileConfigurations() {
+  private void precompileConfigurations(final Project project) {
+    if (compiledConfigurations == null) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          if (!project.isDisposed()) {
+            Matcher matcher = new Matcher(project);
+            compiledConfigurations = matcher.precompileOptions(myConfigurations);
+            InspectionProfileManager.getInstance().fireProfileChanged(null);
+          }
+        }
+      }, ModalityState.NON_MODAL);
+    }
   }
 
   public void projectOpened(Project project) {
-    Matcher matcher = new Matcher(project);
-    compiledConfigurations = matcher.precompileOptions(myConfigurations);
+    precompileConfigurations(project);
   }
 
-  // tests only
-  public void setConfigurations(final List<Configuration> configurations) {
+  @TestOnly
+  public void setConfigurations(final List<Configuration> configurations, final Project project) {
     myConfigurations = configurations;
+    Matcher matcher = new Matcher(project);
+    compiledConfigurations = matcher.precompileOptions(myConfigurations);
   }
 }

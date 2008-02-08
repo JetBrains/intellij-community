@@ -20,10 +20,6 @@ public final class SearchContext implements DataProvider, Cloneable {
   private Project project;
   private VirtualFile currentFile;
 
-  public VirtualFile getCurrentFile() {
-    return currentFile;
-  }
-
   public void setCurrentFile(VirtualFile currentFile) {
     this.currentFile = currentFile;
   }
@@ -59,17 +55,13 @@ public final class SearchContext implements DataProvider, Cloneable {
     setCurrentFile(PlatformDataKeys.VIRTUAL_FILE.getData(context));
   }
 
-  private final Editor selectedEditor() {
+  private Editor selectedEditor() {
     return FileEditorManager.getInstance(project).getSelectedTextEditor();
   }
   public boolean hasSelection() {
     final Editor editor = selectedEditor();
 
-    if (editor!=null) {
-      return editor.getSelectionModel().hasSelection();
-    } else {
-      return false;
-    }
+    return editor != null && editor.getSelectionModel().hasSelection();
   }
 
   public int selectionStart() {
