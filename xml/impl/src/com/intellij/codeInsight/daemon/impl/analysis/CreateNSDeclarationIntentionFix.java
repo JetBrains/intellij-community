@@ -148,6 +148,9 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   public boolean showHint(final Editor editor) {
+    if (!myTag.isValid()) {
+      return false;
+    }
     final XmlFile xmlFile = (XmlFile)myTag.getContainingFile();
     final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(xmlFile);
     if (provider == null) {
