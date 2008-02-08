@@ -19,6 +19,7 @@ package com.intellij.execution.junit2.ui.actions;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunnerRegistry;
+import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -39,7 +40,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.options.SettingsEditor;
 import org.jetbrains.annotations.NotNull;
+import org.jdom.Element;
 
 import java.util.List;
 
@@ -95,27 +101,7 @@ public class RerunFailedTestsAction extends AnAction {
     final TestMethods testMethods = new TestMethods(project, configuration, myRunnerSettings, myConfigurationPerRunnerSettings, failed);
     boolean isDebug = myConsoleProperties.getDebugSession() != null;
     try {
-      final RunProfile profile = new ModuleRunProfile() {
-        public RunProfileState getState(DataContext context,
-                                        RunnerInfo runnerInfo,
-                                        RunnerSettings runnerSettings,
-                                        ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
-          testMethods.clear();
-          return testMethods;
-        }  
-
-        public String getName() {
-          return ExecutionBundle.message("rerun.failed.tests.action.name");
-        }
-
-        public void checkConfiguration() throws RuntimeConfigurationException {
-
-        }
-
-        public Module[] getModules() {
-          return Module.EMPTY_ARRAY;
-        }
-      };
+      final RunProfile profile = new MyRunProfile(testMethods, configuration);
       
       final ProgramRunner runner = isDebug ? RunnerRegistry.getInstance().getRunner(DefaultDebugExecutor.EXECUTOR_ID, profile) : RunnerRegistry
         .getInstance().getRunner(
@@ -128,6 +114,84 @@ public class RerunFailedTestsAction extends AnAction {
     }
     finally{
       testMethods.clear();
+    }
+  }
+
+  private static class MyRunProfile implements ModuleRunProfile, RunConfiguration {
+    private final TestMethods myTestMethods;
+    private final RunConfiguration myConfiguration;
+
+    public MyRunProfile(final TestMethods testMethods, final JUnitConfiguration configuration) {
+      myTestMethods = testMethods;
+      myConfiguration = configuration;
+    }
+
+    public RunProfileState getState(DataContext context,
+                                    RunnerInfo runnerInfo,
+                                    RunnerSettings runnerSettings,
+                                    ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
+      myTestMethods.clear();
+      return myTestMethods;
+    }
+
+    public String getName() {
+      return ExecutionBundle.message("rerun.failed.tests.action.name");
+    }
+
+    public void checkConfiguration() throws RuntimeConfigurationException {
+
+    }
+
+    public Module[] getModules() {
+      return myTestMethods.getModulesToCompile();
+    }
+    ///////////////////////////////////Delegates
+    public void readExternal(final Element element) throws InvalidDataException {
+      myConfiguration.readExternal(element);
+    }
+
+    public void writeExternal(final Element element) throws WriteExternalException {
+      myConfiguration.writeExternal(element);
+    }
+
+    public ConfigurationFactory getFactory() {
+      return myConfiguration.getFactory();
+    }
+
+    public void setName(final String name) {
+      myConfiguration.setName(name);
+    }
+
+    public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+      return myConfiguration.getConfigurationEditor();
+    }
+
+    public Project getProject() {
+      return myConfiguration.getProject();
+    }
+
+    public ConfigurationType getType() {
+      return myConfiguration.getType();
+    }
+
+    public JDOMExternalizable createRunnerSettings(final ConfigurationInfoProvider provider) {
+      return myConfiguration.createRunnerSettings(provider);
+    }
+
+    public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(final ProgramRunner runner) {
+      return myConfiguration.getRunnerSettingsEditor(runner);
+    }
+
+    public RunConfiguration clone() {
+      return myConfiguration.clone();
+    }
+
+    public Object getExtensionSettings(final Class<? extends RunConfigurationExtension> extensionClass) {
+      return myConfiguration.getExtensionSettings(extensionClass);
+    }
+
+    public void setExtensionSettings(final Class<? extends RunConfigurationExtension> extensionClass, final Object value) {
+      myConfiguration.setExtensionSettings(extensionClass, value);
     }
   }
 }
