@@ -1,6 +1,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -58,6 +59,8 @@ public class IndexingStamp {
           stream.close();
         }
       }
+    }
+    catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
     }
     catch (IOException e) {
       LOG.info(e);

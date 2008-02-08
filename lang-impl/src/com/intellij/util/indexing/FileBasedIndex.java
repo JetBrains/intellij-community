@@ -2,7 +2,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -75,15 +74,15 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   private Map<Document, Pair<CharSequence, Long>> myIndexingHistory = Collections.synchronizedMap(new HashMap<Document, Pair<CharSequence, Long>>());
   
-  private List<Disposable> myDisposables = new ArrayList<Disposable>();
-
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+
   private ChangedFilesUpdater myChangedFilesUpdater;
 
   private List<IndexableFileSet> myIndexableSets = new CopyOnWriteArrayList<IndexableFileSet>();
   private Set<String> myRequiresRebuild = Collections.synchronizedSet(new HashSet<String>());
 
   private ExecutorService myInvalidationService = ConcurrencyUtil.newSingleScheduledThreadExecutor("FileBasedIndex.InvalidationQueue");
+  private final VirtualFileManagerEx myVfManager;
 
   public static interface InputFilter {
     boolean acceptInput(VirtualFile file);
@@ -100,6 +99,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
 
   public FileBasedIndex(final VirtualFileManagerEx vfManager) throws IOException {
+    myVfManager = vfManager;
     final FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
     for (FileBasedIndexExtension extension : extensions) {
       registerIndexer(
@@ -117,12 +117,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     myChangedFilesUpdater = new ChangedFilesUpdater();
     vfManager.addVirtualFileListener(myChangedFilesUpdater);
     vfManager.registerRefreshUpdater(myChangedFilesUpdater);
-    myDisposables.add(new Disposable() {
-      public void dispose() {
-        vfManager.removeVirtualFileListener(myChangedFilesUpdater);
-        vfManager.unregisterRefreshUpdater(myChangedFilesUpdater);
-      }
-    });
   }
 
   public static FileBasedIndex getInstance() {
@@ -171,10 +165,9 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     for (String indexId : myIndices.keySet()) {
       getIndex(indexId).dispose();
     }
-    for (Disposable disposable : myDisposables) {
-      disposable.dispose();
-    }
-    myDisposables.clear();
+    myVfManager.removeVirtualFileListener(myChangedFilesUpdater);
+    myVfManager.unregisterRefreshUpdater(myChangedFilesUpdater);
+    myInvalidationService.shutdown();
   }
                 
   public FileBasedIndexState getState() {
