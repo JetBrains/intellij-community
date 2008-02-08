@@ -139,13 +139,13 @@ public class SelectWordHandler extends EditorActionHandler {
   @Nullable
   private static PsiElement findElementAt(final PsiFile file, final int caretOffset) {
     PsiElement elementAt = file.findElementAt(caretOffset);
-    if (isLanguageExtension(file, elementAt)) {
+    if (elementAt != null && isLanguageExtension(file, elementAt)) {
       return file.getViewProvider().findElementAt(caretOffset, file.getLanguage());
     }
     return elementAt;
   }
 
-  private static boolean isLanguageExtension(final PsiFile file, final PsiElement elementAt) {
+  private static boolean isLanguageExtension(@NotNull final PsiFile file, @NotNull final PsiElement elementAt) {
     final Language elementLanguage = elementAt.getLanguage();
     if (file.getLanguage() instanceof CompositeLanguage) {
       CompositeLanguage compositeLanguage = (CompositeLanguage) file.getLanguage();
