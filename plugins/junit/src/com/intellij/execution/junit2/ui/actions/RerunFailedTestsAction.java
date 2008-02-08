@@ -103,10 +103,8 @@ public class RerunFailedTestsAction extends AnAction {
     try {
       final RunProfile profile = new MyRunProfile(testMethods, configuration);
       
-      final ProgramRunner runner = isDebug ? RunnerRegistry.getInstance().getRunner(DefaultDebugExecutor.EXECUTOR_ID, profile) : RunnerRegistry
-        .getInstance().getRunner(
-        DefaultRunExecutor.EXECUTOR_ID, profile);
-      LOG.assertTrue(runner != null);
+      final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(isDebug ? DefaultDebugExecutor.EXECUTOR_ID : DefaultRunExecutor.EXECUTOR_ID, profile);
+      assert runner != null;
       runner.execute(profile, dataContext, myRunnerSettings, myConfigurationPerRunnerSettings);
     }
     catch (ExecutionException e1) {
@@ -170,6 +168,7 @@ public class RerunFailedTestsAction extends AnAction {
       return myConfiguration.getProject();
     }
 
+    @NotNull
     public ConfigurationType getType() {
       return myConfiguration.getType();
     }
