@@ -63,7 +63,7 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
 
-    final RangeMarker rangeMarker = document.createRangeMarker(context.startOffset, context.startOffset);
+    final RangeMarker rangeMarker = document.createRangeMarker(startOffset, startOffset);
     final int caretOffset = editor.getCaretModel().getOffset();
     final RangeMarker caretMarker = document.createRangeMarker(caretOffset, caretOffset);
 
