@@ -2,7 +2,8 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.quickFix.TagFileQuickFixProvider;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.jsp.impl.TldDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
@@ -24,6 +25,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.SchemaNSDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
@@ -344,6 +346,15 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
   }
 
   public void registerQuickfix(HighlightInfo info, PsiReference reference) {
-    TagFileQuickFixProvider.registerTagFileReferenceQuickFix(info, (TagNameReference)reference);
+    final XmlTag element = PsiTreeUtil.getParentOfType(reference.getElement(),XmlTag.class,false);
+    if (element != null) {
+      final XmlExtension extension = XmlExtension.getExtensionByElement(element);
+      if (extension != null) {
+        final IntentionAction action = extension.createAddTagFix(element);
+        if (action != null) {
+          QuickFixAction.registerQuickFixAction(info, action);
+        }
+      }
+    }
   }
 }

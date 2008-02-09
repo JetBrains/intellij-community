@@ -1,9 +1,12 @@
 package com.intellij.xml;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -30,6 +33,15 @@ public abstract class XmlExtension {
     return DEFAULT_EXTENSION;
   }
 
+  @Nullable
+  public static XmlExtension getExtensionByElement(PsiElement element) {
+    final PsiFile psiFile = element.getContainingFile();
+    if (psiFile instanceof XmlFile) {
+      return getExtension((XmlFile)psiFile);
+    }
+    return null;
+  }
+
   public abstract boolean isAvailable(XmlFile file);
 
   @NotNull
@@ -52,5 +64,15 @@ public abstract class XmlExtension {
 
   public String getNamespaceAlias(@NotNull final XmlFile file) {
     return XmlBundle.message("namespace.alias");
+  }
+
+  @Nullable
+  public IntentionAction createAddAttributeFix(@NotNull final XmlAttribute attribute) {
+    return null;
+  }
+
+  @Nullable
+  public IntentionAction createAddTagFix(@NotNull final XmlTag tag) {
+    return null;
   }
 }

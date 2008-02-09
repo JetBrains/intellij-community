@@ -1,9 +1,11 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.*;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.daemon.quickFix.TagFileQuickFixProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -39,6 +41,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.SmartList;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
@@ -47,7 +50,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 /**
  * @author Mike                                  
@@ -467,7 +473,13 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         final String localizedMessage = XmlErrorMessages.message("attribute.is.not.allowed.here", name);
         final HighlightInfo highlightInfo = reportAttributeProblem(tag, name, attribute, localizedMessage);
         if (highlightInfo != null) {
-          TagFileQuickFixProvider.registerTagFileAttributeReferenceQuickFix(highlightInfo, attribute.getReference());
+          final XmlFile xmlFile = (XmlFile)tag.getContainingFile();
+          if (xmlFile != null) {
+            final IntentionAction fix = XmlExtension.getExtension(xmlFile).createAddAttributeFix(attribute);
+            if (fix != null) {
+              QuickFixAction.registerQuickFixAction(highlightInfo, fix);
+            }
+          }
         }
       }
     }
