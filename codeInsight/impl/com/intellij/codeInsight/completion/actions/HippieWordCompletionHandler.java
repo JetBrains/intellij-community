@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
+import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;

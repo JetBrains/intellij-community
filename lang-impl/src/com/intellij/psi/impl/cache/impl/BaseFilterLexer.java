@@ -1,7 +1,8 @@
-package com.intellij.psi.impl.cache.impl.idCache;
+package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
+import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
@@ -91,7 +92,7 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
   }
 
   public static void advanceTodoItemsCount(final CharSequence input, final OccurrenceConsumer consumer) {
-    IndexPattern[] patterns = IdCacheUtil.getIndexPatterns();
+    IndexPattern[] patterns = CacheUtil.getIndexPatterns();
     for (final IndexPattern indexPattern : patterns) {
       Pattern pattern = indexPattern.getPattern();
       if (pattern != null) {

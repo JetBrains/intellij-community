@@ -1,7 +1,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.impl.cache.index.IdIndexEntry;
+import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 
 import java.util.HashMap;
 import java.util.Map;

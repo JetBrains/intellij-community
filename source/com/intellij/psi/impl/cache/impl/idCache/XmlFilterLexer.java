@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.cache.impl.idCache;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;

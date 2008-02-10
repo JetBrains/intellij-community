@@ -1,8 +1,7 @@
-package com.intellij.psi.impl.cache.impl.idCache;
+package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
-import com.intellij.ide.startup.FileContent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -13,21 +12,18 @@ import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lexer.FilterLexer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CustomHighlighterTokenType;
-import com.intellij.psi.PsiLock;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
+import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
-import com.intellij.psi.impl.cache.index.FileTypeIdIndexer;
-import com.intellij.psi.impl.cache.index.IdIndexEntry;
-import com.intellij.psi.impl.cache.index.TodoIndexEntry;
+import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
+import com.intellij.psi.impl.cache.impl.todo.TodoOccurrenceConsumer;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
@@ -39,7 +35,6 @@ import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IdDataConsumer;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,61 +45,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class IdTableBuilding {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding");
-
-  private static final int FILE_SIZE_LIMIT = 10000000; // ignore files of size > 10Mb
-
   private IdTableBuilding() {
-  }
-
-  public static class Result {
-    final Runnable runnable;
-    final TIntIntHashMap wordsMap;
-    final int[] todoCounts;
-
-    private Result(Runnable runnable, TIntIntHashMap wordsMap, int[] todoCounts) {
-      this.runnable = runnable;
-      this.wordsMap = wordsMap;
-      this.todoCounts = todoCounts;
-    }
-  }
-
-  public interface IdCacheBuilder {
-    void build(CharSequence chars,
-               int length,
-               TIntIntHashMap wordsTable,
-               IndexPattern[] todoPatterns,
-               int[] todoCounts,
-               final PsiManager manager);
   }
 
   public interface ScanWordProcessor {
     void run (CharSequence chars, int start, int end, @Nullable char[] charArray);
-  }
-
-  static class TextIdCacheBuilder implements IdCacheBuilder {
-    public void build(CharSequence chars,
-                      int length,
-                      TIntIntHashMap wordsTable,
-                      IndexPattern[] todoPatterns,
-                      int[] todoCounts,
-                      final PsiManager manager) {
-      scanWords(wordsTable, chars, 0, length, UsageSearchContext.IN_PLAIN_TEXT);
-
-      if (todoCounts != null) {
-        for (int index = 0; index < todoPatterns.length; index++) {
-          Pattern pattern = todoPatterns[index].getPattern();
-          if (pattern != null) {
-            Matcher matcher = pattern.matcher(chars);
-            while (matcher.find()) {
-              if (matcher.start() != matcher.end()) {
-                todoCounts[index]++;
-              }
-            }
-          }
-        }
-      }
-    }
   }
 
   public static class PlainTextIndexer extends FileTypeIdIndexer {
@@ -130,7 +75,7 @@ public class IdTableBuilding {
       final CharSequence chars = inputData.content;
 
 
-      final IndexPattern[] indexPatterns = IdCacheUtil.getIndexPatterns();
+      final IndexPattern[] indexPatterns = CacheUtil.getIndexPatterns();
       if (indexPatterns.length > 0) {
         final TodoOccurrenceConsumer occurrenceConsumer = new TodoOccurrenceConsumer();
         for (IndexPattern indexPattern : indexPatterns) {
@@ -157,25 +102,9 @@ public class IdTableBuilding {
     }
 
   }
-  
-  static class EmptyBuilder implements IdCacheBuilder {
-    public void build(CharSequence chars,
-                      int length,
-                      TIntIntHashMap wordsTable,
-                      IndexPattern[] todoPatterns,
-                      int[] todoCounts,
-                      final PsiManager manager) {
-      // Do nothing. This class is used to skip certain files from building caches for them.
-    }
-  }
 
-  private static final HashMap<FileType,IdCacheBuilder> cacheBuilders = new HashMap<FileType, IdCacheBuilder>();
   private static final HashMap<FileType,FileTypeIdIndexer> ourIdIndexers = new HashMap<FileType, FileTypeIdIndexer>();
   private static final HashMap<FileType,DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent>> ourTodoIndexers = new HashMap<FileType, DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent>>();
-
-  public static void registerCacheBuilder(FileType fileType,IdCacheBuilder idCacheBuilder) {
-    cacheBuilders.put(fileType, idCacheBuilder);
-  }
 
   public static void registerIdIndexer(FileType fileType,FileTypeIdIndexer indexer) {
     ourIdIndexers.put(fileType, indexer);
@@ -203,11 +132,6 @@ public class IdTableBuilding {
     registerTodoIndexer(StdFileTypes.IDEA_MODULE, null);
     registerTodoIndexer(StdFileTypes.IDEA_WORKSPACE, null);
     registerTodoIndexer(StdFileTypes.IDEA_PROJECT, null);
-  }
-
-  @Nullable
-  public static IdCacheBuilder getCacheBuilder(FileType fileType, final Project project, final VirtualFile virtualFile) {
-    return null;  // todo: to be removed
   }
 
   @Nullable
@@ -311,20 +235,20 @@ public class IdTableBuilding {
 
     public Map<TodoIndexEntry,Integer> map(final FileBasedIndex.FileContent inputData) {
       final CharSequence chars = inputData.content;
-      if (IdCacheUtil.getIndexPatternCount() > 0) {
+      if (CacheUtil.getIndexPatternCount() > 0) {
         final TodoOccurrenceConsumer occurrenceConsumer = new TodoOccurrenceConsumer();
         final EditorHighlighter highlighter = HighlighterFactory.createHighlighter(null, myFile);
         highlighter.setText(chars);
         final HighlighterIterator iterator = highlighter.createIterator(0);
         while (!iterator.atEnd()) {
           final IElementType token = iterator.getTokenType();
-          if (IdCacheUtil.isInComments(token) || myCommentTokens.contains(token)) {
+          if (CacheUtil.isInComments(token) || myCommentTokens.contains(token)) {
             BaseFilterLexer.advanceTodoItemsCount(chars.subSequence(iterator.getStart(), iterator.getEnd()), occurrenceConsumer);
           }
           iterator.advance();
         }
         final Map<TodoIndexEntry,Integer> map = new HashMap<TodoIndexEntry, Integer>();
-        for (IndexPattern pattern : IdCacheUtil.getIndexPatterns()) {
+        for (IndexPattern pattern : CacheUtil.getIndexPatterns()) {
           final int count = occurrenceConsumer.getOccurrenceCount(pattern);
           if (count > 0) {
             map.put(new TodoIndexEntry(pattern.getPatternString(), pattern.isCaseSensitive()), count);
@@ -334,57 +258,6 @@ public class IdTableBuilding {
       }
       return Collections.emptyMap();
     }
-  }
-
-  @Nullable
-  public static Result getBuildingRunnable(final PsiManagerImpl manager, FileContent fileContent, final boolean buildTodos) {
-    if (LOG.isDebugEnabled()){
-      LOG.debug(
-        "enter: getBuildingRunnable(file='" + fileContent.getVirtualFile() + "' buildTodos='" + buildTodos + "' )"
-      );
-      //LOG.debug(new Throwable());
-    }
-
-    final VirtualFile virtualFile = fileContent.getVirtualFile();
-    LOG.assertTrue(virtualFile.isValid());
-
-    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    if (fileTypeManager.isFileIgnored(virtualFile.getName())) return null;
-    final FileType fileType = fileTypeManager.getFileTypeByFile(virtualFile);
-    if (fileType.isBinary()) return null;
-    if (StdFileTypes.CLASS.equals(fileType)) return null;
-
-    // Still we have to have certain limit since there might be virtually unlimited resources like xml, sql etc, which
-    // once loaded will produce OutOfMemoryError
-    if (fileType != StdFileTypes.JAVA && virtualFile.getLength() > FILE_SIZE_LIMIT) return null;
-
-    final TIntIntHashMap wordsTable = new TIntIntHashMap();
-
-    final int[] todoCounts;
-    final IndexPattern[] todoPatterns = IdCacheUtil.getIndexPatterns();
-    if (buildTodos && CacheManagerImpl.canContainTodoItems(fileContent.getVirtualFile())){
-      int patternCount = todoPatterns.length;
-      todoCounts = patternCount > 0 ? new int[patternCount] : null;
-    }
-    else{
-      todoCounts = null;
-    }
-
-    final CharSequence text = CacheUtil.getContentText(fileContent);
-
-    final IdCacheBuilder cacheBuilder = getCacheBuilder(fileType, manager.getProject(), virtualFile);
-
-    if (cacheBuilder==null) return null;
-
-    Runnable runnable = new Runnable() {
-      public void run() {
-        synchronized (PsiLock.LOCK) {
-          cacheBuilder.build(text, text.length(), wordsTable, todoPatterns, todoCounts, manager);
-        }
-      }
-    };
-
-    return new Result(runnable, wordsTable, todoCounts);
   }
 
   public static final FilterLexer.Filter TOKEN_FILTER = new FilterLexer.Filter() {
@@ -427,19 +300,4 @@ public class IdTableBuilding {
       }
   }
 
-  public static void scanWords(final TIntIntHashMap table,
-                               final CharSequence chars,
-                               final int start,
-                               final int end,
-                               final int occurrenceMask) {
-    scanWords(new ScanWordProcessor(){
-      public void run(final CharSequence chars, final int start, final int end, char[] charsArray) {
-        if (charsArray != null) {
-          IdCacheUtil.addOccurrence(table, charsArray, start, end, occurrenceMask);
-        } else {
-          IdCacheUtil.addOccurrence(table, chars, start, end, occurrenceMask);
-        }
-      }
-    }, chars, start, end);
-  }
 }

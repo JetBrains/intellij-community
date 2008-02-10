@@ -1,4 +1,4 @@
-package com.intellij.psi.impl.cache.index;
+package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
@@ -6,7 +6,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexExtension;

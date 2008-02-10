@@ -7,8 +7,6 @@
                       serviceImplementation="com.intellij.codeInsight.completion.impl.CompletionService"/>
   <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
                       serviceImplementation="com.intellij.openapi.module.impl.ModuleTypeManagerImpl"/>
-  <applicationService serviceInterface="com.intellij.psi.impl.cache.impl.GlobalCacheManager"
-                      serviceImplementation="com.intellij.psi.impl.cache.impl.GlobalCacheManager"/>
   <applicationService serviceInterface="com.intellij.lang.cacheBuilder.CacheBuilderRegistry"
                       serviceImplementation="com.intellij.lang.cacheBuilder.CacheBuilderRegistryImpl"/>
 
@@ -126,8 +124,8 @@
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FirstWordMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.LineNumberMacro"/>
 
-  <fileBasedIndex implementation="com.intellij.psi.impl.cache.index.TodoIndex" />
-  <fileBasedIndex implementation="com.intellij.psi.impl.cache.index.IdIndex" />
+  <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex" />
+  <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.id.IdIndex" />
 
   <syntaxHighlighter factoryClass="com.intellij.openapi.fileTypes.LanguageFileTypeHighlighterProvider"/>
   <structureViewBuilder factoryClass="com.intellij.ide.highlighter.LanguageFileTypeStructureViewBuilderProvider"/>

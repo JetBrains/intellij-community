@@ -1,4 +1,4 @@
-package com.intellij.psi.impl.cache.index;
+package com.intellij.psi.impl.cache.impl.todo;
 
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.todo.TodoConfiguration;
@@ -10,7 +10,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
+import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.indexing.DataIndexer;

@@ -1,4 +1,4 @@
-package com.intellij.psi.impl.cache.index;
+package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.util.text.StringUtil;
 

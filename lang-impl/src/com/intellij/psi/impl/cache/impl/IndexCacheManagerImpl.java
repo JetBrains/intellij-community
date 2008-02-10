@@ -1,4 +1,4 @@
-package com.intellij.psi.impl.cache.index;
+package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,7 +11,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
-import com.intellij.psi.impl.cache.impl.idCache.IdCacheUtil;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
+import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
+import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
+import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
@@ -28,7 +31,7 @@ import java.util.*;
  *         Date: Jan 16, 2008
  */
 public class IndexCacheManagerImpl implements CacheManager{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.index.IndexCacheManagerImpl");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl");
   private final Project myProject;
   private final PsiManager myPsiManager;
 
@@ -105,7 +108,7 @@ public class IndexCacheManagerImpl implements CacheManager{
     final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     final Set<PsiFile> allFiles = new HashSet<PsiFile>();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    for (IndexPattern indexPattern : IdCacheUtil.getIndexPatterns()) {
+    for (IndexPattern indexPattern : CacheUtil.getIndexPatterns()) {
       final Collection<VirtualFile> files = fileBasedIndex.getContainingFiles(
         TodoIndex.NAME, 
         new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), 

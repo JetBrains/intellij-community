@@ -1,4 +1,4 @@
-package com.intellij.psi.impl.cache.impl.idCache;
+package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class VfsIndexer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.impl.idCache.VfsIndexer");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.impl.VfsIndexer");
 
   public static VirtualFile[] writeFileIndex(
       OutputStream stream,

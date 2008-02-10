@@ -2,9 +2,8 @@ package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.filters.ContextGetter;
-import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
+import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.util.ArrayUtil;
 
 import java.util.ArrayList;

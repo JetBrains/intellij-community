@@ -3,6 +3,8 @@ package com.intellij.psi.impl.cache.impl.idCache;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.Lexer;
+import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
+import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
@@ -28,7 +30,7 @@ public class XHtmlFilterLexer extends BaseFilterLexer {
     } else if (tokenType.getLanguage() != StdLanguages.XML &&
       tokenType.getLanguage() != Language.ANY         
     ) {
-      boolean inComments = IdCacheUtil.isInComments(tokenType);
+      boolean inComments = CacheUtil.isInComments(tokenType);
       scanWordsInToken((inComments)?UsageSearchContext.IN_COMMENTS:UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES, true,
                        false);
       

@@ -1,7 +1,7 @@
-package com.intellij.psi.impl.cache.index;
+package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.psi.impl.cache.impl.idCache.BaseFilterLexer;
+import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IdDataConsumer;
