@@ -43,5 +43,5 @@ public class CastMethodArgumentFix extends MethodArgumentFix {
     }
   }
 
-  public static ArgumentFixerActionFactory REGISTRAR = new MyFixerActionFactory();
+  public static final ArgumentFixerActionFactory REGISTRAR = new MyFixerActionFactory();
 }

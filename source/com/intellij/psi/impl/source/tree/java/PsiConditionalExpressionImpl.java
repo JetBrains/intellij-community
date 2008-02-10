@@ -64,14 +64,12 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     if (PsiUtil.getLanguageLevel(this).compareTo(LanguageLevel.JDK_1_5) < 0) {
       return null;
     }
-    else {
-      if (TypeConversionUtil.isPrimitiveAndNotNull(type1)) type1 = ((PsiPrimitiveType)type1).getBoxedType(this);
-      if (type1 == null) return null;
-      if (TypeConversionUtil.isPrimitiveAndNotNull(type2)) type2 = ((PsiPrimitiveType)type2).getBoxedType(this);
-      if (type2 == null) return null;
+    if (TypeConversionUtil.isPrimitiveAndNotNull(type1)) type1 = ((PsiPrimitiveType)type1).getBoxedType(this);
+    if (type1 == null) return null;
+    if (TypeConversionUtil.isPrimitiveAndNotNull(type2)) type2 = ((PsiPrimitiveType)type2).getBoxedType(this);
+    if (type2 == null) return null;
 
-      return GenericsUtil.getLeastUpperBound(type1, type2, getManager());
-    }
+    return GenericsUtil.getLeastUpperBound(type1, type2, getManager());
   }
 
   public ASTNode findChildByRole(int role) {
