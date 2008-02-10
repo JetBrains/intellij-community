@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 
@@ -35,7 +36,7 @@ public class RangeBlinker {
   private final List<RangeMarker> myMarkers = new ArrayList<RangeMarker>();
   private boolean show = true;
   private final Alarm myBlinkingAlarm = new Alarm();
-  private TextAttributes myAttributes;
+  private final TextAttributes myAttributes;
   private final List<RangeHighlighter> myAddedHighlighters = new ArrayList<RangeHighlighter>();
 
   public RangeBlinker(Editor editor, final TextAttributes attributes, int timeToLive) {
@@ -64,13 +65,19 @@ public class RangeBlinker {
   }
 
   public void startBlinking() {
-    if (ApplicationManager.getApplication().isDisposed()) return;
+    Project project = myEditor.getProject();
+    if (ApplicationManager.getApplication().isDisposed() || myEditor.isDisposed() || project != null && project.isDisposed()) {
+      return;
+    }
 
     MarkupModel markupModel = myEditor.getMarkupModel();
     if (show) {
       for (final RangeMarker rangeMarker : myMarkers) {
-        myAddedHighlighters.add(markupModel.addRangeHighlighter(rangeMarker.getStartOffset(), rangeMarker.getEndOffset(),
-                                                  HighlighterLayer.ADDITIONAL_SYNTAX, myAttributes, HighlighterTargetArea.EXACT_RANGE));
+        if (!rangeMarker.isValid()) continue;
+        RangeHighlighter highlighter = markupModel.addRangeHighlighter(rangeMarker.getStartOffset(), rangeMarker.getEndOffset(),
+                                                                       HighlighterLayer.ADDITIONAL_SYNTAX, myAttributes,
+                                                                       HighlighterTargetArea.EXACT_RANGE);
+        myAddedHighlighters.add(highlighter);
       }
     }
     else {
