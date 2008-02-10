@@ -22,7 +22,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -37,7 +36,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   private final int myStartOffset;
   private final int myEndOffset;
 
-  public ShowAutoImportPass(@NotNull Project project, final @NotNull PsiFile file, @NotNull Editor editor) {
+  public ShowAutoImportPass(@NotNull Project project, @NotNull final PsiFile file, @NotNull Editor editor) {
     super(project, editor.getDocument());
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -140,7 +139,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   public static String getMessage(final boolean multiple, final String name) {
-    final @NonNls String messageKey = multiple ? "import.popup.multiple" : "import.popup.text";
+    final String messageKey = multiple ? "import.popup.multiple" : "import.popup.text";
     String hintText = QuickFixBundle.message(messageKey, name);
     hintText += " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
     return hintText;
