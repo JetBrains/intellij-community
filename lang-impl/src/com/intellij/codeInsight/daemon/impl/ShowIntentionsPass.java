@@ -20,10 +20,12 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.IntentionFilterOwner;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -33,18 +35,16 @@ import java.util.List;
 public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.ShowIntentionsPass");
   private final Editor myEditor;
-  @Nullable private IntentionAction[] myIntentionActions; //null means all actions in IntentionManager
 
   private final PsiFile myFile;
   private final int myPassIdToShowIntentionsFor;
 
-  ShowIntentionsPass(@NotNull Project project, @NotNull Editor editor, int passId, @Nullable IntentionAction[] intentionActions) {
+  ShowIntentionsPass(@NotNull Project project, @NotNull Editor editor, int passId) {
     super(project, editor.getDocument());
     myPassIdToShowIntentionsFor = passId;
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     myEditor = editor;
-    myIntentionActions = intentionActions;
 
     myFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     assert myFile != null : FileDocumentManager.getInstance().getFile(myEditor.getDocument());
@@ -75,10 +75,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    if (myIntentionActions == null) {
-      myIntentionActions = IntentionManager.getInstance().getIntentionActions();
-    }
-    getActionsToShow(myEditor, myFile, intentionsToShow, errorFixesToShow, inspectionFixesToShow, myIntentionActions, myPassIdToShowIntentionsFor);
+    getActionsToShow(myEditor, myFile, intentionsToShow, errorFixesToShow, inspectionFixesToShow,
+                     IntentionManager.getInstance().getIntentionActions(), myPassIdToShowIntentionsFor);
     if (myFile instanceof IntentionFilterOwner) {
       final IntentionFilterOwner.IntentionActionsFilter actionsFilter = ((IntentionFilterOwner)myFile).getIntentionActionsFilter();
       if (actionsFilter == null) return;

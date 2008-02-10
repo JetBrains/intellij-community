@@ -114,7 +114,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
           id2Pass.put(passId, pass);
           if (passConfig.runIntentionsPassAfter && !(pass instanceof ProgressableTextEditorHighlightingPass.EmptyPass)) {
             Project project = psiFile.getProject();
-            ShowIntentionsPass intentionsPass = new ShowIntentionsPass(project, editor, passId, null);
+            ShowIntentionsPass intentionsPass = new ShowIntentionsPass(project, editor, passId);
             intentionsPass.setCompletionPredecessorIds(new int[]{passId});
             int id = nextAvailableId++;
             intentionsPass.setId(id);

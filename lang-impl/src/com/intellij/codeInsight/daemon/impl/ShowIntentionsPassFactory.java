@@ -38,6 +38,6 @@ public class ShowIntentionsPassFactory extends AbstractProjectComponent implemen
 
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    return new ShowIntentionsPass(myProject, editor, -1, null);
+    return new ShowIntentionsPass(myProject, editor, -1);
   }
 }
