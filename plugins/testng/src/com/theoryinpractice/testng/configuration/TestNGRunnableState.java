@@ -6,18 +6,24 @@
  */
 package com.theoryinpractice.testng.configuration;
 
+import java.io.*;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.UnknownHostException;
+import java.util.*;
+
 import com.intellij.ExtensionPoints;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.execution.*;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -49,19 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import org.testng.TestNG;
 import org.testng.TestNGCommandLineArgs;
 import org.testng.annotations.AfterClass;
-import org.testng.xml.LaunchSuite;
-import org.testng.xml.Parser;
-import org.testng.xml.SuiteGenerator;
-import org.testng.xml.XmlSuite;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.UnknownHostException;
-import java.util.*;
+import org.testng.xml.*;
 
 public class TestNGRunnableState extends JavaCommandLineState
 {
@@ -146,11 +140,12 @@ public class TestNGRunnableState extends JavaCommandLineState
     EnvironmentVariablesComponent.setupEnvs(javaParameters, config.getPersistantData().getEnvs(), config.getPersistantData().PASS_PARENT_ENVS);
     javaParameters.getVMParametersList().add("-ea");
     javaParameters.setMainClass("org.testng.remote.RemoteTestNG");
+    javaParameters.setWorkingDirectory(config.getProperty(RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY));
 
     //the next few lines are awkward for a reason, using compareTo for some reason causes a JVM class verification error!
     Module module = config.getConfigurationModule().getModule();
     LanguageLevel effectiveLanguageLevel = module == null ? LanguageLevelProjectExtension.getInstance(project).getLanguageLevel() : LanguageLevelUtil
-      .getEffectiveLanguageLevel(module);
+        .getEffectiveLanguageLevel(module);
     boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
 
     LOGGER.info("Language level is " + effectiveLanguageLevel.toString());
@@ -357,7 +352,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     } else if (data.TEST_OBJECT.equals(TestType.CLASS.getType())) {
       //it's a class
       PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject())
-        .findClass(data.getMainClassName(), getSearchScope());
+          .findClass(data.getMainClassName(), getSearchScope());
       if (psiClass == null) {
         throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
       }
@@ -365,7 +360,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     } else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
       //it's a method
       PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject())
-        .findClass(data.getMainClassName(), getSearchScope());
+          .findClass(data.getMainClassName(), getSearchScope());
       if (psiClass == null) {
         throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
       }
@@ -472,7 +467,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     final TestData data = config.getPersistantData();
     final Module module = config.getConfigurationModule().getModule();
     return data.TEST_OBJECT.equals(TestType.PACKAGE.getType())
-           ? config.getPersistantData().getScope().getSourceScope(config).getGlobalSearchScope()
-           : module != null ? GlobalSearchScope.moduleWithDependenciesScope(module) : GlobalSearchScope.projectScope(config.getProject());
+        ? config.getPersistantData().getScope().getSourceScope(config).getGlobalSearchScope()
+        : module != null ? GlobalSearchScope.moduleWithDependenciesScope(module) : GlobalSearchScope.projectScope(config.getProject());
   }
 }
