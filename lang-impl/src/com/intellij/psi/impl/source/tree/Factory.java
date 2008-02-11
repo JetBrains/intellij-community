@@ -7,7 +7,6 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 
 /**
@@ -17,12 +16,12 @@ public class Factory  {
   private Factory() {}
 
   public static LeafElement createSingleLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table, PsiManager manager, PsiFile originalFile) {
-    final LeafElement newElement;
-    final DummyHolder dummyHolder = DummyHolderFactory.createHolder(manager, table, type.getLanguage());
+    DummyHolder dummyHolder = DummyHolderFactory.createHolder(manager, table, type.getLanguage());
     dummyHolder.setOriginalFile(originalFile);
-    dummyHolder.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, PsiUtil.getLanguageLevel(originalFile));
-    final FileElement holderElement = dummyHolder.getTreeElement();
-    newElement = ASTFactory.leaf(type, buffer, startOffset, endOffset, holderElement.getCharTable());
+
+    FileElement holderElement = dummyHolder.getTreeElement();
+    
+    LeafElement newElement = ASTFactory.leaf(type, buffer, startOffset, endOffset, holderElement.getCharTable());
     TreeUtil.addChildren(holderElement, newElement);
     CodeEditUtil.setNodeGenerated(newElement, true);
     return newElement;

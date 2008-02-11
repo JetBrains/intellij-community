@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
@@ -113,4 +114,9 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
     return "".equals(aPackage.getQualifiedName());
   }
 
+
+  public void setOriginalFile(final PsiFile originalFile) {
+    super.setOriginalFile(originalFile);
+    putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, PsiUtil.getLanguageLevel(originalFile));
+  }
 }
