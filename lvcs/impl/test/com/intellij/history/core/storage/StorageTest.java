@@ -134,14 +134,29 @@ public class StorageTest extends TempDirTestCase {
     assertEquals(oldContent.getId(), newContent.getId());
   }
 
+  private void corruptFile(String name) {
+    try {
+      File f = new File(tempDir, name);
+      assertTrue(f.exists());
+
+      FileWriter w = new FileWriter(f);
+      w.write("bla-bla-bla");
+      w.close();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   @Test
   public void testRecreationOfStorageOnContentLoadingError() {
     StoredContent c = (StoredContent)s.storeContent(b("abc"));
     m.myEntryCounter = 10;
     s.store(m);
+    s.purgeContent(c);
+
     s.close();
 
-    corruptFile("contents.rindex");
     initStorage();
     try {
       s.loadContentData(c.getId());
@@ -183,20 +198,6 @@ public class StorageTest extends TempDirTestCase {
 
     Content c = s.storeContent(b("abc"));
     assertEquals(UnavailableContent.class, c.getClass());
-  }
-
-  private void corruptFile(String name) {
-    try {
-      File f = new File(tempDir, name);
-      assertTrue(f.exists());
-
-      FileWriter w = new FileWriter(f);
-      w.write("bla-bla-bla");
-      w.close();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private void initStorage() {
