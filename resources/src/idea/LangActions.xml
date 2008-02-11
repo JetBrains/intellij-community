@@ -104,6 +104,10 @@
       <add-to-group group-id="GoToTarget" anchor="first"/>
     </action>
 
+    <action id="GotoFile" class="com.intellij.ide.actions.GotoFileAction">
+      <add-to-group group-id="GoToTarget" anchor="first"/>
+    </action>
+
     <group id="GoToErrorGroup">
       <separator/>
       <action id="GotoNextError" class="com.intellij.codeInsight.daemon.impl.actions.GotoNextErrorAction"/>

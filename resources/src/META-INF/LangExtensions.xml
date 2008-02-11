@@ -126,6 +126,7 @@
 
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex" />
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.id.IdIndex" />
+  <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndex"/>
 
   <syntaxHighlighter factoryClass="com.intellij.openapi.fileTypes.LanguageFileTypeHighlighterProvider"/>
   <structureViewBuilder factoryClass="com.intellij.ide.highlighter.LanguageFileTypeStructureViewBuilderProvider"/>
@@ -138,4 +139,6 @@
   <programRunner implementation="com.intellij.tools.ToolProgramRunner"/>
 
   <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension"/>
+
+  <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor"/>
 </extensions>

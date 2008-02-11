@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,11 +26,11 @@ public class GotoFileModel extends ContributorsBasedGotoByModel{
   }
 
   public String getCheckBoxName() {
-    return IdeBundle.message("checkbox.include.java.files");
+    return IdeBundle.message("checkbox.include.non.project.files");
   }
 
   public char getCheckBoxMnemonic() {
-    return 'j';
+    return SystemInfo.isMac?'P':'n';
   }
 
   public String getNotInMessage() {

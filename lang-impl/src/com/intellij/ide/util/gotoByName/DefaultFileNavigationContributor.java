@@ -33,34 +33,18 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiFile;
-
-import java.util.ArrayList;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.ProjectScope;
 
 public class DefaultFileNavigationContributor implements ChooseByNameContributor {
 
   public String[] getNames(Project project, boolean includeNonProjectItems) {
-    return JavaPsiFacade.getInstance(project).getShortNamesCache().getAllFileNames();
+    return FilenameIndex.getAllFilenames();
   }
 
   public NavigationItem[] getItemsByName(String name, Project project, boolean includeNonProjectItems) {
-    final PsiFile[] psiFiles = JavaPsiFacade.getInstance(project).getShortNamesCache().getFilesByName(name);
-    ArrayList<PsiFile> list = new ArrayList<PsiFile>();
-    for (PsiFile file : psiFiles) {
-      if (isEditable(file, includeNonProjectItems)) {
-        list.add(file);
-      }
-    }
-    return list.toArray(new PsiFile[list.size()]);
-  }
-
-  private static boolean isEditable(PsiFile psiFile, final boolean checkboxState) {
-    FileType type = psiFile.getFileType();
-    if (!checkboxState && type == StdFileTypes.JAVA) return false;
-    return type != StdFileTypes.CLASS;
+    return FilenameIndex.getFilesByName(project, name,
+                                        includeNonProjectItems ? ProjectScope.getAllScope(project) : ProjectScope.getProjectScope(project));
   }
 }

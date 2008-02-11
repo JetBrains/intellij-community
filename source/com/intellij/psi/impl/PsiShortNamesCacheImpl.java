@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.RepositoryIndex;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ArrayUtil;
@@ -50,38 +51,12 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
 
   @NotNull
   public PsiFile[] getFilesByName(@NotNull String name) {
-    synchronized (PsiLock.LOCK) {
-      fillCache();
-      VirtualFile[] vFiles = getFiles(myFileNameToFilesMap, name);
-      int originalSize = vFiles.length;
-      ArrayList<PsiFile> files = new ArrayList<PsiFile>(vFiles.length);
-      for (int i = 0; i < vFiles.length; i++) {
-        VirtualFile vFile = vFiles[i];
-        PsiFile file;
-        if (!vFile.isValid() || (file = myManager.findFile(vFile)) == null) {
-          VirtualFile[] newFiles = new VirtualFile[vFiles.length - 1];
-          System.arraycopy(vFiles, 0, newFiles, 0, i);
-          System.arraycopy(vFiles, i + 1, newFiles, i, newFiles.length - i);
-          vFiles = newFiles;
-          i--;
-          continue;
-        }
-        files.add(file);
-      }
-      if (vFiles.length < originalSize) {
-        putFiles(myFileNameToFilesMap, name, vFiles);
-        if (vFiles.length == 0) {
-          return PsiFile.EMPTY_ARRAY;
-        }
-      }
-      return files.toArray(new PsiFile[files.size()]);
-    }
+    return FilenameIndex.getFilesByName(myManager.getProject(), name, GlobalSearchScope.projectScope(myManager.getProject()));
   }
 
   @NotNull
   public String[] getAllFileNames() {
-    fillCache();
-    return myFileNameToFilesMap.keySet().toArray(new String[myFileNameToFilesMap.size()]);
+    return FilenameIndex.getAllFilenames();
   }
 
   @NotNull
