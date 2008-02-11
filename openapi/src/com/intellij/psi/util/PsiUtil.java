@@ -17,7 +17,6 @@ package com.intellij.psi.util;
 
 import com.intellij.javaee.UriUtil;
 import com.intellij.lang.*;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -535,22 +534,6 @@ public final class PsiUtil extends PsiUtilBase {
     return type;
   }
 
-  /** @return name for element using element structure info
-   * TODO: Extend functionality for XML/JSP
-   */
-  public static String getName(PsiElement element) {
-    String name = null;
-    if (element instanceof PsiMetaOwner) {
-      final PsiMetaData data = ((PsiMetaOwner) element).getMetaData();
-      if (data != null)
-        name = data.getName(element);
-    }
-    if (name == null && element instanceof PsiNamedElement) {
-      name = ((PsiNamedElement) element).getName();
-    }
-    return name;
-  }
-
   public static boolean isApplicable(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiExpressionList argList) {
     return getApplicabilityLevel(method, substitutorForMethod, argList) != ApplicabilityLevel.NOT_APPLICABLE;
   }
@@ -918,17 +901,6 @@ public final class PsiUtil extends PsiUtilBase {
       PsiTypeParameter parameter = iterator.next();
       if (substitutor.substitute(parameter) == null) return true;
     }
-    return false;
-  }
-
-  public static boolean isUnderPsiRoot(PsiFile root, PsiElement element) {
-    PsiFile containingFile = element.getContainingFile();
-    if (containingFile == root) return true;
-    for (PsiFile psiRoot : root.getPsiRoots()) {
-      if (containingFile == psiRoot) return true;
-    }
-    PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(root.getProject()).getInjectionHost(element);
-    if (host != null) return isUnderPsiRoot(root, host);
     return false;
   }
 

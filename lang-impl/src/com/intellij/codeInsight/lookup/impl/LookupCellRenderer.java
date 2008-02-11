@@ -20,7 +20,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.StrikeoutLabel;
 import com.intellij.util.IconUtil;
@@ -399,7 +399,7 @@ class LookupCellRenderer implements ListCellRenderer {
     if (o instanceof PsiElement) {
       final PsiElement element = (PsiElement)o;
       if (element.isValid()) {
-        name = PsiUtil.getName(element);
+        name = PsiUtilBase.getName(element);
 
         if (element instanceof PsiAnonymousClass) {
           name = null;

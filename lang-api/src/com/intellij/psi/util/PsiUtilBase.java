@@ -2,12 +2,15 @@ package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -319,5 +322,32 @@ public class PsiUtilBase {
 
     final FileViewProvider viewProvider = containingFile.getViewProvider();
     return viewProvider.getPsi(viewProvider.getBaseLanguage());
+  }
+
+  /** @return name for element using element structure info
+   */
+  @Nullable
+  public static String getName(PsiElement element) {
+    String name = null;
+    if (element instanceof PsiMetaOwner) {
+      final PsiMetaData data = ((PsiMetaOwner) element).getMetaData();
+      if (data != null)
+        name = data.getName(element);
+    }
+    if (name == null && element instanceof PsiNamedElement) {
+      name = ((PsiNamedElement) element).getName();
+    }
+    return name;
+  }
+
+  public static boolean isUnderPsiRoot(PsiFile root, PsiElement element) {
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile == root) return true;
+    for (PsiFile psiRoot : root.getPsiRoots()) {
+      if (containingFile == psiRoot) return true;
+    }
+    PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(root.getProject()).getInjectionHost(element);
+    if (host != null) return isUnderPsiRoot(root, host);
+    return false;
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +110,7 @@ public class LookupItemUtil{
         object = element;
         item = new LookupItem(object, "");
       }
-      s = PsiUtil.getName(element);
+      s = PsiUtilBase.getName(element);
     }
     if (object instanceof PsiEnumConstant) {
       item.addLookupStrings(((PsiEnumConstant)object).getName());
