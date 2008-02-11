@@ -5,7 +5,6 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -32,7 +31,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlElementDecl;
 import org.jetbrains.annotations.NotNull;
@@ -391,42 +389,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   }
 
   private static String getElementName(final PsiElement element) {
-    String elementName = null;
-    if (element instanceof PsiClass) {
-      elementName = ((PsiClass)element).getQualifiedName();
-      if (elementName == null) {
-        elementName = ((PsiClass)element).getName();
-      }
-      elementName = (((PsiClass)element).isInterface() ?
-                     LangBundle.message("java.terms.interface") :
-                     LangBundle.message("java.terms.class")) + " " + elementName;
-    }
-    else if (element instanceof PsiMethod) {
-      elementName = PsiFormatUtil.formatMethod((PsiMethod)element,
-                                               PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS |
-                                                                     PsiFormatUtil.SHOW_CONTAINING_CLASS,
-                                               PsiFormatUtil.SHOW_TYPE);
-      elementName = LangBundle.message("java.terms.method") + " " + elementName;
-    }
-    else if (element instanceof PsiVariable) {
-      elementName = PsiFormatUtil.formatVariable((PsiVariable)element,
-                                                 PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS,
-                                                 PsiSubstitutor.EMPTY);
-      if (element instanceof PsiField) {
-        elementName = LangBundle.message("java.terms.field") + " " + elementName;
-      }
-      else if (element instanceof PsiParameter) {
-        elementName = LangBundle.message("java.terms.parameter") + " " + elementName;
-      }
-      else {
-        elementName = LangBundle.message("java.terms.variable") + " " + elementName;
-      }
-    }
-    else if (element instanceof PsiPackage) {
-      elementName = ((PsiPackage)element).getQualifiedName();
-      elementName = LangBundle.message("java.terms.package") + " " + elementName;
-    }
-    return elementName;
+    return ElementDescriptionUtil.getElementDescription(element, HighlightUsagesDescriptionLocation.INSTANCE);
   }
 
   public static String getShortcutText() {
