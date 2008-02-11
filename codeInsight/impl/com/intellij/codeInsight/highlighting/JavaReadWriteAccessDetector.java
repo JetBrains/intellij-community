@@ -14,6 +14,10 @@ public class JavaReadWriteAccessDetector implements ReadWriteAccessDetector {
     return element instanceof PsiVariable;
   }
 
+  public boolean isWriteAccess(final PsiElement element) {
+    return element instanceof PsiVariable && ((PsiVariable) element).getInitializer() != null;
+  }
+
   public boolean isWriteAccess(final PsiElement referencedElement, final PsiReference reference) {
     PsiElement refElement = reference.getElement();
     return refElement instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression) refElement);

@@ -21,7 +21,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
@@ -149,8 +148,6 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     editor.setHeaderComponent(header);
   }
 
-  private static final Runnable EMPTY_HIGHLIGHT_RUNNABLE = EmptyRunnable.getInstance();
-
   public static class DoHighlightRunnable implements Runnable {
     private final List<PsiReference> myRefs;
     private final Project myProject;
@@ -195,13 +192,12 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     return new DoHighlightRunnable(new ArrayList<PsiReference>(refs), project, target, editor, context, clearHighlights);
   }
 
-  public static void highlightOtherOccurrences(final List<PsiElement> otherOccurrences, Project myProject, Editor myEditor, boolean clearHighlights) {
-    HighlightManager highlightManager = HighlightManager.getInstance(myProject);
+  public static void highlightOtherOccurrences(final List<PsiElement> otherOccurrences, Editor editor, boolean clearHighlights) {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
 
     PsiElement[] elements = otherOccurrences.toArray(new PsiElement[otherOccurrences.size()]);
-    doHighlightElements(myEditor, elements, attributes, clearHighlights);
+    doHighlightElements(editor, elements, attributes, clearHighlights);
   }
 
   public static void highlightReferences(@NotNull Project project, @NotNull PsiElement element, @NotNull List<PsiReference> refs, Editor editor,
@@ -244,7 +240,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     PsiElement identifier = getNameIdentifier(element);
     if (identifier != null && PsiUtilBase.isUnderPsiRoot(file, identifier)) {
       TextAttributes nameAttributes = attributes;
-      if (element instanceof PsiVariable && ((PsiVariable)element).getInitializer() != null) {
+      if (detector != null && detector.isWriteAccess(element)) {
         nameAttributes = writeAttributes;
       }
       doHighlightElements(editor, new PsiElement[]{identifier}, nameAttributes, clearHighlights);

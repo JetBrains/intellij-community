@@ -11,5 +11,6 @@ public interface ReadWriteAccessDetector {
   ExtensionPointName<ReadWriteAccessDetector> EP_NAME = ExtensionPointName.create("com.intellij.readWriteAccessDetector");
 
   boolean isReadWriteAccessible(PsiElement element);
+  boolean isWriteAccess(PsiElement element);
   boolean isWriteAccess(final PsiElement referencedElement, PsiReference reference);
 }

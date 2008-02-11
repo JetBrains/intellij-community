@@ -18,6 +18,10 @@ public class XmlReadWriteAccessDetector implements ReadWriteAccessDetector {
         element instanceof XmlComment; // e.g. <!--@elvariable name="xxx" type="yyy"-->
   }
 
+  public boolean isWriteAccess(final PsiElement element) {
+    return false;
+  }
+
   public boolean isWriteAccess(final PsiElement referencedElement, final PsiReference reference) {
     PsiElement refElement = reference.getElement();
     return ( refElement instanceof XmlAttributeValue &&

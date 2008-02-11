@@ -110,7 +110,7 @@ public class HighlightExceptionsHandler implements HighlightUsagesHandlerDelegat
         HighlightUsagesHandler.highlightReferences(project, target, refs, editor, file, clearHighlights);
         TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
         HighlightUsagesHandler.doHighlightElements(editor, new PsiElement[]{target}, attributes, clearHighlights);
-        HighlightUsagesHandler.highlightOtherOccurrences(otherOccurrences, project, editor, clearHighlights);
+        HighlightUsagesHandler.highlightOtherOccurrences(otherOccurrences, editor, clearHighlights);
         HighlightUsagesHandler.setStatusText(project, LangBundle.message("java.terms.exception"), refs.size(), clearHighlights);
       }
     }.run();

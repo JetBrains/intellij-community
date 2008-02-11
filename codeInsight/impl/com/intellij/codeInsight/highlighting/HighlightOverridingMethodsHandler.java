@@ -56,7 +56,7 @@ public class HighlightOverridingMethodsHandler implements HighlightUsagesHandler
             Project project = target.getProject();
             final boolean clearHighlights = HighlightUsagesHandler.isClearHighlights(editor, HighlightManager.getInstance(project));
             toHighlight.add(target);
-            HighlightUsagesHandler.highlightOtherOccurrences(toHighlight, project, editor, clearHighlights);
+            HighlightUsagesHandler.highlightOtherOccurrences(toHighlight, editor, clearHighlights);
             HighlightUsagesHandler.setupFindModel(project);
             final int methodCount = toHighlight.size()-1;  // exclude 'target' keyword
             String message = clearHighlights ? "" : CodeInsightBundle.message("status.bar.overridden.methods.highlighted.message", methodCount,
