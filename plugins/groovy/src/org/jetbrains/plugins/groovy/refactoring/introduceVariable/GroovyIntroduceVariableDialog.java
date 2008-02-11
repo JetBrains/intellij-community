@@ -273,29 +273,37 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper {
   public GroovyIntroduceVariableSettings getSettings() {
     final GroovyIntroduceVariableDialog dialog = GroovyIntroduceVariableDialog.this;
 
-    return new GroovyIntroduceVariableSettings() {
-      String myEnteredName = dialog.getEnteredName();
-      boolean myIsReplaceAllOccurrences = dialog.isReplaceAllOccurrences();
-      boolean myIsDeclareFinal = dialog.isDeclareFinal();
-      PsiType mySelectedType = dialog.getSelectedType();
-
-      public String getEnteredName() {
-        return myEnteredName;
-      }
-
-      public boolean isReplaceAllOccurrences() {
-        return myIsReplaceAllOccurrences;
-      }
-
-      public boolean isDeclareFinal() {
-        return myIsDeclareFinal;
-      }
-
-      public PsiType getSelectedType() {
-        return mySelectedType;
-      }
-
-    };
+    return new MyGroovyIntroduceVariableSettings(dialog);
   }
 
+  private static class MyGroovyIntroduceVariableSettings implements GroovyIntroduceVariableSettings {
+    String myEnteredName;
+    boolean myIsReplaceAllOccurrences;
+    boolean myIsDeclareFinal;
+    PsiType mySelectedType;
+
+    public MyGroovyIntroduceVariableSettings(GroovyIntroduceVariableDialog dialog) {
+      myEnteredName = dialog.getEnteredName();
+      myIsReplaceAllOccurrences = dialog.isReplaceAllOccurrences();
+      myIsDeclareFinal = dialog.isDeclareFinal();
+      mySelectedType = dialog.getSelectedType();
+    }
+
+    public String getEnteredName() {
+      return myEnteredName;
+    }
+
+    public boolean isReplaceAllOccurrences() {
+      return myIsReplaceAllOccurrences;
+    }
+
+    public boolean isDeclareFinal() {
+      return myIsDeclareFinal;
+    }
+
+    public PsiType getSelectedType() {
+      return mySelectedType;
+    }
+
+  }
 }

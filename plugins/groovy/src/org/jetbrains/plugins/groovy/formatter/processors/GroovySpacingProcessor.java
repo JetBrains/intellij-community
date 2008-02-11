@@ -47,7 +47,8 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
     ASTNode leftNode = child1.getNode();
     ASTNode rightNode = child2.getNode();
 
-/********** Braces ************/
+    /********** Braces ************/
+  
 
     // For multi-line strings
     if (!child1.getNode().getTextRange().equals(child1.getTextRange()) ||
@@ -62,7 +63,7 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
         mGT == rightNode.getElementType() &&
             leftNode.getPsi() instanceof GrTypeParameter ||
         mIDENT == leftType &&
-        rightNode.getPsi() instanceof GrTypeParameterList) {
+            rightNode.getPsi() instanceof GrTypeParameterList) {
       return NO_SPACING;
     }
 
@@ -131,7 +132,6 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
     if (GroovyTokenTypes.DOTS.contains(leftType)) {
       return NO_SPACING_WITH_NEWLINE;
     }
-
 
 /********** imports ************/
     if (IMPORT_STATEMENT.equals(leftType) &&
