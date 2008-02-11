@@ -1,14 +1,18 @@
 package com.intellij.psi.formatter.java;
 
-import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lexer.JavaLexer;
+import com.intellij.lexer.Lexer;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
@@ -18,9 +22,15 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ConcurrentHashMap;
+
+import java.util.Map;
 
 public class JavaSpacePropertyProcessor extends JavaElementVisitor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.JavaSpacePropertyProcessor"); 
+
   private PsiElement myParent;
   private int myRole1;
   private int myRole2;
@@ -58,7 +68,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
             myResult = Spacing
               .createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
           }
-          else if (!CodeEditUtil.canStickChildrenTogether(myChild1, myChild2)) {
+          else if (!canStickChildrenTogether(myChild1, myChild2)) {
             myResult = Spacing
               .createSpacing(1, Integer.MIN_VALUE, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
           }
@@ -1019,7 +1029,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
     else {
-      if (!space && !CodeEditUtil.canStickChildrenTogether(myChild1, myChild2)) {
+      if (!space && !canStickChildrenTogether(myChild1, myChild2)) {
         space = true;
       }
 
@@ -1244,4 +1254,55 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       spacePropertyProcessor.clear();
     }
   }
+
+  private static boolean isWS(final ASTNode lastChild) {
+    return lastChild != null && lastChild.getElementType() == TokenType.WHITE_SPACE;
+  }
+
+  private static Map<Pair<IElementType, IElementType>, Boolean> myCanStickJavaTokensMatrix =
+    new ConcurrentHashMap<Pair<IElementType, IElementType>, Boolean>();
+
+  public static boolean canStickChildrenTogether(final ASTNode child1, final ASTNode child2) {
+    if (child1 == null || child2 == null) return true;
+    if (isWS(child1) || isWS(child2)) return true;
+
+    ASTNode token1 = TreeUtil.findLastLeaf(child1);
+    ASTNode token2 = TreeUtil.findFirstLeaf(child2);
+
+    LOG.assertTrue(token1 != null);
+    LOG.assertTrue(token2 != null);
+
+    return !(token1.getElementType() instanceof IJavaElementType && token2.getElementType()instanceof IJavaElementType) ||
+           canStickJavaTokens(token1,token2);
+  }
+
+  private static boolean canStickJavaTokens(ASTNode token1, ASTNode token2) {
+    IElementType type1 = token1.getElementType();
+    IElementType type2 = token2.getElementType();
+
+    Pair<IElementType, IElementType> pair = new Pair<IElementType, IElementType>(type1, type2);
+    Boolean res = myCanStickJavaTokensMatrix.get(pair);
+    if (res == null) {
+      if (!checkToken(token1) || !checkToken(token2)) return true;
+      String text = token1.getText() + token2.getText();
+      Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
+      lexer.start(text, 0, text.length(),0);
+      boolean canMerge = lexer.getTokenType() == type1;
+      lexer.advance();
+      canMerge &= lexer.getTokenType() == type2;
+      res = canMerge;
+      myCanStickJavaTokensMatrix.put(pair, res);
+    }
+    return res.booleanValue();
+  }
+
+  private static boolean checkToken(final ASTNode token1) {
+    Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
+    final String text = token1.getText();
+    lexer.start(text, 0, text.length(),0);
+    if (lexer.getTokenType() != token1.getElementType()) return false;
+    lexer.advance();
+    return lexer.getTokenType() == null;
+  }
+
 }

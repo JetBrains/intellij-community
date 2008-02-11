@@ -5,15 +5,11 @@ import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.formatting.IndentInfo;
 import com.intellij.lang.*;
-import com.intellij.lexer.JavaLexer;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.command.AbnormalCommandTerminationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -23,13 +19,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.java.IJavaElementType;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 public class CodeEditUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeEditUtil");
@@ -309,57 +301,6 @@ public class CodeEditUtil {
     int currentIndex = -1;
     while((currentIndex = text.indexOf('\n', currentIndex + 1)) >= 0) result++;
     return result;
-  }
-
-  private static boolean isWS(final ASTNode lastChild) {
-    return lastChild != null && lastChild.getElementType() == TokenType.WHITE_SPACE;
-  }
-
-  public static boolean canStickChildrenTogether(final ASTNode child1, final ASTNode child2) {
-    if (child1 == null || child2 == null) return true;
-    if (isWS(child1) || isWS(child2)) return true;
-
-    ASTNode token1 = TreeUtil.findLastLeaf(child1);
-    ASTNode token2 = TreeUtil.findFirstLeaf(child2);
-
-    LOG.assertTrue(token1 != null);
-    LOG.assertTrue(token2 != null);
-
-    return !(token1.getElementType() instanceof IJavaElementType && token2.getElementType()instanceof IJavaElementType) ||
-           canStickJavaTokens(token1,token2);
-
-  }
-
-  private static Map<Pair<IElementType, IElementType>, Boolean> myCanStickJavaTokensMatrix =
-    new ConcurrentHashMap<Pair<IElementType, IElementType>, Boolean>();
-
-  private static boolean canStickJavaTokens(ASTNode token1, ASTNode token2) {
-    IElementType type1 = token1.getElementType();
-    IElementType type2 = token2.getElementType();
-
-    Pair<IElementType, IElementType> pair = new Pair<IElementType, IElementType>(type1, type2);
-    Boolean res = myCanStickJavaTokensMatrix.get(pair);
-    if (res == null) {
-      if (!checkToken(token1) || !checkToken(token2)) return true;
-      String text = token1.getText() + token2.getText();
-      Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
-      lexer.start(text, 0, text.length(),0);
-      boolean canMerge = lexer.getTokenType() == type1;
-      lexer.advance();
-      canMerge &= lexer.getTokenType() == type2;
-      res = canMerge;
-      myCanStickJavaTokensMatrix.put(pair, res);
-    }
-    return res.booleanValue();
-  }
-
-  private static boolean checkToken(final ASTNode token1) {
-    Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
-    final String text = token1.getText();
-    lexer.start(text, 0, text.length(),0);
-    if (lexer.getTokenType() != token1.getElementType()) return false;
-    lexer.advance();
-    return lexer.getTokenType() == null;
   }
 
   public static String getStringWhiteSpaceBetweenTokens(ASTNode first, ASTNode second, PsiFile file) {
