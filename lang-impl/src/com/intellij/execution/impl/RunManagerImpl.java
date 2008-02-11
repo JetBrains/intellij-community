@@ -179,10 +179,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public RunnerAndConfigurationSettingsImpl getConfigurationTemplate(final ConfigurationFactory factory) {
-    RunnerAndConfigurationSettingsImpl template = myTemplateConfigurationsMap.get(factory.getName());
+    RunnerAndConfigurationSettingsImpl template = myTemplateConfigurationsMap.get(factory.getType().getId() + "." + factory.getName());
     if (template == null) {
       template = new RunnerAndConfigurationSettingsImpl(this, factory.createTemplateConfiguration(myProject), true);
-      myTemplateConfigurationsMap.put(factory.getName(), template);
+      myTemplateConfigurationsMap.put(factory.getType().getId() + "." + factory.getName(), template);
     }
     return template;
   }
@@ -357,7 +357,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
     final Element methodsElement = element.getChild(METHOD);
     if (configuration.isTemplate()) {
-      myTemplateConfigurationsMap.put(factory.getName(), configuration);
+      myTemplateConfigurationsMap.put(factory.getType().getId() + "." + factory.getName(), configuration);
       final Map<String, Boolean> map = updateStepsBeforeRun(methodsElement);
       setCompileMethodBeforeRun(configuration.getConfiguration(), map);
     }
