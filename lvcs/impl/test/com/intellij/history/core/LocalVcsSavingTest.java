@@ -97,4 +97,18 @@ public class LocalVcsSavingTest extends TempDirTestCase {
 
     assertTrue(123 != f.lastModified());
   }
+  
+  @Test
+  public void testSavingAfterPurge() {
+    vcs.createFile("f", cf("one"), 1, false);
+    vcs.changeFileContent("f", cf("two"), 2);
+    vcs.changeFileContent("f", cf("three"), 3);
+
+    vcs.save();
+    vcs.purgeObsoleteAndSave(0);
+
+    initVcs();
+
+    assertEquals(1, vcs.getRevisionsFor("f").size());
+  }
 }

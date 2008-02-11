@@ -56,6 +56,7 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void purgeObsoleteAndSave(long period) {
+    wasModifiedAfterLastSave = true;
     purgeObsolete(period);
     save();
   }
