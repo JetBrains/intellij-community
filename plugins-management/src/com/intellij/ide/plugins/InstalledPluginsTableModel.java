@@ -194,12 +194,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           }, new Condition<PluginId>() {
             public boolean value(final PluginId pluginId) {
               final Boolean enabled = myEnabled.get(pluginId);
-              if (enabled != null && !enabled.booleanValue()) {
+              if (enabled == null || !enabled.booleanValue()) {
                 cellRenderer.setForeground(Color.red);
                 final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-                if (plugin != null) {
-                  cellRenderer.setToolTipText(IdeBundle.message("plugin.manager.tooltip.warning", plugin.getName()));
-                }
+                cellRenderer.setToolTipText(IdeBundle.message("plugin.manager.tooltip.warning", plugin != null ? plugin.getName() : pluginId.getIdString()));
                 return false;
               }
               return true;
