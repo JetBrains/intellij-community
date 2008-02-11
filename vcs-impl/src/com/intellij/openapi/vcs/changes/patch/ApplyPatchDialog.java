@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangeListChooserPanel;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.DocumentAdapter;
@@ -543,6 +544,14 @@ public class ApplyPatchDialog extends DialogWrapper {
     if (filePatch.isNewFile()) return VcsBundle.message("change.type.new");
     if (filePatch.isDeletedFile()) return VcsBundle.message("change.type.deleted");
     return VcsBundle.message("change.type.modified");
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp("reference.dialogs.vcs.patch.apply");
+  }
+  
+  protected Action[] createActions() {
+    return new Action[]{ getOKAction(), getCancelAction(), getHelpAction() };
   }
 
   private class PatchCellRendererPanel extends JPanel implements ListCellRenderer {
