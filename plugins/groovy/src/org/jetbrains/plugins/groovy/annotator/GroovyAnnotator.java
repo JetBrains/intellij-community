@@ -675,6 +675,7 @@ public class GroovyAnnotator implements Annotator {
         if (context instanceof PsiModifierListOwner && ((PsiModifierListOwner) context).hasModifierProperty(PsiModifier.STATIC)) {
           Annotation annotation = holder.createErrorAnnotation(refExpr, GroovyBundle.message("cannot.resolve", refExpr.getReferenceName()));
           annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+          registerReferenceFixes(refExpr, annotation);
           return;
         }
       }
@@ -719,6 +720,9 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private boolean isNeedsDynamic(@NotNull GrReferenceExpression referenceExpression, final @NotNull PsiClass targetClass) {
+    if (targetClass instanceof GrTypeDefinition &&
+        PsiUtil.isInStaticContext(referenceExpression, (GrMemberOwner) targetClass)) return false;
+    
     final PsiFile containingFile = referenceExpression.getContainingFile();
 
     VirtualFile file;

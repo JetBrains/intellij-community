@@ -25,10 +25,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -36,13 +33,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 
 /**
  * @author ven
@@ -82,7 +79,8 @@ public class CreateFieldFromUsageFix implements IntentionAction {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiClassType type = PsiManager.getInstance(project).getElementFactory().createTypeByFQClassName("Object", GlobalSearchScope.allScope(project));
-    GrVariableDeclaration fieldDecl = GroovyPsiElementFactory.getInstance(project).createFieldDeclaration(ArrayUtil.EMPTY_STRING_ARRAY,
+    String[] modifiers = PsiUtil.isInStaticContext(myRefExpression, myTargetClass) ? new String[] {PsiModifier.STATIC} :ArrayUtil.EMPTY_STRING_ARRAY;
+    GrVariableDeclaration fieldDecl = GroovyPsiElementFactory.getInstance(project).createFieldDeclaration(modifiers,
         myRefExpression.getReferenceName(), null, type);
     fieldDecl = myTargetClass.addMemberDeclaration(fieldDecl, null);
     GrTypeElement typeElement = fieldDecl.getTypeElementGroovy();
@@ -101,16 +99,6 @@ public class CreateFieldFromUsageFix implements IntentionAction {
     TemplateManager manager = TemplateManager.getInstance(project);
     manager.startTemplate(newEditor, template);
   }
-
-  private PsiElement findAnchor(PsiFile file, int offset) {
-    PsiElement element = file.findElementAt(offset);
-    while (element != null) {
-      element = element.getParent();
-      if (element.getParent().equals(file)) return element;
-    }
-    return null;
-  }
-
 
   public boolean startInWriteAction() {
     return true;

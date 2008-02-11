@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -443,5 +444,20 @@ public class PsiUtil {
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  public static boolean isInStaticContext(GrReferenceExpression refExpression, GrMemberOwner targetClass) {
+    if (refExpression.isQualified()) {
+      GrExpression qualifer = refExpression.getQualifierExpression();
+      if (qualifer instanceof GrReferenceExpression) return ((GrReferenceExpression) qualifer).resolve() instanceof PsiClass;
+    } else {
+      PsiElement run = refExpression;
+      while (run != null && run != targetClass) {
+        if (run instanceof PsiModifierListOwner && ((PsiModifierListOwner) run).hasModifierProperty(PsiModifier.STATIC)) return true;
+        run = run.getParent();
+      }
+    }
+    return false;
+
   }
 }
