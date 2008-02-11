@@ -12,9 +12,7 @@ public class CacheUpdaterHelper {
     u.updatingDone();
   }
 
-  public static FileContent fileContentOf(final VirtualFile f) {
-    return new FileContent(f) {
-
-    };
+  public static FileContent fileContentOf(VirtualFile f) {
+    return new FileContent(f);
   }
 }

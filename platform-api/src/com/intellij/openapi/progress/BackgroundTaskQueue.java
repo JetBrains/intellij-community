@@ -62,7 +62,7 @@ public class BackgroundTaskQueue {
 
   public void run(Task.Backgroundable task) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      task.run(null);
+      task.run(new EmptyProgressIndicator());
       task.onSuccess();
     }
     else if (task.isConditionalModal() && !task.shouldStartInBackground()) {
