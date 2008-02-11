@@ -198,13 +198,15 @@ public class FileUtil {
       int n = reader.read(chars, count, chars.length-count);
       if (n <= 0) break;
       count += n;
+      if (total > 1024*1024*10) throw new IOException("File too big "+reader);
       total += n;
       if (count == chars.length) {
         if (buffers == null) {
           buffers = new ArrayList<char[]>();
         }
         buffers.add(chars);
-        chars = new char[chars.length * 2];
+        int newLength = Math.min(1024*1024, chars.length * 2);
+        chars = new char[newLength];
         count = 0;
       }
     }
@@ -228,13 +230,15 @@ public class FileUtil {
       int n = stream.read(bytes, count, bytes.length-count);
       if (n <= 0) break;
       count += n;
+      if (total > 1024*1024*10) throw new IOException("File too big "+stream);
       total += n;
       if (count == bytes.length) {
         if (buffers == null) {
           buffers = new ArrayList<byte[]>();
         }
         buffers.add(bytes);
-        bytes = new byte[bytes.length * 2];
+        int newLength = Math.min(1024*1024, bytes.length * 2);
+        bytes = new byte[newLength];
         count = 0;
       }
     }
