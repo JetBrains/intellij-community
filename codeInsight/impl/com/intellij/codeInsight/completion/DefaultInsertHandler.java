@@ -2,12 +2,16 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
+import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
+import com.intellij.codeInsight.completion.simple.SimpleInsertHandlerFactory;
+import com.intellij.codeInsight.completion.simple.CompletionCharHandler;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -64,6 +68,19 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       if (item.getObject() instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)item.getObject();
         LookupItem<PsiMethod> simpleItem = LookupElementFactoryImpl.getInstance().createLookupElement(method, item.getLookupString());
+        final SimpleInsertHandler handler = SimpleInsertHandlerFactory.createInsertHandler(method);
+        if (handler != null) {
+          simpleItem.setInsertHandler(handler);
+        }
+        simpleItem.setCompletionCharHandler(new CompletionCharHandler<PsiMethod>() {
+          public TailType handleCompletionChar(@NotNull final Editor editor,
+                                               @NotNull final LookupElement<PsiMethod> element, final char completionChar) {
+            if (completionChar == '(') {
+              return element.getObject().getParameterList().getParameters().length > 0 ? TailType.NONE : TailType.SEMICOLON;
+            }
+            return null;
+          }
+        });
         final InsertHandler insertHandler = (InsertHandler)simpleItem.getAttribute(LookupItem.INSERT_HANDLER_ATTR);
         simpleItem.copyAttributes(item);
         insertHandler.handleInsert(context, startOffset, data, simpleItem, signatureSelected, completionChar);
