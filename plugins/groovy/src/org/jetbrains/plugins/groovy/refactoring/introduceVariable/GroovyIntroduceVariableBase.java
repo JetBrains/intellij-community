@@ -118,6 +118,13 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
         !(parent instanceof GrParameter)) {
       parent = parent.getParent();
     }
+
+    if (checkInFieldInitializer(selectedExpr)){
+      String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
+      showErrorMessage(message, project);
+      return false;
+    }
+
     if (parent instanceof GrParameter) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.method.parameters"));
       showErrorMessage(message, project);
@@ -160,6 +167,20 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
     return true;
 
+  }
+
+  private static boolean checkInFieldInitializer(GrExpression expr) {
+    PsiElement parent = expr.getParent();
+    if (parent instanceof GrClosableBlock) {
+      return false;
+    }
+    if (parent instanceof GrField && expr == ((GrField) parent).getInitializerGroovy()) {
+      return true;
+    }
+    if (parent instanceof GrExpression){
+      return checkInFieldInitializer(((GrExpression) parent));
+    }
+    return false;
   }
 
   /**
