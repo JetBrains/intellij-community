@@ -21,7 +21,7 @@ public interface FileBasedIndexExtension<K, V> {
   
   FileBasedIndex.InputFilter getInputFilter();
   
-  boolean shouldLoadFileContent();
+  boolean dependsOnFileContent();
   
   int getVersion();
 }

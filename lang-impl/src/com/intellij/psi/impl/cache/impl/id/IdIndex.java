@@ -76,7 +76,7 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
     return 7;
   }
 
-  public boolean shouldLoadFileContent() {
+  public boolean dependsOnFileContent() {
     return true;
   }
 

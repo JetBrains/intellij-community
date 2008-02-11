@@ -41,7 +41,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     return myInputFilter;
   }
 
-  public boolean shouldLoadFileContent() {
+  public boolean dependsOnFileContent() {
     return false;
   }
 
