@@ -5,14 +5,11 @@ import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.ThreadSafeLocalVcs;
 import com.intellij.history.core.storage.Storage;
-import com.intellij.history.core.storage.StorageChecker;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -88,29 +85,8 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   protected void initVcs() {
     myStorage = new Storage(getStorageDir());
 
-    checkStorageIntegrity();
-
     myVcsImpl = new LocalVcs(myStorage);
     myVcs = new ThreadSafeLocalVcs(myVcsImpl);
-  }
-
-  protected void checkStorageIntegrity() {
-    if (!ApplicationManagerEx.getApplicationEx().isInternal()) return;
-
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) {
-      indicator.pushState();
-      indicator.setText("Checking integrity of the local history");
-    }
-
-    try {
-      StorageChecker.checkIntegrity(myStorage);
-    }
-    finally {
-      if (indicator != null) {
-        indicator.popState();
-      }
-    }
   }
 
   protected void initService() {

@@ -160,10 +160,6 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
       }
 
       @Override
-      protected void checkStorageIntegrity() {
-      }
-
-      @Override
       protected void closeService() {
       }
 
@@ -230,10 +226,6 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     protected void initVcs() {
       super.initVcs();
       isVcsInitialized = true;
-    }
-
-    @Override
-    protected void checkStorageIntegrity() {
     }
 
     @Override
