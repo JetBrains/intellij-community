@@ -6,10 +6,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,10 +17,33 @@ import java.util.Set;
  */
 
 public class PsiMultiReference implements PsiPolyVariantReference {
+  private static final Comparator<PsiReference> COMPARATOR = new Comparator<PsiReference>() {
+    public int compare(final PsiReference ref1, final PsiReference ref2) {
+      if (ref1.isSoft() && !ref2.isSoft()) return 1;
+      if (!ref1.isSoft() && ref2.isSoft()) return -1;
+
+      boolean resolves1 = resolves(ref1);
+      boolean resolves2 = resolves(ref2);
+      if (resolves1 && !resolves2) return -1;
+      if (!resolves1 && resolves2) return 1;
+
+      final TextRange range1 = ref1.getRangeInElement();
+      final TextRange range2 = ref2.getRangeInElement();
+
+      if(range1.getStartOffset() >= range2.getStartOffset() && range1.getEndOffset() <= range2.getEndOffset()) return -1;
+      if(range2.getStartOffset() >= range1.getStartOffset() && range2.getEndOffset() <= range1.getEndOffset()) return 1;
+
+      return 0;
+    }
+  };
+
+  private static boolean resolves(final PsiReference ref1) {
+    return ref1 instanceof PsiPolyVariantReference && ((PsiPolyVariantReference)ref1).multiResolve(false).length > 0 || ref1.resolve() != null;
+  }
+
   private PsiReference[] myReferences;
   private final PsiElement myElement;
-
-  private int myChoosenOne = -1;
+  private boolean mySorted;
 
   public PsiMultiReference(@NotNull PsiReference[] references, PsiElement element){
     myReferences = references;
@@ -34,45 +54,12 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return myReferences;
   }
 
-  private PsiReference chooseReference(){
-    if(myChoosenOne != -1){
-      return myReferences[myChoosenOne];
+  private synchronized PsiReference chooseReference(){
+    if (!mySorted) {
+      Arrays.sort(myReferences, COMPARATOR);
+      mySorted = true;
     }
-    boolean nonSoftFound = false;
-    myChoosenOne = 0;
-    boolean strict = false;
-    for(int i = 0; i < myReferences.length; i++){
-      final PsiReference reference = myReferences[i];
-      if(reference.isSoft() && nonSoftFound) continue;
-      if(!reference.isSoft() && !nonSoftFound){
-        myChoosenOne = i;
-        nonSoftFound = true;
-      }
-
-      if(reference instanceof GenericReference){
-        if(((GenericReference)reference).getContext() != null){
-          myChoosenOne = i;
-          strict = true;
-        }
-      }
-      
-      if(reference instanceof PsiPolyVariantReference && ((PsiPolyVariantReference)reference).multiResolve(false).length > 0 ||
-         reference.resolve() != null
-        ){
-        myChoosenOne = i;
-        strict = true;
-      }
-      if(!strict){
-        // One reference inside other
-        final TextRange rangeInElement1 = reference.getRangeInElement();
-        final TextRange rangeInElement2 = myReferences[myChoosenOne].getRangeInElement();
-        if(rangeInElement1.getStartOffset() >= rangeInElement2.getStartOffset()
-           && rangeInElement1.getEndOffset() <= rangeInElement2.getEndOffset()){
-          myChoosenOne = i;
-        }
-      }
-    }
-    return myReferences[myChoosenOne];
+    return myReferences[0];
   }
 
   public PsiElement getElement(){
@@ -92,7 +79,16 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   }
 
   public PsiElement resolve(){
-    return chooseReference().resolve();
+    final PsiReference reference = chooseReference();
+    if (cannotChoose()) {
+      final ResolveResult[] results = multiResolve(false);
+      return results.length == 1 ? results[0].getElement() : null;
+    }
+    return reference.resolve();
+  }
+
+  private boolean cannotChoose() {
+    return COMPARATOR.compare(myReferences[0], myReferences[1]) == 0;
   }
 
   public String getCanonicalText(){

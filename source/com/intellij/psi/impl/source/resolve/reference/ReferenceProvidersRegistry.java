@@ -1,33 +1,21 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.encoding.HtmlHttpEquivEncodingReferenceProvider;
-import com.intellij.codeInsight.daemon.impl.analysis.encoding.JspEncodingInAttributeReferenceProvider;
-import com.intellij.codeInsight.daemon.impl.analysis.encoding.XmlEncodingReferenceProvider;
-import com.intellij.codeInspection.i18n.I18nUtil;
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.properties.PropertiesReferenceProvider;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.patterns.*;
-import static com.intellij.patterns.StandardPatterns.string;
-import static com.intellij.patterns.XmlPatterns.*;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.*;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
-import com.intellij.psi.filters.position.NamespaceFilter;
-import com.intellij.psi.filters.position.ParentElementFilter;
-import com.intellij.psi.filters.position.TokenTypeFilter;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.util.HtmlReferenceProvider;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +35,7 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
   private final ConcurrentMap<Class,SimpleProviderBinding> myBindingsMap = new ConcurrentWeakHashMap<Class, SimpleProviderBinding>();
   private final ConcurrentMap<Class,NamedObjectProviderBinding> myNamedBindingsMap = new ConcurrentWeakHashMap<Class, NamedObjectProviderBinding>();
   private final Map<ReferenceProviderType,PsiReferenceProvider> myReferenceTypeToProviderMap = new ConcurrentHashMap<ReferenceProviderType, PsiReferenceProvider>(5);
+  private boolean myInitialized;
 
   private static final Comparator<Trinity<PsiReferenceProvider,ProcessingContext,Double>> PRIORITY_COMPARATOR = new Comparator<Trinity<PsiReferenceProvider, ProcessingContext, Double>>() {
     public int compare(final Trinity<PsiReferenceProvider, ProcessingContext, Double> o1,
@@ -76,157 +65,10 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
   }
 
   private ReferenceProvidersRegistry() {
-    // Binding declarations
-
     myReferenceTypeToProviderMap.put(CLASS_REFERENCE_PROVIDER, new JavaClassReferenceProvider());
-
-    PsiReferenceProvider propertiesReferenceProvider = new PropertiesReferenceProvider(false);
-    myReferenceTypeToProviderMap.put(PROPERTIES_FILE_KEY_PROVIDER, propertiesReferenceProvider);
-
-    XmlUtil.registerXmlAttributeValueReferenceProvider(this,
-      new String[]{"code"},
-      new ScopeFilter(
-        new ParentElementFilter(
-          new AndFilter(
-            new NamespaceFilter(XmlUtil.SPRING_URI),
-            new AndFilter(
-              new ClassFilter(XmlTag.class),
-              new TextFilter("message", "theme")
-            )
-          ), 2
-        )
-      ), propertiesReferenceProvider
-    );
-
-    final JavaClassListReferenceProvider classListProvider = new JavaClassListReferenceProvider();
-    registerReferenceProvider(xmlAttributeValue(), classListProvider, LOWER_PRIORITY);
-
-    registerReferenceProvider(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS) {
-      public boolean isAcceptable(final Object element, final PsiElement context) {
-        final boolean acceptable = super.isAcceptable(element, context);
-        if (acceptable) {
-          final Language language = ((XmlToken)element).getContainingFile().getLanguage();
-          return language != StdLanguages.JSP && language != StdLanguages.JSPX;
-        }
-        return false;
-      }
-    }, XmlToken.class, classListProvider, LOWER_PRIORITY);
-
-    final IdReferenceProvider idReferenceProvider = new IdReferenceProvider();
-
-    String[] attributeNames3 = idReferenceProvider.getIdForAttributeNames();
-    ElementFilter elementFilter3 = idReferenceProvider.getIdForFilter();
-    boolean caseSensitive2 = true;
-    PsiReferenceProvider provider4 = idReferenceProvider;
-    XmlUtil.registerXmlAttributeValueReferenceProvider(this, attributeNames3, elementFilter3, caseSensitive2, provider4);
-
-    final DtdReferencesProvider dtdReferencesProvider = new DtdReferencesProvider();
-    //registerReferenceProvider(null, XmlEntityDecl.class,dtdReferencesProvider);
-    registerReferenceProvider(null, XmlEntityRef.class,dtdReferencesProvider);
-    registerReferenceProvider(null, XmlDoctype.class,dtdReferencesProvider);
-    registerReferenceProvider(null, XmlElementDecl.class,dtdReferencesProvider);
-    registerReferenceProvider(null, XmlAttlistDecl.class,dtdReferencesProvider);
-    registerReferenceProvider(null, XmlElementContentSpec.class,dtdReferencesProvider);
-    registerReferenceProvider(null, XmlToken.class,dtdReferencesProvider);
-
-    URIReferenceProvider uriProvider = new URIReferenceProvider();
-
-    registerTypeWithProvider(URI_PROVIDER,uriProvider);
-    XmlUtil.registerXmlAttributeValueReferenceProvider(this,
-      null,
-      dtdReferencesProvider.getSystemReferenceFilter(),
-      uriProvider
-    );
-
-    //registerReferenceProvider(PsiPlainTextFile.class, new JavaClassListReferenceProvider());
-
-    HtmlReferenceProvider provider = new HtmlReferenceProvider();
-    String[] attributeNames2 = HtmlReferenceProvider.getAttributeValues();
-    ElementFilter elementFilter2 = HtmlReferenceProvider.getFilter();
-    boolean caseSensitive1 = false;
-    PsiReferenceProvider provider3 = provider;
-    XmlUtil.registerXmlAttributeValueReferenceProvider(this, attributeNames2, elementFilter2, caseSensitive1, provider3);
-
-    XmlUtil.registerXmlAttributeValueReferenceProvider(this, new String[] { "href" }, new ScopeFilter(
-      new ParentElementFilter(
-        new AndFilter(
-          new AndFilter(
-            new ClassFilter(XmlTag.class),
-            new TextFilter("include")
-          ),
-          new NamespaceFilter(XmlUtil.XINCLUDE_URI)
-        ),
-        2
-      )
-    ), true, uriProvider);
-
-    final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider();
-    registerReferenceProvider(
-      new ElementFilter() {
-        public boolean isAcceptable(Object element, PsiElement context) {
-          if (context instanceof PsiLiteralExpression) {
-            PsiLiteralExpression literalExpression = (PsiLiteralExpression) context;
-            final Map<String, Object> annotationParams = new HashMap<String, Object>();
-            annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
-            if (I18nUtil.mustBePropertyKey(literalExpression, annotationParams)) {
-              return false;
-            }
-          }
-          return true;
-        }
-
-        public boolean isClassAcceptable(Class hintClass) {
-          return true;
-        }
-      }, PsiLiteralExpression.class, filePathReferenceProvider);
-
-    final SchemaReferencesProvider schemaReferencesProvider = new SchemaReferencesProvider();
-    registerTypeWithProvider(SCHEMA_PROVIDER, schemaReferencesProvider);
-
-    XmlUtil.registerXmlAttributeValueReferenceProvider(this,
-      schemaReferencesProvider.getCandidateAttributeNamesForSchemaReferences(),
-      new ScopeFilter(
-        new ParentElementFilter(
-          new NamespaceFilter(XmlUtil.SCHEMA_URIS), 2
-        )
-      ),
-      schemaReferencesProvider
-    );
-
-    registerReferenceProvider(xmlAttributeValue(xmlAttribute().withNamespace(XmlUtil.XML_SCHEMA_INSTANCE_URI)).
-      withLocalName("type"), schemaReferencesProvider);
-
-    registerReferenceProvider(xmlAttributeValue(xmlAttribute().withNamespace(XmlUtil.XML_SCHEMA_INSTANCE_URI)).
-      withLocalName("noNamespaceSchemaLocation", "schemaLocation"), uriProvider);
-
-    registerReferenceProvider(
-      xmlAttributeValue().withLocalName("schemaLocation","namespace").
-        withSuperParent(2,
-                        xmlTag().withNamespace(XmlUtil.SCHEMA_URIS).withLocalName(string().oneOf("import", "include","redefine"))),
-      uriProvider);
-
-    String[] attributeNames6 = null;
-    ElementFilter elementFilter6 = URIReferenceProvider.ELEMENT_FILTER;
-    PsiReferenceProvider provider7 = uriProvider;
-    XmlUtil.registerXmlAttributeValueReferenceProvider(this, attributeNames6, elementFilter6, true, provider7);
-
-    String[] attributeNames5 = new String[] {"content"};
-    ElementFilter elementFilter5 = new ScopeFilter(
-      new ParentElementFilter(
-        new AndFilter(
-          new ClassFilter(XmlTag.class),
-          new TextFilter("meta")
-        ), 2
-      )
-    );
-    XmlUtil.registerXmlAttributeValueReferenceProvider(this, attributeNames5, elementFilter5, true, new HtmlHttpEquivEncodingReferenceProvider());
-
-    PsiReferenceProvider provider5 = new XmlEncodingReferenceProvider();
-    XmlUtil.registerXmlAttributeValueReferenceProvider(this, new String[] {"encoding"}, new ScopeFilter(new ParentElementFilter(new ClassFilter(XmlProcessingInstruction.class))), true, provider5);
-    String[] attributeNames = new String[]{"contentType", "pageEncoding",};
-    ElementFilter elementFilter = new ScopeFilter(new ParentElementFilter(new NamespaceFilter(XmlUtil.JSP_URI), 2));
-    PsiReferenceProvider provider1 = new JspEncodingInAttributeReferenceProvider();
-    XmlUtil.registerXmlAttributeValueReferenceProvider(this, attributeNames, elementFilter, true, provider1);
+    myReferenceTypeToProviderMap.put(PROPERTIES_FILE_KEY_PROVIDER, new PropertiesReferenceProvider(false));
+    myReferenceTypeToProviderMap.put(URI_PROVIDER, new URIReferenceProvider());
+    myReferenceTypeToProviderMap.put(SCHEMA_PROVIDER, new SchemaReferencesProvider());
   }
 
   public void registerReferenceProvider(@Nullable ElementFilter elementFilter,
@@ -330,6 +172,15 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
   @NotNull
   private List<Trinity<PsiReferenceProvider,ProcessingContext,Double>> getPairsByElement(@NotNull PsiElement element, @NotNull Class clazz) {
     assert ReflectionCache.isInstance(element, clazz);
+
+    synchronized (myBindingsMap) {
+      if (!myInitialized) {
+        for (final PsiReferenceContributor contributor : Extensions.getExtensions(PsiReferenceContributor.EP_NAME)) {
+          contributor.registerReferenceProviders(this);
+        }
+        myInitialized = true;
+      }
+    }
 
     final SimpleProviderBinding simpleBinding = myBindingsMap.get(clazz);
     final NamedObjectProviderBinding namedBinding = myNamedBindingsMap.get(clazz);
