@@ -20,11 +20,8 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
@@ -67,16 +64,6 @@ public class CreateFieldFromUsageFix implements IntentionAction {
     return myTargetClass.isValid() && myRefExpression.isValid();
   }
 
-  protected static Editor positionCursor(Project project, PsiFile targetFile, PsiElement element) {
-    TextRange range = element.getTextRange();
-    int textOffset = range.getStartOffset();
-
-    VirtualFile vFile = targetFile.getVirtualFile();
-    assert vFile != null;
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, vFile, textOffset);
-    return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-  }
-
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiClassType type = PsiManager.getInstance(project).getElementFactory().createTypeByFQClassName("Object", GlobalSearchScope.allScope(project));
     String[] modifiers = PsiUtil.isInStaticContext(myRefExpression, myTargetClass) ? new String[] {PsiModifier.STATIC} :ArrayUtil.EMPTY_STRING_ARRAY;
@@ -92,7 +79,7 @@ public class CreateFieldFromUsageFix implements IntentionAction {
     fieldDecl = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(fieldDecl);
     Template template = builder.buildTemplate();
 
-    Editor newEditor = positionCursor(project, myTargetClass.getContainingFile(), fieldDecl);
+    Editor newEditor = QuickfixUtil.positionCursor(project, myTargetClass.getContainingFile(), fieldDecl);
     TextRange range = fieldDecl.getTextRange();
     newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
 
