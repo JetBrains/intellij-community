@@ -229,14 +229,16 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   ExtractMethodSettings getSettings() {
     final GroovyExtractMethodDialog dialog = GroovyExtractMethodDialog.this;
     return new ExtractMethodSettings() {
+      ExtractMethodInfoHelper myHelper = dialog.getHelper();
+      String myEnteredName = dialog.getEnteredName();
 
       @NotNull
       public ExtractMethodInfoHelper getHelper() {
-        return dialog.getHelper();
+        return myHelper;
       }
 
       public String getEnteredName() {
-        return dialog.getEnteredName();
+        return myEnteredName;
       }
     };
   }

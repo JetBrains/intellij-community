@@ -62,6 +62,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper {
   private JLabel myTypeLabel;
   private JLabel myNameLabel;
   private JButton buttonOK;
+  public String myEnteredName;
 
   public GroovyIntroduceVariableDialog(Project project,
                                        GrExpression expression,
@@ -271,22 +272,27 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper {
 
   public GroovyIntroduceVariableSettings getSettings() {
     final GroovyIntroduceVariableDialog dialog = GroovyIntroduceVariableDialog.this;
+
     return new GroovyIntroduceVariableSettings() {
+      String myEnteredName = dialog.getEnteredName();
+      boolean myIsReplaceAllOccurrences = dialog.isReplaceAllOccurrences();
+      boolean myIsDeclareFinal = dialog.isDeclareFinal();
+      PsiType mySelectedType = dialog.getSelectedType();
 
       public String getEnteredName() {
-        return dialog.getEnteredName();
+        return myEnteredName;
       }
 
       public boolean isReplaceAllOccurrences() {
-        return dialog.isReplaceAllOccurrences();
+        return myIsReplaceAllOccurrences;
       }
 
       public boolean isDeclareFinal() {
-        return dialog.isDeclareFinal();
+        return myIsDeclareFinal;
       }
 
       public PsiType getSelectedType() {
-        return dialog.getSelectedType();
+        return mySelectedType;
       }
 
     };
