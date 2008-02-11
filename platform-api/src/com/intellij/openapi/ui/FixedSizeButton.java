@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,6 +41,9 @@ public class FixedSizeButton extends JButton {
     setMargin(new Insets(0, 0, 0, 0));
     setDefaultCapable(false);
     setFocusable(false);
+    if (SystemInfo.isMac) {
+      putClientProperty("JButton.buttonType", "square");
+    }
   }
 
   /**

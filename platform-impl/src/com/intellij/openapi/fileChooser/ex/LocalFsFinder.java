@@ -60,6 +60,8 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
     private VirtualFile myFile;
     private LocalFsFinder myFinder;
 
+    private String myMacro;
+
     public VfsFile(LocalFsFinder finder, final VirtualFile file) {
       myFinder = finder;
       myFile = file;
@@ -72,6 +74,14 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
 
     public boolean isDirectory() {
       return myFile != null ? myFile.isDirectory() : false;
+    }
+
+    public void setMacro(final String macro) {
+      myMacro = macro;
+    }
+
+    public String getMacro() {
+      return myMacro;
     }
 
     public LookupFile getParent() {

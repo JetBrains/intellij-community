@@ -15,6 +15,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -220,7 +221,13 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   private void setAlphaMode(Window window, float ratio) {
     try {
-      WindowUtils.setWindowAlpha(window, 1.0f - ratio);
+      if (SystemInfo.isMacOSLeopard) {
+        if (window instanceof JWindow) {
+          ((JWindow)window).getRootPane().putClientProperty("Window.alpha", 1.0f - ratio);
+        }
+      } else {
+        WindowUtils.setWindowAlpha(window, 1.0f - ratio);
+      }
     }
     catch (Throwable e) {
       LOG.debug(e);

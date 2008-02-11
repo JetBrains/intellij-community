@@ -25,10 +25,8 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileTextField {
 
@@ -52,13 +50,16 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   private boolean myAutopopup = true;
   private FileTextFieldImpl.CancelAction myCancelAction;
   private Set<Action> myDisabledTextActions;
+  private Map<String, String> myMacroMap;
 
-  public FileTextFieldImpl(Finder finder, LookupFilter filter) {
-    this(new JTextField(), finder, filter, null);
+  public FileTextFieldImpl(Finder finder, LookupFilter filter, Map<String, String> macroMap) {
+    this(new JTextField(), finder, filter, macroMap, null);
   }
 
-  public FileTextFieldImpl(JTextField field, Finder finder, LookupFilter filter, MergingUpdateQueue uiUpdater) {
+  public FileTextFieldImpl(JTextField field, Finder finder, LookupFilter filter, Map<String, String> macroMap, MergingUpdateQueue uiUpdater) {
     myPathTextField = field;
+    myMacroMap = new TreeMap<String, String>();
+    myMacroMap.putAll(macroMap);
 
 
     final InputMap listMap = (InputMap)UIManager.getDefaults().get("List.focusInputMap");
@@ -197,12 +198,31 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   }
 
   public static class CompletionResult {
+    public List<LookupFile> myMacros;
     public List<LookupFile> myToComplete;
     public List<LookupFile> mySiblings;
     public List<LookupFile> myKidsAfterSeparator;
     public String myCompletionBase;
     public LookupFile myClosestParent;
     public LookupFile myPreselected;
+    public LookupFile current;
+    public boolean currentParentMatch;
+    public String effectivePrefix;
+    public LookupFile currentGrandparent;
+    public String grandparentPrefix;
+    public boolean closedPath;
+  }
+
+  private class Separator {
+    private String myText;
+
+    private Separator(final String text) {
+      myText = text;
+    }
+
+    public String getText() {
+      return myText;
+    }
   }
 
   private void showCompletionPopup(final CompletionResult result, int position) {
@@ -213,8 +233,14 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       myList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptor() {
         public String getTextFor(final Object value) {
           final LookupFile file = (LookupFile)value;
-          return (myCurrentCompletion != null && myCurrentCompletion.myKidsAfterSeparator.contains(file) ? myFinder.getSeparator() : "") +
-                 file.getName();
+
+          if (file.getMacro() != null) {
+            return file.getMacro();
+          } else {
+            return (myCurrentCompletion != null && myCurrentCompletion.myKidsAfterSeparator.contains(file) ? myFinder.getSeparator() : "") +
+                   file.getName();
+          }
+
         }
 
         public String getTooltipFor(final Object value) {
@@ -225,20 +251,38 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
           return null;
         }
 
+        private Separator getSeparatorAboveOf(Object value) {
+          if (myCurrentCompletion == null) return null;
+          final LookupFile file = (LookupFile)value;
+
+          final int fileIndex = myCurrentCompletion.myToComplete.indexOf(file);
+          if (fileIndex > 0 && !myCurrentCompletion.myMacros.contains(file)) {
+            final LookupFile prev = myCurrentCompletion.myToComplete.get(fileIndex - 1);
+            if (myCurrentCompletion.myMacros.contains(prev)) {
+              return new Separator("");
+            }
+          }
+
+
+          if (myCurrentCompletion.myKidsAfterSeparator.indexOf(file) == 0 && myCurrentCompletion.mySiblings.size() > 0) {
+            final LookupFile parent = file.getParent();
+            return parent == null ? new Separator("") : new Separator(parent.getName());
+          }
+
+          if (myCurrentCompletion.myMacros.size() > 0 && fileIndex == 0) {
+            return new Separator("Path Variables");
+          }
+
+          return null;
+        }
+
         public boolean hasSeparatorAboveOf(final Object value) {
-          return getCaptionAboveOf(value) != null;
+          return getSeparatorAboveOf(value) != null;
         }
 
         public String getCaptionAboveOf(final Object value) {
-          if (myCurrentCompletion == null) return null;
-          final LookupFile file = (LookupFile)value;
-          if (myCurrentCompletion.myKidsAfterSeparator.indexOf(file) == 0 && myCurrentCompletion.mySiblings.size() > 0) {
-            final LookupFile parent = file.getParent();
-            return parent == null ? "" : parent.getName();
-          }
-          else {
-            return null;
-          }
+          final FileTextFieldImpl.Separator separator = getSeparatorAboveOf(value);
+          return separator != null ? separator.getText() : null;
         }
       }));
     }
@@ -299,7 +343,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         public void run() {
           processChosenFromCompletion(true);
         }
-      }).setCancelKeyEnabled(false).setAlpha(0.25f).setFocusOwners(new Component[]{myPathTextField}).createPopup();
+      }).setCancelKeyEnabled(false).setAlpha(0.1f).setFocusOwners(new Component[]{myPathTextField}).createPopup();
 
 
     if (result.myPreselected != null) {
@@ -324,6 +368,8 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
     SwingUtilities.convertPointToScreen(point, myPathTextField);
 
+    point.y += 2;
+
     return point;
   }
 
@@ -333,77 +379,92 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     result.myKidsAfterSeparator = new ArrayList<LookupFile>();
     String typed = result.myCompletionBase;
 
-    final LookupFile current = getClosestParent(typed);
-    result.myClosestParent = current;
-
-    if (current == null) return;
     if (typed == null || typed.length() == 0) return;
 
+    addMacroPaths(result, typed);
+
     final String typedText = myFinder.normalize(typed);
-    final boolean currentParentMatch = SystemInfo.isFileSystemCaseSensitive
-                                       ? typedText.equals(current.getAbsolutePath())
-                                       : typedText.equalsIgnoreCase(current.getAbsolutePath());
 
-    final boolean closedPath = typed.endsWith(myFinder.getSeparator()) && typedText.length() > myFinder.getSeparator().length();
-    final String currentParentText = current.getAbsolutePath();
 
-    if (!typedText.toUpperCase().startsWith(currentParentText.toUpperCase())) return;
+    result.current = getClosestParent(typed);
+    result.myClosestParent = result.current;
 
-    String prefix = typedText.substring(currentParentText.length());
-    if (prefix.startsWith(myFinder.getSeparator())) {
-      prefix = prefix.substring(myFinder.getSeparator().length());
-    }
-    else if (typed.endsWith(myFinder.getSeparator())) {
-      prefix = "";
-    }
+    if (result.current != null) {
+      result.currentParentMatch = SystemInfo.isFileSystemCaseSensitive
+                                         ? typedText.equals(result.current.getAbsolutePath())
+                                         : typedText.equalsIgnoreCase(result.current.getAbsolutePath());
 
-    final String effectivePrefix = prefix.toUpperCase();
+      result.closedPath = typed.endsWith(myFinder.getSeparator()) && typedText.length() > myFinder.getSeparator().length();
+      final String currentParentText = result.current.getAbsolutePath();
 
-    final LookupFile currentGrandparent = current.getParent();
-    final String[] grandparentPrefix = new String[1];
-    if (currentGrandparent != null && currentParentMatch && !closedPath) {
-      final String currentGrandparentText = currentGrandparent.getAbsolutePath();
-      if (typedText.startsWith(currentGrandparentText + myFinder.getSeparator())) {
-        grandparentPrefix[0] =
-          currentParentText.substring(currentGrandparentText.length() + myFinder.getSeparator().length()).toUpperCase();
+      if (!typedText.toUpperCase().startsWith(currentParentText.toUpperCase())) return;
+
+      String prefix = typedText.substring(currentParentText.length());
+      if (prefix.startsWith(myFinder.getSeparator())) {
+        prefix = prefix.substring(myFinder.getSeparator().length());
       }
+      else if (typed.endsWith(myFinder.getSeparator())) {
+        prefix = "";
+      }
+
+      result.effectivePrefix = prefix.toUpperCase();
+
+      result.currentGrandparent = result.current.getParent();
+      if (result.currentGrandparent != null && result.currentParentMatch && !result.closedPath) {
+        final String currentGrandparentText = result.currentGrandparent.getAbsolutePath();
+        if (typedText.startsWith(currentGrandparentText + myFinder.getSeparator())) {
+          result.grandparentPrefix =
+            currentParentText.substring(currentGrandparentText.length() + myFinder.getSeparator().length()).toUpperCase();
+        }
+      }
+    } else {
+      result.effectivePrefix = typedText.toUpperCase();
     }
+
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        result.myToComplete.addAll(current.getChildren(new LookupFilter() {
-          public boolean isAccepted(final LookupFile file) {
-            return myFilter.isAccepted(file) && file.getName().toUpperCase().startsWith(effectivePrefix);
-          }
-        }));
-
-        if (currentParentMatch && !closedPath) {
-          result.myKidsAfterSeparator.addAll(result.myToComplete);
-        }
-
-        if (grandparentPrefix[0] != null) {
-          final List<LookupFile> siblings = currentGrandparent.getChildren(new LookupFilter() {
+        if (result.current != null) {
+          result.myToComplete.addAll(result.current.getChildren(new LookupFilter() {
             public boolean isAccepted(final LookupFile file) {
-              return !file.equals(current) && myFilter.isAccepted(file) && file.getName().toUpperCase().startsWith(grandparentPrefix[0]);
+              return myFilter.isAccepted(file) && file.getName().toUpperCase().startsWith(result.effectivePrefix);
             }
-          });
-          result.myToComplete.addAll(0, siblings);
-          result.mySiblings.addAll(siblings);
+          }));
+
+          if (result.currentParentMatch && !result.closedPath) {
+            result.myKidsAfterSeparator.addAll(result.myToComplete);
+          }
+
+          if (result.grandparentPrefix != null) {
+            final List<LookupFile> siblings = result.currentGrandparent.getChildren(new LookupFilter() {
+              public boolean isAccepted(final LookupFile file) {
+                return !file.equals(result.current) && myFilter.isAccepted(file) && file.getName().toUpperCase().startsWith(result.grandparentPrefix);
+              }
+            });
+            result.myToComplete.addAll(0, siblings);
+            result.mySiblings.addAll(siblings);
+          }
         }
 
         int currentDiff = Integer.MIN_VALUE;
         LookupFile toPreselect = result.myPreselected;
 
         if (toPreselect == null || !result.myToComplete.contains(toPreselect)) {
-          if (effectivePrefix.length() > 0) {
+          boolean toPreselectFixed = false;
+          if (result.effectivePrefix.length() > 0) {
             for (LookupFile each : result.myToComplete) {
               String eachName = each.getName().toUpperCase();
-              if (!eachName.startsWith(effectivePrefix)) continue;
-              int diff = effectivePrefix.compareTo(eachName);
+              if (!eachName.startsWith(result.effectivePrefix)) continue;
+              int diff = result.effectivePrefix.compareTo(eachName);
               currentDiff = Math.max(diff, currentDiff);
               if (currentDiff == diff) {
                 toPreselect = each;
+                toPreselectFixed = true;
               }
+            }
+
+            if (!toPreselectFixed) {
+              toPreselect = null;
             }
           }
           else {
@@ -414,24 +475,45 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
             if (result.myToComplete.size() == 1) {
               toPreselect = result.myToComplete.get(0);
             }
-            else if (effectivePrefix.length() == 0) {
+            else if (result.effectivePrefix.length() == 0) {
               if (result.mySiblings.size() > 0) {
                 toPreselect = result.mySiblings.get(0);
               }
-              if (!result.myToComplete.contains(toPreselect) && result.myToComplete.size() > 0) {
-                toPreselect = result.myToComplete.get(0);
-              }
+            }
+
+            if (toPreselect == null && !result.myToComplete.contains(toPreselect) && result.myToComplete.size() > 0) {
+              toPreselect = result.myToComplete.get(0);
             }
           }
         }
 
-        if (currentParentMatch && result.mySiblings.size() > 0) {
+        if (result.currentParentMatch && result.mySiblings.size() > 0) {
           toPreselect = null;
         }
 
         result.myPreselected = toPreselect;
       }
     });
+  }
+
+  private void addMacroPaths(final CompletionResult result, final String typedText) {
+    result.myMacros = new ArrayList<LookupFile>();
+
+    final Iterator<String> macros = myMacroMap.keySet().iterator();
+    while (macros.hasNext()) {
+      String eachMacro = macros.next();
+      if (eachMacro.toUpperCase().startsWith(typedText.toUpperCase())) {
+        final String eachPath = myMacroMap.get(eachMacro);
+        if (eachPath != null) {
+          final LookupFile macroFile = myFinder.find(eachPath);
+          if (macroFile != null && macroFile.exists()) {
+            result.myMacros.add(macroFile);
+            result.myToComplete.add(macroFile);
+            macroFile.setMacro(eachMacro);
+          }
+        }
+      }
+    }
   }
 
   private
@@ -623,20 +705,20 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   public static class Vfs extends FileTextFieldImpl {
 
 
-    public Vfs(final LookupFilter filter) {
-      super(new LocalFsFinder(), filter);
+    public Vfs(final LookupFilter filter, Map<String, String> macroMap) {
+      super(new LocalFsFinder(), filter, macroMap);
     }
 
-    public Vfs(FileChooserDescriptor filter, boolean showHidden, JTextField field) {
-      super(field, new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden), null);
+    public Vfs(FileChooserDescriptor filter, boolean showHidden, JTextField field, Map<String, String> macroMap) {
+      super(field, new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden), macroMap, null);
     }
 
-    public Vfs(FileChooserDescriptor filter, boolean showHidden, final MergingUpdateQueue uiUpdater) {
-      super(new JTextField(), new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden), uiUpdater);
+    public Vfs(FileChooserDescriptor filter, boolean showHidden, final MergingUpdateQueue uiUpdater, Map<String, String> macroMap) {
+      super(new JTextField(), new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden), macroMap, uiUpdater);
     }
 
-    public Vfs(final LookupFilter filter, final MergingUpdateQueue uiUpdater) {
-      super(new JTextField(), new LocalFsFinder(), filter, uiUpdater);
+    public Vfs(final LookupFilter filter, final MergingUpdateQueue uiUpdater, Map<String, String> macroMap) {
+      super(new JTextField(), new LocalFsFinder(), filter, macroMap, uiUpdater);
     }
 
     public VirtualFile getSelectedFile() {

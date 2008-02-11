@@ -23,6 +23,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
@@ -40,7 +41,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
   private boolean myButtonEnabled = true;
 
   public ComponentWithBrowseButton(Comp component, ActionListener browseActionListener) {
-    super(new BorderLayout(2, 0));
+    super(new BorderLayout(SystemInfo.isMac? 0 : 2, 0));
     myComponent = component;
     add(myComponent, BorderLayout.CENTER);
 

@@ -22,6 +22,8 @@ public interface FileLookup {
     String getAbsolutePath();
     boolean isDirectory();
 
+    void setMacro(String macro);
+    String getMacro();
 
     List<LookupFile> getChildren(LookupFilter filter);
 

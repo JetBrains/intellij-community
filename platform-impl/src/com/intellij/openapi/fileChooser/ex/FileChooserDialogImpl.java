@@ -6,10 +6,8 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileElement;
-import com.intellij.openapi.fileChooser.FileSystemTree;
+import com.intellij.openapi.fileChooser.*;
+import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -166,7 +164,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     myPathTextFieldWrapper = new JPanel(new BorderLayout());
     myPathTextFieldWrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
-    myPathTextField = new FileTextFieldImpl.Vfs(myChooserDescriptor, myFileSystemTree.areHiddensShown(), myUiUpdater) {
+    myPathTextField = new FileTextFieldImpl.Vfs(myChooserDescriptor, myFileSystemTree.areHiddensShown(), myUiUpdater,
+                                                FileChooserFactoryImpl.getMacroMap()) {
       protected void onTextChanged(final String newValue) {
         updateTreeFromPath(newValue);
       }
