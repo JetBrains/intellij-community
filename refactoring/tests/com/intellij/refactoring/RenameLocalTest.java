@@ -19,6 +19,10 @@ public class RenameLocalTest extends LightCodeInsightTestCase {
     doTest("aaaaa");
   }
 
+  public void testConflictWithOuterClassField() throws Exception {  // IDEADEV-24564
+    doTest("f");
+  }
+
   private void doTest(final String newName) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement element = TargetElementUtilBase

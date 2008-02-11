@@ -115,7 +115,7 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
       occurence.replace(qualified);
     }
     else {
-      PsiReferenceExpression qualified = (PsiReferenceExpression)factory.createExpressionFromText("this." + newName, null);
+      PsiReferenceExpression qualified = createQualifiedFieldReference(field, occurence);
       qualified = (PsiReferenceExpression)CodeStyleManager.getInstance(psiManager.getProject()).reformat(qualified);
       occurence.replace(qualified);
     }
@@ -128,7 +128,16 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
     PsiReferenceExpression ref = (PsiReferenceExpression) factory.createExpressionFromText(name, context);
     PsiElement resolved = ref.resolve();
     if (manager.areElementsEquivalent(resolved, field)) return ref;
+    return createQualifiedFieldReference(field, context);
+  }
+
+  private static PsiReferenceExpression createQualifiedFieldReference(final PsiField field, final PsiElement context) throws IncorrectOperationException {
+    PsiReferenceExpression ref;
     final PsiJavaCodeReferenceElement qualifier;
+
+    final PsiManager manager = field.getManager();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    final String name = field.getName();
     if (field.hasModifierProperty(PsiModifier.STATIC)) {
       ref = (PsiReferenceExpression)factory.createExpressionFromText("A." + name, context);
       qualifier = (PsiReferenceExpression)ref.getQualifierExpression();
@@ -138,7 +147,7 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
     }
     else {
       ref = (PsiReferenceExpression)factory.createExpressionFromText("this." + name, context);
-      resolved = ref.resolve();
+      PsiElement resolved = ref.resolve();
       if (manager.areElementsEquivalent(resolved, field)) return ref;
       ref = (PsiReferenceExpression) factory.createExpressionFromText("A.this." + name, null);
       qualifier = ((PsiThisExpression)ref.getQualifierExpression()).getQualifier();
