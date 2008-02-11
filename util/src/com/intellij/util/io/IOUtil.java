@@ -20,6 +20,9 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 public class IOUtil {
+  private static final int STRING_HEADER_SIZE = 1;
+  private static final int STRING_LENGTH_THRESHOLD = 255;
+
   public static String readString(DataInput stream) throws IOException {
     int length = stream.readInt();
     if (length == -1) return null;
@@ -60,5 +63,49 @@ public class IOUtil {
     else {
       stream.writeUTF(text);
     }
+  }
+
+  public static byte[] allocReadWriteUTFBuffer() {
+    return new byte[STRING_LENGTH_THRESHOLD + STRING_HEADER_SIZE];
+  }
+
+  public static void writeUTFFast(final byte[] buffer, final DataOutput storage, final String value) throws IOException {
+    int len = value.length();
+    if (len < STRING_LENGTH_THRESHOLD && isAscii(value)) {
+      buffer[0] = (byte)len;
+      for (int i = 0; i < len; i++) {
+        buffer[i + STRING_HEADER_SIZE] = (byte)value.charAt(i);
+      }
+      storage.write(buffer, 0, len + STRING_HEADER_SIZE);
+    }
+    else {
+      storage.writeByte((byte)0xFF);
+      storage.writeUTF(value);
+    }
+  }
+
+  public static String readUTFFast(final byte[] buffer, final DataInput storage) throws IOException {
+    final int len = 0xFF & (int)storage.readByte();
+    if (len == 0xFF) {
+      return storage.readUTF();
+    }
+
+    final char[] chars = new char[len];
+    final byte[] buf = buffer;
+    storage.readFully(buf, 0, len);
+    for (int i = 0; i < len; i++) {
+      chars[i] = (char)buf[i];
+    }
+    return new String(chars);
+  }
+
+  static boolean isAscii(final String str) {
+    for (int i = 0; i != str.length(); ++ i) {
+      final char c = str.charAt(i);
+      if (c < 0 || c >= 128) {
+        return false;
+      }
+    }
+    return true;
   }
 }
