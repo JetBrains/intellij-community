@@ -41,7 +41,7 @@ public class RenameTest extends CommonRefactoringTestCase {
   protected String processFile(String fileText) throws IncorrectOperationException, InvalidDataException, IOException {
     String result;
     int caretOffset = fileText.indexOf(CARET_MARKER);
-    fileText = TestUtils.removeCaretMarker(fileText, caretOffset);
+    fileText = TestUtils.removeCaretMarker(fileText);
     PsiFile file = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
 
     Assert.assertNotNull(file);

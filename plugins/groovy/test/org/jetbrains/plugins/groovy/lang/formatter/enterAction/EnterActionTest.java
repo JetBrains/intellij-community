@@ -64,7 +64,7 @@ public class EnterActionTest extends ActionTestCase {
     String result;
     String fileText = file.getText();
     int offset = fileText.indexOf(CARET_MARKER);
-    fileText = TestUtils.removeCaretMarker(fileText, offset);
+    fileText = TestUtils.removeCaretMarker(fileText);
     myFile = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
     fileEditorManager = FileEditorManager.getInstance(myProject);
     VirtualFile virtualFile = myFile.getVirtualFile();

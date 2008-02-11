@@ -61,9 +61,9 @@ public class InlineMethodTest extends CommonRefactoringTestCase {
   protected String processFile(String fileText) throws IncorrectOperationException, InvalidDataException, IOException {
     String result = "";
     int startOffset = fileText.indexOf(BEGIN_MARKER);
-    fileText = TestUtils.removeBeginMarker(fileText, startOffset);
+    fileText = TestUtils.removeBeginMarker(fileText);
     int endOffset = fileText.indexOf(END_MARKER);
-    fileText = TestUtils.removeEndMarker(fileText, endOffset);
+    fileText = TestUtils.removeEndMarker(fileText);
     PsiFile file = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
 
     Assert.assertNotNull(file);

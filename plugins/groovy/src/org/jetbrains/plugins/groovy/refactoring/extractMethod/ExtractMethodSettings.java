@@ -27,6 +27,4 @@ public interface ExtractMethodSettings {
 
   String getEnteredName();
 
-  boolean isOK();
-
 }

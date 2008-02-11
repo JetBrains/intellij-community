@@ -68,10 +68,10 @@ public class IntroduceVariableValidatorTest extends ActionTestCase {
       fileText = removeAllMarker(fileText);
     } else {
       replaceAllOccurences = false;
-      fileText = TestUtils.removeBeginMarker(fileText, myOffset);
+      fileText = TestUtils.removeBeginMarker(fileText);
     }
     int endOffset = fileText.indexOf(TestUtils.END_MARKER);
-    fileText = TestUtils.removeEndMarker(fileText, myOffset);
+    fileText = TestUtils.removeEndMarker(fileText);
     myFile = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
     fileEditorManager = FileEditorManager.getInstance(myProject);
     myEditor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myFile.getVirtualFile(), 0), false);

@@ -171,13 +171,18 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
     ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(inputInfos, outputInfo, elements, statements, owner, canBeStatic, isReturnStatement);
 
-    ExtractMethodSettings settings = getSettings(helper);
-    if (!settings.isOK()) {
-      return false;
+    final String methodName;
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      GroovyExtractMethodDialog dialog = getDialog(helper);
+      if (!dialog.isOK()) {
+        return false;
+      }
+      ExtractMethodSettings settings = dialog.getSettings();
+      methodName = settings.getEnteredName();
+      helper = settings.getHelper();
+    } else {
+      methodName = "testMethod";
     }
-
-    final String methodName = settings.getEnteredName();
-    helper = settings.getHelper();
 
     assert methodName != null;
     runRefactoring(methodName, helper, owner, declarationOwner, editor);
@@ -243,28 +248,10 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
   }
 
-  private ExtractMethodSettings getSettings(@NotNull final ExtractMethodInfoHelper helper) {
-    Application application = ApplicationManager.getApplication();
-    if (!application.isUnitTestMode()) {
-      GroovyExtractMethodDialog dialog = new GroovyExtractMethodDialog(helper, helper.getProject());
-      dialog.show();
-      return dialog;
-    } else {
-      return new ExtractMethodSettings() {
-        @NotNull
-        public ExtractMethodInfoHelper getHelper() {
-          return helper;
-        }
-
-        public String getEnteredName() {
-          return "testMethod";
-        }
-
-        public boolean isOK() {
-          return true;
-        }
-      };
-    }
+  private GroovyExtractMethodDialog getDialog(@NotNull final ExtractMethodInfoHelper helper) {
+    GroovyExtractMethodDialog dialog = new GroovyExtractMethodDialog(helper, helper.getProject());
+    dialog.show();
+    return dialog;
   }
 
 

@@ -28,6 +28,4 @@ public interface GroovyIntroduceVariableSettings {
   public boolean isDeclareFinal();
 
   public PsiType getSelectedType();
-
-  public boolean isOK();
 }

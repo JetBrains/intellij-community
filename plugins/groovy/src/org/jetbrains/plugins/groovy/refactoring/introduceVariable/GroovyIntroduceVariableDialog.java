@@ -41,7 +41,7 @@ import java.awt.event.*;
 import java.util.EventListener;
 import java.util.HashMap;
 
-public class GroovyIntroduceVariableDialog extends DialogWrapper implements GroovyIntroduceVariableSettings {
+public class GroovyIntroduceVariableDialog extends DialogWrapper {
 
   private Project myProject;
   private final GrExpression myExpression;
@@ -95,7 +95,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
   }
 
   @Nullable
-  public String getEnteredName() {
+  protected String getEnteredName() {
     if (myNameComboBox.getEditor().getItem() instanceof String &&
         ((String) myNameComboBox.getEditor().getItem()).length() > 0) {
       return (String) myNameComboBox.getEditor().getItem();
@@ -104,15 +104,15 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
     }
   }
 
-  public boolean isReplaceAllOccurrences() {
+  protected boolean isReplaceAllOccurrences() {
     return myCbReplaceAllOccurences.isSelected();
   }
 
-  public boolean isDeclareFinal() {
+  private boolean isDeclareFinal() {
     return myCbIsFinal.isSelected();
   }
 
-  public PsiType getSelectedType() {
+  private PsiType getSelectedType() {
     if (!myCbTypeSpec.isSelected() || !myCbTypeSpec.isEnabled()) {
       return null;
     } else {
@@ -267,6 +267,29 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
         ((DataChangedListener) aList).dataChanged();
       }
     }
+  }
+
+  public GroovyIntroduceVariableSettings getSettings() {
+    final GroovyIntroduceVariableDialog dialog = GroovyIntroduceVariableDialog.this;
+    return new GroovyIntroduceVariableSettings() {
+
+      public String getEnteredName() {
+        return dialog.getEnteredName();
+      }
+
+      public boolean isReplaceAllOccurrences() {
+        return dialog.isReplaceAllOccurrences();
+      }
+
+      public boolean isDeclareFinal() {
+        return dialog.isDeclareFinal();
+      }
+
+      public PsiType getSelectedType() {
+        return dialog.getSelectedType();
+      }
+
+    };
   }
 
 }

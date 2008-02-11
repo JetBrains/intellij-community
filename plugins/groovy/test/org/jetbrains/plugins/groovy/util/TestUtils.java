@@ -111,21 +111,18 @@ public abstract class TestUtils {
    * @param text
    * @return
    */
-  public static String removeCaretMarker(String text, int myOffset) {
+  public static String removeCaretMarker(String text) {
     int index = text.indexOf(CARET_MARKER);
-    myOffset = index - 1;
     return text.substring(0, index) + text.substring(index + CARET_MARKER.length());
   }
 
-  public static String removeBeginMarker(String text, int myOffset) {
+  public static String removeBeginMarker(String text) {
     int index = text.indexOf(BEGIN_MARKER);
-    myOffset = index - 1;
     return text.substring(0, index) + text.substring(index + BEGIN_MARKER.length());
   }
 
-  public static String removeEndMarker(String text, int myOffset) {
+  public static String removeEndMarker(String text) {
     int index = text.indexOf(END_MARKER);
-    myOffset = index - 1;
     return text.substring(0, index) + text.substring(index + END_MARKER.length());
   }
 

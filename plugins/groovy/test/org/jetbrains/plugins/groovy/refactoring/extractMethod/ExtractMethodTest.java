@@ -60,9 +60,9 @@ public class ExtractMethodTest extends ActionTestCase {
     String result = "";
     String fileText = file.getText();
     int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
-    fileText = TestUtils.removeBeginMarker(fileText, myOffset);
+    fileText = TestUtils.removeBeginMarker(fileText);
     int endOffset = fileText.indexOf(TestUtils.END_MARKER);
-    fileText = TestUtils.removeEndMarker(fileText, myOffset);
+    fileText = TestUtils.removeEndMarker(fileText);
     myFile = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
     fileEditorManager = FileEditorManager.getInstance(myProject);
     myEditor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myFile.getVirtualFile(), 0), false);

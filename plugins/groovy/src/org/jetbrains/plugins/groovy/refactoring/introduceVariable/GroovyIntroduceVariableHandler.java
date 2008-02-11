@@ -50,7 +50,7 @@ public class GroovyIntroduceVariableHandler extends GroovyIntroduceVariableBase 
     return conflictsDialog.isOK();
   }
 
-  protected GroovyIntroduceVariableSettings getSettings(final Project project, Editor editor, GrExpression expr,
+  protected GroovyIntroduceVariableDialog getDialog(final Project project, Editor editor, GrExpression expr,
                                                         PsiType exprType, PsiElement[] occurrences, boolean declareFinal,
                                                         Validator validator) {
 

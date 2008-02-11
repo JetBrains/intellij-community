@@ -148,11 +148,13 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), tempContainer);
     // Getting settings
     Validator validator = new GroovyVariableValidator(this, project, selectedExpr, occurrences, tempContainer);
-    GroovyIntroduceVariableSettings settings = getSettings(project, editor, selectedExpr, type, occurrences, false, validator);
+    GroovyIntroduceVariableDialog dialog = getDialog(project, editor, selectedExpr, type, occurrences, false, validator);
 
-    if (!settings.isOK()) {
+    if (!dialog.isOK()) {
       return false;
     }
+    
+    GroovyIntroduceVariableSettings settings = dialog.getSettings();
 
     final String varName = settings.getEnteredName();
     PsiType varType = settings.getSelectedType();
@@ -424,7 +426,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     // Does nothing
   }
 
-  protected abstract GroovyIntroduceVariableSettings getSettings(final Project project, Editor editor, GrExpression expr,
+  protected abstract GroovyIntroduceVariableDialog getDialog(final Project project, Editor editor, GrExpression expr,
                                                                  PsiType type, PsiElement[] occurrences, boolean decalreFinal,
                                                                  Validator validator);
 

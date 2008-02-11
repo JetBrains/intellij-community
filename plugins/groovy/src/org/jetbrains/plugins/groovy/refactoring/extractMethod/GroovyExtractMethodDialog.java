@@ -43,7 +43,7 @@ import java.util.EventListener;
 /**
  * @author ilyas
  */
-public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractMethodSettings {
+public class GroovyExtractMethodDialog extends DialogWrapper {
 
   private final ExtractMethodInfoHelper myHelper;
   private final Project myProject;
@@ -138,7 +138,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
   }
 
   @NotNull
-  public ExtractMethodInfoHelper getHelper() {
+  protected ExtractMethodInfoHelper getHelper() {
     return myHelper;
   }
 
@@ -148,7 +148,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
     setOKActionEnabled(GroovyNamesUtil.isIdentifier(text));
   }
 
-  public String getEnteredName() {
+  protected String getEnteredName() {
     String text = myNameField.getText();
     if (text != null && text.trim().length() > 0) {
       return text.trim();
@@ -224,6 +224,21 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
     }
     buffer.append(")");
     mySignatureArea.setText(buffer.toString());
+  }
+
+  ExtractMethodSettings getSettings() {
+    final GroovyExtractMethodDialog dialog = GroovyExtractMethodDialog.this;
+    return new ExtractMethodSettings() {
+
+      @NotNull
+      public ExtractMethodInfoHelper getHelper() {
+        return dialog.getHelper();
+      }
+
+      public String getEnteredName() {
+        return dialog.getEnteredName();
+      }
+    };
   }
 
 
