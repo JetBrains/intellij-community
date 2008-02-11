@@ -72,10 +72,11 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     public boolean execute(PsiElement element) {
       if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass) element;
-        if (findExistingImplementation(aClass, myMethod) != null) {
+        final PsiMethod existingImplementation = findExistingImplementation(aClass, myMethod);
+        if (existingImplementation != null && !existingImplementation.hasModifierProperty(PsiModifier.ABSTRACT)) {
           myHasExistingImplementations = true;
         }
-        else {
+        else if (existingImplementation == null) {
           myHasMissingImplementations = true;
         }
         if (myHasMissingImplementations && myHasExistingImplementations) return false;

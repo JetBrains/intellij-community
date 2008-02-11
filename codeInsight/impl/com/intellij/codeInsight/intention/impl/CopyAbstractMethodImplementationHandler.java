@@ -94,7 +94,7 @@ public class CopyAbstractMethodImplementationHandler {
         if (method != null && !method.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT)) {
           mySourceMethods.add(method);
         }
-        else {
+        else if (method == null) {
           myTargetClasses.add(inheritor);
         }
       }
