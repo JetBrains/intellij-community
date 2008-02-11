@@ -5,6 +5,9 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -105,6 +108,8 @@ public class HighlightExceptionsHandler implements HighlightUsagesHandlerDelegat
         }
 
         HighlightUsagesHandler.highlightReferences(project, target, refs, editor, file, clearHighlights);
+        TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+        HighlightUsagesHandler.doHighlightElements(editor, new PsiElement[]{target}, attributes, clearHighlights);
         HighlightUsagesHandler.highlightOtherOccurrences(otherOccurrences, project, editor, clearHighlights);
         HighlightUsagesHandler.setStatusText(project, LangBundle.message("java.terms.exception"), refs.size(), clearHighlights);
       }

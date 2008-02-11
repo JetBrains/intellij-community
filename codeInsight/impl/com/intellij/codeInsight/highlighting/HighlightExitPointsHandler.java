@@ -53,7 +53,7 @@ public class HighlightExitPointsHandler implements HighlightUsagesHandlerDelegat
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     final boolean clearHighlights = HighlightUsagesHandler.isClearHighlights(editor, highlightManager);
-    HighlightUsagesHandler.doHighlightElements(highlightManager, editor, exitStatements.toArray(new PsiElement[exitStatements.size()]),
+    HighlightUsagesHandler.doHighlightElements(editor, exitStatements.toArray(new PsiElement[exitStatements.size()]),
                                                attributes, clearHighlights);
 
     HighlightUsagesHandler.setupFindModel(project);

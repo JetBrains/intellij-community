@@ -203,7 +203,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
 
     PsiElement[] elements = otherOccurrences.toArray(new PsiElement[otherOccurrences.size()]);
-    doHighlightElements(highlightManager, myEditor, elements, attributes, clearHighlights);
+    doHighlightElements(myEditor, elements, attributes, clearHighlights);
   }
 
   public static void highlightReferences(@NotNull Project project, @NotNull PsiElement element, @NotNull List<PsiReference> refs, Editor editor,
@@ -249,15 +249,12 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       if (element instanceof PsiVariable && ((PsiVariable)element).getInitializer() != null) {
         nameAttributes = writeAttributes;
       }
-      doHighlightElements(highlightManager, editor, new PsiElement[]{identifier}, nameAttributes, clearHighlights);
-    }
-    else if (element instanceof PsiKeyword) { //try, catch, throws.
-      doHighlightElements(highlightManager, editor, new PsiElement[]{element}, attributes, clearHighlights);
+      doHighlightElements(editor, new PsiElement[]{identifier}, nameAttributes, clearHighlights);
     }
   }
 
-  public static void doHighlightElements(HighlightManager highlightManager, Editor editor, PsiElement[] elements, TextAttributes attributes,
-                                          boolean clearHighlights) {
+  public static void doHighlightElements(Editor editor, PsiElement[] elements, TextAttributes attributes, boolean clearHighlights) {
+    HighlightManager highlightManager = HighlightManager.getInstance(editor.getProject());
     List<TextRange> textRanges = new ArrayList<TextRange>(elements.length);
     for (PsiElement element : elements) {
       TextRange range = element.getTextRange();
