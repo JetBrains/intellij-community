@@ -16,7 +16,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
@@ -69,8 +68,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
 
   public void projectOpened() {
     final ReferenceProvidersRegistry registry = ReferenceProvidersRegistry.getInstance(myProject);
-    final PsiReferenceProvider referenceProvider = new PropertiesReferenceProvider(true);
-    registry.registerReferenceProvider(PsiLiteralExpression.class, referenceProvider);
+    registry.registerReferenceProvider(PsiLiteralExpression.class, new PropertiesReferenceProvider(true));
     registry.registerReferenceProvider(new ElementFilter() {
       public boolean isAcceptable(Object element, PsiElement context) {
         if (context instanceof PsiLiteralExpression) {

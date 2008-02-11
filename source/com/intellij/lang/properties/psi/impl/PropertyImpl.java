@@ -100,7 +100,7 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
   }
 
   public String getValue() {
-    final ASTNode node = getNode().findChildByType(PropertiesTokenTypes.VALUE_CHARACTERS);
+    final ASTNode node = getValueNode();
     if (node == null) {
       return "";
     }

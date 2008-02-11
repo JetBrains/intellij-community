@@ -114,7 +114,6 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
 
     final IdReferenceProvider idReferenceProvider = new IdReferenceProvider();
 
-    final ReferenceProvidersRegistry referenceProvidersRegistry3 = ReferenceProvidersRegistry.this;
     String[] attributeNames3 = idReferenceProvider.getIdForAttributeNames();
     ElementFilter elementFilter3 = idReferenceProvider.getIdForFilter();
     boolean caseSensitive2 = true;
@@ -142,7 +141,6 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
     //registerReferenceProvider(PsiPlainTextFile.class, new JavaClassListReferenceProvider());
 
     HtmlReferenceProvider provider = new HtmlReferenceProvider();
-    final ReferenceProvidersRegistry referenceProvidersRegistry2 = ReferenceProvidersRegistry.this;
     String[] attributeNames2 = HtmlReferenceProvider.getAttributeValues();
     ElementFilter elementFilter2 = HtmlReferenceProvider.getFilter();
     boolean caseSensitive1 = false;
