@@ -50,7 +50,7 @@ public class OverrideGutter extends GutterIconRenderer {
         if (methods.length == 0) {
         } else if (methods.length == 1) {
           // only one navigation target
-          final Navigatable method = (Navigatable) methods[0];
+          final Navigatable method = methods[0];
           if (method.canNavigateToSource()) {
             method.navigate(true);
           }
