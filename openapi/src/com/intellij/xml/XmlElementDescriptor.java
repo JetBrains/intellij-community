@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Describes an XML tag.
+ *
  * @author Mike
  */
 public interface XmlElementDescriptor extends PsiMetaData {
@@ -38,8 +40,13 @@ public interface XmlElementDescriptor extends PsiMetaData {
   @NonNls
   String getDefaultName();
 
-  //todo: refactor to support full DTD spec
+  /**
+   * Returns an array of child tag descriptors.
+   * @param context the parent tag.
+   * @return an array of child tag descriptors, or empty array if no child tag allowed.
+   */
   XmlElementDescriptor[] getElementsDescriptors(XmlTag context);
+
   @Nullable
   XmlElementDescriptor getElementDescriptor(XmlTag childTag);
 
