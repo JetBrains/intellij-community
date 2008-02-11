@@ -21,7 +21,6 @@ import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -117,9 +115,6 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
     items = items.clone();
-    if (!settings.SHOW_SIGNATURES_IN_LOOKUPS){
-      items = filterEqualSignatures(items);
-    }
 
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
     PsiElement context = psiFile;
@@ -302,43 +297,6 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
 
   public boolean isDisposed() {
     return myIsDisposed;
-  }
-
-  protected static LookupItem[] filterEqualSignatures(LookupItem[] items) {
-    ArrayList<LookupItem> array = new ArrayList<LookupItem>();
-    HashMap<String, LookupItem> methodNameToItem = new HashMap<String, LookupItem>();
-    for (LookupItem item : items) {
-      if (item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null) {
-        array.add(item);
-        continue;
-      }
-      Object o = item.getObject();
-      if (o instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)o;
-        String name = method.getName();
-        LookupItem item1 = methodNameToItem.get(name);
-        if (item1 != null) {
-          ArrayList<PsiMethod> allMethods = (ArrayList<PsiMethod>)item1.getAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE);
-          allMethods.add(method);
-          continue;
-        }
-        else {
-          methodNameToItem.put(name, item);
-          ArrayList<PsiMethod> allMethods = new ArrayList<PsiMethod>();
-          allMethods.add(method);
-          item.setAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE, allMethods);
-        }
-      }
-      array.add(item);
-    }
-    items = array.toArray(new LookupItem[array.size()]);
-    for (LookupItem item : items) {
-      ArrayList<PsiMethod> allMethods = (ArrayList<PsiMethod>)item.getAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE);
-      if (allMethods != null) {
-        item.setAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE, allMethods.toArray(new PsiMethod[allMethods.size()]));
-      }
-    }
-    return items;
   }
 
   public static THashSet<PsiClass> getFirstClasses(final ExpectedTypeInfo[] expectedInfos) {

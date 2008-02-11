@@ -99,43 +99,21 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     String uniqueText = null;
     LookupItem item = null;
     boolean doNotAutocomplete = false;
-    boolean signatureSensitive = false;
 
-    for (final LookupItem item1 : items) {
-      if (item1.getAttribute(LookupItem.DO_NOT_AUTOCOMPLETE_ATTR) != null) {
+    for (final LookupItem curItem : items) {
+      if (curItem.getAttribute(LookupItem.DO_NOT_AUTOCOMPLETE_ATTR) != null) {
         item = null;
         doNotAutocomplete = true;
         break;
       }
 
-      if (item1.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null) {
-        signatureSensitive = true;
-      }
       if (uniqueText == null) {
-        uniqueText = item1.getLookupString();
-        item = item1;
+        uniqueText = curItem.getLookupString();
+        item = curItem;
       }
-      else {
-        if (!uniqueText.equals(item1.getLookupString())) {
-          item = null;
-          break;
-        }
-        if (item.getObject() instanceof PsiMethod && item1.getObject() instanceof PsiMethod) {
-          if (!signatureSensitive) {
-            final PsiParameter[] parms = ((PsiMethod)item1.getObject()).getParameterList().getParameters();
-            if (parms.length > 0) {
-              item = item1;
-            }
-          }
-          else {
-            item = null;
-            break;
-          }
-        }
-        else {
-          item = null;
-          break;
-        }
+      else if (!uniqueText.equals(curItem.getLookupString())) {
+        item = null;
+        break;
       }
     }
 

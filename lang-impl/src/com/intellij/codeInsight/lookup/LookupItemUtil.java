@@ -184,6 +184,10 @@ public class LookupItemUtil{
       s = ((PresentableLookupValue)object).getPresentation();
     }
 
+    if (object instanceof LookupValueWithUIHint && ((LookupValueWithUIHint) object).isBold() || object instanceof PsiKeyword) {
+      item.setBold();
+    }
+
     if (s == null) {
       LOG.assertTrue(false, "Null string for object: " + object + " of class " + (object != null ?object.getClass():null));
     }

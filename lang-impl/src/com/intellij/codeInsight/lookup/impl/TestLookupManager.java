@@ -40,9 +40,6 @@ public class TestLookupManager extends LookupManagerImpl{
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
     items = (LookupItem[])items.clone();
-    if (!settings.SHOW_SIGNATURES_IN_LOOKUPS){
-      items = filterEqualSignatures(items);
-    }
 
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
     PsiElement context = psiFile;
