@@ -161,6 +161,9 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       final String message = ShowAutoImportPass.getMessage(namespaces.size() > 1, namespaces.iterator().next());
       final String title = getTitle();
       final PsiElement element = myElement == null ? myTag : myElement;
+      if (!element.isValid()) {
+        return false;
+      }
       final ImportNSAction action = new ImportNSAction(namespaces, myFile, myElement != null ? null : myTag, editor, title);
       HintManager.getInstance().showQuestionHint(editor, message, element.getTextOffset(), element.getTextRange().getEndOffset(), action);
       return true;
