@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.content.newUI.actions;
 import com.intellij.debugger.ui.content.newUI.Grid;
 import com.intellij.debugger.ui.content.newUI.Tab;
 import com.intellij.debugger.ui.content.newUI.ViewContext;
+import com.intellij.debugger.ui.content.newUI.GridCell;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.content.Content;
@@ -44,7 +45,8 @@ public abstract class BaseDebuggerViewAction extends AnAction {
   }
 
   protected static boolean isDetached(ViewContext context, Content content) {
-    return context.findCellFor(content).isDetached();
+    final GridCell cell = context.findCellFor(content);
+    return cell != null ? cell.isDetached() : false;
   }
 
   protected static Tab getTabFor(final ViewContext context, final Content[] content) {
