@@ -73,6 +73,10 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     myWaitSemaphore.waitFor();
   }
 
+  public boolean waitFor(long timeoutInMilliseconds) {
+    return myWaitSemaphore.waitFor(timeoutInMilliseconds);
+  }
+
   public void destroyProcess() {
     afterStartNotified(new Runnable() {
       public void run() {

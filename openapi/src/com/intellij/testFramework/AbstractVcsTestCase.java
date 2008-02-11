@@ -99,7 +99,10 @@ public class AbstractVcsTestCase {
       }
     });
     handler.startNotify();
-    handler.waitFor();
+    if (!handler.waitFor(60*1000)) {
+      clientProcess.destroy();
+      throw new RuntimeException("Timeout waiting for VCS client to finish execution");     
+    }
     result.exitCode = clientProcess.exitValue();
     return result;
   }
