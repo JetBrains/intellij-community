@@ -271,9 +271,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper {
   }
 
   public GroovyIntroduceVariableSettings getSettings() {
-    final GroovyIntroduceVariableDialog dialog = GroovyIntroduceVariableDialog.this;
-
-    return new MyGroovyIntroduceVariableSettings(dialog);
+    return new MyGroovyIntroduceVariableSettings(this);
   }
 
   private static class MyGroovyIntroduceVariableSettings implements GroovyIntroduceVariableSettings {
