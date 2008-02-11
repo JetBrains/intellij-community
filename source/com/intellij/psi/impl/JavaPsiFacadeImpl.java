@@ -83,7 +83,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
     boolean isProjectDefault = project.isDefault();
     if (psiManagerConfiguration.REPOSITORY_ENABLED && !isProjectDefault) {
-      myShortNamesCache = new PsiShortNamesCacheImpl((PsiManagerEx)PsiManager.getInstance(project), projectRootManagerEx);
+      myShortNamesCache = new PsiShortNamesCacheImpl((PsiManagerEx)PsiManager.getInstance(project));
     }
     else {
       myShortNamesCache = new EmptyShortNamesCacheImpl();

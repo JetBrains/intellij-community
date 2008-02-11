@@ -1,7 +1,6 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
@@ -23,7 +22,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
 
   private RepositoryIndex myRepositoryIndex = null;
 
-  public PsiShortNamesCacheImpl(PsiManagerEx manager, ProjectRootManager projectRootManager) {
+  public PsiShortNamesCacheImpl(PsiManagerEx manager) {
     myManager = manager;
   }
 
