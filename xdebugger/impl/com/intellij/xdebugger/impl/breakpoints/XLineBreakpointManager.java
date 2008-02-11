@@ -17,6 +17,7 @@ import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebuggerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseEvent;
 import java.util.Collection;
@@ -100,7 +101,26 @@ public class XLineBreakpointManager {
   }
 
   public void breakpointChanged(final XLineBreakpointImpl breakpoint) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     breakpoint.updateUI();
+  }
+
+  public void queueBreakpointUpdate(@NotNull final XLineBreakpointImpl<?> breakpoint) {
+    myBreakpointsUpdateQueue.queue(new Update(breakpoint) {
+      public void run() {
+        breakpoint.updateUI();
+      }
+    });
+  }
+
+  public void queueAllBreakpointsUpdate() {
+    myBreakpointsUpdateQueue.queue(new Update("all breakpoints") {
+      public void run() {
+        for (XLineBreakpointImpl breakpoint : myBreakpoints.keySet()) {
+          breakpoint.updateUI();
+        }
+      }
+    });
   }
 
   private class MyDocumentListener extends DocumentAdapter {
@@ -108,7 +128,7 @@ public class XLineBreakpointManager {
       final Document document = e.getDocument();
       Collection<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(document);
       if (breakpoints != null && !breakpoints.isEmpty()) {
-        myBreakpointsUpdateQueue.queue(new Update("document:" + document) {
+        myBreakpointsUpdateQueue.queue(new Update(document) {
           public void run() {
             updateBreakpoints(document);
           }

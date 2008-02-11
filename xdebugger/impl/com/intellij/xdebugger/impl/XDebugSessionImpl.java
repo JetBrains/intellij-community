@@ -5,15 +5,18 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation;
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author nik
@@ -21,7 +24,7 @@ import java.util.Set;
 public class XDebugSessionImpl implements XDebugSession {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.XDebugSessionImpl");
   private XDebugProcess myDebugProcess;
-  private Set<XBreakpoint<?>> myRegisteredBreakpoints = new HashSet<XBreakpoint<?>>();
+  private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints = new HashMap<XBreakpoint<?>, CustomizedBreakpointPresentation>();
   private boolean myBreakpointsMuted;
   private boolean myBreakpointsDisabled;
   private final XDebuggerManagerImpl myDebuggerManager;
@@ -81,12 +84,29 @@ public class XDebugSessionImpl implements XDebugSession {
   private <B extends XBreakpoint<?>> void handleBreakpoint(final XBreakpointHandler<B> handler, final B b, final boolean register,
                                                            final boolean temporary) {
     if (register && isBreakpointActive(b)) {
-      myRegisteredBreakpoints.add(b);
+      synchronized (myRegisteredBreakpoints) {
+        myRegisteredBreakpoints.put(b, new CustomizedBreakpointPresentation());
+      }
       handler.registerBreakpoint(b);
     }
-    if (!register && myRegisteredBreakpoints.contains(b)) {
-      myRegisteredBreakpoints.remove(b);
-      handler.unregisterBreakpoint(b, temporary);
+    if (!register) {
+      boolean removed = false;
+      synchronized (myRegisteredBreakpoints) {
+        if (myRegisteredBreakpoints.containsKey(b)) {
+          myRegisteredBreakpoints.remove(b);
+          removed = true;
+        }
+      }
+      if (removed) {
+        handler.unregisterBreakpoint(b, temporary);
+      }
+    }
+  }
+
+  @Nullable
+  public CustomizedBreakpointPresentation getBreakpointPresentation(@NotNull XLineBreakpoint<?> breakpoint) {
+    synchronized (myRegisteredBreakpoints) {
+      return myRegisteredBreakpoints.get(breakpoint);
     }
   }
 
@@ -173,6 +193,20 @@ public class XDebugSessionImpl implements XDebugSession {
 
   public void showExecutionPoint() {
     myDebuggerManager.showExecutionPosition();
+  }
+
+  public void updateBreakpointPresentation(@NotNull final XLineBreakpoint<?> breakpoint, @Nullable final Icon icon, @Nullable final String errorMessage) {
+    CustomizedBreakpointPresentation presentation;
+    synchronized (myRegisteredBreakpoints) {
+      presentation = myRegisteredBreakpoints.get(breakpoint);
+      if (presentation != null) {
+        presentation.setErrorMessage(errorMessage);
+        presentation.setIcon(icon);
+      }
+    }
+    if (presentation != null) {
+      myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdate((XLineBreakpointImpl<?>)breakpoint);
+    }
   }
 
   public boolean breakpointReached(@NotNull final XBreakpoint<?> breakpoint, @NotNull final XSuspendContext suspendContext) {

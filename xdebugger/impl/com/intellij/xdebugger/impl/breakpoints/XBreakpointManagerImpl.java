@@ -11,6 +11,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,15 +26,25 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   private EventDispatcher<XBreakpointListener> myAllBreakpointsDispatcher;
   private final XLineBreakpointManager myLineBreakpointManager;
   private final Project myProject;
+  private final XDebuggerManagerImpl myDebuggerManager;
 
-  public XBreakpointManagerImpl(final Project project, StartupManager startupManager) {
+  public XBreakpointManagerImpl(final Project project, final XDebuggerManagerImpl debuggerManager, StartupManager startupManager) {
     myProject = project;
+    myDebuggerManager = debuggerManager;
     myLineBreakpointManager = new XLineBreakpointManager(project, startupManager);
     myAllBreakpointsDispatcher = EventDispatcher.create(XBreakpointListener.class);
   }
 
   public void dispose() {
     myLineBreakpointManager.dispose();
+  }
+
+  public XLineBreakpointManager getLineBreakpointManager() {
+    return myLineBreakpointManager;
+  }
+
+  public XDebuggerManagerImpl getDebuggerManager() {
+    return myDebuggerManager;
   }
 
   public Project getProject() {

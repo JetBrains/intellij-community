@@ -39,7 +39,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
 
   public XDebuggerManagerImpl(final Project project, final StartupManager startupManager) {
     myProject = project;
-    myBreakpointManager = new XBreakpointManagerImpl(project, startupManager);
+    myBreakpointManager = new XBreakpointManagerImpl(project, this, startupManager);
     mySessions = new ArrayList<XDebugSessionImpl>();
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
   }
@@ -90,6 +90,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   }
 
   public void updateExecutionPosition(@NotNull XDebugSessionImpl session, @Nullable XSourcePosition position) {
+    boolean sessionChanged = myLastActiveSession != session;
     myLastActiveSession = session;
     if (position != null) {
       myExecutionPointHighlighter.show(position);
@@ -97,6 +98,13 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
     else {
       myExecutionPointHighlighter.hide();
     }
+    if (sessionChanged) {
+      onActiveSessionChanged();
+    }
+  }
+
+  private void onActiveSessionChanged() {
+    myBreakpointManager.getLineBreakpointManager().queueAllBreakpointsUpdate();
   }
 
   @NotNull
@@ -105,7 +113,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   }
 
   @Nullable
-  public XDebugSession getCurrentSession() {
+  public XDebugSessionImpl getCurrentSession() {
     if (myLastActiveSession != null) {
       return myLastActiveSession;
     }

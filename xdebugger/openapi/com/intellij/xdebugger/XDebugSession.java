@@ -18,9 +18,12 @@ package com.intellij.xdebugger;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author nik
@@ -51,13 +54,27 @@ public interface XDebugSession {
   void showExecutionPoint();
 
   /**
-   * Call this method when a breakpoint is reached.
+   * Call this method to setup custom icon and/or error message (it will be shown in tooltip) for breakpoint
+   * @param breakpoint breakpoint
+   * @param icon icon (<code>null</code> if default icon should be used). You can use icons from {@link com.intellij.xdebugger.ui.DebuggerIcons}
+   * @param errorMessage an error message if breakpoint isn't successfully registered
+   */
+  void updateBreakpointPresentation(@NotNull XLineBreakpoint<?> breakpoint, @Nullable Icon icon, @Nullable String errorMessage);
+
+  /**
+   * Call this method when a breakpoint is reached. If the method returns <code>true</code> the underlying debugging process should be
+   * suspended.
    * @param breakpoint reached breakpoint
-   * @param suspendContext {@link com.intellij.xdebugger.frame.XSuspendContext} instance
+   * @param suspendContext context
    * @return <code>true</code> if the debug process should be suspended
    */
   boolean breakpointReached(@NotNull XBreakpoint<?> breakpoint, @NotNull XSuspendContext suspendContext);
 
+  /**
+   * Call this method when position is reached (e.g. after "Run to cursor" or "Step over" command)
+   * @param position current position
+   * @param suspendContext context
+   */
   void positionReached(@NotNull XSourcePosition position, @NotNull XSuspendContext suspendContext);
 
 

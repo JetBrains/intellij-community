@@ -12,17 +12,19 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XDebuggerUtil;
-import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
@@ -34,6 +36,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   private final XLineBreakpointType<P> myType;
   private Icon myIcon;
   private XSourcePosition mySourcePosition;
+  @NonNls private static final String BR_NBSP = "<br>&nbsp;";
 
   public XLineBreakpointImpl(final XLineBreakpointType<P> type, XBreakpointManagerImpl breakpointManager, String url, int line, final @Nullable P properties) {
     super(type, breakpointManager, properties, new LineBreakpointState<P>(true, type.getId(), url, line));
@@ -83,7 +86,19 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   private void updateIcon() {
-    myIcon = isEnabled() ? myType.getEnabledIcon() : myType.getDisabledIcon();
+    if (isEnabled()) {
+      CustomizedBreakpointPresentation presentation = getCustomizedPresentation();
+      myIcon = presentation != null ? presentation.getIcon() : myType.getEnabledIcon();
+    }
+    else {
+      myIcon = myType.getDisabledIcon();
+    }
+  }
+
+  @Nullable
+  private CustomizedBreakpointPresentation getCustomizedPresentation() {
+    XDebugSessionImpl currentSession = getBreakpointManager().getDebuggerManager().getCurrentSession();
+    return currentSession != null ? currentSession.getBreakpointPresentation(this) : null;
   }
 
   public int getLine() {
@@ -129,13 +144,71 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   public String getDescription() {
-    return XDebuggerBundle.message("xdebugger.line.breakpoint.tooltip", myType.getDisplayText(this));
+    @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append("<html><body>");
+      builder.append(myType.getDisplayText(this));
+
+      String errorMessage = getErrorMessage();
+      if (errorMessage != null) {
+        builder.append(BR_NBSP);
+        builder.append("<font color=\"red\">");
+        builder.append(errorMessage);
+        builder.append("</font>");
+      }
+
+      SuspendPolicy suspendPolicy = getSuspendPolicy();
+      if (suspendPolicy == SuspendPolicy.THREAD) {
+        builder.append(BR_NBSP).append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.thread"));
+      }
+      else if (suspendPolicy == SuspendPolicy.NONE) {
+        builder.append(BR_NBSP).append(XDebuggerBundle.message("xbreakpoint.tooltip.suspend.policy.none"));
+      }
+
+      String condition = getCondition();
+      if (condition != null) {
+        builder.append(BR_NBSP);
+        builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.condition"));
+        builder.append("&nbsp;");
+        builder.append(condition);
+      }
+
+      if (isLogMessage()) {
+        builder.append(BR_NBSP).append(XDebuggerBundle.message("xbreakpoint.tooltip.log.message"));
+      }
+      String logExpression = getLogExpression();
+      if (logExpression != null) {
+        builder.append(BR_NBSP);
+        builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.log.expression"));
+        builder.append("&nbsp;");
+        builder.append(logExpression);
+      }
+
+      builder.append("</body><html");
+      return builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
+  }
+
+  @Nullable
+  private String getErrorMessage() {
+    CustomizedBreakpointPresentation presentation = getCustomizedPresentation();
+    return presentation != null ? presentation.getErrorMessage() : null;
   }
 
   public void updatePosition() {
     if (myHighlighter != null && myHighlighter.isValid()) {
       Document document = myHighlighter.getDocument();
-      getState().setLine(document.getLineNumber(myHighlighter.getStartOffset()));
+      setLine(document.getLineNumber(myHighlighter.getStartOffset()));
+    }
+  }
+
+  private void setLine(final int line) {
+    if (getLine() != line) {
+      getState().setLine(line);
+      fireBreakpointChanged();
     }
   }
 

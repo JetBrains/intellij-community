@@ -27,7 +27,7 @@ public class XBreakpointManagerTest extends XDebuggerTestCase {
     MutablePicoContainer container = getApplication().getPicoContainer();
     registerComponentImplementation(container, EditorFactory.class, MockEditorFactory.class);
     registerComponentImplementation(container, VirtualFileManager.class, MockVirtualFileManager.class);
-    myBreakpointManager = new XBreakpointManagerImpl(project, null);
+    myBreakpointManager = new XBreakpointManagerImpl(project, null, null);
   }
 
   public void testAddRemove() throws Exception {

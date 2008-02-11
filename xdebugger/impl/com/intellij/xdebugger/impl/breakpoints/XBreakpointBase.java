@@ -4,6 +4,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -43,13 +44,19 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     myBreakpointManager = breakpointManager;
     myProperties = type.createProperties();
     if (myProperties != null) {
+      //noinspection unchecked
       Object state = XmlSerializer.deserialize(myState.getPropertiesElement(), getStateClass(myProperties.getClass()));
+      //noinspection unchecked
       myProperties.loadState(state);
     }
   }
 
   protected final Project getProject() {
     return myBreakpointManager.getProject();
+  }
+
+  protected XBreakpointManagerImpl getBreakpointManager() {
+    return myBreakpointManager;
   }
 
   protected final void fireBreakpointChanged() {
@@ -90,8 +97,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setEnabled(final boolean enabled) {
-    myState.setEnabled(enabled);
-    fireBreakpointChanged();
+    if (enabled != isEnabled()) {
+      myState.setEnabled(enabled);
+      fireBreakpointChanged();
+    }
   }
 
   @NotNull
@@ -100,8 +109,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setSuspendPolicy(@NotNull SuspendPolicy policy) {
-    myState.mySuspendPolicy = policy;
-    fireBreakpointChanged();
+    if (myState.mySuspendPolicy != policy) {
+      myState.mySuspendPolicy = policy;
+      fireBreakpointChanged();
+    }
   }
 
   public boolean isLogMessage() {
@@ -109,8 +120,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setLogMessage(final boolean logMessage) {
-    myState.setLogMessage(logMessage);
-    fireBreakpointChanged();
+    if (logMessage != isLogMessage()) {
+      myState.setLogMessage(logMessage);
+      fireBreakpointChanged();
+    }
   }
 
   public String getLogExpression() {
@@ -118,8 +131,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setLogExpression(@Nullable final String expression) {
-    myState.setLogExpression(expression);
-    fireBreakpointChanged();
+    if (!Comparing.equal(getLogExpression(), expression)) {
+      myState.setLogExpression(expression);
+      fireBreakpointChanged();
+    }
   }
 
   public String getCondition() {
@@ -127,8 +142,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setCondition(@Nullable final String condition) {
-    myState.setCondition(condition);
-    fireBreakpointChanged();
+    if (!Comparing.equal(condition, getCondition())) {
+      myState.setCondition(condition);
+      fireBreakpointChanged();
+    }
   }
 
   public boolean isValid() {
