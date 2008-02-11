@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
+import com.intellij.lang.LangBundle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -102,8 +103,10 @@ public class HighlightExceptionsHandler implements HighlightUsagesHandlerDelegat
         for (PsiClass aClass : classes) {
           addExceptionThrownPlaces(refs, otherOccurrences, factory.createType(aClass), place, typeFilter);
         }
-        new HighlightUsagesHandler.DoHighlightRunnable(refs, project, target, editor, file, clearHighlights).run();
+
+        HighlightUsagesHandler.highlightReferences(project, target, refs, editor, file, clearHighlights);
         HighlightUsagesHandler.highlightOtherOccurrences(otherOccurrences, project, editor, clearHighlights);
+        HighlightUsagesHandler.setStatusText(project, LangBundle.message("java.terms.exception"), refs.size(), clearHighlights);
       }
     }.run();
   }

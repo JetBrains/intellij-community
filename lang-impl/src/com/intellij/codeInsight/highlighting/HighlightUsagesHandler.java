@@ -173,7 +173,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
     public void run() {
       highlightReferences(myProject, myTarget, myRefs, myEditor, myFile, myClearHighlights);
-      setStatusText(myTarget, myRefs.size(), myProject, myClearHighlights);
+      setStatusText(myProject, getElementName(myTarget), myRefs.size(), myClearHighlights);
     }
   }
 
@@ -206,9 +206,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     doHighlightElements(highlightManager, myEditor, elements, attributes, clearHighlights);
   }
 
-  private static void highlightReferences(@NotNull Project project, @NotNull PsiElement element, @NotNull List<PsiReference> refs, Editor editor,
-                                          PsiFile file,
-                                          boolean clearHighlights) {
+  public static void highlightReferences(@NotNull Project project, @NotNull PsiElement element, @NotNull List<PsiReference> refs, Editor editor,
+                                         PsiFile file, boolean clearHighlights) {
 
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager manager = EditorColorsManager.getInstance();
@@ -374,53 +373,12 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     return null;
   }
 
-  private static void setStatusText(PsiElement element, int refCount, Project project, boolean clearHighlights) {
+  public static void setStatusText(Project project, final String elementName, int refCount, boolean clearHighlights) {
     String message;
     if (clearHighlights) {
       message = "";
     }
     else {
-      String elementName = null;
-      if (element instanceof PsiClass) {
-        elementName = ((PsiClass)element).getQualifiedName();
-        if (elementName == null) {
-          elementName = ((PsiClass)element).getName();
-        }
-        elementName = (((PsiClass)element).isInterface() ?
-                       LangBundle.message("java.terms.interface") :
-                       LangBundle.message("java.terms.class")) + " " + elementName;
-      }
-      else if (element instanceof PsiMethod) {
-        elementName = PsiFormatUtil.formatMethod((PsiMethod)element,
-                                                 PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS |
-                                                                       PsiFormatUtil.SHOW_CONTAINING_CLASS,
-                                                 PsiFormatUtil.SHOW_TYPE);
-        elementName = LangBundle.message("java.terms.method") + " " + elementName;
-      }
-      else if (element instanceof PsiVariable) {
-        elementName = PsiFormatUtil.formatVariable((PsiVariable)element,
-                                                   PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS,
-                                                   PsiSubstitutor.EMPTY);
-        if (element instanceof PsiField) {
-          elementName = LangBundle.message("java.terms.field") + " " + elementName;
-        }
-        else if (element instanceof PsiParameter) {
-          elementName = LangBundle.message("java.terms.parameter") + " " + elementName;
-        }
-        else {
-          elementName = LangBundle.message("java.terms.variable") + " " + elementName;
-        }
-      }
-      else if (element instanceof PsiPackage) {
-        elementName = ((PsiPackage)element).getQualifiedName();
-        elementName = LangBundle.message("java.terms.package") + " " + elementName;
-      }
-      if (element instanceof PsiKeyword &&
-          (PsiKeyword.TRY.equals(element.getText()) || PsiKeyword.CATCH.equals(element.getText()) ||
-           PsiKeyword.THROWS.equals(element.getText()))) {
-        elementName = LangBundle.message("java.terms.exception");
-      }
-
       if (refCount > 0) {
         message = CodeInsightBundle.message(elementName != null ?
                                           "status.bar.highlighted.usages.message" :
@@ -433,6 +391,45 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       }
     }
     WindowManager.getInstance().getStatusBar(project).setInfo(message);
+  }
+
+  private static String getElementName(final PsiElement element) {
+    String elementName = null;
+    if (element instanceof PsiClass) {
+      elementName = ((PsiClass)element).getQualifiedName();
+      if (elementName == null) {
+        elementName = ((PsiClass)element).getName();
+      }
+      elementName = (((PsiClass)element).isInterface() ?
+                     LangBundle.message("java.terms.interface") :
+                     LangBundle.message("java.terms.class")) + " " + elementName;
+    }
+    else if (element instanceof PsiMethod) {
+      elementName = PsiFormatUtil.formatMethod((PsiMethod)element,
+                                               PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS |
+                                                                     PsiFormatUtil.SHOW_CONTAINING_CLASS,
+                                               PsiFormatUtil.SHOW_TYPE);
+      elementName = LangBundle.message("java.terms.method") + " " + elementName;
+    }
+    else if (element instanceof PsiVariable) {
+      elementName = PsiFormatUtil.formatVariable((PsiVariable)element,
+                                                 PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS,
+                                                 PsiSubstitutor.EMPTY);
+      if (element instanceof PsiField) {
+        elementName = LangBundle.message("java.terms.field") + " " + elementName;
+      }
+      else if (element instanceof PsiParameter) {
+        elementName = LangBundle.message("java.terms.parameter") + " " + elementName;
+      }
+      else {
+        elementName = LangBundle.message("java.terms.variable") + " " + elementName;
+      }
+    }
+    else if (element instanceof PsiPackage) {
+      elementName = ((PsiPackage)element).getQualifiedName();
+      elementName = LangBundle.message("java.terms.package") + " " + elementName;
+    }
+    return elementName;
   }
 
   public static String getShortcutText() {
