@@ -50,9 +50,9 @@ public class OverrideGutter extends GutterIconRenderer {
         if (methods.length == 0) {
         } else if (methods.length == 1) {
           // only one navigation target
-          final PsiElement element = methods[0];
-          if (element instanceof Navigatable && ((Navigatable) element).canNavigateToSource()) {
-            ((Navigatable) element).navigate(true);
+          final Navigatable method = (Navigatable) methods[0];
+          if (method.canNavigateToSource()) {
+            method.navigate(true);
           }
         } else {
           // show popup for selecting navigation target from list
