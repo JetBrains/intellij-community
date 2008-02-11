@@ -1,12 +1,7 @@
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
@@ -14,39 +9,25 @@ import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Set;
 
 class PsiShortNamesCacheImpl implements PsiShortNamesCache {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiShortNamesCacheImpl");
-
   private final PsiManagerEx myManager;
-  private final ProjectFileIndex myProjectFileIndex;
 
-  private THashMap<String,Object> myFileNameToFilesMap = new THashMap<String,Object>(); // short name --> VirtualFile or Pair of VirtualFile or ArrayList of VirtualFile
-
-  private boolean myInitialized = false;
   private RepositoryIndex myRepositoryIndex = null;
-  private final ContentCacheBuilder myBuilder = new ContentCacheBuilder();
 
   public PsiShortNamesCacheImpl(PsiManagerEx manager, ProjectRootManager projectRootManager) {
     myManager = manager;
-    myProjectFileIndex = projectRootManager.getFileIndex();
   }
 
   public void runStartupActivity() {
-    fillCache();
-
-    myManager.addPsiTreeChangeListener(new MyPsiTreeChangeListener());
   }
 
   @NotNull
@@ -208,180 +189,10 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
     }
   }
 
-  private void fillCache() {
-    if (myInitialized) return;
-
-    _fillCache();
-
-    myInitialized = true;
-  }
-
-  private void _fillCache() {
-    myFileNameToFilesMap.clear();
-
-    ProjectRootManager.getInstance(myManager.getProject()).getFileIndex().iterateContent(myBuilder);
-  }
-
-  private void cacheFilesInDirectory(VirtualFile dir) {
-    ProgressManager progressManager = ProgressManager.getInstance();
-    ProgressIndicator progress = progressManager.getProgressIndicator();
-
-    if (progress != null) {
-      progress.pushState();
-      progress.setText(PsiBundle.message("psi.scanning.files.progress"));
-    }
-
-    _cacheFilesInDirectory(dir, ProjectRootManager.getInstance(myManager.getProject()).getFileIndex());
-
-    if (progress != null) {
-      progress.popState();
-    }
-  }
-
-  private void _cacheFilesInDirectory(VirtualFile dir, ProjectFileIndex index) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Scanning files in " + dir.getPresentableUrl());
-    }
-
-    ProgressManager progressManager = ProgressManager.getInstance();
-    ProgressIndicator progress = progressManager.getProgressIndicator();
-    if (progress != null) {
-      progress.setText2(dir.getPresentableUrl());
-    }
-
-    index.iterateContentUnderDirectory(dir, myBuilder);
-  }
-
-  private void cacheFile(final VirtualFile vFile) {
-    String fileName = vFile.getName();
-    VirtualFile[] files = getFiles(myFileNameToFilesMap, fileName);
-    if (ArrayUtil.indexOf(files,vFile) == -1) {
-      VirtualFile[] newFiles = new VirtualFile[files.length + 1];
-      System.arraycopy(files, 0, newFiles, 0, files.length);
-      newFiles[files.length] = vFile;
-      putFiles(myFileNameToFilesMap, fileName, newFiles);
-    }
-  }
-
-  private void releaseFile(PsiFile file, String oldName) {
-    VirtualFile[] files = getFiles(myFileNameToFilesMap, oldName);
-    ArrayList<VirtualFile> list = new ArrayList<VirtualFile>();
-    list.addAll(Arrays.asList(files));
-    list.remove(file.getVirtualFile());
-    putFiles(myFileNameToFilesMap, oldName, list.toArray(new VirtualFile[list.size()]));
-  }
-
-  private static VirtualFile[] getFiles(THashMap map, String key) {
-    Object o = map.get(key);
-    if (o == null) return VirtualFile.EMPTY_ARRAY;
-    if (o instanceof VirtualFile) {
-      return new VirtualFile[]{(VirtualFile)o};
-    }
-    else if (o instanceof Pair) {
-      Pair pair = (Pair)o;
-      return new VirtualFile[]{(VirtualFile)pair.first, (VirtualFile)pair.second};
-    }
-    else {
-      return (VirtualFile[])o;
-    }
-  }
-
-  private static void putFiles(THashMap<String,Object> map, String key, VirtualFile[] files) {
-    if (files.length == 0) {
-      map.remove(key);
-    }
-    else if (files.length == 1) {
-      map.put(key, files[0]);
-    }
-    else if (files.length == 2) {
-      map.put(key, Pair.create(files[0], files[1]));
-    }
-    else {
-      map.put(key, files);
-    }
-  }
-
   private RepositoryIndex getRepositoryIndex() {
     if (myRepositoryIndex == null) {
       myRepositoryIndex = myManager.getRepositoryManager().getIndex();
     }
     return myRepositoryIndex;
-  }
-
-  private class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
-    public void childAdded(PsiTreeChangeEvent event) {
-      if (!myInitialized) return;
-      PsiElement child = event.getChild();
-      if (child instanceof PsiDirectory) {
-        VirtualFile vFile = ((PsiDirectory)child).getVirtualFile();
-        cacheFilesInDirectory(vFile);
-      }
-      else if (child instanceof PsiFile) {
-        final PsiFile psiFile = (PsiFile)child;
-        if(psiFile.isPhysical()){
-          VirtualFile vFile = psiFile.getVirtualFile();
-          assert vFile != null;
-          if (myProjectFileIndex.isInContent(vFile)) {
-            cacheFile(vFile);
-          }
-        }
-      }
-    }
-
-    public void childMoved(PsiTreeChangeEvent event) {
-      if (!myInitialized) return;
-      PsiElement child = event.getChild();
-      if (child instanceof PsiDirectory) {
-        VirtualFile vFile = ((PsiDirectory)child).getVirtualFile();
-        cacheFilesInDirectory(vFile);
-      }
-      else if (child instanceof PsiFile) {
-        final PsiFile psiFile = (PsiFile)child;
-        if(psiFile.isPhysical()){
-          VirtualFile vFile = ((PsiFile)child).getVirtualFile();
-          assert vFile != null;
-          if (myProjectFileIndex.isInContent(vFile)) {
-            cacheFile(vFile);
-          }
-        }
-      }
-    }
-
-    public void propertyChanged(PsiTreeChangeEvent event) {
-      if (!myInitialized) return;
-
-      String propertyName = event.getPropertyName();
-      if (PsiTreeChangeEvent.PROP_FILE_NAME.equals(propertyName)) {
-        PsiFile file = (PsiFile)event.getElement();
-        String oldName = (String)event.getOldValue();
-        releaseFile(file, oldName);
-        VirtualFile vFile = file.getVirtualFile();
-        assert vFile != null;
-        if (file.isPhysical() && myProjectFileIndex.isInContent(vFile)) {
-          cacheFile(vFile);
-        }
-      }
-      else if (propertyName.equals(PsiTreeChangeEvent.PROP_ROOTS)) {
-        myInitialized = false;
-        /*
-        _fillCache();
-        */
-      }
-      else if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_TYPES)) {
-        /*
-        _fillCache();
-        */
-        myInitialized = false;
-      }
-    }
-  }
-
-  private class ContentCacheBuilder implements ContentIterator {
-    public boolean processFile(VirtualFile fileOrDir) {
-      if (!fileOrDir.isDirectory()) {
-        cacheFile(fileOrDir);
-      }
-      return true;
-    }
   }
 }
