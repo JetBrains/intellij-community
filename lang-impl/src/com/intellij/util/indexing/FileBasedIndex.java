@@ -90,10 +90,13 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   public static final class FileContent {
     public final VirtualFile file;
+    public final String fileName;
     public final CharSequence content;
 
     public FileContent(final VirtualFile file, final CharSequence content) {
       this.file = file;
+      // remember name explicitly because the file could be renamed afterwards
+      fileName = file.getName();
       this.content = content;
     }
   }
@@ -568,7 +571,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     // No need to react on movement events since files stay valid, their ids don't change and all associated attributes remain intact.
 
     public void fileCreated(final VirtualFileEvent event) {
-      markDirty(event);
+      markDirty(event, true);
     }
 
     public void fileDeleted(final VirtualFileEvent event) {
@@ -576,7 +579,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     public void fileCopied(final VirtualFileCopyEvent event) {
-      markDirty(event);
+      markDirty(event, true);
     }
 
     public void beforeFileDeletion(final VirtualFileEvent event) {
@@ -588,12 +591,26 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     public void contentsChanged(final VirtualFileEvent event) {
-      markDirty(event);
+      markDirty(event, true);
     }
 
-    private void markDirty(final VirtualFileEvent event) {
+    public void beforePropertyChange(final VirtualFilePropertyEvent event) {
+      if (event.getPropertyName().equals(VirtualFile.PROP_NAME)) {
+        // indexes may depend on file name
+        scheduleInvalidation(event.getFile());
+      }
+    }
+
+    public void propertyChanged(final VirtualFilePropertyEvent event) {
+      if (event.getPropertyName().equals(VirtualFile.PROP_NAME)) {
+        // indexes may depend on file name
+        markDirty(event, false);
+      }
+    }
+
+    private void markDirty(final VirtualFileEvent event, final boolean recursive) {
       final VirtualFile file = event.getFile();
-      includeToUpdateSet(file);
+      includeToUpdateSet(file, recursive);
     }
 
     private void scheduleInvalidation(final VirtualFile file) {
@@ -618,7 +635,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
         }
         
         if (toUpdate.size() > 0) {
-          includeToUpdateSet(file);
+          includeToUpdateSet(file, true);
           final FileContent fc = new FileContent(file, loadContent(file));
           final FutureTask<?> future = (FutureTask<?>)myInvalidationService.submit(new Runnable() {
             public void run() {
@@ -647,8 +664,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       }
     }
 
-    private void includeToUpdateSet(final VirtualFile file) {
-      if (file.isDirectory()) {
+    private void includeToUpdateSet(final VirtualFile file, final boolean recursive) {
+      if (file.isDirectory() && recursive) {
         ContentIterator iterator = new ContentIterator() {
           public boolean processFile(final VirtualFile fileOrDir) {
             if (!fileOrDir.isDirectory()) {
