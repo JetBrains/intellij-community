@@ -4,18 +4,13 @@
 
 package org.jetbrains.idea.maven;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
@@ -28,66 +23,22 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.repo.MavenRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public abstract class ImportingTestCase extends IdeaTestCase {
-  protected File dir;
-
-  protected VirtualFile projectRoot;
-  protected VirtualFile projectPom;
-
-  private List<VirtualFile> poms = new ArrayList<VirtualFile>();
+public abstract class ImportingTestCase extends MavenTestCase {
   protected MavenImporterSettings myPrefs;
   protected MavenProjectModel projectModel;
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        try {
-          init();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
-  }
-
-  private void init() throws Exception {
-    initDirs();
-
+  protected void setUpInWriteAction() throws Exception {
+    super.setUpInWriteAction();
     MavenWorkspaceSettingsComponent c = myProject.getComponent(MavenWorkspaceSettingsComponent.class);
     myPrefs = c.getState().myImporterSettings;
   }
 
-  protected void initDirs() throws IOException {
-    dir = createTempDirectory();
-
-    File projectDir = new File(dir, "project");
-    projectDir.mkdirs();
-    projectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
-  }
-
   @Override
   protected void setUpModule() {
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    Messages.setTestDialog(TestDialog.DEFAULT);
-    super.tearDown();
-  }
-
-  protected String getProjectPath() {
-    return projectRoot.getPath();
-  }
-
-  protected String getParentPath() {
-    return projectRoot.getParent().getPath();
   }
 
   protected String getRepositoryPath() {
@@ -104,7 +55,7 @@ public abstract class ImportingTestCase extends IdeaTestCase {
                                               myProject.getComponent(MavenRepository.class),
                                               myProject.getComponent(MavenEventsHandler.class)) {
       {
-        for (VirtualFile pom : poms) {
+        for (VirtualFile pom : allPoms) {
           this.root.addUnder(new PomNode(pom));
         }
       }
@@ -335,68 +286,6 @@ public abstract class ImportingTestCase extends IdeaTestCase {
 
   private ModuleRootManager getRootManager(String module) {
     return ModuleRootManager.getInstance(getModule(module));
-  }
-
-  protected void createProjectPom(String xml) throws IOException {
-    projectPom = createPomFile(projectRoot, xml);
-  }
-
-  protected void updateProjectPom(String xml) throws IOException {
-    setFileContent(projectPom, xml);
-  }
-
-  protected void createModulePom(String relativePath, String xml) throws IOException {
-    createPomFile(createProjectSubDir(relativePath), xml);
-  }
-
-  protected void updateModulePom(String relativePath, String xml) throws IOException {
-    setFileContent(projectRoot.findFileByRelativePath(relativePath + "/pom.xml"), xml);
-  }
-
-  private VirtualFile createPomFile(VirtualFile dir, String xml) throws IOException {
-    VirtualFile f = dir.createChildData(null, "pom.xml");
-    poms.add(f);
-    return setFileContent(f, xml);
-  }
-
-  private VirtualFile setFileContent(VirtualFile f, String xml) throws IOException {
-    f.setBinaryContent(createValidPom(xml).getBytes());
-    return f;
-  }
-
-  protected String createValidPom(String xml) {
-    return "<?xml version=\"1.0\"?>" +
-           "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
-           "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
-           "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">" +
-           "  <modelVersion>4.0.0</modelVersion>" +
-           xml +
-           "</project>";
-  }
-
-  protected void createProfilesXml(String xml) throws IOException {
-    VirtualFile f = projectRoot.createChildData(null, "profiles.xml");
-    f.setBinaryContent(createValidProfiles(xml).getBytes());
-  }
-
-  private String createValidProfiles(String xml) {
-    return "<?xml version=\"1.0\"?>" +
-           "<profiles>" +
-           xml +
-           "</profiles>";
-  }
-
-  protected VirtualFile createProjectSubDir(String relativePath) {
-    File f = new File(getProjectPath(), relativePath);
-    f.mkdirs();
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
-  }
-
-  protected VirtualFile createProjectSubFile(String relativePath) throws IOException {
-    File f = new File(getProjectPath(), relativePath);
-    f.getParentFile().mkdirs();
-    f.createNewFile();
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
   }
 
   protected void importProject(String xml) throws IOException {

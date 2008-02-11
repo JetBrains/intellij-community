@@ -14,8 +14,12 @@ public class SnapshotDependenciesImportingTest extends ImportingTestCase {
   private File remoteRepoDir;
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  protected void setUpInWriteAction() throws Exception {
+    super.setUpInWriteAction();
+
+    remoteRepoDir = new File(dir, "remote");
+    remoteRepoDir.mkdirs();
+
     removeFromLocalRepository("test");
   }
 
@@ -23,14 +27,6 @@ public class SnapshotDependenciesImportingTest extends ImportingTestCase {
   protected void tearDown() throws Exception {
     removeFromLocalRepository("test");
     super.tearDown();
-  }
-
-  @Override
-  protected void initDirs() throws IOException {
-    super.initDirs();
-
-    remoteRepoDir = new File(dir, "remote");
-    remoteRepoDir.mkdirs();
   }
 
   public void testSnapshotVersionDependencyToModule() throws Exception {

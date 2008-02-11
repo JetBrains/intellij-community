@@ -305,15 +305,15 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
       requestKeymapUpdate();
     }
 
-    public void createFile(VirtualFile file) {
+    public void projectAdded(VirtualFile file) {
       requestKeymapUpdate();
     }
 
-    public void removeFile(VirtualFile file) {
+    public void projectRemoved(VirtualFile file) {
       requestKeymapUpdate();
     }
 
-    public void updateFile(VirtualFile file) {
+    public void projectUpdated(VirtualFile file) {
       requestKeymapUpdate();
     }
 

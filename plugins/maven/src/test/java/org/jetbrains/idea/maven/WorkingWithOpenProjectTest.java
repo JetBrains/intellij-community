@@ -13,8 +13,8 @@ import java.io.File;
 
 public class WorkingWithOpenProjectTest extends ImportingTestCase {
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  protected void setUpInWriteAction() throws Exception {
+    super.setUpInWriteAction();
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");

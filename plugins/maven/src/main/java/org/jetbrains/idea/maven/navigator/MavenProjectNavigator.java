@@ -76,23 +76,25 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
         updateFromRoot(true, true);
       }
 
-      public void createFile(final VirtualFile file) {
+      public void projectAdded(final VirtualFile file) {
         final PomNode newNode = new PomNode(file);
         fileToNode.put(file, newNode);
         root.addToStructure(newNode);
+
+        updateFromRoot(true, true);
       }
 
-      public void updateFile(VirtualFile file) {
+      public void projectUpdated(VirtualFile file) {
         final PomNode pomNode = fileToNode.get(file);
         if (pomNode != null) {
           pomNode.onFileUpdate();
         }
         else {
-          createFile(file);
+          projectAdded(file);
         }
       }
 
-      public void removeFile(VirtualFile file) {
+      public void projectRemoved(VirtualFile file) {
         final PomNode pomNode = fileToNode.get(file);
         if (pomNode != null) {
           fileToNode.remove(file);

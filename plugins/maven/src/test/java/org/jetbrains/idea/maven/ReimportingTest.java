@@ -4,6 +4,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 
 public class ReimportingTest extends ImportingTestCase {
+  @Override
+  protected void tearDown() throws Exception {
+    Messages.setTestDialog(TestDialog.DEFAULT);
+    super.tearDown();
+  }
+
   public void testAddingNewModule() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
