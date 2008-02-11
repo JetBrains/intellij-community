@@ -170,7 +170,7 @@ public class AddSupportForFrameworksPanel {
 
   private static GridBagConstraints createConstraints(final int gridx, final int gridy, final int gridwidth, final int gridheight,
                                                final Insets insets) {
-    return new GridBagConstraints(gridx, gridy, gridwidth, gridheight, 1, 1, GridBagConstraints.WEST,
+    return new GridBagConstraints(gridx, gridy, gridwidth, gridheight, 1, 1, GridBagConstraints.NORTHWEST,
                                                                         GridBagConstraints.NONE, insets, 0, 0);
   }
 
