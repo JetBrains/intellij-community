@@ -163,6 +163,7 @@
     </group>
 
     <group id="UpdateActionGroup">
+      <reference ref="EditSource"/>
       <reference ref="$Delete"/>
     </group>
 
