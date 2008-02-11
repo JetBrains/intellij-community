@@ -73,7 +73,7 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testDisplayingOnlyChangesIfTheyWerePurged() {
-    vcs.purgeObsolete(0);
+    vcs.purgeObsoleteAndSave(0);
     assertEquals(0, vcs.getChangeList().getChanges().size());
 
     // and some changes that normally are exclueed on "ShowChangesOnly"

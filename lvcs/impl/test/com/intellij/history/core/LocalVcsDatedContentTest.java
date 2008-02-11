@@ -45,7 +45,7 @@ public class LocalVcsDatedContentTest extends LocalVcsTestCase {
     setCurrentTimestamp(30);
     vcs.changeFileContent("f", cf("three"), 30);
 
-    vcs.purgeObsolete(5);
+    vcs.purgeObsoleteAndSave(5);
 
     assertNull(vcs.getByteContent("f", fileComparator(10)));
     assertEquals("two", new String(vcs.getByteContent("f", fileComparator(20))));
@@ -101,7 +101,7 @@ public class LocalVcsDatedContentTest extends LocalVcsTestCase {
     setCurrentTimestamp(20);
     vcs.changeFileContent("f", cf("two"), -1);
 
-    vcs.purgeObsolete(5);
+    vcs.purgeObsoleteAndSave(5);
 
     assertNull(vcs.getByteContent("f", revisionComparator(10)));
     assertEquals("two", new String(vcs.getByteContent("f", revisionComparator(20))));

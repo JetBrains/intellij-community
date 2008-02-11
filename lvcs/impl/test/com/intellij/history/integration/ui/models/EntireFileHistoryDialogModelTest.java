@@ -19,7 +19,7 @@ public class EntireFileHistoryDialogModelTest extends LocalVcsTestCase {
     setCurrentTimestamp(10);
     long timestamp = -1;
     vcs.createFile("f", cf(""), timestamp, false);
-    vcs.purgeObsolete(0);
+    vcs.purgeObsoleteAndSave(0);
 
     initModelFor("f");
 

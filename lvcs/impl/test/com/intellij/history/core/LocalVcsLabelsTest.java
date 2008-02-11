@@ -83,7 +83,7 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
     setCurrentTimestamp(20);
     vcs.putUserLabel("file", "l");
 
-    vcs.purgeObsolete(5);
+    vcs.purgeObsoleteAndSave(5);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
     assertEquals(1, rr.size());

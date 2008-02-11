@@ -141,12 +141,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   public void disposeComponent() {
     if (!isInitialized) return;
 
-    myVcs.purgeObsolete(myConfiguration.PURGE_PERIOD);
-
-    // save could haven't been called if user had canceled save of project files
-    // so we have to force save. But that will be ignored if where were
-    // no changes since last save, so there is no performance issues here
-    save();
+    myVcs.purgeObsoleteAndSave(myConfiguration.PURGE_PERIOD);
 
     closeVcs();
     closeService();

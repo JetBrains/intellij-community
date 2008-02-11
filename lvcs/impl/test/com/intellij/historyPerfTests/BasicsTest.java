@@ -112,7 +112,7 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
 
     assertExecutionTime(100, new RunnableAdapter() {
       public void doRun() {
-        vcs.purgeObsolete(0);
+        vcs.purgeObsoleteAndSave(0);
       }
     });
   }

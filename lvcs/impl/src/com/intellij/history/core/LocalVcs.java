@@ -55,7 +55,12 @@ public class LocalVcs implements ILocalVcs {
     wasModifiedAfterLastSave = false;
   }
 
-  public void purgeObsolete(long period) {
+  public void purgeObsoleteAndSave(long period) {
+    purgeObsolete(period);
+    save();
+  }
+
+  private void purgeObsolete(long period) {
     List<Content> contentsToPurge = myChangeList.purgeObsolete(period);
     myStorage.purgeContents(contentsToPurge);
   }

@@ -33,7 +33,7 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
   public void testPurging() {
     assertEquals(4, vcs.getRevisionsFor("file").size());
 
-    vcs.purgeObsolete(5);
+    vcs.purgeObsoleteAndSave(5);
 
     List<Revision> rr = vcs.getRevisionsFor("file");
     assertEquals(2, rr.size());
@@ -42,7 +42,7 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
 
   @Test
   public void testPurgingContents() {
-    vcs.purgeObsolete(5);
+    vcs.purgeObsoleteAndSave(5);
 
     assertEquals(2, purgedContent.size());
     assertEquals(c("one"), purgedContent.get(0));
@@ -62,7 +62,7 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
     setCurrentTimestamp(30);
     vcs.changeFileContent("file", cf("twoo"), -1);
 
-    vcs.purgeObsolete(5);
+    vcs.purgeObsoleteAndSave(5);
 
     assertTrue(purgedContent.isEmpty());
   }
