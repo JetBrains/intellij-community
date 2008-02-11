@@ -31,6 +31,7 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
+import java.io.File;
 
 /**
  * @author Anton Katilin
@@ -40,7 +41,10 @@ import java.awt.event.WindowFocusListener;
 // Made non-final for Fabrique
 public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   private String myTitle;
+
   private String myFileTitle;
+  private File myCurrentFile;
+
   private Project myProject;
   private final LayoutFocusTraversalPolicyExt myLayoutFocusTraversalPolicy;
 
@@ -151,7 +155,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   }
 
   public void setFileTitle(final String fileTitle) {
+    setFileTitle(fileTitle, null);
+  }
+
+  public void setFileTitle(@Nullable final String fileTitle, @Nullable File file) {
     myFileTitle = fileTitle;
+    myCurrentFile = file;
     updateTitle();
   }
 
@@ -165,6 +174,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
       sb.append(myFileTitle);
       sb.append(" - ");
     }
+
+    getRootPane().putClientProperty("Window.documentFile", myCurrentFile);
+
     sb.append(((ApplicationInfoEx)ApplicationInfo.getInstance()).getFullApplicationName());
     setFrameTitle(sb.toString());
   }

@@ -44,6 +44,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -171,7 +172,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         final IdeFrameImpl frame = windowManagerEx.getFrame(myProject);
         LOG.assertTrue(frame != null);
         mySplitters.updateFileName(file);
-        frame.setFileTitle(file == null ? null : getFileTitle(file));
+        File ioFile = file == null ? null : new File(file.getPresentableUrl());
+        frame.setFileTitle(file == null ? null : getFileTitle(file), ioFile);
       }
     });
   }

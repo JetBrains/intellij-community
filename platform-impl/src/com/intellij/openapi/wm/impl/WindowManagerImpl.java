@@ -413,7 +413,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
     frame.setProject(null);
     frame.setTitle(null);
-    frame.setFileTitle(null);
+    frame.setFileTitle(null, null);
 
     final StatusBarEx statusBar = frame.getStatusBar();
     statusBar.clear();
