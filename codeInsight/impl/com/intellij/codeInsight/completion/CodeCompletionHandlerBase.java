@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.completion.impl.CompletionService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
@@ -12,29 +13,28 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.getters.ExpectedTypesGetter;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -44,10 +44,11 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
   private static final Key<Class<? extends CodeCompletionHandlerBase>> COMPLETION_HANDLER_CLASS_KEY =
     Key.create("COMPLETION_HANDLER_CLASS_KEY");
+  protected final CompletionType myCompletionType;
 
-  protected LookupItemPreferencePolicy myPreferencePolicy = null;
-  protected boolean mySuggestSmartCompletion = false;
-  protected boolean mySuggestClassNameCompletion = false;
+  protected CodeCompletionHandlerBase(final CompletionType completionType) {
+    myCompletionType = completionType;
+  }
 
   public final void invoke(final Project project, final Editor editor, PsiFile file) {
     final Document document = editor.getDocument();
@@ -188,7 +189,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       final RangeMarker startOffsetMarker = document.createRangeMarker(startOffset, startOffset);
-      final Lookup lookup = showLookup(project, editor, items, prefix, data, file, appendSuggestion(null));
+      final Lookup lookup = showLookup(project, editor, items, prefix, data, file, appendSuggestion(null, data));
       
       if (lookup != null) {
         lookup.putUserData(COMPLETION_HANDLER_CLASS_KEY, getClass());
@@ -207,16 +208,10 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  @Nullable protected String appendSuggestion(@Nullable String s) {
-    String suggestion = null;
-    if (mySuggestSmartCompletion) {
-      suggestion = CompletionBundle.message("completion.smart.hint", KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SMART_TYPE_COMPLETION)));
-    } else if (mySuggestClassNameCompletion) {
-      suggestion = CompletionBundle.message("completion.class.name.hint", KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CLASS_NAME_COMPLETION)));
-    }
-    if (s == null) return suggestion;
-    if (suggestion == null) return s;
-    return s + "; " + suggestion;
+  @Nullable protected static String appendSuggestion(@Nullable String prefix, LookupData data) {
+    if (prefix == null) return data.adText;
+    if (data.adText == null) return prefix;
+    return prefix + "; " + data.adText;
   }
 
   private static void insertLookupString(final CompletionContext context, final int currentOffset, final String newText,
@@ -311,7 +306,31 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   protected abstract CompletionData getCompletionData(CompletionContext context, PsiElement element);
 
-  protected abstract LookupData getLookupData(final CompletionContext _context);
+  protected LookupData getLookupData(final CompletionContext _context) {
+    final PsiFile file = _context.file;
+    final PsiManager manager = file.getManager();
+
+    final Pair<CompletionContext, PsiElement> insertedInfo =
+      ApplicationManager.getApplication().runWriteAction(new Computable<Pair<CompletionContext, PsiElement>>() {
+        public Pair<CompletionContext, PsiElement> compute() {
+          return insertDummyIdentifier(_context);
+        }
+      });
+
+    PsiElement insertedElement = insertedInfo.getSecond();
+    final CompletionContext context = insertedInfo.getFirst();
+    insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, context);
+    final CompletionParameters parameters = new CompletionParameters(insertedElement, context.file);
+    final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>((Collection)CompletionService.getCompletionService().
+      getQueryFactory(myCompletionType, parameters).
+      createQuery(parameters).findAll());
+    insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, null);
+
+    final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
+    final LookupData data = new LookupData(items, context.getPrefix());
+    data.itemPreferencePolicy = new CompletionPreferencePolicy(manager, items, null, context.getPrefix(), insertedElement);
+    return data;
+  }
 
   protected Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context) {
     PsiFile oldFileCopy = createFileCopy(context.file);
@@ -399,7 +418,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     LOG.assertTrue(lookupData.items.length == 0);
     if (lookupData.prefix != null) {
-      HintManager.getInstance().showErrorHint(editor, appendSuggestion(CompletionBundle.message("completion.no.suggestions")));
+      HintManager.getInstance().showErrorHint(editor, appendSuggestion(CompletionBundle.message("completion.no.suggestions"), lookupData));
     }
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     if (codeAnalyzer != null) {
@@ -483,20 +502,5 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return fileCopy;
   }
 
-  protected static boolean shouldSuggestSmartCompletion(final PsiElement element, CompletionContext context) {
-    if (shouldSuggestClassNameCompletion(element, context)) return false;
 
-    final PsiElement parent = element.getParent();
-    if (parent instanceof PsiReferenceExpression && ((PsiReferenceExpression)parent).getQualifier() != null) return false;
-
-    return new ExpectedTypesGetter().get(element, null).length > 0;
-  }
-
-  protected static boolean shouldSuggestClassNameCompletion(final PsiElement element, CompletionContext context) {
-    if (StringUtil.isEmpty(context.getPrefix())) return false;
-    if (element == null) return false;
-    final PsiElement parent = element.getParent();
-    if (parent == null) return false;
-    return parent.getParent() instanceof PsiTypeElement || parent.getParent() instanceof PsiExpressionStatement || parent.getParent() instanceof PsiReferenceList;
-  }
 }

@@ -15,8 +15,13 @@ import com.intellij.util.ProcessingContext;
 import static com.intellij.patterns.StandardPatterns.or;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterUtil;
+import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.IdeActions;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -145,19 +150,69 @@ public class JavaCompletionContributor extends CompletionContributor{
 
         final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
         final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(context.offset);
+        final PrefixMatcher matcher = result.getPrefixMatcher();
         if (ref != null) {
-          completionData.completeReference(ref, lookupSet, insertedElement, result.getPrefixMatcher(), file, context.offset);
+          completionData.completeReference(ref, lookupSet, insertedElement, matcher, file, context.offset);
         }
         if (lookupSet.isEmpty() || !CodeInsightUtil.isAntFile(file)) {
           final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
           completionData.addKeywordVariants(keywordVariants, insertedElement, file);
-          CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), file);
+          CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, matcher, file);
         }
         result.addAllElements(lookupSet);
       }
     });
 
+    registrar.extend(CompletionType.BASIC, psiElement()).withId(JAVA_LEGACY).withAdvertiser(new CompletionAdvertiser() {
+      public String advertise(@NotNull final CompletionParameters parameters, final ProcessingContext context, final PrefixMatcher matcher) {
+        if (shouldSuggestSmartCompletion(parameters.getPosition(), matcher.getPrefix())) {
+          return CompletionBundle.message("completion.smart.hint", KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(
+            IdeActions.ACTION_SMART_TYPE_COMPLETION)));
+        }
+        if (shouldSuggestClassNameCompletion(parameters.getPosition(), matcher.getPrefix())) {
+          return CompletionBundle.message("completion.class.name.hint", KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(
+            IdeActions.ACTION_CLASS_NAME_COMPLETION)));
+        }
+        return null;
+      }
+    });
+    registrar.extend(CompletionType.SMART, psiElement()).withId(JAVA_LEGACY).withAdvertiser(new CompletionAdvertiser() {
+      public String advertise(@NotNull final CompletionParameters parameters, final ProcessingContext context, final PrefixMatcher matcher) {
+        if (shouldSuggestClassNameCompletion(parameters.getPosition(), matcher.getPrefix())) {
+          return CompletionBundle.message("completion.class.name.hint", KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(
+            IdeActions.ACTION_CLASS_NAME_COMPLETION)));
+        }
+        return null;
+      }
+    });
+    registrar.extend(CompletionType.CLASS_NAME, psiElement()).withId(JAVA_LEGACY).withAdvertiser(new CompletionAdvertiser() {
+      public String advertise(@NotNull final CompletionParameters parameters, final ProcessingContext context, final PrefixMatcher matcher) {
+        if (shouldSuggestSmartCompletion(parameters.getPosition(), matcher.getPrefix())) {
+          return CompletionBundle.message("completion.smart.hint", KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(
+            IdeActions.ACTION_SMART_TYPE_COMPLETION)));
+        }
+        return null;
+      }
+    });
 
+
+  }
+
+  protected static boolean shouldSuggestSmartCompletion(final PsiElement element, String prefix) {
+    if (shouldSuggestClassNameCompletion(element, prefix)) return false;
+
+    final PsiElement parent = element.getParent();
+    if (parent instanceof PsiReferenceExpression && ((PsiReferenceExpression)parent).getQualifier() != null) return false;
+
+    return new ExpectedTypesGetter().get(element, null).length > 0;
+  }
+
+  protected static boolean shouldSuggestClassNameCompletion(final PsiElement element, String prefix) {
+    if (StringUtil.isEmpty(prefix)) return false;
+    if (element == null) return false;
+    final PsiElement parent = element.getParent();
+    if (parent == null) return false;
+    return parent.getParent() instanceof PsiTypeElement || parent.getParent() instanceof PsiExpressionStatement || parent.getParent() instanceof PsiReferenceList;
   }
 
   private static void analyzeItem(final CompletionContext context, final LookupItem item, final Object completion, final PsiElement position) {

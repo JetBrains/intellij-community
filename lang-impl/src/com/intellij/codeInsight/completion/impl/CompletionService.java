@@ -8,12 +8,10 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Ref;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.PrioritizedQueryExecutor;
-import com.intellij.util.PrioritizedQueryFactory;
-import com.intellij.util.ProcessingContext;
-import com.intellij.util.QueryResultSet;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,26 +36,50 @@ public class CompletionService implements CompletionRegistrar{
     return new CompletionPlaceImpl<LookupElement,CompletionParameters>(place, getProviderSet(type));
   }
 
-  public PrioritizedQueryFactory<LookupElement, CompletionParameters> getQueryFactory(CompletionType type, final CompletionParameters queryParameters) {
-    final ArrayList<PrioritizedQueryExecutor<LookupElement, CompletionParameters>> list = new ArrayList<PrioritizedQueryExecutor<LookupElement, CompletionParameters>>();
+  private boolean executeForMatchingProviders(CompletionType type, final CompletionParameters queryParameters, PairProcessor<ProcessingContext,CompletionPlaceImpl<LookupElement,CompletionParameters>> processor) {
     for (final CompletionPlaceImpl<LookupElement, CompletionParameters> place : getProviderSet(type).getValues()) {
       final ProcessingContext processingContext = new ProcessingContext();
       if (place.myPlace.accepts(queryParameters.getPosition(), processingContext)) {
-        final CompletionContext context = queryParameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-        final PrefixMatcher matcher = new CamelHumpMatcher(CompletionData.findPrefixStatic(queryParameters.getPosition(), context.startOffset));
+        if (!processor.process(processingContext, place)) return false;
+      }
+    }
+    return true;
+  }
 
+  public PrioritizedQueryFactory<LookupElement, CompletionParameters> getQueryFactory(CompletionType type, final CompletionParameters queryParameters) {
+    final CompletionContext context = queryParameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
+    final PrefixMatcher matcher = new CamelHumpMatcher(CompletionData.findPrefixStatic(queryParameters.getPosition(), context.startOffset));
+
+    final ArrayList<PrioritizedQueryExecutor<LookupElement, CompletionParameters>> list = new ArrayList<PrioritizedQueryExecutor<LookupElement, CompletionParameters>>();
+    executeForMatchingProviders(type, queryParameters, new PairProcessor<ProcessingContext, CompletionPlaceImpl<LookupElement, CompletionParameters>>() {
+      public boolean process(final ProcessingContext processingContext, final CompletionPlaceImpl<LookupElement, CompletionParameters> place) {
         list.add(new PrioritizedQueryExecutor<LookupElement, CompletionParameters>() {
-          public void execute(final CompletionParameters parameters1, final QueryResultSet<LookupElement> resultSet) {
-            place.myProvider.addCompletions(parameters1, processingContext, new CompletionResultSetImpl(matcher, resultSet, context));
+          public void execute(final CompletionParameters parameters, final QueryResultSet<LookupElement> resultSet) {
+            place.myProvider.addCompletions(parameters, processingContext, new CompletionResultSetImpl(matcher, resultSet, context));
           }
 
           public String toString() {
             return place.myId != null ? place.myId : place.myProvider.toString();
           }
         });
+        return true;
       }
-    }
+    });
     return new PrioritizedQueryFactory<LookupElement, CompletionParameters>(list);
+  }
+
+  public String getAdvertisementText(CompletionType type, final CompletionParameters queryParameters) {
+    final CompletionContext context = queryParameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
+    final PrefixMatcher matcher = new CamelHumpMatcher(CompletionData.findPrefixStatic(queryParameters.getPosition(), context.startOffset));
+    final Ref<String> result = Ref.create(null);
+    executeForMatchingProviders(type, queryParameters, new PairProcessor<ProcessingContext, CompletionPlaceImpl<LookupElement, CompletionParameters>>() {
+      public boolean process(final ProcessingContext processingContext, final CompletionPlaceImpl<LookupElement, CompletionParameters> place) {
+        final String ad = place.myAdvertiser.advertise(queryParameters, processingContext, matcher);
+        result.set(ad);
+        return ad == null;
+      }
+    });
+    return result.get();
   }
 
   private PartiallyOrderedSet<String,CompletionPlaceImpl<LookupElement, CompletionParameters>> getProviderSet(CompletionType type) {
@@ -77,7 +99,8 @@ public class CompletionService implements CompletionRegistrar{
     private final ElementPattern myPlace;
     private final PartiallyOrderedSet<String, CompletionPlaceImpl<Result, Params>> myProviders;
     private String myId;
-    private CompletionProvider<Result, Params> myProvider;
+    private CompletionProvider<Result, Params> myProvider = CompletionProvider.EMPTY_PROVIDER;
+    private CompletionAdvertiser myAdvertiser = CompletionAdvertiser.EMPTY_ADVERTISER;
 
     protected CompletionPlaceImpl(final ElementPattern place, PartiallyOrderedSet<String, CompletionPlaceImpl<Result,Params>> providers) {
       myPlace = place;
@@ -98,9 +121,16 @@ public class CompletionService implements CompletionRegistrar{
       return this;
     }
 
-    public void withProvider(final CompletionProvider<Result, Params> provider) {
+    public CompletionPlace<Result, Params> withProvider(final CompletionProvider<Result, Params> provider) {
       myProviders.addValue(myId, this);
       myProvider = provider;
+      return this;
+    }
+
+    public CompletionPlace<Result, Params> withAdvertiser(final CompletionAdvertiser advertiser) {
+      myProviders.addValue(myId, this);
+      myAdvertiser = advertiser;
+      return this;
     }
 
     public String toString() {
