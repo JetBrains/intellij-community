@@ -99,6 +99,21 @@ public class CopyAbstractMethodImplementationHandler {
         }
       }
     }
+    for (Iterator<PsiClass> targetClassIterator = myTargetClasses.iterator(); targetClassIterator.hasNext();) {
+      PsiClass targetClass = targetClassIterator.next();
+      if (containsAnySuperClass(targetClass)) {
+        targetClassIterator.remove();
+      }
+    }
+  }
+
+  private boolean containsAnySuperClass(final PsiClass targetClass) {
+    PsiClass superClass = targetClass.getSuperClass();
+    while(superClass != null) {
+      if (myTargetClasses.contains(superClass)) return true;
+      superClass = superClass.getSuperClass();
+    }
+    return false;
   }
 
   private void copyImplementation(final PsiMethod sourceMethod) {
