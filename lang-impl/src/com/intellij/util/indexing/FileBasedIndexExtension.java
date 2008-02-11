@@ -9,7 +9,6 @@ import com.intellij.util.io.PersistentEnumerator;
  *         Date: Dec 26, 2007
  */
 public interface FileBasedIndexExtension<K, V> {
-  
   ExtensionPointName<FileBasedIndexExtension> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.fileBasedIndex");
   
   String getName();
@@ -21,6 +20,8 @@ public interface FileBasedIndexExtension<K, V> {
   DataExternalizer<V> getValueExternalizer();
   
   FileBasedIndex.InputFilter getInputFilter();
+  
+  boolean shouldLoadFileContent();
   
   int getVersion();
 }

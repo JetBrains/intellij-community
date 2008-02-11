@@ -1,14 +1,14 @@
 package com.intellij.psi.search;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentEnumerator;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.DataInput;
@@ -39,6 +39,10 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
 
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
+  }
+
+  public boolean shouldLoadFileContent() {
+    return false;
   }
 
   public int getVersion() {

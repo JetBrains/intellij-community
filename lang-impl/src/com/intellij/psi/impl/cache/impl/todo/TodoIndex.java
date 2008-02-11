@@ -113,6 +113,10 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
     return 3;
   }
 
+  public boolean shouldLoadFileContent() {
+    return true;
+  }
+
   public String getName() {
     return NAME;
   }

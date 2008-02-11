@@ -34,8 +34,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.PersistentEnumerator;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectLongHashMap;
@@ -68,6 +66,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   private final Map<String, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>> myIndices = new HashMap<String, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
   private final TObjectIntHashMap<String> myIndexIdToVersionMap = new TObjectIntHashMap<String>();
+  private final Set<String> myNeedContentLoading = new HashSet<String>();
   private FileBasedIndexState myPreviouslyRegistered;
 
   private TObjectLongHashMap<String> myIndexIdToCreationStamp = new TObjectLongHashMap<String>();
@@ -104,15 +103,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   public FileBasedIndex(final VirtualFileManagerEx vfManager) throws IOException {
     myVfManager = vfManager;
     final FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
-    for (FileBasedIndexExtension extension : extensions) {
-      registerIndexer(
-        extension.getName(),
-        extension.getIndexer(),
-        extension.getKeyDescriptor(),
-        extension.getValueExternalizer(),
-        extension.getInputFilter(), 
-        extension.getVersion()
-      );
+    for (FileBasedIndexExtension<?, ?> extension : extensions) {
+      registerIndexer(extension);
     }
 
     dropUnregisteredIndices();
@@ -128,11 +120,14 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   /**
    * @return true if registered index requires full rebuild for some reason, e.g. is just created or corrupted
+   * @param extension
    */
-  private <K, V> void registerIndexer(final String name, final DataIndexer<K, V, FileContent> indexer, final PersistentEnumerator.DataDescriptor<K> keyDescriptor,
-                                      final DataExternalizer<V> valueExternalizer,
-                                      final InputFilter filter,
-                                      final int version) throws IOException {
+  private <K, V> void registerIndexer(final FileBasedIndexExtension<K, V> extension) throws IOException {
+    final String name = extension.getName();
+    final int version = extension.getVersion();
+    if (extension.shouldLoadFileContent()) {
+      myNeedContentLoading.add(name);
+    }
     myIndexIdToVersionMap.put(name, version);
     final File versionFile = getVersionFile(name);
     if (readVersion(versionFile) != version || ourUnitTestMode) { // in test mode drop caches each time application starts
@@ -142,10 +137,10 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        final MapIndexStorage<K, V> storage = new MapIndexStorage<K, V>(getStorageFile(name), keyDescriptor, valueExternalizer);
+        final MapIndexStorage<K, V> storage = new MapIndexStorage<K, V>(getStorageFile(name), extension.getKeyDescriptor(), extension.getValueExternalizer());
         final MemoryIndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
-        final MapReduceIndex<?, ?, FileContent> index = new MapReduceIndex<K, V, FileContent>(indexer, memStorage);
-        myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, filter));
+        final MapReduceIndex<?, ?, FileContent> index = new MapReduceIndex<K, V, FileContent>(extension.getIndexer(), memStorage);
+        myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, extension.getInputFilter()));
         break;
       }
       catch (IOException e) {
@@ -515,15 +510,15 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   public void indexFileContent(com.intellij.ide.startup.FileContent content) {
     final VirtualFile file = content.getVirtualFile();
-    FileContent fc = null;
+    FileContent preloadedFC = null;
     for (String indexId : myIndices.keySet()) {
       if (getInputFilter(indexId).acceptInput(file) && !IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId))) {
-        if (fc == null) {
-          fc = new FileContent(file, CacheUtil.getContentText(content));
+        final boolean needContentLoading = myNeedContentLoading.contains(indexId);
+        if (preloadedFC == null && needContentLoading) {
+          preloadedFC = new FileContent(file, CacheUtil.getContentText(content));
         }
-
         try {
-          updateSingleIndex(indexId, file, fc, null);
+          updateSingleIndex(indexId, file, preloadedFC != null? preloadedFC : new FileContent(file, null), null);
         }
         catch (StorageException e) {
           requestRebuild(indexId);
@@ -627,16 +622,20 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
         }
       }
       else {
+        boolean shouldLoadContent = false;
         final List<String> toUpdate = new ArrayList<String>(myIndices.size());
         for (String indexId : myIndices.keySet()) {
           if (getInputFilter(indexId).acceptInput(file) && IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId))) {
             toUpdate.add(indexId);
+            if (myNeedContentLoading.contains(indexId)) {
+              shouldLoadContent = true;
+            }
           }
         }
         
         if (toUpdate.size() > 0) {
           includeToUpdateSet(file, true);
-          final FileContent fc = new FileContent(file, loadContent(file));
+          final FileContent fc = new FileContent(file, shouldLoadContent? loadContent(file) : null);
           final FutureTask<?> future = (FutureTask<?>)myInvalidationService.submit(new Runnable() {
             public void run() {
               for (String indexId : toUpdate) {

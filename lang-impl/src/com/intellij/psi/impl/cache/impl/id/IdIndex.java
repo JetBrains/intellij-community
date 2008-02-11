@@ -76,6 +76,10 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
     return 7;
   }
 
+  public boolean shouldLoadFileContent() {
+    return true;
+  }
+
   public String getName() {
     return NAME;
   }
