@@ -138,13 +138,17 @@ public class MemberSelectionTable extends Table implements TypeSafeDataProvider 
   public MemberInfo[] getSelectedMemberInfos() {
     ArrayList<MemberInfo> list = new ArrayList<MemberInfo>(myMemberInfos.length);
     for (MemberInfo info : myMemberInfos) {
-      final boolean memberEnabled = myMemberInfoModel.isMemberEnabled(info);
-      if ((memberEnabled && info.isChecked()) || (!memberEnabled && myMemberInfoModel.isCheckedWhenDisabled(info))) {
+      if (isMemberInfoSelected(info)) {
 //      if (info.isChecked() || (!myMemberInfoModel.isMemberEnabled(info) && myMemberInfoModel.isCheckedWhenDisabled(info))) {
         list.add(info);
       }
     }
     return list.toArray(new MemberInfo[list.size()]);
+  }
+
+  private boolean isMemberInfoSelected(final MemberInfo info) {
+    final boolean memberEnabled = myMemberInfoModel.isMemberEnabled(info);
+    return (memberEnabled && info.isChecked()) || (!memberEnabled && myMemberInfoModel.isCheckedWhenDisabled(info));
   }
 
   public MemberInfoModel getMemberInfoModel() {
@@ -187,6 +191,21 @@ public class MemberSelectionTable extends Table implements TypeSafeDataProvider 
         sink.put(LangDataKeys.PSI_ELEMENT, memberInfos [0].getMember());
       }
     }
+  }
+
+  public void scrollSelectionInView() {
+    for(int i=0; i<myMemberInfos.length; i++) {
+      if (isMemberInfoSelected(myMemberInfos [i])) {
+        Rectangle rc = getCellRect(i, 0, false);
+        scrollRectToVisible(rc);
+        break;
+      }
+    }
+  }
+
+  public void addNotify() {
+    super.addNotify();
+    scrollSelectionInView();
   }
 
   private class MyTableModel extends AbstractTableModel {
