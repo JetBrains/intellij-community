@@ -201,6 +201,10 @@ public final class LoadTextUtil {
   }
 
   public static CharSequence loadText(VirtualFile file) {
+    return loadText(file, false);
+  }
+
+  public static CharSequence loadText(VirtualFile file, final boolean allowMissingDecompiler) {
     if (file instanceof LightVirtualFile) {
       return ((LightVirtualFile)file).getContent();
     }
@@ -214,6 +218,7 @@ public final class LoadTextUtil {
         return decompiler.decompile(file);
       }
 
+      if (allowMissingDecompiler) return null;
       throw new IllegalArgumentException("Attempt to load text for binary file, that doesn't have decompiler plugged in.");
     }
 

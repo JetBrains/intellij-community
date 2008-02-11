@@ -562,7 +562,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
 
   private static CharSequence loadContent(VirtualFile file) {
-    return LoadTextUtil.loadText(file);
+    return LoadTextUtil.loadText(file, true);
   }
 
   private final class ChangedFilesUpdater extends VirtualFileAdapter implements CacheUpdater{
