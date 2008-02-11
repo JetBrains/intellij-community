@@ -219,4 +219,6 @@
   <extensionPoint name="nameSuggestionProvider" interface="com.intellij.refactoring.rename.NameSuggestionProvider"/>
   <extensionPoint name="vetoRenameCondition" interface="com.intellij.openapi.util.Condition"/>
 
+  <extensionPoint name="readWriteAccessDetector" interface="com.intellij.codeInsight.highlighting.ReadWriteAccessDetector"/>
+
 </extensionPoints>

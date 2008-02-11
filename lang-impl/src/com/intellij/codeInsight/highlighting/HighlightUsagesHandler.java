@@ -33,11 +33,8 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlElementDecl;
-import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -220,25 +217,20 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
     setupFindModel(project);
 
-    if (element instanceof PsiVariable ||
-        element instanceof XmlAttributeValue ||
-        element instanceof XmlTag ||
-        element instanceof XmlElementDecl ||
-        element instanceof XmlComment // e.g. <!--@elvariable name="xxx" type="yyy"-->
-       ) {
+    ReadWriteAccessDetector detector = null;
+    for(ReadWriteAccessDetector accessDetector: Extensions.getExtensions(ReadWriteAccessDetector.EP_NAME)) {
+      if (accessDetector.isReadWriteAccessible(element)) {
+        detector = accessDetector;
+        break;
+      }
+    }
+
+    if (detector != null) {
       List<PsiReference> readRefs = new ArrayList<PsiReference>();
       List<PsiReference> writeRefs = new ArrayList<PsiReference>();
 
       for (PsiReference ref : refs) {
-        PsiElement refElement = ref.getElement();
-        
-        if (refElement instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)refElement) ||
-            ( refElement instanceof XmlAttributeValue &&
-              (!(element instanceof XmlTag) || refElement.getParent().getParent() == element)
-            ) ||
-            refElement instanceof XmlElementDecl ||
-            refElement instanceof XmlComment // e.g. <!--@elvariable name="xxx" type="yyy"-->
-           ) {
+        if (detector.isWriteAccess(element, ref)) {
           writeRefs.add(ref);
         }
         else {
@@ -253,7 +245,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
 
     PsiElement identifier = getNameIdentifier(element);
-    if (identifier != null && PsiUtil.isUnderPsiRoot(file, identifier)) {
+    if (identifier != null && PsiUtilBase.isUnderPsiRoot(file, identifier)) {
       TextAttributes nameAttributes = attributes;
       if (element instanceof PsiVariable && ((PsiVariable)element).getInitializer() != null) {
         nameAttributes = writeAttributes;
