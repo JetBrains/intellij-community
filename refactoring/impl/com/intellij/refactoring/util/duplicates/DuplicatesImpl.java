@@ -37,6 +37,7 @@ public class DuplicatesImpl {
   public static void invoke(final Project project, Editor editor, final MatchProvider provider) {
     final List<Match> duplicates = provider.getDuplicates();
     for (final Match match : duplicates) {
+      if (!match.getMatchStart().isValid() || !match.getMatchEnd().isValid()) continue;
       final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
       highlightMatch(project, editor, match, highlighters);
       final TextRange textRange = match.getTextRange();
