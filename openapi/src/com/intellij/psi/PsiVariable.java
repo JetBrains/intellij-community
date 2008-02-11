@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NonNls;
 /**
  * Represents a Java local variable, method parameter or field.
  */
-public interface PsiVariable extends PsiElement, PsiModifierListOwner, PsiNamedElement {
+public interface PsiVariable extends PsiElement, PsiModifierListOwner, PsiNameIdentifierOwner {
   /**
    * Returns the type of the variable.
    *

@@ -30,7 +30,7 @@ import java.util.List;
  * @see PsiJavaFile#getClasses() 
  */
 public interface PsiClass
-  extends PsiNamedElement, PsiModifierListOwner, PsiDocCommentOwner, PsiMetaOwner, PsiTypeParameterListOwner, PsiMember {
+  extends PsiNameIdentifierOwner, PsiModifierListOwner, PsiDocCommentOwner, PsiMetaOwner, PsiTypeParameterListOwner, PsiMember {
   /**
    * The empty array of PSI classes which can be reused to avoid unnecessary allocations.
    */

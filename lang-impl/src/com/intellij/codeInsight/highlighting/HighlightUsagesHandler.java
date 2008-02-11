@@ -31,7 +31,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.psi.xml.XmlElementDecl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -338,20 +337,14 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     highlightRanges(highlightManager, editor, attributes, clearHighlights, textRanges);
   }
 
+  @Nullable
   public static PsiElement getNameIdentifier(@NotNull PsiElement element) {
-    if (element instanceof PsiClass) {
-      return ((PsiClass)element).getNameIdentifier();
-    }
-    if (element instanceof PsiMethod) {
-      return ((PsiMethod)element).getNameIdentifier();
-    }
-    if (element instanceof PsiVariable) {
-      return ((PsiVariable)element).getNameIdentifier();
+    if (element instanceof PsiNameIdentifierOwner) {
+      return ((PsiNameIdentifierOwner)element).getNameIdentifier();
     }
 
     if (element.isPhysical() &&
         element instanceof PsiNamedElement &&
-        !(element instanceof XmlElementDecl) &&
         element.getContainingFile() != null &&
         element.getTextRange() != null) {
       // Quite hacky way to get name identifier. Depends on getTextOffset overriden properly.

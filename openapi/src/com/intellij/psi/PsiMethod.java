@@ -28,7 +28,7 @@ import java.util.List;
  *
  * @see PsiClass#getMethods()
  */
-public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOwner, PsiDocCommentOwner, PsiTypeParameterListOwner {
+public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifierListOwner, PsiDocCommentOwner, PsiTypeParameterListOwner {
   /**
    * The empty array of PSI methods which can be reused to avoid unnecessary allocations.
    */

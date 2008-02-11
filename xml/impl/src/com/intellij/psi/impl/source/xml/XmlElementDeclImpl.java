@@ -118,4 +118,8 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
 
     return element1 == element2;
   }
+
+  public PsiElement getNameIdentifier() {
+    return null;
+  }
 }
