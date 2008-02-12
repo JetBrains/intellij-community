@@ -46,6 +46,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class I18nInspection extends BaseLocalInspectionTool {
@@ -363,7 +364,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
   private class StringI18nVisitor extends JavaRecursiveElementVisitor {
     private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
-    private InspectionManager myManager;
+    private final InspectionManager myManager;
 
     public StringI18nVisitor(final InspectionManager manager) {
       myManager = manager;
@@ -501,11 +502,20 @@ public class I18nInspection extends BaseLocalInspectionTool {
     Pattern pattern = myCachedNonNlsPattern;
     if (pattern != null) {
       Project project = expression.getProject();
-      Document document = PsiDocumentManager.getInstance(project).getDocument(expression.getContainingFile());
+      PsiFile file = expression.getContainingFile();
+      Document document = PsiDocumentManager.getInstance(project).getDocument(file);
       int line = document.getLineNumber(expression.getTextRange().getStartOffset());
-      CharSequence lineText = document.getCharsSequence().subSequence(document.getLineStartOffset(line), document.getLineEndOffset(line));
-      if (pattern.matcher(lineText).matches()) {
-        return false;
+      int lineStartOffset = document.getLineStartOffset(line);
+      CharSequence lineText = document.getCharsSequence().subSequence(lineStartOffset, document.getLineEndOffset(line));
+
+      Matcher matcher = pattern.matcher(lineText);
+      int start = 0;
+      while (matcher.find(start)) {
+        start = matcher.start();
+        PsiElement element = file.findElementAt(lineStartOffset + start);
+        if (PsiTreeUtil.getParentOfType(element, PsiComment.class, false, true) != null) return false;
+        if (start == lineText.length() - 1) break;
+        start++;
       }
     }
 
@@ -517,8 +527,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       myCachedNonNlsPattern = null;
     }
     else {
-      @NonNls String regex = ".*//\\s*" + nonNlsCommentPattern + ".*";
-      myCachedNonNlsPattern = Pattern.compile(regex);
+      myCachedNonNlsPattern = Pattern.compile(nonNlsCommentPattern);
     }
   }
 
