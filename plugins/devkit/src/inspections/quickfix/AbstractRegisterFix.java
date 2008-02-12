@@ -23,8 +23,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -67,6 +69,8 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
   }
 
   public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+    if (ReadonlyStatusHandler.getInstance(project)
+        .ensureFilesWritable(PsiUtilBase.getVirtualFile(descriptor.getPsiElement())).hasReadonlyFiles()) return;
     final PsiFile psiFile = myClass.getContainingFile();
     LOG.assertTrue(psiFile != null);
     final Module module = ModuleUtil.findModuleForFile(psiFile.getVirtualFile(), project);
