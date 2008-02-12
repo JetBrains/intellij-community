@@ -166,8 +166,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     final GrStatement target = continueStatement.findTarget();
     if (target != null) {
       final InstructionImpl instruction = findInstruction(target);
-      assert instruction != null;
-      addEdge(myHead, instruction);
+      if (instruction != null) {
+        addEdge(myHead, instruction);
+      }
     }
     flowAbrupted();
   }
