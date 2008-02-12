@@ -6,7 +6,10 @@ package com.intellij.util.io.storage;
 import com.intellij.openapi.util.Disposer;
 import junit.framework.TestCase;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.IOException;
 
 public class StorageTest extends TestCase {
   private Storage myStorage;
@@ -57,5 +60,42 @@ public class StorageTest extends TestCase {
     System.out.println("Done for " + timedelta + "msec.");
   }
 
+  public void testAppender() throws Exception {
+    final int r = myStorage.createNewRecord();
 
+    DataOutputStream out = new DataOutputStream(myStorage.appendStream(r));
+    for (int i = 0; i < 10000; i++) {
+      out.writeInt(i);
+      if (i % 100 == 0) {
+        myStorage.readStream(r); // Drop the appenders cache
+        out.close();
+        out = new DataOutputStream(myStorage.appendStream(r));
+      }
+    }
+    
+    out.close();
+
+
+    DataInputStream in = new DataInputStream(myStorage.readStream(r));
+    for (int i = 0; i < 10000; i++) {
+      assertEquals(i, in.readInt());
+    }
+
+    in.close();
+  }
+  
+  public void testAppender2() throws Exception {
+    int r = myStorage.createNewRecord();
+    appendNBytes(r, 64);
+    appendNBytes(r, 256);
+    appendNBytes(r, 512);
+  }
+
+  private void appendNBytes(final int r, final int len) throws IOException {
+    DataOutputStream out = new DataOutputStream(myStorage.appendStream(r));
+    for (int i = 0; i < len; i++) {
+      out.write(0);
+    }
+    myStorage.readBytes(r);
+  }
 }

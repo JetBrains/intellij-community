@@ -1,8 +1,10 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.storage.Storage;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.Collection;
@@ -15,6 +17,45 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   private Storage myValueStorage;
   private final DataExternalizer<Value> myValueExternalizer;
   @NonNls public static final String DATA_FILE_EXTENSION = ".values";
+
+  private static class AppendStream extends DataOutputStream {
+    private AppendStream() {
+      super(new ByteArrayOutputStream());
+    }
+
+    public void writeTo(OutputStream stream) throws IOException {
+      ((ByteArrayOutputStream)out).writeTo(stream);
+    }
+  }
+
+  private final SLRUCache<Key, AppendStream> myAppendCache = new SLRUCache<Key, AppendStream>(16 * 1024, 4 * 1024) {
+    @NotNull
+    public AppendStream createValue(final Key key) {
+      return new AppendStream();
+    }
+
+    protected void onDropFromCache(final Key key, final AppendStream value) {
+      try {
+        final int id = enumerate(key);
+        int valueId = readValueId(id);
+        if (valueId == NULL_ID) {
+          valueId = myValueStorage.createNewRecord();
+          updateValueId(id, valueId);
+        }
+        final Storage.AppenderStream record = myValueStorage.appendStream(valueId);
+        try {
+          value.writeTo(record);
+        }
+        finally {
+          record.close();
+        }
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  };
+
   public PersistentHashMap(final File file, PersistentEnumerator.DataDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer) throws IOException {
     this(file, keyDescriptor, valueExternalizer, 1024 * 4);
   }
@@ -66,22 +107,11 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
   
   public synchronized void appendData(Key key, ValueDataAppender appender) throws IOException {
-    final int id = enumerate(key);
-    int valueId = readValueId(id);
-    if (valueId == NULL_ID) {
-      valueId = myValueStorage.createNewRecord();
-      updateValueId(id, valueId);
-    }
-    final Storage.AppenderStream record = myValueStorage.appendStream(valueId);
-    try {
-      appender.append(record);
-    }
-    finally {
-      record.close();
-    }
+    appender.append(myAppendCache.get(key));
   }
 
-  public Collection<Key> allKeys() throws IOException {
+  public synchronized Collection<Key> allKeys() throws IOException {
+    myAppendCache.clear();
     return getAllDataObjects(new DataFilter() {
       public boolean accept(final int id) {
         try {
@@ -95,6 +125,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
 
   public synchronized Value get(Key key) throws IOException {
+    myAppendCache.remove(key);
     final int id = tryEnumerate(key);
     if (id == NULL_ID) {
       return null;
@@ -113,6 +144,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
   
   public synchronized void remove(Key key) throws IOException {
+    myAppendCache.remove(key);
     final int id = tryEnumerate(key);
     if (id == NULL_ID) {
       return;
@@ -125,7 +157,14 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     myValueStorage.deleteRecord(valueId);
   }
 
+  public synchronized void force() {
+    myAppendCache.clear();
+    myValueStorage.force();
+    super.force();
+  }
+
   public void close() throws IOException {
+    myAppendCache.clear();
     super.close();
     myValueStorage.dispose();
   }

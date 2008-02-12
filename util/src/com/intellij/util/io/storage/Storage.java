@@ -24,44 +24,18 @@ import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.RecordDataOutput;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class Storage implements Disposable, Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.Storage");
 
   private final Object lock = new Object();
   private final RecordsTable myRecordsTable;
   private DataTable myDataTable;
-
-  private final Object myAppendersLock = new Object();
-  private final SLRUCache<Integer, AppenderStream> myAppendersCache = new SLRUCache<Integer, AppenderStream>(8192, 8192) {
-    @NotNull
-    public AppenderStream createValue(final Integer key) {
-      return new AppenderStream(key.intValue());
-    }
-
-    @NotNull
-    public AppenderStream get(final Integer key) {
-      final AppenderStream stream = super.get(key);
-      if (stream.size() > 10 * 1024) {
-        stream.reset();
-      }
-      return stream;
-    }
-
-    protected void onDropFromCache(final Integer key, final AppenderStream value) {
-      try {
-        value.realClose();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  };
 
   public static boolean deleteFiles(String storageFilePath) {
     final File recordsFile = new File(storageFilePath + ".rindex");
@@ -178,10 +152,6 @@ public class Storage implements Disposable, Forceable {
   }
 
   public void force() {
-    synchronized (myAppendersLock) {
-      myAppendersCache.clear();
-    }
-
     synchronized (lock) {
       myDataTable.force();
       myRecordsTable.force();
@@ -240,7 +210,6 @@ public class Storage implements Disposable, Forceable {
 
   public void writeBytes(int record, byte[] bytes) {
     synchronized (lock) {
-      dropRecordCache(record);
       doWriteBytes(record, bytes);
     }
   }
@@ -272,12 +241,6 @@ public class Storage implements Disposable, Forceable {
     }
   }
 
-  private void dropRecordCache(final int record) {
-    synchronized (myAppendersLock) {
-      myAppendersCache.remove(record);
-    }
-  }
-
   private static int calcCapacity(int requiredLength) {
     return Math.max(64, nearestPowerOfTwo(requiredLength * 3 / 2));
   }
@@ -298,10 +261,7 @@ public class Storage implements Disposable, Forceable {
   public AppenderStream appendStream(int record) {
     synchronized (lock) {
       myRecordsTable.markDirty();
-    }
-
-    synchronized (myAppendersLock) {
-      return myAppendersCache.get(record);
+      return new AppenderStream(record);
     }
   }
 
@@ -312,7 +272,6 @@ public class Storage implements Disposable, Forceable {
 
   public byte[] readBytes(int record) {
     synchronized (lock) {
-      dropRecordCache(record);
       return doReadBytes(record);
     }
   }
@@ -332,7 +291,6 @@ public class Storage implements Disposable, Forceable {
 
   public void deleteRecord(int record) {
     synchronized (lock) {
-      dropRecordCache(record);
       myRecordsTable.deleteRecord(record);
     }
   }
@@ -374,22 +332,8 @@ public class Storage implements Disposable, Forceable {
     }
 
     public void close() throws IOException {
-    }
-
-    public void realClose() throws IOException {
       super.close();
       appendBytes(myRecordId, ((ByteArrayOutputStream)out).toByteArray());
-    }
-
-    public void reset() {
-      try {
-        realClose();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-
-      ((ByteArrayOutputStream)out).reset();
     }
   }
 }

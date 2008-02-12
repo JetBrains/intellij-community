@@ -29,8 +29,8 @@ import java.util.*;
 public class PagePool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PagePool");
 
-  private final static int PROTECTED_PAGES = 150;
-  private final static int PROBATIONAL_PAGES = 500;
+  private final static int PROTECTED_PAGES = 300;
+  private final static int PROBATIONAL_PAGES = 300;
 
   private final Map<PoolPageKey, Page> myProtectedQueue = new LinkedHashMap<PoolPageKey, Page>() {
     @Override
@@ -148,19 +148,21 @@ public class PagePool {
     }
 
     if (hasFlushes) {
-      flushFinalizationQueue();
+      flushFinalizationQueue(Integer.MAX_VALUE);
     }
   }
 
-  private void flushFinalizationQueue() {
-    do {
-      final FinalizationRequest request = retreiveFinalizationRequest();
+  private void flushFinalizationQueue(final int maxPagesToFlush) {
+    int count = 0;
+
+    while (count < maxPagesToFlush) {
+      FinalizationRequest request = retreiveFinalizationRequest();
       if (request == null) {
         break;
       }
       processFinalizationRequest(request);
+      count++;
     }
-    while (true);
   }
 
   private boolean scanQueue(final RandomAccessDataFile owner, final Map<?, Page> queue) {
@@ -187,7 +189,7 @@ public class PagePool {
     final FinalizationRequest request = page.prepareForFinalization(curFinalizationId);
     if (request == null) return;
 
-    boolean wakeUpFinalizer = false;
+    boolean flushQueueNow = false;
 
     synchronized (lock) {
       if (myFinalizerThread == null) {
@@ -197,14 +199,14 @@ public class PagePool {
 
       myFinalizationQueue.put(keyForPage(page), request);
       if (myFinalizationQueue.size() > 5000) {
-        flushFinalizationQueue();
-      }
-      else {
-        wakeUpFinalizer = true;
+        flushQueueNow = true;
       }
     }
 
-    if (wakeUpFinalizer) {
+    if (flushQueueNow) {
+      flushFinalizationQueue(4000);
+    }
+    else {
       synchronized (finalizationMonitor) {
         finalizationMonitor.notifyAll();
       }

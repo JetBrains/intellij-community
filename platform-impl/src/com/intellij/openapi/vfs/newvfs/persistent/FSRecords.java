@@ -714,16 +714,20 @@ public class FSRecords implements Disposable, Forceable {
 
   @Nullable
   public DataInputStream readAttribute(int id, String attId) {
-    synchronized (lock) {
-      try {
-        int encodedAttId = DbConnection.getAttributeId(attId);
-        final int att = findAttributePage(id, encodedAttId, false);
-        if (att == 0) return null;
+    try {
+      synchronized (attId) {
+        final int att;
+        synchronized (lock) {
+          int encodedAttId = DbConnection.getAttributeId(attId);
+          att = findAttributePage(id, encodedAttId, false);
+          if (att == 0) return null;
+        }
+
         return getAttributes().readStream(att);
       }
-      catch (IOException e) {
-        throw DbConnection.handleError(e);
-      }
+    }
+    catch (IOException e) {
+      throw DbConnection.handleError(e);
     }
   }
 
@@ -776,19 +780,23 @@ public class FSRecords implements Disposable, Forceable {
     public void close() throws IOException {
       super.close();
 
-      synchronized (lock) {
-        try {
-          DbConnection.markDirty();
-          incModCount(myFileId);
-          final int encodedAttId = DbConnection.getAttributeId(myAttributeId);
-          final int att = findAttributePage(myFileId, encodedAttId, true);
+      try {
+        synchronized (myAttributeId) {
+          final int att;
+          synchronized (lock) {
+            DbConnection.markDirty();
+            incModCount(myFileId);
+            final int encodedAttId = DbConnection.getAttributeId(myAttributeId);
+            att = findAttributePage(myFileId, encodedAttId, true);
+          }
+
           final DataOutputStream sinkStream = getAttributes().writeStream(att);
           sinkStream.write(((ByteArrayOutputStream)out).toByteArray());
           sinkStream.close();
         }
-        catch (IOException e) {
-          throw DbConnection.handleError(e);
-        }
+      }
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
       }
     }
   }
