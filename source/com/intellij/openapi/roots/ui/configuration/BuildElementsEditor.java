@@ -106,13 +106,13 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
     myTestOutputLabel = new JLabel(ProjectBundle.message("module.paths.test.output.label"));
     outputPathsPanel.add(myTestOutputLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
-                                                                   GridBagConstraints.NONE, new Insets(6, 12, 0, 4), 0, 0));
+                                                                   GridBagConstraints.NONE, new Insets(6, 16, 0, 4), 0, 0));
     outputPathsPanel.add(myTestsOutputPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0,
                                                                         GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                                                         new Insets(6, 4, 0, 0), 0, 0));
 
     outputPathsPanel.add(myCbExcludeOutput, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST,
-                                                                   GridBagConstraints.NONE, new Insets(6, 12, 0, 0), 0, 0));
+                                                                   GridBagConstraints.NONE, new Insets(6, 16, 0, 0), 0, 0));
 
     // fill with data
     updateOutputPathPresentation();
