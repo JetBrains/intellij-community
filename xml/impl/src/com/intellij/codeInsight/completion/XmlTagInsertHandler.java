@@ -184,6 +184,7 @@ class XmlTagInsertHandler extends BasicInsertHandler {
     }
 
     if (completionChar == '>' || (completionChar == '/' && indirectRequiredAttrs != null)) {
+      template.addTextSegment(">");
       boolean toInsertCDataEnd = false;
 
       if (descriptor instanceof XmlElementDescriptorWithCDataContent) {
