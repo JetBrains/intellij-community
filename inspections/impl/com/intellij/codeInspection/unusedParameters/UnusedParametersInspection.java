@@ -14,6 +14,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.search.PsiReferenceProcessorAdapter;
@@ -22,6 +23,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import org.jetbrains.annotations.NotNull;
@@ -220,6 +222,8 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
     }
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      if (ReadonlyStatusHandler.getInstance(project)
+        .ensureFilesWritable(PsiUtilBase.getVirtualFile(descriptor.getPsiElement())).hasReadonlyFiles()) return;
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
       if (psiMethod != null) {
         ArrayList<PsiElement> psiParameters = new ArrayList<PsiElement>();

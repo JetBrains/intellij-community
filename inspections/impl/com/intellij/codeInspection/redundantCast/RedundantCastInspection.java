@@ -13,7 +13,12 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.miscGenerics.GenericsInspectionToolBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -55,6 +60,8 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
     }
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      if (ReadonlyStatusHandler.getInstance(project)
+        .ensureFilesWritable(PsiUtilBase.getVirtualFile(descriptor.getPsiElement())).hasReadonlyFiles()) return;
       PsiElement castTypeElement = descriptor.getPsiElement();
       PsiTypeCastExpression cast = castTypeElement == null ? null : (PsiTypeCastExpression)castTypeElement.getParent();
       if (cast != null) {
