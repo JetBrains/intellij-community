@@ -11,7 +11,7 @@ import com.intellij.util.io.PersistentEnumerator;
 public interface FileBasedIndexExtension<K, V> {
   ExtensionPointName<FileBasedIndexExtension> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.fileBasedIndex");
   
-  String getName();
+  ID<K, V> getName();
   
   DataIndexer<K, V, FileBasedIndex.FileContent> getIndexer();
   

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentEnumerator;
@@ -20,12 +21,12 @@ import java.util.*;
  * @author yole
  */
 public class FilenameIndex extends ScalarIndexExtension<String> {
-  @NonNls public static final String NAME = "FilenameIndex";
+  @NonNls public static final ID<String, Void> NAME = new ID<String, Void>("FilenameIndex");
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
   private final MyDataDescriptor myDataDescriptor = new MyDataDescriptor();
   private final MyInputFilter myInputFilter = new MyInputFilter();
 
-  public String getName() {
+  public ID<String,Void> getName() {
     return NAME;
   }
 

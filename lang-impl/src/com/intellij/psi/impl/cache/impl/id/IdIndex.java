@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.annotations.NonNls;
@@ -24,7 +25,7 @@ import java.util.Map;
  *         Date: Jan 16, 2008
  */
 public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
-  @NonNls public static final String NAME = "IdIndex";
+  @NonNls public static final ID<IdIndexEntry, Integer> NAME = new ID<IdIndexEntry, Integer>("IdIndex");
   
   private FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     private FileTypeManager myFtManager = FileTypeManager.getInstance();
@@ -80,7 +81,7 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
     return true;
   }
 
-  public String getName() {
+  public ID<IdIndexEntry,Integer> getName() {
     return NAME;
   }
 

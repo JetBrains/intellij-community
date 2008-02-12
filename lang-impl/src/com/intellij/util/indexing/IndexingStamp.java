@@ -20,12 +20,12 @@ import java.util.Map;
 public class IndexingStamp {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerDirectoryTimestamp");
   
-  private static final Map<String, FileAttribute> ourAttributes = new HashMap<String, FileAttribute>();
+  private static final Map<ID<?, ?>, FileAttribute> ourAttributes = new HashMap<ID<?, ?>, FileAttribute>();
 
   private IndexingStamp() {
   }
 
-  public static boolean isFileIndexed(VirtualFile file, String indexName, final long indexCreationStamp) {
+  public static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexName, final long indexCreationStamp) {
     try {
       if (!(file instanceof NewVirtualFile)) return false;
       if (!file.isValid()) {
@@ -48,7 +48,7 @@ public class IndexingStamp {
     }
   }
 
-  public static void update(final VirtualFile file, final String indexName, final long indexCreationStamp) {
+  public static void update(final VirtualFile file, final ID<?, ?> indexName, final long indexCreationStamp) {
     try {
       if (file instanceof NewVirtualFile && file.isValid()) {
         final DataOutputStream stream = getAttribute(indexName).writeAttribute(file);
@@ -68,7 +68,7 @@ public class IndexingStamp {
   }
 
   @NotNull
-  private static FileAttribute getAttribute(String indexName) {
+  private static FileAttribute getAttribute(ID<?, ?> indexName) {
     FileAttribute attrib = ourAttributes.get(indexName);
     if (attrib == null) {
       attrib = new FileAttribute("_indexing_stamp_" + indexName, 2);

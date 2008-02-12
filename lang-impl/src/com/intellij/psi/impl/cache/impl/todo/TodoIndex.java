@@ -16,6 +16,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.annotations.NonNls;
@@ -34,7 +35,7 @@ import java.util.Map;
  */
 public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Integer> {
 
-  @NonNls public static final String NAME = "TodoIndex";
+  @NonNls public static final ID<TodoIndexEntry, Integer> NAME = new ID<TodoIndexEntry, Integer>("TodoIndex");
 
   public TodoIndex(TodoConfiguration config) {
     config.addPropertyChangeListener(new PropertyChangeListener() {
@@ -117,7 +118,7 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
     return true;
   }
 
-  public String getName() {
+  public ID<TodoIndexEntry, Integer> getName() {
     return NAME;
   }
 
