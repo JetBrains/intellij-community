@@ -29,6 +29,7 @@ public interface DebuggerIcons {
   Icon DISABLED_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_disabled_breakpoint.png");
   Icon INVALID_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_invalid_breakpoint.png");
   Icon VERIFIED_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_verified_breakpoint.png");
+  Icon DISABLED_DEPENDENT_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_dep_line_breakpoint.png");
 
   Icon VALUE_ICON = IconLoader.getIcon("/debugger/value.png");
   Icon ARRAY_VALUE_ICON = IconLoader.getIcon("/debugger/db_array.png");

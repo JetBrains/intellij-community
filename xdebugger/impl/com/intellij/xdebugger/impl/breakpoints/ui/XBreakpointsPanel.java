@@ -81,7 +81,7 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
     }
 
     if (selectedBreakpoint != null && selectedBreakpoint != oldBreakpoint) {
-      mySelectedPropertiesPanel = new XBreakpointPropertiesPanel<B>(myProject, selectedBreakpoint);
+      mySelectedPropertiesPanel = new XBreakpointPropertiesPanel<B>(myProject, getBreakpointManager(), selectedBreakpoint);
       myPropertiesPanel.add(mySelectedPropertiesPanel.getMainPanel(), BorderLayout.CENTER);
       myPropertiesPanelWrapper.revalidate();
     }

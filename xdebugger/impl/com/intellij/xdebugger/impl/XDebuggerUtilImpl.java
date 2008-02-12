@@ -118,8 +118,4 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return editor;
   }
 
-  public static <B extends XBreakpoint<?>> XBreakpointType<B, ?> getType(@NotNull B breakpoint) {
-    //noinspection unchecked
-    return (XBreakpointType<B,?>)breakpoint.getType();
-  }
 }

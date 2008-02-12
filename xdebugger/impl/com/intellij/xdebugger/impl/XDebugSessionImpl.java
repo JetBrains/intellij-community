@@ -5,18 +5,15 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.*;
-import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation;
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.impl.breakpoints.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author nik
@@ -25,6 +22,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.XDebugSessionImpl");
   private XDebugProcess myDebugProcess;
   private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints = new HashMap<XBreakpoint<?>, CustomizedBreakpointPresentation>();
+  private final Set<XBreakpoint<?>> myDisabledSlaveBreakpoints = new HashSet<XBreakpoint<?>>();
   private boolean myBreakpointsMuted;
   private boolean myBreakpointsDisabled;
   private final XDebuggerManagerImpl myDebuggerManager;
@@ -32,6 +30,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private XSuspendContext mySuspendContext;
   private XSourcePosition myCurrentPosition;
   private boolean myPaused;
+  private MyDependentBreakpointListener myDependentBreakpointListener;
 
   public XDebugSessionImpl(XDebuggerManagerImpl debuggerManager) {
     myDebuggerManager = debuggerManager;
@@ -67,10 +66,34 @@ public class XDebugSessionImpl implements XDebugSession {
   public void init(final XDebugProcess process) {
     LOG.assertTrue(myDebugProcess == null);
     myDebugProcess = process;
+
+    XBreakpointManagerImpl breakpointManager = myDebuggerManager.getBreakpointManager();
+    XDependentBreakpointManager dependentBreakpointManager = breakpointManager.getDependentBreakpointManager();
+    disableSlaveBreakpoints(dependentBreakpointManager);
     processAllBreakpoints(true, false);
+
     myBreakpointListener = new MyBreakpointListener();
-    myDebuggerManager.getBreakpointManager().addBreakpointListener(myBreakpointListener);
+    breakpointManager.addBreakpointListener(myBreakpointListener);
+    myDependentBreakpointListener = new MyDependentBreakpointListener();
+    dependentBreakpointManager.addListener(myDependentBreakpointListener);
     process.sessionInitialized();
+  }
+
+  private void disableSlaveBreakpoints(final XDependentBreakpointManager dependentBreakpointManager) {
+    Set<XBreakpointBase> slaveBreakpoints = dependentBreakpointManager.getAllSlaveBreakpoints();
+    Set<XBreakpointType<?,?>> breakpointTypes = new HashSet<XBreakpointType<?,?>>();
+    for (XBreakpointHandler<?> handler : myDebugProcess.getBreakpointHandlers()) {
+      breakpointTypes.add(getBreakpointTypeClass(handler));
+    }
+    for (XBreakpointBase slaveBreakpoint : slaveBreakpoints) {
+      if (breakpointTypes.contains(slaveBreakpoint.getType())) {
+        myDisabledSlaveBreakpoints.add(slaveBreakpoint);
+      }
+    }
+  }
+
+  private static <B extends XBreakpoint<?>> XBreakpointType<?, ?> getBreakpointTypeClass(final XBreakpointHandler<B> handler) {
+    return XDebuggerUtil.getInstance().findBreakpointType(handler.getBreakpointTypeClass());
   }
 
   private <B extends XBreakpoint<?>> void processBreakpoints(final XBreakpointHandler<B> handler, boolean register, final boolean temporary) {
@@ -125,7 +148,7 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   private boolean isBreakpointActive(final XBreakpoint<?> b) {
-    return !myBreakpointsMuted && b.isEnabled();
+    return !myBreakpointsMuted && b.isEnabled() && !myDisabledSlaveBreakpoints.contains(b);
   }
 
   public boolean areBreakpointsMuted() {
@@ -222,7 +245,7 @@ public class XDebugSessionImpl implements XDebugSession {
     }
 
     if (breakpoint.isLogMessage()) {
-      String message = getBreakpointLogMessage(breakpoint);
+      String message = XDebuggerBundle.message("xbreakpoint.reached.at.0", XBreakpointUtil.getDisplayText(breakpoint));
       printMessage(message);
     }
     String expression = breakpoint.getLogExpression();
@@ -230,6 +253,8 @@ public class XDebugSessionImpl implements XDebugSession {
       LOG.debug("evaluating log expression: " + expression);
       printMessage(evaluator.evaluateMessage(expression));
     }
+
+    processDependencies(breakpoint);
 
     if (breakpoint.getSuspendPolicy() == SuspendPolicy.NONE) {
       return false;
@@ -243,13 +268,28 @@ public class XDebugSessionImpl implements XDebugSession {
     return true;
   }
 
+  private void processDependencies(final XBreakpoint<?> breakpoint) {
+    XDependentBreakpointManager dependentBreakpointManager = myDebuggerManager.getBreakpointManager().getDependentBreakpointManager();
+    if (!dependentBreakpointManager.isMasterOrSlave(breakpoint)) return;
+
+    List<XBreakpoint<?>> breakpoints = dependentBreakpointManager.getSlaveBreakpoints(breakpoint);
+    myDisabledSlaveBreakpoints.removeAll(breakpoints);
+    for (XBreakpoint<?> slaveBreakpoint : breakpoints) {
+      processAllHandlers(slaveBreakpoint, true);
+    }
+
+    if (dependentBreakpointManager.getMasterBreakpoint(breakpoint) != null && !dependentBreakpointManager.isLeaveEnabled(breakpoint)) {
+      boolean added = myDisabledSlaveBreakpoints.add(breakpoint);
+      if (added) {
+        processAllHandlers(breakpoint, false);
+        myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdate(breakpoint);
+      }
+    }
+  }
+
   private static void printMessage(final String message) {
     //todo[nik]
     LOG.info(message);
-  }
-
-  private static <B extends XBreakpoint<?>> String getBreakpointLogMessage(final B breakpoint) {
-    return XDebuggerBundle.message("xbreakpoint.reached.at.0", XDebuggerUtilImpl.getType(breakpoint).getDisplayText(breakpoint));
   }
 
   public void positionReached(@NotNull final XSourcePosition position, @NotNull final XSuspendContext suspendContext) {
@@ -274,8 +314,14 @@ public class XDebugSessionImpl implements XDebugSession {
   public void stop() {
     myDebugProcess.stop();
     myDebuggerManager.updateExecutionPosition(this, null);
-    myDebuggerManager.getBreakpointManager().removeBreakpointListener(myBreakpointListener);
+    XBreakpointManagerImpl breakpointManager = myDebuggerManager.getBreakpointManager();
+    breakpointManager.removeBreakpointListener(myBreakpointListener);
+    breakpointManager.getDependentBreakpointManager().removeListener(myDependentBreakpointListener);
     myDebuggerManager.removeSession(this);
+  }
+
+  public boolean isDisabledSlaveBreakpoint(final XBreakpoint<?> breakpoint) {
+    return myDisabledSlaveBreakpoints.contains(breakpoint);
   }
 
   private class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {
@@ -295,4 +341,19 @@ public class XDebugSessionImpl implements XDebugSession {
     }
   }
 
+  private class MyDependentBreakpointListener implements XDependentBreakpointListener {
+    public void dependencySet(final XBreakpoint<?> slave, final XBreakpoint<?> master) {
+      boolean added = myDisabledSlaveBreakpoints.add(slave);
+      if (added) {
+        processAllHandlers(slave, false);
+      }
+    }
+
+    public void dependencyCleared(final XBreakpoint<?> breakpoint) {
+      boolean removed = myDisabledSlaveBreakpoints.remove(breakpoint);
+      if (removed) {
+        processAllHandlers(breakpoint, true);
+      }
+    }
+  }
 }

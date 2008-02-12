@@ -43,7 +43,6 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   // icons
   public static Icon ICON = DebuggerIcons.ENABLED_BREAKPOINT_ICON;
   public static final Icon DISABLED_ICON = DebuggerIcons.DISABLED_BREAKPOINT_ICON;
-  public static final Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_line_breakpoint.png");
   private static Icon ourVerifiedWarningsIcon = IconLoader.getIcon("/debugger/db_verified_warning_breakpoint.png");
 
   private String myMethodName;
@@ -59,7 +58,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   protected Icon getDisabledIcon() {
     final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
-    return master == null? DISABLED_ICON : DISABLED_DEP_ICON;
+    return master == null? DISABLED_ICON : DebuggerIcons.DISABLED_DEPENDENT_BREAKPOINT_ICON;
   }
 
   protected Icon getSetIcon() {

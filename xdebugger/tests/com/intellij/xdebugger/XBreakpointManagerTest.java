@@ -1,34 +1,16 @@
 package com.intellij.xdebugger;
 
-import com.intellij.mock.MockEditorFactory;
-import com.intellij.mock.MockProject;
-import com.intellij.mock.MockVirtualFileManager;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import com.intellij.xdebugger.breakpoints.SuspendPolicy;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.picocontainer.MutablePicoContainer;
+import org.jdom.Element;
 
 /**
  * @author nik
  */
-public class XBreakpointManagerTest extends XDebuggerTestCase {
-  private XBreakpointManagerImpl myBreakpointManager;
-
-  protected void setUp() throws Exception {
-    super.setUp();
-    MockProject project = disposeOnTearDown(new MockProject());
-    MutablePicoContainer container = getApplication().getPicoContainer();
-    registerComponentImplementation(container, EditorFactory.class, MockEditorFactory.class);
-    registerComponentImplementation(container, VirtualFileManager.class, MockVirtualFileManager.class);
-    myBreakpointManager = new XBreakpointManagerImpl(project, null, null);
-  }
+public class XBreakpointManagerTest extends XBreakpointsTestCase {
 
   public void testAddRemove() throws Exception {
     XLineBreakpoint<MyBreakpointProperties> lineBreakpoint =
@@ -59,10 +41,9 @@ public class XBreakpointManagerTest extends XDebuggerTestCase {
     breakpoint.setLogMessage(true);
     myBreakpointManager.addBreakpoint(MY_SIMPLE_BREAKPOINT_TYPE, new MyBreakpointProperties("123"));
 
-    Element element = XmlSerializer.serialize(myBreakpointManager.getState());
+    Element element = save();
     //System.out.println(JDOMUtil.writeElement(element, SystemProperties.getLineSeparator()));
-    XBreakpointManagerImpl.BreakpointManagerState managerState = XmlSerializer.deserialize(element, XBreakpointManagerImpl.BreakpointManagerState.class);
-    myBreakpointManager.loadState(managerState);
+    load(element);
     XBreakpoint<?>[] breakpoints = myBreakpointManager.getAllBreakpoints();
     assertEquals(2, breakpoints.length);
 

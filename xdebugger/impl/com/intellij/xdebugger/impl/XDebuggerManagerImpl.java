@@ -86,6 +86,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
     mySessions.remove(session);
     if (myLastActiveSession == session) {
       myLastActiveSession = null;
+      onActiveSessionChanged();
     }
   }
 

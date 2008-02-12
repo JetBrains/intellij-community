@@ -14,10 +14,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.*;
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
-import com.intellij.xdebugger.breakpoints.SuspendPolicy;
+import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -86,18 +83,35 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   private void updateIcon() {
-    if (isEnabled()) {
-      CustomizedBreakpointPresentation presentation = getCustomizedPresentation();
-      myIcon = presentation != null ? presentation.getIcon() : myType.getEnabledIcon();
+    myIcon = calculateIcon();
+  }
+
+  private Icon calculateIcon() {
+    if (!isEnabled()) {
+      return myType.getDisabledIcon();
+    }
+
+    XDebugSessionImpl session = getBreakpointManager().getDebuggerManager().getCurrentSession();
+    if (session == null) {
+      if (getBreakpointManager().getDependentBreakpointManager().getMasterBreakpoint(this) != null) {
+        return myType.getDisabledDependentIcon();
+      }
     }
     else {
-      myIcon = myType.getDisabledIcon();
+      if (session.isDisabledSlaveBreakpoint(this)) {
+        return myType.getDisabledDependentIcon();
+      }
+      CustomizedBreakpointPresentation presentation = session.getBreakpointPresentation(this);
+      if (presentation != null) {
+        return presentation.getIcon();
+      }
     }
+    return myType.getEnabledIcon();
   }
 
   @Nullable
   private CustomizedBreakpointPresentation getCustomizedPresentation() {
-    XDebugSessionImpl currentSession = getBreakpointManager().getDebuggerManager().getCurrentSession();
+    final XDebugSessionImpl currentSession = getBreakpointManager().getDebuggerManager().getCurrentSession();
     return currentSession != null ? currentSession.getBreakpointPresentation(this) : null;
   }
 
@@ -182,6 +196,15 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
         builder.append(XDebuggerBundle.message("xbreakpoint.tooltip.log.expression"));
         builder.append("&nbsp;");
         builder.append(logExpression);
+      }
+
+      XBreakpoint<?> masterBreakpoint = getBreakpointManager().getDependentBreakpointManager().getMasterBreakpoint(this);
+      if (masterBreakpoint != null) {
+        builder.append(BR_NBSP);
+        String str = XDebuggerBundle.message("xbreakpoint.tooltip.depends.on");
+        builder.append(str);
+        builder.append("&nbsp;");
+        builder.append(XBreakpointUtil.getDisplayText(masterBreakpoint));
       }
 
       builder.append("</body><html");

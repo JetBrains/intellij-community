@@ -1,22 +1,27 @@
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
-import com.intellij.xdebugger.breakpoints.*;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
+import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
+import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author nik
@@ -35,16 +40,24 @@ public class XBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
   private JPanel myCustomConditionsPanelWrapper;
   private JPanel mySuspendPolicyPanel;
   private JPanel myCustomPropertiesPanelWrapper;
+  private JRadioButton myLeaveEnabledRadioButton;
+  private JPanel myMasterBreakpointComboBoxPanel;
+  private JPanel myAfterBreakpointHitPanel;
+  private final XBreakpointManager myBreakpointManager;
   private final B myBreakpoint;
   private final Map<SuspendPolicy, JRadioButton> mySuspendRadioButtons;
   private List<XBreakpointCustomPropertiesPanel<B>> myCustomPanels;
   private XDebuggerExpressionComboBox myLogExpressionComboBox;
   private XDebuggerExpressionComboBox myConditionComboBox;
+  private ComboBox myMasterBreakpointComboBox;
+  private XDependentBreakpointManager myDependentBreakpointManager;
 
-  public XBreakpointPropertiesPanel(final Project project, @NotNull B breakpoint) {
+  public XBreakpointPropertiesPanel(Project project, final XBreakpointManager breakpointManager, @NotNull B breakpoint) {
+    myBreakpointManager = breakpointManager;
+    myDependentBreakpointManager = ((XBreakpointManagerImpl)breakpointManager).getDependentBreakpointManager();
     myBreakpoint = breakpoint;
 
-    XBreakpointType<B,?> type = XDebuggerUtilImpl.getType(breakpoint);
+    XBreakpointType<B,?> type = XBreakpointUtil.getType(breakpoint);
 
     mySuspendRadioButtons = new HashMap<SuspendPolicy, JRadioButton>();
     mySuspendRadioButtons.put(SuspendPolicy.ALL, mySuspendAllRadioButton);
@@ -52,6 +65,16 @@ public class XBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
     mySuspendRadioButtons.put(SuspendPolicy.NONE, mySuspendNoneRadioButton);
     @NonNls String card = type.isSuspendThreadSupported() ? "radioButtons" : "checkbox";
     ((CardLayout)mySuspendPolicyPanel.getLayout()).show(mySuspendPolicyPanel, card);
+
+    myMasterBreakpointComboBox = new ComboBox();
+    myMasterBreakpointComboBoxPanel.add(myMasterBreakpointComboBox, BorderLayout.CENTER);
+    myMasterBreakpointComboBox.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        updateAfterBreakpointHitPanel();
+      }
+    });
+    myMasterBreakpointComboBox.setRenderer(new BreakpointsListCellRenderer<B>());
+    fillMasterBreakpointComboBox();
 
     XDebuggerEditorsProvider debuggerEditorsProvider = type.getEditorsProvider();
     if (debuggerEditorsProvider != null) {
@@ -96,6 +119,11 @@ public class XBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
     loadProperties();
   }
 
+  private void updateAfterBreakpointHitPanel() {
+    boolean enable = myMasterBreakpointComboBox.getSelectedItem() != null;
+    GuiUtils.enableChildren(enable, myAfterBreakpointHitPanel);
+  }
+
   private void onCheckboxChanged() {
     myLogExpressionComboBox.setEnabled(myLogExpressionCheckBox.isSelected());
     myConditionComboBox.setEnabled(myConditionCheckBox.isSelected());
@@ -118,11 +146,28 @@ public class XBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
       myConditionComboBox.setText(condition != null ? condition : "");
     }
 
+    XBreakpoint<?> masterBreakpoint = myDependentBreakpointManager.getMasterBreakpoint(myBreakpoint);
+    if (masterBreakpoint != null) {
+      myMasterBreakpointComboBox.setSelectedItem(masterBreakpoint);
+      myLeaveEnabledRadioButton.setSelected(myDependentBreakpointManager.isLeaveEnabled(myBreakpoint));
+    }
+    updateAfterBreakpointHitPanel();
+
     for (XBreakpointCustomPropertiesPanel<B> customPanel : myCustomPanels) {
       customPanel.loadFrom(myBreakpoint);
     }
 
     onCheckboxChanged();
+  }
+
+  private void fillMasterBreakpointComboBox() {
+    myMasterBreakpointComboBox.removeAllItems();
+    myMasterBreakpointComboBox.addItem(null);
+    for (B breakpoint : myBreakpointManager.getBreakpoints(XBreakpointUtil.getType(myBreakpoint))) {
+      if (breakpoint != myBreakpoint) {
+        myMasterBreakpointComboBox.addItem(breakpoint);
+      }
+    }
   }
 
   public B getBreakpoint() {
@@ -149,6 +194,14 @@ public class XBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
       myConditionComboBox.saveTextInHistory();
     }
 
+    XBreakpoint<?> masterBreakpoint = (XBreakpoint<?>)myMasterBreakpointComboBox.getSelectedItem();
+    if (masterBreakpoint == null) {
+      myDependentBreakpointManager.clearMasterBreakpoint(myBreakpoint);
+    }
+    else {
+      myDependentBreakpointManager.setMasterBreakpoint(myBreakpoint, masterBreakpoint, myLeaveEnabledRadioButton.isSelected());
+    }
+
     for (XBreakpointCustomPropertiesPanel<B> customPanel : myCustomPanels) {
       customPanel.saveTo(myBreakpoint);
     }
@@ -170,6 +223,26 @@ public class XBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
   public void dispose() {
     for (XBreakpointCustomPropertiesPanel<B> customPanel : myCustomPanels) {
       customPanel.dispose();
+    }
+  }
+
+  private static class BreakpointsListCellRenderer<B extends XBreakpoint<?>> extends DefaultListCellRenderer {
+    public Component getListCellRendererComponent(final JList list,
+                                                  final Object value,
+                                                  final int index,
+                                                  final boolean isSelected,
+                                                  final boolean cellHasFocus) {
+      Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      if (value != null) {
+        B breakpoint = (B)value;
+        setText(XBreakpointUtil.getDisplayText(breakpoint));
+        setIcon(breakpoint.getType().getEnabledIcon());
+      }
+      else {
+        setText(XDebuggerBundle.message("xbreakpoint.master.breakpoint.none"));
+        setIcon(null);
+      }
+      return component;
     }
   }
 }

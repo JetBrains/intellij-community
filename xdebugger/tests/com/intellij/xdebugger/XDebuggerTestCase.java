@@ -1,10 +1,15 @@
 package com.intellij.xdebugger;
 
+import com.intellij.mock.MockEditorFactory;
+import com.intellij.mock.MockVirtualFileManager;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.LiteFixture;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.xdebugger.breakpoints.*;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.picocontainer.MutablePicoContainer;
 
 /**
  * @author nik
@@ -19,6 +24,10 @@ public abstract class XDebuggerTestCase extends LiteFixture {
     registerExtensionPoint(XBreakpointType.EXTENSION_POINT_NAME, XBreakpointType.class);
     registerExtension(XBreakpointType.EXTENSION_POINT_NAME, MY_LINE_BREAKPOINT_TYPE);
     registerExtension(XBreakpointType.EXTENSION_POINT_NAME, MY_SIMPLE_BREAKPOINT_TYPE);
+
+    MutablePicoContainer container = getApplication().getPicoContainer();
+    registerComponentImplementation(container, EditorFactory.class, MockEditorFactory.class);
+    registerComponentImplementation(container, VirtualFileManager.class, MockVirtualFileManager.class);
   }
 
   public static class MyLineBreakpointType extends XLineBreakpointType<MyBreakpointProperties> {

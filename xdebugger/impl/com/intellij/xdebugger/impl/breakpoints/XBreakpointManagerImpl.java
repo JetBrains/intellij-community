@@ -27,12 +27,14 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   private final XLineBreakpointManager myLineBreakpointManager;
   private final Project myProject;
   private final XDebuggerManagerImpl myDebuggerManager;
+  private final XDependentBreakpointManager myDependentBreakpointManager;
 
   public XBreakpointManagerImpl(final Project project, final XDebuggerManagerImpl debuggerManager, StartupManager startupManager) {
     myProject = project;
     myDebuggerManager = debuggerManager;
-    myLineBreakpointManager = new XLineBreakpointManager(project, startupManager);
     myAllBreakpointsDispatcher = EventDispatcher.create(XBreakpointListener.class);
+    myDependentBreakpointManager = new XDependentBreakpointManager(this);
+    myLineBreakpointManager = new XLineBreakpointManager(project, myDependentBreakpointManager, startupManager);
   }
 
   public void dispose() {
@@ -41,6 +43,10 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
 
   public XLineBreakpointManager getLineBreakpointManager() {
     return myLineBreakpointManager;
+  }
+
+  public XDependentBreakpointManager getDependentBreakpointManager() {
+    return myDependentBreakpointManager;
   }
 
   public XDebuggerManagerImpl getDebuggerManager() {
@@ -118,10 +124,10 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   }
 
   @NotNull
-  public XBreakpoint<?>[] getAllBreakpoints() {
+  public XBreakpointBase<?,?,?>[] getAllBreakpoints() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Collection<XBreakpointBase<?,?,?>> breakpoints = myBreakpoints.values();
-    return breakpoints.toArray(new XBreakpoint[breakpoints.size()]);
+    return breakpoints.toArray(new XBreakpointBase[breakpoints.size()]);
   }
 
   @NotNull
@@ -187,6 +193,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   }
 
   public BreakpointManagerState getState() {
+    myDependentBreakpointManager.saveState();
     BreakpointManagerState state = new BreakpointManagerState();
     for (XBreakpointBase<?,?,?> breakpoint : myBreakpoints.values()) {
       state.getBreakpoints().add(breakpoint.getState());
@@ -202,6 +209,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
         addBreakpoint(breakpoint, false);
       }
     }
+    myDependentBreakpointManager.loadState();
     myLineBreakpointManager.updateBreakpointsUI();
   }
 

@@ -6,6 +6,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -84,7 +85,7 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
       if (value instanceof BreakpointNode) {
         BreakpointNode node = (BreakpointNode)value;
         XBreakpoint breakpoint = node.getBreakpoint();
-        String text = breakpoint.getType().getDisplayText(breakpoint);
+        String text = XBreakpointUtil.getDisplayText(breakpoint);
         getTextRenderer().setIcon(node.getIcon());
         getTextRenderer().append(text, node.getTextAttributes());
       }

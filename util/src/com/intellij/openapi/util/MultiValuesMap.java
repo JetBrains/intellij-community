@@ -83,8 +83,9 @@ public class MultiValuesMap<Key, Value>{
     myBaseMap.clear();
   }
 
-  public void removeAll(final Key key) {
-    myBaseMap.remove(key);
+  @Nullable 
+  public Collection<Value> removeAll(final Key key) {
+    return myBaseMap.remove(key);
   }
 
   public Set<Map.Entry<Key, Collection<Value>>> entrySet() {

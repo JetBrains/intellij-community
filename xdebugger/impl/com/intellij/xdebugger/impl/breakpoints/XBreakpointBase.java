@@ -3,12 +3,14 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
@@ -168,6 +170,14 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return myState;
   }
 
+  public XBreakpointDependencyState getDependencyState() {
+    return myState.getDependencyState();
+  }
+
+  public void setDependencyState(XBreakpointDependencyState state) {
+    myState.setDependencyState(state);
+  }
+
   public void dispose() {
   }
 
@@ -180,6 +190,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     private boolean myLogMessage;
     private String myLogExpression;
     private String myCondition;
+    private XBreakpointDependencyState myDependencyState;
 
     public BreakpointState() {
     }
@@ -250,6 +261,15 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
     public void setCondition(final String condition) {
       myCondition = condition;
+    }
+
+    @Property(surroundWithTag = false)
+    public XBreakpointDependencyState getDependencyState() {
+      return myDependencyState;
+    }
+
+    public void setDependencyState(final XBreakpointDependencyState dependencyState) {
+      myDependencyState = dependencyState;
     }
 
     public XBreakpointBase<B,P,?> createBreakpoint(@NotNull T type, @NotNull XBreakpointManagerImpl breakpointManager) {
