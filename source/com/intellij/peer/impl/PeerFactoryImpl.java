@@ -234,11 +234,11 @@ public class PeerFactoryImpl extends PeerFactory {
   }
 
   public PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq, final Project project) {
-    return PsiBuilderFactory.getInstance(project).createBuilder(tree, lang, seq);
+    return PsiBuilderFactory.getInstance().createBuilder(project, tree, lang, seq);
   }
 
   public PsiBuilder createBuilder(final ASTNode tree, final Lexer lexer, final Language lang, final CharSequence seq, final Project project) {
-    return PsiBuilderFactory.getInstance(project).createBuilder(tree, lexer, lang, seq);
+    return PsiBuilderFactory.getInstance().createBuilder(project, tree, lexer, lang, seq);
   }
 
   public XmlRpcServer createRpcServer() {

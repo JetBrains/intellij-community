@@ -1,5 +1,7 @@
 package com.intellij.util.indexing;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Feb 12, 2008
@@ -14,7 +16,7 @@ public final class ID<K, V> {
     myName = name;
   }
 
-  public static <K, V> ID<K, V> create(String name) {
+  public static <K, V> ID<K, V> create(@NonNls String name) {
     return new ID<K,V>(name);
   }
 

@@ -8,13 +8,10 @@ import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.ScalarIndexExtension;
-import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -23,8 +20,8 @@ import java.util.*;
 public class FilenameIndex extends ScalarIndexExtension<String> {
   @NonNls public static final ID<String, Void> NAME = new ID<String, Void>("FilenameIndex");
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
-  private final MyDataDescriptor myDataDescriptor = new MyDataDescriptor();
   private final MyInputFilter myInputFilter = new MyInputFilter();
+  private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
 
   public ID<String,Void> getName() {
     return NAME;
@@ -35,7 +32,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   }
 
   public PersistentEnumerator.DataDescriptor<String> getKeyDescriptor() {
-    return myDataDescriptor;
+    return myKeyDescriptor;
   }
 
   public FileBasedIndex.InputFilter getInputFilter() {
@@ -72,26 +69,6 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   private static class MyDataIndexer implements DataIndexer<String, Void, FileBasedIndex.FileContent> {
     public Map<String, Void> map(final FileBasedIndex.FileContent inputData) {
       return Collections.singletonMap(inputData.fileName, null);
-    }
-  }
-
-  private static class MyDataDescriptor implements PersistentEnumerator.DataDescriptor<String> {
-    private final byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
-
-    public int getHashCode(final String value) {
-      return value.hashCode();
-    }
-
-    public boolean isEqual(final String val1, final String val2) {
-      return val1.equals(val2);
-    }
-
-    public void save(final DataOutput out, final String value) throws IOException {
-      IOUtil.writeUTFFast(buffer, out, value);
-    }
-
-    public String read(final DataInput in) throws IOException {
-      return IOUtil.readUTFFast(buffer, in);
     }
   }
 

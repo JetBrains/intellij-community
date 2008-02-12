@@ -40,6 +40,9 @@
   <applicationService serviceInterface="com.intellij.execution.filters.TextConsoleBuilderFactory"
                       serviceImplementation="com.intellij.execution.filters.TextConsoleBuilderFactoryImpl"/>
 
+  <applicationService serviceInterface="com.intellij.lang.PsiBuilderFactory"
+                      serviceImplementation="com.intellij.lang.PsiBuilderFactoryImpl"/>
+
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
   <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"
@@ -55,10 +58,6 @@
   <projectService serviceInterface="com.intellij.psi.codeStyle.CodeStyleManager"
                   serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl"/>
   <projectService serviceInterface="com.intellij.pom.PomModel" serviceImplementation="com.intellij.pom.core.impl.PomModelImpl"/>
-
-  <projectService serviceInterface="com.intellij.lang.PsiBuilderFactory"
-                  serviceImplementation="com.intellij.lang.PsiBuilderFactoryImpl"/>
-
 
   <projectService serviceInterface="com.intellij.codeInsight.AutoPopupController"
                   serviceImplementation="com.intellij.codeInsight.AutoPopupController"/>

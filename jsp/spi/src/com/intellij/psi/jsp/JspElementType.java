@@ -21,7 +21,7 @@ public interface JspElementType extends JspTokenType {
   IChameleonElementType JSP_EL_HOLDER = new IChameleonElementType("EL_HOLDER", IELElementType.EL_LANGUAGE){
     public ASTNode parseContents(ASTNode chameleon) {
       final Project project = chameleon.getTreeParent().getPsi().getProject();
-      final PsiBuilder builder = PsiBuilderFactory.getInstance(project).createBuilder(chameleon, getLanguage(), chameleon.getText());
+      final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, getLanguage(), chameleon.getText());
       final PsiParser parser = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage()).createParser(project);
 
       builder.putUserData(ourContextNodeKey, chameleon.getTreeParent());

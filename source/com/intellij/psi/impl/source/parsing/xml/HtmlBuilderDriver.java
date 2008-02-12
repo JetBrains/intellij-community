@@ -19,7 +19,7 @@ public class HtmlBuilderDriver extends XmlBuilderDriver {
     final ParserDefinition htmlParserDef = LanguageParserDefinitions.INSTANCE.forLanguage(StdLanguages.HTML);
     assert htmlParserDef != null;
 
-    PsiBuilderImpl b = new PsiBuilderImpl(htmlParserDef.createLexer(null), htmlParserDef.getWhitespaceTokens(), TokenSet.EMPTY, null, getText());
+    PsiBuilderImpl b = new PsiBuilderImpl(htmlParserDef.createLexer(null), htmlParserDef.getWhitespaceTokens(), TokenSet.EMPTY, getText());
     new HtmlParsing(b).parseDocument();
     return b;
   }

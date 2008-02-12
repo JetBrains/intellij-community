@@ -131,15 +131,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   /**
    * For tests only!
    */
-  public PsiBuilderImpl(final Lexer lexer, final TokenSet whitespaces, final TokenSet comments, CharTable charTable, CharSequence text) {
+  public PsiBuilderImpl(final Lexer lexer, final TokenSet whitespaces, final TokenSet comments, CharSequence text) {
     myWhitespaces = whitespaces;
     myLexer = lexer;
     myComments = comments;
     myText = text;
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
-    myCharTable = charTable;
 
-    myFileLevelParsing = myCharTable == null;
+    myFileLevelParsing = true;
 
     myLexer.start(myText, 0, text.length(), 0);
     myLexStarts = new int[5];
