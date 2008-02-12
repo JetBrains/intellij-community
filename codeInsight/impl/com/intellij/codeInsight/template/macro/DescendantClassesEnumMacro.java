@@ -44,7 +44,7 @@ public class DescendantClassesEnumMacro implements Macro {
     int i = 0;
 
     for (final PsiClass aClass : classes) {
-      results[i++] = new PsiElementResult(aClass);
+      results[i++] = new JavaPsiElementResult(aClass);
     }
     return results;
   }

@@ -23,7 +23,7 @@ public class TypeOfVariableMacro implements Macro {
   }
 
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
-    if (params == null || params.length == 0) return null;
+    if (params.length == 0) return null;
 
     final Project project = context.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();

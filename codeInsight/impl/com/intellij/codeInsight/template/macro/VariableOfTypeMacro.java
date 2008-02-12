@@ -33,7 +33,7 @@ public class VariableOfTypeMacro implements Macro {
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length == 0) return null;
-    return new PsiElementResult(vars[0]);
+    return new JavaPsiElementResult(vars[0]);
   }
 
   public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {

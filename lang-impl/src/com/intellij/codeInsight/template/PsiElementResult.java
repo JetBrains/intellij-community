@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.template;
 
-import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 
@@ -22,28 +21,13 @@ public class PsiElementResult implements Result {
   }
 
   public String toString() {
-    String text = null;
     PsiElement element = getElement();
     if (element != null) {
-      if (element instanceof PsiVariable) {
-        text = ((PsiVariable)element).getName();
-      }
-      else if (element instanceof PsiMethod) {
-        text = ((PsiMethod)element).getName() + "()";
-      }
-      else if (element instanceof PsiClass) {
-        PsiIdentifier identifier = ((PsiClass)element).getNameIdentifier();
-        if (identifier == null) return "";
-        text = identifier.getText();
-      }
-      else {
-        text = element.getText();
-      }
+      return element.getText();
     }
-    return text;
+    return null;
   }
 
   public void handleFocused(final PsiFile psiFile, final Document document, final int segmentStart, final int segmentEnd) {
-    JavaTemplateUtil.updateTypeBindings(getElement(), psiFile, document, segmentStart, segmentEnd);
   }
 }
