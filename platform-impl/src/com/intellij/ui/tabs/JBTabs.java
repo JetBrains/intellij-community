@@ -88,7 +88,9 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   private TableLayoutData myLastTableLayout;
 
   private boolean myForcedRelayout;
+
   private UiDecorator myUiDecorator;
+  private static final UiDecorator ourDefaultDecorator = new DefautDecorator();
 
   private boolean myPaintBorder = true;
   private boolean myPaintFocus = true;
@@ -105,6 +107,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   private boolean myPaintBlocked;
   private BufferedImage myImage;
 
+
   public JBTabs(@Nullable Project project, ActionManager actionManager, Disposable parent) {
     myProject = project;
     myActionManager = (ActionManagerEx)actionManager;
@@ -115,6 +118,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       myNavigationActions.add(new SelectNextAction(this));
       myNavigationActions.add(new SelectPreviousAction(this));
     }
+
+    setUiDecorator(null);
 
     UIUtil.addAwtListener(new AWTEventListener() {
       public void eventDispatched(final AWTEvent event) {
@@ -199,7 +204,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     super.removeNotify();
 
     setFocused(false);
-    
+
     removeTimerUpdate();
   }
 
@@ -621,7 +626,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     result.addAll(myHiddenInfos);
 
     myAllTabs = result;
-    
+
     return result;
   }
 
@@ -1030,8 +1035,57 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
 
+    final GraphicsConfig config = new GraphicsConfig(g);
+    config.setAntialiasing(true);
+
+    Graphics2D g2d = (Graphics2D)g;
+
+    int arc = getArcSize();
+    Insets insets = getLayoutInsets();
+
 
     final TabInfo selected = getSelectedInfo();
+
+    if (!isStealthModeEffective() && !isHideTabs()) {
+      for (int i = myVisibleInfos.size() - 1; i >= 0; i--) {
+        TabInfo each = myVisibleInfos.get(i);
+        final TabLabel eachLabel = myInfo2Label.get(each);
+
+        final Rectangle eachBounds = eachLabel.getBounds();
+        final GeneralPath path = new GeneralPath();
+
+        boolean firstOne = i == 0;
+        boolean lastOne = i == myVisibleInfos.size() - 1;
+        boolean leftFromSelection = selected != null && i == myVisibleInfos.indexOf(selected) - 1;
+
+
+        int leftX = firstOne ? eachBounds.x : eachBounds.x - arc - 1;
+        int topY = eachBounds.y + 2;
+        int rigthX = !lastOne && leftFromSelection ? (int)eachBounds.getMaxX() + arc + 1: (int)eachBounds.getMaxX();
+        int bottomY = (int)eachBounds.getMaxY();
+
+        path.moveTo(leftX, bottomY);
+        path.lineTo(leftX, topY + arc);
+        path.quadTo(leftX, topY, leftX + arc, topY);
+        path.lineTo(rigthX - arc, topY);
+        path.quadTo(rigthX, topY, rigthX, topY + arc);
+        path.lineTo(rigthX, bottomY);
+        path.closePath();
+
+        g2d.setColor(getBackground());
+        g2d.fill(path);
+
+        g.setColor(Color.white);
+        g.drawLine(leftX, topY + 1, rigthX - arc, topY + 1);
+
+        g.setColor(Color.lightGray);
+        g.drawLine(rigthX - 1, topY + arc - 1, rigthX - 1, bottomY);
+
+        g2d.setColor(Color.gray);
+        g2d.draw(path);
+      }
+    }
+
     if (selected == null) return;
 
 
@@ -1041,15 +1095,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     Rectangle selectedTabBounds = selectedLabel.getBounds();
 
 
-    final GraphicsConfig config = new GraphicsConfig(g);
-    config.setAntialiasing(true);
-
-    Graphics2D g2d = (Graphics2D)g;
-
-    int arc = getArcSize();
 
     final GeneralPath path = new GeneralPath();
-    Insets insets = getLayoutInsets();
     final int bottomY = (int)selectedTabBounds.getMaxY();
     final int topY = selectedTabBounds.y;
     int leftX = selectedTabBounds.x;
@@ -1087,11 +1134,22 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       to = UIUtil.getFocusedFillColor();
     }
     else {
-      alpha = 150;
-      from = UIUtil.toAlpha(UIUtil.getPanelBackgound().brighter(), alpha);
-      to = UIUtil.toAlpha(UIUtil.getPanelBackgound(), alpha);
+      if (isPaintFocus()) {
+        alpha = 150;
+        from = UIUtil.toAlpha(UIUtil.getPanelBackgound().brighter(), alpha);
+        to = UIUtil.toAlpha(UIUtil.getPanelBackgound(), alpha);
+      } else {
+        alpha = 255;
+        from = UIUtil.toAlpha(Color.white, alpha);
+        to = UIUtil.toAlpha(Color.white, alpha);
+      }
     }
 
+
+    g2d.setColor(getBackground());
+    if (!isHideTabs()) {
+      g2d.fill(path);
+    }
 
     g2d.setPaint(new GradientPaint(selectedTabBounds.x, topY, from, selectedTabBounds.x, bottomY, to));
 
@@ -1128,7 +1186,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
         g.drawLine((int)toolBounds.getMaxX(), toolBounds.y, (int)toolBounds.getMaxX(), (int)toolBounds.getMaxY() - 1);
       }
     }
-    
+
     config.restore();
 
   }
@@ -1156,27 +1214,27 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     super.paintChildren(g);
 
 
-    if (isSingleRow() && myLastSingRowLayout != null) {
-      final List<TabInfo> infos = myLastSingRowLayout.toLayout;
-      for (int i = 1; i < infos.size(); i++) {
-        final TabInfo each = infos.get(i);
-        if (getSelectedInfo() != each && getSelectedInfo() != infos.get(i - 1)) {
-          drawSeparator(g, each);
-        }
-      }
-    }
-    else if (!isSingleRow() && myLastTableLayout != null) {
-      final List<TableRow> table = myLastTableLayout.table;
-      for (TableRow eachRow : table) {
-        final List<TabInfo> infos = eachRow.myColumns;
-        for (int i = 1; i < infos.size(); i++) {
-          final TabInfo each = infos.get(i);
-          if (getSelectedInfo() != each && getSelectedInfo() != infos.get(i - 1)) {
-            drawSeparator(g, each);
-          }
-        }
-      }
-    }
+    //if (isSingleRow() && myLastSingRowLayout != null) {
+    //  final List<TabInfo> infos = myLastSingRowLayout.toLayout;
+    //  for (int i = 1; i < infos.size(); i++) {
+    //    final TabInfo each = infos.get(i);
+    //    if (getSelectedInfo() != each && getSelectedInfo() != infos.get(i - 1)) {
+    //      drawSeparator(g, each);
+    //    }
+    //  }
+    //}
+    //else if (!isSingleRow() && myLastTableLayout != null) {
+    //  final List<TableRow> table = myLastTableLayout.table;
+    //  for (TableRow eachRow : table) {
+    //    final List<TabInfo> infos = eachRow.myColumns;
+    //    for (int i = 1; i < infos.size(); i++) {
+    //      final TabInfo each = infos.get(i);
+    //      if (getSelectedInfo() != each && getSelectedInfo() != infos.get(i - 1)) {
+    //        drawSeparator(g, each);
+    //      }
+    //    }
+    //  }
+    //}
 
     myMoreIcon.paintIcon(this, g);
   }
@@ -1366,6 +1424,11 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
   protected void addImpl(final Component comp, final Object constraints, final int index) {
     setForDeferredRemove(comp, false);
+
+    if (comp instanceof TabLabel) {
+      ((TabLabel)comp).apply(myUiDecorator.getDecoration());
+    }
+
     super.addImpl(comp, constraints, index);
   }
 
@@ -1456,9 +1519,18 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
           handlePopup(e);
         }
       });
+    }
 
+    public void paint(final Graphics g) {
+      if (getSelectedInfo() != myInfo) {
+        g.translate(0, 1);
+      }
 
-      setBorder(new EmptyBorder(2, 8, 2, 8));
+      super.paint(g);
+
+      if (getSelectedInfo() != myInfo) {
+        g.translate(0, -1);
+      }
     }
 
     private void handlePopup(final MouseEvent e) {
@@ -1522,12 +1594,9 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
       Insets insets = decoration.getLabelInsets();
       if (insets != null) {
-        Insets current = getInsets();
-        if (current == null) {
-          current = new Insets(0, 0, 0, 0);
-        }
-        setBorder(new EmptyBorder(getValue(current.top, insets.top), getValue(current.left, insets.left),
-                                  getValue(current.bottom, insets.bottom), getValue(current.right, insets.right)));
+        Insets current = ourDefaultDecorator.getDecoration().getLabelInsets();
+        setBorder(new EmptyBorder(getValue(current.top, insets.top) + 2, getValue(current.left, insets.left),
+                                  getValue(current.bottom, insets.bottom) + 1, getValue(current.right, insets.right)));
       }
     }
 
@@ -1762,7 +1831,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   public void setUiDecorator(UiDecorator decorator) {
-    myUiDecorator = decorator;
+    myUiDecorator = decorator == null ? ourDefaultDecorator : decorator;
     applyDecoration();
   }
 
@@ -2076,9 +2145,9 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
 
     tabs.addTab(toAnimate1).setText("Tree2");
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 1").setActions(new DefaultActionGroup(), null);
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 2").setActions(new DefaultActionGroup(), null);
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 3").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 1").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 2").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 3").setActions(new DefaultActionGroup(), null);
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 4").setActions(new DefaultActionGroup(), null);
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 5").setActions(new DefaultActionGroup(), null);
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 6").setActions(new DefaultActionGroup(), null);
@@ -2089,11 +2158,11 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
     tabs.setBorder(new EmptyBorder(6, 6, 20, 6));
 
-    tabs.setUiDecorator(new UiDecorator() {
-      public UiDecoration getDecoration() {
-        return new UiDecoration(null, new Insets(1, -1, 1, -1));
-      }
-    });
+    //tabs.setUiDecorator(new UiDecorator() {
+    //  public UiDecoration getDecoration() {
+    //    return new UiDecoration(null, new Insets(1, -1, 1, -1));
+    //  }
+    //});
 
 
     frame.setBounds(200, 200, 800, 400);
@@ -2103,4 +2172,10 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
 
+  private static class DefautDecorator implements UiDecorator {
+    @NotNull
+    public UiDecoration getDecoration() {
+      return new UiDecoration(null, new Insets(2, 8, 2, 8));
+    }
+  }
 }
