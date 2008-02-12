@@ -1,13 +1,18 @@
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.template.TemplateLookupSelectionHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+
+import java.util.Set;
 
 public class JavaTemplateUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.JavaTemplateUtil");
@@ -88,5 +93,21 @@ public class JavaTemplateUtil {
         });
       }
     }
+  }
+
+  public static LookupItem addElementLookupItem(Set<LookupItem> items, PsiElement element) {
+    return addJavaLookupItem(items, element);
+  }
+
+  public static LookupItem addTypeLookupItem(Set<LookupItem> items, PsiType type) {
+    return addJavaLookupItem(items, type);
+  }
+
+  private static LookupItem addJavaLookupItem(final Set<LookupItem> items, final Object element) {
+    final LookupItem item = LookupItemUtil.addLookupItem(items, element);
+    if (item != null) {
+      item.setAttribute(TemplateLookupSelectionHandler.KEY_IN_LOOKUP_ITEM, new JavaTemplateLookupSelectionHandler());
+    }
+    return item;
   }
 }

@@ -2,19 +2,19 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
-
-import org.jetbrains.annotations.NotNull;
 
 public class VariableOfTypeMacro implements Macro {
 
@@ -45,11 +45,12 @@ public class VariableOfTypeMacro implements Macro {
     if (vars == null || vars.length < 2) return null;
     final Set<LookupItem> set = new LinkedHashSet<LookupItem>();
     for (PsiElement var : vars) {
-      LookupItemUtil.addLookupItem(set, var);
+      JavaTemplateUtil.addElementLookupItem(set, var);
     }
     return set.toArray(new LookupItem[set.size()]);
   }
 
+  @Nullable
   private static PsiElement[] getVariables(Expression[] params, final ExpressionContext context) {
     if (params.length != 1) return null;
     final Result result = params[0].calculateResult(context);

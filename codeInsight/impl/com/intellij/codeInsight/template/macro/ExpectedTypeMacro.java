@@ -5,8 +5,8 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -49,7 +49,7 @@ public class ExpectedTypeMacro implements Macro{
     if (types == null || types.length < 2) return null;
     Set<LookupItem> set = new LinkedHashSet<LookupItem>();
     for (PsiType type : types) {
-      LookupItemUtil.addLookupItem(set, type);
+      JavaTemplateUtil.addTypeLookupItem(set, type);
     }
     return set.toArray(new LookupItem[set.size()]);
   }

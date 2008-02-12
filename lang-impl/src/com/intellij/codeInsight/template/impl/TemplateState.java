@@ -448,7 +448,7 @@ public class TemplateState implements Disposable {
     });
   }
 
-  private void itemSelected(final LookupItem item, final PsiFile psiFile, final int currentSegmentNumber, final char completionChar) {
+  private void itemSelected(final LookupItem<?> item, final PsiFile psiFile, final int currentSegmentNumber, final char completionChar) {
     if (item != null) {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -462,8 +462,11 @@ public class TemplateState implements Disposable {
         PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
       }
 
-      JavaTemplateUtil.updateTypeBindings(item.getObject(), psiFile, myDocument, mySegments.getSegmentStart(
-        currentSegmentNumber), mySegments.getSegmentEnd(currentSegmentNumber));
+      final TemplateLookupSelectionHandler handler = item.getAttribute(TemplateLookupSelectionHandler.KEY_IN_LOOKUP_ITEM);
+      if (handler != null) {
+        handler.itemSelected(item, psiFile, myDocument,
+                             mySegments.getSegmentStart(currentSegmentNumber), mySegments.getSegmentEnd(currentSegmentNumber));
+      }
 
       if (completionChar == '.') {
         EditorModificationUtil.insertStringAtCaret(myEditor, ".");

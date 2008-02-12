@@ -2,18 +2,17 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.HashSet;
-
-import java.util.Iterator;
-import java.util.Set;
-
 import org.jetbrains.annotations.NotNull;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class SubtypesMacro implements Macro {
   public String getName() {
@@ -29,7 +28,7 @@ public class SubtypesMacro implements Macro {
   }
 
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
-    if (params == null || params.length == 0) return null;
+    if (params.length == 0) return null;
     return params[0].calculateQuickResult(context);
   }
 
@@ -38,7 +37,7 @@ public class SubtypesMacro implements Macro {
   }
 
   public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
-    if (params == null || params.length == 0) return LookupItem.EMPTY_ARRAY;
+    if (params.length == 0) return LookupItem.EMPTY_ARRAY;
     Result paramResult = params[0].calculateQuickResult(context);
     if (paramResult instanceof PsiTypeResult) {
       final PsiType type = ((PsiTypeResult)paramResult).getType();
@@ -47,13 +46,11 @@ public class SubtypesMacro implements Macro {
       final PsiFile file = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(context.getEditor().getDocument());
       final PsiElement element = file.findElementAt(context.getStartOffset());
       types.addAll(CodeInsightUtil.addSubtypes(type, element, false));
-      LookupItem[] result = new LookupItem[types.size()];
-      final Iterator<PsiType> it = types.iterator();
-      for (int i = 0; i < result.length; i++) {
-        result[i] = LookupItemUtil.objectToLookupItem(it.next());
-
+      final Set<LookupItem> set = new LinkedHashSet<LookupItem>();
+      for (PsiType t: types) {
+        JavaTemplateUtil.addTypeLookupItem(set, t);
       }
-      return result;
+      return set.toArray(new LookupItem[set.size()]);
     }
     return LookupItem.EMPTY_ARRAY;
   }
