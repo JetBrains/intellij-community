@@ -25,7 +25,7 @@ import java.util.HashSet;
 /**
  * @author peter
  */
-public abstract class FactoryMap<K,V> {
+public abstract class FactoryMap<K,V> implements Map<K, V> {
   static final Object NULL = new Object() {
     @NonNls
     public String toString() {
@@ -42,11 +42,11 @@ public abstract class FactoryMap<K,V> {
   protected abstract V create(K key);
   
   @Nullable
-  public V get(K key) {
+  public V get(Object key) {
     V value = myMap.get(getKey(key));
     if (value == null) {
-      value = create(key);
-      myMap.put(getKey(key), value == null ? (V)NULL : value);
+      value = create((K)key);
+      myMap.put((K)getKey(key), value == null ? (V)NULL : value);
     }
     return value == NULL ? null : value;
   }
@@ -55,16 +55,16 @@ public abstract class FactoryMap<K,V> {
     return key == null ? (K)NULL : key;
   }
 
-  public final boolean containsKey(K key) {
+  public final boolean containsKey(Object key) {
     return myMap.containsKey(getKey(key));
   }
 
-  public void put(K key, V value) {
-    myMap.put(getKey(key), value == null ? (V)NULL : value);
+  public V put(K key, V value) {
+    return myMap.put(getKey(key), value == null ? (V)NULL : value);
   }
 
-  public void removeEntry(K key) {
-    myMap.remove(key);
+  public V remove(Object key) {
+    return myMap.remove(key);
   }
 
   public Set<K> keySet() {
@@ -90,5 +90,31 @@ public abstract class FactoryMap<K,V> {
 
   public void clear() {
     myMap.clear();
+  }
+
+  public int size() {
+    return myMap.size();
+  }
+
+  public boolean isEmpty() {
+    return myMap.isEmpty();
+  }
+
+  public boolean containsValue(final Object value) {
+    return myMap.containsValue(value);
+  }
+
+  public void putAll(final Map<? extends K, ? extends V> m) {
+    for (Entry<? extends K, ? extends V> entry : m.entrySet()) {
+      put(entry.getKey(), entry.getValue());
+    }
+  }
+
+  public Collection<V> values() {
+    return myMap.values();
+  }
+
+  public Set<Entry<K, V>> entrySet() {
+    throw new RuntimeException("Not implemented");
   }
 }
