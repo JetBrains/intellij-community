@@ -67,7 +67,7 @@ public class ThreadsViewConfigurable extends BaseConfigurable {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.dialogs.customizeThreadView";
   }
 
   public void disposeUIResources() {

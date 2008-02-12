@@ -226,6 +226,6 @@ public class BaseRenderersConfigurable implements Configurable {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "topicId367253";
   }
 }
