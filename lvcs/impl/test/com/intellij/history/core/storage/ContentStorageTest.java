@@ -75,9 +75,12 @@ public class ContentStorageTest extends TempDirTestCase {
   }
 
   @Test
-  public void testThrowingExceptionWhenAskingForInvalidContent() {
+  public void testThrowingExceptionWhenAskingForInvalidContent() throws BrokenStorageException {
+    int id = s.store(new byte[]{1});
+    s.remove(id);
+
     try {
-      s.load(123);
+      s.load(id);
       fail();
     }
     catch (BrokenStorageException e) {
