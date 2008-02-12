@@ -182,7 +182,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     super.force();
   }
 
-  public void close() throws IOException {
+  public synchronized void close() throws IOException {
     myAppendCache.clear();
     super.close();
     myValueStorage.dispose();

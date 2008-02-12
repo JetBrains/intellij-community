@@ -2,6 +2,8 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
+import gnu.trove.TIntIntHashMap;
+import gnu.trove.TIntIntProcedure;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,10 +13,18 @@ import java.util.Map;
  *         Date: Feb 6, 2008
  */
 public class IdDataConsumer {
-  final Map<IdIndexEntry, Integer> myResult = new HashMap<IdIndexEntry, Integer>();
+  private final TIntIntHashMap myResult = new TIntIntHashMap();
 
   public Map<IdIndexEntry, Integer> getResult() {
-    return myResult;
+    final Map<IdIndexEntry, Integer> result = new HashMap<IdIndexEntry, Integer>();
+    myResult.forEachEntry(new TIntIntProcedure() {
+      public boolean execute(final int key, final int value) {
+        result.put(new IdIndexEntry(key), value);
+        return true;
+      }
+    });
+
+    return result;
   }
   
   public void addOccurrence(CharSequence charSequence, int start, int end, int occurrenceMask) {
@@ -38,16 +48,11 @@ public class IdDataConsumer {
 
   private void addOccurrence(int hashcode, int occurrenceMask) {
     if (occurrenceMask != 0) {
-      final IdIndexEntry key = new IdIndexEntry(hashcode);
-      Integer v = myResult.get(key);
-      if (v == null) {
-        v = occurrenceMask;
+      final int old = myResult.get(hashcode);
+      int v = old | occurrenceMask;
+      if (v != old) {
+        myResult.put(hashcode, v);
       }
-      else {
-        v = v.intValue() | ((Integer)occurrenceMask).intValue();
-      }
-      myResult.put(key, v);
     }
   }
-  
 }

@@ -328,7 +328,7 @@ public class PersistentEnumerator<Data> implements Forceable {
     return myDataDescriptor.read(myIn);
   }
 
-  public void close() throws IOException {
+  public synchronized void close() throws IOException {
     if (!myClosed) {
       myClosed = true;
       try {
@@ -340,22 +340,22 @@ public class PersistentEnumerator<Data> implements Forceable {
     }
   }
 
-  public boolean isClosed() {
+  public synchronized boolean isClosed() {
     return myClosed;
   }
 
-  public boolean isDirty() {
+  public synchronized boolean isDirty() {
     return myDirty;
   }
 
-  public void flush() throws IOException {
+  public synchronized void flush() throws IOException {
     if (myStorage.isMapped() || isDirty()) {
       markDirty(false);
       myStorage.flush();
     }
   }
 
-  public void force() {
+  public synchronized void force() {
     try {
       flush();
     }
