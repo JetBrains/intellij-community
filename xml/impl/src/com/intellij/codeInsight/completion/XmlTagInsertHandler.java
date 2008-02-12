@@ -1,41 +1,42 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingListener;
-import com.intellij.codeInsight.template.macro.MacroFactory;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.template.macro.MacroFactory;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
+import com.intellij.jsp.impl.TldAttributeDescriptor;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.psi.xml.XmlToken;
-import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlElementDescriptorWithCDataContent;
 import com.intellij.xml.util.HtmlUtil;
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.jsp.impl.TldAttributeDescriptor;
+import com.intellij.xml.util.XmlUtil;
 
-import java.util.Set;
 import java.util.Collections;
-import java.util.StringTokenizer;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 class XmlTagInsertHandler extends BasicInsertHandler {
   public XmlTagInsertHandler() {
@@ -183,9 +184,21 @@ class XmlTagInsertHandler extends BasicInsertHandler {
     }
 
     if (completionChar == '>' || (completionChar == '/' && indirectRequiredAttrs != null)) {
-      template.addTextSegment(">");
+      boolean toInsertCDataEnd = false;
+
+      if (descriptor instanceof XmlElementDescriptorWithCDataContent) {
+        final XmlElementDescriptorWithCDataContent cDataContainer = (XmlElementDescriptorWithCDataContent)descriptor;
+
+        if (cDataContainer.requiresCdataBracesInContext(tag)) {
+          template.addTextSegment("<![CDATA[\n");
+          toInsertCDataEnd = true;
+        }
+      }
+
       if (indirectRequiredAttrs != null) template.addTextSegment(indirectRequiredAttrs.toString());
       template.addEndVariable();
+
+      if (toInsertCDataEnd) template.addTextSegment("\n]]>");
 
       if (!(tag instanceof HtmlTag) || !HtmlUtil.isSingleHtmlTag(tag.getName())) {
         template.addTextSegment("</");

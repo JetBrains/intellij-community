@@ -2,6 +2,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -9,22 +10,28 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlElementDescriptorWithCDataContent;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 
 public class XmlGtTypedHandler extends TypedHandlerDelegate {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.TypedHandler");
+
   public boolean beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile, final FileType fileType) {
     if (c == '>' && editedFile instanceof XmlFile) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       FileViewProvider provider = file.getViewProvider();
-      final int offset = editor.getCaretModel().getOffset();
+      int offset = editor.getCaretModel().getOffset();
 
       PsiElement element;
 
@@ -123,7 +130,38 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(tagOffset);
       if (BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), fileType, iterator, true,true)) return false;
 
+      boolean insertedCData = false;
+
+      if (name.indexOf(':') != -1) {  // optimization
+        final XmlElementDescriptor descriptor = tag.getDescriptor();
+
+        if (descriptor instanceof XmlElementDescriptorWithCDataContent) {
+          final XmlElementDescriptorWithCDataContent cDataContainer = (XmlElementDescriptorWithCDataContent)descriptor;
+
+          if (cDataContainer.requiresCdataBracesInContext(tag)) {
+            final String cDataStart = "><![CDATA[\n";
+            final String inserted = cDataStart + "\n]]>";
+            editor.getDocument().insertString(offset, inserted);
+            final int newoffset = offset + cDataStart.length();
+            editor.getCaretModel().moveToOffset(newoffset);
+            offset += inserted.length();
+            insertedCData = true;
+          }
+        }
+      }
+
       editor.getDocument().insertString(offset, "</" + name + ">");
+
+      if (insertedCData) {
+        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+        try {
+          CodeStyleManager.getInstance(project).adjustLineIndent(file, editor.getCaretModel().getOffset());
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+      return insertedCData;
     }
     return false;
   }
