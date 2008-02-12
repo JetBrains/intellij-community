@@ -42,4 +42,7 @@ public class MacroCallNode implements Expression {
     return myMacro.calculateLookupItems(parameters, context);
   }
 
+  public Expression[] getParameters() {
+    return myParameters.toArray(new Expression[myParameters.size()]);
+  }
 }

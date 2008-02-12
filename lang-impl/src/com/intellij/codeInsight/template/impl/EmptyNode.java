@@ -2,14 +2,13 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Expression;
-import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.ExpressionContext;
-import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.Result;
 
 /**
  *
  */
-class EmptyNode implements Expression {
+public class EmptyNode implements Expression {
   public EmptyNode() {
   }
 

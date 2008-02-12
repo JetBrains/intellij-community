@@ -8,7 +8,7 @@ import com.intellij.codeInsight.template.Result;
 /**
  *
  */
-class VariableNode implements Expression {
+public class VariableNode implements Expression {
   private final String myName;
   private final Expression myInitialValue;
 
@@ -46,8 +46,11 @@ class VariableNode implements Expression {
     return myInitialValue.calculateLookupItems(context);
   }
 
-  private String getName() {
+  public String getName() {
     return myName;
   }
 
+  public Expression getInitialValue() {
+    return myInitialValue;
+  }
 }

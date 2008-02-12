@@ -7,6 +7,8 @@ import com.intellij.util.text.CharArrayUtil;
 import java.util.ArrayList;
 import java.util.Set;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Created by IntelliJ IDEA.
  * User: Maxim.Mossienko
@@ -69,7 +71,7 @@ public class TemplateImplUtil {
     }
   }
 
-  public static Expression parseTemplate(String text) {
+  public static Expression parseTemplate(@NonNls String text) {
     return MacroParser.parse(text);
   }
 }

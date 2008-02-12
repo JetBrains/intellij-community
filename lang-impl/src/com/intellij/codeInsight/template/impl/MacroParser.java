@@ -86,6 +86,7 @@ class MacroParser {
     advance(lexer);
     return macroCallNode;
   }
+
   private static void parseParameters(MacroCallNode macroCallNode, Lexer lexer, String expression) {
     if (!getString(lexer, expression).equals(")")) {
       while (lexer.getTokenType() != null) {
