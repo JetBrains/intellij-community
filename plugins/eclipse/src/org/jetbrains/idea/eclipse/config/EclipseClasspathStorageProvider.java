@@ -77,11 +77,11 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     };
   }
 
-  static void registerFiles(final CachedFileSet fileCache, final Module module, final String moduleRoot, final String storageRoot) {
+  static void registerFiles(final CachedFileSet fileCache, final String moduleRoot, final String storageRoot) {
     fileCache.register(EclipseXml.CLASSPATH_FILE, storageRoot);
     fileCache.register(EclipseXml.PROJECT_FILE, storageRoot);
     fileCache.register(EclipseXml.PLUGIN_XML_FILE, storageRoot);
-    fileCache.register(module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX, moduleRoot);
+    fileCache.register(EclipseXml.IDEA_SETTINGS_POSTFIX, moduleRoot);
   }
 
   static XmlDocumentSet getDocumentSet(final Module module) {
@@ -116,7 +116,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     if (fileCache == null) {
       fileCache = new CachedXmlDocumentSet();
       EclipseModuleManager.getInstance(module).setDocumentSet(fileCache);
-      registerFiles(fileCache, module, ClasspathStorage.getModuleDir(module), ClasspathStorage.getStorageRootFromOptions(module));
+      registerFiles(fileCache, ClasspathStorage.getModuleDir(module), ClasspathStorage.getStorageRootFromOptions(module));
       fileCache.preload();
     }
     return fileCache;
@@ -179,7 +179,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       try {
         IdeaToEclipseConverter
           .convert(ClasspathStorage.getModuleDir(module), module.getName(), element, true, ClasspathStorage.getStorageRootMap(module.getProject(), null),
-                   getDocumentSet(module));
+                   getDocumentSet(module), module);
       }
       catch (ConversionException e) {
         throw new WriteExternalException(e.getMessage());
