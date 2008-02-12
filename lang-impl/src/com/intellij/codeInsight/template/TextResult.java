@@ -1,6 +1,8 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.openapi.editor.Document;
 
 public class TextResult implements Result{
   private final String myText;
@@ -19,5 +21,8 @@ public class TextResult implements Result{
 
   public String toString() {
     return myText;
+  }
+
+  public void handleFocused(final PsiFile psiFile, final Document document, final int segmentStart, final int segmentEnd) {
   }
 }

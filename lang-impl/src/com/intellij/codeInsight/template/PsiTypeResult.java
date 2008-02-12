@@ -1,9 +1,11 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,5 +43,9 @@ public class PsiTypeResult implements Result {
 
   public String toString() {
     return getType().getCanonicalText();
+  }
+
+  public void handleFocused(final PsiFile psiFile, final Document document, final int segmentStart, final int segmentEnd) {
+    JavaTemplateUtil.updateTypeBindings(getType(), psiFile, document, segmentStart, segmentEnd);
   }
 }

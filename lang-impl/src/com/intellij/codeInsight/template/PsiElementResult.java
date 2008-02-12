@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.template;
 
+import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
-import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.SmartPointerManager;
 
 public class PsiElementResult implements Result {
   private SmartPsiElementPointer myPointer = null;
@@ -41,5 +41,9 @@ public class PsiElementResult implements Result {
       }
     }
     return text;
+  }
+
+  public void handleFocused(final PsiFile psiFile, final Document document, final int segmentStart, final int segmentEnd) {
+    JavaTemplateUtil.updateTypeBindings(getElement(), psiFile, document, segmentStart, segmentEnd);
   }
 }

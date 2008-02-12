@@ -31,8 +31,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.IntArrayList;
@@ -406,14 +404,9 @@ public class TemplateState implements Disposable {
     }
     else {
       Result result = expressionNode.calculateResult(context);
-      if (result instanceof PsiElementResult) {
-        updateTypeBindings(((PsiElementResult)result).getElement(), psiFile, currentSegmentNumber);
-      }
-      if (result instanceof PsiTypeResult) {
-        updateTypeBindings(((PsiTypeResult)result).getType(), psiFile, currentSegmentNumber);
-      }
-      if (result instanceof InvokeActionResult) {
-        ((InvokeActionResult)result).getAction().run();
+      if (result != null) {
+        result.handleFocused(psiFile, myDocument,
+                             mySegments.getSegmentStart(currentSegmentNumber), mySegments.getSegmentEnd(currentSegmentNumber));
       }
     }
     focusCurrentHighlighter(true);
@@ -469,7 +462,8 @@ public class TemplateState implements Disposable {
         PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
       }
 
-      updateTypeBindings(item.getObject(), psiFile, currentSegmentNumber);
+      JavaTemplateUtil.updateTypeBindings(item.getObject(), psiFile, myDocument, mySegments.getSegmentStart(
+        currentSegmentNumber), mySegments.getSegmentEnd(currentSegmentNumber));
 
       if (completionChar == '.') {
         EditorModificationUtil.insertStringAtCaret(myEditor, ".");
@@ -490,84 +484,8 @@ public class TemplateState implements Disposable {
     nextTab();
   }
 
-
-  private void updateTypeBindings(Object item, PsiFile file, final int segmentNumber) {
-    PsiClass aClass = null;
-    if (item instanceof PsiClass) {
-      aClass = (PsiClass)item;
-    }
-    else if (item instanceof PsiType) {
-      aClass = PsiUtil.resolveClassInType((PsiType)item);
-    }
-
-    if (aClass != null) {
-      if (aClass instanceof PsiTypeParameter) {
-        if (((PsiTypeParameter)aClass).getOwner() instanceof PsiMethod) {
-          PsiElement element = file.findElementAt(mySegments.getSegmentStart(segmentNumber));
-          PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-          if (method != null) {
-            PsiTypeParameterList paramList = method.getTypeParameterList();
-            PsiTypeParameter[] params = paramList.getTypeParameters();
-            for (PsiTypeParameter param : params) {
-              if (param.getName().equals(aClass.getName())) return;
-            }
-            try {
-              paramList.add(aClass.copy());
-              unblockDocument();
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        }
-      }  else {
-        addImportForClass(aClass, segmentNumber);
-        unblockDocument();
-      }
-    }
-  }
-
   private void unblockDocument() {
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
-  }
-
-  private void addImportForClass(final PsiClass aClass, int segmentNumber) {
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    if (!aClass.isValid() || aClass.getQualifiedName() == null) return;
-
-    JavaPsiFacade manager = JavaPsiFacade.getInstance(myProject);
-    PsiResolveHelper helper = manager.getResolveHelper();
-
-    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-    CharSequence chars = myDocument.getCharsSequence();
-
-    final int start = mySegments.getSegmentStart(segmentNumber);
-    final int end = mySegments.getSegmentEnd(segmentNumber);
-    PsiElement element = file.findElementAt(start);
-    String refText = chars.subSequence(start, end).toString();
-    PsiClass refClass = helper.resolveReferencedClass(refText, element);
-    if (aClass.equals(refClass)) return;
-
-    if (element instanceof PsiIdentifier) {
-      PsiElement parent = element.getParent();
-      while (parent != null) {
-        PsiElement tmp = parent.getParent();
-        if (!(tmp instanceof PsiJavaCodeReferenceElement) || tmp.getTextRange().getEndOffset() > end) break;
-        parent = tmp;
-      }
-      if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement) parent).isQualified()) {
-        final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement) parent;
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            try {
-              ref.bindToElement(aClass);
-            } catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
-      }
-    }
   }
 
   private void calcResults(final boolean isQuick) {
@@ -649,7 +567,8 @@ public class TemplateState implements Disposable {
     if (result instanceof PsiTypeResult) {
       shortenReferences();
       PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-      updateTypeBindings(((PsiTypeResult)result).getType(), psiFile, segmentNumber);
+      JavaTemplateUtil.updateTypeBindings(((PsiTypeResult)result).getType(), psiFile, myDocument, mySegments.getSegmentStart(
+        segmentNumber), mySegments.getSegmentEnd(segmentNumber));
     }
   }
 

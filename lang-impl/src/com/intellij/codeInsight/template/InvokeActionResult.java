@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.openapi.editor.Document;
 
 public class InvokeActionResult implements Result{
   private final Runnable myAction;
@@ -20,5 +22,9 @@ public class InvokeActionResult implements Result{
 
   public String toString() {
     return "";
+  }
+
+  public void handleFocused(final PsiFile psiFile, final Document document, final int segmentStart, final int segmentEnd) {
+    myAction.run();
   }
 }
