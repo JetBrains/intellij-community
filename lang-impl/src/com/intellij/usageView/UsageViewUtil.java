@@ -7,12 +7,13 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
-import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.TypeNameManager;
@@ -56,69 +57,21 @@ public class UsageViewUtil {
     return "";
   }
 
-  private static String getMetaDataName(final PsiMetaData metaData) {
+  public static String getMetaDataName(final PsiMetaData metaData) {
     final String name = metaData.getName();
     return StringUtil.isEmpty(name) ? "''" : name;
   }
 
   public static String getShortName(final PsiElement psiElement) {
     LOG.assertTrue(psiElement.isValid());
-    if (psiElement instanceof PsiMetaOwner) {
-      PsiMetaData metaData = ((PsiMetaOwner)psiElement).getMetaData();
-      if (metaData!=null) return getMetaDataName(metaData);
-    }
-
-    String ret = "";
-    if (psiElement instanceof PsiNamedElement) {
-      ret = ((PsiNamedElement)psiElement).getName();
-    }
-    else if (psiElement instanceof PsiThrowStatement) {
-      ret = UsageViewBundle.message("usage.target.exception");
-    }
-    else if (psiElement instanceof XmlAttributeValue) {
-      ret = ((XmlAttributeValue)psiElement).getValue();
-    }
-    return ret;
+    final String name = ElementDescriptionUtil.getElementDescription(psiElement, UsageViewShortNameLocation.INSTANCE);
+    return name == null ? "" : name;
   }
 
   public static String getLongName(final PsiElement psiElement) {
     LOG.assertTrue(psiElement.isValid());
-    String ret;
-    if (psiElement instanceof PsiDirectory) {
-      ret = PsiDirectoryFactory.getInstance(psiElement.getProject()).getQualifiedName((PsiDirectory)psiElement, true);
-    }
-    else if (psiElement instanceof PsiPackage) {
-      ret = ((PsiPackage)psiElement).getQualifiedName();
-    }
-    else if (psiElement instanceof PsiClass) {
-      if (psiElement instanceof PsiAnonymousClass) {
-        ret = LangBundle.message("java.terms.anonymous.class");
-      }
-      else {
-        ret = ((PsiClass)psiElement).getQualifiedName(); // It happens for local classes
-        if (ret == null) {
-          ret = ((PsiClass)psiElement).getName();
-        }
-      }
-    }
-    else if (psiElement instanceof PsiVariable) {
-      ret = ((PsiVariable)psiElement).getName();
-    }
-    else if (psiElement instanceof XmlTag) {
-      ret = ((XmlTag)psiElement).getName();
-    }
-    else if (psiElement instanceof XmlAttributeValue) {
-      ret = ((XmlAttributeValue)psiElement).getValue();
-    }
-    else if (psiElement instanceof PsiMethod) {
-      PsiMethod psiMethod = (PsiMethod)psiElement;
-      ret = PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY,
-                                 PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS, PsiFormatUtil.SHOW_TYPE);
-    }
-    else {
-      ret = "";
-    }
-    return ret;
+    final String desc = ElementDescriptionUtil.getElementDescription(psiElement, UsageViewLongNameLocation.INSTANCE);
+    return desc == null ? "" : desc;
   }
 
   public static String getType(@NotNull PsiElement psiElement) {
