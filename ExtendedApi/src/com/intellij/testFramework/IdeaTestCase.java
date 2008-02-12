@@ -158,6 +158,10 @@ import java.util.HashSet;
 
     setUpJdk();
 
+    openProject();
+  }
+
+  protected void openProject() {
     ((StartupManagerImpl)StartupManager.getInstance(myProject)).runStartupActivities();
   }
 
