@@ -447,7 +447,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private void selectMostPreferableItem(){
     //if (!isVisible()) return;
 
-    myIndex = LookupItemUtil.doSelectMostPreferableItem(myItemPreferencePolicy, myPrefix, ((DefaultListModel)myList.getModel()).toArray());
+    myIndex = doSelectMostPreferableItem(myItemPreferencePolicy, myPrefix, ((DefaultListModel)myList.getModel()).toArray());
     myList.setSelectedIndex(myIndex);
   }
 
@@ -614,5 +614,36 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public void dispose() {
     myDisposed = true;
+  }
+
+  public static int doSelectMostPreferableItem(final LookupItemPreferencePolicy itemPreferencePolicy,
+                                                 final String prefix,
+                                                 Object[] items) {
+    if (itemPreferencePolicy == null){
+      return -1;
+    }
+    else{
+      itemPreferencePolicy.setPrefix(prefix);
+      LookupItem prefItem = null;
+      int prefItemIndex = -1;
+
+      for(int i = 0; i < items.length; i++){
+        LookupItem item = (LookupItem)items[i];
+        final Object obj = item.getObject();
+        if (obj instanceof PsiElement && !((PsiElement)obj).isValid()) continue;
+        if (prefItem == null){
+          prefItem = item;
+          prefItemIndex = i;
+        }
+        else{
+          int d = itemPreferencePolicy.compare(item, prefItem);
+          if (d < 0){
+            prefItem = item;
+            prefItemIndex = i;
+          }
+        }
+      }
+      return prefItem != null ? prefItemIndex : -1;
+    }
   }
 }
