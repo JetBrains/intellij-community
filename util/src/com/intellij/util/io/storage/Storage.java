@@ -182,10 +182,6 @@ public class Storage implements Disposable, Forceable {
     return writeStream(createNewRecord());
   }
 
-  private int totalBytesAppended = 0;
-  private int maxDelta = 0;
-  private int maxNewSize = 0;
-
   private void appendBytes(int record, byte[] bytes) {
     int delta = bytes.length;
     if (delta == 0) return;
@@ -194,11 +190,8 @@ public class Storage implements Disposable, Forceable {
       int capacity = myRecordsTable.getCapacity(record);
       int oldSize = myRecordsTable.getSize(record);
       int newSize = oldSize + delta;
-      totalBytesAppended += delta;
-      maxDelta = Math.max(delta, maxDelta);
       if (newSize > capacity) {
         if (oldSize > 0) {
-          maxNewSize = Math.max(maxNewSize, newSize);
           byte[] newbytes = new byte[newSize];
           System.arraycopy(readBytes(record), 0, newbytes, 0, oldSize);
           System.arraycopy(bytes, 0, newbytes, oldSize, delta);
@@ -261,10 +254,7 @@ public class Storage implements Disposable, Forceable {
   }
 
   public AppenderStream appendStream(int record) {
-    synchronized (lock) {
-      myRecordsTable.markDirty();
-      return new AppenderStream(record);
-    }
+    return new AppenderStream(record);
   }
 
   public DataInputStream readStream(int record) {
