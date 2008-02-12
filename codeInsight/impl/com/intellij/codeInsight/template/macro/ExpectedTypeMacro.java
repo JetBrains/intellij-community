@@ -13,6 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -32,17 +34,17 @@ public class ExpectedTypeMacro implements Macro{
     return "A";
   }
 
-  public Result calculateResult(Expression[] params, ExpressionContext context) {
+  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     PsiType[] types = getExpectedTypes(params, context);
     if (types == null || types.length == 0) return null;
     return new PsiTypeResult(types[0], context.getProject());
   }
 
-  public Result calculateQuickResult(Expression[] params, ExpressionContext context) {
+  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return null;
   }
 
-  public LookupItem[] calculateLookupItems(Expression[] params, ExpressionContext context) {
+  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     PsiType[] types = getExpectedTypes(params, context);
     if (types == null || types.length < 2) return null;
     Set<LookupItem> set = new LinkedHashSet<LookupItem>();
@@ -52,7 +54,8 @@ public class ExpectedTypeMacro implements Macro{
     return set.toArray(new LookupItem[set.size()]);
   }
 
-  private PsiType[] getExpectedTypes(Expression[] params, final ExpressionContext context) {
+  @Nullable
+  private static PsiType[] getExpectedTypes(Expression[] params, final ExpressionContext context) {
     if (params.length != 0) return null;
 
     final Project project = context.getProject();

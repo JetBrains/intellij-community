@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template.macro;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -28,15 +29,15 @@ public abstract class SimpleMacro implements Macro {
     return "11.11.1111";
   }
 
-  public Result calculateResult(final Expression[] params, final ExpressionContext context) {
+  public Result calculateResult(@NotNull final Expression[] params, final ExpressionContext context) {
     return new TextResult(evaluate());
   }
 
-  public Result calculateQuickResult(final Expression[] params, final ExpressionContext context) {
+  public Result calculateQuickResult(@NotNull final Expression[] params, final ExpressionContext context) {
     return calculateResult(params, context);
   }
 
-  public LookupItem[] calculateLookupItems(final Expression[] params, final ExpressionContext context) {
+  public LookupItem[] calculateLookupItems(@NotNull final Expression[] params, final ExpressionContext context) {
     return LookupItem.EMPTY_ARRAY;
   }
 

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiVariable;
+import org.jetbrains.annotations.NotNull;
 
 public class TypeOfVariableMacro implements Macro {
   public String getName() {
@@ -21,7 +22,7 @@ public class TypeOfVariableMacro implements Macro {
     return "A";
   }
 
-  public Result calculateResult(Expression[] params, ExpressionContext context) {
+  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     if (params == null || params.length == 0) return null;
 
     final Project project = context.getProject();
@@ -44,11 +45,11 @@ public class TypeOfVariableMacro implements Macro {
     return null;
   }
 
-  public Result calculateQuickResult(Expression[] params, ExpressionContext context) {
+  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return calculateResult(params, context);
   }
 
-  public LookupItem[] calculateLookupItems(Expression[] params, ExpressionContext context) {
+  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     return LookupItem.EMPTY_ARRAY;
   }
 

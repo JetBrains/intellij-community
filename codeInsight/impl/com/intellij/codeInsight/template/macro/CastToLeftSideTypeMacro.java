@@ -9,6 +9,7 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class CastToLeftSideTypeMacro implements Macro {
   public String getName() {
@@ -23,7 +24,7 @@ public class CastToLeftSideTypeMacro implements Macro {
     return "(A)";
   }
 
-  public Result calculateResult(Expression[] params, ExpressionContext context) {
+  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     int offset = context.getStartOffset();
     Project project = context.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -51,11 +52,11 @@ public class CastToLeftSideTypeMacro implements Macro {
     return new TextResult("");
   }
 
-  public Result calculateQuickResult(Expression[] params, ExpressionContext context) {
+  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return null;
   }
 
-  public LookupItem[] calculateLookupItems(Expression[] params, ExpressionContext context) {
+  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     return LookupItem.EMPTY_ARRAY;
   }
 }

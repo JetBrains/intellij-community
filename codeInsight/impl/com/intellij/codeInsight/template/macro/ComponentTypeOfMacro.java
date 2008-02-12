@@ -7,6 +7,7 @@ import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 
 public class ComponentTypeOfMacro implements Macro {
   public String getName() {
@@ -21,7 +22,7 @@ public class ComponentTypeOfMacro implements Macro {
     return "A";
   }
 
-  public LookupItem[] calculateLookupItems(Expression[] params, ExpressionContext context) {
+  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     if (params.length != 1) return null;
     LookupItem[] lookupItems = params[0].calculateLookupItems(context);
     if (lookupItems == null) return null;
@@ -35,11 +36,11 @@ public class ComponentTypeOfMacro implements Macro {
     return lookupItems;
   }
 
-  public Result calculateQuickResult(Expression[] params, ExpressionContext context) {
+  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return null;
   }
 
-  public Result calculateResult(Expression[] params, final ExpressionContext context) {
+  public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
     if (params.length != 1) return null;
     final Result result = params[0].calculateResult(context);
     if (result == null) return null;

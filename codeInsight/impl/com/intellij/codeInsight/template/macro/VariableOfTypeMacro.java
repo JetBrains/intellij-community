@@ -14,6 +14,8 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 public class VariableOfTypeMacro implements Macro {
 
   public String getName() {
@@ -28,17 +30,17 @@ public class VariableOfTypeMacro implements Macro {
     return "a";
   }
 
-  public Result calculateResult(Expression[] params, ExpressionContext context) {
+  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length == 0) return null;
     return new PsiElementResult(vars[0]);
   }
 
-  public Result calculateQuickResult(Expression[] params, ExpressionContext context) {
+  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return null;
   }
 
-  public LookupItem[] calculateLookupItems(Expression[] params, final ExpressionContext context) {
+  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length < 2) return null;
     final Set<LookupItem> set = new LinkedHashSet<LookupItem>();

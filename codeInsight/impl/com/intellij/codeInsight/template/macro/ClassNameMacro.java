@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class ClassNameMacro implements Macro {
 
@@ -20,7 +21,7 @@ public class ClassNameMacro implements Macro {
     return "";
   }
 
-  public Result calculateResult(Expression[] params, final ExpressionContext context) {
+  public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
     Project project = context.getProject();
     int templateStartOffset = context.getTemplateStartOffset();
     int offset = templateStartOffset > 0 ? context.getTemplateStartOffset() - 1 : context.getTemplateStartOffset();
@@ -58,11 +59,11 @@ public class ClassNameMacro implements Macro {
     return new TextResult(result);
   }
 
-  public Result calculateQuickResult(Expression[] params, ExpressionContext context) {
+  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return null;
   }
 
-  public LookupItem[] calculateLookupItems(Expression[] params, final ExpressionContext context) {
+  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
     return null;
   }
 }

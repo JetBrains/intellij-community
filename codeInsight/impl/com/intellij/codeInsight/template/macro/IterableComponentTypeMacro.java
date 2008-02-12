@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -23,7 +24,7 @@ public class IterableComponentTypeMacro implements Macro {
     return "a";
   }
 
-  public Result calculateResult(Expression[] params, ExpressionContext context) {
+  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     if (params.length != 1) return null;
     final Result result = params[0].calculateResult(context);
     if (result == null) return null;
@@ -68,11 +69,11 @@ public class IterableComponentTypeMacro implements Macro {
     return null;
   }
 
-  public Result calculateQuickResult(Expression[] params, ExpressionContext context) {
+  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return calculateResult(params, context);
   }
 
-  public LookupItem[] calculateLookupItems(Expression[] params, ExpressionContext context) {
+  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     return LookupItem.EMPTY_ARRAY;
   }
 }

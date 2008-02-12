@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import org.jetbrains.annotations.NotNull;
 
 
 /**
@@ -25,7 +26,7 @@ public class RightSideTypeMacro implements Macro {
     return "A";
   }
 
-  public Result calculateResult(Expression[] params, ExpressionContext context) {
+  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     int offset = context.getStartOffset();
     Project project = context.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -50,11 +51,11 @@ public class RightSideTypeMacro implements Macro {
     return null;
   }
 
-  public Result calculateQuickResult(Expression[] params, ExpressionContext context) {
+  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return null;
   }
 
-  public LookupItem[] calculateLookupItems(Expression[] params, ExpressionContext context) {
+  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     return LookupItem.EMPTY_ARRAY;
   }
 }

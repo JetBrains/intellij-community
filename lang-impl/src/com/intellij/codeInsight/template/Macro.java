@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface Macro {
@@ -15,11 +16,11 @@ public interface Macro {
   @NonNls String getDefaultValue();
 
   @Nullable
-  Result calculateResult(Expression[] params, ExpressionContext context);
+  Result calculateResult(@NotNull Expression[] params, ExpressionContext context);
 
   @Nullable
-  Result calculateQuickResult(Expression[] params, ExpressionContext context);
+  Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context);
 
   @Nullable
-  LookupItem[] calculateLookupItems(Expression[] params, ExpressionContext context);
+  LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context);
 }

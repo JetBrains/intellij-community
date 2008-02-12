@@ -13,6 +13,8 @@ import com.intellij.util.containers.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 public class SubtypesMacro implements Macro {
   public String getName() {
     return "subtypes";
@@ -26,16 +28,16 @@ public class SubtypesMacro implements Macro {
     return "A";
   }
 
-  public Result calculateResult(Expression[] params, ExpressionContext context) {
+  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     if (params == null || params.length == 0) return null;
     return params[0].calculateQuickResult(context);
   }
 
-  public Result calculateQuickResult(Expression[] params, ExpressionContext context) {
+  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return calculateResult(params, context);
   }
 
-  public LookupItem[] calculateLookupItems(Expression[] params, ExpressionContext context) {
+  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     if (params == null || params.length == 0) return LookupItem.EMPTY_ARRAY;
     Result paramResult = params[0].calculateQuickResult(context);
     if (paramResult instanceof PsiTypeResult) {

@@ -11,6 +11,8 @@ import com.intellij.psi.PsiVariable;
 import java.util.Arrays;
 import java.util.LinkedList;
 
+import org.jetbrains.annotations.NotNull;
+
 public class SuggestVariableNameMacro implements Macro {
 
   public String getName() {
@@ -25,17 +27,17 @@ public class SuggestVariableNameMacro implements Macro {
     return "a";
   }
 
-  public Result calculateResult(Expression[] params, ExpressionContext context) {
+  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     String[] names = getNames(context);
     if (names == null || names.length == 0) return null;
     return new TextResult(names[0]);
   }
 
-  public Result calculateQuickResult(Expression[] params, ExpressionContext context) {
+  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return null;
   }
 
-  public LookupItem[] calculateLookupItems(Expression[] params, final ExpressionContext context) {
+  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
     String[] names = getNames(context);
     if (names == null || names.length < 2) return null;
     LookupItem[] items = new LookupItem[names.length];

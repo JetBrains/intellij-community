@@ -16,6 +16,8 @@ import com.intellij.psi.PsiWildcardType;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 public class GuessElementTypeMacro implements Macro {
   public String getName() {
     return "guessElementType";
@@ -29,17 +31,17 @@ public class GuessElementTypeMacro implements Macro {
     return "A";
   }
 
-  public Result calculateResult(Expression[] params, final ExpressionContext context) {
+  public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
     PsiType[] types = guessTypes(params, context);
     if (types == null || types.length == 0) return null;
     return new PsiTypeResult(types[0], context.getProject());
   }
 
-  public Result calculateQuickResult(Expression[] params, ExpressionContext context) {
+  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return null;
   }
 
-  public LookupItem[] calculateLookupItems(Expression[] params, ExpressionContext context) {
+  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     PsiType[] types = guessTypes(params, context);
     if (types == null || types.length < 2) return null;
     Set<LookupItem> set = new LinkedHashSet<LookupItem>();

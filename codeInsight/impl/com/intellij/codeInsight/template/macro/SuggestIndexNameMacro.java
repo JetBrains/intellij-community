@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class SuggestIndexNameMacro implements Macro{
   public String getName() {
@@ -20,7 +21,7 @@ public class SuggestIndexNameMacro implements Macro{
     return "a";
   }
 
-  public Result calculateResult(Expression[] params, final ExpressionContext context) {
+  public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
     if (params.length != 0) return null;
 
     final Project project = context.getProject();
@@ -56,11 +57,11 @@ public class SuggestIndexNameMacro implements Macro{
     return null;
   }
 
-  public Result calculateQuickResult(Expression[] params, ExpressionContext context) {
+  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return null;
   }
 
-  public LookupItem[] calculateLookupItems(Expression[] params, ExpressionContext context) {
+  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     return null;
   }
 }

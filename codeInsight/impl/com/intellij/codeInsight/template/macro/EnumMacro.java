@@ -7,6 +7,7 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Macro;
 import com.intellij.codeInsight.template.Result;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -24,20 +25,18 @@ public class EnumMacro implements Macro{
     return "";
   }
 
-  public Result calculateResult(Expression[] params, ExpressionContext context) {
-    if (params == null || params.length == 0) return null;
-    Result result = params[0].calculateResult(context);
-    return result;
+  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
+    if (params.length == 0) return null;
+    return params[0].calculateResult(context);
   }
 
-  public Result calculateQuickResult(Expression[] params, ExpressionContext context) {
-    if (params == null || params.length == 0) return null;
-    Result result = params[0].calculateQuickResult(context);
-    return result;
+  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
+    if (params.length == 0) return null;
+    return params[0].calculateQuickResult(context);
   }
 
-  public LookupItem[] calculateLookupItems(Expression[] params, ExpressionContext context) {
-    if (params == null || params.length ==0) return null;
+  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
+    if (params.length ==0) return null;
     Set<LookupItem> set = new LinkedHashSet<LookupItem>();
 
     for (Expression param : params) {

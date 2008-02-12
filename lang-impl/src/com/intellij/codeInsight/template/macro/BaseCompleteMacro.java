@@ -36,7 +36,7 @@ public abstract class BaseCompleteMacro implements Macro {
     return "a";
   }
 
-  public final Result calculateResult(Expression[] params, final ExpressionContext context) {
+  public final Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
     return new InvokeActionResult(
       new Runnable() {
         public void run() {
@@ -88,11 +88,11 @@ public abstract class BaseCompleteMacro implements Macro {
     });
   }
 
-  public Result calculateQuickResult(Expression[] params, ExpressionContext context) {
+  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return null;
   }
 
-  public LookupItem[] calculateLookupItems(Expression[] params, ExpressionContext context) {
+  public LookupItem[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     return null;
   }
 
