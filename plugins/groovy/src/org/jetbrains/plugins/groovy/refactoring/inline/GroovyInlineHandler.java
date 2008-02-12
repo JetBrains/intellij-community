@@ -43,7 +43,7 @@ public class GroovyInlineHandler implements InlineHandler {
   public Settings prepareInlineElement(final PsiElement element, Editor editor, boolean invokedOnReference) {
 
     if (element instanceof GrVariable && GroovyRefactoringUtil.isLocalVariable((GrVariable) element)) { 
-      return GroovyInlineVariableUtil.inlineLocalVariableSettings((GrVariable) element, editor);
+      return GroovyInlineVariableUtil.inlineLocalVariableSettings((GrVariable) element, editor, invokedOnReference);
     } else if (element instanceof GrMethod) {
       return GroovyInlineMethodUtil.inlineMethodSettings((GrMethod) element, editor, invokedOnReference);
     } else {

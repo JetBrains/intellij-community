@@ -7,7 +7,7 @@ import com.intellij.psi.*;
  * Date: 13.11.2007
  */
 public class GroovyPsiElementVisitor extends PsiElementVisitor {
-  GroovyElementVisitor myGroovyElementVisitor;
+  protected GroovyElementVisitor myGroovyElementVisitor;
 
   public GroovyPsiElementVisitor(GroovyElementVisitor groovyElementVisitor) {
     myGroovyElementVisitor = groovyElementVisitor;

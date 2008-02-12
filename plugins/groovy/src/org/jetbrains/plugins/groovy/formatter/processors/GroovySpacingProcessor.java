@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2008 JetBrains s.r.o.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,182 +17,110 @@ package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
-import org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 
 /**
  * @author ilyas
  */
-public abstract class GroovySpacingProcessor extends SpacingTokens implements GroovyElementTypes {
+public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
 
-  private static final Spacing NO_SPACING_WITH_NEWLINE = Spacing.createSpacing(0, 0, 0, true, 1);
-  private static final Spacing NO_SPACING = Spacing.createSpacing(0, 0, 0, false, 0);
-  private static final Spacing COMMON_SPACING = Spacing.createSpacing(1, 1, 0, true, 100);
-  private static final Spacing IMPORT_BETWEEN_SPACING = Spacing.createSpacing(0, 0, 1, true, 100);
-  private static final Spacing IMPORT_OTHER_SPACING = Spacing.createSpacing(0, 0, 2, true, 100);
-  private static final Spacing LAZY_SPACING = Spacing.createSpacing(0, 239, 0, true, 100);
+  private static final ThreadLocal<GroovySpacingProcessor> mySharedProcessorAllocator = new ThreadLocal<GroovySpacingProcessor>();
+  protected MyGroovySpacingVisitor myGroovyElementVisitor;
 
-  public static Spacing getSpacing(GroovyBlock child1, GroovyBlock child2, CodeStyleSettings settings) {
+  public GroovySpacingProcessor(GroovyElementVisitor visitor) {
+    super(visitor);
+  }
 
-    ASTNode leftNode = child1.getNode();
-    ASTNode rightNode = child2.getNode();
+  public static Spacing getSpacing(ASTNode node, CodeStyleSettings settings) {
+    GroovySpacingProcessor spacingProcessor = mySharedProcessorAllocator.get();
+    try {
+      if (spacingProcessor == null) {
+        spacingProcessor = new GroovySpacingProcessor(new MyGroovySpacingVisitor(node, settings));
+        mySharedProcessorAllocator.set(spacingProcessor);
+      }
+      spacingProcessor.doInit(node, settings);
+      return spacingProcessor.getResult();
+    }
+    finally {
+      if (spacingProcessor != null) {
+        spacingProcessor.clear();
+      }
+    }
+  }
 
-    /********** Braces ************/
-  
+  private void doInit(ASTNode node, CodeStyleSettings settings) {
+    myGroovyElementVisitor.doInit(node, settings);
+  }
 
-    // For multi-line strings
-    if (!child1.getNode().getTextRange().equals(child1.getTextRange()) ||
-        !child2.getNode().getTextRange().equals(child2.getTextRange())) {
-      return NO_SPACING;
+  private void clear() {
+    myGroovyElementVisitor.clear();
+  }
+
+  private Spacing getResult() {
+    return myGroovyElementVisitor.getResult();
+  }
+
+
+  /**
+   * Visitor to adjust spaces via user Code Style Settings
+   */
+  private static class MyGroovySpacingVisitor extends GroovyElementVisitor {
+    private PsiElement myParent;
+    private CodeStyleSettings mySettings;
+
+    private Spacing myResult;
+    private ASTNode myChild1;
+    private ASTNode myChild2;
+
+    public MyGroovySpacingVisitor(ASTNode node, CodeStyleSettings settings) {
+      mySettings = settings;
+      init(node);
     }
 
-    //For type parameters
-    IElementType leftType = leftNode.getElementType();
-    if (mLT == leftType &&
-        rightNode.getPsi() instanceof GrTypeParameter ||
-        mGT == rightNode.getElementType() &&
-            leftNode.getPsi() instanceof GrTypeParameter ||
-        mIDENT == leftType &&
-            rightNode.getPsi() instanceof GrTypeParameterList) {
-      return NO_SPACING;
-    }
-
-    // For left parentheses in method declarations or calls
-    if (mLPAREN.equals(rightNode.getElementType()) &&
-        rightNode.getPsi().getParent().getNode() != null &&
-        METHOD_DEFS.contains(rightNode.getPsi().getParent().getNode().getElementType())) {
-      return NO_SPACING;
-    }
-
-    if (ARGUMENTS.equals(rightNode.getElementType())) {
-      return NO_SPACING;
-    }
-    // For left square bracket in array declarations and selections by index
-    if ((mLBRACK.equals(rightNode.getElementType()) &&
-        rightNode.getPsi().getParent().getNode() != null &&
-        INDEX_OR_ARRAY.contains(rightNode.getPsi().getParent().getNode().getElementType())) ||
-        ARRAY_DECLARATOR.equals(rightNode.getElementType())) {
-      return NO_SPACING;
-    }
-
-    if (CLASS_MEMBER_DEFS.contains(leftType) && CLASS_BODY_SET.contains(leftNode.getTreeParent().getElementType())) {
-      if (mRCURLY.equals(rightNode.getElementType())) {
-        return Spacing.createSpacing(0, 0, 1, false, 100);
+    private void init(final ASTNode child) {
+      if (child == null) return;
+      ASTNode treePrev = child.getTreePrev();
+      while (treePrev != null && SpacingUtil.isWhiteSpace(treePrev)) {
+        treePrev = treePrev.getTreePrev();
+      }
+      if (treePrev == null) {
+        init(child.getTreeParent());
+      } else {
+        myChild2 = child;
+        myChild1 = treePrev;
+        final CompositeElement parent = (CompositeElement) treePrev.getTreeParent();
+        myParent = SourceTreeToPsiMap.treeElementToPsi(parent);
       }
     }
 
-    if (METHOD_DEFS.contains(leftType)) {
-      return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 100);
+
+    /*
+    Method to start visiting
+     */
+    private void doInit(final ASTNode child, final CodeStyleSettings settings) {
     }
 
-    if (CLASS_MEMBER_DEFS.contains(rightNode.getElementType()) && CLASS_BODY_SET.contains(rightNode.getTreeParent().getElementType())) {
-      if (mLCURLY.equals(leftType)) {
-        return Spacing.createSpacing(0, 0, 1, false, 100);
-      }
+    public MyGroovySpacingVisitor() {
+
     }
 
-    if (METHOD_DEFS.contains(rightNode.getElementType())) {
-      return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 100);
+    protected void clear() {
+      myResult = null;
+      myChild2 = myChild1 = null;
+      myParent = null;
     }
 
-    // For parentheses in arguments and typecasts
-    if (LEFT_BRACES.contains(leftType) ||
-        RIGHT_BRACES.contains(rightNode.getElementType())) {
-      return NO_SPACING_WITH_NEWLINE;
+    protected Spacing getResult() {
+      final Spacing result = myResult;
+      clear();
+      return result;
     }
-    // For type parameters
-    if ((mLT.equals(leftType) || mGT.equals(rightNode.getElementType())) &&
-        leftNode.getPsi().getParent() != null &&
-        leftNode.getPsi().getParent() instanceof GrTypeArgumentList) {
-      return NO_SPACING_WITH_NEWLINE;
-    }
-
-    if (rightNode.getPsi() != null && rightNode.getPsi() instanceof GrTypeArgumentList) {
-      return NO_SPACING_WITH_NEWLINE;
-    }
-
-/********** punctuation marks ************/
-    // For dots, commas etc.
-    if ((PUNCTUATION_SIGNS.contains(rightNode.getElementType())) ||
-        (mCOLON.equals(rightNode.getElementType()) &&
-            !(rightNode.getPsi().getParent() instanceof GrConditionalExpression))) {
-      return NO_SPACING;
-    }
-
-    if (GroovyTokenTypes.DOTS.contains(leftType)) {
-      return NO_SPACING_WITH_NEWLINE;
-    }
-
-/********** imports ************/
-    if (IMPORT_STATEMENT.equals(leftType) &&
-        IMPORT_STATEMENT.equals(rightNode.getElementType())) {
-      return IMPORT_BETWEEN_SPACING;
-    }
-    if ((IMPORT_STATEMENT.equals(leftType) &&
-        (!IMPORT_STATEMENT.equals(rightNode.getElementType()) &&
-            !mSEMI.equals(rightNode.getElementType()))) ||
-        ((!IMPORT_STATEMENT.equals(leftType) &&
-            !mSEMI.equals(leftType)) &&
-            IMPORT_STATEMENT.equals(rightNode.getElementType()))) {
-      return IMPORT_OTHER_SPACING;
-    }
-
-    if (VARIABLE_DEFINITION.equals(leftType) ||
-        VARIABLE_DEFINITION.equals(rightNode.getElementType())) {
-      return Spacing.createSpacing(0, 0, 1, false, 100);
-    }
-
-/********** exclusions ************/
-    // For << and >> ...
-    if ((mLT.equals(leftType) && mLT.equals(rightNode.getElementType())) ||
-        (mGT.equals(leftType) && mGT.equals(rightNode.getElementType()))) {
-      return NO_SPACING_WITH_NEWLINE;
-    }
-
-    // Unary and postfix expressions
-    if (PREFIXES.contains(leftType) ||
-        POSTFIXES.contains(rightNode.getElementType()) ||
-        (PREFIXES_OPTIONAL.contains(leftType) &&
-            leftNode.getPsi().getParent() instanceof GrUnaryExpression)) {
-      return NO_SPACING_WITH_NEWLINE;
-    }
-
-    if (RANGES.contains(leftType) ||
-        RANGES.contains(rightNode.getElementType())) {
-      return NO_SPACING_WITH_NEWLINE;
-    }
-
-    // For Gstrings and regexes
-    if (leftNode.getPsi().getParent() != null &&
-        leftNode.getPsi().getParent().equals(rightNode.getPsi().getParent()) &&
-        leftNode.getPsi().getParent() instanceof GrString
-        ) {
-      return null;
-    }
-
-    if (mGDOC_ASTERISKS == leftType && mGDOC_COMMENT_DATA == rightNode.getElementType()) {
-      String text = rightNode.getText();
-      if (text.length() > 0 && !text.startsWith(" ")) {
-        return COMMON_SPACING;
-      }
-      return NO_SPACING;
-    }
-    IElementType rightType = rightNode.getElementType();
-    if (leftType == mGDOC_TAG_VALUE_TOKEN && rightType == mGDOC_COMMENT_DATA) {
-      return LAZY_SPACING;
-    }
-
-    return COMMON_SPACING;
   }
 
 }
+

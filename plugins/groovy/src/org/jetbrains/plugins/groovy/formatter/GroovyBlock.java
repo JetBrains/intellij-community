@@ -26,7 +26,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.ChameleonElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessor;
+import org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessor1;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -106,7 +106,7 @@ public class GroovyBlock implements Block, GroovyElementTypes {
   @Nullable
   public Spacing getSpacing(Block child1, Block child2) {
     if ((child1 instanceof GroovyBlock) && (child2 instanceof GroovyBlock)) {
-      return GroovySpacingProcessor.getSpacing(((GroovyBlock) child1), ((GroovyBlock) child2), mySettings);
+      return GroovySpacingProcessor1.getSpacing(((GroovyBlock) child1), ((GroovyBlock) child2), mySettings);
     }
     return null;
   }
