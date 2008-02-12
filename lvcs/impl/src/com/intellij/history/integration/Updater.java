@@ -186,34 +186,37 @@ public class Updater implements CacheUpdater {
     StringBuilder b = new StringBuilder();
 
     b.append("already exists!!\n");
-    b.append("file: " + f + "\n");
-    b.append("file.name: " + f.getName() + "\n");
-    b.append("file.parent: " + f.getParent() + "\n");
-    if (f.getParent() != null) b.append("file.parent.name: " + f.getParent().getName() + "\n");
-    b.append("entry: " + e + "\n");
-    b.append("entry.parent: " + e.getParent() + "\n");
-    if (f.getParent() != null) b.append("entry for file.parent: " + myVcs.findEntry(f.getParent().getPath()) + "\n");
+    b.append("file: '" + f + "'\n");
+    b.append("file.name: '" + f.getName() + "'\n");
+    b.append("file.parent: '" + f.getParent() + "'\n");
+    if (f.getParent() != null) b.append("file.parent.name: '" + f.getParent().getName() + "'\n");
+    b.append("entry: '" + e + "'\n");
+    b.append("entry.parent: '" + e.getParent() + "'\n");
+    if (f.getParent() != null) b.append("entry for file.parent: '" + myVcs.findEntry(f.getParent().getPath()) + "'\n");
     b.append("has vcs root: " + hasVcsRoot(f) + "\n");
     b.append("has vfs root: " + hasVfsRoot(e) + "\n");
     b.append("is file allowed: " + !notAllowed(f) + "\n");
     if (f.getParent() != null) b.append("is file parent allowed: " + !notAllowed(f.getParent()) + "\n");
-    log(b, myVfsRoots);
-    log(b, myVcs.getRoots());
+    log(b, "vfs roots:", myVfsRoots);
+    log(b, "vcs roots:", myVcs.getRoots());
+
+    if (f.getParent() != null) log(b, "vfs siblings:", f.getParent().getChildren());
+    log(b, "vcs siblings:", e.getParent().getChildren());
 
     throw new RuntimeException(b.toString());
   }
 
-  private void log(StringBuilder b, VirtualFile[] roots) {
-    b.append("vfs roots:\n");
+  private void log(StringBuilder b, String title, VirtualFile[] roots) {
+    b.append(title + "\n");
     for (VirtualFile r : roots) {
-      b.append("-" + r + "\n");
+      b.append("-'" + r + "'\n");
     }
   }
 
-  private void log(StringBuilder b, List<Entry> roots) {
-    b.append("vcs roots:\n");
+  private void log(StringBuilder b, String title, List<Entry> roots) {
+    b.append(title + "\n");
     for (Entry r : roots) {
-      b.append("-" + r + "\n");
+      b.append("-'" + r + "'\n");
     }
   }
 }
