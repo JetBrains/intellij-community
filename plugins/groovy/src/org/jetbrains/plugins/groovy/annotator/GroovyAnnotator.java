@@ -707,8 +707,14 @@ public class GroovyAnnotator implements Annotator {
     if (targetClass != null && isNeedsDynamic(refExpr, targetClass) && refExpr.resolve() == null) {
       addDynamicAnnotation(annotation, refExpr);
     }
-    if (targetClass != null && targetClass instanceof GrMemberOwner && !(targetClass instanceof GroovyScriptClass)) {
-      annotation.registerFix(new CreateFieldFromUsageFix(refExpr, (GrMemberOwner) targetClass));
+    if (targetClass != null && targetClass instanceof GrMemberOwner) {
+      if (!(targetClass instanceof GroovyScriptClass)) {
+        annotation.registerFix(new CreateFieldFromUsageFix(refExpr, (GrMemberOwner) targetClass));
+      }
+
+      if (refExpr.getParent() instanceof GrCallExpression) {
+        annotation.registerFix(new CreateMethodFromUsageFix(refExpr, (GrMemberOwner) targetClass));
+      }
     }
 
     if (!refExpr.isQualified()) {

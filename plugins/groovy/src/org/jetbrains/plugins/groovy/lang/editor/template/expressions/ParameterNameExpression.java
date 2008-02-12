@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -38,7 +39,9 @@ public class ParameterNameExpression implements Expression {
   }
 
   public Result calculateResult(ExpressionContext context) {
+    PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getEditor().getDocument());
     SuggestedNameInfo info = getNameInfo(context);
+    if (info == null) return new TextResult("p");
     String[] names = info.names;
     if (names.length > 0) {
       return new TextResult(names[0]);
@@ -46,26 +49,28 @@ public class ParameterNameExpression implements Expression {
     return null;
   }
 
+  @Nullable
   private SuggestedNameInfo getNameInfo(ExpressionContext context) {
     Project project = context.getProject();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
     assert file != null;
     PsiElement elementAt = file.findElementAt(context.getStartOffset());
     GrParameter parameter = PsiTreeUtil.getParentOfType(elementAt, GrParameter.class);
-    assert parameter != null;
+    if (parameter == null) return null;
     CodeStyleManager manager = CodeStyleManager.getInstance(project);
     return manager.suggestVariableName(VariableKind.PARAMETER, null, null, parameter.getTypeGroovy());
   }
 
   public Result calculateQuickResult(ExpressionContext context) {
-    return null;
+    return calculateResult(context);
   }
 
   public LookupItem[] calculateLookupItems(ExpressionContext context) {
     SuggestedNameInfo info = getNameInfo(context);
+    if (info == null) return null;
     LookupItem[] result = new LookupItem[info.names.length];
     for (int i = 0; i < result.length; i++) {
-      result[i] = LookupItemUtil.objectToLookupItem(result[i]);
+      result[i] = LookupItemUtil.objectToLookupItem(info.names[i]);
     }
     return result;
   }
