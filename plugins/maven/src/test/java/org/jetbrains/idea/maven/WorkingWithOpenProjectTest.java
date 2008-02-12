@@ -1,9 +1,9 @@
 package org.jetbrains.idea.maven;
 
-import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
@@ -21,10 +21,14 @@ public class WorkingWithOpenProjectTest extends ImportingTestCase {
   }
 
   @Override
-  protected void setUpProject() throws Exception {
-    super.setUpProject();
-    // initialize all components (MavenProjectComponent, Navigator etc.)
-    ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
+  protected void openProject() {
+    ProjectManagerEx.getInstanceEx().openProject(myProject);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    ProjectManager.getInstance().closeProject(myProject);
+    super.tearDown();
   }
 
   public void testShouldNotFailOnNewEmptyPomCreation() throws Exception {
