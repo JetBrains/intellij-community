@@ -40,6 +40,8 @@ import javax.swing.*;
 
 public class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
   private static final Icon ICON = IconLoader.getIcon("/modules/emptyProjectType.png");
+  private static final Icon NODE_ICON_OPEN = IconLoader.getIcon("/nodes/ModuleOpen.png");
+  private static final Icon NODE_ICON_CLOSED = IconLoader.getIcon("/nodes/ModuleClosed.png");
   @NonNls public static final String EMPTY_MODULE = "EMPTY_MODULE";
 
   public EmptyModuleType() {
@@ -67,6 +69,6 @@ public class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
   }
 
   public Icon getNodeIcon(boolean isOpened) {
-    return null;
+    return isOpened ? NODE_ICON_OPEN : NODE_ICON_CLOSED;
   }
 }
