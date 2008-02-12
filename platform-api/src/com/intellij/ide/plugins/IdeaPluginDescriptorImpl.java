@@ -9,11 +9,11 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.JDOMXIncluder;
+import com.intellij.util.xmlb.XmlSerializer;
+import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.Document;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -213,6 +213,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (myExtensions != null || myExtensionsPoints != null) {
       Extensions.getRootArea().getExtensionPoint(Extensions.AREA_LISTENER_EXTENSION_POINT).registerExtension(new AreaListener() {
         public void areaCreated(String areaClass, AreaInstance areaInstance) {
+          if (PluginManager.shouldSkipPlugin(IdeaPluginDescriptorImpl.this)) return;
           final ExtensionsArea area = Extensions.getArea(areaInstance);
           area.registerAreaExtensionsAndPoints(IdeaPluginDescriptorImpl.this, myExtensionsPoints, myExtensions);
         }
