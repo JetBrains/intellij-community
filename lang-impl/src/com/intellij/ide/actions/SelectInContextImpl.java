@@ -2,7 +2,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.SelectInContext;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
@@ -14,7 +13,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,12 +158,12 @@ abstract class SelectInContextImpl implements SelectInContext {
     }
 
     public Object getSelectorInFile() {
-      if (myPsiFile instanceof JspFile) return super.getSelectorInFile();
+      if (myPsiFile.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
+        return super.getSelectorInFile();
+      }
       final int offset = myEditor.getEditor().getCaretModel().getOffset();
 
       if (offset >= 0 && offset < myPsiFile.getTextLength()) {
-        PsiElement javaPsi = myPsiFile.getViewProvider().findElementAt(offset, StdLanguages.JAVA);
-        if (javaPsi != null) return javaPsi;
         return myPsiFile.findElementAt(offset);
       }
       return super.getSelectorInFile();

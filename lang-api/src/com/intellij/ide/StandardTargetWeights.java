@@ -26,7 +26,6 @@ public interface StandardTargetWeights {
   float COMMANDER_WEIGHT = 5;
   float FAVORITES_WEIGHT = 6;
   float SCOPE_WEIGHT = 6.5f;
-  float ASPECTS_WEIGHT = 7;
   float NAV_BAR = 8;
   float CHANGES_VIEW = 9;
 }

@@ -138,7 +138,11 @@
 
   <programRunner implementation="com.intellij.tools.ToolProgramRunner"/>
 
+  <ideRootPaneNorth implementation="com.intellij.ide.navigationToolbar.NavBarRootPaneExtension"/>
   <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension"/>
 
   <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor"/>
+
+  <selectInTarget implementation="com.intellij.ide.navigationToolbar.SelectInNavBarTarget"/>
+  <selectInTarget implementation="com.intellij.ide.impl.StructureViewSelectInTarget"/>
 </extensions>

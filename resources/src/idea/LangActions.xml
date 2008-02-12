@@ -60,12 +60,17 @@
     </group>
 
     <!-- View -->
+    <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
+      <add-to-group group-id="ViewMenu" relative-to-action="ViewStatusBar" anchor="after"/>
+    </action>
+
     <group id="CodeEditorBaseGroup">
       <separator/>
       <group id="CodeEditorViewGroup" class="com.intellij.ide.actions.CodeEditorActionGroup">
         <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
         <action id="QuickJavaDoc" class="com.intellij.codeInsight.documentation.actions.ShowJavaDocInfoAction"/>
         <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction"/>
+        <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
       </group>
       <separator/>
 

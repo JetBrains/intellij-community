@@ -135,12 +135,7 @@
 
     <!-- View -->
 
-    <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
-      <add-to-group group-id="ViewMenu" relative-to-action="ViewStatusBar" anchor="after"/>
-    </action>
-
     <group id="JavaCodeEditorGroup">
-      <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
       <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction"/>
       <action id="EditorContextInfo" class="com.intellij.codeInsight.hint.actions.ShowContainerInfoAction"/>
       <action id="ShowErrorDescription" class="com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction"/>
