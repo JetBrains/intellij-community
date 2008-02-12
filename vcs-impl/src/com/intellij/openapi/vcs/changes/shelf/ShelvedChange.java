@@ -17,10 +17,7 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
@@ -82,7 +79,12 @@ public class ShelvedChange {
       final FilePathImpl beforePath = new FilePathImpl(file, false);
       beforePath.refresh();
       if (myFileStatus != FileStatus.ADDED) {
-        beforeRevision = new CurrentContentRevision(beforePath);
+        beforeRevision = new CurrentContentRevision(beforePath) {
+          @NotNull
+          public VcsRevisionNumber getRevisionNumber() {
+            return new TextRevisionNumber(VcsBundle.message("local.version.title"));
+          }
+        };
       }
       if (myFileStatus != FileStatus.DELETED) {
         final FilePathImpl afterPath = new FilePathImpl(getAbsolutePath(baseDir, myAfterPath), false);
@@ -161,7 +163,23 @@ public class ShelvedChange {
 
     @NotNull
     public VcsRevisionNumber getRevisionNumber() {
-      return VcsRevisionNumber.NULL;
+      return new TextRevisionNumber(VcsBundle.message("shelved.version.name"));
+    }
+  }
+
+  private static class TextRevisionNumber implements VcsRevisionNumber {
+    private final String myText;
+
+    public TextRevisionNumber(final String text) {
+      myText = text;
+    }
+
+    public String asString() {
+      return myText;
+    }
+
+    public int compareTo(final VcsRevisionNumber o) {
+      return 0;
     }
   }
 }
