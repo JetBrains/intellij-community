@@ -22,6 +22,7 @@ package com.intellij.util.io.storage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.io.PagePool;
 import com.intellij.util.io.RandomAccessDataFile;
 
 import java.io.File;
@@ -39,8 +40,8 @@ class DataTable implements Disposable, Forceable {
   private static final int HEADER_WASTE_SIZE_OFFSET = 4;
   private boolean myIsDirty = false;
 
-  public DataTable(final File filePath) throws IOException {
-    myFile = new RandomAccessDataFile(filePath);
+  public DataTable(final File filePath, final PagePool pool) throws IOException {
+    myFile = new RandomAccessDataFile(filePath, pool);
     if (myFile.length() == 0) {
       fillInHeader(CONNECTED_MAGIC, 0);
       myIsDirty = true;

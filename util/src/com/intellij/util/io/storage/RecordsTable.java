@@ -21,6 +21,7 @@ package com.intellij.util.io.storage;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.Forceable;
+import com.intellij.util.io.PagePool;
 import com.intellij.util.io.RandomAccessDataFile;
 import gnu.trove.TIntArrayList;
 
@@ -46,8 +47,8 @@ class RecordsTable implements Disposable, Forceable {
   private TIntArrayList myFreeRecordsList = null;
   private boolean myIsDirty = false;
 
-  public RecordsTable(final File storageFilePath) throws IOException {
-    myStorage = new RandomAccessDataFile(storageFilePath);
+  public RecordsTable(final File storageFilePath, final PagePool pool) throws IOException {
+    myStorage = new RandomAccessDataFile(storageFilePath, pool);
     if (myStorage.length() == 0) {
       cleanRecord(0); // Initialize header
       myIsDirty = true;

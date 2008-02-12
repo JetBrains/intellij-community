@@ -24,6 +24,7 @@ import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.io.PagePool;
 import com.intellij.util.io.RecordDataOutput;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +37,7 @@ public class Storage implements Disposable, Forceable {
   private final Object lock = new Object();
   private final RecordsTable myRecordsTable;
   private DataTable myDataTable;
+  private final PagePool myPool;
 
   public static boolean deleteFiles(String storageFilePath) {
     final File recordsFile = new File(storageFilePath + ".rindex");
@@ -46,6 +48,11 @@ public class Storage implements Disposable, Forceable {
 
   @NotNull
   public static Storage create(String storageFilePath) throws IOException {
+    return create(storageFilePath, PagePool.SHARED);
+  }
+
+  @NotNull
+  public static Storage create(String storageFilePath, PagePool pool) throws IOException {
     final File recordsFile = new File(storageFilePath + ".rindex");
     final File dataFile = new File(storageFilePath + ".data");
 
@@ -63,8 +70,8 @@ public class Storage implements Disposable, Forceable {
     RecordsTable recordsTable = null;
     DataTable dataTable;
     try {
-      recordsTable = new RecordsTable(recordsFile);
-      dataTable = new DataTable(dataFile);
+      recordsTable = new RecordsTable(recordsFile, pool);
+      dataTable = new DataTable(dataFile, pool);
     }
     catch (IOException e) {
       LOG.info(e.getMessage());
@@ -76,15 +83,16 @@ public class Storage implements Disposable, Forceable {
       if (!deleted) {
         throw new IOException("Can't delete caches at: " + storageFilePath);
       }
-      return create(storageFilePath);
+      return create(storageFilePath, pool);
     }
 
-    return new Storage(storageFilePath, recordsTable, dataTable);
+    return new Storage(storageFilePath, recordsTable, dataTable, pool);
   }
 
-  private Storage(String path, RecordsTable recordsTable, DataTable dataTable) {
+  private Storage(String path, RecordsTable recordsTable, DataTable dataTable, final PagePool pool) {
     myRecordsTable = recordsTable;
     myDataTable = dataTable;
+    myPool = pool;
 
     if (myDataTable.isCompactNecessary()) {
       compact(path);
@@ -102,7 +110,7 @@ public class Storage implements Disposable, Forceable {
         newDataFile.createNewFile();
 
         File oldDataFile = new File(path + ".data");
-        DataTable newDataTable = new DataTable(newDataFile);
+        DataTable newDataTable = new DataTable(newDataFile, myPool);
 
         final int count = myRecordsTable.getRecordsCount();
         for (int i = 0; i < count; i++) {
@@ -128,7 +136,7 @@ public class Storage implements Disposable, Forceable {
         }
 
         newDataFile.renameTo(oldDataFile);
-        myDataTable = new DataTable(oldDataFile);
+        myDataTable = new DataTable(oldDataFile, myPool);
       }
       catch (IOException e) {
         LOG.info("Compact failed: " + e.getMessage());

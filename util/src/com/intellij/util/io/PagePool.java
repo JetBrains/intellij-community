@@ -29,13 +29,13 @@ import java.util.*;
 public class PagePool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PagePool");
 
-  private final static int PROTECTED_PAGES = 300;
-  private final static int PROBATIONAL_PAGES = 300;
+  private final int myProtectedPagesLimit;
+  private final int myProbationalPagesLimit;
 
   private final Map<PoolPageKey, Page> myProtectedQueue = new LinkedHashMap<PoolPageKey, Page>() {
     @Override
     protected boolean removeEldestEntry(final Map.Entry<PoolPageKey, Page> eldest) {
-      if (size() > PROTECTED_PAGES) {
+      if (size() > myProtectedPagesLimit) {
         myProbationalQueue.put(eldest.getKey(), eldest.getValue());
         return true;
       }
@@ -48,7 +48,7 @@ public class PagePool {
   private final Map<PoolPageKey, Page> myProbationalQueue = new LinkedHashMap<PoolPageKey, Page>() {
     @Override
     protected boolean removeEldestEntry(final Map.Entry<PoolPageKey, Page> eldest) {
-      if (size() > PROBATIONAL_PAGES) {
+      if (size() > myProbationalPagesLimit) {
         scheduleFinalization(eldest.getValue());
         return true;
       }
@@ -64,6 +64,10 @@ public class PagePool {
   private PoolPageKey lastFinalizedKey = null;
   private Thread myFinalizerThread;
 
+  public PagePool(final int protectedPagesLimit, final int probationalPagesLimit) {
+    myProtectedPagesLimit = protectedPagesLimit;
+    myProbationalPagesLimit = probationalPagesLimit;
+  }
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int hits = 0;
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int cache_misses = 0;
@@ -72,6 +76,7 @@ public class PagePool {
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int finalization_queue_hits = 0;
 
   @NonNls private static final String FINALIZER_THREAD_NAME = "Disk cache finalization queue";
+  public final static PagePool SHARED = new PagePool(500, 500);
 
   @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
   @NotNull

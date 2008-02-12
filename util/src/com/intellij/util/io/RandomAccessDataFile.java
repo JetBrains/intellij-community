@@ -26,11 +26,11 @@ import java.nio.ByteBuffer;
 
 public class RandomAccessDataFile implements Forceable {
   private final static OpenChannelsCache ourCache = new OpenChannelsCache(150, "rw");
-  private final static PagePool ourPool = new PagePool();
   private static int ourFilesCount = 0;
 
   private final int myCount = ourFilesCount++;
   private final File myFile;
+  private final PagePool myPool;
 
   private final byte[] myTypedIOBuffer = new byte[8];
 
@@ -38,6 +38,11 @@ public class RandomAccessDataFile implements Forceable {
   private volatile boolean myIsDirty = false;
 
   public RandomAccessDataFile(final File file) throws IOException {
+    this(file, PagePool.SHARED);
+  }
+
+  public RandomAccessDataFile(final File file, final PagePool pool) throws IOException {
+    myPool = pool;
     myFile = file;
     if (!file.exists()) {
       throw new FileNotFoundException(file.getPath() + " does not exist");
@@ -51,7 +56,7 @@ public class RandomAccessDataFile implements Forceable {
     mySize = Math.max(mySize, addr + len);
 
     while (len > 0) {
-      final Page page = ourPool.alloc(this, addr);
+      final Page page = myPool.alloc(this, addr);
       int written = page.put(addr, bytes, off, len);
       len -= written;
       addr += written;
@@ -61,7 +66,7 @@ public class RandomAccessDataFile implements Forceable {
 
   public void get(long addr, byte[] bytes, int off, int len) {
     while (len > 0) {
-      final Page page = ourPool.alloc(this, addr);
+      final Page page = myPool.alloc(this, addr);
       int read = page.get(addr, bytes, off, len);
       len -= read;
       addr += read;
@@ -167,13 +172,13 @@ public class RandomAccessDataFile implements Forceable {
   }
 
   public void dispose() {
-    ourPool.flushPages(this);
+    myPool.flushPages(this);
     ourCache.closeChannel(myFile);
   }
 
   public void force() {
     if (isDirty()) {
-      ourPool.flushPages(this);
+      myPool.flushPages(this);
       myIsDirty = false;
     }
   }

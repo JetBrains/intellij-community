@@ -32,7 +32,7 @@ public class JavaFilterLexer extends BaseFilterLexer {
       advanceTodoItemCountsInToken();
     }
     else if (JavaTokenType.KEYWORD_BIT_SET.contains(tokenType)) {
-      addOccurrenceInToken(UsageSearchContext.IN_PLAIN_TEXT);
+     // addOccurrenceInToken(UsageSearchContext.IN_PLAIN_TEXT);
     }
 
     myOriginalLexer.advance();

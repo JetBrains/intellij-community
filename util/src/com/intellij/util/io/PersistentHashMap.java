@@ -1,6 +1,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.storage.Storage;
 import org.jetbrains.annotations.NonNls;
@@ -14,9 +15,11 @@ import java.util.Collection;
  *         Date: Dec 18, 2007
  */
 public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
-  private Storage myValueStorage;
+  private final Storage myValueStorage;
   private final DataExternalizer<Value> myValueExternalizer;
-  @NonNls public static final String DATA_FILE_EXTENSION = ".values";
+
+  @NonNls
+  public static final String DATA_FILE_EXTENSION = ".values";
 
   private static class AppendStream extends DataOutputStream {
     private AppendStream() {
@@ -26,12 +29,26 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     public void writeTo(OutputStream stream) throws IOException {
       ((ByteArrayOutputStream)out).writeTo(stream);
     }
+
+    public void reset() {
+      ((ByteArrayOutputStream)out).reset();
+    }
   }
+
+  private final LimitedPool<AppendStream> myStreamPool = new LimitedPool<AppendStream>(10, new LimitedPool.ObjectFactory<AppendStream>() {
+    public AppendStream create() {
+      return new AppendStream();
+    }
+
+    public void cleanup(final AppendStream appendStream) {
+      appendStream.reset();
+    }
+  });
 
   private final SLRUCache<Key, AppendStream> myAppendCache = new SLRUCache<Key, AppendStream>(16 * 1024, 4 * 1024) {
     @NotNull
     public AppendStream createValue(final Key key) {
-      return new AppendStream();
+      return myStreamPool.alloc();
     }
 
     protected void onDropFromCache(final Key key, final AppendStream value) {
@@ -49,6 +66,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
         finally {
           record.close();
         }
+
+        myStreamPool.recycle(value);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
