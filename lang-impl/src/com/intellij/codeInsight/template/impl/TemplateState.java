@@ -564,11 +564,11 @@ public class TemplateState implements Disposable {
 
     replaceString(newValue, start, end, segmentNumber);
 
-    if (result instanceof PsiTypeResult) {
+    if (result instanceof RecalculatableResult) {
       shortenReferences();
       PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-      JavaTemplateUtil.updateTypeBindings(((PsiTypeResult)result).getType(), psiFile, myDocument, mySegments.getSegmentStart(
-        segmentNumber), mySegments.getSegmentEnd(segmentNumber));
+      ((RecalculatableResult) result).handleRecalc(psiFile, myDocument, 
+                                                   mySegments.getSegmentStart(segmentNumber), mySegments.getSegmentEnd(segmentNumber));
     }
   }
 
