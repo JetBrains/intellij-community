@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
@@ -342,6 +343,13 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
 
   @Nullable
+  public static VirtualFile findFileById(Project project, int id) {
+    PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
+    DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
+    return findFileById(dirIndex, fs, id);
+  }
+
+  @Nullable
   private static VirtualFile findFileById(final DirectoryIndex dirIndex, final PersistentFS fs, final int id) {
     if (ourUnitTestMode) {
       final VirtualFile testFile = findTestFile(id);
@@ -553,6 +561,34 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   private static CharSequence loadContent(VirtualFile file) {
     return LoadTextUtil.loadText(file, true);
+  }
+
+  public static <K, V> List<Pair<VirtualFile, V>> collectFilesAndValues(final ID<K, List<V>> indexId, final K key, final Project project,
+                                                                          @Nullable final GlobalSearchScope scope) {
+    final List<Pair<VirtualFile, V>> result = new ArrayList<Pair<VirtualFile,V>>();
+    final DataFilter<K, List<V>> filter =
+      new DataFilter<K, List<V>>() {
+        public List<List<V>> process(final K key, final ValueContainer<List<V>> listValueContainer) {
+          final Iterator<List<V>> listIterator = listValueContainer.getValueIterator();
+          while(listIterator.hasNext()) {
+            final List<V> entryList = listIterator.next();
+            final ValueContainer.IntIterator idIterator = listValueContainer.getInputIdsIterator(entryList);
+            while(idIterator.hasNext()) {
+              final int id = idIterator.next();
+              VirtualFile file = findFileById(project, id);
+              if (file != null && (scope == null || scope.contains(file))) {
+                for(V e: entryList) {
+                  result.add(new Pair<VirtualFile,V>(file, e));                  
+                }
+              }
+            }
+          }
+
+          return Collections.emptyList();
+        }
+      };
+    getInstance().getContainingFiles(indexId, key, project, filter);
+    return result;
   }
 
   private final class ChangedFilesUpdater extends VirtualFileAdapter implements CacheUpdater{
