@@ -61,19 +61,6 @@ public abstract class GroovyUtils {
 
   /**
    * @param module Module to get content root
-   * @return VirtualFile corresponding to content root
-   */
-  @NotNull
-  public static VirtualFile getModuleRoot(@NotNull final Module module) {
-    final VirtualFile[] roots = ModuleRootManager.getInstance(module).getSourceRoots();
-    if (roots.length > 0) {
-      return roots[0];
-    }
-    return (module.getModuleFile().getParent());
-  }
-
-  /**
-   * @param module Module to get content root
    * @return VirtualFile array corresponding to content roots of current module
    */
   @NotNull
