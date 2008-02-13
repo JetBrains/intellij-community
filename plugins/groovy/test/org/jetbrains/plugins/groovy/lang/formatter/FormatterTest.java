@@ -41,10 +41,11 @@ public class FormatterTest extends SimpleGroovyFileSetTestCase {
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.formatter.FormatterTest");
 
-  public FormatterTest() {
-    super(System.getProperty("path") != null ?
-        System.getProperty("path") :
-        DATA_PATH
+  public FormatterTest(String path) {
+    super(path != null ? path :
+        System.getProperty("path") != null ?
+            System.getProperty("path") :
+            DATA_PATH
     );
   }
 
@@ -78,7 +79,7 @@ public class FormatterTest extends SimpleGroovyFileSetTestCase {
 
 
   public static Test suite() {
-    return new FormatterTest();
+    return new FormatterTest(null);
   }
 
 }

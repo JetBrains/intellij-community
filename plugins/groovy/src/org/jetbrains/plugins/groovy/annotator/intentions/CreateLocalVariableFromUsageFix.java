@@ -83,7 +83,7 @@ public class CreateLocalVariableFromUsageFix implements IntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiClassType type = PsiManager.getInstance(project).getElementFactory().createTypeByFQClassName("Object", GlobalSearchScope.allScope(project));
     GrVariableDeclaration decl = GroovyPsiElementFactory.getInstance(project).createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY,
-        myRefExpression.getReferenceName(), null, type);
+        null, type, myRefExpression.getReferenceName());
     int offset = myRefExpression.getTextRange().getStartOffset();
     GrStatement anchor = findAnchor(file, offset);
 

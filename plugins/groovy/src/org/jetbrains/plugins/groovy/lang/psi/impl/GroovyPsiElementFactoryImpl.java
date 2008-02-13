@@ -81,7 +81,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
     return (GrExpression) ((GroovyFileBase) file).getTopStatements()[0];
   }
 
-  public GrVariableDeclaration createVariableDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type) {
+  public GrVariableDeclaration createVariableDeclaration(String[] modifiers, GrExpression initializer, PsiType type, String... identifiers) {
     StringBuffer text = writeModifiers(modifiers);
 
     if (type != null) {
@@ -98,7 +98,14 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
       text.append("def ");
     }
 
-    text.append(identifier);
+    int i = 1;
+    for (String identifier : identifiers) {
+      text.append(identifier);
+      if (i < identifiers.length) {
+        text.append(", ");
+      }
+      i++;
+    }
     GrExpression expr;
 
     if (initializer != null) {
@@ -108,14 +115,14 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
         expr = initializer;
       }
       text.append(" = ").append(expr.getText());
-    } 
+    }
 
     PsiFile file = createGroovyFile(text.toString());
     return ((GrVariableDeclaration) ((GroovyFileBase) file).getTopStatements()[0]);
   }
 
   public GrVariableDeclaration createFieldDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type) {
-    final String varDeclaration = createVariableDeclaration(modifiers, identifier, initializer, type).getText();
+    final String varDeclaration = createVariableDeclaration(modifiers, initializer, type, identifier).getText();
 
     final GroovyFileBase file = (GroovyFileBase) createGroovyFile("class A { " + varDeclaration + "}");
     final GrTypeDefinitionBody body = file.getTypeDefinitions()[0].getBody();
@@ -153,8 +160,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
     return (GrClosableBlock) node.getPsi();
   }
 
-  private GroovyFileImpl createDummyFile(String s, boolean  isPhisical) {
-    return (GroovyFileImpl) PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), GroovyFileType.GROOVY_FILE_TYPE, s, System.currentTimeMillis() , isPhisical);
+  private GroovyFileImpl createDummyFile(String s, boolean isPhisical) {
+    return (GroovyFileImpl) PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), GroovyFileType.GROOVY_FILE_TYPE, s, System.currentTimeMillis(), isPhisical);
   }
 
   private GroovyFileImpl createDummyFile(String s) {
@@ -199,7 +206,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
 
     if (topStatements == null || topStatements.length == 0) throw new IncorrectOperationException("");
     GrTopStatement statement = topStatements[0];
-    
+
     if (!(statement instanceof GrVariableDeclaration)) throw new IncorrectOperationException("");
     GrVariableDeclaration decl = (GrVariableDeclaration) statement;
     return decl.getTypeElementGroovy();
@@ -207,7 +214,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
 
   public GrTypeElement createTypeElement(PsiType type) throws IncorrectOperationException {
     final String typeText = getTypeText(type);
-    if (typeText == null) throw new IncorrectOperationException("Cannot create type element: cannot obtain text for type");
+    if (typeText == null)
+      throw new IncorrectOperationException("Cannot create type element: cannot obtain text for type");
     return createTypeElement(typeText);
   }
 
@@ -259,7 +267,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
   }
 
   public PsiFile createGroovyFile(String idText) {
-   return createGroovyFile(idText, false, null);
+    return createGroovyFile(idText, false, null);
   }
 
   public GroovyFile createGroovyFile(String idText, boolean isPhisical, PsiElement context) {

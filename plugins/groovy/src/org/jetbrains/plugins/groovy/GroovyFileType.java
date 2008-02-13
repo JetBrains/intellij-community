@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,7 @@ import javax.swing.*;
 public class GroovyFileType extends LanguageFileType {
 
   public static final GroovyFileType GROOVY_FILE_TYPE = new GroovyFileType();
+  public static final Language GROOVY_LANGUAGE = GROOVY_FILE_TYPE.getLanguage();
   public static final Icon GROOVY_LOGO = GroovyIcons.FILE_TYPE;
   public static final String DEFAULT_EXTENSION = "groovy";
 

@@ -8,7 +8,7 @@ println result
 -----
 def cond = true
 
-result = <caret>testMethod(cond)
+boolean result = <caret>testMethod(cond)
 
 println result
 

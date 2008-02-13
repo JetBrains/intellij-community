@@ -162,8 +162,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     final boolean replaceAllOccurrences = settings.isReplaceAllOccurrences();
 
     // Generating varibable declaration
-    final GrVariableDeclaration varDecl = factory.createVariableDeclaration(isFinal ? new String[]{PsiModifier.FINAL} : null, varName,
-        GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), varType);
+    final GrVariableDeclaration varDecl = factory.createVariableDeclaration(isFinal ? new String[]{PsiModifier.FINAL} : null, GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), varType, varName
+    );
 
     runRefactoring(selectedExpr, editor, tempContainer, occurrences, varName, varType, replaceAllOccurrences, varDecl);
 

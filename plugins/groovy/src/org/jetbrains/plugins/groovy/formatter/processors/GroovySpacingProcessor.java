@@ -20,8 +20,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 
 /**
@@ -32,7 +36,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
   private static final ThreadLocal<GroovySpacingProcessor> mySharedProcessorAllocator = new ThreadLocal<GroovySpacingProcessor>();
   protected MyGroovySpacingVisitor myGroovyElementVisitor;
 
-  public GroovySpacingProcessor(GroovyElementVisitor visitor) {
+  private GroovySpacingProcessor(GroovyElementVisitor visitor) {
     super(visitor);
   }
 
@@ -54,7 +58,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
   }
 
   private void doInit(ASTNode node, CodeStyleSettings settings) {
-    myGroovyElementVisitor.doInit(node, settings);
+    myGroovyElementVisitor.doInit();
   }
 
   private void clear() {
@@ -98,15 +102,34 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
       }
     }
 
-
     /*
     Method to start visiting
      */
-    private void doInit(final ASTNode child, final CodeStyleSettings settings) {
-    }
+    private void doInit() {
+      if (myChild1.getPsi().getLanguage() != GROOVY_LANGUAGE ||
+          myChild2.getPsi().getLanguage() != GROOVY_LANGUAGE) {
+        return;
+      }
 
-    public MyGroovySpacingVisitor() {
-
+      if (myChild2 != null && mySettings.KEEP_FIRST_COLUMN_COMMENT && SpacingUtil.COMMENT_BIT_SET.contains(myChild2.getElementType())) {
+        myResult = Spacing.createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, 1);
+      } else {
+        if (myParent instanceof GroovyPsiElement) {
+          ((GroovyPsiElement) myParent).accept(this);
+          if (myResult == null) {
+            final ASTNode prev = SpacingUtil.getPrevElementType(myChild2);
+            if (prev != null && prev.getElementType() == GroovyTokenTypes.mSL_COMMENT) {
+              myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+            } else if (!CodeEditUtil.canStickChildrenTogether(myChild1, myChild2)) {
+              myResult = Spacing.createSpacing(1, Integer.MIN_VALUE, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+            } else if (myChild1.getElementType() == GroovyTokenTypes.mML_COMMENT) {
+              myResult = null;
+            } else if (!SpacingUtil.shouldKeepSpace(myParent)) {
+              myResult = Spacing.createSpacing(0, 0, 0, true, mySettings.KEEP_BLANK_LINES_IN_CODE);
+            }
+          }
+        }
+      }
     }
 
     protected void clear() {

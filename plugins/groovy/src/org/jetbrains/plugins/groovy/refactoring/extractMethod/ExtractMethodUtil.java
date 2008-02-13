@@ -74,10 +74,10 @@ public class ExtractMethodUtil {
     GrMethodCallExpression callExpression = createMethodCallByHelper(methodName, helper);
     if ((name == null || type == PsiType.VOID) && !helper.isReturnStatement()) return callExpression;
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
-    if (helper.isReturnStatement()){
-      return  factory.createStatementFromText("return " + callExpression.getText());
+    if (helper.isReturnStatement()) {
+      return factory.createStatementFromText("return " + callExpression.getText());
     } else if (name != null && mustAddVariableDeclaration(statements, name)) {
-      return factory.createVariableDeclaration(new String[0], name, callExpression, type.equalsToText("java.lang.Object") ? null : type);
+      return factory.createVariableDeclaration(new String[0], callExpression, type.equalsToText("java.lang.Object") ? null : type, name);
     } else {
       return factory.createExpressionFromText(name + "= " + callExpression.getText());
     }
@@ -137,6 +137,14 @@ public class ExtractMethodUtil {
   To declare or not a variable to which method call result will be assigned.
    */
   private static boolean mustAddVariableDeclaration(@NotNull GrStatement[] statements, @NotNull String varName) {
+    for (GrStatement statement : statements) {
+      if (statement instanceof GrVariableDeclaration) {
+        GrVariableDeclaration declaration = (GrVariableDeclaration) statement;
+        for (GrVariable variable : declaration.getVariables()) {
+          if (varName.equals(variable.getName())) return true;
+        }
+      }
+    }
     return ResolveUtil.resolveProperty(statements[0], varName) == null;
   }
 
@@ -214,7 +222,7 @@ public class ExtractMethodUtil {
     if (type != PsiType.VOID && outputName != null && !outputIsParameter &&
         !mustAddVariableDeclaration(helper.getStatements(), outputName) &&
         !containVariableDeclaration(helper.getStatements(), outputName)) {
-      GrVariableDeclaration decl = factory.createVariableDeclaration(new String[0], outputName, null, type);
+      GrVariableDeclaration decl = factory.createVariableDeclaration(new String[0], null, type, outputName);
       buffer.append(decl.getText()).append("\n");
     }
     if (!ExtractMethodUtil.isSingleExpression(helper.getStatements())) {
@@ -400,7 +408,7 @@ public class ExtractMethodUtil {
     return visibility + (helper.isStatic() ? "static " : "");
   }
 
-  static boolean isReturnStatement(GrStatement statement, Collection<GrReturnStatement> returnStatements){
+  static boolean isReturnStatement(GrStatement statement, Collection<GrReturnStatement> returnStatements) {
     if (statement instanceof GrReturnStatement) return true;
     if (statement instanceof GrIfStatement) {
       boolean checked = GroovyInlineMethodUtil.checkTailIfStatement(((GrIfStatement) statement), returnStatements);
