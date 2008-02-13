@@ -290,7 +290,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     PsiElement insertedElement = insertedInfo.getSecond();
     final CompletionContext context = insertedInfo.getFirst();
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, context);
-    final CompletionParameters parameters = new CompletionParameters(insertedElement, context.file);
+    final CompletionParametersImpl parameters = new CompletionParametersImpl(insertedElement, context.file);
     final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>((Collection)CompletionService.getCompletionService().
       getQueryFactory(myCompletionType, parameters).
       createQuery(parameters).findAll());
