@@ -395,15 +395,7 @@ public class PsiUtil {
   }
 
   public static boolean isStaticsOK(PsiModifierListOwner owner, PsiElement place) {
-    PsiElement run = place;
-    if (owner.hasModifierProperty(PsiModifier.STATIC)) {
-      if (place instanceof GrReferenceExpression && ((GrReferenceExpression) place).getQualifierExpression() == null) {
-        while (run != null && run != owner) {
-          if (run instanceof GrClosableBlock) return false;
-          run = run.getContext();
-        }
-      }
-    } else {
+    if (!owner.hasModifierProperty(PsiModifier.STATIC)) {
       if (place instanceof GrReferenceExpression) {
         GrExpression qualifier = ((GrReferenceExpression) place).getQualifierExpression();
         if (qualifier instanceof GrReferenceExpression) {
