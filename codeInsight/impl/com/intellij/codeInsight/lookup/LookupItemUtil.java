@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -105,9 +104,8 @@ public class LookupItemUtil{
     LookupItem item = new LookupItem(object, "");
     if (object instanceof PsiElement){
       PsiElement element = (PsiElement) object;
-      if(element.getUserData(PsiUtil.ORIGINAL_KEY) != null){
-        element = element.getUserData(PsiUtil.ORIGINAL_KEY);
-        object = element;
+      if(element instanceof PsiClass){
+        object = element = CompletionUtil.getOriginalElement(element);
         item = new LookupItem(object, "");
       }
       s = PsiUtilBase.getName(element);

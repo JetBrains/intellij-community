@@ -4,7 +4,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.CompletionVariantPeerImpl;
+import com.intellij.codeInsight.completion.JavaAwareCompletionData;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
@@ -475,7 +475,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     final LookupItem<PsiClass> lookup = LookupElementFactoryImpl.getInstance().createLookupElement(clazz, name);
     lookup.setInsertHandler(FQN_INSERT_HANDLER);
     lookup.setLookupString(clazz.getName());
-    return CompletionVariantPeerImpl.setShowFQN(lookup).setTailType(TailType.NONE);
+    return JavaAwareCompletionData.setShowFQN(lookup).setTailType(TailType.NONE);
    }
 
   public LocalQuickFix[] getQuickFixes() {

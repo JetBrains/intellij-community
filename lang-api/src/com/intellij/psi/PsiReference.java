@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,10 +96,10 @@ public interface PsiReference {
   boolean isReferenceTo(PsiElement element);
 
   /**
-   * Returns the array of String, {@link PsiElement} and/or {@link com.intellij.psi.infos.CandidateInfo}
+   * Returns the array of String, {@link PsiElement} and/or {@link LookupElement}
    * instances representing all identifiers that are visible at the location of the reference. The contents
    * of the returned array is used to build the lookup list for basic code completion. (The list
-   * of visible identifiers must not be filtered by the completion prefix string - the
+   * of visible identifiers may not be filtered by the completion prefix string - the
    * filtering is performed later by IDEA core.)
    *
    * @return the array of available identifiers.

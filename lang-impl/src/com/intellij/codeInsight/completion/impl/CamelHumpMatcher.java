@@ -5,7 +5,6 @@
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.completion.CompletionVariantPeerImpl;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -49,7 +48,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
     //todo dirty hack
     if (result && itemCaseInsensitive) {
       final String currentString = item.getLookupString();
-      final String newString = CompletionVariantPeerImpl.handleCaseInsensitiveVariant(myPrefix, currentString);
+      final String newString = handleCaseInsensitiveVariant(myPrefix, currentString);
       item.setLookupString(newString);
       if (item.getObject().equals(currentString)) {
         ((LookupItem)item).setObject(newString);
@@ -61,5 +60,23 @@ public class CamelHumpMatcher extends PrefixMatcher {
   @NotNull
   public String getPrefix() {
     return myPrefix;
+  }
+
+  public static String handleCaseInsensitiveVariant(final String prefix, final String uniqueText) {
+    final int length = prefix.length();
+    if (length == 0) return uniqueText;
+    boolean isAllLower = true;
+    boolean isAllUpper = true;
+    boolean sameCase = true;
+    for (int i = 0; i < length && (isAllLower || isAllUpper || sameCase); i++) {
+      final char c = prefix.charAt(i);
+      isAllLower = isAllLower && Character.isLowerCase(c);
+      isAllUpper = isAllUpper && Character.isUpperCase(c);
+      sameCase = sameCase && Character.isLowerCase(c) == Character.isLowerCase(uniqueText.charAt(i));
+    }
+    if (sameCase) return uniqueText;
+    if (isAllLower) return uniqueText.toLowerCase();
+    if (isAllUpper) return uniqueText.toUpperCase();
+    return uniqueText;
   }
 }

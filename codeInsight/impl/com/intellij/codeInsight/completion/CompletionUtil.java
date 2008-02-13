@@ -2,8 +2,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -26,6 +26,7 @@ import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.position.SuperParentFilter;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
@@ -39,6 +40,7 @@ import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Compiler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -85,10 +87,16 @@ public class CompletionUtil {
   public static final @NonNls String DUMMY_IDENTIFIER = "IntellijIdeaRulezzz ";
   public static final @NonNls String DUMMY_IDENTIFIER_TRIMMED = DUMMY_IDENTIFIER.trim();
   public static final Key<String> COMPLETION_PREFIX = Key.create("Completion prefix");
-  public static final Key<PsiElement> COPY_KEY = Key.create("COPY_KEY");
+  public static final Key<PsiElement> ORIGINAL_KEY = Key.create("ORIGINAL_KEY");
 
   public static PsiType getQualifierType(LookupItem item) {
     return (PsiType)item.getAttribute(QUALIFIER_TYPE_ATTR);
+  }
+
+  @NotNull
+  public static <T extends PsiElement> T getOriginalElement(@NotNull T element) {
+    final T data = (T)element.getUserData(ORIGINAL_KEY);
+    return data != null ? data : element;
   }
 
   public static void setQualifierType(LookupItem item, PsiType type) {
@@ -503,4 +511,57 @@ public class CompletionUtil {
   }
 
 
+  @SuppressWarnings({"unchecked"})
+  @NotNull
+  public static <T extends PsiType> T originalize(@NotNull T type) {
+    return (T)type.accept(new PsiTypeVisitor<PsiType>() {
+
+      public PsiType visitArrayType(final PsiArrayType arrayType) {
+        return new PsiArrayType(originalize(arrayType.getComponentType()));
+      }
+
+      public PsiType visitCapturedWildcardType(final PsiCapturedWildcardType capturedWildcardType) {
+        return PsiCapturedWildcardType.create(originalize(capturedWildcardType.getWildcard()), capturedWildcardType.getContext());
+      }
+
+      public PsiType visitClassType(final PsiClassType classType) {
+        final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
+        final PsiClass psiClass = classResolveResult.getElement();
+        final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
+        if (psiClass == null) return classType;
+
+        return new PsiImmediateClassType(getOriginalElement(psiClass), originalize(substitutor));
+      }
+
+      public PsiType visitEllipsisType(final PsiEllipsisType ellipsisType) {
+        return new PsiEllipsisType(originalize(ellipsisType.getComponentType()));
+      }
+
+      public PsiType visitPrimitiveType(final PsiPrimitiveType primitiveType) {
+        return primitiveType;
+      }
+
+      public PsiType visitType(final PsiType type) {
+        return type;
+      }
+
+      public PsiType visitWildcardType(final PsiWildcardType wildcardType) {
+        final PsiType bound = wildcardType.getBound();
+        final PsiManager manager = wildcardType.getManager();
+        if (bound == null) return PsiWildcardType.createUnbounded(manager);
+        return wildcardType.isExtends() ? PsiWildcardType.createExtends(manager, bound) : PsiWildcardType.createSuper(manager, bound);
+      }
+    });
+  }
+
+  public static PsiSubstitutor originalize(@Nullable final PsiSubstitutor substitutor) {
+    if (substitutor == null) return null;
+
+    PsiSubstitutor originalSubstitutor = PsiSubstitutor.EMPTY;
+    for (final Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
+      final PsiType value = entry.getValue();
+      originalSubstitutor = originalSubstitutor.put(getOriginalElement(entry.getKey()), value == null ? null : originalize(value));
+    }
+    return originalSubstitutor;
+  }
 }

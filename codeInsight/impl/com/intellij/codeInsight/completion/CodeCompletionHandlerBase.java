@@ -2,16 +2,14 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.impl.CompletionService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,10 +24,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,9 +33,6 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @see #notifyAll()
- */
 abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
   private static final Key<Class<? extends CodeCompletionHandlerBase>> COMPLETION_HANDLER_CLASS_KEY =
@@ -358,16 +351,10 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   private static PsiElement findElementAt(final PsiFile fileCopy, int startOffset) {
-    final PsiElement element;
-    if (CodeInsightUtil.isAntFile(fileCopy)) {
-      //need xml element but ant reference
-      //TODO: need a better way of handling this
-      final ASTNode fileNode = fileCopy.getViewProvider().getPsi(StdLanguages.XML).getNode();
-      assert fileNode != null;
-      element = fileNode.findLeafElementAt(startOffset).getPsi();
-    }
-    else {
-      element = fileCopy.findElementAt(startOffset);
+    PsiElement element = fileCopy.findElementAt(startOffset);
+    if (element instanceof MetadataPsiElementBase) {
+      final PsiElement source = ((MetadataPsiElementBase)element).getSourceElement();
+      return source.findElementAt(startOffset - source.getTextRange().getStartOffset());
     }
     return element;
   }
@@ -428,53 +415,33 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   protected PsiFile createFileCopy(PsiFile file) {
-    if (file instanceof PsiJavaFile) {
-      final JavaElementVisitor visitor = new JavaRecursiveElementVisitor() {
-        @Override public void visitClass(PsiClass aClass) {
-          aClass.putCopyableUserData(PsiUtil.ORIGINAL_KEY, aClass);
-          super.visitClass(aClass);
-        }
+    final PsiElementVisitor originalVisitor = new PsiRecursiveElementVisitor() {
+      public void visitElement(final PsiElement element) {
+        if (element instanceof LeafElement) return;
 
-        @Override public void visitVariable(PsiVariable variable) {
-          variable.putCopyableUserData(PsiUtil.ORIGINAL_KEY, variable);
-          super.visitVariable(variable);
-        }
+        element.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, element);
+        super.visitElement(element);
+      }
+    };
+    originalVisitor.visitFile(file);
 
-        @Override public void visitMethod(PsiMethod method) {
-          method.putCopyableUserData(PsiUtil.ORIGINAL_KEY, method);
-          super.visitMethod(method);
-        }
-      };
-      visitor.visitFile(file);
-    }
-
-    if (file instanceof XmlFile) {
-      final XmlElementVisitor xmlVisitor = new XmlRecursiveElementVisitor() {
-        @Override public void visitXmlTag(XmlTag tag) {
-          tag.putCopyableUserData(PsiUtil.ORIGINAL_KEY, tag);
-          super.visitXmlTag(tag);
-        }
-      };
-      xmlVisitor.visitFile(file);
-    }
 
     final PsiFile fileCopy = (PsiFile)file.copy();
 
-    final PsiElementVisitor copyVisitor = new JavaRecursiveElementVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-        visitExpression(expression);
+    final PsiElementVisitor copyVisitor = new PsiRecursiveElementVisitor() {
+
+      public void visitElement(final PsiElement element) {
+        if (element instanceof LeafElement) return;
+
+        final PsiElement originalElement = element.getCopyableUserData(CompletionUtil.ORIGINAL_KEY);
+        if (originalElement != null) {
+          originalElement.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, null);
+          element.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, null);
+          element.putUserData(CompletionUtil.ORIGINAL_KEY, originalElement);
+        }
+        super.visitElement(element);
       }
 
-      @Override public void visitClass(PsiClass aClass) {
-        final PsiElement originalElement = aClass.getCopyableUserData(PsiUtil.ORIGINAL_KEY);
-        if (originalElement != null) {
-          originalElement.putCopyableUserData(PsiUtil.ORIGINAL_KEY, null);
-          originalElement.putUserData(CompletionUtil.COPY_KEY, aClass);
-          aClass.putCopyableUserData(PsiUtil.ORIGINAL_KEY, null);
-          aClass.putUserData(PsiUtil.ORIGINAL_KEY, originalElement);
-        }
-        super.visitClass(aClass);
-      }
     };
     copyVisitor.visitFile(fileCopy);
     return fileCopy;

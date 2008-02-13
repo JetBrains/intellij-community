@@ -35,7 +35,10 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
         if (doc != null) {
           //[ven] this is a really NASTY hack; when no smart pointer is kept on UsageInfo then remove this conditional
           if (!(element instanceof PsiFile)) {
-            LOG.assertTrue(!psiDocumentManager.isUncommited(doc) || ((PsiDocumentManagerImpl)psiDocumentManager).isCommittingDocument(doc));
+            if (psiDocumentManager.isUncommited(doc) &&
+                             !((PsiDocumentManagerImpl)psiDocumentManager).isCommittingDocument(doc)) {
+              LOG.assertTrue(false, element);
+            }
           }
         }
       }

@@ -14,7 +14,6 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.Nullable;
 
-@Deprecated
 public class CompletionContext implements Cloneable {
   public static final Key<CompletionContext> COMPLETION_CONTEXT_KEY = Key.create("CompletionContext");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionContext");

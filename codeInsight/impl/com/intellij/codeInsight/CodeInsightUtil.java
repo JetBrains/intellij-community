@@ -243,10 +243,12 @@ public class CodeInsightUtil {
 
   private static void getSubtypes(final PsiElement context, final PsiClassType baseType, final int arrayDim,
                                   final boolean getRawSubtypes, final Set<PsiType> result){
-    final PsiClassType.ClassResolveResult baseResult = baseType.resolveGenerics();
+    final PsiClassType.ClassResolveResult baseResult = CompletionUtil.originalize(baseType).resolveGenerics();
     final PsiClass baseClass = baseResult.getElement();
     final PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
     if(baseClass == null) return;
+
+
 
     final Query<PsiClass> query = new FilteredQuery<PsiClass>(
       ClassInheritorsSearch.search(baseClass, context.getResolveScope(), true, false, false), new Condition<PsiClass>() {
@@ -262,12 +264,6 @@ public class CodeInsightUtil {
     query.forEach(new Processor<PsiClass>() {
       public boolean process(PsiClass inheritor) {
         if(!facade.getResolveHelper().isAccessible(inheritor, context, null)) return true;
-
-        if(inheritor.getUserData(CompletionUtil.COPY_KEY) != null){
-          final PsiClass newClass = (PsiClass) inheritor.getUserData(CompletionUtil.COPY_KEY);
-          if(newClass.isValid())
-            inheritor = newClass;
-        }
 
         if(inheritor.getQualifiedName() == null && !manager.areElementsEquivalent(inheritor.getContainingFile(), context.getContainingFile())){
           return true;

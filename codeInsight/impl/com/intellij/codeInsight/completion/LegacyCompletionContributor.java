@@ -52,7 +52,7 @@ public class LegacyCompletionContributor extends CompletionContributor{
         if (lookupSet.isEmpty() || !CodeInsightUtil.isAntFile(file)) {
           final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
           completionData.addKeywordVariants(keywordVariants, insertedElement, context.file);
-          CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), context.file);
+          completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), context.file);
         }
         result.addAllElements(lookupSet);
       }

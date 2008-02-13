@@ -33,10 +33,8 @@ public class CompletionVariant {
   private final Set<Class> myScopeClassExceptions = new HashSet<Class>();
   private InsertHandler myInsertHandler = null;
   private final Map<Object, Serializable> myItemProperties = new HashMap<Object, Serializable>();
-  private final CompletionVariantPeer myPeer;
 
   public CompletionVariant() {
-    myPeer = new CompletionVariantPeerImpl(this);
   }
 
   public CompletionVariant(Class scopeClass, ElementPattern position){
@@ -48,7 +46,6 @@ public class CompletionVariant {
       includeScopeClass(JspClassLevelDeclarationStatement.class); // hack for JSP completion
     }
     myPosition = position;
-    myPeer = new CompletionVariantPeerImpl(this);
   }
 
   public CompletionVariant(ElementPattern<? extends PsiElement> position){
@@ -56,7 +53,6 @@ public class CompletionVariant {
   }
   public CompletionVariant(ElementFilter position){
     myPosition = position;
-    myPeer = new CompletionVariantPeerImpl(this);
   }
 
   public boolean isScopeAcceptable(PsiElement scope){
@@ -185,35 +181,21 @@ public class CompletionVariant {
     return isScopeAcceptable(scope) && myPosition.isAcceptable(position, scope);
   }
 
-  public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, final PrefixMatcher matcher, final PsiFile file){
+  public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, final PrefixMatcher matcher, final PsiFile file,
+                                      final CompletionData completionData){
     for (final CompletionVariantItem ce : myCompletionsList) {
-      addReferenceCompletions(reference, position, set, ce, matcher, file);
+      if(ce.myCompletion instanceof ElementFilter){
+        final ElementFilter filter = (ElementFilter)ce.myCompletion;
+        completionData.completeReference(reference, position, set, ce.myTailType, matcher, file, filter, this);
+      }
     }
   }
 
-  public void addKeywords(Set<LookupItem> set, PsiElement position, final PrefixMatcher matcher, final PsiFile file){
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
+  public void addKeywords(Set<LookupItem> set, PsiElement position, final PrefixMatcher matcher, final PsiFile file,
+                          final CompletionData completionData){
+
     for (final CompletionVariantItem ce : myCompletionsList) {
-      final Object comp = ce.myCompletion;
-      if (comp instanceof String) {
-        myPeer.addKeyword(factory, set, ce.myTailType, comp, matcher, file);
-      }
-      else {
-        final CompletionContext context = position.getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-        if (comp instanceof ContextGetter) {
-          final Object[] elements = ((ContextGetter)comp).get(position, context);
-          for (Object element : elements) {
-            myPeer.addLookupItem(set, ce.myTailType, element, matcher, file);
-          }
-        }
-        // TODO: KeywordChooser -> ContextGetter
-        else if (comp instanceof KeywordChooser) {
-          final String[] keywords = ((KeywordChooser)comp).getKeywords(context, position);
-          for (String keyword : keywords) {
-            myPeer.addKeyword(factory, set, ce.myTailType, keyword, matcher, file);
-          }
-        }
-      }
+      completionData.addKeywords(set, position, matcher, file, this, ce.myCompletion, ce.myTailType);
     }
   }
 
@@ -233,11 +215,6 @@ public class CompletionVariant {
       }
     }
     return false;
-  }
-
-  protected void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, CompletionVariantItem item, final PrefixMatcher matcher,
-                                         final PsiFile file){
-    myPeer.addReferenceCompletions(reference, position, set, item.myCompletion, item.myTailType, matcher, file);
   }
 
 
@@ -273,4 +250,5 @@ public class CompletionVariant {
   public void setCaseInsensitive(boolean caseInsensitive) {
     setItemProperty(LookupItem.CASE_INSENSITIVE, caseInsensitive);
   }
+
 }

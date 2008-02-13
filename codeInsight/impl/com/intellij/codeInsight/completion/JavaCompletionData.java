@@ -23,7 +23,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.jsp.JspElementType;
 import org.jetbrains.annotations.NonNls;
 
-public class JavaCompletionData extends CompletionData{
+public class JavaCompletionData extends JavaAwareCompletionData{
 
   private static final @NonNls String[] ourBlockFinalizers = {"{", "}", ";", ":", "else"};
 

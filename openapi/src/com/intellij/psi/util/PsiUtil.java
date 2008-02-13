@@ -55,7 +55,6 @@ public final class PsiUtil extends PsiUtilBase {
   public static final int ACCESS_LEVEL_PACKAGE_LOCAL = 2;
   public static final int ACCESS_LEVEL_PRIVATE = 1;
   public static final Key<Boolean> VALID_VOID_TYPE_IN_CODE_FRAGMENT = Key.create("VALID_VOID_TYPE_IN_CODE_FRAGMENT");
-  public static final Key<PsiElement> ORIGINAL_KEY = Key.create("ORIGINAL_KEY");
   public static final PsiParser NULL_PARSER = new PsiParser() {
     @NotNull
     public ASTNode parse(IElementType root, PsiBuilder builder) {

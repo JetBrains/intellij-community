@@ -36,7 +36,7 @@ import java.util.*;
  * Time: 18:55:15
  * To change this template use Options | File Templates.
  */
-public class XmlCompletionData extends CompletionData {
+public class XmlCompletionData extends JavaAwareCompletionData {
   public XmlCompletionData() {
     declareFinalScope(XmlTag.class);
     declareFinalScope(XmlAttribute.class);

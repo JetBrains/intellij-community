@@ -133,7 +133,7 @@ public class JavaCompletionContributor extends CompletionContributor{
           SMART_DATA.completeReference(ref, set, identifierCopy, result.getPrefixMatcher(), file, context.offset);
         }
         SMART_DATA.addKeywordVariants(keywordVariants, identifierCopy, file);
-        CompletionData.completeKeywordsBySet(set, keywordVariants, identifierCopy, result.getPrefixMatcher(), file);
+        SMART_DATA.completeKeywordsBySet(set, keywordVariants, identifierCopy, result.getPrefixMatcher(), file);
         CompletionUtil.highlightMembersOfContainer(set);
         result.addAllElements(set);
       }
@@ -157,7 +157,7 @@ public class JavaCompletionContributor extends CompletionContributor{
         if (lookupSet.isEmpty() || !CodeInsightUtil.isAntFile(file)) {
           final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
           completionData.addKeywordVariants(keywordVariants, insertedElement, file);
-          CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, matcher, file);
+          completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, matcher, file);
         }
         result.addAllElements(lookupSet);
       }

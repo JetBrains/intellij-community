@@ -41,7 +41,7 @@ import java.util.StringTokenizer;
  * Time: 21:40:11
  * To change this template use Options | File Templates.
  */
-public class JavaDocCompletionData extends CompletionData {
+public class JavaDocCompletionData extends JavaAwareCompletionData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaDocCompletionData");
   private static final @NonNls String VALUE_TAG = "value";
   private static final @NonNls String LINK_TAG = "link";
