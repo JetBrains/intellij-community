@@ -7,6 +7,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +23,7 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
   protected abstract String getLocalName(T t);
   protected abstract String getNamespace(T t);
 
-  public Self withLocalName(String localName) {
+  public Self withLocalName(@NonNls String localName) {
     return withLocalName(StandardPatterns.string().equalTo(localName));
   }
 
