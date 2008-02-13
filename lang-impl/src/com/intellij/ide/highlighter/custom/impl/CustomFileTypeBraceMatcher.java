@@ -4,6 +4,7 @@ import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.CustomHighlighterTokenType;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,5 +81,9 @@ class CustomFileTypeBraceMatcher implements BraceMatcher {
 
   public String getTagName(final CharSequence fileText, final HighlighterIterator iterator) {
     return null;
+  }
+
+  public int getCodeConstructStart(final PsiFile file, final int openingBraceOffset) {
+    return openingBraceOffset;
   }
 }

@@ -9,7 +9,6 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.hint.DeclarationRangeUtil;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
@@ -28,7 +27,9 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
@@ -320,12 +321,12 @@ public class BraceHighlightingHandler {
             if (!myEditor.getComponent().isShowing()) return;
             Rectangle viewRect = myEditor.getScrollingModel().getVisibleArea();
             if (y < viewRect.y) {
-              final int[] start = new int[]{lbraceStart};
+              int start = lbraceStart;
               if (!(myPsiFile instanceof PsiPlainTextFile)) {
                 PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-                start[0] = getCodeContructStart(lbraceStart);
+                start = BraceMatchingUtil.getBraceMatcher(myFileType).getCodeConstructStart(myPsiFile, lbraceStart);
               }
-              TextRange range = new TextRange(start[0], lbraceEnd);
+              TextRange range = new TextRange(start, lbraceEnd);
               int line1 = myDocument.getLineNumber(range.getStartOffset());
               int line2 = myDocument.getLineNumber(range.getEndOffset());
               line1 = Math.max(line1, line2 - 5);
@@ -366,30 +367,6 @@ public class BraceHighlightingHandler {
       myEditor.getMarkupModel().removeHighlighter(marker);
       myEditor.putUserData(LINE_MARKER_IN_EDITOR_KEY, null);
     }
-  }
-
-  private int getCodeContructStart(int lbraceOffset) {
-    PsiElement element = myPsiFile.findElementAt(lbraceOffset);
-    if (element == null || element instanceof PsiFile) return lbraceOffset;
-    PsiElement parent = element.getParent();
-    if (parent instanceof PsiCodeBlock) {
-      parent = parent.getParent();
-      if (parent instanceof PsiMethod || parent instanceof PsiClassInitializer) {
-        TextRange range = DeclarationRangeUtil.getDeclarationRange(parent);
-        return range.getStartOffset();
-      }
-      else if (parent instanceof PsiStatement) {
-        if (parent instanceof PsiBlockStatement && parent.getParent() instanceof PsiStatement) {
-          parent = parent.getParent();
-        }
-        return parent.getTextRange().getStartOffset();
-      }
-    }
-    else if (parent instanceof PsiClass) {
-      TextRange range = DeclarationRangeUtil.getDeclarationRange(parent);
-      return range.getStartOffset();
-    }
-    return lbraceOffset;
   }
 
   private static class MyLineMarkerRenderer implements LineMarkerRenderer {

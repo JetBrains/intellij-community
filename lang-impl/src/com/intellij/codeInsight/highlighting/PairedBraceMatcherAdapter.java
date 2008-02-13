@@ -4,6 +4,7 @@ import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.Language;
 import com.intellij.lang.BracePair;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiFile;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.NotNull;
@@ -92,5 +93,9 @@ class PairedBraceMatcherAdapter implements BraceMatcher {
   @Nullable
   public String getTagName(final CharSequence fileText, final HighlighterIterator iterator) {
     return null;
+  }
+
+  public int getCodeConstructStart(final PsiFile file, int openingBraceOffset) {
+    return myMatcher.getCodeConstructStart(file, openingBraceOffset);
   }
 }

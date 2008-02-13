@@ -16,6 +16,7 @@
 package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,4 +47,14 @@ public interface PairedBraceMatcher {
    * @return true / false as described
    */
   boolean isPairedBracesAllowedBeforeType(@NotNull IElementType lbraceType, @Nullable IElementType contextType);
+
+  /**
+   * Returns the start offset of the code construct which owns the opening structural brace at the specified offset. For example,
+   * if the opening brace belongs to an 'if' statement, returns the start offset of the 'if' statement.
+   *
+   * @param file the file in which brace matching is performed.
+   * @param openingBraceOffset the offset of an opening structural brace.
+   * @return the offset of corresponding code construct, or the same offset if not defined.
+   */
+  int getCodeConstructStart(final PsiFile file, int openingBraceOffset);
 }

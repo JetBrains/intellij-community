@@ -6,10 +6,8 @@ import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.JavaDocTokenType;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.TokenType;
-import com.intellij.psi.TokenTypeEx;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.psi.tree.IElementType;
@@ -20,6 +18,7 @@ import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.xml.util.HtmlUtil;
+import com.intellij.codeInsight.hint.DeclarationRangeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -329,5 +328,29 @@ public class DefaultBraceMatcher implements BraceMatcher {
     }
 
     return name;
+  }
+
+  public int getCodeConstructStart(final PsiFile file, int openingBraceOffset) {
+    PsiElement element = file.findElementAt(openingBraceOffset);
+    if (element == null || element instanceof PsiFile) return openingBraceOffset;
+    PsiElement parent = element.getParent();
+    if (parent instanceof PsiCodeBlock) {
+      parent = parent.getParent();
+      if (parent instanceof PsiMethod || parent instanceof PsiClassInitializer) {
+        TextRange range = DeclarationRangeUtil.getDeclarationRange(parent);
+        return range.getStartOffset();
+      }
+      else if (parent instanceof PsiStatement) {
+        if (parent instanceof PsiBlockStatement && parent.getParent() instanceof PsiStatement) {
+          parent = parent.getParent();
+        }
+        return parent.getTextRange().getStartOffset();
+      }
+    }
+    else if (parent instanceof PsiClass) {
+      TextRange range = DeclarationRangeUtil.getDeclarationRange(parent);
+      return range.getStartOffset();
+    }
+    return openingBraceOffset;
   }
 }
