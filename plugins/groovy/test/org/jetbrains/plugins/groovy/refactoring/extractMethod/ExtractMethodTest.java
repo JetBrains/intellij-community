@@ -55,7 +55,6 @@ public class ExtractMethodTest extends ActionTestCase {
     );
   }
 
-
   private String processFile(final PsiFile file) throws IncorrectOperationException, InvalidDataException, IOException {
     String result = "";
     String fileText = file.getText();

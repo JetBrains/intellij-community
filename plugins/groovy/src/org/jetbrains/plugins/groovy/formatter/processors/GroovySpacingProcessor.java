@@ -22,11 +22,13 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.openapi.diagnostic.Logger;
 import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
+import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 
 /**
  * @author ilyas
@@ -35,38 +37,56 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
 
   private static final ThreadLocal<GroovySpacingProcessor> mySharedProcessorAllocator = new ThreadLocal<GroovySpacingProcessor>();
   protected MyGroovySpacingVisitor myGroovyElementVisitor;
+  protected static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessor");
 
-  private GroovySpacingProcessor(GroovyElementVisitor visitor) {
+  private GroovySpacingProcessor(MyGroovySpacingVisitor visitor) {
     super(visitor);
+    myGroovyElementVisitor = visitor;
   }
 
-  public static Spacing getSpacing(ASTNode node, CodeStyleSettings settings) {
+  public static Spacing getSpacing(GroovyBlock child1, GroovyBlock child2, CodeStyleSettings settings) {
+    return getSpacing(child2.getNode(), settings);
+  }
+
+  private static Spacing getSpacing(ASTNode node, CodeStyleSettings settings) {
     GroovySpacingProcessor spacingProcessor = mySharedProcessorAllocator.get();
     try {
       if (spacingProcessor == null) {
         spacingProcessor = new GroovySpacingProcessor(new MyGroovySpacingVisitor(node, settings));
         mySharedProcessorAllocator.set(spacingProcessor);
+      } else {
+        spacingProcessor.setVisitor(new MyGroovySpacingVisitor(node, settings));
       }
       spacingProcessor.doInit(node, settings);
       return spacingProcessor.getResult();
     }
+    catch (Exception e) {
+      LOG.error(e);
+      return null;
+    }
     finally {
-      if (spacingProcessor != null) {
-        spacingProcessor.clear();
-      }
+      spacingProcessor.clear();
     }
   }
+
+
 
   private void doInit(ASTNode node, CodeStyleSettings settings) {
     myGroovyElementVisitor.doInit();
   }
 
   private void clear() {
-    myGroovyElementVisitor.clear();
+    if (myGroovyElementVisitor != null) {
+      myGroovyElementVisitor.clear();
+    }
   }
 
   private Spacing getResult() {
     return myGroovyElementVisitor.getResult();
+  }
+
+  public void setVisitor(MyGroovySpacingVisitor visitor) {
+    myGroovyElementVisitor = visitor;
   }
 
 
