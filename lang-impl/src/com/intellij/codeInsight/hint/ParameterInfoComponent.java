@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SideBorder;
@@ -63,7 +64,7 @@ class ParameterInfoComponent extends JPanel{
     myCurrentParameterIndex = -1;
   }
 
-  class MyParameterContext implements com.intellij.codeInsight.hint.api.ParameterInfoUIContext {
+  class MyParameterContext implements ParameterInfoUIContext {
     private int i;
     public void setupUIComponentPresentation(String text,
                                              int highlightStartOffset,

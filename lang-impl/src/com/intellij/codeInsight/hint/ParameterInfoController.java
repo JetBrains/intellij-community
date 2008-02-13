@@ -331,7 +331,7 @@ public class ParameterInfoController {
     return null;
   }
 
-  private class MyUpdateParameterInfoContext implements com.intellij.codeInsight.hint.api.UpdateParameterInfoContext {
+  private class MyUpdateParameterInfoContext implements UpdateParameterInfoContext {
     private final int myOffset;
     private final PsiFile myFile;
 
