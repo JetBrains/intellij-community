@@ -33,11 +33,12 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ChooseByNameRegistry;
+import com.intellij.navigation.GotoClassContributor;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,13 +84,11 @@ public class GotoClassModel2 extends ContributorsBasedGotoByModel {
   }
 
   public String getFullName(final Object element) {
-    if (element instanceof PsiClass) {
-      final PsiClass psiClass = (PsiClass)element;
-      final String qName = psiClass.getQualifiedName();
-      if (qName != null) return qName;
-
-      final String containerText = SymbolPresentationUtil.getSymbolContainerText(psiClass);
-      return containerText + "." + psiClass.getName();
+    for(ChooseByNameContributor c: getContributors()) {
+      if (c instanceof GotoClassContributor) {
+        String result = ((GotoClassContributor) c).getQualifiedName((NavigationItem) element);
+        if (result != null) return result;
+      }
     }
 
     return getElementName(element);

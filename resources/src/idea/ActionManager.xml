@@ -170,14 +170,6 @@
       <add-to-group group-id="LanguageSpecificCollapseGroup" anchor="last"/>
     </group>
 
-    <!-- Go To -->
-    <group id="GoToTargetEx">
-      <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction"/>
-      <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction"/>
-
-      <add-to-group group-id="GoToTarget" anchor="first"/>
-    </group>
-
     <group id="GoToJavaCodeGroup">
       <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
 

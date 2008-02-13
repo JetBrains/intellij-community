@@ -34,7 +34,12 @@ public abstract class GotoActionBase extends AnAction {
   public final void update(final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
-    presentation.setEnabled(!getClass ().equals (myInAction) && project != null);
+    presentation.setEnabled(!getClass().equals (myInAction) && project != null && hasContributors());
+    presentation.setVisible(hasContributors());
+  }
+
+  protected boolean hasContributors() {
+    return true;
   }
 
   public static PsiElement getPsiContext(final AnActionEvent e) {

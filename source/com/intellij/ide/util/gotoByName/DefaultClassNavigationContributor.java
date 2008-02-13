@@ -31,16 +31,17 @@
  */
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.navigation.ChooseByNameContributor;
+import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 
 import java.util.ArrayList;
 
-public class DefaultClassNavigationContributor implements ChooseByNameContributor {
+public class DefaultClassNavigationContributor implements GotoClassContributor {
   public DefaultClassNavigationContributor() {
   }
 
@@ -60,5 +61,17 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
       list.add(item);
     }
     return list.toArray(new NavigationItem[list.size()]);
+  }
+
+  public String getQualifiedName(final NavigationItem item) {
+    if (item instanceof PsiClass) {
+      final PsiClass psiClass = (PsiClass)item;
+      final String qName = psiClass.getQualifiedName();
+      if (qName != null) return qName;
+
+      final String containerText = SymbolPresentationUtil.getSymbolContainerText(psiClass);
+      return containerText + "." + psiClass.getName();
+    }
+    return null;
   }
 }

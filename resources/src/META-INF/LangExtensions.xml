@@ -43,6 +43,9 @@
   <applicationService serviceInterface="com.intellij.lang.PsiBuilderFactory"
                       serviceImplementation="com.intellij.lang.PsiBuilderFactoryImpl"/>
 
+  <applicationService serviceInterface="com.intellij.navigation.ChooseByNameRegistry"
+                      serviceImplementation="com.intellij.navigation.ChooseByNameRegistry"/>
+
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
   <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"
