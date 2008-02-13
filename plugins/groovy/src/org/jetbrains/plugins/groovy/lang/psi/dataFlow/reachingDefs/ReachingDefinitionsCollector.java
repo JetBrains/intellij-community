@@ -98,6 +98,8 @@ public class ReachingDefinitionsCollector {
       }
     });
 
+    addClosureUsages(imap, omap, first, last, flowOwner);
+
     final VariableInfo[] iarr = filterNonlocals(imap, first);
     final VariableInfo[] oarr = filterNonlocals(omap, first);
 
@@ -112,11 +114,55 @@ public class ReachingDefinitionsCollector {
     };
   }
 
-  private static void addVariable(String name, Map<String, VariableInfo> omap, PsiManager manager, PsiType type) {
-    VariableInfoImpl info = (VariableInfoImpl) omap.get(name);
+  private static void addClosureUsages(final Map<String, VariableInfo> imap, final Map<String, VariableInfo> omap, final GrStatement first, final GrStatement last, GrControlFlowOwner flowOwner) {
+    flowOwner.accept(new GroovyRecursiveElementVisitor() {
+      public void visitClosure(GrClosableBlock closure) {
+        addUsagesInClosure(imap, omap, closure, first, last);
+        super.visitClosure(closure);
+      }
+
+      private void addUsagesInClosure(final Map<String, VariableInfo> imap, final Map<String, VariableInfo> omap, final GrClosableBlock closure, final GrStatement first, final GrStatement last) {
+        closure.accept(new GroovyRecursiveElementVisitor() {
+          public void visitReferenceExpression(GrReferenceExpression refExpr) {
+            if (!refExpr.isQualified()) {
+              PsiElement resolved = refExpr.resolve();
+              if (resolved instanceof GrVariable) {
+                GrVariable variable = (GrVariable) resolved;
+                if (!PsiTreeUtil.isAncestor(closure, variable, true)) {
+                  String name = variable.getName();
+                  if (name != null) {
+                    if (!(variable instanceof GrField)) {
+                      if (!isInFragment(first, last, resolved)) {
+                        if (isBefore(resolved, first)) {
+                          addVariable(name, imap, variable.getManager(), variable.getType());
+                        }
+                      } else {
+                        if (isBefore(last, refExpr)) {
+                          addVariable(name, omap, variable.getManager(), variable.getType());
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } else {
+              super.visitReferenceExpression(refExpr);
+            }
+          }
+        });
+      }
+    });
+  }
+
+  private static boolean isBefore(PsiElement e1, PsiElement e2) {
+    return e1.getTextRange().getStartOffset() < e2.getTextRange().getStartOffset(); //todo rewrite in tree combinators
+  }
+
+  private static void addVariable(String name, Map<String, VariableInfo> map, PsiManager manager, PsiType type) {
+    VariableInfoImpl info = (VariableInfoImpl) map.get(name);
     if (info == null) {
       info = new VariableInfoImpl(name, manager);
-      omap.put(name, info);
+      map.put(name, info);
     }
     info.addSubtype(type);
   }
@@ -193,8 +239,7 @@ public class ReachingDefinitionsCollector {
   private static TIntHashSet getFragmentInstructions(GrStatement first, GrStatement last, Instruction[] flow) {
     TIntHashSet result;
     result = new TIntHashSet();
-    for (int i = 0; i < flow.length; i++) {
-      Instruction instruction = flow[i];
+    for (Instruction instruction : flow) {
       if (isInFragment(instruction, first, last)) {
         result.add(instruction.num());
       }
@@ -205,6 +250,10 @@ public class ReachingDefinitionsCollector {
   private static boolean isInFragment(Instruction instruction, GrStatement first, GrStatement last) {
     final PsiElement element = instruction.getElement();
     if (element == null) return false;
+    return isInFragment(first, last, element);
+  }
+
+  private static boolean isInFragment(GrStatement first, GrStatement last, PsiElement element) {
     final PsiElement parent = first.getParent();
     if (!PsiTreeUtil.isAncestor(parent, element, true)) return false;
     PsiElement run = element;
