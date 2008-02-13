@@ -6,7 +6,7 @@ package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.lexer.Lexer;
-import com.intellij.psi.TokenTypeEx;
+import com.intellij.psi.search.scope.packageSet.lexer.ScopeTokenTypes;
 
 public class PatternPackageSetParserExtension implements PackageSetParserExtension {
 
@@ -25,7 +25,7 @@ public class PatternPackageSetParserExtension implements PackageSetParserExtensi
   }
 
   public String parseScope(final Lexer lexer) {
-    if (lexer.getTokenType() != TokenTypeEx.IDENTIFIER) return PatternPackageSet.SCOPE_ANY;
+    if (lexer.getTokenType() != ScopeTokenTypes.IDENTIFIER) return PatternPackageSet.SCOPE_ANY;
     String id = getTokenText(lexer);
     String scope = PatternPackageSet.SCOPE_ANY;
     if (PatternPackageSet.SCOPE_SOURCE.equals(id)) {
@@ -56,15 +56,15 @@ public class PatternPackageSetParserExtension implements PackageSetParserExtensi
     StringBuffer pattern = new StringBuffer();
     boolean wasIdentifier = false;
     while (true) {
-      if (lexer.getTokenType() == TokenTypeEx.DOT) {
+      if (lexer.getTokenType() == ScopeTokenTypes.DOT) {
         pattern.append('.');
         wasIdentifier = false;
       }
-      else if (lexer.getTokenType() == TokenTypeEx.ASTERISK) {
+      else if (lexer.getTokenType() == ScopeTokenTypes.ASTERISK) {
         pattern.append('*');
         wasIdentifier = false;
       }
-      else if (lexer.getTokenType() == TokenTypeEx.IDENTIFIER) {
+      else if (lexer.getTokenType() == ScopeTokenTypes.IDENTIFIER) {
         if (wasIdentifier) error(AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText(lexer)), lexer);
         wasIdentifier = true;
         pattern.append(getTokenText(lexer));

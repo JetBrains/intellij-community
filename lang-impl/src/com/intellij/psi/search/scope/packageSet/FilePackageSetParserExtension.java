@@ -6,15 +6,14 @@ package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.lexer.Lexer;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.TokenTypeEx;
+import com.intellij.psi.search.scope.packageSet.lexer.ScopeTokenTypes;
 import org.jetbrains.annotations.Nullable;
 
 public class FilePackageSetParserExtension implements PackageSetParserExtension {
 
   @Nullable
   public String parseScope(Lexer lexer) {
-    if (lexer.getTokenType() != TokenTypeEx.IDENTIFIER) return null;
+    if (lexer.getTokenType() != ScopeTokenTypes.IDENTIFIER) return null;
     String id = getTokenText(lexer);
     if (FilePatternPackageSet.SCOPE_FILE.equals(id)) {
 
@@ -43,28 +42,28 @@ public class FilePackageSetParserExtension implements PackageSetParserExtension 
     StringBuffer pattern = new StringBuffer();
     boolean wasIdentifier = false;
     while (true) {
-      if (lexer.getTokenType() == TokenTypeEx.DIV) {
+      if (lexer.getTokenType() == ScopeTokenTypes.DIV) {
         wasIdentifier = false;
         pattern.append("/");
       }
-      else if (lexer.getTokenType() == TokenTypeEx.IDENTIFIER || lexer.getTokenType() == JavaTokenType.INTEGER_LITERAL) {
+      else if (lexer.getTokenType() == ScopeTokenTypes.IDENTIFIER || lexer.getTokenType() == ScopeTokenTypes.INTEGER_LITERAL) {
         if (wasIdentifier) error(lexer, AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText(lexer)));
         wasIdentifier = true;
         pattern.append(getTokenText(lexer));
       }
-      else if (lexer.getTokenType() == TokenTypeEx.ASTERISK) {
+      else if (lexer.getTokenType() == ScopeTokenTypes.ASTERISK) {
         wasIdentifier = false;
         pattern.append("*");
       }
-      else if (lexer.getTokenType() == TokenTypeEx.DOT) {
+      else if (lexer.getTokenType() == ScopeTokenTypes.DOT) {
         wasIdentifier = false;
         pattern.append(".");
       }
-      else if (lexer.getTokenType() == TokenTypeEx.WHITE_SPACE) {
+      else if (lexer.getTokenType() == ScopeTokenTypes.WHITE_SPACE) {
         wasIdentifier = false;
         pattern.append(" ");
       }
-      else if (lexer.getTokenType() == TokenTypeEx.MINUS) {
+      else if (lexer.getTokenType() == ScopeTokenTypes.MINUS) {
         wasIdentifier = false;
         pattern.append("-");
       }
