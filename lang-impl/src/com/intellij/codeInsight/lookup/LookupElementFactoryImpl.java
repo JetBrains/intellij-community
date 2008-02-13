@@ -3,15 +3,9 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.simple.CompletionCharHandler;
 import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
-import com.intellij.ide.IconUtilEx;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,10 +30,6 @@ public class LookupElementFactoryImpl extends LookupElementFactory{
   }
 
   public <T extends PsiElement> SimpleLookupItem<T> createLookupElement(@NotNull T element, @NotNull String lookupString) {
-    final LookupItem<T> item = new SimpleLookupItem<T>(element, lookupString);
-    if (!(element instanceof PsiClass)) {
-      item.setIcon(IconUtilEx.getIcon(element, 0, element.getProject()));
-    }
-    return (SimpleLookupItem<T>)item;
+    return new SimpleLookupItem<T>(element, lookupString);
   }
 }
