@@ -221,4 +221,8 @@
 
   <extensionPoint name="readWriteAccessDetector" interface="com.intellij.codeInsight.highlighting.ReadWriteAccessDetector"/>
 
+  <extensionPoint name="scopeParserExtension" interface="com.intellij.psi.search.scope.packageSet.PackageSetParserExtension"/>
+  <extensionPoint name="referenceProviderType" interface="com.intellij.util.KeyedLazyInstanceEP"/>
+  <extensionPoint name="colorSettingsPage"
+                  interface="com.intellij.openapi.options.colors.ColorSettingsPage"/>
 </extensionPoints>
