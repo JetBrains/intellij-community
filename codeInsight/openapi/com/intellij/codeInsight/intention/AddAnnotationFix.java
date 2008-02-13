@@ -162,7 +162,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
     }
     else {
       final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-      annotationsManager.annotateExternally(PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class), myAnnotation, file);
+      annotationsManager.annotateExternally(PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false), myAnnotation, file);
     }
   }
 
