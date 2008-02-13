@@ -32,11 +32,9 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
-import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -194,92 +192,72 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
   
   @NotNull
-  public <K, V> List<V> getData(final ID<K, V> indexId, K dataKey, Project project) {
-    return getData(indexId, dataKey, project, null);
+  public <K, V> List<V> getValues(final ID<K, V> indexId, K dataKey, Project project) {
+    final List<V> values = new ArrayList<V>();
+    processValuesImpl(indexId, dataKey, project, true, null, new ValueProcessor<V>() {
+      public void process(final VirtualFile file, final V value) {
+        values.add(value);
+      }
+    });
+    return values;
+  }
+
+  @NotNull
+  public <K, V> Collection<VirtualFile> getContainingFiles(final ID<K, V> indexId, K dataKey, @NotNull Project project) {
+    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+    processValuesImpl(indexId, dataKey, project, false, null, new ValueProcessor<V>() {
+      public void process(final VirtualFile file, final V value) {
+        files.add(file);
+      }
+    });
+    return files;
   }
 
   
-  public static interface DataFilter<K, V> {
-    List<V> process(K key, ValueContainer<V> container);
+  public static interface ValueProcessor<V> {
+    void process(VirtualFile file, V value);
+  }
+  public <K, V> void processValues(final ID<K, V> indexId, final K dataKey, final Project project, final @Nullable VirtualFile inFile, ValueProcessor<V> processor) {
+    processValuesImpl(indexId, dataKey, project, false, inFile, processor);
   }
   
-  @NotNull
-  public <K, V> List<V> getData(final ID<K, V> indexId, K dataKey, Project project, @Nullable DataFilter<K, V> filter) {
+  private <K, V> void processValuesImpl(final ID<K, V> indexId, final K dataKey, final Project project, boolean ensureValueProcessedOnce,
+                                        final @Nullable VirtualFile restrictToFile, ValueProcessor<V> processor) {
     try {
       checkRebuild(indexId);
       indexUnsavedDocuments();
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
-        return Collections.emptyList();
+        return;
       }
-      
+
       final Lock readLock = index.getReadLock();
       readLock.lock();
       try {
         final ValueContainer<V> container = index.getData(dataKey);
-        final List<V> valueList = filter != null? filter.process(dataKey, container) : container.toValueList();
 
-        if (project != null) {
-          final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
-          final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
-    
-          for (Iterator<V> it = valueList.iterator(); it.hasNext();) {
-            final V value = it.next();
-            if (!belongsToProject(container.getInputIdsIterator(value), dirIndex, fs)) {
-              it.remove();
+        if (restrictToFile != null) {
+          final int restrictedFileId = getFileId(restrictToFile);
+          for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
+            final V value = valueIt.next();
+            if (container.isAssociated(value, restrictedFileId)) {
+              processor.process(restrictToFile, value);
             }
           }
         }
-
-        return valueList;
-      }
-      finally {
-        readLock.unlock();
-      }
-    }
-    catch (StorageException e) {
-      requestRebuild(indexId);
-      LOG.error(e);
-    }
-    return Collections.emptyList();
-  }
-
-  @NotNull
-  public <K> Collection<VirtualFile> getContainingFiles(final ID<K, ?> indexId, K dataKey, @NotNull Project project) {
-    return getContainingFiles(indexId, dataKey, project, null);
-  }
-  
-  @NotNull
-  public <K, V> Collection<VirtualFile> getContainingFiles(final ID<K, V> indexId, K dataKey, @NotNull Project project, @Nullable DataFilter<K, V> filter) {
-    try {
-      checkRebuild(indexId);
-      indexUnsavedDocuments();
-      final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
-      if (index == null) {
-        return Collections.emptyList();
-      }
-
-      final List<VirtualFile> files = new ArrayList<VirtualFile>();
-      final TIntHashSet processedIds = new TIntHashSet();
-      
-      final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
-      final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
-
-      final Lock readLock = index.getReadLock();
-      readLock.lock();
-      try {
-        final ValueContainer<V> container = index.getData(dataKey);
-        final List<V> valueList = filter != null? filter.process(dataKey, container) : container.toValueList();
-        for (final V value : valueList) {
-          //noinspection unchecked
-          final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value);
-          while (inputIdsIterator.hasNext()) {
-            final int id = inputIdsIterator.next();
-            if (!processedIds.contains(id)) {
-              processedIds.add(id);
+        else {
+          final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
+          final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
+          for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
+            V value = valueIt.next();
+            for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext();) {
+              final int id = inputIdsIterator.next();
               VirtualFile file = findFileById(dirIndex, fs, id);
               if (file != null) {
-                files.add(file);
+                processor.process(file, value);
+                if (ensureValueProcessedOnce) {
+                  break; // continue with the next value
+                }
               }
             }
           }
@@ -288,16 +266,13 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       finally {
         readLock.unlock();
       }
-
-      return files;
     }
     catch (StorageException e) {
       requestRebuild(indexId);
       LOG.error(e);
     }
-    return Collections.emptyList();
   }
-
+  
   private void checkRebuild(final ID<?, ?> indexId) throws StorageException {
     final boolean reallyRemoved = myRequiresRebuild.remove(indexId);
     if (!reallyRemoved) {
@@ -340,13 +315,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       }.queue();
       semaphore.waitFor();
     }
-  }
-
-  @Nullable
-  public static VirtualFile findFileById(Project project, int id) {
-    PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
-    DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
-    return findFileById(dirIndex, fs, id);
   }
 
   @Nullable
@@ -434,19 +402,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   private InputFilter getInputFilter(ID<?, ?> indexId) {
     final Pair<UpdatableIndex<?, ?, FileContent>, InputFilter> pair = myIndices.get(indexId);
     return pair != null? pair.getSecond() : null;
-  }
-
-  private static boolean belongsToProject(final ValueContainer.IntIterator inputIdsIterator, final DirectoryIndex dirIndex, final PersistentFS fs) {
-    while (inputIdsIterator.hasNext()) {
-      final int id = inputIdsIterator.next();
-      final DirectoryInfo directoryInfo = fs.isDirectory(id)?
-                                          dirIndex.getInfoForDirectoryId(id) :
-                                          dirIndex.getInfoForDirectoryId(fs.getParent(id));
-      if (directoryInfo != null && directoryInfo.contentRoot != null) {
-        return true; // the directory is under the content
-      }
-    }
-    return false;
   }
 
   private long getIndexCreationStamp(ID<?, ?> indexName) {
@@ -551,7 +506,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
   }
 
-  public static int getFileId(final VirtualFile file) {
+  private static int getFileId(final VirtualFile file) {
     if (file instanceof VirtualFileWithId) {
       return ((VirtualFileWithId)file).getId();
     }
@@ -561,34 +516,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   private static CharSequence loadContent(VirtualFile file) {
     return LoadTextUtil.loadText(file, true);
-  }
-
-  public static <K, V> List<Pair<VirtualFile, V>> collectFilesAndValues(final ID<K, List<V>> indexId, final K key, final Project project,
-                                                                          @Nullable final GlobalSearchScope scope) {
-    final List<Pair<VirtualFile, V>> result = new ArrayList<Pair<VirtualFile,V>>();
-    final DataFilter<K, List<V>> filter =
-      new DataFilter<K, List<V>>() {
-        public List<List<V>> process(final K key, final ValueContainer<List<V>> listValueContainer) {
-          final Iterator<List<V>> listIterator = listValueContainer.getValueIterator();
-          while(listIterator.hasNext()) {
-            final List<V> entryList = listIterator.next();
-            final ValueContainer.IntIterator idIterator = listValueContainer.getInputIdsIterator(entryList);
-            while(idIterator.hasNext()) {
-              final int id = idIterator.next();
-              VirtualFile file = findFileById(project, id);
-              if (file != null && (scope == null || scope.contains(file))) {
-                for(V e: entryList) {
-                  result.add(new Pair<VirtualFile,V>(file, e));                  
-                }
-              }
-            }
-          }
-
-          return Collections.emptyList();
-        }
-      };
-    getInstance().getContainingFiles(indexId, key, project, filter);
-    return result;
   }
 
   private final class ChangedFilesUpdater extends VirtualFileAdapter implements CacheUpdater{

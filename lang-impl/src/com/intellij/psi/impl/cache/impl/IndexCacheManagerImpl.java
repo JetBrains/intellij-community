@@ -21,10 +21,11 @@ import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.ValueContainer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -75,24 +76,16 @@ public class IndexCacheManagerImpl implements CacheManager{
       }
     };
 
-    final Collection<VirtualFile> vFiles = FileBasedIndex.getInstance().getContainingFiles(
-      IdIndex.NAME, 
-      new IdIndexEntry(word, caseSensitively),
-      myProject,
-      new FileBasedIndex.DataFilter<IdIndexEntry, Integer>() {
-        public List<Integer> process(final IdIndexEntry key, final ValueContainer<Integer> valueContainer) {
-          final List<Integer> values = new ArrayList<Integer>();
-          for (final Iterator<Integer> valueIterator = valueContainer.getValueIterator(); valueIterator.hasNext();) {
-            final Integer value = valueIterator.next();
-            final int mask = value.intValue();
-            if ((mask & occurrenceMask) != 0) {
-              values.add(value);
-            }
-          }
-          return values;
+    final Set<VirtualFile> vFiles = new HashSet<VirtualFile>();
+
+    FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), myProject, null, new FileBasedIndex.ValueProcessor<Integer>() {
+      public void process(final VirtualFile file, final Integer value) {
+        final int mask = value.intValue();
+        if ((mask & occurrenceMask) != 0) {
+          vFiles.add(file);
         }
       }
-    );
+    });
 
     for (VirtualFile vFile : vFiles) {
       if (!virtualFileProcessor.process(vFile)) {
@@ -100,6 +93,7 @@ public class IndexCacheManagerImpl implements CacheManager{
       }
     }
 
+    
     return true;
   }
 
@@ -132,32 +126,27 @@ public class IndexCacheManagerImpl implements CacheManager{
 
   public int getTodoCount(@NotNull final VirtualFile file, final IndexPatternProvider patternProvider) {
     final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-    final int fileId = FileBasedIndex.getFileId(file);
     int count = 0;
     for (IndexPattern indexPattern : patternProvider.getIndexPatterns()) {
-      count += fetchCount(fileBasedIndex, fileId, indexPattern);
+      count += fetchCount(fileBasedIndex, file, indexPattern);
     }
     return count;
   }
    
   public int getTodoCount(@NotNull final VirtualFile file, final IndexPattern pattern) {
-    return fetchCount(FileBasedIndex.getInstance(), FileBasedIndex.getFileId(file), pattern);
+    return fetchCount(FileBasedIndex.getInstance(), file, pattern);
   }
 
-  private int fetchCount(final FileBasedIndex fileBasedIndex, final int fileId, final IndexPattern indexPattern) {
+  private int fetchCount(final FileBasedIndex fileBasedIndex, final VirtualFile file, final IndexPattern indexPattern) {
     final int[] count = new int[] {0};
-    fileBasedIndex.getData(TodoIndex.NAME, new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), myProject, new FileBasedIndex.DataFilter<TodoIndexEntry, Integer>() {
-      public List<Integer> process(final TodoIndexEntry entry, final ValueContainer<Integer> container) {
-        for (final Iterator<Integer> valueIterator = container.getValueIterator(); valueIterator.hasNext(); ) {
-          final Integer value = valueIterator.next();
-          if (container.isAssociated(value, fileId)) {
-            count[0] = value.intValue();
-            return Collections.emptyList();
-          }
+    fileBasedIndex.processValues(
+      TodoIndex.NAME, new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), myProject, file, 
+      new FileBasedIndex.ValueProcessor<Integer>() {
+        public void process(final VirtualFile file, final Integer value) {
+          count[0] += value.intValue();
         }
-        return Collections.emptyList();
       }
-    });
+    );
     return count[0];
   }
 
