@@ -348,6 +348,10 @@ public class ParameterInfoController {
       return myOffset;
     }
 
+    public Project getProject() {
+      return myProject;
+    }
+
     public PsiFile getFile() {
       return myFile;
     }

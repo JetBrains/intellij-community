@@ -225,4 +225,6 @@
   <extensionPoint name="referenceProviderType" interface="com.intellij.util.KeyedLazyInstanceEP"/>
   <extensionPoint name="colorSettingsPage"
                   interface="com.intellij.openapi.options.colors.ColorSettingsPage"/>
+
+  <extensionPoint name="codeInsight.parameterInfo" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 </extensionPoints>

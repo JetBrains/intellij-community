@@ -17,10 +17,8 @@
 package com.intellij.lang.parameterInfo;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.openapi.editor.Editor;
 
-public interface UpdateParameterInfoContext {
+public interface UpdateParameterInfoContext extends ParameterInfoContext {
   void removeHint();
 
   void setParameterOwner(final PsiElement o);
@@ -32,10 +30,6 @@ public interface UpdateParameterInfoContext {
   void setUIComponentEnabled(int index, boolean b);
 
   int getParameterListStart();
-
-  int getOffset();
-  PsiFile getFile();
-  Editor getEditor();
 
   Object[] getObjectsToView();
 }
