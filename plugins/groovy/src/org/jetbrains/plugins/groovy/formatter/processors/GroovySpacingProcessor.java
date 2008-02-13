@@ -18,16 +18,21 @@ package org.jetbrains.plugins.groovy.formatter.processors;
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.openapi.diagnostic.Logger;
 import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 
 /**
@@ -70,7 +75,6 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
   }
 
 
-
   private void doInit(ASTNode node, CodeStyleSettings settings) {
     myGroovyElementVisitor.doInit();
   }
@@ -88,7 +92,6 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
   public void setVisitor(MyGroovySpacingVisitor visitor) {
     myGroovyElementVisitor = visitor;
   }
-
 
   /**
    * Visitor to adjust spaces via user Code Style Settings
@@ -152,6 +155,15 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
       }
     }
 
+    public void visitNewExpression(GrNewExpression newExpression) {
+      if (myChild1.getElementType() == GroovyTokenTypes.kNEW) {
+        createSpaceInCode(true);
+      } else if (myChild2.getElementType() == GroovyElementTypes.ARGUMENTS) {
+        createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
+      }
+    }
+
+
     protected void clear() {
       myResult = null;
       myChild2 = myChild1 = null;
@@ -163,6 +175,28 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
       clear();
       return result;
     }
+
+    private void createSpaceInCode(final boolean space) {
+      createSpaceProperty(space, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    }
+
+    private void createSpaceProperty(boolean space, int keepBlankLines) {
+      createSpaceProperty(space, mySettings.KEEP_LINE_BREAKS, keepBlankLines);
+    }
+
+    private void createSpaceProperty(boolean space, boolean keepLineBreaks, final int keepBlankLines) {
+      final ASTNode prev = SpacingUtil.getPrevElementType(myChild2);
+      if (prev != null && prev.getElementType() == GroovyTokenTypes.mSL_COMMENT) {
+        myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      } else {
+        if (!space && !CodeEditUtil.canStickChildrenTogether(myChild1, myChild2)) {
+          space = true;
+        }
+        myResult = Spacing.createSpacing(space ? 1 : 0, space ? 1 : 0, 0, keepLineBreaks, keepBlankLines);
+      }
+    }
+
+
   }
 
 }
