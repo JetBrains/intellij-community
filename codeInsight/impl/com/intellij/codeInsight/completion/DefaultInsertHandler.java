@@ -177,7 +177,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     try{
       final int previousStartOffset = myStartOffset;
       myStartOffset = addImportForItem(myFile, previousStartOffset, myLookupItem);
-      myContext.startOffset += myStartOffset - previousStartOffset;
+      myContext.setStartOffset(myContext.getStartOffset() + (myStartOffset - previousStartOffset));
     }
     catch(IncorrectOperationException e){
       LOG.error(e);
@@ -207,7 +207,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       // Check if someone inserts annotation class that require @
       final Document document = context.editor.getDocument();
       PsiDocumentManager.getInstance(context.project).commitDocument(document);
-      PsiElement elementAt = myFile.findElementAt(myContext.startOffset);
+      PsiElement elementAt = myFile.findElementAt(myContext.getStartOffset());
       final PsiElement parentElement = elementAt != null ? elementAt.getParent():null;
 
       if (elementAt instanceof PsiIdentifier &&
@@ -232,7 +232,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   }
 
   private boolean isAtTokenNeeded() {
-    HighlighterIterator iterator = ((EditorEx)myContext.editor).getHighlighter().createIterator(myContext.startOffset);
+    HighlighterIterator iterator = ((EditorEx)myContext.editor).getHighlighter().createIterator(myContext.getStartOffset());
     LOG.assertTrue(iterator.getTokenType() == JavaTokenType.IDENTIFIER);
     iterator.retreat();
     if (iterator.getTokenType() == TokenType.WHITE_SPACE) iterator.retreat();
@@ -387,7 +387,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     if(insertingAnnotation()) {
       final Document document = myContext.editor.getDocument();
       PsiDocumentManager.getInstance(myContext.project).commitDocument(document);
-      PsiElement elementAt = myFile.findElementAt(myContext.startOffset);
+      PsiElement elementAt = myFile.findElementAt(myContext.getStartOffset());
       if (elementAt instanceof PsiIdentifier) {
         if (insertingNotRuntimeAnnotation() || PsiTreeUtil.getParentOfType(elementAt, PsiAnnotationParameterList.class) != null) {
           final PsiElement parent = PsiTreeUtil.getParentOfType(elementAt, PsiModifierListOwner.class, PsiCodeBlock.class);

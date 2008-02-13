@@ -32,7 +32,7 @@ public class LegacyCompletionContributor extends CompletionContributor{
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
         CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         final PsiFile file = parameters.getOriginalFile();
-        final int startOffset = context.startOffset;
+        final int startOffset = context.getStartOffset();
         final PsiElement lastElement = file.findElementAt(startOffset - 1);
         PsiElement insertedElement = parameters.getPosition();
         CompletionData completionData = CompletionUtil.getCompletionDataByElement(lastElement, file, startOffset);
@@ -45,9 +45,9 @@ public class LegacyCompletionContributor extends CompletionContributor{
         if (completionData == null) return;
 
         final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
-        final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(context.offset);
+        final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(context.getStartOffset());
         if (ref != null) {
-          completionData.completeReference(ref, lookupSet, insertedElement, result.getPrefixMatcher(), context.file, context.offset);
+          completionData.completeReference(ref, lookupSet, insertedElement, result.getPrefixMatcher(), context.file, context.getStartOffset());
         }
         if (lookupSet.isEmpty() || !CodeInsightUtil.isAntFile(file)) {
           final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();

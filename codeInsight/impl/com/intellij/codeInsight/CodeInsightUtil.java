@@ -1,6 +1,6 @@
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -243,7 +243,7 @@ public class CodeInsightUtil {
 
   private static void getSubtypes(final PsiElement context, final PsiClassType baseType, final int arrayDim,
                                   final boolean getRawSubtypes, final Set<PsiType> result){
-    final PsiClassType.ClassResolveResult baseResult = CompletionUtil.originalize(baseType).resolveGenerics();
+    final PsiClassType.ClassResolveResult baseResult = JavaCompletionUtil.originalize(baseType).resolveGenerics();
     final PsiClass baseClass = baseResult.getElement();
     final PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
     if(baseClass == null) return;
@@ -269,7 +269,7 @@ public class CodeInsightUtil {
           return true;
         }
 
-        if (CompletionUtil.isInExcludedPackage(inheritor)) return true;
+        if (JavaCompletionUtil.isInExcludedPackage(inheritor)) return true;
 
         PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, inheritor, PsiSubstitutor.EMPTY);
         if(superSubstitutor == null) return true;

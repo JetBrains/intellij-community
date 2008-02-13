@@ -31,9 +31,8 @@ public class CompletionContext implements Cloneable {
   public final Project project;
   public final Editor editor;
   public final PsiFile file;
-  public int startOffset;
+  private int startOffset;
   public int selectionEndOffset;
-  public int offset;
 
   public int identifierEndOffset = -1;
   public int lparenthOffset = -1;
@@ -175,6 +174,14 @@ public class CompletionContext implements Cloneable {
 
   public void setPrefix(final String prefix) {
     myPrefix = prefix;
+  }
+
+  public int getStartOffset() {
+    return startOffset;
+  }
+
+  public void setStartOffset(final int offset) {
+    startOffset = offset;
   }
 }
 

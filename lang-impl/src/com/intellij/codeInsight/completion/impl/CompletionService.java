@@ -48,7 +48,7 @@ public class CompletionService implements CompletionRegistrar{
 
   public PrioritizedQueryFactory<LookupElement, CompletionParameters> getQueryFactory(CompletionType type, final CompletionParameters queryParameters) {
     final CompletionContext context = queryParameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-    final PrefixMatcher matcher = new CamelHumpMatcher(CompletionData.findPrefixStatic(queryParameters.getPosition(), context.startOffset));
+    final PrefixMatcher matcher = new CamelHumpMatcher(CompletionData.findPrefixStatic(queryParameters.getPosition(), context.getStartOffset()));
 
     final ArrayList<PrioritizedQueryExecutor<LookupElement, CompletionParameters>> list = new ArrayList<PrioritizedQueryExecutor<LookupElement, CompletionParameters>>();
     executeForMatchingProviders(type, queryParameters, new PairProcessor<ProcessingContext, CompletionPlaceImpl<LookupElement, CompletionParameters>>() {
@@ -70,7 +70,7 @@ public class CompletionService implements CompletionRegistrar{
 
   public String getAdvertisementText(CompletionType type, final CompletionParameters queryParameters) {
     final CompletionContext context = queryParameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-    final PrefixMatcher matcher = new CamelHumpMatcher(CompletionData.findPrefixStatic(queryParameters.getPosition(), context.startOffset));
+    final PrefixMatcher matcher = new CamelHumpMatcher(CompletionData.findPrefixStatic(queryParameters.getPosition(), context.getStartOffset()));
     final Ref<String> result = Ref.create(null);
     executeForMatchingProviders(type, queryParameters, new PairProcessor<ProcessingContext, CompletionPlaceImpl<LookupElement, CompletionParameters>>() {
       public boolean process(final ProcessingContext processingContext, final CompletionPlaceImpl<LookupElement, CompletionParameters> place) {

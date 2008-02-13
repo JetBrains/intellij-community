@@ -9,7 +9,7 @@
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.ide.util.SuperMethodWarningUtil;
@@ -200,7 +200,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
         public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix, PsiType type) {
           LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
           LookupItemPreferencePolicy policy =
-            CompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.PARAMETER);
+            JavaCompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.PARAMETER);
           return new Pair<LookupItemPreferencePolicy, Set<LookupItem>>(policy, set);
         }
       };

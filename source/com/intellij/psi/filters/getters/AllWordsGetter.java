@@ -18,7 +18,7 @@ public class AllWordsGetter implements ContextGetter {
     final List<String> objs = new ArrayList<String>();
     IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor(){
       public void run(final CharSequence chars, final int start, final int end, char[] charArray) {
-        if (completionContext == null || start > completionContext.offset || completionContext.offset > end) {
+        if (completionContext == null || start > completionContext.getStartOffset() || completionContext.getStartOffset() > end) {
           objs.add(chars.subSequence(start, end).toString());
         }
       }

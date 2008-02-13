@@ -143,6 +143,8 @@
   <ideRootPaneNorth implementation="com.intellij.ide.navigationToolbar.NavBarRootPaneExtension"/>
   <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension"/>
 
+  <completion.contributor implementation="com.intellij.codeInsight.completion.LegacyCompletionContributor"/>
+
   <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor"/>
 
   <selectInTarget implementation="com.intellij.ide.navigationToolbar.SelectInNavBarTarget"/>

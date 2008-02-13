@@ -116,7 +116,7 @@ public class XmlCompletionData extends JavaAwareCompletionData {
                              boolean signatureSelected,
                              char completionChar) {
       super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
-      final PsiElement current = context.file.findElementAt(context.startOffset);
+      final PsiElement current = context.file.findElementAt(context.getStartOffset());
       final String text = current.getText();
       final CaretModel caretModel = context.editor.getCaretModel();
       int localOffset = caretModel.getOffset() - current.getTextRange().getStartOffset() - 1;

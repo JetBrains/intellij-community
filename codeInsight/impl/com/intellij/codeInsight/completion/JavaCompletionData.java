@@ -248,6 +248,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
                            new SuperParentFilter(new ClassFilter(PsiTypeParameterList.class)))))
         ),
         new PatternFilter(not(PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement().withText("@"))))));
+      variant.includeScopeClass(JspClassLevelDeclarationStatement.class);
 
 // completion
       addPrimitiveTypes(variant);

@@ -27,6 +27,7 @@ import java.util.*;
  * Time: 16:58:32
  * To change this template use Options | File Templates.
  */
+@Deprecated
 public class CompletionData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionData");
   private final Set<Class> myFinalScopes = new HashSet<Class>();

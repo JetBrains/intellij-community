@@ -4,8 +4,8 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.DefaultInsertHandler;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -163,7 +163,7 @@ public class AllClassesGetter implements ContextGetter{
   public Object[] get(final PsiElement context, CompletionContext completionContext) {
     if(context == null || !context.isValid()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
 
-    String prefix = context.getText().substring(0, completionContext.startOffset - context.getTextRange().getStartOffset());
+    String prefix = context.getText().substring(0, completionContext.getStartOffset() - context.getTextRange().getStartOffset());
     final int i = prefix.lastIndexOf('.');
     String packagePrefix = "";
     if (i > 0) {
@@ -201,7 +201,7 @@ public class AllClassesGetter implements ContextGetter{
       for (PsiClass psiClass : cache.getClassesByName(name, scope)) {
         if (lookingForAnnotations && !psiClass.isAnnotationType()) continue;
 
-        if (CompletionUtil.isInExcludedPackage(psiClass)) continue;
+        if (JavaCompletionUtil.isInExcludedPackage(psiClass)) continue;
 
         final String qualifiedName = psiClass.getQualifiedName();
         if (qualifiedName == null || !qualifiedName.startsWith(packagePrefix)) continue;

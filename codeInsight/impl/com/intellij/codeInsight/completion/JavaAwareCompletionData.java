@@ -102,7 +102,7 @@ public class JavaAwareCompletionData extends CompletionData{
         if (lookupItem != null) {
           lookupItem.setAttribute(LookupItem.SUBSTITUTOR, element.getSubstitutor());
           if (element.getQualifier() != null){
-            CompletionUtil.setQualifierType(lookupItem, element.getQualifier());
+            JavaCompletionUtil.setQualifierType(lookupItem, element.getQualifier());
           }
         }
       }

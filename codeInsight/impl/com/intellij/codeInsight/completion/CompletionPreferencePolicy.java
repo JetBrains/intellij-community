@@ -93,7 +93,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   public void itemSelected(LookupItem item) {
     final Object o = item.getObject();
     if (o instanceof PsiMember){
-      final PsiType qualifierType = CompletionUtil.getQualifierType(item);
+      final PsiType qualifierType = JavaCompletionUtil.getQualifierType(item);
       if (qualifierType != null){
         StatisticsManager.getInstance().incMemberUseCount(qualifierType, (PsiMember)o);
       }
@@ -138,7 +138,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     result[6] = nameEndMatchingDegree;
 
     if (object instanceof PsiMember) {
-      final PsiType qualifierType1 = CompletionUtil.getQualifierType(item);
+      final PsiType qualifierType1 = JavaCompletionUtil.getQualifierType(item);
       if (qualifierType1 != null){
         result[7] = StatisticsManager.getInstance().getMemberUseCount(qualifierType1, (PsiMember)object);
       }

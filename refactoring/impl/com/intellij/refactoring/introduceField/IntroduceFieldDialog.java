@@ -1,7 +1,7 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TestUtil;
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -488,7 +488,7 @@ class IntroduceFieldDialog extends DialogWrapper {
       public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix, PsiType type) {
         LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
         VariableKind kind = myWillBeDeclaredStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
-        LookupItemPreferencePolicy policy = CompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, kind);
+        LookupItemPreferencePolicy policy = JavaCompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, kind);
         return new Pair<LookupItemPreferencePolicy, Set<LookupItem>> (policy, set);
       }
     };

@@ -1,6 +1,6 @@
 package com.intellij.refactoring.rename;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -74,7 +74,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
       PsiVariable var = (PsiVariable)element;
       VariableKind kind = JavaCodeStyleManager.getInstance(element.getProject()).getVariableKind(var);
       Set<LookupItem> set = new LinkedHashSet<LookupItem>();
-      CompletionUtil.completeVariableNameForRefactoring(element.getProject(), set, prefix, var.getType(), kind);
+      JavaCompletionUtil.completeVariableNameForRefactoring(element.getProject(), set, prefix, var.getType(), kind);
 
       if (prefix.length() == 0) {
         List<String> suggestedNames = new ArrayList<String>();

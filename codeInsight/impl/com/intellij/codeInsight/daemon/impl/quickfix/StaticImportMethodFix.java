@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.MethodCellRenderer;
@@ -80,7 +80,7 @@ public class StaticImportMethodFix implements IntentionAction {
     for (PsiMethod method : methods) {
       ProgressManager.getInstance().checkCanceled();
       PsiClass aClass = method.getContainingClass();
-      if (aClass != null && CompletionUtil.isInExcludedPackage(aClass)) continue;
+      if (aClass != null && JavaCompletionUtil.isInExcludedPackage(aClass)) continue;
       if (!method.hasModifierProperty(PsiModifier.STATIC)) continue;
       PsiFile file = method.getContainingFile();
       if (file instanceof PsiJavaFile

@@ -22,7 +22,7 @@ public class DotAutoLookupHandler extends CodeCompletionHandler{
 
   protected LookupData getLookupData(CompletionContext context){
     PsiFile file = context.file;
-    int offset = context.startOffset;
+    int offset = context.getStartOffset();
 
     PsiElement lastElement = file.findElementAt(offset - 1);
     if (lastElement == null) {

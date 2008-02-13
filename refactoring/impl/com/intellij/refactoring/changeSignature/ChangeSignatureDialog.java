@@ -1,7 +1,6 @@
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -360,7 +359,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     String prefix = editorTextField.getText();
     if (prefix == null) prefix = "";
     Set<LookupItem> set = new LinkedHashSet<LookupItem>();
-    CompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.PARAMETER);
+    JavaCompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.PARAMETER);
 
     LookupItem[] lookupItems = set.toArray(new LookupItem[set.size()]);
     editor.getCaretModel().moveToOffset(prefix.length());

@@ -25,7 +25,7 @@ public class XmlAutoLookupHandler extends CodeCompletionHandler {
 
   protected LookupData getLookupData(CompletionContext context) {
     PsiFile file = context.file;
-    int offset = context.startOffset;
+    int offset = context.getStartOffset();
 
     PsiElement lastElement = file.findElementAt(offset - 1);
     if (lastElement == null) return LookupData.EMPTY;
@@ -33,7 +33,7 @@ public class XmlAutoLookupHandler extends CodeCompletionHandler {
     final Ref<Boolean> isRelevantLanguage = new Ref<Boolean>();
     final Ref<Boolean> isAnt = new Ref<Boolean>();
     String text = lastElement.getText();
-    final int len = context.startOffset - lastElement.getTextRange().getStartOffset();
+    final int len = context.getStartOffset() - lastElement.getTextRange().getStartOffset();
     if (len < text.length()) {
       text = text.substring(0, len);
     }

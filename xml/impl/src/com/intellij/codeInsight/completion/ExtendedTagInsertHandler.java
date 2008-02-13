@@ -75,7 +75,7 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
             PsiDocumentManager.getInstance(project).commitDocument(document);
           }
           final int offset = rangeMarker.getStartOffset();
-          context.startOffset = rangeMarker.getStartOffset();
+          context.setStartOffset(rangeMarker.getStartOffset());
           editor.getCaretModel().moveToOffset(caretMarker.getStartOffset());
           PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
           doDefault(context, offset, data, item, signatureSelected, completionChar);

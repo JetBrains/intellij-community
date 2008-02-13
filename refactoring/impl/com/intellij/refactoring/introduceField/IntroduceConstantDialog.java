@@ -1,7 +1,7 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.ide.util.PropertiesComponent;
@@ -230,7 +230,7 @@ class IntroduceConstantDialog extends DialogWrapper {
         public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix, PsiType type) {
           LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
           LookupItemPreferencePolicy policy =
-            CompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.STATIC_FINAL_FIELD);
+            JavaCompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.STATIC_FINAL_FIELD);
           return new Pair<LookupItemPreferencePolicy, Set<LookupItem>>(policy, set);
         }
       }, myProject);

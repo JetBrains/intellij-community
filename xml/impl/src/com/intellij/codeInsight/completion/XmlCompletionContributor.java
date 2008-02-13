@@ -39,7 +39,7 @@ public class XmlCompletionContributor extends CompletionContributor{
         final PsiReference reference = parent.getReference();
         if (reference != null && namespace.length() > 0 && parentDescriptor != null && !(parentDescriptor instanceof AnyXmlElementDescriptor)) {
           final Set<LookupItem> set = new HashSet<LookupItem>();
-          new XmlCompletionData().completeReference(reference, set, element, result.getPrefixMatcher(), context.file, context.offset);
+          new XmlCompletionData().completeReference(reference, set, element, result.getPrefixMatcher(), context.file, context.getStartOffset());
           result.addAllElements(set);
         } else {
 

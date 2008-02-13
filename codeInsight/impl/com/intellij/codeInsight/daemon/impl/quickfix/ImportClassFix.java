@@ -10,7 +10,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -84,7 +84,7 @@ public class ImportClassFix implements HintAction {
     boolean isAnnotationReference = myRef.getParent() instanceof PsiAnnotation;
     for (PsiClass aClass : classes) {
       if (isAnnotationReference && !aClass.isAnnotationType()) continue;
-      if (CompletionUtil.isInExcludedPackage(aClass)) continue;
+      if (JavaCompletionUtil.isInExcludedPackage(aClass)) continue;
       if (referenceHasTypeParameters && !aClass.hasTypeParameters()) continue;
       PsiFile file = aClass.getContainingFile();
       if (file instanceof PsiJavaFile && ((PsiJavaFile)file).getPackageName().length() == 0) { //do not show classes from default package

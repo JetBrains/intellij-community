@@ -128,7 +128,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         }
 
         uniqueText = item.getLookupString(); // text may be not ready yet
-        context.startOffset -= prefix.length();
+        context.setStartOffset(context.getStartOffset() - prefix.length());
         data.prefix = "";
         context.setPrefix(""); // prefix may be of no interest
       }
@@ -144,7 +144,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
     else {
       if (isAutocompleteCommonPrefixOnInvocation() && !doNotAutocomplete) {
-        final int offset = context.startOffset;
+        final int offset = context.getStartOffset();
         final String newPrefix = fillInCommonPrefix(items, prefix, context);
 
         if (!newPrefix.equals(prefix)) {
@@ -199,8 +199,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                   final char completionChar,
                                   final int startOffset,
                                   final CompletionContext context, final LookupData data) {
-    context.shiftOffsets(context.editor.getCaretModel().getOffset() - context.offset);
-    context.shiftOffsets(startOffset - (context.startOffset - context.getPrefix().length()));
+    context.shiftOffsets(context.editor.getCaretModel().getOffset() - context.getStartOffset());
+    context.shiftOffsets(startOffset - (context.getStartOffset() - context.getPrefix().length()));
     insertLookupString(context, context.editor.getCaretModel().getOffset(), item.getLookupString(), startOffset);
     final int caretOffset = context.editor.getCaretModel().getOffset();
     final int previousSelectionEndOffset = context.selectionEndOffset;
@@ -264,8 +264,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           ++replacedLength
       ) {
         context.selectionEndOffset++;
-        context.startOffset++;
-        context.offset++;
+        context.setStartOffset(context.getStartOffset() + 1);
         context.shiftOffsets(-1); // compensation of next adjustment
       }
     }
@@ -309,10 +308,11 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     Project project = hostFile.getProject();
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
     // is null in tests
-    int hostStartOffset = injectedLanguageManager == null ? context.startOffset : injectedLanguageManager.injectedToHost(oldFileCopy, TextRange.from(context.startOffset, 0)).getStartOffset();
+    int hostStartOffset = injectedLanguageManager == null ? context.getStartOffset() : injectedLanguageManager.injectedToHost(oldFileCopy, TextRange.from(
+      context.getStartOffset(), 0)).getStartOffset();
     Document document = oldFileCopy.getViewProvider().getDocument();
 
-    document.insertString(context.startOffset, CompletionUtil.DUMMY_IDENTIFIER);
+    document.insertString(context.getStartOffset(), CompletionUtil.DUMMY_IDENTIFIER);
     PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiFile fileCopy = InjectedLanguageUtil.findInjectedPsiAt(hostFile, hostStartOffset);
     if (fileCopy == null) {
@@ -320,32 +320,29 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       fileCopy = elementAfterCommit == null ? oldFileCopy : elementAfterCommit.getContainingFile();
     }
 
-    context.offset = context.startOffset;
-
     if (oldFileCopy != fileCopy) {
       // newly inserted identifier can well end up in the injected language region
       Editor oldEditor = context.editor;
       Editor editor = EditorFactory.getInstance().createEditor(document, project);
-      Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, hostFile, context.startOffset);
+      Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, hostFile, context.getStartOffset());
       if (newEditor instanceof EditorWindow) {
         EditorWindow injectedEditor = (EditorWindow)newEditor;
-        int newOffset1 = injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(oldEditor.offsetToLogicalPosition(context.startOffset)));
+        int newOffset1 = injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(oldEditor.offsetToLogicalPosition(context.getStartOffset())));
         int newOffset2 = injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(oldEditor.offsetToLogicalPosition(context.selectionEndOffset)));
         PsiFile injectedFile = injectedEditor.getInjectedFile();
         CompletionContext newContext = new CompletionContext(context.project, injectedEditor, injectedFile, newOffset1, newOffset2);
-        newContext.offset = newContext.startOffset;
-        PsiElement element = findElementAt(injectedFile, newContext.startOffset);
+        PsiElement element = findElementAt(injectedFile, newContext.getStartOffset());
         if (element == null) {
-          LOG.assertTrue(false, "offset " + newContext.startOffset + " at:\n" + injectedFile.getText());
+          LOG.assertTrue(false, "offset " + newContext.getStartOffset() + " at:\n" + injectedFile.getText());
         }
         EditorFactory.getInstance().releaseEditor(editor);
         return Pair.create(newContext, element);
       }
       EditorFactory.getInstance().releaseEditor(editor);
     }
-    PsiElement element = findElementAt(fileCopy, context.startOffset);
+    PsiElement element = findElementAt(fileCopy, context.getStartOffset());
     if (element == null) {
-      LOG.assertTrue(false, "offset " + context.startOffset + " at:\n" + fileCopy.getText());
+      LOG.assertTrue(false, "offset " + context.getStartOffset() + " at:\n" + fileCopy.getText());
     }
     return Pair.create(context, element);
   }
@@ -403,7 +400,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         PsiDocumentManager.getInstance(context.project).commitAllDocuments();
         context.setPrefix(data.prefix);
         final PsiElement position =
-          context.file.findElementAt(context.startOffset - context.getPrefix().length() + item.getLookupString().length() - 1);
+          context.file.findElementAt(context.getStartOffset() - context.getPrefix().length() + item.getLookupString().length() - 1);
         analyseItem(item, position, context);
         handler.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
       }

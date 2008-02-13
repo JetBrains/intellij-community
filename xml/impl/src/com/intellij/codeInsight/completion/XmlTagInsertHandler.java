@@ -54,7 +54,7 @@ class XmlTagInsertHandler extends BasicInsertHandler {
     final int offset = editor.getCaretModel().getOffset();
     editor.getDocument().insertString(offset, " ");
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    PsiElement current = context.file.findElementAt(context.startOffset);
+    PsiElement current = context.file.findElementAt(context.getStartOffset());
     editor.getDocument().deleteString(offset, offset + 1);
     final XmlTag tag = PsiTreeUtil.getContextOfType(current, XmlTag.class, true);
 
@@ -94,7 +94,7 @@ class XmlTagInsertHandler extends BasicInsertHandler {
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();
     }
-    current = context.file.findElementAt(context.startOffset);
+    current = context.file.findElementAt(context.getStartOffset());
     if (current != null && current.getPrevSibling()instanceof XmlToken) {
       if (!isClosed(current) && ((XmlToken)current.getPrevSibling()).getTokenType() == XmlTokenType.XML_END_TAG_START) {
         editor.getDocument().insertString(current.getTextRange().getEndOffset(), ">");
