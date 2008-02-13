@@ -21,7 +21,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.project.Project;
@@ -140,8 +140,8 @@ public class AbstractVcsTestCase {
 
   protected VirtualFile createFileInCommand(final VirtualFile parent, final String name, @Nullable final String content) {
     final Ref<VirtualFile> result = new Ref<VirtualFile>();
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
+    new WriteCommandAction.Simple(myProject) {
+      protected void run() throws Throwable {
         try {
           VirtualFile file = parent.createChildData(this, name);
           if (content != null) {
@@ -153,14 +153,14 @@ public class AbstractVcsTestCase {
           throw new RuntimeException(e);
         }
       }
-    }, "", null);
+    }.execute();
     return result.get();
   }
 
   protected VirtualFile createDirInCommand(final VirtualFile parent, final String name) {
     final Ref<VirtualFile> result = new Ref<VirtualFile>();
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
+    new WriteCommandAction.Simple(myProject) {
+      protected void run() throws Throwable {
         try {
           VirtualFile dir = parent.createChildDirectory(this, name);
           result.set(dir);
@@ -169,7 +169,7 @@ public class AbstractVcsTestCase {
           throw new RuntimeException(e);
         }
       }
-    }, "", null);
+    }.execute();
     return result.get();
   }
 
@@ -247,8 +247,8 @@ public class AbstractVcsTestCase {
   }
 
   public static void renameFileInCommand(final Project project, final VirtualFile file, final String newName) {
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
+    new WriteCommandAction.Simple(project) {
+      protected void run() throws Throwable {
         try {
           file.rename(this, newName);
         }
@@ -256,12 +256,12 @@ public class AbstractVcsTestCase {
           throw new RuntimeException(e);
         }
       }
-    }, "", null);
+    }.execute();
   }
 
   protected void renamePsiInCommand(final PsiNamedElement element, final String newName) {
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
+    new WriteCommandAction.Simple(myProject) {
+      protected void run() throws Throwable {
         try {
           element.setName(newName);
         }
@@ -269,7 +269,7 @@ public class AbstractVcsTestCase {
           throw new RuntimeException(e);
         }
       }
-    }, "", null);
+    }.execute();
   }
 
   protected void deleteFileInCommand(final VirtualFile file) {
@@ -277,8 +277,8 @@ public class AbstractVcsTestCase {
   }
 
   public static void deleteFileInCommand(final Project project, final VirtualFile file) {
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
+    new WriteCommandAction.Simple(project) {
+      protected void run() throws Throwable {
         try {
           file.delete(this);
         }
@@ -286,12 +286,12 @@ public class AbstractVcsTestCase {
           throw new RuntimeException(ex);
         }
       }
-    }, "", file);
+    }.execute();
   }
 
   protected void copyFileInCommand(final VirtualFile file, final String toName) {
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
+    new WriteCommandAction.Simple(myProject) {
+      protected void run() throws Throwable {
         try {
           file.copy(this, file.getParent(), toName);
         }
@@ -299,7 +299,7 @@ public class AbstractVcsTestCase {
           throw new RuntimeException(e);
         }
       }
-    }, "", null);
+    }.execute();
   }
 
   protected void moveFileInCommand(final VirtualFile file, final VirtualFile newParent) {
@@ -307,8 +307,8 @@ public class AbstractVcsTestCase {
   }
 
   public static void moveFileInCommand(final Project project, final VirtualFile file, final VirtualFile newParent) {
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
+    new WriteCommandAction.Simple(project) {
+      protected void run() throws Throwable {
         try {
           file.move(this, newParent);
         }
@@ -316,7 +316,7 @@ public class AbstractVcsTestCase {
           throw new RuntimeException(e);
         }
       }
-    }, "", null);
+    }.execute();
   }
 
   protected void verifyChange(final Change c, final String beforePath, final String afterPath) {
