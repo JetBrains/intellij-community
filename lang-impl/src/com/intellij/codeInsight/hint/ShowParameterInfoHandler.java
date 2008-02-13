@@ -98,6 +98,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     });
   }
 
+  @Nullable
   public static ParameterInfoHandler[] getHandlers(final Language language) {
     final Collection<ParameterInfoHandler> infoHandlersFromLanguage = LanguageParameterInfo.INSTANCE.allForLanguage(language);
     if (!infoHandlersFromLanguage.isEmpty()) {

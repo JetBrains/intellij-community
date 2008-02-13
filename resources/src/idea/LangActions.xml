@@ -71,6 +71,7 @@
         <action id="QuickJavaDoc" class="com.intellij.codeInsight.documentation.actions.ShowJavaDocInfoAction"/>
         <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction"/>
         <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
+        <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction"/>
       </group>
       <separator/>
 

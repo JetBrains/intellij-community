@@ -8,6 +8,9 @@
 
       <action id="NextTemplateVariable" class="com.intellij.codeInsight.template.impl.actions.NextVariableAction"/>
       <action id="PreviousTemplateVariable" class="com.intellij.codeInsight.template.impl.actions.PreviousVariableAction"/>
+
+      <action id="NextParameter" class="com.intellij.codeInsight.hint.actions.NextParameterAction"/>
+      <action id="PrevParameter" class="com.intellij.codeInsight.hint.actions.PrevParameterAction"/>
     </group>
   </actions>
 
