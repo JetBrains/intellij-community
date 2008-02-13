@@ -121,4 +121,8 @@ class DataTable implements Disposable, Forceable {
   public int getWaste() {
     return myWasteSize;
   }
+
+  public long getFileSize() {
+    return myFile.length();
+  }
 }

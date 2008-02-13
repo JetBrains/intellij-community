@@ -28,9 +28,11 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   private final static FileAttribute FILE_CONTENT = new FileAttribute("PersistentFS.File.Contents", 1);
 
   private static final int CHILDREN_CACHED_FLAG = 0x01;
-  private static final int IS_DIRECTORY_FLAG = 0x02;
+  static final int IS_DIRECTORY_FLAG = 0x02;
   private static final int IS_READ_ONLY = 0x04;
   private static final int MUST_RELOAD_CONTENT = 0x08;
+
+  static int ALL_VALID_FLAGS = CHILDREN_CACHED_FLAG | IS_DIRECTORY_FLAG | IS_READ_ONLY | MUST_RELOAD_CONTENT;
 
   private static final long FILE_LENGTH_TO_CACHE_THRESHOULD = 20 * 1024 * 1024; // 20 megabytes
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.MappedFile;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -64,6 +65,7 @@ public class FSRecords implements Disposable, Forceable {
   private static int ourLocalModificationCount = 0;
 
   private static final int FREE_RECORD_FLAG = 0x100;
+  private static final int ALL_VALID_FLAGS = PersistentFS.ALL_VALID_FLAGS | FREE_RECORD_FLAG;
 
   static {
     //noinspection ConstantConditions
@@ -80,14 +82,14 @@ public class FSRecords implements Disposable, Forceable {
     private static MappedFile myRecords;
 
     private static boolean myDirty = false;
-    private static ScheduledFuture<?> myFlashingFuture;
+    private static ScheduledFuture<?> myFlushingFuture;
     private static boolean myCorrupted = false;
 
     public static DbConnection connect() {
       synchronized (LOCK) {
         if (refCount == 0) {
           init();
-          setupFlashing();
+          setupFlushing();
         }
         refCount++;
       }
@@ -150,8 +152,8 @@ public class FSRecords implements Disposable, Forceable {
       }
     }
 
-    private static void setupFlashing() {
-      myFlashingFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
+    private static void setupFlushing() {
+      myFlushingFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
         int lastModCount = 0;
         public void run() {
           if (lastModCount == ourLocalModificationCount && !HeavyProcessLatch.INSTANCE.isRunning()) {
@@ -199,15 +201,15 @@ public class FSRecords implements Disposable, Forceable {
       myRecords.put(id * RECORD_SIZE, ZEROES, 0, RECORD_SIZE);
     }
 
-    public PersistentStringEnumerator getNames() {
+    public static PersistentStringEnumerator getNames() {
       return myNames;
     }
 
-    public Storage getAttributes() {
+    public static Storage getAttributes() {
       return myAttributes;
     }
 
-    public MappedFile getRecords() {
+    public static MappedFile getRecords() {
       return myRecords;
     }
 
@@ -221,9 +223,9 @@ public class FSRecords implements Disposable, Forceable {
     }
 
     private static void closeFiles() throws IOException {
-      if (myFlashingFuture != null) {
-        myFlashingFuture.cancel(false);
-        myFlashingFuture = null;
+      if (myFlushingFuture != null) {
+        myFlushingFuture.cancel(false);
+        myFlushingFuture = null;
       }
 
       if (myNames != null) {
@@ -277,19 +279,19 @@ public class FSRecords implements Disposable, Forceable {
     myConnection = DbConnection.connect();
   }
 
-  private MappedFile getRecords() {
-    return myConnection.getRecords();
+  private static MappedFile getRecords() {
+    return DbConnection.getRecords();
   }
 
-  private Storage getAttributes() {
-    return myConnection.getAttributes();
+  private static Storage getAttributes() {
+    return DbConnection.getAttributes();
   }
 
-  private PersistentStringEnumerator getNames() {
-    return myConnection.getNames();
+  private static PersistentStringEnumerator getNames() {
+    return DbConnection.getNames();
   }
 
-  public int createRecord() {
+  public static int createRecord() {
     synchronized (lock) {
       try {
         DbConnection.markDirty();
@@ -339,7 +341,7 @@ public class FSRecords implements Disposable, Forceable {
     synchronized (lock) {
       try {
         DbConnection.markDirty();
-        int att_page = getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
+        int att_page = getAttributeRecordId(id);
         if (att_page != 0) {
           final DataInputStream attStream = getAttributes().readStream(att_page);
           while (attStream.available() > 0) {
@@ -544,7 +546,7 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
-  public int getModCount() {
+  public static int getModCount() {
     synchronized (lock) {
       try {
         return getRecords().getInt(HEADER_GLOBAL_MODCOUNT_OFFSET);
@@ -555,7 +557,7 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
-  public int getParent(int id) {
+  public static int getParent(int id) {
     synchronized (lock) {
       try {
         final int parentId = getRecords().getInt(id * RECORD_SIZE + PARENT_OFFSET);
@@ -590,11 +592,11 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
-  private int getNextFree(int id) {
+  private static int getNextFree(int id) {
     return getParent(id);
   }
 
-  private void setNextFree(int id, int next) {
+  private static void setNextFree(int id, int next) {
     try {
       getRecords().putInt(id * RECORD_SIZE + PARENT_OFFSET, next);
     }
@@ -603,7 +605,7 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
-  public String getName(int id) {
+  public static String getName(int id) {
     synchronized (lock) {
       try {
         final int nameId = getRecords().getInt(id * RECORD_SIZE + NAME_OFFSET);
@@ -628,7 +630,7 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
-  public int getFlags(int id) {
+  public static int getFlags(int id) {
     synchronized (lock) {
       try {
         return getRecords().getInt(id * RECORD_SIZE + FLAGS_OFFSET);
@@ -652,7 +654,7 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
-  public long getLength(int id) {
+  public static long getLength(int id) {
     synchronized (lock) {
       try {
         return getRecords().getLong(id * RECORD_SIZE + LENGTH_OFFSET);
@@ -676,7 +678,7 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
-  public long getTimestamp(int id) {
+  public static long getTimestamp(int id) {
     synchronized (lock) {
       try {
         return getRecords().getLong(id * RECORD_SIZE + TIMESTAMP_OFFSET);
@@ -700,7 +702,7 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
-  public int getModCount(int id) {
+  public static int getModCount(int id) {
     synchronized (lock) {
       try {
         return getRecords().getInt(id * RECORD_SIZE + MODCOUNT_OFFSET);
@@ -711,8 +713,12 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
-  private void setModCount(int id, int value) throws IOException {
+  private static void setModCount(int id, int value) throws IOException {
     getRecords().putInt(id * RECORD_SIZE + MODCOUNT_OFFSET, value);
+  }
+
+  private static int getAttributeRecordId(final int id) throws IOException {
+    return getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
   }
 
   @Nullable
@@ -738,7 +744,7 @@ public class FSRecords implements Disposable, Forceable {
     assert fileId > 0;
     assert (getFlags(fileId) & FREE_RECORD_FLAG) == 0; // TODO: This assertion is a bit timey, will remove when bug is caught.
 
-    int attrsRecord = getRecords().getInt(fileId * RECORD_SIZE + ATTREF_OFFSET);
+    int attrsRecord = getAttributeRecordId(fileId);
 
     if (attrsRecord == 0) {
       if (!createIfNotFound) return 0;
@@ -826,5 +832,109 @@ public class FSRecords implements Disposable, Forceable {
         throw DbConnection.handleError(e);
       }
     }
+  }
+
+  public static void checkSanity() {
+    long startTime = System.currentTimeMillis();
+    synchronized (lock) {
+      final int fileLength = (int)getRecords().length();
+      assert fileLength % RECORD_SIZE == 0;
+      int recordCount = fileLength / RECORD_SIZE;
+
+      IntArrayList freeRecordIds = new IntArrayList();
+      IntArrayList usedAttributeRecordIds = new IntArrayList();
+      IntArrayList validAttributeIds = new IntArrayList();
+      for(int id=2; id<recordCount; id++) {
+        int flags = getFlags(id);
+        assert (flags & ~ALL_VALID_FLAGS) == 0;
+        if ((flags & FREE_RECORD_FLAG) != 0) {
+          freeRecordIds.add(id);
+        }
+        else {
+          checkRecordSanity(id, recordCount, usedAttributeRecordIds, validAttributeIds);
+        }
+      }
+
+      try {
+        checkFreeListSanity(freeRecordIds);
+      }
+      catch (IOException ex) {
+        throw DbConnection.handleError(ex);
+      }
+    }
+    long endTime = System.currentTimeMillis();
+    System.out.println("Sanity check took " + (endTime-startTime) + " ms");
+  }
+
+  private static void checkRecordSanity(final int id, final int recordCount, final IntArrayList usedAttributeRecordIds,
+                                        final IntArrayList validAttributeIds) {
+    int parentId = getParent(id);
+    assert parentId >= 0 && parentId < recordCount;
+    if (parentId > 0) {
+      final int parentFlags = getFlags(parentId);
+      assert (parentFlags & FREE_RECORD_FLAG) == 0;
+      assert (parentFlags & PersistentFS.IS_DIRECTORY_FLAG) != 0;
+    }
+
+    String name = getName(id);
+    assert name.length() > 0;
+
+    int attributeRecordId;
+    try {
+      attributeRecordId = getAttributeRecordId(id);
+    }
+    catch(IOException ex) {
+      throw DbConnection.handleError(ex);
+    }
+
+    assert attributeRecordId >= 0;
+    if (attributeRecordId > 0) {
+      try {
+        checkAttributesSanity(attributeRecordId, usedAttributeRecordIds, validAttributeIds);
+      }
+      catch (IOException ex) {
+        throw DbConnection.handleError(ex);
+      }
+    }
+
+    long length = getLength(id);
+    assert length >= -1: "Invalid file length found for " + name + ": " + length;
+  }
+
+  private static void checkAttributesSanity(final int attributeRecordId, final IntArrayList usedAttributeRecordIds,
+                                            final IntArrayList validAttributeIds) throws IOException {
+    assert !usedAttributeRecordIds.contains(attributeRecordId);
+    usedAttributeRecordIds.add(attributeRecordId);
+
+    final DataInputStream dataInputStream = getAttributes().readStream(attributeRecordId);
+    try {
+      final int streamSize = dataInputStream.available();
+      assert (streamSize % 8) == 0;
+      for(int i=0; i<streamSize / 8; i++) {
+        int attId = dataInputStream.readInt();
+        int attDataRecordId = dataInputStream.readInt();
+        assert !usedAttributeRecordIds.contains(attDataRecordId);
+        usedAttributeRecordIds.add(attDataRecordId);
+        if (!validAttributeIds.contains(attId)) {
+          assert getNames().valueOf(attId).length() > 0;
+          validAttributeIds.add(attId);
+        }
+        getAttributes().checkSanity(attDataRecordId);
+      }
+    }
+    finally {
+      dataInputStream.close();
+    }
+  }
+
+  private static void checkFreeListSanity(final IntArrayList freeRecordIds) throws IOException {
+    int freeRecordCount = 0;
+    int next = getRecords().getInt(HEADER_FREE_RECORD_OFFSET);
+    while(next > 0) {
+      freeRecordCount++;
+      assert freeRecordIds.contains(next);
+      next = getNextFree(next);
+    }
+    assert freeRecordCount == freeRecordIds.size(): "Found " + freeRecordIds.size() + " total free records and only " + freeRecordCount + " records in free list";
   }
 }

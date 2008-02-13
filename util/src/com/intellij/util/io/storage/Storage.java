@@ -289,6 +289,16 @@ public class Storage implements Disposable, Forceable {
     }
   }
 
+  public void checkSanity(final int record) {
+    synchronized (lock) {
+      final int size = myRecordsTable.getSize(record);
+      assert size >= 0;
+      final long address = myRecordsTable.getAddress(record);
+      assert address >= 0;
+      assert address + size < myDataTable.getFileSize();      
+    }
+  }
+
   public static class StorageDataOutput extends DataOutputStream implements RecordDataOutput {
     private final Storage myStorage;
     private final int myRecordId;
