@@ -9,7 +9,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public final class AntElementCompletionWrapper extends AntElementImpl implements PsiNamedElement {
+public class AntElementCompletionWrapper extends AntElementImpl implements PsiNamedElement {
 
   private final String myName;
   private final Project myProject;

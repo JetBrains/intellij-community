@@ -7,12 +7,10 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.TestLookupManager;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
 import java.util.Arrays;
-import java.util.Calendar;
 
 /**
  * @author zhzhot
@@ -140,7 +138,6 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     checkResultByFile(testName + "-out.xml");
   }
 
-  @Bombed(month = Calendar.FEBRUARY, day = 10, user = "jeka")
   public void testEndTagCompletion() throws Exception {
     doTest();
   }

@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Expression;
@@ -56,12 +55,7 @@ class XmlTagInsertHandler extends BasicInsertHandler {
     editor.getDocument().insertString(offset, " ");
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     PsiElement current = context.file.findElementAt(context.startOffset);
-    if (CodeInsightUtil.isAntFile(context.file)) {
-      editor.getCaretModel().moveToOffset(offset + 1);
-    }
-    else {
-      editor.getDocument().deleteString(offset, offset + 1);
-    }
+    editor.getDocument().deleteString(offset, offset + 1);
     final XmlTag tag = PsiTreeUtil.getContextOfType(current, XmlTag.class, true);
 
     if (tag == null || tag instanceof JspXmlRootTag) return;
@@ -109,7 +103,7 @@ class XmlTagInsertHandler extends BasicInsertHandler {
     }
   }
 
-  private boolean isClosed(PsiElement current) {
+  private static boolean isClosed(PsiElement current) {
     PsiElement e = current;
 
     while (e != null) {
