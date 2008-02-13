@@ -39,9 +39,13 @@ public abstract class JspManager {
   /**
    * Returns possible tag names for given context JSP file.
    * @param context context JSP file.
-   * @return map from tag name to the list of namespaces where it is defined.
+   * @return set of tag names
    */
-  public abstract Set<String> getAvailableTagNames(@NotNull JspFile context);
+  @NotNull
+  public abstract Set<String> getAvailableTagNames(@NotNull final JspFile context);
+
+  @NotNull
+  public abstract Set<String> getAvailableFunctions(@NotNull final JspFile context);
 
   @Nullable
   public abstract String getPrefixForNamespace(@NotNull String namespaceUri, final @NotNull JspFile context);

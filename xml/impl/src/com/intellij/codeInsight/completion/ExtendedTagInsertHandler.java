@@ -12,13 +12,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlSchemaProvider;
-import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -28,11 +27,11 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.ExtendedTagInsertHandler");
 
-  private final String myTagName;
+  protected final String myElementName;
   @Nullable private final String myNamespacePrefix;
 
-  public ExtendedTagInsertHandler(final String tagName, @Nullable final String namespacePrefix) {
-    myTagName = tagName;
+  public ExtendedTagInsertHandler(final String elementName, @Nullable final String namespacePrefix) {
+    myElementName = elementName;
     myNamespacePrefix = namespacePrefix;
   }
 
@@ -46,16 +45,10 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     final XmlFile file = (XmlFile)context.file;
     final Project project = context.project;
 
-    final XmlExtension extension = XmlExtension.getExtension(file);
-    final Set<String> namespaces = extension.getNamespacesByTagName(myTagName, file);
     final PsiElement psiElement = file.findElementAt(startOffset);
     assert psiElement != null;
-    final XmlTag tag = (XmlTag)psiElement.getParent();
-    final String tagPrefix = tag.getNamespacePrefix();
-    final XmlElementDescriptor tagDescriptor = tag.getDescriptor();
-    final String tagNamespace = tag.getNamespace();
-    if (tagDescriptor != null && !(tagDescriptor instanceof AnyXmlElementDescriptor) && !StringUtil.isEmpty(tagNamespace)) {
-      ExtendedTagInsertHandler.super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+    if (isNamespaceBound(psiElement)) {
+      doDefault(context, startOffset, data, item, signatureSelected, completionChar);
       return;
     }
 
@@ -67,6 +60,65 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     final int caretOffset = editor.getCaretModel().getOffset();
     final RangeMarker caretMarker = document.createRangeMarker(caretOffset, caretOffset);
 
+    final Set<String> namespaces = getNamespaces(file);
+    @Nullable String nsPrefix = getPrefix(file, namespaces);
+
+    final XmlExtension.Runner<String, IncorrectOperationException> runAfter =
+      new XmlExtension.Runner<String, IncorrectOperationException>() {
+
+        public void run(final String namespacePrefix) {
+
+          PsiDocumentManager.getInstance(project).commitDocument(document);
+          final PsiElement element = file.findElementAt(rangeMarker.getStartOffset());
+          if (element != null) {
+            qualifyWithPrefix(namespacePrefix, element, document);
+            PsiDocumentManager.getInstance(project).commitDocument(document);
+          }
+          final int offset = rangeMarker.getStartOffset();
+          context.startOffset = rangeMarker.getStartOffset();
+          editor.getCaretModel().moveToOffset(caretMarker.getStartOffset());
+          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+          doDefault(context, offset, data, item, signatureSelected, completionChar);
+        }
+      };
+
+    try {
+      if (isDeclarationMissed(psiElement, namespaces)) {
+        XmlExtension.getExtension(file).insertNamespaceDeclaration(file, editor, namespaces, nsPrefix, runAfter);
+      } else {
+        runAfter.run(nsPrefix);    // qualify && complete
+      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+  }
+
+  protected void doDefault(final CompletionContext context, final int startOffset, final LookupData data, final LookupItem item,
+                         final boolean signatureSelected,
+                         final char completionChar) {
+    ExtendedTagInsertHandler.super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+  }
+
+  protected boolean isNamespaceBound(PsiElement psiElement) {
+    final XmlTag tag = (XmlTag)psiElement.getParent();
+    final XmlElementDescriptor tagDescriptor = tag.getDescriptor();
+    final String tagNamespace = tag.getNamespace();
+    return (tagDescriptor != null && !(tagDescriptor instanceof AnyXmlElementDescriptor) && !StringUtil.isEmpty(tagNamespace));
+  }
+
+  protected boolean isDeclarationMissed(PsiElement psiElement, Set<String> namespaces) {
+    final XmlTag tag = (XmlTag)psiElement.getParent();
+    for (String ns: tag.knownNamespaces()) {
+      if (namespaces.contains(ns)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Nullable
+  private String getPrefix(final XmlFile file, final Set<String> namespaces) {
     @Nullable String nsPrefix = myNamespacePrefix;
     if (myNamespacePrefix == null && namespaces.size() > 0) {
       final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
@@ -84,52 +136,26 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
         }
       }
     }
+    return nsPrefix;
+  }
 
-    final XmlExtension.Runner<String, IncorrectOperationException> runAfter =
-      new XmlExtension.Runner<String, IncorrectOperationException>() {
+  protected Set<String> getNamespaces(final XmlFile file) {
+    return XmlExtension.getExtension(file).getNamespacesByTagName(myElementName, file);
+  }
 
-        public void run(final String namespacePrefix) {
-
-          PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-          final PsiElement element = file.findElementAt(rangeMarker.getStartOffset());
-          if (element != null) {
-            final PsiElement tag = element.getParent();
-            if (tag instanceof XmlTag) {
-              final String prefix = ((XmlTag)tag).getNamespacePrefix();
-              if (!prefix.equals(namespacePrefix)) {
-                final String name = namespacePrefix + ":" + ((XmlTag)tag).getLocalName();
-                try {
-                  ((XmlTag)tag).setName(name);
-                  PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-                }
-                catch (IncorrectOperationException e) {
-                  LOG.error(e);
-                }
-              }
-            }
-          }
-          final int offset = rangeMarker.getStartOffset();
-          context.startOffset = rangeMarker.getStartOffset();
-          editor.getCaretModel().moveToOffset(caretMarker.getStartOffset());
-          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-          ExtendedTagInsertHandler.super.handleInsert(context, offset, data, item, signatureSelected, completionChar);
+  protected void qualifyWithPrefix(final String namespacePrefix, final PsiElement element, final Document document) {
+    final PsiElement tag = element.getParent();
+    if (tag instanceof XmlTag) {
+      final String prefix = ((XmlTag)tag).getNamespacePrefix();
+      if (!prefix.equals(namespacePrefix)) {
+        final String name = namespacePrefix + ":" + ((XmlTag)tag).getLocalName();
+        try {
+          ((XmlTag)tag).setName(name);
         }
-      };
-
-    try {
-      final String[] strings = tag.knownNamespaces();
-      if (Arrays.asList(strings).contains(tagNamespace) && (namespaces.size() == 0 || namespaces.contains(tagNamespace))) {
-        if (nsPrefix != null && !nsPrefix.equals(tagPrefix)) {
-          runAfter.run(nsPrefix);
-        } else {
-          ExtendedTagInsertHandler.super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);          
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
         }
-      } else {
-        extension.insertNamespaceDeclaration(file, editor, namespaces, nsPrefix, runAfter);
       }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
     }
   }
 }

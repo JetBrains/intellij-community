@@ -30,13 +30,13 @@ public class XmlCompletionContributor extends CompletionContributor{
         CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         final PsiElement element = parameters.getPosition();
         final XmlTag parent = (XmlTag)element.getParent();
-        final PsiReference reference = parent.getReference();
         final String namespace = parent.getNamespace();
         final XmlElementDescriptor parentDescriptor = parent.getDescriptor();
         final String prefix = result.getPrefixMatcher().getPrefix();
         final int pos = prefix.indexOf(':');
         final String namespacePrefix = pos > 0 ? prefix.substring(0, pos) : null;
 
+        final PsiReference reference = parent.getReference();
         if (reference != null && namespace.length() > 0 && parentDescriptor != null && !(parentDescriptor instanceof AnyXmlElementDescriptor)) {
           final Set<LookupItem> set = new HashSet<LookupItem>();
           new XmlCompletionData().completeReference(reference, set, element, result.getPrefixMatcher(), context.file, context.offset);
