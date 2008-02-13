@@ -13,6 +13,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -124,7 +125,7 @@ public class CreateClassDialog extends DialogWrapper {
           getOKAction().setEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(myTfClassName.getText()));
         }
       });
-      getOKAction().setEnabled(myClassName != null);
+      getOKAction().setEnabled(StringUtil.isNotEmpty(myClassName));
     }
 
     gbConstraints.gridx = 0;
