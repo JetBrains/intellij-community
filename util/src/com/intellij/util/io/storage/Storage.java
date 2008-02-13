@@ -117,7 +117,9 @@ public class Storage implements Disposable, Forceable {
           final long addr = myRecordsTable.getAddress(i);
           final int size = myRecordsTable.getSize(i);
 
-          if (addr != 0 && size != 0) {
+          if (size > 0) {
+            assert addr > 0;
+
             final int capacity = calcCapacity(size);
             final long newaddr = newDataTable.allocateSpace(capacity);
             final byte[] bytes = new byte[size];
@@ -214,7 +216,10 @@ public class Storage implements Disposable, Forceable {
       final int requiredLength = bytes.length;
       final int currentCapacity = myRecordsTable.getCapacity(record);
 
-      if (requiredLength == 0 && myRecordsTable.getSize(record) == 0) return;
+      final int currentSize = myRecordsTable.getSize(record);
+      assert currentSize >= 0;
+
+      if (requiredLength == 0 && currentSize == 0) return;
 
       final long address;
       if (currentCapacity >= requiredLength) {
@@ -266,6 +271,7 @@ public class Storage implements Disposable, Forceable {
     synchronized (lock) {
       final int length = myRecordsTable.getSize(record);
       if (length == 0) return ArrayUtil.EMPTY_BYTE_ARRAY;
+      assert length > 0;
 
       final long address = myRecordsTable.getAddress(record);
       byte[] result = new byte[length];

@@ -82,7 +82,10 @@ class RecordsTable implements Disposable, Forceable {
       return result;
     }
     else {
-      return myFreeRecordsList.remove(myFreeRecordsList.size() - 1);
+      final int result = myFreeRecordsList.remove(myFreeRecordsList.size() - 1);
+      assert getSize(result) == -1;
+      setSize(result, 0);
+      return result;
     }
   }
 
@@ -100,7 +103,7 @@ class RecordsTable implements Disposable, Forceable {
 
     int lastRecord = filelength / RECORD_SIZE;
     for (int i = FIRST_RECORD; i < lastRecord; i++) {
-      if (getAddress(i) == 0) {
+      if (getSize(i) == -1) {
         result.add(i);
       }
     }
@@ -141,7 +144,7 @@ class RecordsTable implements Disposable, Forceable {
 
   public void deleteRecord(final int record) {
     ensureFreeRecordsScanned();
-    setSize(record, 0);
+    setSize(record, -1);
     myFreeRecordsList.add(record);
   }
 
