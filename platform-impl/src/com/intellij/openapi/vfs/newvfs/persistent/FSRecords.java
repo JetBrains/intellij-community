@@ -63,6 +63,8 @@ public class FSRecords implements Disposable, Forceable {
 
   private static int ourLocalModificationCount = 0;
 
+  private static final int FREE_RECORD_FLAG = 0x100;
+
   static {
     //noinspection ConstantConditions
     assert HEADER_SIZE <= RECORD_SIZE;
@@ -361,6 +363,7 @@ public class FSRecords implements Disposable, Forceable {
   private void addToFreeRecordsList(int id) throws IOException {
     final int next = getRecords().getInt(HEADER_FREE_RECORD_OFFSET);
     setNextFree(id, next);
+    setFlags(id, FREE_RECORD_FLAG);
     getRecords().putInt(HEADER_FREE_RECORD_OFFSET, id);
   }
 
@@ -732,6 +735,9 @@ public class FSRecords implements Disposable, Forceable {
   }
 
   private int findAttributePage(int fileId, int attributeId, boolean createIfNotFound) throws IOException {
+    assert fileId > 0;
+    assert (getFlags(fileId) & FREE_RECORD_FLAG) == 0; // TODO: This assertion is a bit timey, will remove when bug is caught.
+
     int attrsRecord = getRecords().getInt(fileId * RECORD_SIZE + ATTREF_OFFSET);
 
     if (attrsRecord == 0) {
