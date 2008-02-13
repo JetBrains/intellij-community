@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.psi.usages;
 
 import com.intellij.lang.ant.HelpID;
+import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.cacheBuilder.WordsScanner;
@@ -32,7 +33,7 @@ public class AntUsagesProvider implements FindUsagesProvider {
 
   @NotNull
   public String getType(@NotNull PsiElement element) {
-    return ((AntStructuredElement)element).getSourceElement().getName();
+    return ((PsiAntElement) element).getRole().getName();
   }
 
   @NotNull

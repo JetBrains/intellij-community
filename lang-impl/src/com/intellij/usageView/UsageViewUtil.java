@@ -2,7 +2,6 @@ package com.intellij.usageView;
 
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
-import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,8 +13,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.TypeNameManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,17 +36,8 @@ public class UsageViewUtil {
         return ((PsiPresentableMetaData)metaData).getTypeName() + " " + getMetaDataName(metaData);
       }
     }
-
-    if (element instanceof XmlTag) {
-      final XmlTag xmlTag = (XmlTag)element;
-      final PsiMetaData metaData = xmlTag.getMetaData();
-      final String name = metaData != null ? getMetaDataName(metaData) : xmlTag.getName();
-      return UsageViewBundle.message("usage.target.xml.tag.of.file", metaData == null ? "<" + name + ">" : name, xmlTag.getContainingFile().getName());
-    }
-    else if (element instanceof XmlAttributeValue) {
-      return ((XmlAttributeValue)element).getValue();
-    }
-    else if (element != null) {
+                                         
+    if (element != null) {
       FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage());
       return provider.getNodeText(element, useFullName);
     }
@@ -81,17 +69,7 @@ public class UsageViewUtil {
         return ((PsiPresentableMetaData)metaData).getTypeName();
       }
     }
-    if (psiElement instanceof XmlTag) {
-      final PsiMetaData metaData = ((XmlTag)psiElement).getMetaData();
-      if (metaData != null && metaData.getDeclaration() instanceof XmlTag) {
-        return ((XmlTag)metaData.getDeclaration()).getName();
-      }
-      return LangBundle.message("xml.terms.xml.tag");
-    }
 
-    if (psiElement instanceof PsiAntElement) {
-      return ((PsiAntElement)psiElement).getRole().getName();
-    }
     if (psiElement instanceof PsiFile) {
       return LangBundle.message("terms.file");
     }
@@ -116,14 +94,6 @@ public class UsageViewUtil {
       final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)psiElement;
       final PsiMetaData metaData = psiMetaOwner.getMetaData();
       if (metaData != null) return getMetaDataName(metaData);
-    }
-
-    if (psiElement instanceof XmlTag) {
-      return ((XmlTag)psiElement).getName();
-    }
-
-    if (psiElement instanceof XmlAttributeValue) {
-      return ((XmlAttributeValue)psiElement).getValue();
     }
 
     final Language lang = psiElement.getLanguage();
