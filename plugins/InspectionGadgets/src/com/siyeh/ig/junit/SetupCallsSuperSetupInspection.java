@@ -76,7 +76,7 @@ public class SetupCallsSuperSetupInspection extends BaseInspection {
         }
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new AddSuperSetUpCall();
     }
 

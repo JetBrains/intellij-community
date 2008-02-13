@@ -16,7 +16,6 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.psi.PsiClassInitializer;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -47,7 +46,7 @@ public class ClassInitializerInspection extends BaseInspection {
 
     @Override
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new MakeStaticFix();
     }
 

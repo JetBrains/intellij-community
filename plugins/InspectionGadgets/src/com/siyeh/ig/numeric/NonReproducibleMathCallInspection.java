@@ -69,7 +69,7 @@ public class NonReproducibleMathCallInspection extends BaseInspection {
                 "non.reproducible.math.call.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new MakeStrictFix();
     }
 

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -42,7 +41,7 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection
                 "serializable.inner.class.has.serial.version.uid.field.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new AddSerialVersionUIDFix();
     }
 

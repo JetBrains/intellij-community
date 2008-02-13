@@ -18,7 +18,6 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiConditionalExpression;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
@@ -111,7 +110,7 @@ public class SimplifiableConditionalExpressionInspection
         }
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new SimplifiableConditionalFix();
     }
 

@@ -44,7 +44,7 @@ public class FinalizeNotProtectedInspection extends BaseInspection {
         return new FinalizeDeclaredProtectedVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(Object... infos){
         return new ProtectedFinalizeFix();
     }
 
@@ -69,7 +69,7 @@ public class FinalizeNotProtectedInspection extends BaseInspection {
 
     private static class FinalizeDeclaredProtectedVisitor
             extends BaseInspectionVisitor{
-        
+
         @Override public void visitMethod(@NotNull PsiMethod method){
             //note: no call to super;
             final String methodName = method.getName();

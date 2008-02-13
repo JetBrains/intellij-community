@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2008 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,30 +31,14 @@ import org.jetbrains.annotations.Nullable;
 
 public class MakeFieldFinalFix extends InspectionGadgetsFix {
 
-    private final String name;
+    private final String fieldName;
 
-    private MakeFieldFinalFix(String name) {
-        this.name = name;
+    private MakeFieldFinalFix(String fieldName) {
+        this.fieldName = fieldName;
     }
 
     @Nullable
-    public static InspectionGadgetsFix buildFix(PsiElement location) {
-        final PsiField field;
-        if (location instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression) location;
-            final PsiElement target = referenceExpression.resolve();
-            if (!(target instanceof PsiField)) {
-                return null;
-            }
-            field = (PsiField)target;
-        } else {
-            final PsiElement parent = location.getParent();
-            if (!(parent instanceof PsiField)) {
-                return null;
-            }
-            field = (PsiField)parent;
-        }
+    public static InspectionGadgetsFix buildFix(PsiField field) {
         if (field.hasModifierProperty(PsiModifier.STATIC)) {
             if (!canStaticFieldBeFinal(field)) {
                 return null;
@@ -136,7 +120,7 @@ public class MakeFieldFinalFix extends InspectionGadgetsFix {
     @NotNull
     public String getName() {
         return InspectionGadgetsBundle.message("make.field.final.quickfix",
-                name);
+                fieldName);
     }
 
     protected void doFix(Project project, ProblemDescriptor descriptor)

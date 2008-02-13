@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -41,7 +40,7 @@ public class InstanceMethodNamingConventionInspection
                 "instance.method.naming.convention.display.name");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix();
     }
 

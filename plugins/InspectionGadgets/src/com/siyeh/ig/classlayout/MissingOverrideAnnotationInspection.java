@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class MissingOverrideAnnotationInspection extends BaseInspection {
-    
+
     /** @noinspection PublicField*/
     public boolean useJdk6Rules = false;
 
@@ -50,7 +50,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "missing.override.annotation.jdk6.option"), this, 
+                "missing.override.annotation.jdk6.option"), this,
                 "useJdk6Rules");
     }
 
@@ -60,7 +60,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
                 "missing.override.annotation.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new MissingOverrideAnnotationFix();
     }
 

@@ -47,11 +47,11 @@ public class PublicFieldInspection extends BaseInspection {
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "public.field.ignore.enum.type.fields.option"), this, 
+                "public.field.ignore.enum.type.fields.option"), this,
                 "ignoreEnums");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new EncapsulateVariableFix();
     }
 

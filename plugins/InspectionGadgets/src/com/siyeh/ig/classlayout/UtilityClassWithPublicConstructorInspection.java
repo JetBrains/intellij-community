@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,11 +42,8 @@ public class UtilityClassWithPublicConstructorInspection
                 "utility.class.with.public.constructor.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        final PsiClass psiClass = (PsiClass)location.getParent();
-        if (psiClass == null) {
-            return null;
-        }
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        final PsiClass psiClass = (PsiClass)infos[0];
         if (psiClass.getConstructors().length > 1) {
             return new UtilityClassWithPublicConstructorFix(true);
         } else {
@@ -102,7 +99,7 @@ public class UtilityClassWithPublicConstructorInspection
             if (!hasPublicConstructor(aClass)) {
                 return;
             }
-            registerClassError(aClass);
+            registerClassError(aClass, aClass);
         }
 
         private static boolean hasPublicConstructor(PsiClass aClass) {

@@ -48,7 +48,7 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
         return new UnnecessaryConstructorVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessaryConstructorFix();
     }
 

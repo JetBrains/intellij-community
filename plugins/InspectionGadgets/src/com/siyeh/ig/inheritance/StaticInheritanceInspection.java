@@ -48,7 +48,7 @@ public class StaticInheritanceInspection extends BaseInspection {
                 "static.inheritance.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new StaticInheritanceFix();
     }
 

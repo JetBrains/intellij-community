@@ -59,7 +59,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
         return new UnnecessaryReturnVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new DeleteUnnecessaryStatementFix("return");
     }
 

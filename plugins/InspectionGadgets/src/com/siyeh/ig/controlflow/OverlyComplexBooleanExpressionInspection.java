@@ -119,7 +119,7 @@ public class OverlyComplexBooleanExpressionInspection
         return true;
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location){
+    protected InspectionGadgetsFix buildFix(Object... infos){
         return new ExtractMethodFix();
     }
 

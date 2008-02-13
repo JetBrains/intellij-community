@@ -41,7 +41,7 @@ public class ControlFlowStatementWithoutBracesInspection
                 "control.flow.statement.without.braces.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(Object... infos){
         return new ControlFlowStatementFix();
     }
 

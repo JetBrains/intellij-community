@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,10 +50,12 @@ public class StringEqualsInspection extends BaseInspection {
     }
 
     @NotNull
-    protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
+    protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+        final PsiMethodCallExpression methodCallExpression =
+                (PsiMethodCallExpression)infos[0];
         final List<InspectionGadgetsFix> result = new ArrayList();
         final PsiReferenceExpression methodExpression =
-                (PsiReferenceExpression)location.getParent();
+                methodCallExpression.getMethodExpression();
         final PsiModifierListOwner annotatableQualifier =
                 NonNlsUtils.getAnnotatableQualifier(
                         methodExpression);
@@ -63,8 +65,6 @@ public class StringEqualsInspection extends BaseInspection {
                             AnnotationUtil.NON_NLS, annotatableQualifier));
             result.add(fix);
         }
-        final PsiMethodCallExpression methodCallExpression =
-                (PsiMethodCallExpression)methodExpression.getParent();
         final PsiModifierListOwner annotatableArgument =
                 NonNlsUtils.getAnnotatableArgument(
                         methodCallExpression);
@@ -122,7 +122,7 @@ public class StringEqualsInspection extends BaseInspection {
             if (NonNlsUtils.isNonNlsAnnotated(arguments[0])) {
                 return;
             }
-            registerMethodCallError(expression);
+            registerMethodCallError(expression, expression);
         }
     }
 }

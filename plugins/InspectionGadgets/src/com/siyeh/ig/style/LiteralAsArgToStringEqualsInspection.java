@@ -50,7 +50,7 @@ public class LiteralAsArgToStringEqualsInspection
         return new LiteralAsArgToEqualsVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new SwapEqualsFix();
     }
 

@@ -49,7 +49,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
                 "simplifiable.junit.assertion.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new SimplifyJUnitAssertFix();
     }
 

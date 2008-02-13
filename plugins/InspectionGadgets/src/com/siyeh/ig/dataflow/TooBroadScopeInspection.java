@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,25 +83,26 @@ public class TooBroadScopeInspection extends BaseInspection
                 "too.broad.scope.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location)
+    public InspectionGadgetsFix buildFix(Object... infos)
     {
-        return new TooBroadScopeInspectionFix(location.getText());
+        final PsiVariable variable = (PsiVariable) infos[0];
+        return new TooBroadScopeInspectionFix(variable.getName());
     }
 
     private class TooBroadScopeInspectionFix extends InspectionGadgetsFix
     {
-        private String m_name;
+        private String variableName;
 
-        TooBroadScopeInspectionFix(String name)
+        TooBroadScopeInspectionFix(String variableName)
         {
-            m_name = name;
+            this.variableName = variableName;
         }
 
         @NotNull
         public String getName()
         {
             return InspectionGadgetsBundle.message(
-                    "too.broad.scope.narrow.quickfix", m_name);
+                    "too.broad.scope.narrow.quickfix", variableName);
         }
 
         protected void doFix(@NotNull Project project,
@@ -477,7 +478,7 @@ public class TooBroadScopeInspection extends BaseInspection
             }
             if (PsiTreeUtil.isAncestor(variableScope, commonParent, true))
             {
-                registerVariableError(variable);
+                registerVariableError(variable, variable);
                 return;
             }
             if (m_onlyLookAtBlocks)
@@ -547,7 +548,7 @@ public class TooBroadScopeInspection extends BaseInspection
                     }
                 }
             }
-            registerVariableError(variable);
+            registerVariableError(variable, variable);
         }
     }
 }

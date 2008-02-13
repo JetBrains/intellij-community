@@ -54,7 +54,7 @@ public class ReuseOfLocalVariableInspection
                 "reuse.of.local.variable.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location){
+    protected InspectionGadgetsFix buildFix(Object... infos){
         return new ReuseOfLocalVariableFix();
     }
 

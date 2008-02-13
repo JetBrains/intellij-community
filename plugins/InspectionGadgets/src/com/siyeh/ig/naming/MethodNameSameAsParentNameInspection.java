@@ -16,7 +16,6 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -39,7 +38,7 @@ public class MethodNameSameAsParentNameInspection extends BaseInspection {
                 "method.name.same.as.parent.name.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix();
     }
 

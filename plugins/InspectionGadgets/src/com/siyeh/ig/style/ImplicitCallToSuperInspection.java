@@ -46,7 +46,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
                 "implicit.call.to.super.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new AddExplicitSuperCall();
     }
 

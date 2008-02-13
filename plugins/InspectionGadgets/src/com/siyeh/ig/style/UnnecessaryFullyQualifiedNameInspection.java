@@ -68,7 +68,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
                 "unnecessary.fully.qualified.name.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(Object... infos){
         return new UnnecessaryFullyQualifiedNameFix();
     }
 

@@ -16,7 +16,6 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -47,7 +46,7 @@ public class ReadResolveAndWriteReplaceProtectedInspection
         return new ReadResolveWriteReplaceProtectedVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new MakeProtectedFix();
     }
 

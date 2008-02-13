@@ -70,7 +70,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         return new UnnecessaryBoxingVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessaryBoxingFix();
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection {
 
     @NotNull
     public String buildErrorString(Object... infos) {
-        final PsiElement parent = (PsiElement)infos[0];
+        final PsiElement parent = (PsiElement)infos[1];
         if (parent instanceof PsiMethod) {
             return InspectionGadgetsBundle.message(
                     "unnecessary.enum.modifier.problem.descriptor");
@@ -50,19 +50,19 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection {
         return new UnnecessaryInterfaceModifierVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new UnnecessaryEnumModifierFix(location);
+    public InspectionGadgetsFix buildFix(Object... infos) {
+        return new UnnecessaryEnumModifierFix((PsiElement)infos[0]);
     }
 
     private static class UnnecessaryEnumModifierFix
             extends InspectionGadgetsFix {
+
         private final String m_name;
 
-        private UnnecessaryEnumModifierFix(PsiElement fieldModifiers) {
-            super();
+        private UnnecessaryEnumModifierFix(PsiElement modifier) {
             m_name = InspectionGadgetsBundle.message(
                     "smth.unnecessary.remove.quickfix",
-                    fieldModifiers.getText());
+                    modifier.getText());
         }
 
         @NotNull
@@ -112,7 +112,7 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection {
             for (final PsiElement child : children) {
                 final String text = child.getText();
                 if (PsiModifier.STATIC.equals(text)) {
-                    registerError(child, aClass);
+                    registerError(child, child, aClass);
                 }
             }
         }
@@ -137,7 +137,7 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection {
             for (final PsiElement child : children) {
                 final String text = child.getText();
                 if (PsiModifier.PRIVATE.equals(text)) {
-                    registerError(child, method);
+                    registerError(child, child, method);
                 }
             }
         }

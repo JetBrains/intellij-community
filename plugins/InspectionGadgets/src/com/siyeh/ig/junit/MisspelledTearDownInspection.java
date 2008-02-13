@@ -16,7 +16,6 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -41,7 +40,7 @@ public class MisspelledTearDownInspection extends BaseInspection {
                 "misspelled.tear.down.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix("tearDown");
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,13 +59,9 @@ public class StringConcatenationInspection extends BaseInspection {
     }
 
     @NotNull
-    protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
-        final PsiElement parent = location.getParent();
-        if (!(parent instanceof PsiBinaryExpression)) {
-           return InspectionGadgetsFix.EMPTY_ARRAY;
-        }
+    protected InspectionGadgetsFix[] buildFixes(Object... infos) {
         final PsiBinaryExpression binaryExpression =
-                (PsiBinaryExpression)parent;
+                (PsiBinaryExpression) infos[0];
         final PsiExpression lhs = binaryExpression.getLOperand();
         final Collection<InspectionGadgetsFix> result = new ArrayList();
         final PsiModifierListOwner element1 = getAnnotatableElement(lhs);
@@ -187,7 +183,7 @@ public class StringConcatenationInspection extends BaseInspection {
             if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
                 return;
             }
-            registerError(sign);
+            registerError(sign, expression);
         }
     }
 }

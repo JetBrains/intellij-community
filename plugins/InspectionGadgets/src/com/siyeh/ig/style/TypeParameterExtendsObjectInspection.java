@@ -56,7 +56,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
         return true;
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new ExtendsObjectFix();
     }
 

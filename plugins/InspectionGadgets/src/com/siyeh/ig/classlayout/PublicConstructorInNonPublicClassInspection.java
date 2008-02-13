@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,18 +52,16 @@ public class PublicConstructorInNonPublicClassInspection
     }
 
     @NotNull
-    public InspectionGadgetsFix[] buildFixes(PsiElement location) {
+    public InspectionGadgetsFix[] buildFixes(Object... infos) {
         final List<InspectionGadgetsFix> fixes = new ArrayList();
-        final PsiModifierList modifierList =
-                (PsiModifierList)location.getParent();
-        final PsiMethod constructor = (PsiMethod)modifierList.getParent();
+        final PsiMethod constructor = (PsiMethod)infos[0];
         final PsiClass aClass = constructor.getContainingClass();
         if (aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
             fixes.add(new SetConstructorModifierFix(PsiModifier.PROTECTED));
         } else if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
             fixes.add(new SetConstructorModifierFix(PsiModifier.PRIVATE));
         }
-        fixes.add(new RemoveModifierFix(location));
+        fixes.add(new RemoveModifierFix(PsiModifier.PUBLIC));
         return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
     }
 

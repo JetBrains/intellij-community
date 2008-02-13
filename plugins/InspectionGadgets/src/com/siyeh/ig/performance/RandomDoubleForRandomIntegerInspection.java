@@ -49,7 +49,7 @@ public class RandomDoubleForRandomIntegerInspection
                 "random.double.for.random.integer.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new RandomDoubleForRandomIntegerFix();
     }
 

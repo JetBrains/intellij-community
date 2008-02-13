@@ -119,7 +119,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
         return new PointlessBitwiseVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(Object... infos){
         return new PointlessBitwiseFix();
     }
 

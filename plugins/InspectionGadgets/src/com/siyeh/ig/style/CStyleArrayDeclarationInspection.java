@@ -42,7 +42,7 @@ public class CStyleArrayDeclarationInspection extends BaseInspection {
                 "c.style.array.declaration.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new CStyleArrayDeclarationFix();
     }
 

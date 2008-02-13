@@ -53,7 +53,7 @@ public class ConstantIfStatementInspection extends BaseInspection {
         return new ConstantIfStatementVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         //if (PsiUtil.isInJspFile(location)) {
         //    return null;
         //}
@@ -91,7 +91,7 @@ public class ConstantIfStatementInspection extends BaseInspection {
         private static void replaceStatementWithUnwrapping(
                 PsiStatement branch, PsiIfStatement statement)
                 throws IncorrectOperationException {
-            if (branch instanceof PsiBlockStatement && 
+            if (branch instanceof PsiBlockStatement &&
                     !(statement.getParent() instanceof PsiIfStatement)) {
                 final PsiCodeBlock parentBlock =
                         PsiTreeUtil.getParentOfType(branch, PsiCodeBlock.class);

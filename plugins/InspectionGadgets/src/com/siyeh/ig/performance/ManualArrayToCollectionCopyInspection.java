@@ -56,7 +56,7 @@ public class ManualArrayToCollectionCopyInspection
         return new ManualArrayToCollectionCopyVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new ManualArrayToCollectionCopyFix();
     }
 
@@ -91,7 +91,7 @@ public class ManualArrayToCollectionCopyInspection
                 if (newExpression == null) {
                     return;
                 }
-                replaceStatementAndShortenClassNames(foreachStatement, 
+                replaceStatementAndShortenClassNames(foreachStatement,
                         newExpression);
             }
         }

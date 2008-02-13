@@ -54,7 +54,7 @@ public class ComparisonToNaNInspection extends BaseInspection {
         return new ComparisonToNaNVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new ComparisonToNaNFix();
     }
 

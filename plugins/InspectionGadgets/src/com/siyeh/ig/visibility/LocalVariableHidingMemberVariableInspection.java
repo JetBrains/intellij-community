@@ -47,7 +47,7 @@ public class LocalVariableHidingMemberVariableInspection
                 "local.variable.hides.member.variable.display.name");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix();
     }
 

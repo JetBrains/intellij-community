@@ -37,7 +37,7 @@ public class UnusedImportInspection extends BaseInspection {
                 "unused.import.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new DeleteImportFix();
     }
 

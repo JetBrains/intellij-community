@@ -43,7 +43,7 @@ public class MisorderedAssertEqualsParametersInspection
                 "misordered.assert.equals.parameters.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new FlipParametersFix();
     }
 

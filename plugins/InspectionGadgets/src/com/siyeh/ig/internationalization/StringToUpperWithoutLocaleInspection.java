@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,9 +47,9 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiReferenceExpression methodExpression =
-                (PsiReferenceExpression)location.getParent();
+                (PsiReferenceExpression)infos[0];
         final PsiModifierListOwner annotatableQualifier =
                 NonNlsUtils.getAnnotatableQualifier(
                         methodExpression);
@@ -101,7 +101,7 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
             if (NonNlsUtils.isNonNlsAnnotated(qualifier)) {
                 return;
             }
-            registerMethodCallError(expression);
+            registerMethodCallError(expression, methodExpression);
         }
     }
 }

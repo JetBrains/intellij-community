@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,8 +58,8 @@ public class CachedNumberConstructorCallInspection
         return new LongConstructorVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
-        final PsiNewExpression expression = (PsiNewExpression) location;
+    public InspectionGadgetsFix buildFix(Object... infos) {
+        final PsiNewExpression expression = (PsiNewExpression) infos[0];
         final PsiJavaCodeReferenceElement classReference =
                 expression.getClassReference();
         assert classReference != null;
@@ -98,8 +98,10 @@ public class CachedNumberConstructorCallInspection
     private static class LongConstructorVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
-            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
+        @Override public void visitNewExpression(
+                @NotNull PsiNewExpression expression) {
+            final LanguageLevel languageLevel =
+                    PsiUtil.getLanguageLevel(expression);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }
@@ -131,7 +133,7 @@ public class CachedNumberConstructorCallInspection
                     argumentType.equalsToText("java.lang.String")) {
                 return;
             }
-            registerError(expression);
+            registerError(expression, expression);
         }
     }
 }

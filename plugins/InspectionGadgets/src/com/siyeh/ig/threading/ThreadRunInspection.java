@@ -45,7 +45,7 @@ public class ThreadRunInspection extends BaseInspection {
         return InspectionGadgetsBundle.message("thread.run.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new ThreadRunFix();
     }
 

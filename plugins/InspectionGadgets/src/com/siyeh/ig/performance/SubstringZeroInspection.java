@@ -41,7 +41,7 @@ public class SubstringZeroInspection extends BaseInspection {
                 "substring.zero.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new SubstringZeroFix();
     }
 

@@ -39,7 +39,7 @@ public class MultipleTopLevelClassesInFileInspection extends BaseInspection {
                 "multiple.top.level.classes.in.file.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new MoveClassFix();
     }
 

@@ -44,7 +44,7 @@ public class FieldMayBeStaticInspection extends BaseInspection {
                 "field.may.be.static.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new MakeStaticFix();
     }
 

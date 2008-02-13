@@ -60,7 +60,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
                 this, "ignoreInMatchingInstanceof");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new OverlyStrongCastFix();
     }
 

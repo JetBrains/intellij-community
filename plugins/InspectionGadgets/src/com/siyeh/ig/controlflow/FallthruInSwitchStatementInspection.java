@@ -47,7 +47,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new FallthruInSwitchStatementFix();
     }
 

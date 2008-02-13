@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,13 +57,12 @@ public class ReturnNullInspection extends BaseInspection {
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        if (AnnotationUtil.isAnnotatingApplicable(location)) {
-            return new DelegatingFix(new AnnotateMethodFix(
-                    AnnotationUtil.NULLABLE, AnnotationUtil.NOT_NULL));
-        } else {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        if (!AnnotationUtil.isAnnotatingApplicable((PsiElement) infos[0])) {
             return null;
         }
+        return new DelegatingFix(new AnnotateMethodFix(
+                AnnotationUtil.NULLABLE, AnnotationUtil.NOT_NULL));
     }
 
   public JComponent createOptionsPanel() {
@@ -117,11 +116,11 @@ public class ReturnNullInspection extends BaseInspection {
             }
             if (m_reportCollectionMethods &&
                     CollectionUtils.isCollectionClassOrInterface(returnType)) {
-                registerError(value);
+                registerError(value, value);
             } else if (m_reportArrayMethods && isArray) {
-                registerError(value);
+                registerError(value, value);
             } else if (m_reportObjectMethods && !isArray) {
-                registerError(value);
+                registerError(value, value);
             }
         }
     }

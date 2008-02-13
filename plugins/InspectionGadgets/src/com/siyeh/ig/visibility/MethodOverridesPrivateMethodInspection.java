@@ -16,7 +16,6 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -48,7 +47,7 @@ public class MethodOverridesPrivateMethodInspection extends BaseInspection {
                 "method.overrides.private.display.name.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location){
+    protected InspectionGadgetsFix buildFix(Object... infos){
         return new RenameFix();
     }
 

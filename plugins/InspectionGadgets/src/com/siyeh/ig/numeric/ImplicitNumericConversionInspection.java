@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
 
     @NotNull
     public String buildErrorString(Object... infos) {
-        final PsiType type = (PsiType)infos[0];
+        final PsiType type = (PsiType) infos[1];
         final PsiType expectedType = (PsiType)infos[1];
         return InspectionGadgetsBundle.message(
                 "implicit.numeric.conversion.problem.descriptor",
@@ -83,8 +83,9 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
         return new ImplicitNumericConversionVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new ImplicitNumericConversionFix(location);
+    public InspectionGadgetsFix buildFix(Object... infos) {
+        return new ImplicitNumericConversionFix((PsiExpression)infos[0],
+                (PsiType) infos[2]);
     }
 
     private static class ImplicitNumericConversionFix
@@ -92,12 +93,8 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
 
         private final String m_name;
 
-        private ImplicitNumericConversionFix(PsiElement field) {
-            super();
-            final PsiExpression expression = (PsiExpression)field;
-            final PsiType expectedType =
-                    ExpectedTypeUtils.findExpectedType(expression, true);
-            assert expectedType != null;
+         ImplicitNumericConversionFix(PsiExpression expression,
+                                      PsiType expectedType) {
             if (isConvertible(expression, expectedType)) {
                 m_name = InspectionGadgetsBundle.message(
                         "implicit.numeric.conversion.convert.quickfix",
@@ -327,7 +324,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
                     expectedType)) {
                 return;
             }
-            registerError(expression, expressionType, expectedType);
+            registerError(expression, expression, expressionType, expectedType);
         }
     }
 

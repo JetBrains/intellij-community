@@ -56,7 +56,7 @@ public class LengthOneStringInIndexOfInspection
         return new LengthOneStringsInIndexOfVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new ReplaceStringsWithCharsFix();
     }
 

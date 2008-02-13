@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CaughtExceptionImmediatelyRethrownInspection 
+public class CaughtExceptionImmediatelyRethrownInspection
         extends BaseInspection {
 
     @Nls
@@ -52,12 +52,8 @@ public class CaughtExceptionImmediatelyRethrownInspection
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(
-                location, PsiTryStatement.class);
-        if (tryStatement == null) {
-            return null;
-        }
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        final PsiTryStatement tryStatement = (PsiTryStatement) infos[0];
         final boolean removeTryCatch =
                 tryStatement.getCatchSections().length == 1 &&
                         tryStatement.getFinallyBlock() == null;
@@ -203,7 +199,8 @@ public class CaughtExceptionImmediatelyRethrownInspection
                     return;
                 }
             }
-            registerVariableError(parameter);
+            final PsiTryStatement tryStatement = catchSection.getTryStatement();
+            registerVariableError(parameter, tryStatement);
         }
 
         private static boolean isSuperClassExceptionCaughtLater(

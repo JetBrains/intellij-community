@@ -44,7 +44,7 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
                 "inner.class.may.be.static.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new InnerClassMayBeStaticFix();
     }
 

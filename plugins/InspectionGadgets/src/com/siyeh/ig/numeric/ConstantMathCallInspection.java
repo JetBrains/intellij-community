@@ -76,7 +76,7 @@ public class ConstantMathCallInspection extends BaseInspection {
                 "constant.math.call.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(Object... infos){
         return new MakeStrictFix();
     }
 

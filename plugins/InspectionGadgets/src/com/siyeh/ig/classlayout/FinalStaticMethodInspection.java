@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -47,8 +46,8 @@ public class FinalStaticMethodInspection extends BaseInspection {
         return new FinalStaticMethodVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new RemoveModifierFix(location);
+    public InspectionGadgetsFix buildFix(Object... infos) {
+        return new RemoveModifierFix((String) infos[0]);
     }
 
     private static class FinalStaticMethodVisitor
@@ -60,7 +59,7 @@ public class FinalStaticMethodInspection extends BaseInspection {
                     || !method.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
-            registerModifierError(PsiModifier.FINAL, method);
+            registerModifierError(PsiModifier.FINAL, method, PsiModifier.FINAL);
         }
     }
 }

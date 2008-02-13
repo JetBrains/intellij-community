@@ -44,7 +44,7 @@ public class SerializableHasSerialVersionUIDFieldInspection
                 "serializable.class.without.serialversionuid.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new AddSerialVersionUIDFix();
     }
 

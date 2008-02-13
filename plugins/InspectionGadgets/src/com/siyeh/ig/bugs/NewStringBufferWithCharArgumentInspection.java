@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2008 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,15 +48,8 @@ public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        final PsiNewExpression newExpression =
-                (PsiNewExpression) location.getParent();
-        final PsiExpressionList argumentList = newExpression.getArgumentList();
-        if (argumentList == null) {
-            return null;
-        }
-        final PsiExpression[] arguments = argumentList.getExpressions();
-        final PsiExpression argument = arguments[0];
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        final PsiExpression argument = (PsiExpression) infos[0];
         if (!(argument instanceof PsiLiteralExpression)) {
             return null;
         }
@@ -125,7 +118,7 @@ public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
                     "java.lang.AbstractStringBuilder")) {
                 return;
             }
-            registerNewExpressionError(expression);
+            registerNewExpressionError(expression, argument);
         }
     }
 }

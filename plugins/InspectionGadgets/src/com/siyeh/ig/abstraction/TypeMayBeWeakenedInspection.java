@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Bas Leijdekkers
+ * Copyright 2006-2008 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
 
     @NotNull
     protected String buildErrorString(Object... infos) {
-        final Iterable<PsiClass> weakerClasses =
-		        (Iterable<PsiClass>)infos[1];
+        final Iterable<PsiClass> weakerClasses = (Iterable<PsiClass>)infos[1];
         @NonNls final StringBuilder builder = new StringBuilder();
         final Iterator<PsiClass> iterator = weakerClasses.iterator();
         if (iterator.hasNext()) {
@@ -97,16 +96,10 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     }
 
     @NotNull
-    protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
-        final PsiElement parent = location.getParent();
-        final Collection<PsiClass> weakestClasses =
-                calculateWeakestClassesNecessary(
-                        parent, useRighthandTypeAsWeakestTypeInAssignments);
-        if (weakestClasses.isEmpty()) {
-            return InspectionGadgetsFix.EMPTY_ARRAY;
-        }
+    protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+        final Iterable<PsiClass> weakerClasses = (Iterable<PsiClass>)infos[1];
         final Collection<InspectionGadgetsFix> fixes = new ArrayList();
-        for (PsiClass weakestClass : weakestClasses) {
+        for (PsiClass weakestClass : weakerClasses) {
             final String qualifiedName = weakestClass.getQualifiedName();
             fixes.add(new TypeMayBeWeakenedFix(qualifiedName));
         }

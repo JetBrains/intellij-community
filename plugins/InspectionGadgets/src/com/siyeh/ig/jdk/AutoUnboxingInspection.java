@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,14 +74,14 @@ public class AutoUnboxingInspection extends BaseInspection {
     }
 
     @Nullable
-    public InspectionGadgetsFix buildFix(PsiElement location){
-        if (!isFixApplicable(location)) {
+    public InspectionGadgetsFix buildFix(Object... infos){
+        if (!isFixApplicable((PsiExpression)infos[0])) {
             return null;
         }
         return new AutoUnboxingFix();
     }
 
-    private static boolean isFixApplicable(PsiElement location) {
+    private static boolean isFixApplicable(PsiExpression location) {
         // conservative check to see if the result value of the postfix
         // expression is used later in the same expression statement.
         // Applying the quick fix in such a case would break the code
@@ -241,7 +241,7 @@ public class AutoUnboxingInspection extends BaseInspection {
             if (element.getLanguage() != StdLanguages.JAVA) {
                 return;
             }
-            final LanguageLevel languageLevel = 
+            final LanguageLevel languageLevel =
                     PsiUtil.getLanguageLevel(element);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
@@ -261,7 +261,8 @@ public class AutoUnboxingInspection extends BaseInspection {
             checkExpression(expression);
         }
 
-        @Override public void visitReferenceExpression(PsiReferenceExpression expression){
+        @Override public void visitReferenceExpression(
+                PsiReferenceExpression expression){
             super.visitReferenceExpression(expression);
             checkExpression(expression);
         }
@@ -326,7 +327,7 @@ public class AutoUnboxingInspection extends BaseInspection {
             if(!expectedType.isAssignableFrom(unboxedType)){
                 return;
             }
-            registerError(expression);
+            registerError(expression, expression);
         }
     }
 }

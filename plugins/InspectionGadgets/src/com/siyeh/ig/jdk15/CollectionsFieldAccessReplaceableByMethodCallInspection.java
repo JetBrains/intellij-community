@@ -44,22 +44,45 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "collections.field.access.replaceable.by.method.call.problem.descriptor",
-                infos[0]);
+                infos[1]);
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        // todo pass infos object to here and use that instead of location (currently 48 usages)
-        return new CollectionsFieldAccessReplaceableByMethodCallFix();
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        final PsiReferenceExpression expression =
+                (PsiReferenceExpression) infos[0];
+        return new CollectionsFieldAccessReplaceableByMethodCallFix(
+                expression.getReferenceName());
     }
 
     private static class CollectionsFieldAccessReplaceableByMethodCallFix
             extends InspectionGadgetsFix {
 
+        private final String replacementText;
+
+        private CollectionsFieldAccessReplaceableByMethodCallFix(String referenceName) {
+            replacementText = getCollectionsMethodCallText(referenceName);
+        }
+
         @NotNull
         public String getName() {
-            // todo parameterize!
-            return "Replace with Collections.emptyList()";
+            return InspectionGadgetsBundle.message(
+                    "collections.field.access.replaceable.by.method.call.quickfix",
+                    replacementText);
+        }
+
+        private static String getCollectionsMethodCallText(
+                String collectionsFieldName) {
+            if ("EMPTY_LIST".equals(collectionsFieldName)) {
+                return "Collections.emptyList()";
+            } else if ("EMPTY_MAP".equals(collectionsFieldName)) {
+                return "Collections.emptyMap()";
+            } else if ("EMPTY_SET".equals(collectionsFieldName)) {
+                return "Collections.emptySet()";
+            } else {
+                throw new AssertionError("unknown collections field name: " +
+                        collectionsFieldName);
+            }
         }
 
         protected void doFix(Project project, ProblemDescriptor descriptor)
@@ -71,16 +94,9 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
             final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression) element;
             final String name = referenceExpression.getReferenceName();
-            if ("EMPTY_LIST".equals(name)) {
-                replaceExpression(referenceExpression,
-                        "Collections.emptyList()");
-            } else if ("EMPTY_MAP".equals(name)) {
-                replaceExpression(referenceExpression,
-                        "Collections.emptyMap()");
-            } else if ("EMPTY_SET".equals(name)) {
-                replaceExpression(referenceExpression,
-                        "Collections.emptySet()");
-            }
+            final String newMethodCallText = getCollectionsMethodCallText(name);
+            replaceExpression(referenceExpression,
+                    "java.util." + newMethodCallText);
         }
     }
 
@@ -125,7 +141,7 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
             if (!"java.util.Collections".equals(qualifiedName)) {
                 return;
             }
-            registerError(expression, replacement);
+            registerError(expression, expression, replacement);
         }
     }
 }

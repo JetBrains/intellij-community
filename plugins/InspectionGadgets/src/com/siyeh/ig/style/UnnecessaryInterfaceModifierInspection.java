@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
 
     @NotNull
     public String buildErrorString(Object... infos) {
-        final PsiModifierList modifierList = (PsiModifierList)infos[0];
+        final PsiModifierList modifierList = (PsiModifierList)infos[1];
         assert modifierList != null;
         final PsiElement parent = modifierList.getParent();
         if (parent instanceof PsiClass) {
@@ -81,8 +81,8 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
         return new UnnecessaryInterfaceModifierVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new UnnecessaryInterfaceModifersFix(location);
+    public InspectionGadgetsFix buildFix(Object... infos) {
+        return new UnnecessaryInterfaceModifersFix((PsiElement) infos[0]);
     }
 
     private static class UnnecessaryInterfaceModifersFix
@@ -182,7 +182,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
             final PsiElement[] children = list.getChildren();
             for (PsiElement child : children) {
                 if (modifiers.contains(child.getText())) {
-                    registerError(child, list);
+                    registerError(child, child, list);
                 }
             }
         }

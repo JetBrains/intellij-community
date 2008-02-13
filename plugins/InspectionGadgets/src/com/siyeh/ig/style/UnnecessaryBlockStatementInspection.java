@@ -52,7 +52,7 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection{
         return new UnnecessaryBlockStatementVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(Object... infos){
         return new UnnecessaryBlockFix();
     }
 

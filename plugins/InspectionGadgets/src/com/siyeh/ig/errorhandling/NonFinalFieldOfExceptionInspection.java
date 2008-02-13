@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -43,8 +42,9 @@ public class NonFinalFieldOfExceptionInspection extends BaseInspection {
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return MakeFieldFinalFix.buildFix(location);
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        final PsiField field = (PsiField) infos[0];
+        return MakeFieldFinalFix.buildFix(field);
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -54,7 +54,8 @@ public class NonFinalFieldOfExceptionInspection extends BaseInspection {
     private static class NonFinalFieldOfExceptionVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitField(PsiField field) {
+        @Override
+        public void visitField(PsiField field) {
             super.visitField(field);
             if (field.hasModifierProperty(PsiModifier.FINAL)) {
                 return;
@@ -67,7 +68,7 @@ public class NonFinalFieldOfExceptionInspection extends BaseInspection {
                     "java.lang.Exception")) {
                 return;
             }
-            registerFieldError(field);
+            registerFieldError(field, field);
         }
     }
 }

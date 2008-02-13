@@ -45,7 +45,7 @@ public class UnnecessaryQualifierForThisInspection
         return new UnnecessaryQualifierForThisVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessaryQualifierForThisFix();
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
         return new ProtectedMemberInFinalClassVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new RemoveModifierFix(location);
+    public InspectionGadgetsFix buildFix(Object... infos) {
+        return new RemoveModifierFix((String) infos[0]);
     }
 
     private static class ProtectedMemberInFinalClassVisitor
@@ -68,7 +68,8 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
             if (superMethodQuery.findFirst() != null) {
 	            return;
 	        }
-            registerModifierError(PsiModifier.PROTECTED, method);
+            registerModifierError(PsiModifier.PROTECTED, method,
+                    PsiModifier.PROTECTED);
         }
 
 	    @Override public void visitField(@NotNull PsiField field) {
@@ -83,7 +84,8 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
 	        if (!containingClass.hasModifierProperty(PsiModifier.FINAL)) {
 	            return;
 	        }
-	        registerModifierError(PsiModifier.PROTECTED, field);
+	        registerModifierError(PsiModifier.PROTECTED, field,
+                    PsiModifier.PROTECTED);
 	    }
     }
 }

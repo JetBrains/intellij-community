@@ -16,7 +16,6 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -42,7 +41,7 @@ public class ExtendsThreadInspection extends BaseInspection {
                 "extends.thread.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new ReplaceInheritanceWithDelegationFix();
     }
 

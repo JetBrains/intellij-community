@@ -49,7 +49,7 @@ public class StaticFieldReferenceOnSubclassInspection
                 declaringClass.getQualifiedName(), referencedClass.getQualifiedName());
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location){
+    protected InspectionGadgetsFix buildFix(Object... infos){
         return new StaticCallOnSubclassFix();
     }
 

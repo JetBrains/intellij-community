@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,8 +66,8 @@ public class UnnecessaryFinalOnParameterInspection extends BaseInspection {
         return new UnnecessaryFinalOnParameterVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new RemoveModifierFix(location);
+    public InspectionGadgetsFix buildFix(Object... infos) {
+        return new RemoveModifierFix((String) infos[1]);
     }
 
     private class UnnecessaryFinalOnParameterVisitor
@@ -91,12 +91,13 @@ public class UnnecessaryFinalOnParameterInspection extends BaseInspection {
                 if (containingClass.isInterface() ||
                         containingClass.isAnnotationType()) {
                     registerModifierError(PsiModifier.FINAL, parameter,
-                            parameter);
+                            parameter, PsiModifier.FINAL);
                     return;
                 }
             }
             if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                registerModifierError(PsiModifier.FINAL, parameter, parameter);
+                registerModifierError(PsiModifier.FINAL, parameter,
+                        parameter, PsiModifier.FINAL);
                 return;
             }
             if (onlyWarnOnAbstractMethods) {
@@ -106,7 +107,8 @@ public class UnnecessaryFinalOnParameterInspection extends BaseInspection {
                     method)) {
                 return;
             }
-            registerModifierError(PsiModifier.FINAL, parameter, parameter);
+            registerModifierError(PsiModifier.FINAL, parameter,
+                    parameter, PsiModifier.FINAL);
         }
     }
 }

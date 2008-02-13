@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,8 +75,8 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection {
         return new UnqualifiedStaticCallVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
-        if (location.getParent() instanceof PsiMethodCallExpression) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
+        if (infos[0] instanceof PsiMethodCallExpression) {
             return new UnqualifiedStaticAccessFix(false);
         } else {
             return new UnqualifiedStaticAccessFix(true);
@@ -89,7 +89,6 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection {
         private boolean m_fixField;
 
         UnqualifiedStaticAccessFix(boolean fixField) {
-            super();
             m_fixField = fixField;
         }
 

@@ -48,7 +48,7 @@ public class ObjectNotifyInspection extends BaseInspection {
         return new ObjectNotifyVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new ObjectNotifyFix();
     }
 

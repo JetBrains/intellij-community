@@ -44,7 +44,7 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
     }
 
     @NotNull
-    protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
+    protected InspectionGadgetsFix[] buildFixes(Object... infos) {
         return new InspectionGadgetsFix[]{
                 new RenameFix(), new MethodNameSameAsClassNameFix()};
     }

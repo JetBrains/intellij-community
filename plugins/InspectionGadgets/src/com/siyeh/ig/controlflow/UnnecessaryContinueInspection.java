@@ -47,7 +47,7 @@ public class UnnecessaryContinueInspection extends BaseInspection {
         return new UnnecessaryContinueVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new DeleteUnnecessaryStatementFix("continue");
     }
 

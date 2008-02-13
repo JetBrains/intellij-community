@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,10 +100,9 @@ public class TooBroadCatchInspection extends BaseInspection {
         }
     }
 
-  @NotNull
-  protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
-    PsiTypeElement typeElement = (PsiTypeElement)location;
-    PsiParameter catchParameter = (PsiParameter)typeElement.getParent();
+  @Override @NotNull
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    PsiParameter catchParameter = (PsiParameter)infos[0];
 
     PsiCatchSection catchSection = (PsiCatchSection)catchParameter.getParent();
     PsiTryStatement tryStatement = catchSection.getTryStatement();

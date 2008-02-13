@@ -46,7 +46,7 @@ public class UnusedLabelInspection extends BaseInspection {
                 "unused.label.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnusedLabelFix();
     }
 

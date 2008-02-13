@@ -53,12 +53,12 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "size.replaceable.by.isempty.negation.ignore.option"), this, 
+                "size.replaceable.by.isempty.negation.ignore.option"), this,
                 "ignoreNegations");
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new SizeReplaceableByIsEmptyFix();
     }
 

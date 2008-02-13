@@ -45,7 +45,7 @@ public class UnqualifiedFieldAccessInspection extends BaseInspection {
                 "unqualified.field.access.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnqualifiedFieldAccessFix();
     }
 
@@ -86,7 +86,7 @@ public class UnqualifiedFieldAccessInspection extends BaseInspection {
         @Override public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
-            final PsiElement parent = 
+            final PsiElement parent =
                     expression.getParent();
             if (parent instanceof PsiReferenceExpression ||
                     parent instanceof PsiCallExpression) {

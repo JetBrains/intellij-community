@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,12 +70,9 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection{
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        if (!(location instanceof PsiReferenceExpression)) {
-            return null;
-        }
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiReferenceExpression referenceExpression =
-                (PsiReferenceExpression) location;
+                (PsiReferenceExpression) infos[1];
         final String text = referenceExpression.getText();
         if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression,
             "java.util.Map")) {
@@ -145,7 +142,8 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection{
     private class ReturnOfCollectionFieldVisitor
             extends BaseInspectionVisitor {
 
-    @Override public void visitReturnStatement(@NotNull PsiReturnStatement statement){
+        @Override
+        public void visitReturnStatement(@NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);
             final PsiExpression returnValue = statement.getReturnValue();
             if(returnValue == null){
@@ -182,7 +180,7 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection{
             if(!CollectionUtils.isArrayOrCollectionField(field)){
                 return;
             }
-            registerError(returnValue, field);
+            registerError(returnValue, field, returnValue);
         }
     }
 }

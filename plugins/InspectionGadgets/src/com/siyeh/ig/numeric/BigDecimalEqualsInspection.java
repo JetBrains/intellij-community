@@ -41,7 +41,7 @@ public class BigDecimalEqualsInspection extends BaseInspection {
                 "big.decimal.equals.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new BigDecimalEqualsFix();
     }
 

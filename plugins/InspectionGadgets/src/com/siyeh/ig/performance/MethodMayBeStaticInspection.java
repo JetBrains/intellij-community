@@ -61,7 +61,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
                 "method.may.be.static.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location){
+    protected InspectionGadgetsFix buildFix(Object... infos){
         return new MethodMayBeStaticFix();
     }
 
@@ -127,7 +127,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
                 if (condition.value(method)) {
                     return;
                 }
-            }            
+            }
             final PsiElement scope = containingClass.getScope();
             if(!(scope instanceof PsiJavaFile) &&
                     !containingClass.hasModifierProperty(PsiModifier.STATIC)){

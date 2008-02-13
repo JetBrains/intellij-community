@@ -65,7 +65,7 @@ public class ChainedMethodCallInspection extends BaseInspection {
         return new ChainedMethodCallVisitor();
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new ChainedMethodCallFix();
     }
 

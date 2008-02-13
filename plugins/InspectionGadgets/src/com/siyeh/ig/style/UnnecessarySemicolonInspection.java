@@ -50,7 +50,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection {
         return new UnnecessarySemicolonVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(Object... infos){
         return new UnnecessarySemicolonFix();
     }
 

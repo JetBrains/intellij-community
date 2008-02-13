@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEnumConstant;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,7 +34,7 @@ public class EnumeratedConstantNamingConventionInspection
                 "enumerated.constant.naming.convention.display.name");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix();
     }
 

@@ -17,7 +17,6 @@ package com.siyeh.ig.naming;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
@@ -79,7 +78,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection
         return form.getContentPanel();
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location){
+    protected InspectionGadgetsFix buildFix(Object... infos){
         return new RenameFix();
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,10 +46,9 @@ public class OverridableMethodCallDuringObjectConstructionInspection
     }
 
     @NotNull
-    protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
-        final PsiElement methodExpression = location.getParent();
+    protected InspectionGadgetsFix[] buildFixes(Object... infos) {
         final PsiMethodCallExpression methodCallExpression =
-                (PsiMethodCallExpression)methodExpression.getParent();
+                (PsiMethodCallExpression)infos[0];
         final PsiClass callClass =
                 ClassUtils.getContainingClass(methodCallExpression);
         final PsiMethod method = methodCallExpression.resolveMethod();
@@ -61,13 +60,14 @@ public class OverridableMethodCallDuringObjectConstructionInspection
                 MethodUtils.isOverridden(method)) {
             return InspectionGadgetsFix.EMPTY_ARRAY;
         }
+        final String methodName = method.getName();
         if (!ClassUtils.isOverridden(containingClass)) {
             return new InspectionGadgetsFix[]{
                     new MakeClassFinalFix(containingClass),
-                    new MakeMethodFinalFix(location.getText())};
+                    new MakeMethodFinalFix(methodName)};
         } else {
             return new InspectionGadgetsFix[]{
-                    new MakeMethodFinalFix(location.getText())};
+                    new MakeMethodFinalFix(methodName)};
         }
     }
 
@@ -173,7 +173,7 @@ public class OverridableMethodCallDuringObjectConstructionInspection
             if (containingClass.hasModifierProperty(PsiModifier.FINAL)) {
                 return;
             }
-            final PsiMethod calledMethod = 
+            final PsiMethod calledMethod =
                     (PsiMethod) methodExpression.resolve();
             if (calledMethod == null || !PsiUtil.canBeOverriden(calledMethod)) {
                 return;
@@ -184,7 +184,7 @@ public class OverridableMethodCallDuringObjectConstructionInspection
                 !calledMethodClass.equals(containingClass)) {
                 return;
             }
-            registerMethodCallError(call);
+            registerMethodCallError(call, call);
         }
 
         public static boolean isObjectConstructionMethod(PsiMethod method) {

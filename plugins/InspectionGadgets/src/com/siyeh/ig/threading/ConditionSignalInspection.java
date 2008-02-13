@@ -49,7 +49,7 @@ public class ConditionSignalInspection extends BaseInspection {
         return new ConditionSignalVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new ConditionSignalFix();
     }
 
@@ -82,7 +82,7 @@ public class ConditionSignalInspection extends BaseInspection {
     }
 
     private static class ConditionSignalVisitor extends BaseInspectionVisitor {
-        
+
         @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);

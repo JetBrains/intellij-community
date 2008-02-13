@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,9 @@ public class HashCodeUsesNonFinalVariableInspection
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return MakeFieldFinalFix.buildFix(location);
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        final PsiField field = (PsiField) infos[0];
+        return MakeFieldFinalFix.buildFix(field);
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -60,7 +61,7 @@ public class HashCodeUsesNonFinalVariableInspection
             final boolean isHashCode = MethodUtils.isHashCode(method);
             if (isHashCode) {
                 method.accept(new JavaRecursiveElementVisitor() {
-                    
+
                     @Override public void visitClass(PsiClass aClass) {
                         // Do not recurse into.
                     }
@@ -76,7 +77,7 @@ public class HashCodeUsesNonFinalVariableInspection
                         if (field.hasModifierProperty(PsiModifier.FINAL)) {
                             return;
                         }
-                        registerError(expression);
+                        registerError(expression, field);
                     }
                 });
             }

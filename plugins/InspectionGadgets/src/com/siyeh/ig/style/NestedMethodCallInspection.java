@@ -60,7 +60,7 @@ public class NestedMethodCallInspection extends BaseInspection {
         return new NestedMethodCallVisitor();
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new NestedMethodCallFix();
     }
 

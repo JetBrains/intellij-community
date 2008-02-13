@@ -55,7 +55,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
         return new ManualArrayCopyVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new ManualArrayCopyFix();
     }
 

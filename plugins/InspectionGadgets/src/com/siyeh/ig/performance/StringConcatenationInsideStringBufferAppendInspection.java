@@ -57,7 +57,7 @@ public class StringConcatenationInsideStringBufferAppendInspection
         return new StringConcatenationInsideStringBufferAppendVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(Object... infos){
         return new ReplaceWithChainedAppendFix();
     }
 

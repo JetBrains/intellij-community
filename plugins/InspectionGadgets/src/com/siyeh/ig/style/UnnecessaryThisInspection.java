@@ -40,7 +40,7 @@ public class UnnecessaryThisInspection extends BaseInspection {
                 "unnecessary.this.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessaryThisFix();
     }
 

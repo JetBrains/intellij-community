@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,9 @@ public class CompareToUsesNonFinalVariableInspection
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return MakeFieldFinalFix.buildFix(location);
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        final PsiField field = (PsiField) infos[0];
+        return MakeFieldFinalFix.buildFix(field);
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -72,7 +73,7 @@ public class CompareToUsesNonFinalVariableInspection
                         if (field.hasModifierProperty(PsiModifier.FINAL)) {
                             return;
                         }
-                        registerError(expression);
+                        registerError(expression, field);
                     }
                 });
             }

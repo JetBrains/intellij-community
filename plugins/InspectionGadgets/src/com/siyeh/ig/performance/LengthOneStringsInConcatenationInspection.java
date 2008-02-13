@@ -55,7 +55,7 @@ public class LengthOneStringsInConcatenationInspection
         return new LengthOneStringsInConcatenationVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new ReplaceStringsWithCharsFix();
     }
 

@@ -52,7 +52,7 @@ public class StringToStringInspection extends BaseInspection {
         return new StringToStringVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new StringToStringFix();
     }
 

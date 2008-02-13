@@ -57,7 +57,7 @@ public class BooleanConstructorInspection extends BaseInspection {
         return new BooleanConstructorVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(Object... infos){
         return new BooleanConstructorFix();
     }
 

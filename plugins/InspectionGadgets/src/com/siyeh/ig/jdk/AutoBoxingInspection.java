@@ -81,7 +81,7 @@ public class AutoBoxingInspection extends BaseInspection {
         return new AutoBoxingVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new AutoBoxingFix();
     }
 

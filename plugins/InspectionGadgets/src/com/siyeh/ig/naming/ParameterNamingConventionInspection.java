@@ -41,7 +41,7 @@ public class ParameterNamingConventionInspection extends ConventionInspection {
                 "parameter.naming.convention.display.name");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix();
     }
 

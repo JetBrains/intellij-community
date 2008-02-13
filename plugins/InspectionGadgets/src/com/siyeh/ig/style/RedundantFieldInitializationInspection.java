@@ -63,7 +63,7 @@ public class RedundantFieldInitializationInspection extends BaseInspection {
                 "redundant.field.initialization.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new RedundantFieldInitializationFix();
     }
 

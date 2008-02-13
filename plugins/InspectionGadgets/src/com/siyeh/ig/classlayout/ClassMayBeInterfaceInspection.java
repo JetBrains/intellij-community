@@ -44,7 +44,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
                 "class.may.be.interface.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new ClassMayBeInterfaceFix();
     }
 

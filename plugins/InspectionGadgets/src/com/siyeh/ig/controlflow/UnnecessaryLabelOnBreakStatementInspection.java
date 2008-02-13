@@ -45,7 +45,7 @@ public class UnnecessaryLabelOnBreakStatementInspection
         return true;
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessaryLabelOnBreakStatementFix();
     }
 

@@ -40,7 +40,7 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
                 "assignment.used.as.condition.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new AssignmentUsedAsConditionFix();
     }
 

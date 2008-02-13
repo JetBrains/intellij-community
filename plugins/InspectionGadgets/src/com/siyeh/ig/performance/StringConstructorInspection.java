@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,25 +68,22 @@ public class StringConstructorInspection extends BaseInspection {
         return new StringConstructorVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new StringConstructorFix((PsiNewExpression)location);
+    public InspectionGadgetsFix buildFix(Object... infos) {
+        final Boolean noArguments = (Boolean) infos[0];
+        return new StringConstructorFix(noArguments.booleanValue());
     }
 
     private static class StringConstructorFix extends InspectionGadgetsFix {
 
         private final String m_name;
 
-        private StringConstructorFix(PsiNewExpression expression) {
-            super();
-            final PsiExpressionList argList = expression.getArgumentList();
-            assert argList != null;
-            final PsiExpression[] args = argList.getExpressions();
-            if (args.length == 1) {
-                m_name = InspectionGadgetsBundle.message(
-                        "string.constructor.replace.arg.quickfix");
-            } else {
+        private StringConstructorFix(boolean noArguments) {
+            if (noArguments) {
                 m_name = InspectionGadgetsBundle.message(
                         "string.constructor.replace.empty.quickfix");
+            } else {
+                m_name = InspectionGadgetsBundle.message(
+                        "string.constructor.replace.arg.quickfix");
             }
         }
 
@@ -155,7 +152,7 @@ public class StringConstructorInspection extends BaseInspection {
                     }
                 }
             }
-            registerError(expression);
+            registerError(expression, Boolean.valueOf(arguments.length == 0));
         }
     }
 }

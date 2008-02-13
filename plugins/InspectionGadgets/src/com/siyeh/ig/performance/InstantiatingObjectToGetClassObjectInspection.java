@@ -45,7 +45,7 @@ public class InstantiatingObjectToGetClassObjectInspection
                 "instantiating.object.to.get.class.object.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new InstantiatingObjectToGetClassObjectFix();
     }
 

@@ -16,7 +16,6 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
@@ -70,7 +69,7 @@ public class StandardVariableNamesInspection extends BaseInspection {
                 "standard.variable.names.display.name");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix();
     }
 

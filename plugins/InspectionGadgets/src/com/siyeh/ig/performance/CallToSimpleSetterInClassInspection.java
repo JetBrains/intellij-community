@@ -63,7 +63,7 @@ public class CallToSimpleSetterInClassInspection extends BaseInspection {
                 this, "ignoreSetterCallsOnOtherObjects");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(Object... infos){
         return new InlineCallFix();
     }
 

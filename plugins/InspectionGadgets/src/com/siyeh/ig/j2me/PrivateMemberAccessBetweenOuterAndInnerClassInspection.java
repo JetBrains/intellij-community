@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,20 +45,11 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
                 infos[0]);
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
-        final PsiReferenceExpression reference =
-                (PsiReferenceExpression) location;
-        final PsiMember member = (PsiMember) reference.resolve();
-        if (member == null) {
-            return null;
-        }
+    public InspectionGadgetsFix buildFix(Object... infos){
+        final PsiMember member = (PsiMember) infos[1];
         final String memberName = member.getName();
-        final PsiClass containingClass = member.getContainingClass();
-        if (containingClass == null) {
-            return null;
-        }
-        final String containingClassName = containingClass.getName();
-        String elementName = containingClassName + '.' + memberName;
+        final String containingClassName = (String) infos[0];
+        final String elementName = containingClassName + '.' + memberName;
         return new MakePackagePrivateFix(elementName);
     }
 
@@ -67,7 +58,6 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         private String elementName;
 
         private MakePackagePrivateFix(String elementName){
-            super();
             this.elementName = elementName;
         }
 
@@ -133,7 +123,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
                 return;
             }
             final String memberClassName = memberClass.getName();
-            registerError(expression, memberClassName);
+            registerError(expression, memberClassName, member);
         }
 
         @Nullable

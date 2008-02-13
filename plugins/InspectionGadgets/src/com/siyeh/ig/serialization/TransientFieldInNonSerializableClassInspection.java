@@ -46,7 +46,7 @@ public class TransientFieldInNonSerializableClassInspection
                 field.getName());
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new TransientFieldInNonSerializableClassFix();
     }
 

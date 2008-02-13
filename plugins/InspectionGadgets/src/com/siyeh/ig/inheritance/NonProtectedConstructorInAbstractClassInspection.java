@@ -16,7 +16,6 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -65,7 +64,7 @@ public class NonProtectedConstructorInAbstractClassInspection
         return new NonProtectedConstructorInAbstractClassVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new MakeProtectedFix();
     }
 

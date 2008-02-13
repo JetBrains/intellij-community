@@ -231,7 +231,7 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
         }
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new SimplifiableIfStatementFix();
     }
 

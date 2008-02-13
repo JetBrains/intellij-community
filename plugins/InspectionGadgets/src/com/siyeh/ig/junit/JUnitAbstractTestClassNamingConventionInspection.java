@@ -16,7 +16,6 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
@@ -39,7 +38,7 @@ public class JUnitAbstractTestClassNamingConventionInspection
                 "j.unit.abstract.test.class.naming.convention.display.name");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix();
     }
 

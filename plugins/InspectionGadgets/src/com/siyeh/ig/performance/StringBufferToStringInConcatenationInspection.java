@@ -46,7 +46,7 @@ public class StringBufferToStringInConcatenationInspection
         return new StringBufferToStringVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new StringBufferToStringFix();
     }
 

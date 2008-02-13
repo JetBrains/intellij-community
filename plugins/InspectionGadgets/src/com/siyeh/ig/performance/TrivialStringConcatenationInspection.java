@@ -79,8 +79,8 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
         return "String.valueOf(" + replacementText + ')';
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new UnnecessaryTemporaryObjectFix((PsiBinaryExpression)location);
+    public InspectionGadgetsFix buildFix(Object... infos) {
+        return new UnnecessaryTemporaryObjectFix((PsiBinaryExpression)infos[0]);
     }
 
     private static class UnnecessaryTemporaryObjectFix
@@ -89,7 +89,6 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
         private final String m_name;
 
         private UnnecessaryTemporaryObjectFix(PsiBinaryExpression expression) {
-            super();
             m_name = InspectionGadgetsBundle.message("string.replace.quickfix",
                             calculateReplacementExpression(expression));
         }

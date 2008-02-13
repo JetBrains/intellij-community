@@ -56,7 +56,7 @@ public class TrivialIfInspection extends BaseInspection {
         return InspectionGadgetsBundle.message("trivial.if.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new TrivialIfFix();
     }
 

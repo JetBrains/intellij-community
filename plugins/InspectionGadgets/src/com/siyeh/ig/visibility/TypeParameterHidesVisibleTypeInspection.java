@@ -31,7 +31,7 @@ public class TypeParameterHidesVisibleTypeInspection extends BaseInspection {
                 "type.parameter.hides.visible.type.display.name");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location){
+    protected InspectionGadgetsFix buildFix(Object... infos){
         return new RenameFix();
     }
 

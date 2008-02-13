@@ -70,7 +70,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
         return new UnnecessaryLocalVariableVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new InlineVariableFix();
     }
 

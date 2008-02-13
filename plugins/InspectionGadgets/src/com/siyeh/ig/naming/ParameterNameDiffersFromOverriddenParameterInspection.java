@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ig.naming;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -69,32 +68,8 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        final PsiParameter parameter = (PsiParameter)location.getParent();
-        if (parameter == null) {
-            return null;
-        }
-        final String parameterName = parameter.getName();
-        final PsiMethod method =
-                PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
-        if (method == null) {
-            return null;
-        }
-        final PsiMethod[] superMethods =
-                method.findSuperMethods();
-        final PsiParameterList methodParamList = method.getParameterList();
-        final int index = methodParamList.getParameterIndex(parameter);
-        for (final PsiMethod superMethod : superMethods) {
-            final PsiParameterList parameterList =
-                    superMethod.getParameterList();
-            final PsiParameter[] parameters = parameterList.getParameters();
-            final String superParameterName = parameters[index].getName();
-            assert superParameterName != null;
-            if (!superParameterName.equals(parameterName)) {
-                return new RenameParameterFix(superParameterName);
-            }
-        }
-        return null;
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        return new RenameParameterFix((String) infos[0]);
     }
 
     public BaseInspectionVisitor buildVisitor() {

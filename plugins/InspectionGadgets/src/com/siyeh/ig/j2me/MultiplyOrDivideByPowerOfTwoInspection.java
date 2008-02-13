@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,17 +107,19 @@ public class MultiplyOrDivideByPowerOfTwoInspection
         return expString;
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
-        if (location instanceof PsiBinaryExpression) {
-            final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)location;
+    public InspectionGadgetsFix buildFix(Object... infos) {
+        final PsiExpression expression = (PsiExpression) infos[0];
+        if (expression instanceof PsiBinaryExpression) {
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression)expression;
             final IElementType operationTokenType =
                     binaryExpression.getOperationTokenType();
             if (JavaTokenType.DIV.equals(operationTokenType)) {
                 return null;
             }
-        } else if (location instanceof PsiAssignmentExpression) {
+        } else if (expression instanceof PsiAssignmentExpression) {
             final PsiAssignmentExpression assignmentExpression =
-                    (PsiAssignmentExpression)location;
+                    (PsiAssignmentExpression)expression;
             final IElementType operationTokenType =
                     assignmentExpression.getOperationTokenType();
             if (JavaTokenType.DIVEQ.equals(operationTokenType)) {

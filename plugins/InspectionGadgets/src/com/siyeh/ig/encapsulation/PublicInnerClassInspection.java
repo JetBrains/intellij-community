@@ -16,7 +16,6 @@
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -53,7 +52,7 @@ public class PublicInnerClassInspection extends BaseInspection {
                 "public.inner.class.ignore.enum.option"), this, "ignoreEnums");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new MoveClassFix();
     }
 

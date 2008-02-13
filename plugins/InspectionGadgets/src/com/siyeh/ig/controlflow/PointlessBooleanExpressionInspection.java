@@ -176,7 +176,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         }
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(Object... infos){
         return new BooleanLiteralComparisonFix();
     }
 

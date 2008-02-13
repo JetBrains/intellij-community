@@ -50,7 +50,7 @@ public class MultipleTypedDeclarationInspection extends BaseInspection {
         return new MultiplyTypedDeclarationVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new NormalizeDeclarationFix();
     }
 

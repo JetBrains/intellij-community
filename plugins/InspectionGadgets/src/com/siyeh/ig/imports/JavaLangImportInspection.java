@@ -40,7 +40,7 @@ public class JavaLangImportInspection extends BaseInspection {
                 "java.lang.import.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new DeleteImportFix();
     }
 

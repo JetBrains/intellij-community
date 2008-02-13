@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,11 +49,8 @@ public class SynchronizedMethodInspection extends BaseInspection {
                 "synchronized.method.problem.descriptor", method.getName());
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        final PsiElement modifierList = location.getParent();
-        assert modifierList != null;
-        final PsiMethod method = (PsiMethod)modifierList.getParent();
-        assert method != null;
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        final PsiMethod method = (PsiMethod)infos[0];
         if (method.getBody() == null) {
             return null;
         }

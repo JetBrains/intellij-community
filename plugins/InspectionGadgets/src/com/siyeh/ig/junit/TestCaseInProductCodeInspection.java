@@ -16,7 +16,6 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -45,7 +44,7 @@ public class TestCaseInProductCodeInspection extends BaseInspection {
                 "test.case.in.product.code.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new MoveClassFix();
     }
 

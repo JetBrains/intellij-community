@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,9 +94,9 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
         return lhs.getText() + ' ' + signText + "= " + rhsRhs.getText();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(Object... infos){
         return new ReplaceAssignmentWithOperatorAssignmentFix(
-                (PsiAssignmentExpression) location);
+                (PsiAssignmentExpression) infos[0]);
     }
 
     private static class ReplaceAssignmentWithOperatorAssignmentFix

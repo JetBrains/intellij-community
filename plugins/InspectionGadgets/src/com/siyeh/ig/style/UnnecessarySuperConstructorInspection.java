@@ -45,7 +45,7 @@ public class UnnecessarySuperConstructorInspection
                 "unnecessary.super.constructor.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessarySuperConstructorFix();
     }
 

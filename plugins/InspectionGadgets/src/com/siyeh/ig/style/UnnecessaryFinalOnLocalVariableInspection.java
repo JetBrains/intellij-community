@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,8 @@ public class UnnecessaryFinalOnLocalVariableInspection
         return new UnnecessaryFinalOnLocalVariableVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new RemoveModifierFix(location);
+    public InspectionGadgetsFix buildFix(Object... infos) {
+        return new RemoveModifierFix((String) infos[1]);
     }
 
     private static class UnnecessaryFinalOnLocalVariableVisitor
@@ -85,9 +85,10 @@ public class UnnecessaryFinalOnLocalVariableInspection
                     return;
                 }
             }
-            final PsiLocalVariable variable1 =
+            final PsiLocalVariable variable =
                     (PsiLocalVariable)statement.getDeclaredElements()[0];
-            registerModifierError(PsiModifier.FINAL, variable1, variable1);
+            registerModifierError(PsiModifier.FINAL, variable, variable,
+                    PsiModifier.FINAL);
         }
 
         @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
@@ -106,7 +107,7 @@ public class UnnecessaryFinalOnLocalVariableInspection
                 if (!VariableAccessUtils.variableIsUsedInInnerClass(
                         parameter, catchBlock)) {
                     registerModifierError(PsiModifier.FINAL, parameter,
-                            parameter);
+                            parameter, PsiModifier.FINAL);
                 }
             }
         }
@@ -121,7 +122,8 @@ public class UnnecessaryFinalOnLocalVariableInspection
                     statement)) {
                 return;
             }
-            registerModifierError(PsiModifier.FINAL, parameter, parameter);
+            registerModifierError(PsiModifier.FINAL, parameter,
+                    parameter, PsiModifier.FINAL);
         }
     }
 }

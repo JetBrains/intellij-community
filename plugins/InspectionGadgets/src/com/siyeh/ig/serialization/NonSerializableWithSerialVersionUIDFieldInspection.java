@@ -51,7 +51,7 @@ public class NonSerializableWithSerialVersionUIDFieldInspection
     }
 
     @NotNull
-    protected InspectionGadgetsFix[] buildFixes(PsiElement location){
+    protected InspectionGadgetsFix[] buildFixes(Object... infos){
         return new InspectionGadgetsFix[]{new MakeSerializableFix(),
                                           new RemoveSerialVersionUIDFix()};
     }

@@ -16,7 +16,6 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -29,14 +28,14 @@ import java.util.StringTokenizer;
 
 public class ClassNamePrefixedWithPackageNameInspection
         extends BaseInspection {
-    
+
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "class.name.prefixed.with.package.name.display.name");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix();
     }
 

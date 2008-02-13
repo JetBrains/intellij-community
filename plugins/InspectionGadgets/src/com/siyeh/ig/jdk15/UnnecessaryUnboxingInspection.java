@@ -72,7 +72,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
         return new UnnecessaryUnboxingVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessaryUnboxingFix();
     }
 

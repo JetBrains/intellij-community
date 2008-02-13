@@ -77,7 +77,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
         return optionsPanel;
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessarilyQualifiedStaticUsageFix();
     }
 

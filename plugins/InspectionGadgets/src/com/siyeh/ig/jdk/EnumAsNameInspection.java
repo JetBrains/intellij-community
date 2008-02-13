@@ -42,7 +42,7 @@ public class EnumAsNameInspection extends BaseInspection{
                 "use.enum.as.identifier.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location){
+    protected InspectionGadgetsFix buildFix(Object... infos){
         return new RenameFix();
     }
 
@@ -51,7 +51,7 @@ public class EnumAsNameInspection extends BaseInspection{
     }
 
     private static class EnumAsNameVisitor extends BaseInspectionVisitor{
-        
+
         @Override public void visitVariable(@NotNull PsiVariable variable){
             super.visitVariable(variable);
             final String variableName = variable.getName();

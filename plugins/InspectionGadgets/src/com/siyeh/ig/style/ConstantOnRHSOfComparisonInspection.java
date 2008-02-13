@@ -18,7 +18,6 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiBinaryExpression;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.util.PsiUtil;
@@ -53,7 +52,7 @@ public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
         return new ConstantOnRHSOfComparisonVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new SwapComparisonFix();
     }
 

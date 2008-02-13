@@ -52,7 +52,7 @@ public class MissortedModifiersInspection extends BaseInspection {
         return new MissortedModifiersVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new SortModifiersFix();
     }
 

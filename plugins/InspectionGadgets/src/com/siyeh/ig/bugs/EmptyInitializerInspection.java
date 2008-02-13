@@ -29,7 +29,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class EmptyInitializerInspection extends BaseInspection{
-    
+
     @NotNull
     public String getID(){
         return "EmptyClassInitializer";
@@ -47,7 +47,7 @@ public class EmptyInitializerInspection extends BaseInspection{
                 "empty.class.initializer.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location){
+    protected InspectionGadgetsFix buildFix(Object... infos){
         return new EmptyInitializerFix();
     }
 

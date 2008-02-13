@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2008 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,10 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
 
     @NotNull
     protected String buildErrorString(Object... infos) {
-        final PsiElement element = (PsiElement)infos[0];
+        final PsiExpression argument = (PsiExpression)infos[1];
         return InspectionGadgetsBundle.message(
                 "to.array.call.with.zero.length.array.argument.problem.descriptor",
-                element.getText());
+                argument.getText());
     }
 
     public boolean isEnabledByDefault() {
@@ -52,11 +52,12 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        final PsiElement parent = location.getParent().getParent();
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        final PsiMethodCallExpression methodCallExpression =
+                (PsiMethodCallExpression) infos[0];
         final String replacementText =
                 ToArrayCallWithZeroLengthArrayArgumentFix.getReplacementText(
-                        parent);
+                        methodCallExpression);
         if (replacementText == null) {
             return null;
         }
@@ -93,12 +94,8 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
         }
 
         @Nullable
-        public static String getReplacementText(PsiElement element) {
-            if (!(element instanceof PsiMethodCallExpression)) {
-                return null;
-            }
-            final PsiMethodCallExpression expression =
-                    (PsiMethodCallExpression) element;
+        public static String getReplacementText(
+                PsiMethodCallExpression expression) {
             final PsiExpressionList argumentList = expression.getArgumentList();
             final PsiExpression[] arguments = argumentList.getExpressions();
             if (arguments.length != 1) {
@@ -194,7 +191,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
                     "java.util.Collection")) {
                 return;
             }
-            registerMethodCallError(expression, argument);
+            registerMethodCallError(expression, expression, argument);
         }
     }
 }

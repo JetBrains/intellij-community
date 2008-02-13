@@ -18,7 +18,6 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiConditionalExpression;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -74,11 +73,11 @@ public class UnnecessaryConditionalExpressionInspection
         }
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessaryConditionalFix();
     }
 
-    private static class UnnecessaryConditionalFix 
+    private static class UnnecessaryConditionalFix
             extends InspectionGadgetsFix {
 
         @NotNull

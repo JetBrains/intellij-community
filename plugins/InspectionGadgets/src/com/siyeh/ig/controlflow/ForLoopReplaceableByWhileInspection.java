@@ -57,7 +57,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
                 this, "m_ignoreLoopsWithoutConditions");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new ReplaceForByWhileFix();
     }
 

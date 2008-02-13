@@ -41,7 +41,7 @@ public class MethodOverloadsParentMethodInspection extends BaseInspection {
         return InspectionGadgetsBundle.message("method.overloads.display.name");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location){
+    protected InspectionGadgetsFix buildFix(Object... infos){
         return new RenameFix();
     }
 

@@ -50,7 +50,7 @@ public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
         return true;
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(Object... infos){
         return new CloneDeclaresCloneNotSupportedInspectionFix();
     }
 

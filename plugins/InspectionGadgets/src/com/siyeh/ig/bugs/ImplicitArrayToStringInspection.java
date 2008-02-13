@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2008 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,8 +53,8 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        final PsiExpression expression = (PsiExpression)location;
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        final PsiExpression expression = (PsiExpression)infos[0];
         final PsiArrayType type = (PsiArrayType) expression.getType();
         if (type != null) {
             final PsiType componentType = type.getComponentType();

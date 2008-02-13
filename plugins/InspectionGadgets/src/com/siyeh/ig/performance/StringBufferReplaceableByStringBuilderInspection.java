@@ -51,7 +51,7 @@ public class StringBufferReplaceableByStringBuilderInspection
                 "string.buffer.replaceable.by.string.builder.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new StringBufferMayBeStringBuilderFix();
     }
 

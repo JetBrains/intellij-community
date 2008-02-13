@@ -126,7 +126,7 @@ public class PointlessArithmeticExpressionInspection
         return new PointlessArithmeticVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new PointlessArithmeticFix();
     }
 

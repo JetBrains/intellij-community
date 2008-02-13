@@ -63,7 +63,7 @@ public class InstanceVariableInitializationInspection extends BaseInspection{
                 this, "m_ignorePrimitives");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(Object... infos){
         return new MakeInitializerExplicitFix();
     }
 

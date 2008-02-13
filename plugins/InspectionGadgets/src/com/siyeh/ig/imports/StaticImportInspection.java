@@ -50,7 +50,7 @@ public class StaticImportInspection extends BaseInspection {
         return new StaticImportVisitor();
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location){
+    protected InspectionGadgetsFix buildFix(Object... infos){
         return new StaticImportFix();
     }
 

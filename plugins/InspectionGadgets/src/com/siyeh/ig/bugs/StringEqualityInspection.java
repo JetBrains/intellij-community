@@ -47,7 +47,7 @@ public class StringEqualityInspection extends BaseInspection {
         return new ObjectEqualityVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new EqualityToEqualsFix();
     }
 

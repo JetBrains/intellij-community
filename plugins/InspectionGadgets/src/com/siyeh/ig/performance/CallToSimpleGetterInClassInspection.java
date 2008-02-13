@@ -62,7 +62,7 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
                 this, "ignoreGetterCallsOnOtherObjects");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(Object... infos){
         return new InlineCallFix();
     }
 

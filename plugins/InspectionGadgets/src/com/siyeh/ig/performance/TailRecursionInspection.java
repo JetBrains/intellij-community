@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,14 +45,12 @@ public class TailRecursionInspection extends BaseInspection {
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        final PsiMethod containingMethod =
-                PsiTreeUtil.getParentOfType(location, PsiMethod.class);
-        if (mayBeReplacedByIterativeMethod(containingMethod)) {
-            return new RemoveTailRecursionFix();
-        } else {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        final PsiMethod containingMethod = (PsiMethod) infos[0];
+        if (!mayBeReplacedByIterativeMethod(containingMethod)) {
             return null;
         }
+        return new RemoveTailRecursionFix();
     }
 
     private static boolean mayBeReplacedByIterativeMethod(
@@ -295,7 +293,7 @@ public class TailRecursionInspection extends BaseInspection {
             if (!method.equals(containingMethod)) {
                 return;
             }
-            registerMethodCallError(returnCall);
+            registerMethodCallError(returnCall, containingMethod);
         }
     }
 }

@@ -16,7 +16,6 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -48,7 +47,7 @@ public class FieldHidesSuperclassFieldInspection extends BaseInspection {
                 "field.name.hides.in.superclass.display.name");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix();
     }
 

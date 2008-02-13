@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,12 @@ public class IncrementDecrementUsedAsExpressionInspection
 
     @NotNull
     public String buildErrorString(Object... infos) {
-        final Boolean isPostFixExpression = (Boolean)infos[0];
-        final IElementType tokenType = (IElementType)infos[1];
-        if (isPostFixExpression.booleanValue()) {
+        final PsiExpression expression = (PsiExpression) infos[0];
+        if (expression instanceof PsiPostfixExpression) {
+            final PsiPostfixExpression postfixExpression =
+                    (PsiPostfixExpression) expression;
+            final IElementType tokenType =
+                    postfixExpression.getOperationTokenType();
             if (tokenType.equals(JavaTokenType.PLUSPLUS)) {
                 return InspectionGadgetsBundle.message(
                         "value.of.post.increment.problem.descriptor");
@@ -57,6 +60,10 @@ public class IncrementDecrementUsedAsExpressionInspection
                         "value.of.post.decrement.problem.descriptor");
             }
         } else {
+            final PsiPrefixExpression prefixExpression =
+                    (PsiPrefixExpression) expression;
+            final IElementType tokenType =
+                    prefixExpression.getOperationTokenType();
             if (tokenType.equals(JavaTokenType.PLUSPLUS)) {
                 return InspectionGadgetsBundle.message(
                         "value.of.pre.increment.problem.descriptor");
@@ -68,8 +75,9 @@ public class IncrementDecrementUsedAsExpressionInspection
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return new IncrementDecrementUsedAsExpressionFix(location.getText());
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        final PsiExpression expression = (PsiExpression) infos[0];
+        return new IncrementDecrementUsedAsExpressionFix(expression.getText());
     }
 
     private static class IncrementDecrementUsedAsExpressionFix
@@ -114,8 +122,8 @@ public class IncrementDecrementUsedAsExpressionInspection
             if (parent == null) {
                 return;
             }
-            final PsiManager manager = element.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+            final PsiElementFactory factory =
+                    JavaPsiFacade.getInstance(project).getElementFactory();
             final String newStatementText = element.getText() + ';';
             final String operandText = operand.getText();
             if (parent instanceof PsiIfStatement ||
@@ -234,7 +242,7 @@ public class IncrementDecrementUsedAsExpressionInspection
                     !tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 return;
             }
-            registerError(expression, Boolean.TRUE, tokenType);
+            registerError(expression, expression);
         }
 
         @Override public void visitPrefixExpression(
@@ -252,7 +260,7 @@ public class IncrementDecrementUsedAsExpressionInspection
                     !tokenType.equals(JavaTokenType.MINUSMINUS)) {
                 return;
             }
-            registerError(expression, Boolean.FALSE, tokenType);
+            registerError(expression, expression);
         }
     }
 }

@@ -16,7 +16,6 @@
 package com.siyeh.ig.cloneable;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -40,7 +39,7 @@ public class CloneInNonCloneableClassInspection extends BaseInspection {
                 "clone.method.in.non.cloneable.class.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location){
+    protected InspectionGadgetsFix buildFix(Object... infos){
         return new MakeCloneableFix();
     }
 

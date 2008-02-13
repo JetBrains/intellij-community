@@ -70,7 +70,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
                 "for.can.be.foreach.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(Object... infos){
         return new ForCanBeForeachFix();
     }
 

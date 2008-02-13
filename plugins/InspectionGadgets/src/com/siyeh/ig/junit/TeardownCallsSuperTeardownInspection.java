@@ -78,7 +78,7 @@ public class TeardownCallsSuperTeardownInspection extends BaseInspection {
         }
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new AddSuperTearDownCall();
     }
 

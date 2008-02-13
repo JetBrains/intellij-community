@@ -44,7 +44,7 @@ public class IfStatementWithIdenticalBranchesInspection
                 "if.statement.with.identical.branches.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
+    public InspectionGadgetsFix buildFix(Object... infos){
         return new CollapseIfFix();
     }
 

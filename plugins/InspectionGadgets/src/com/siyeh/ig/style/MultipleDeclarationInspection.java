@@ -42,7 +42,7 @@ public class MultipleDeclarationInspection extends BaseInspection {
                 "multiple.declaration.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new NormalizeDeclarationFix();
     }
 

@@ -63,7 +63,7 @@ public class NegatedIfElseInspection extends BaseInspection {
                 this, "m_ignoreNegatedNullComparison");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new NegatedIfElseFix();
     }
 

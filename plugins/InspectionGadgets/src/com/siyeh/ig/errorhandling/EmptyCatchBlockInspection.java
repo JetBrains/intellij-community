@@ -71,20 +71,7 @@ public class EmptyCatchBlockInspection extends BaseInspection {
     }
 
     @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        final PsiElement parent = location.getParent();
-        if (!(parent instanceof PsiCatchSection)) {
-            return null;
-        }
-        final PsiCatchSection catchSection = (PsiCatchSection)parent;
-        final PsiParameter parameter = catchSection.getParameter();
-        if (parameter == null) {
-            return null;
-        }
-        final PsiIdentifier identifier = parameter.getNameIdentifier();
-        if (identifier == null) {
-            return null;
-        }
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new EmptyCatchBlockFix();
     }
 
@@ -149,14 +136,19 @@ public class EmptyCatchBlockInspection extends BaseInspection {
                 return;
             }
             final PsiParameter parameter = section.getParameter();
-            if (parameter != null) {
-                @NonNls final String parametername =
-                        parameter.getName();
-                if (m_ignoreIgnoreParameter &&
-                        ("ignore".equals(parametername) ||
-                                "ignored".equals(parametername))) {
-                    return;
-                }
+            if (parameter == null) {
+                return;
+            }
+            final PsiIdentifier identifier = parameter.getNameIdentifier();
+            if (identifier == null) {
+                return;
+            }
+            @NonNls final String parameterName =
+                    parameter.getName();
+            if (m_ignoreIgnoreParameter &&
+                    ("ignore".equals(parameterName) ||
+                            "ignored".equals(parameterName))) {
+                return;
             }
             final PsiElement catchToken = section.getFirstChild();
             if (catchToken == null) {

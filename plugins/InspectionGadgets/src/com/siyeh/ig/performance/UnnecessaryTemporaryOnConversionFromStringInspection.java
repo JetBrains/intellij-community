@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,8 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
     @NotNull
     public String buildErrorString(Object... infos) {
         final String replacementString =
-                calculateReplacementExpression((PsiElement)infos[0]);
+                calculateReplacementExpression(
+                        (PsiMethodCallExpression)infos[0]);
         return InspectionGadgetsBundle.message(
                 "unnecessary.temporary.on.conversion.from.string.problem.descriptor",
                 replacementString);
@@ -71,9 +72,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
 
     @Nullable
     @NonNls static String calculateReplacementExpression(
-            PsiElement location) {
-        final PsiMethodCallExpression expression =
-                (PsiMethodCallExpression) location;
+            PsiMethodCallExpression expression) {
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
         final PsiExpression qualifierExpression =
@@ -97,7 +96,8 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
         final String canonicalType = type.getCanonicalText();
         final String conversionName = s_conversionMap.get(canonicalType);
         if (TypeUtils.typeEquals("java.lang.Boolean", type)) {
-            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(location);
+            final LanguageLevel languageLevel =
+                    PsiUtil.getLanguageLevel(expression);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return qualifierType + '.' + conversionName + '(' +
                         arg.getText() + ").booleanValue()";
@@ -112,9 +112,10 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
     }
 
     @Nullable
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         final String replacementExpression =
-                calculateReplacementExpression(location);
+                calculateReplacementExpression(
+                        (PsiMethodCallExpression)infos[0]);
         if (replacementExpression == null) {
             return null;
         }

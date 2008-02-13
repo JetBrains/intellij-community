@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,7 +160,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor{
         if (location.getTextLength() == 0) {
             return;
         }
-        final InspectionGadgetsFix[] fixes = createFixes(location);
+        final InspectionGadgetsFix[] fixes = createFixes(infos);
         for (InspectionGadgetsFix fix : fixes) {
             fix.setOnTheFly(onTheFly);
         }
@@ -169,22 +169,23 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor{
     }
 
     @NotNull
-    private InspectionGadgetsFix[] createFixes(PsiElement location){
+    private InspectionGadgetsFix[] createFixes(Object... infos){
         if(!onTheFly && inspection.buildQuickFixesOnlyForOnTheFlyErrors()){
             return InspectionGadgetsFix.EMPTY_ARRAY;
         }
-        final InspectionGadgetsFix[] fixes = inspection.buildFixes(location);
+        final InspectionGadgetsFix[] fixes = inspection.buildFixes(infos);
         if(fixes.length > 0){
             return fixes;
         }
-        final InspectionGadgetsFix fix = inspection.buildFix(location);
+        final InspectionGadgetsFix fix = inspection.buildFix(infos);
         if(fix == null){
             return InspectionGadgetsFix.EMPTY_ARRAY;
         }
         return new InspectionGadgetsFix[]{fix};
     }
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(
+            PsiReferenceExpression expression) {
         visitExpression(expression);
     }
 

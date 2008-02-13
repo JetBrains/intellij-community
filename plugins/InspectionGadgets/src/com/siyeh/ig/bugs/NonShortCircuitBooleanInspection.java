@@ -45,7 +45,7 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
                 "non.short.circuit.boolean.expression.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new NonShortCircuitBooleanFix();
     }
 

@@ -62,7 +62,7 @@ public class AssignmentToMethodParameterInspection
                 "ignoreTransformationOfOriginalParameter");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new AssignmentToMethodParameterFix();
     }
 

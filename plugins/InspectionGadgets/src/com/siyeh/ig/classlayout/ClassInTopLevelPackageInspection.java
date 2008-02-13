@@ -16,7 +16,6 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.PsiUtil;
@@ -47,7 +46,7 @@ public class ClassInTopLevelPackageInspection extends BaseInspection {
                 "class.in.top.level.package.problem.descriptor");
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new MoveClassFix();
     }
 

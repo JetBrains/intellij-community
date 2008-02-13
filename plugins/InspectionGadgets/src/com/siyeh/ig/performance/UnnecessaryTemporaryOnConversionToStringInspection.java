@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,8 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
 
     @NotNull
     public String buildErrorString(Object... infos) {
-        final String replacementString =
-                calculateReplacementExpression((PsiElement)infos[0]);
+        final String replacementString = calculateReplacementExpression(
+                (PsiMethodCallExpression)infos[0]);
         return InspectionGadgetsBundle.message(
                 "unnecessary.temporary.on.conversion.from.string.problem.descriptor",
                 replacementString);
@@ -55,9 +55,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
 
     @Nullable @NonNls
     static String calculateReplacementExpression(
-            PsiElement location) {
-        final PsiMethodCallExpression expression =
-                (PsiMethodCallExpression) location;
+            PsiMethodCallExpression expression) {
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
         final PsiExpression qualifier =
@@ -84,8 +82,9 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
         return qualifierType + ".toString(" + argumentText + ')';
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
-        final String replacement = calculateReplacementExpression(location);
+    public InspectionGadgetsFix buildFix(Object... infos) {
+        final String replacement = calculateReplacementExpression(
+                (PsiMethodCallExpression)infos[0]);
         final String name = InspectionGadgetsBundle.message(
                 "unnecessary.temporary.on.conversion.from.string.fix.name",
                 replacement);

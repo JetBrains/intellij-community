@@ -45,7 +45,7 @@ public class UnnecessaryLabelOnContinueStatementInspection
                 "unnecessary.label.on.continue.statement.problem.descriptor");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessaryLabelOnContinueStatementFix();
     }
 

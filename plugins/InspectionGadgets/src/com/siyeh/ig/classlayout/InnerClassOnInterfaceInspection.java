@@ -17,7 +17,6 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -59,7 +58,7 @@ public class InnerClassOnInterfaceInspection extends BaseInspection {
                 "inner.class.on.interface.problem.descriptor", interfaceName);
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new MoveClassFix();
     }
 

@@ -48,7 +48,7 @@ public class ZeroLengthArrayInitializationInspection extends BaseInspection {
         return new ZeroLengthArrayInitializationVisitor();
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(Object... infos) {
         return new IntroduceConstantFix();
     }
 
