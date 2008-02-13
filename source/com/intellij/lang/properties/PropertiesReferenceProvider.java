@@ -25,6 +25,9 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
 
   private final boolean myDefaultSoft;
 
+  public PropertiesReferenceProvider() {
+    this(false);
+  }
 
   public PropertiesReferenceProvider(final boolean defaultSoft) {
     myDefaultSoft = defaultSoft;

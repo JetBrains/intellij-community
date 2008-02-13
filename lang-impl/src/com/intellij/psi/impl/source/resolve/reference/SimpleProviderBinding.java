@@ -1,15 +1,14 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.util.Trinity;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
-import com.intellij.patterns.ElementPattern;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -20,15 +19,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * To change this template use Options | File Templates.
  */
 public class SimpleProviderBinding implements ProviderBinding {
-  private final Class myScope;
   private final List<Trinity<PsiReferenceProvider,ElementPattern,Double>> myProviderPairs = new CopyOnWriteArrayList<Trinity<PsiReferenceProvider,ElementPattern,Double>>();
 
-  public SimpleProviderBinding(Class scope){
-    myScope = scope;
-  }
-
-  public void registerProvider(PsiReferenceProvider provider,ElementPattern pattern,@Nullable Double priority){
-    myProviderPairs.add(Trinity.create(provider, pattern, priority == null ? ReferenceProvidersRegistry.DEFAULT_PRIORITY : priority));
+  public void registerProvider(PsiReferenceProvider provider,ElementPattern pattern, double priority){
+    myProviderPairs.add(Trinity.create(provider, pattern, priority));
   }
 
   public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> list) {

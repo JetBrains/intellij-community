@@ -1,6 +1,5 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
-import com.intellij.lang.properties.PropertiesReferenceProvider;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -9,14 +8,9 @@ import com.intellij.patterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.util.*;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,10 +25,8 @@ import java.util.concurrent.ConcurrentMap;
  * To change this template use Options | File Templates.
  */
 public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
-            
   private final ConcurrentMap<Class,SimpleProviderBinding> myBindingsMap = new ConcurrentWeakHashMap<Class, SimpleProviderBinding>();
   private final ConcurrentMap<Class,NamedObjectProviderBinding> myNamedBindingsMap = new ConcurrentWeakHashMap<Class, NamedObjectProviderBinding>();
-  private final Map<ReferenceProviderType,PsiReferenceProvider> myReferenceTypeToProviderMap = new ConcurrentHashMap<ReferenceProviderType, PsiReferenceProvider>(5);
   private boolean myInitialized;
 
   private static final Comparator<Trinity<PsiReferenceProvider,ProcessingContext,Double>> PRIORITY_COMPARATOR = new Comparator<Trinity<PsiReferenceProvider, ProcessingContext, Double>>() {
@@ -44,31 +36,11 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
     }
   };
 
-  public static class ReferenceProviderType {
-    private final String myId;
-    public ReferenceProviderType(@NonNls String id) { myId = id; }
-    public String toString() { return myId; }
-  }
-
-  public static final ReferenceProviderType PROPERTIES_FILE_KEY_PROVIDER = new ReferenceProviderType("Properties File Key Provider");
-  public static final ReferenceProviderType CLASS_REFERENCE_PROVIDER = new ReferenceProviderType("Class Reference Provider");
-  public static final ReferenceProviderType CSS_CLASS_OR_ID_KEY_PROVIDER = new ReferenceProviderType("Css Class or ID Provider");
-  private static final ReferenceProviderType URI_PROVIDER = new ReferenceProviderType("Uri references provider");
-  private static final ReferenceProviderType SCHEMA_PROVIDER = new ReferenceProviderType("Schema references provider");
-
   public static ReferenceProvidersRegistry getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ReferenceProvidersRegistry.class);
   }
 
-  public void registerTypeWithProvider(@NotNull ReferenceProviderType type, @NotNull PsiReferenceProvider provider) {
-    myReferenceTypeToProviderMap.put(type, provider);
-  }
-
   private ReferenceProvidersRegistry() {
-    myReferenceTypeToProviderMap.put(CLASS_REFERENCE_PROVIDER, new JavaClassReferenceProvider());
-    myReferenceTypeToProviderMap.put(PROPERTIES_FILE_KEY_PROVIDER, new PropertiesReferenceProvider(false));
-    myReferenceTypeToProviderMap.put(URI_PROVIDER, new URIReferenceProvider());
-    myReferenceTypeToProviderMap.put(SCHEMA_PROVIDER, new SchemaReferencesProvider());
   }
 
   public void registerReferenceProvider(@Nullable ElementFilter elementFilter,
@@ -90,7 +62,7 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
         ContainerUtil.findInstance(nameCondition.getNamePattern().getCondition().getConditions(), ValuePatternCondition.class);
       if (valueCondition != null) {
         final Collection<String> strings = valueCondition.getValues();
-        registerNamedReferenceProvider(strings.toArray(new String[strings.size()]), new NamedObjectProviderBinding(scope) {
+        registerNamedReferenceProvider(strings.toArray(new String[strings.size()]), new NamedObjectProviderBinding() {
           protected String getName(final PsiElement position) {
             return nameCondition.getPropertyValue(position);
           }
@@ -101,7 +73,7 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
       final CaseInsensitiveValuePatternCondition ciCondition =
         ContainerUtil.findInstance(nameCondition.getNamePattern().getCondition().getConditions(), CaseInsensitiveValuePatternCondition.class);
       if (ciCondition != null) {
-        registerNamedReferenceProvider(ciCondition.getValues(), new NamedObjectProviderBinding(scope) {
+        registerNamedReferenceProvider(ciCondition.getValues(), new NamedObjectProviderBinding() {
           @Nullable
           protected String getName(final PsiElement position) {
             return nameCondition.getPropertyValue(position);
@@ -119,7 +91,7 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
         return;
       }
 
-      final SimpleProviderBinding binding = new SimpleProviderBinding(scope);
+      final SimpleProviderBinding binding = new SimpleProviderBinding();
       binding.registerProvider(provider, pattern, priority);
       if (myBindingsMap.putIfAbsent(scope, binding) == null) break;
     }
@@ -148,11 +120,6 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
     }
 
     providerBinding.registerProvider(names, pattern, caseSensitive, provider, priority);
-  }
-
-  @Nullable
-  public PsiReferenceProvider getProviderByType(@NotNull ReferenceProviderType type) {
-    return myReferenceTypeToProviderMap.get(type);
   }
 
   public void registerReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
@@ -209,10 +176,7 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
     next: for (Trinity<PsiReferenceProvider, ProcessingContext, Double> trinity : providers) {
       final PsiReference[] refs = trinity.getFirst().getReferencesByElement(context, trinity.getSecond());
       if (trinity.getThird().equals(maxPriority)) {
-        result = ArrayUtil.mergeArrays(
-          result, refs,
-          PsiReference.class
-        );
+        result = ArrayUtil.mergeArrays(result, refs, PsiReference.class);
       } else {
         for (PsiReference ref : refs) {
           for (PsiReference reference : result) {
@@ -221,10 +185,7 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
             }
           }
         }
-        result = ArrayUtil.mergeArrays(
-          result, refs,
-          PsiReference.class
-        );
+        result = ArrayUtil.mergeArrays(result, refs, PsiReference.class);
       }
     }
     return result;
