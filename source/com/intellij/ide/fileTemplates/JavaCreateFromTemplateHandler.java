@@ -64,11 +64,18 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     return fileType.equals(StdFileTypes.JAVA);
   }
 
-  public PsiElement createFromTemplate(final Project project, final PsiDirectory directory,
-                                       FileTemplate template, String templateText, Properties props) throws IncorrectOperationException {
+  public PsiElement createFromTemplate(final Project project, final PsiDirectory directory, final String fileName, FileTemplate template,
+                                       String templateText, Properties props) throws IncorrectOperationException {
     String extension = template.getExtension();
     PsiElement result = createClassOrInterface(project, directory, templateText, template.isAdjust(), extension);
     hackAwayEmptyPackage((PsiJavaFile)result.getContainingFile(), template, props);
     return result;
+  }
+
+  public boolean canCreate(final PsiDirectory[] dirs) {
+    for (PsiDirectory dir : dirs) {
+      if (JavaDirectoryService.getInstance().getPackage(dir) != null) return true;
+    }
+    return false;
   }
 }

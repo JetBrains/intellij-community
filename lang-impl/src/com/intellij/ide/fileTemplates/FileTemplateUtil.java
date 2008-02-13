@@ -10,14 +10,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.util.IncorrectOperationException;
 import org.apache.commons.collections.ExtendedProperties;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
@@ -45,6 +44,7 @@ import java.util.*;
 public class FileTemplateUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.FileTemplateUtil");
   private static boolean ourVelocityInitialized = false;
+  private static CreateFromTemplateHandler ourDefaultCreateFromTemplateHandler = new DefaultCreateFromTemplateHandler();
 
   private FileTemplateUtil() {
   }
@@ -250,16 +250,8 @@ public class FileTemplateUtil{
         final Runnable run = new Runnable(){
           public void run(){
             try{
-              boolean handled = false;
-              for(CreateFromTemplateHandler handler: Extensions.getExtensions(CreateFromTemplateHandler.EP_NAME)) {
-                if (handler.handlesTemplate(template)) {
-                  result [0] = handler.createFromTemplate(project, directory, template, templateText, finalProps);
-                  handled = true;
-                }
-              }
-              if (!handled) {
-                result[0] = createPsiFile(project, directory, templateText, fileName, template.getExtension());
-              }
+              CreateFromTemplateHandler handler = findHandler(template);
+              result [0] = handler.createFromTemplate(project, directory, fileName, template, templateText, finalProps);
             }
             catch (Exception ex){
               commandException[0] = ex;
@@ -277,24 +269,20 @@ public class FileTemplateUtil{
     return result[0];
   }
 
+  private static CreateFromTemplateHandler findHandler(final FileTemplate template) {
+    for(CreateFromTemplateHandler handler: Extensions.getExtensions(CreateFromTemplateHandler.EP_NAME)) {
+      if (handler.handlesTemplate(template)) {
+        return handler;
+      }
+    }
+    return ourDefaultCreateFromTemplateHandler;
+  }
+
   public static void fillDefaultProperties(final Properties props, final PsiDirectory directory) {
     final DefaultTemplatePropertiesProvider[] providers = Extensions.getExtensions(DefaultTemplatePropertiesProvider.EP_NAME);
     for(DefaultTemplatePropertiesProvider provider: providers) {
       provider.fillProperties(directory, props);
     }
-  }
-
-  private static PsiFile createPsiFile(Project project, @NotNull PsiDirectory directory, String content, String fileName, String extension) throws IncorrectOperationException{
-    final String suggestedFileNameEnd = "." + extension;
-    
-    if (!fileName.endsWith(suggestedFileNameEnd)) {
-      fileName += suggestedFileNameEnd;
-    }
-    
-    directory.checkCreateFile(fileName);
-    PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, content);
-    file = (PsiFile)directory.add(file);
-    return file;
   }
 
   public static String indent(String methodText, Project project, FileType fileType) {
@@ -340,15 +328,7 @@ public class FileTemplateUtil{
   public static boolean canCreateFromTemplate (PsiDirectory[] dirs, FileTemplate template) {
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
     if (fileType.equals(FileTypes.UNKNOWN)) return false;
-    if (
-      template.isJavaClassTemplate() ||
-      fileType.equals(StdFileTypes.GUI_DESIGNER_FORM)
-    ){
-      for (PsiDirectory dir : dirs) {
-        if (JavaDirectoryService.getInstance().getPackage(dir) != null) return true;
-      }
-      return false;
-    }
-    return true;
+    CreateFromTemplateHandler handler = findHandler(template);
+    return handler.canCreate(dirs);
   }
 }

@@ -1,4 +1,4 @@
-package com.intellij.ide.actions;
+package com.intellij.uiDesigner.fileTemplate;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.JDOMUtil;
@@ -7,6 +7,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.ide.actions.SaveFileAsTemplateHandler;
 import org.jdom.Attribute;
 import org.jdom.Document;
 

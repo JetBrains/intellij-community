@@ -89,7 +89,8 @@
 
     <referencesSearch implementation="com.intellij.uiDesigner.binding.FormReferencesSearcher"/>
 
-    <saveFileAsTemplateHandler implementation="com.intellij.ide.actions.SaveFormAsTemplateHandler"/>
+    <saveFileAsTemplateHandler implementation="com.intellij.uiDesigner.fileTemplate.SaveFormAsTemplateHandler"/>
+    <createFromTemplateHandler implementation="com.intellij.uiDesigner.fileTemplate.CreateFormFromTemplateHandler"/>
 
     <automaticRenamerFactory implementation="com.intellij.uiDesigner.binding.FormsRenamerFactory"/>
   </extensions>

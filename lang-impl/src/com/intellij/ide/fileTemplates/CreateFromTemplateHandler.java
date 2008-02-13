@@ -15,6 +15,8 @@ public interface CreateFromTemplateHandler {
   ExtensionPointName<CreateFromTemplateHandler> EP_NAME = ExtensionPointName.create("com.intellij.createFromTemplateHandler");
 
   boolean handlesTemplate(FileTemplate template);
-  PsiElement createFromTemplate(Project project, PsiDirectory directory, FileTemplate template, String templateText, Properties props)
-    throws IncorrectOperationException;
+  PsiElement createFromTemplate(Project project, PsiDirectory directory, final String fileName, FileTemplate template, String templateText,
+                                Properties props) throws IncorrectOperationException;
+
+  boolean canCreate(final PsiDirectory[] dirs);
 }
