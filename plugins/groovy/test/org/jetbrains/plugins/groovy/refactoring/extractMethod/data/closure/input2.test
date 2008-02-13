@@ -3,25 +3,29 @@ class S {
         Closure sin = {x -> Math.sin(x)}
 
 
-        <begin>10.times {
+        10.times {
             x -> sin x
-        }<end>
+        }
 
     }
 }
+
+<begin>"hhh"<end>
 -----
 class S {
     def r() {
         Closure sin = {x -> Math.sin(x)}
 
 
-        <caret>testMethod(sin)
+        10.times {
+            x -> sin x
+        }
 
     }
+}
 
-  private def testMethod(Closure sin) {
-    10.times {
-      x -> sin x
-    }
-  }
+<caret>testMethod()
+
+private String testMethod() {
+  return "hhh"
 }

@@ -133,7 +133,7 @@ public class ReachingDefinitionsCollector {
                   if (name != null) {
                     if (!(variable instanceof GrField)) {
                       if (!isInFragment(first, last, resolved)) {
-                        if (isBefore(resolved, first)) {
+                        if (isInFragment(first, last, closure) && isBefore(resolved, first)) {
                           addVariable(name, imap, variable.getManager(), variable.getType());
                         }
                       } else {
