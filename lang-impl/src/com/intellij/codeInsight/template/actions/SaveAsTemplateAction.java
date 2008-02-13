@@ -25,21 +25,15 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 public class SaveAsTemplateAction extends AnAction {
   public static final @NonNls String JAVA_LANG_PACKAGE_PREFIX = "java.lang";
-
-  public SaveAsTemplateAction() {
-  }
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
@@ -63,15 +57,7 @@ public class SaveAsTemplateAction extends AnAction {
 
     final PsiElement[] psiElements = PsiTreeUtil.collectElements(file, new PsiElementFilter() {
       public boolean isAccepted(PsiElement element) {
-        if (!(element instanceof PsiJavaCodeReferenceElement)) return false;
-        if (!selection.contains(element.getTextRange())) return false;
-        PsiElement ref = ((PsiJavaCodeReferenceElement)element).resolve();
-        if (!(ref instanceof PsiClass)) return false;
-        PsiClass psiClass = (PsiClass)ref;
-        if (!(psiClass.getParent() instanceof PsiJavaFile)) return false;
-        PsiDirectory directory = PsiTreeUtil.getParentOfType(psiClass, PsiDirectory.class);
-        if (directory == null || PsiDirectoryFactory.getInstance(project).getQualifiedName(directory, true).equals(JAVA_LANG_PACKAGE_PREFIX)) return false;
-        return true;
+        return selection.contains(element.getTextRange()) && element.getReferences().length > 0;
       }
     });
 
@@ -83,22 +69,24 @@ public class SaveAsTemplateAction extends AnAction {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            Map rangeToClass = new HashMap();
+            Map<RangeMarker, String> rangeToText = new HashMap<RangeMarker, String>();
 
-            for (int i = 0; i < psiElements.length; i++) {
-              PsiElement element = psiElements[i];
-              TextRange textRange = element.getTextRange();
-              rangeToClass.put(document.createRangeMarker(
-                element.getTextRange().getStartOffset() - offsetDelta,
-                textRange.getEndOffset() - offsetDelta),
-                               ((PsiJavaCodeReferenceElement)element).resolve());
+            for (PsiElement element : psiElements) {
+              for (PsiReference reference : element.getReferences()) {
+                if (!(reference instanceof PsiQualifiedReference) || ((PsiQualifiedReference) reference).getQualifier() == null) {
+                  String canonicalText = reference.getCanonicalText();
+                  TextRange referenceRange = reference.getRangeInElement();
+                  TextRange range = element.getTextRange().cutOut(referenceRange).shiftRight(-offsetDelta);
+                  final String oldText = document.getText().substring(range.getStartOffset(), range.getEndOffset());
+                  if (!canonicalText.equals(oldText)) {
+                    rangeToText.put(document.createRangeMarker(range), canonicalText);
+                  }
+                }
+              }
             }
 
-            Set ranges = rangeToClass.keySet();
-            for (Iterator i = ranges.iterator(); i.hasNext();) {
-              RangeMarker textRange = (RangeMarker)i.next();
-              PsiClass psiClass = (PsiClass)rangeToClass.get(textRange);
-              document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), psiClass.getQualifiedName());
+            for (Map.Entry<RangeMarker, String> entry : rangeToText.entrySet()) {
+              document.replaceString(entry.getKey().getStartOffset(), entry.getKey().getEndOffset(), entry.getValue());
             }
           }
         });
