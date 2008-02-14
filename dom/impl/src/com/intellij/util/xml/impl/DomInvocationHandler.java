@@ -921,7 +921,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
     public T create() {
       final XmlTag tag = myPointer.getElement();
-      if (tag == null) return null;
+      if (tag == null || !tag.isValid()) return null;
 
       final DomElement element = DomManager.getDomManager(tag.getProject()).getDomElement(tag);
       if (element == null || !element.getDomElementType().equals(myType)) return null;
