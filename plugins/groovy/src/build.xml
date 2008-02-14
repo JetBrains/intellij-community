@@ -241,10 +241,14 @@
     <path id="output.path">
       <pathelement path="${production.dest.groovy}"/>
     </path>
+    <path id="test.out">
+      <pathelement path="${test.dest}"/>
+    </path>
 
     <groovyc destdir="${test.dest}" srcDir="../test">
       <classpath>
         <path refid="idea.lib.path"/>
+        <path refid="test.out"/>
         <path refid="groovy.path"/>
         <path refid="output.path"/>
       </classpath>
