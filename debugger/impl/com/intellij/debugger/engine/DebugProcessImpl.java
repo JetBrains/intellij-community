@@ -46,6 +46,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -1617,8 +1618,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
+    final Ref<Boolean> connectorIsReady = Ref.create(false);
     myDebugProcessDispatcher.addListener(new DebugProcessAdapter() {
       public void connectorIsReady() {
+        connectorIsReady.set(true);
         semaphore.up();
         myDebugProcessDispatcher.removeListener(this);
       }
@@ -1649,7 +1652,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
               }
               else {
                 fail();
-                if (myExecutionResult != null) {
+                if (myExecutionResult != null || !connectorIsReady.get()) {
                   // propagate exception only in case we succeded to obtain execution result,
                   // otherwise it the error is induced by the fact that there is nothing to debug, and there is no need to show
                   // this problem to the user
