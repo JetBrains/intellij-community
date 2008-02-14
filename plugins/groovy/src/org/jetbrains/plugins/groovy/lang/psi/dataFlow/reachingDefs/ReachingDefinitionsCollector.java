@@ -133,11 +133,11 @@ public class ReachingDefinitionsCollector {
                   if (name != null) {
                     if (!(variable instanceof GrField)) {
                       if (!isInFragment(first, last, resolved)) {
-                        if (isInFragment(first, last, closure) && isBefore(resolved, first)) {
+                        if (isInFragment(first, last, closure)) {
                           addVariable(name, imap, variable.getManager(), variable.getType());
                         }
                       } else {
-                        if (isBefore(last, refExpr)) {
+                        if (!isInFragment(first, last, closure)) {
                           addVariable(name, omap, variable.getManager(), variable.getType());
                         }
                       }
@@ -152,10 +152,6 @@ public class ReachingDefinitionsCollector {
         });
       }
     });
-  }
-
-  private static boolean isBefore(PsiElement e1, PsiElement e2) {
-    return e1.getTextRange().getStartOffset() < e2.getTextRange().getStartOffset(); //todo rewrite in tree combinators
   }
 
   private static void addVariable(String name, Map<String, VariableInfo> map, PsiManager manager, PsiType type) {
