@@ -30,10 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -68,6 +65,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
     if (!(statement instanceof GrReferenceExpression)) return null;
 
     return ((GrReferenceExpression) statement).getReferenceNameElement();
+  }
+
+  public GrCodeReferenceElement createReferenceElementFromText(String refName) {
+    PsiFile file = createGroovyFile("(" + refName + " " + ")foo");
+    GrTypeElement typeElement = ((GrTypeCastExpression) ((GroovyFileBase) file).getTopStatements()[0]).getCastTypeElement();
+    return ((GrClassTypeElement) typeElement).getReferenceElement();
   }
 
   public GrReferenceExpression createReferenceExpressionFromText(String idText) {

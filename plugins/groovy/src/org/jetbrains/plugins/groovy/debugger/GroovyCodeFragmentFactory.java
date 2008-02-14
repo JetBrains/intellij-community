@@ -16,22 +16,25 @@ package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 import java.util.Set;
 
@@ -57,11 +60,11 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
   public PsiCodeFragment createCodeFragment(TextWithImports textWithImports, PsiElement context, Project project) {
     String text = textWithImports.getText();
     String imports = textWithImports.getImports();
-    final GroovyPsiElement toEval;
-    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
-    toEval = factory.createGroovyFile(text, false, context);
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+    final GroovyFile toEval = factory.createGroovyFile(text, false, context);
 
     final Set<String> namesList = new HashSet<String>();
+
     toEval.accept(new GroovyRecursiveElementVisitor() {
       public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
@@ -71,7 +74,26 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
           namesList.add(((GrVariable) resolved).getName());
         }
       }
+
+      public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+        if (refElement.getQualifier() != null) {
+          super.visitCodeReferenceElement(refElement);
+        } else {
+          PsiElement resolved = refElement.resolve();
+          if (resolved instanceof PsiClass) {
+            String qName = ((PsiClass) resolved).getQualifiedName();
+            if (qName != null) {
+              int dotIndex = qName.lastIndexOf(".");
+              if (dotIndex < 0) return;
+              String packageName = qName.substring(0, dotIndex);
+              refElement.setQualifier(factory.createReferenceElementFromText(packageName));
+            }
+          }
+        }
+      }
     });
+
+    text = toEval.getText();
 
     String[] names = namesList.toArray(new String[namesList.size()]);
 
@@ -89,7 +111,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
       javaText.append("mc = groovy.lang.GroovySystem.getMetaClassRegistry().getMetaClass(clazz);\n");
     }
 
-    javaText.append(createProperty(StringUtil.escapeStringCharacters(text), imports, names));
+    javaText.append(createProperty(stripImports(text, toEval), imports, names));
     javaText.append("groovy.lang.ExpandoMetaClass emc = new groovy.lang.ExpandoMetaClass(clazz);\n");
     if (!isStatic) {
       javaText.append("emc.setProperty(\"").append(EVAL_NAME).append("\", closure);\n");
@@ -114,6 +136,15 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     PsiCodeFragment result = elementFactory.createCodeBlockCodeFragment(javaText.toString(), null, true);
     result.setThisType(elementFactory.createType(contextClass));
     return result;
+  }
+
+  private String stripImports(String text, GroovyFile toEval) {
+    GrImportStatement[] imports = toEval.getImportStatements();
+    for (int i = imports.length - 1; i >= 0; i--) {
+      TextRange range = imports[i].getTextRange();
+      text = text.substring(0, range.getStartOffset()) + text.substring(range.getEndOffset(), text.length());
+    }
+    return StringUtil.escapeStringCharacters(text);
   }
 
   public PsiCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project) {

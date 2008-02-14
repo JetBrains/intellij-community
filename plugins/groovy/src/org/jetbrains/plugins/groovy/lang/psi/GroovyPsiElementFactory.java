@@ -77,6 +77,8 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract GrReferenceExpression createReferenceExpressionFromText(String exprText);
 
+  public abstract GrCodeReferenceElement createReferenceElementFromText(String refName);
+
   public abstract GrExpression createExpressionFromText(String exprText);
 
   public abstract GrVariableDeclaration createFieldDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type);
