@@ -416,8 +416,8 @@ public class DocumentationManager implements ProjectComponent {
     doFetchDocInfo(component, provider, false);
   }
 
-  public void queueFetchDocInfo(final PsiMethod setter, final DocumentationComponent component) {
-    queueFetchDocInfo(getDefaultCollector(setter), component);
+  public void queueFetchDocInfo(final PsiElement element, final DocumentationComponent component) {
+    queueFetchDocInfo(getDefaultCollector(element), component);
   }
 
   private void doFetchDocInfo(final DocumentationComponent component, final DocumentationCollector provider, final boolean cancelRequests) {
