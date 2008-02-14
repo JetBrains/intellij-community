@@ -10,7 +10,6 @@ import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.content.DebuggerContentUI;
 import com.intellij.debugger.ui.content.DebuggerContentUIFacade;
 import com.intellij.debugger.ui.content.newUI.NewDebuggerContentUI;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
@@ -124,14 +123,8 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
       });
     }
 
-    if (NewDebuggerContentUI.isActive()) {
-      myContentUI = new NewDebuggerContentUI(getProject(), ActionManager.getInstance(), DebuggerSettings.getInstance(),
-                                             DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName);
-    }
-    else {
-      myContentUI = new DebuggerContentUI(this, getProject(), ActionManager.getInstance(),
-                                          DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName);
-    }
+    myContentUI = new NewDebuggerContentUI(getProject(), ActionManager.getInstance(), DebuggerSettings.getInstance(),
+                                           DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName);
 
     myViewsContentManager = getContentFactory().
       createContentManager(myContentUI.getContentUI(), false, getProject());
@@ -156,27 +149,10 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
                                     IconLoader.getIcon("/debugger/frame.png"), DebuggerContentInfo.FRAME_CONTENT, null);
     final DefaultActionGroup framesGroup = new DefaultActionGroup();
 
-    if (NewDebuggerContentUI.isActive()) {
-      addAction(framesGroup, DebuggerActions.POP_FRAME);
-      CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-      framesGroup.add(actionsManager.createPrevOccurenceAction(myFramesPanel.getOccurenceNavigator()));
-      framesGroup.add(actionsManager.createNextOccurenceAction(myFramesPanel.getOccurenceNavigator()));
-    }
-    else {
-      addAction(framesGroup, DebuggerActions.SHOW_EXECUTION_POINT);
-      framesGroup.addSeparator();
-      addAction(framesGroup, DebuggerActions.STEP_OVER);
-      addAction(framesGroup, DebuggerActions.STEP_INTO);
-      addAction(framesGroup, DebuggerActions.FORCE_STEP_INTO);
-      addAction(framesGroup, DebuggerActions.STEP_OUT);
-      addAction(framesGroup, DebuggerActions.POP_FRAME);
-      framesGroup.addSeparator();
-      CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-      framesGroup.add(actionsManager.createPrevOccurenceAction(myFramesPanel.getOccurenceNavigator()));
-      framesGroup.add(actionsManager.createNextOccurenceAction(myFramesPanel.getOccurenceNavigator()));
-      addAction(framesGroup, DebuggerActions.RUN_TO_CURSOR);
-    }
-
+    addAction(framesGroup, DebuggerActions.POP_FRAME);
+    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    framesGroup.add(actionsManager.createPrevOccurenceAction(myFramesPanel.getOccurenceNavigator()));
+    framesGroup.add(actionsManager.createNextOccurenceAction(myFramesPanel.getOccurenceNavigator()));
 
     myFramesContent.setActions(framesGroup, ActionPlaces.DEBUGGER_TOOLBAR, myFramesPanel.getFramesList());
 

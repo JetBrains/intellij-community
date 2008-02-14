@@ -4,7 +4,6 @@ import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.settings.DebuggerLayoutSettings;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerContentInfo;
-import com.intellij.debugger.ui.content.DebuggerContentUI;
 import com.intellij.debugger.ui.content.DebuggerContentUIFacade;
 import com.intellij.debugger.ui.content.newUI.actions.RestoreViewAction;
 import com.intellij.openapi.Disposable;
@@ -63,6 +62,7 @@ public class NewDebuggerContentUI
   boolean myUiLastStateWasRestored;
 
   private Set<Object> myRestoreStateRequestors = new HashSet<Object>();
+  public static final DataKey<NewDebuggerContentUI> KEY = DataKey.create("DebuggerContentUI");
 
   public NewDebuggerContentUI(Project project, ActionManager actionManager, DebuggerSettings settings, String sessionName) {
     myProject = project;
@@ -451,10 +451,6 @@ public class NewDebuggerContentUI
     updateTabsUI(true);
   }
 
-  public static boolean isActive() {
-    return !"true".equalsIgnoreCase(System.getProperty("old.debugger.ui"));
-  }
-
   public boolean isStateBeingRestored() {
     return myRestoreStateRequestors.size() > 0;
   }
@@ -476,7 +472,7 @@ public class NewDebuggerContentUI
 
     @Nullable
     public Object getData(@NonNls final String dataId) {
-      if (DebuggerContentUI.KEY.getName().equals(dataId)) {
+      if (KEY.getName().equals(dataId)) {
         return NewDebuggerContentUI.this;
       }
       else {

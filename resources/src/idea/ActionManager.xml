@@ -787,18 +787,6 @@
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
-    <group id="Debugger.ContentPopup">
-      <action id="Debugger.MaximizeContent" class="com.intellij.debugger.ui.content.actions.MaximizeContentAction"/>
-      <action id="Debugger.HideContent" class="com.intellij.debugger.ui.content.actions.HideContentAction"/>
-      <action id="Debugger.DetachContent" class="com.intellij.debugger.ui.content.actions.DetachContentAction"/>
-      <separator/>
-      <action id="Debugger.RestoreContent" class="com.intellij.debugger.ui.content.actions.RestoreContentAction"/>
-      <separator/>
-      <action id="Debugger.NextContent" class="com.intellij.debugger.ui.content.actions.SelectNextContentAction"/>
-      <action id="Debugger.PreviousContent" class="com.intellij.debugger.ui.content.actions.SelectPreviousContentAction"/>
-    </group>
-
-
 
     <!--  TODO: fix
       <group id="UsageView.Popup">-->
