@@ -262,7 +262,7 @@ class MoveDropTargetListener implements DropTargetListener {
     protected boolean canDrop(@NotNull final TreeNode[] sourceNodes, @Nullable final TreeNode targetNode) {
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
       final PsiElement targetElement = getPsiElement(targetNode);
-      return ( targetElement instanceof PsiPackage || targetElement instanceof PsiDirectory ) &&
+      return (targetElement instanceof PsiDirectoryContainer || targetElement instanceof PsiDirectory) &&
              fromSameProject(sourceElements, targetElement) && CopyHandler.canCopy(sourceElements);
     }
 
