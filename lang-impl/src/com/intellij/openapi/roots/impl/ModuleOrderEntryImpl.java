@@ -1,13 +1,11 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -146,13 +144,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
   @Nullable
   public Module getModule() {
-    if (!myRootModel.isWritable() || ApplicationManager.getApplication().isUnitTestMode()) {
-      return myModule;
-    }
-    if (myModule == null) {
-      return ModuleStructureConfigurable.getInstance(myRootModel.getModule().getProject()).getModule(myModuleName);
-    }
-    return myModule;
+    return myRootModel.getConfigurationAccessor().getModule(myModule, myModuleName);
   }
 
   public void writeExternal(Element rootElement) throws WriteExternalException {

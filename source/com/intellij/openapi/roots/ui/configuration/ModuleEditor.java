@@ -13,6 +13,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleConfigurable;
@@ -118,7 +119,7 @@ public class ModuleEditor implements Place.Navigator {
 
   public ModifiableRootModel getModifiableRootModel() {
     if (myModifiableRootModel == null){
-      myModifiableRootModel = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+      myModifiableRootModel = ((ModuleRootManagerImpl)ModuleRootManager.getInstance(getModule())).getModifiableModel(new UIRootConfigurationAccessor(myProject));
     }
     return myModifiableRootModel;
   }

@@ -68,6 +68,8 @@ public class RootModelImpl implements ModifiableRootModel {
 
   private final Map<OrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new HashMap<OrderRootType, VirtualFilePointerContainer>();
 
+  private RootConfigurationAccessor myConfigurationAccessor = new RootConfigurationAccessor();
+
   private VirtualFilePointerFactory myVirtualFilePointerFactory = new VirtualFilePointerFactory() {
     public VirtualFilePointer create(VirtualFile file) {
       final VirtualFilePointer pointer = myFilePointerManager.create(file, getFileListener());
@@ -184,9 +186,14 @@ public class RootModelImpl implements ModifiableRootModel {
     return myWritable;
   }
 
+  public RootConfigurationAccessor getConfigurationAccessor() {
+    return myConfigurationAccessor;
+  }
+
   RootModelImpl(RootModelImpl rootModel,
                 ModuleRootManagerImpl moduleRootManager,
                 final boolean writable,
+                final RootConfigurationAccessor rootConfigurationAccessor,
                 final VirtualFilePointerListener virtualFilePointerListener,
                 VirtualFilePointerManager filePointerManager,
                 ProjectRootManagerImpl projectRootManager) {
@@ -197,6 +204,7 @@ public class RootModelImpl implements ModifiableRootModel {
     myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager, myFilePointerManager);
 
     myWritable = writable;
+    myConfigurationAccessor = rootConfigurationAccessor;
     LOG.assertTrue(!writable || virtualFilePointerListener == null);
     myVirtualFilePointerListener = virtualFilePointerListener;
 

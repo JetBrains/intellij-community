@@ -115,8 +115,13 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   @NotNull
   public ModifiableRootModel getModifiableModel() {
+    return getModifiableModel(new RootConfigurationAccessor());
+  }
+
+  @NotNull
+  public ModifiableRootModel getModifiableModel(final RootConfigurationAccessor accessor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    return new RootModelImpl(myRootModel, this, true, null, myFilePointerManager, myProjectRootManager);
+    return new RootModelImpl(myRootModel, this, true, accessor, null, myFilePointerManager, myProjectRootManager);
   }
 
   void fireBeforeRootsChange() {
@@ -243,7 +248,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     else {
       final VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(
         myModule.getProject())).getVirtualFilePointerListener();
-      myRootModel = new RootModelImpl(rootModel, this, false, listener, myFilePointerManager, myProjectRootManager);
+      myRootModel = new RootModelImpl(rootModel, this, false, new RootConfigurationAccessor(), listener, myFilePointerManager, myProjectRootManager);
       rootModel.disposeModel();
     }
   }
@@ -453,7 +458,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     RootModelImpl oldModel = myRootModel;
     final VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(
       myModule.getProject())).getVirtualFilePointerListener();
-    myRootModel = new RootModelImpl(myRootModel, this, false, listener, myFilePointerManager, myProjectRootManager);
+    myRootModel = new RootModelImpl(myRootModel, this, false, new RootConfigurationAccessor(), listener, myFilePointerManager, myProjectRootManager);
     oldModel.disposeModel();
     final ArrayList<RootModelComponentBase> components = myRootModel.myComponents;
     for (RootModelComponentBase rootModelComponentBase : components) {

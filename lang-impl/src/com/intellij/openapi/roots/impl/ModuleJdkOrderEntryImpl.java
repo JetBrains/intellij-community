@@ -1,16 +1,12 @@
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleJdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.RootProvider;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -116,10 +112,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   }
 
   public Sdk getJdk() {
-    if (ApplicationManager.getApplication().isUnitTestMode() || !myRootModel.isWritable()) return myJdk;
-    final Project project = getRootModel().getModule().getProject();
-    final ProjectJdksModel model = ProjectStructureConfigurable.getInstance(project).getJdkConfig().getJdksTreeModel();
-    return myJdkName != null ? model.findSdk(myJdkName) : myJdk;
+    return myRootModel.getConfigurationAccessor().getSdk(myJdk, myJdkName);
   }
 
   public String getJdkName() {

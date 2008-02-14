@@ -1,12 +1,13 @@
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.InheritedJdkOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -78,26 +79,13 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
   }
 
   public Sdk getJdk() {
-    if (!getRootModel().isWritable()){
-      return myProjectRootManager.getProjectJdk();
-    }
     final Project project = getRootModel().getModule().getProject();
-    return ProjectJdksModel.getInstance(project).getProjectJdk();
+    return getRootModel().getConfigurationAccessor().getProjectSdk(project);
   }
 
   public String getJdkName() {
-    final String projectJdkName = myProjectRootManager.getProjectJdkName();
-    if (!getRootModel().isWritable() || ApplicationManager.getApplication().isUnitTestMode()){
-      return projectJdkName;
-    }
-    final Sdk projectJdk = getJdk();
-    if (projectJdk != null) {
-      return projectJdk.getName();
-    }
-    else {
-      final Project project = getRootModel().getModule().getProject();
-      return ProjectJdksModel.getInstance(project).findSdk(projectJdkName) == null ? projectJdkName : null;
-    }
+    final Project project = getRootModel().getModule().getProject();
+    return getRootModel().getConfigurationAccessor().getProjectSdkName(project);
   }
 
   private RootProvider getRootProvider() {

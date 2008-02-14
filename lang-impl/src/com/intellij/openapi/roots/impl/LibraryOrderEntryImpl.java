@@ -1,8 +1,6 @@
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.RootPolicy;
@@ -10,8 +8,6 @@ import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -118,20 +114,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
 
   @Nullable
   public Library getLibrary() {
-    if (!getRootModel().isWritable()){
-      return myLibrary;
-    }
-    if (ApplicationManager.getApplication().isUnitTestMode()) return myLibrary;
-    final Project project = getRootModel().getModule().getProject();
-    final StructureConfigurableContext context = ProjectStructureConfigurable.getInstance(project).getContext();
-    Library library = null;
-    if (myLibrary == null) {
-      if (myLibraryName != null) {
-        library = context.getLibrary(myLibraryName, myLibraryLevel);
-      }
-    } else {
-      library = context.getLibrary(myLibrary.getName(), myLibrary.getTable().getTableLevel());
-    }
+    Library library = myRootModel.getConfigurationAccessor().getLibrary(myLibrary, myLibraryName, myLibraryLevel);
     if (library != null) { //library was not deleted
       return library;
     }
