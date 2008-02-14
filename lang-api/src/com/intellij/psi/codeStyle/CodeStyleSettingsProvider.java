@@ -18,6 +18,7 @@ package com.intellij.psi.codeStyle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -25,8 +26,11 @@ import org.jetbrains.annotations.NotNull;
 public abstract class CodeStyleSettingsProvider {
   public static final ExtensionPointName<CodeStyleSettingsProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.codeStyleSettingsProvider");
 
-  public abstract CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings);
+  @Nullable
+  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+    return null;
+  }
 
   @NotNull
-  public abstract Configurable createSettingsPage(CodeStyleSettings settings);
+  public abstract Configurable createSettingsPage(CodeStyleSettings settings, final CodeStyleSettings originalSettings);
 }

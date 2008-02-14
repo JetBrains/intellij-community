@@ -95,7 +95,9 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   }
 
   private void addCustomSettings(CustomCodeStyleSettings settings) {
-    myCustomSettings.put(settings.getClass(), settings);
+    if (settings != null) {
+      myCustomSettings.put(settings.getClass(), settings);
+    }
   }
 
   public <T extends CustomCodeStyleSettings> T getCustomSettings(Class<T> aClass) {

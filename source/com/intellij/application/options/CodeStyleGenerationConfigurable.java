@@ -15,7 +15,7 @@ import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class CodeStyleGeneralConfigurable implements Configurable {
+public class CodeStyleGenerationConfigurable implements Configurable {
   JPanel myPanel;
   private JTextField myFieldPrefixField;
   private JTextField myStaticFieldPrefixField;
@@ -42,7 +42,7 @@ public class CodeStyleGeneralConfigurable implements Configurable {
   private JCheckBox myCbGenerateFinalLocals;
   private JCheckBox myCbUseExternalAnnotations;
 
-  public CodeStyleGeneralConfigurable(CodeStyleSettings settings) {
+  public CodeStyleGenerationConfigurable(CodeStyleSettings settings) {
     mySettings = settings;
     myMembersOrderList = new MembersOrderList();
   }
