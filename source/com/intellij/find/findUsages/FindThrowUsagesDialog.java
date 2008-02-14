@@ -74,7 +74,7 @@ public class FindThrowUsagesDialog extends JavaFindUsagesDialog {
   }
 
   protected void doOKAction() {
-    myFindUsagesOptions.myThrowRoot = (ThrowSearchUtil.Root)myCbExns.getSelectedItem();
+    myFindUsagesOptions.putUserData(ThrowSearchUtil.THROW_SEARCH_ROOT_KEY, (ThrowSearchUtil.Root)myCbExns.getSelectedItem());
     super.doOKAction();
   }
 
@@ -84,7 +84,7 @@ public class FindThrowUsagesDialog extends JavaFindUsagesDialog {
       return;
     }
     else{
-      myFindUsagesOptions.myThrowRoot = (ThrowSearchUtil.Root)myCbExns.getSelectedItem();
+      myFindUsagesOptions.putUserData(ThrowSearchUtil.THROW_SEARCH_ROOT_KEY, (ThrowSearchUtil.Root)myCbExns.getSelectedItem());
       final boolean hasSelected = isSelected(myCbUsages);
       setOKActionEnabled(hasSelected);
     }

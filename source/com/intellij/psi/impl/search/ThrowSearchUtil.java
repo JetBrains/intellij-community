@@ -2,6 +2,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -19,6 +20,9 @@ public class ThrowSearchUtil {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.ThrowSearchUtil");
 
+  private ThrowSearchUtil() {
+  }
+
   public static class Root {
     final PsiElement myElement;
     final PsiType    myType;
@@ -34,6 +38,8 @@ public class ThrowSearchUtil {
       return PsiFormatUtil.formatType (myType, PsiFormatUtil.SHOW_FQ_CLASS_NAMES, PsiSubstitutor.EMPTY);
     }
   }
+
+  public static Key<Root> THROW_SEARCH_ROOT_KEY = Key.create("ThrowSearchUtil.root");
 
   /**
    * @return true, if we should continue processing

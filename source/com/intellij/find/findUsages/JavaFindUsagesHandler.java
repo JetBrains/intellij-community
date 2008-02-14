@@ -278,7 +278,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     if (ThrowSearchUtil.isSearchable (element) && options.isThrowUsages) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          ThrowSearchUtil.addThrowUsages(processor, options.myThrowRoot, options);
+          ThrowSearchUtil.Root root = options.getUserData(ThrowSearchUtil.THROW_SEARCH_ROOT_KEY);
+          ThrowSearchUtil.addThrowUsages(processor, root, options);
         }
       });
     }

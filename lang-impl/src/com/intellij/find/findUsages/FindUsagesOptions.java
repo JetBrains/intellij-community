@@ -3,7 +3,7 @@ package com.intellij.find.findUsages;
 
 import com.intellij.find.FindSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.impl.search.ThrowSearchUtil;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  *
  */
-public class FindUsagesOptions implements Cloneable {
+public class FindUsagesOptions extends UserDataHolderBase implements Cloneable {
   public SearchScope searchScope;
 
   public boolean isSearchForTextOccurences = true;
@@ -37,7 +37,6 @@ public class FindUsagesOptions implements Cloneable {
   public boolean isWriteAccess = false;
   public boolean isIncludeOverloadUsages = false;
   public boolean isThrowUsages = false;
-  public ThrowSearchUtil.Root myThrowRoot = null;
 
   public FindUsagesOptions(@NotNull Project project) {
     NamedScope defaultScope = NamedScopesHolder.getScope(project, FindSettings.getInstance().getDefaultScopeName());
@@ -45,12 +44,7 @@ public class FindUsagesOptions implements Cloneable {
   }
 
   public Object clone() {
-    try{
-      return super.clone();
-    }
-    catch(CloneNotSupportedException e){
-      return null;
-    }
+    return super.clone();
   }
 
   public boolean equals(final Object o) {
@@ -78,7 +72,6 @@ public class FindUsagesOptions implements Cloneable {
     if (isThrowUsages != that.isThrowUsages) return false;
     if (isUsages != that.isUsages) return false;
     if (isWriteAccess != that.isWriteAccess) return false;
-    if (myThrowRoot != null ? !myThrowRoot.equals(that.myThrowRoot) : that.myThrowRoot != null) return false;
     if (searchScope != null ? !searchScope.equals(that.searchScope) : that.searchScope != null) return false;
 
     return true;
@@ -106,7 +99,6 @@ public class FindUsagesOptions implements Cloneable {
     result = 31 * result + (isWriteAccess ? 1 : 0);
     result = 31 * result + (isIncludeOverloadUsages ? 1 : 0);
     result = 31 * result + (isThrowUsages ? 1 : 0);
-    result = 31 * result + (myThrowRoot != null ? myThrowRoot.hashCode() : 0);
     return result;
   }
 }
