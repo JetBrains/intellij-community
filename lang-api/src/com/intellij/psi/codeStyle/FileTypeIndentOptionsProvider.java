@@ -22,8 +22,9 @@
  */
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.FileType;
 
 public interface FileTypeIndentOptionsProvider {
   ExtensionPointName<FileTypeIndentOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileTypeIndentOptionsProvider");
@@ -31,4 +32,6 @@ public interface FileTypeIndentOptionsProvider {
   CodeStyleSettings.IndentOptions createIndentOptions();
 
   FileType getFileType();
+
+  IndentOptionsEditor createOptionsEditor();
 }
