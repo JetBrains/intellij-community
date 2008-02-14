@@ -3,6 +3,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
@@ -510,6 +511,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   public void processEvents(List<? extends VFileEvent> events) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    
     events = validateEvents(events);
 
     myEventsBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(events);

@@ -59,7 +59,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -439,11 +442,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assert qName != null;
 
     final VirtualFile root = ModuleRootManager.getInstance(myProjectFixture.getModule()).getSourceRoots()[0];
+    final VirtualFile[] virtualFile = new VirtualFile[1];
     final VirtualFile dir = VfsUtil.createDirectories(root.getPath() + "/" + StringUtil.getPackageName(qName).replace('.', '/'));
-    final VirtualFile virtualFile = dir.createChildData(this, StringUtil.getShortName(qName) + ".java");
-    VfsUtil.saveText(virtualFile, classText);
-    myAddedClasses.add(virtualFile);
-    return ((PsiJavaFile)getPsiManager().findFile(virtualFile)).getClasses()[0];
+
+    new WriteCommandAction.Simple(getProject()) {
+      protected void run() throws Throwable {
+        virtualFile[0] = dir.createChildData(this, StringUtil.getShortName(qName) + ".java");
+        VfsUtil.saveText(virtualFile[0], classText);
+      }
+    }.execute();
+    
+    myAddedClasses.add(virtualFile[0]);
+    return ((PsiJavaFile)getPsiManager().findFile(virtualFile[0])).getClasses()[0];
   }
 
   public <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> epName, final T extension) {
