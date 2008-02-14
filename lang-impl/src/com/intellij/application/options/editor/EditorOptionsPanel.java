@@ -2,7 +2,6 @@ package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,16 +69,7 @@ public class EditorOptionsPanel {
 
   private JCheckBox myCbInsertPairBracket;
   private JCheckBox myCbInsertPairQuote;
-  private JCheckBox myCbCollapseImports;
-  private JCheckBox myCbCollapseJavadocComments;
-  private JCheckBox myCbCollapseMethodBodies;
-  private JCheckBox myCbCollapseInnerClasses;
-  private JCheckBox myCbCollapseXMLTags;
-  private JCheckBox myCbCollapseAnonymousClasses;
-  private JCheckBox myCbCollapseFileHeader;
   private JTextField myClipboardContentLimitTextField;
-  private JCheckBox myCbCollapseAccessors;
-  private JCheckBox myCbCollapseAnnotations;
   private JCheckBox myCbShowWhitespaces;
   private JCheckBox myCbSmoothScrolling;
   private JCheckBox myCbCamelWords;
@@ -92,6 +82,7 @@ public class EditorOptionsPanel {
   private JRadioButton myRbPreferScrolling;
   private JRadioButton myRbPreferMovingCaret;
   private ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
+  private JPanel myFoldingPanel;
 
   private TabbedPaneWrapper myTabbedPaneWrapper;
 
@@ -146,6 +137,11 @@ public class EditorOptionsPanel {
     for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
       myTabbedPaneWrapper.addTab(provider.getDisplayName(), provider.createComponent());
     }
+
+    for (CodeFoldingOptionsProvider provider : Extensions.getExtensions(CodeFoldingOptionsProvider.EP_NAME)) {
+      myFoldingPanel.add(provider.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
+                                                                            GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0));
+    }
   }
 
 
@@ -153,7 +149,6 @@ public class EditorOptionsPanel {
   public void reset() {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
-    CodeFoldingSettings codeFoldingSettings = CodeFoldingSettings.getInstance();
     UISettings uiSettings=UISettings.getInstance();
 
     // Display
@@ -236,15 +231,6 @@ public class EditorOptionsPanel {
 
     myCbFolding.setSelected(editorSettings.isFoldingOutlineShown());
 
-    myCbCollapseImports.setSelected(codeFoldingSettings.isCollapseImports());
-    myCbCollapseJavadocComments.setSelected(codeFoldingSettings.isCollapseJavadocs());
-    myCbCollapseMethodBodies.setSelected(codeFoldingSettings.isCollapseMethods());
-    myCbCollapseAccessors.setSelected(codeFoldingSettings.isCollapseAccessors());
-    myCbCollapseInnerClasses.setSelected(codeFoldingSettings.isCollapseInnerClasses());
-    myCbCollapseXMLTags.setSelected(codeFoldingSettings.isCollapseXmlTags());
-    myCbCollapseAnonymousClasses.setSelected(codeFoldingSettings.isCollapseAnonymousClasses());
-    myCbCollapseFileHeader.setSelected(codeFoldingSettings.isCollapseFileHeader());
-    myCbCollapseAnnotations.setSelected(codeFoldingSettings.isCollapseAnnotations());
 
     // Advanced mouse
     myCbEnableDnD.setSelected(editorSettings.isDndEnabled());
@@ -278,12 +264,14 @@ public class EditorOptionsPanel {
     for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
       provider.reset();
     }
+    for (CodeFoldingOptionsProvider provider : Extensions.getExtensions(CodeFoldingOptionsProvider.EP_NAME)) {
+      provider.reset();
+    }
   }
 
   public void apply() throws ConfigurationException {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
-    CodeFoldingSettings codeFoldingSettings = CodeFoldingSettings.getInstance();
     UISettings uiSettings=UISettings.getInstance();
 
     // Display
@@ -365,15 +353,7 @@ public class EditorOptionsPanel {
 
     editorSettings.setFoldingOutlineShown(myCbFolding.isSelected());
 
-    codeFoldingSettings.setCollapseImports( myCbCollapseImports.isSelected() );
-    codeFoldingSettings.setCollapseJavadocs( myCbCollapseJavadocComments.isSelected() );
-    codeFoldingSettings.setCollapseMethods( myCbCollapseMethodBodies.isSelected() );
-    codeFoldingSettings.setCollapseAccessors( myCbCollapseAccessors.isSelected() );
-    codeFoldingSettings.setCollapseInnerClasses( myCbCollapseInnerClasses.isSelected() );
-    codeFoldingSettings.setCollapseXmlTags( myCbCollapseXMLTags.isSelected() );
-    codeFoldingSettings.setCollapseAnonymousClasses( myCbCollapseAnonymousClasses.isSelected() );
-    codeFoldingSettings.setCollapseFileHeader( myCbCollapseFileHeader.isSelected() );
-    codeFoldingSettings.setCollapseAnnotations( myCbCollapseAnnotations.isSelected() );
+
 
     editorSettings.setDndEnabled(myCbEnableDnD.isSelected());
 
@@ -424,7 +404,10 @@ public class EditorOptionsPanel {
       uiSettings.fireUISettingsChanged();
     }
     myErrorHighlightingPanel.apply();
-     for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
+    for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
+      provider.apply();
+    }
+    for (CodeFoldingOptionsProvider provider : Extensions.getExtensions(CodeFoldingOptionsProvider.EP_NAME)) {
       provider.apply();
     }
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
@@ -447,7 +430,6 @@ public class EditorOptionsPanel {
   public boolean isModified() {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
-    CodeFoldingSettings codeFoldingSettings = CodeFoldingSettings.getInstance();
     UISettings uiSettings=UISettings.getInstance();
 
     // Display
@@ -499,15 +481,6 @@ public class EditorOptionsPanel {
 
     isModified |= isModified(myCbFolding, editorSettings.isFoldingOutlineShown());
 
-    isModified |= isModified(myCbCollapseImports, codeFoldingSettings.isCollapseImports());
-    isModified |= isModified(myCbCollapseJavadocComments, codeFoldingSettings.isCollapseJavadocs());
-    isModified |= isModified(myCbCollapseMethodBodies, codeFoldingSettings.isCollapseMethods());
-    isModified |= isModified(myCbCollapseAccessors, codeFoldingSettings.isCollapseAccessors());
-    isModified |= isModified(myCbCollapseInnerClasses, codeFoldingSettings.isCollapseInnerClasses());
-    isModified |= isModified(myCbCollapseXMLTags, codeFoldingSettings.isCollapseXmlTags());
-    isModified |= isModified(myCbCollapseAnonymousClasses, codeFoldingSettings.isCollapseAnonymousClasses());
-    isModified |= isModified(myCbCollapseFileHeader, codeFoldingSettings.isCollapseFileHeader());
-    isModified |= isModified(myCbCollapseAnnotations, codeFoldingSettings.isCollapseAnnotations());
 
     // advanced mouse
     isModified |= isModified(myCbEnableDnD, editorSettings.isDndEnabled());
@@ -531,6 +504,9 @@ public class EditorOptionsPanel {
 
     isModified |= myErrorHighlightingPanel.isModified();
     for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
+      isModified |= provider.isModified();
+    }
+    for (CodeFoldingOptionsProvider provider : Extensions.getExtensions(CodeFoldingOptionsProvider.EP_NAME)) {
       isModified |= provider.isModified();
     }
     return isModified;

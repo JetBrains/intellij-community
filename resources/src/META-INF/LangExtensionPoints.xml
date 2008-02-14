@@ -1,5 +1,6 @@
 <extensionPoints>
   <extensionPoint name="errorOptionsProvider" interface="com.intellij.profile.codeInspection.ui.ErrorOptionsProvider"/>
+  <extensionPoint name="codeFoldingOptionsProvider" interface="com.intellij.application.options.editor.CodeFoldingOptionsProvider"/>
   <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
 
   <extensionPoint name="indexPatternProvider"
