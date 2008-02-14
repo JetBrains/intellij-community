@@ -34,8 +34,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class StructureConfigrableContext implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#" + StructureConfigrableContext.class.getName());
+public class StructureConfigurableContext implements Disposable {
+  private static final Logger LOG = Logger.getInstance("#" + StructureConfigurableContext.class.getName());
 
   @NonNls public static final String DELETED_LIBRARIES = "lib";
   public static final String NO_JDK = ProjectBundle.message("project.roots.module.jdk.problem.message");
@@ -61,7 +61,7 @@ public class StructureConfigrableContext implements Disposable {
   private Project myProject;
 
 
-  public StructureConfigrableContext(Project project, final ModuleManager moduleManager, final ModulesConfigurator modulesConfigurator) {
+  public StructureConfigurableContext(Project project, final ModuleManager moduleManager, final ModulesConfigurator modulesConfigurator) {
     myProject = project;
     myModuleManager = moduleManager;
     myModulesConfigurator = modulesConfigurator;

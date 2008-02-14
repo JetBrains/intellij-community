@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigrableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -123,7 +123,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     }
     if (ApplicationManager.getApplication().isUnitTestMode()) return myLibrary;
     final Project project = getRootModel().getModule().getProject();
-    final StructureConfigrableContext context = ProjectStructureConfigurable.getInstance(project).getContext();
+    final StructureConfigurableContext context = ProjectStructureConfigurable.getInstance(project).getContext();
     Library library = null;
     if (myLibrary == null) {
       if (myLibraryName != null) {

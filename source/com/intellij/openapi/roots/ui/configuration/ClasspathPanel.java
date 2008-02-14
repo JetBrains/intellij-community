@@ -35,7 +35,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDi
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryFileChooser;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigrableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.ui.Messages;
@@ -489,7 +489,7 @@ public class ClasspathPanel extends JPanel {
 
   private void initPopupActions() {
     if (myPopupActions == null) {
-      final StructureConfigrableContext context = ProjectStructureConfigurable.getInstance(myProject).getContext();
+      final StructureConfigurableContext context = ProjectStructureConfigurable.getInstance(myProject).getContext();
       int actionIndex = 1;
       final List<PopupAction> actions = new ArrayList<PopupAction>(Arrays.<PopupAction>asList(
         new ChooseAndAddAction<Library>(actionIndex++, ProjectBundle.message("classpath.add.simple.module.library.action"), Icons.JAR_ICON) {

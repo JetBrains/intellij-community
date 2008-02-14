@@ -22,7 +22,7 @@ import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigrableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -69,7 +69,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private ModifiableModuleModel myModuleModel;
   private ProjectFacetsConfigurator myFacetsConfigurator;
 
-  private StructureConfigrableContext myContext;
+  private StructureConfigurableContext myContext;
 
   public ModulesConfigurator(Project project, ProjectJdksModel projectJdksModel) {
     myProject = project;
@@ -77,7 +77,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myProjectConfigurable = new ProjectConfigurable(project, this, projectJdksModel);
   }
 
-  public void setContext(final StructureConfigrableContext context) {
+  public void setContext(final StructureConfigurableContext context) {
     myContext = context;
     myFacetsConfigurator = createFacetsConfigurator();
   }

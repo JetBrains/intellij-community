@@ -23,7 +23,7 @@ import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigrableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -48,11 +48,11 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   private Set<Facet> myFacetsToDispose = new HashSet<Facet>();
   private Set<Facet> myChangedFacets = new HashSet<Facet>();
   private Set<Facet> myCreatedFacets = new HashSet<Facet>();
-  private final StructureConfigrableContext myContext;
+  private final StructureConfigurableContext myContext;
   private final NotNullFunction<Module, ModuleConfigurationState> myModuleStateProvider;
   private UserDataHolderBase myProjectData = new UserDataHolderBase();
 
-  public ProjectFacetsConfigurator(final StructureConfigrableContext context, NotNullFunction<Module, ModuleConfigurationState> moduleStateProvider) {
+  public ProjectFacetsConfigurator(final StructureConfigurableContext context, NotNullFunction<Module, ModuleConfigurationState> moduleStateProvider) {
     myContext = context;
     myModuleStateProvider = moduleStateProvider;
   }

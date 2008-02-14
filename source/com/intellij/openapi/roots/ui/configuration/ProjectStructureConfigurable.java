@@ -84,7 +84,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   private boolean myWasIntialized;
 
   private List<Configurable> myName2Config = new ArrayList<Configurable>();
-  private StructureConfigrableContext myContext;
+  private StructureConfigurableContext myContext;
   private ModulesConfigurator myModuleConfigurator;
   private JdkListConfigurable myJdkListConfig;
 
@@ -97,7 +97,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myModuleManager = moduleManager;
 
     myModuleConfigurator = new ModulesConfigurator(myProject, myProjectJdksModel);
-    myContext = new StructureConfigrableContext(myProject, myModuleManager, myModuleConfigurator);
+    myContext = new StructureConfigurableContext(myProject, myModuleManager, myModuleConfigurator);
     myModuleConfigurator.setContext(myContext);
 
     myProjectLibrariesConfig = projectLibrariesConfigurable;
@@ -459,7 +459,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
 
-  public StructureConfigrableContext getContext() {
+  public StructureConfigurableContext getContext() {
     return myContext;
   }
 

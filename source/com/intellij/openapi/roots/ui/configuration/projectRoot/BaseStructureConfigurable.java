@@ -49,7 +49,7 @@ import java.util.Set;
 public abstract class BaseStructureConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable, Configurable.Assistant, Place.Navigator {
 
   private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
-  protected StructureConfigrableContext myContext;
+  protected StructureConfigurableContext myContext;
 
   protected final Project myProject;
 
@@ -63,7 +63,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     myProject = project;
   }
 
-  public void init(StructureConfigrableContext context) {
+  public void init(StructureConfigurableContext context) {
     myContext = context;
     myContext.addCacheUpdateListener(new Runnable() {
       public void run() {
@@ -182,14 +182,14 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
           final Module module = (Module)object;
           final Map<String, Set<String>> problems = myContext.myValidityCache.get(module);
 
-          if (problems.containsKey(StructureConfigrableContext.DUPLICATE_MODULE_NAME)) {
-            buf.append(StructureConfigrableContext.DUPLICATE_MODULE_NAME).append("\n");
+          if (problems.containsKey(StructureConfigurableContext.DUPLICATE_MODULE_NAME)) {
+            buf.append(StructureConfigurableContext.DUPLICATE_MODULE_NAME).append("\n");
           }
 
-          if (problems.containsKey(StructureConfigrableContext.NO_JDK)){
-            buf.append(StructureConfigrableContext.NO_JDK).append("\n");
+          if (problems.containsKey(StructureConfigurableContext.NO_JDK)){
+            buf.append(StructureConfigurableContext.NO_JDK).append("\n");
           }
-          final Set<String> deletedLibraries = problems.get(StructureConfigrableContext.DELETED_LIBRARIES);
+          final Set<String> deletedLibraries = problems.get(StructureConfigurableContext.DELETED_LIBRARIES);
           if (deletedLibraries != null) {
             buf.append(ProjectBundle.message("project.roots.library.problem.message", deletedLibraries.size()));
             for (String problem : deletedLibraries) {

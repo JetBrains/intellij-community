@@ -287,7 +287,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   
 
 
-  public void init(final StructureConfigrableContext context) {
+  public void init(final StructureConfigurableContext context) {
     super.init(context);
 
     addItemsChangeListener(new ItemsChangeListener() {
@@ -516,7 +516,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return (myContext != null && myContext.myModulesConfigurator != null) ? myContext.myModulesConfigurator.getModule(moduleName) : myModuleManager.findModuleByName(moduleName);
   }
 
-  public StructureConfigrableContext getContext() {
+  public StructureConfigurableContext getContext() {
     return myContext;
   }
 
