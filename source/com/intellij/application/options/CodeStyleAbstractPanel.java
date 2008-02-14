@@ -170,10 +170,8 @@ public abstract class CodeStyleAbstractPanel {
   }
 
   private void replaceText(final Project project) {
-    final PsiManager manager = PsiManager.getInstance(project);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         try {
           //important not mark as generated not to get the classes before setting language level
           PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("a." + getFileType().getDefaultExtension(),
