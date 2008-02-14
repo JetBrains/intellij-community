@@ -11,7 +11,6 @@ import com.intellij.lang.cacheBuilder.WordOccurrence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.lexer.FilterLexer;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
@@ -24,12 +23,10 @@ import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.impl.cache.impl.todo.TodoOccurrenceConsumer;
-import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -259,12 +256,6 @@ public class IdTableBuilding {
       return Collections.emptyMap();
     }
   }
-
-  public static final FilterLexer.Filter TOKEN_FILTER = new FilterLexer.Filter() {
-    public boolean reject(IElementType type) {
-      return !(type instanceof IJavaElementType) || StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(type);
-    }
-  };
 
   public static void scanWords(final ScanWordProcessor processor, final CharSequence chars, final int startOffset, final int endOffset) {
     scanWords(processor, chars, CharArrayUtil.fromSequenceWithoutCopying(chars), startOffset, endOffset, false);
