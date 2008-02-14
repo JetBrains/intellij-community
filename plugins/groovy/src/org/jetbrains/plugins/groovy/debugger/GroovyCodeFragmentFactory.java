@@ -82,7 +82,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     javaText.append("groovy.lang.MetaClass mc;\n");
     javaText.append("java.lang.Class clazz;\n");
     if (!isStatic) {
-      javaText.append("clazz = this.getClass();\n");
+      javaText.append("clazz = ((java.lang.Object)this).getClass();\n");
       javaText.append("mc = ((groovy.lang.GroovyObject)this).getMetaClass();\n");
     } else {
       javaText.append("clazz = java.lang.Class.forName(\"").append(contextClass.getQualifiedName()).append("\");\n");
