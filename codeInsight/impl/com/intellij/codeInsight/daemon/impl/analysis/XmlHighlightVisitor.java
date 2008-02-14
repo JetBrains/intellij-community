@@ -285,7 +285,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           tag,
           XmlErrorMessages.message("element.is.not.allowed.here", name),
           getTagProblemInfoType(tag),
-          new CreateNSDeclarationIntentionFix(tag, "")
+          null
         );
         return;
       }
