@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import gnu.trove.THashMap;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author peter
@@ -36,7 +37,7 @@ public class OffsetMap {
 
     final int endOffset = marker.getEndOffset();
     if (marker.getStartOffset() != endOffset) {
-      addOffset(key, endOffset, true);
+      addOffset(key, endOffset);
     }
     return endOffset;
   }
@@ -46,21 +47,23 @@ public class OffsetMap {
    * unless an operation replaces completely the offset vicinity.
    * @param key
    * @param offset
-   * @param moveableToRight whether the offset should move right when a string is inserted directly into
-   * this offset position
    */
-  public void addOffset(OffsetKey key, int offset, boolean moveableToRight) {
+  public void addOffset(OffsetKey key, int offset) {
     if (offset < 0) {
       removeOffset(key);
       return;
     }
 
     final RangeMarker marker = myDocument.createRangeMarker(offset, offset);
-    marker.setGreedyToRight(moveableToRight);
+    marker.setGreedyToRight(key.isMoveableToRight());
     myMap.put(key, marker);
   }
 
   public void removeOffset(OffsetKey key) {
     myMap.remove(key);
+  }
+
+  public Set<OffsetKey> keySet() {
+    return myMap.keySet();
   }
 }

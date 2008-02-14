@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class CompletionInitializationContext {
-  public static final OffsetKey START_OFFSET = OffsetKey.create("startOffset");
+  public static final OffsetKey START_OFFSET = OffsetKey.create("startOffset", false);
   public static final OffsetKey SELECTION_END_OFFSET = OffsetKey.create("selectionEnd");
   public static final OffsetKey IDENTIFIER_END_OFFSET = OffsetKey.create("identifierEnd");
 
@@ -35,17 +35,17 @@ public class CompletionInitializationContext {
 
     final int caretOffset = editor.getCaretModel().getOffset();
     final SelectionModel selectionModel = editor.getSelectionModel();
-    myOffsetMap.addOffset(START_OFFSET, selectionModel.hasSelection() ? selectionModel.getSelectionStart() : caretOffset, false);
+    myOffsetMap.addOffset(START_OFFSET, selectionModel.hasSelection() ? selectionModel.getSelectionStart() : caretOffset);
     
     final int selectionEndOffset = selectionModel.hasSelection() ? selectionModel.getSelectionEnd() : caretOffset;
-    myOffsetMap.addOffset(SELECTION_END_OFFSET, selectionEndOffset, true);
+    myOffsetMap.addOffset(SELECTION_END_OFFSET, selectionEndOffset);
 
     final PsiReference reference = file.findReferenceAt(selectionEndOffset);
     if(reference != null){
       myOffsetMap.addOffset(IDENTIFIER_END_OFFSET,
-                            reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset(), true);
+                            reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset());
     } else {
-      myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, selectionEndOffset, true);
+      myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, selectionEndOffset);
     }
   }
 

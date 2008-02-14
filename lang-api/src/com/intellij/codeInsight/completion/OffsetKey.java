@@ -11,16 +11,26 @@ import org.jetbrains.annotations.NonNls;
  */
 public class OffsetKey {
   private final String myName; // for debug purposes only
+  private final boolean myMoveableToRight;
 
-  private OffsetKey(@NonNls String name) {
+  private OffsetKey(@NonNls String name, final boolean moveableToRight) {
     myName = name;
+    myMoveableToRight = moveableToRight;
   }
 
   public String toString() {
     return myName;
   }
 
+  public boolean isMoveableToRight() {
+    return myMoveableToRight;
+  }
+
   public static OffsetKey create(@NonNls String name) {
-    return new OffsetKey(name);
+    return create(name, true);
+  }
+
+  public static OffsetKey create(@NonNls String name, final boolean moveableToRight) {
+    return new OffsetKey(name, moveableToRight);
   }
 }

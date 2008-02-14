@@ -40,7 +40,7 @@ public class CompletionContext {
   }
 
   public void setStartOffset(final int newStartOffset) {
-    getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, newStartOffset, false);
+    getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, newStartOffset);
   }
 
   public int getSelectionEndOffset() {
@@ -48,7 +48,7 @@ public class CompletionContext {
   }
 
   public void setSelectionEndOffset(final int selectionEndOffset) {
-    getOffsetMap().addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, selectionEndOffset, true);
+    getOffsetMap().addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, selectionEndOffset);
   }
 
   public OffsetMap getOffsetMap() {

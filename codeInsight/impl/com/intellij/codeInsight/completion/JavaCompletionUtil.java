@@ -522,21 +522,21 @@ public class JavaCompletionUtil {
     final PsiReference reference = file.findReferenceAt(selectionEndOffset);
     if(reference != null){
       if(reference instanceof PsiJavaCodeReferenceElement){
-        offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getParent().getTextRange().getEndOffset(), true);
+        offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getParent().getTextRange().getEndOffset());
       }
       else{
         offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET,
-                                 reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset(), true);
+                                 reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset());
       }
 
       element = file.findElementAt(offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
     }
     else if (isWord(element)){
       if(element instanceof PsiIdentifier && element.getParent() instanceof PsiJavaCodeReferenceElement){
-        offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getParent().getTextRange().getEndOffset(), true);
+        offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getParent().getTextRange().getEndOffset());
       }
       else{
-        offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getTextRange().getEndOffset(), true);
+        offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getTextRange().getEndOffset());
       }
 
       element = file.findElementAt(offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
@@ -556,15 +556,15 @@ public class JavaCompletionUtil {
 
       if(element.getParent() instanceof PsiExpressionList || ".".equals(file.findElementAt(selectionEndOffset - 1).getText())
         || PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement(JavaTokenType.NEW_KEYWORD)).accepts(element)) {
-        offsetMap.addOffset(LPAREN_OFFSET, element.getTextRange().getStartOffset(), true);
+        offsetMap.addOffset(LPAREN_OFFSET, element.getTextRange().getStartOffset());
         PsiElement list = element.getParent();
         PsiElement last = list.getLastChild();
         if (last instanceof PsiJavaToken && ((PsiJavaToken)last).getTokenType() == JavaTokenType.RPARENTH){
-          offsetMap.addOffset(RPAREN_OFFSET, last.getTextRange().getStartOffset(), true);
+          offsetMap.addOffset(RPAREN_OFFSET, last.getTextRange().getStartOffset());
         }
 
 
-        offsetMap.addOffset(ARG_LIST_END_OFFSET, list.getTextRange().getEndOffset(), true);
+        offsetMap.addOffset(ARG_LIST_END_OFFSET, list.getTextRange().getEndOffset());
       }
     }
   }

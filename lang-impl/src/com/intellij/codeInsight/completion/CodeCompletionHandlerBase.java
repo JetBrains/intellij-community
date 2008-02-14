@@ -205,7 +205,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       CompletionUtil.isOverwrite(item, completionChar) && previousSelectionEndOffset ==
                                                           context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) ?
       caretOffset:Math.max(caretOffset, context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
-    context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, identifierEndOffset, true);
+    context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, identifierEndOffset);
     lookupItemSelected(context, data, item, signatureSelected, completionChar);
   }
 
@@ -312,10 +312,13 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, hostFile, context.getStartOffset());
       if (newEditor instanceof EditorWindow) {
         EditorWindow injectedEditor = (EditorWindow)newEditor;
-        int newOffset1 = injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(oldEditor.offsetToLogicalPosition(context.getStartOffset())));
-        int newOffset2 = injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(oldEditor.offsetToLogicalPosition(context.getSelectionEndOffset())));
         PsiFile injectedFile = injectedEditor.getInjectedFile();
-        CompletionContext newContext = new CompletionContext(context.project, injectedEditor, injectedFile, context.getOffsetMap());
+        final OffsetMap map = new OffsetMap(newEditor.getDocument());
+        final OffsetMap oldMap = context.getOffsetMap();
+        for (final OffsetKey key : oldMap.keySet()) {
+          map.addOffset(key, injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(oldEditor.offsetToLogicalPosition(oldMap.getOffset(key)))));
+        }
+        CompletionContext newContext = new CompletionContext(context.project, injectedEditor, injectedFile, map);
         PsiElement element = findElementAt(injectedFile, newContext.getStartOffset());
         if (element == null) {
           LOG.assertTrue(false, "offset " + newContext.getStartOffset() + " at:\n" + injectedFile.getText());
