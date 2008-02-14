@@ -45,7 +45,7 @@ public class CompletionUtil {
 
   private static HashMap<FileType, NotNullLazyValue<CompletionData>> ourCustomCompletionDatas = new HashMap<FileType, NotNullLazyValue<CompletionData>>();
 
-  public static final @NonNls String DUMMY_IDENTIFIER = "IntellijIdeaRulezzz ";
+  public static final @NonNls String DUMMY_IDENTIFIER = CompletionInitializationContext.DUMMY_IDENTIFIER;
   public static final @NonNls String DUMMY_IDENTIFIER_TRIMMED = DUMMY_IDENTIFIER.trim();
   public static final Key<PsiElement> ORIGINAL_KEY = Key.create("ORIGINAL_KEY");
 

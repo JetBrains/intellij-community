@@ -16,9 +16,15 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -28,6 +34,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.patterns.PlatformPatterns;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +68,9 @@ public class JavaCompletionUtil {
   @NonNls
   public static final String IS_PREFIX = "is";
   private static final int MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED = 50000;
+  public static final Key LPAREN_OFFSET = Key.create("lparen");
+  public static final Key RPAREN_OFFSET = Key.create("rparen");
+  public static final Key ARG_LIST_END_OFFSET = Key.create("argListEnd");
 
   public static void completeLocalVariableName(Set<LookupItem> set, PrefixMatcher matcher, PsiVariable var){
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
@@ -501,5 +511,99 @@ public class JavaCompletionUtil {
       });
     }
     return unresolvedRefs.toArray(new String[unresolvedRefs.size()]);
+  }
+
+  public static void initOffsets(final PsiFile file, final Project project, final OffsetMap offsetMap){
+    final int selectionEndOffset = offsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
+
+    PsiElement element = file.findElementAt(selectionEndOffset);
+    if (element == null) return;
+
+    final PsiReference reference = file.findReferenceAt(selectionEndOffset);
+    if(reference != null){
+      if(reference instanceof PsiJavaCodeReferenceElement){
+        offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getParent().getTextRange().getEndOffset(), true);
+      }
+      else{
+        offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET,
+                                 reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset(), true);
+      }
+
+      element = file.findElementAt(offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
+    }
+    else if (isWord(element)){
+      if(element instanceof PsiIdentifier && element.getParent() instanceof PsiJavaCodeReferenceElement){
+        offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getParent().getTextRange().getEndOffset(), true);
+      }
+      else{
+        offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getTextRange().getEndOffset(), true);
+      }
+
+      element = file.findElementAt(offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
+      if (element == null) return;
+    }
+
+    if (element instanceof PsiWhiteSpace &&
+        ( !element.textContains('\n') ||
+          CodeStyleSettingsManager.getInstance(project).getCurrentSettings().METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE
+        )
+       ){
+      element = file.findElementAt(element.getTextRange().getEndOffset());
+    }
+
+    if (element instanceof PsiJavaToken
+        && ((PsiJavaToken)element).getTokenType() == JavaTokenType.LPARENTH){
+
+      if(element.getParent() instanceof PsiExpressionList || ".".equals(file.findElementAt(selectionEndOffset - 1).getText())
+        || PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement(JavaTokenType.NEW_KEYWORD)).accepts(element)) {
+        offsetMap.addOffset(LPAREN_OFFSET, element.getTextRange().getStartOffset(), true);
+        PsiElement list = element.getParent();
+        PsiElement last = list.getLastChild();
+        if (last instanceof PsiJavaToken && ((PsiJavaToken)last).getTokenType() == JavaTokenType.RPARENTH){
+          offsetMap.addOffset(RPAREN_OFFSET, last.getTextRange().getStartOffset(), true);
+        }
+
+
+        offsetMap.addOffset(ARG_LIST_END_OFFSET, list.getTextRange().getEndOffset(), true);
+      }
+    }
+  }
+
+  static boolean isWord(PsiElement element) {
+    if (element instanceof PsiIdentifier){
+      return true;
+    }
+    else if (element instanceof PsiKeyword){
+      return true;
+    }
+    else if (element instanceof PsiJavaToken){
+      final String text = element.getText();
+      if(PsiKeyword.TRUE.equals(text)) return true;
+      if(PsiKeyword.FALSE.equals(text)) return true;
+      if(PsiKeyword.NULL.equals(text)) return true;
+      return false;
+    }
+    else if (element instanceof PsiDocToken) {
+      IElementType tokenType = ((PsiDocToken)element).getTokenType();
+      return tokenType == JavaDocTokenType.DOC_TAG_VALUE_TOKEN || tokenType == JavaDocTokenType.DOC_TAG_NAME;
+    }
+    else if (element instanceof XmlToken) {
+      IElementType tokenType = ((XmlToken)element).getTokenType();
+      return tokenType == XmlTokenType.XML_TAG_NAME ||
+          tokenType == XmlTokenType.XML_NAME ||
+          tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
+          // html data chars contains whitespaces
+          (tokenType == XmlTokenType.XML_DATA_CHARACTERS && !(element.getParent() instanceof HtmlTag));
+    }
+    else{
+      return false;
+    }
+  }
+
+  public static void resetParensInfo(final OffsetMap offsetMap) {
+    offsetMap.removeOffset(LPAREN_OFFSET);
+    offsetMap.removeOffset(RPAREN_OFFSET);
+    offsetMap.removeOffset(ARG_LIST_END_OFFSET);
+    offsetMap.removeOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
   }
 }

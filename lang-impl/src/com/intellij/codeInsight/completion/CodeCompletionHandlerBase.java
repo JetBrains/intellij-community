@@ -4,7 +4,6 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CompletionService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.extapi.psi.MetadataPsiElementBase;
@@ -13,8 +12,12 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -23,7 +26,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
@@ -71,13 +73,18 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
 
     EditorUtil.fillVirtualSpaceUntil(editor, editor.getCaretModel().getLogicalPosition().column, editor.getCaretModel().getLogicalPosition().line);
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-    ShowAutoImportPass.autoImportReferenceAtCursor(editor, file, false); //let autoimport complete
-    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(file.getViewProvider());
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
 
-    final int offset1 = editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionStart() : editor.getCaretModel().getOffset();
-    final int offset2 = editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionEnd() : offset1;
-    final CompletionContext context = new CompletionContext(project, editor, file, offset1, offset2);
+    documentManager.commitAllDocuments();
+    final CompletionInitializationContext initializationContext = new CompletionInitializationContext(editor, file, myCompletionType);
+    for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
+      contributor.beforeCompletion(initializationContext);
+      assert !documentManager.isUncommited(editor.getDocument()) : "Contributor " + contributor + " left the document uncommitted";
+    }
+
+    final int offset1 = initializationContext.getStartOffset();
+    final int offset2 = initializationContext.getSelectionEndOffset();
+    final CompletionContext context = new CompletionContext(project, editor, file, initializationContext.getOffsetMap());
 
     final LookupData data = getLookupData(context);
     final LookupItem[] items = data.items;
@@ -115,7 +122,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         item = null;
       }
     }
-    if (item != null && context.getIdentifierEndOffset() != context.getSelectionEndOffset()) { // give a chance to use Tab
+    if (item != null && context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != context.getSelectionEndOffset()) { // give a chance to use Tab
       if (item.getAttribute(LookupItem.DO_AUTOCOMPLETE_ATTR) == null) {
         item = null;
       }
@@ -153,7 +160,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         }
       }
 
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      documentManager.commitAllDocuments();
       final Lookup lookup = showLookup(project, editor, items, prefix, data, file, appendSuggestion(null, data));
       
       if (lookup != null) {
@@ -194,9 +201,11 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final int previousSelectionEndOffset = context.getSelectionEndOffset();
 
     context.setSelectionEndOffset(caretOffset);
-    context.setIdentifierEndOffset(
-      CompletionUtil.isOverwrite(item, completionChar) && previousSelectionEndOffset == context.getIdentifierEndOffset() ?
-      caretOffset:Math.max(caretOffset, context.getIdentifierEndOffset()));
+    final int identifierEndOffset =
+      CompletionUtil.isOverwrite(item, completionChar) && previousSelectionEndOffset ==
+                                                          context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) ?
+      caretOffset:Math.max(caretOffset, context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
+    context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, identifierEndOffset, true);
     lookupItemSelected(context, data, item, signatureSelected, completionChar);
   }
 
@@ -252,8 +261,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return commonPrefix;
   }
 
-  protected abstract CompletionData getCompletionData(CompletionContext context, PsiElement element);
-
   protected LookupData getLookupData(final CompletionContext _context) {
     final PsiFile file = _context.file;
     final PsiManager manager = file.getManager();
@@ -308,7 +315,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         int newOffset1 = injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(oldEditor.offsetToLogicalPosition(context.getStartOffset())));
         int newOffset2 = injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(oldEditor.offsetToLogicalPosition(context.getSelectionEndOffset())));
         PsiFile injectedFile = injectedEditor.getInjectedFile();
-        CompletionContext newContext = new CompletionContext(context.project, injectedEditor, injectedFile, newOffset1, newOffset2);
+        CompletionContext newContext = new CompletionContext(context.project, injectedEditor, injectedFile, context.getOffsetMap());
         PsiElement element = findElementAt(injectedFile, newContext.getStartOffset());
         if (element == null) {
           LOG.assertTrue(false, "offset " + newContext.getStartOffset() + " at:\n" + injectedFile.getText());

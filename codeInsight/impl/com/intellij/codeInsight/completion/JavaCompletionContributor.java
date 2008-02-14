@@ -5,6 +5,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -12,12 +13,14 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiJavaPatterns;
 import static com.intellij.patterns.StandardPatterns.or;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -360,5 +363,13 @@ public class JavaCompletionContributor extends CompletionContributor{
     }
   }
 
+  public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
+    final PsiFile file = context.getFile();
+    final Project project = context.getProject();
 
+    ShowAutoImportPass.autoImportReferenceAtCursor(context.getEditor(), file, false); //let autoimport complete
+    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(file.getViewProvider());
+
+    JavaCompletionUtil.initOffsets(file, project, context.getOffsetMap());
+  }
 }

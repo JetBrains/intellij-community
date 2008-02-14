@@ -153,8 +153,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
     if (CompletionUtil.isOverwrite(item, completionChar))
       removeEndOfIdentifier(needLeftParenth && hasParams);
-    else if(myContext.getIdentifierEndOffset() != myContext.getSelectionEndOffset())
-      context.resetParensInfo();
+    else if(myContext.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != myContext.getSelectionEndOffset())
+      JavaCompletionUtil.resetParensInfo(context.getOffsetMap());
 
     handleParenses(hasParams, needLeftParenth, tailType);
     handleBrackets();
@@ -262,17 +262,17 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
                                  || tailType != TailType.NONE) && tailType != TailTypes.SMART_COMPLETION;
 
     if (needParenth){
-      if (myContext.getLparenthOffset() >= 0){
-        myState.tailOffset = myContext.getArgListEndOffset();
-        if (myContext.getRparenthOffset() < 0 && insertRightParenth){
+      if (myContext.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET) >= 0){
+        myState.tailOffset = myContext.getOffsetMap().getOffset(JavaCompletionUtil.ARG_LIST_END_OFFSET);
+        if (myContext.getOffsetMap().getOffset(JavaCompletionUtil.RPAREN_OFFSET) < 0 && insertRightParenth){
           myDocument.insertString(myState.tailOffset, ")");
           myState.tailOffset += 1;
         }
         if (hasParams){
-          myState.caretOffset = myContext.getLparenthOffset() + 1;
+          myState.caretOffset = myContext.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET) + 1;
         }
         else{
-          myState.caretOffset = myContext.getArgListEndOffset();
+          myState.caretOffset = myContext.getOffsetMap().getOffset(JavaCompletionUtil.ARG_LIST_END_OFFSET);
         }
       }
       else{
@@ -417,11 +417,12 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   }
 
   protected void removeEndOfIdentifier(boolean needParenth){
-    myContext.init();
-    myDocument.deleteString(myContext.getSelectionEndOffset(), myContext.getIdentifierEndOffset());
-    if(myContext.getLparenthOffset() > 0 && !needParenth){
-      myDocument.deleteString(myContext.getLparenthOffset(), myContext.getArgListEndOffset());
-      myContext.resetParensInfo();
+    JavaCompletionUtil.initOffsets(myContext.file, myContext.project, myContext.getOffsetMap());
+    myDocument.deleteString(myContext.getSelectionEndOffset(), myContext.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
+    if(myContext.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET) > 0 && !needParenth){
+      myDocument.deleteString(myContext.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET),
+                              myContext.getOffsetMap().getOffset(JavaCompletionUtil.ARG_LIST_END_OFFSET));
+      JavaCompletionUtil.resetParensInfo(myContext.getOffsetMap());
     }
   }
 
@@ -468,7 +469,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
           String lookupString = editor.getDocument().getCharsSequence().subSequence(startOffset, endOffset).toString();
           myLookupItem.setLookupString(lookupString);
 
-          CompletionContext newContext = new CompletionContext(myContext.project, editor, myContext.file, startOffset, endOffset);
+          CompletionContext newContext = new CompletionContext(myContext.project, editor, myContext.file, myContext.getOffsetMap());
           handleInsert(newContext, myContext.getStartOffset(), myLookupData, myLookupItem, signatureSelected, completionChar);
         }
       }

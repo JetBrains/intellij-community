@@ -6,6 +6,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -14,6 +15,9 @@ public abstract class CompletionContributor implements Disposable {
   public static final ExtensionPointName<CompletionContributor> EP_NAME = ExtensionPointName.create("com.intellij.completion.contributor");
 
   public abstract void registerCompletionProviders(CompletionRegistrar registrar);
+
+  public void beforeCompletion(@NotNull CompletionInitializationContext context) {
+  }
 
   public void dispose() {
   }
