@@ -6,12 +6,6 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import java.io.*;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.UnknownHostException;
-import java.util.*;
-
 import com.intellij.ExtensionPoints;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
@@ -55,7 +49,19 @@ import org.jetbrains.annotations.Nullable;
 import org.testng.TestNG;
 import org.testng.TestNGCommandLineArgs;
 import org.testng.annotations.AfterClass;
-import org.testng.xml.*;
+import org.testng.xml.LaunchSuite;
+import org.testng.xml.Parser;
+import org.testng.xml.SuiteGenerator;
+import org.testng.xml.XmlSuite;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.UnknownHostException;
+import java.util.*;
 
 public class TestNGRunnableState extends JavaCommandLineState
 {
@@ -173,7 +179,7 @@ public class TestNGRunnableState extends JavaCommandLineState
       LOGGER.info("Adding coverage data from " + fileProvider.getCoverageDataFilePath());
       myCurrentCoverageSuite = coverageDataManager.addCoverageSuite(config.getGeneratedName() + " Coverage Results", fileProvider,
                                                                     config.getCoveragePatterns(), new Date().getTime(),
-                                                                    !config.isMergeDataByDefault());
+                                                                    null, config.getCoverageRunner());
       LOGGER.info("Added coverage data with name '" + myCurrentCoverageSuite.getPresentableName() + "'");
       config.appendCoverageArgument(javaParameters);
     }

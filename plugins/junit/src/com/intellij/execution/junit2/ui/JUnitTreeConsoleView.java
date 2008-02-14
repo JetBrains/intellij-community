@@ -113,6 +113,10 @@ public class JUnitTreeConsoleView extends WrappingConsoleView {
     }
   }
 
+  public JUnitRunningModel getModel() {
+    return myModel;
+  }
+
   private static PacketsDispatcher installDispatcher(final InputObjectRegistry registry,
                                                      final PacketExtractorBase packetExtractor,
                                                      final ProcessHandler process, final InputRouter inputRouter, final InputConsumer defaultConsumer) {

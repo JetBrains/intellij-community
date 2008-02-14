@@ -21,7 +21,6 @@ import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.execution.*;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.junit2.ui.JUnitTreeConsoleView;
@@ -29,6 +28,7 @@ import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -195,8 +195,7 @@ public abstract class TestObject implements JavaCommandLine {
         myConfiguration.getName(),
         new DefaultCoverageFileProvider(coverageFileName),
         myConfiguration.getCoveragePatterns(), lastCoverageTime,
-        myConfiguration.getSuiteToMergeWith()
-      );
+        myConfiguration.getSuiteToMergeWith(), myConfiguration.getCoverageRunner());
       myConfiguration.appendCoverageArgument(myJavaParameters);
     }
   }
