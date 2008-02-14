@@ -86,6 +86,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     myIcon = calculateIcon();
   }
 
+  @NotNull
   private Icon calculateIcon() {
     if (!isEnabled()) {
       return myType.getDisabledIcon();
@@ -103,7 +104,10 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       }
       CustomizedBreakpointPresentation presentation = session.getBreakpointPresentation(this);
       if (presentation != null) {
-        return presentation.getIcon();
+        Icon icon = presentation.getIcon();
+        if (icon != null) {
+          return icon;
+        }
       }
     }
     return myType.getEnabledIcon();

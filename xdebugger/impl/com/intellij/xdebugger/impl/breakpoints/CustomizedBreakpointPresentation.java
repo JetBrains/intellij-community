@@ -1,5 +1,7 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 
 /**
@@ -17,6 +19,7 @@ public class CustomizedBreakpointPresentation {
     myErrorMessage = errorMessage;
   }
 
+  @Nullable 
   public Icon getIcon() {
     return myIcon;
   }
