@@ -161,7 +161,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
   }
 
   private GroovyFileImpl createDummyFile(String s, boolean isPhisical) {
-    return (GroovyFileImpl) PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), GroovyFileType.GROOVY_FILE_TYPE, s, System.currentTimeMillis(), isPhisical);
+    return (GroovyFileImpl) PsiManager.getInstance(myProject).getElementFactory().createFileFromText("DUMMY__." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), GroovyFileType.GROOVY_FILE_TYPE, s, System.currentTimeMillis(), isPhisical);
   }
 
   private GroovyFileImpl createDummyFile(String s) {
