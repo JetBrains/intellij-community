@@ -10,17 +10,13 @@ public class ErrorHighlightingPanel {
   private JTextField myMarkMinHeight;
   private JPanel myPanel;
   private JCheckBox myNextErrorGoesToErrorsFirst;
-  private JCheckBox mySuppressWay;
 
   public void reset() {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     myAutoreparseDelayField.setText(Integer.toString(settings.AUTOREPARSE_DELAY));
 
-
-
     myMarkMinHeight.setText(Integer.toString(settings.ERROR_STRIPE_MARK_MIN_HEIGHT));
     myNextErrorGoesToErrorsFirst.setSelected(settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST);
-    mySuppressWay.setSelected(settings.SUPPRESS_WARNINGS);
   }
 
   public void apply(){
@@ -32,7 +28,6 @@ public class ErrorHighlightingPanel {
 
     settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = myNextErrorGoesToErrorsFirst.isSelected();
 
-    settings.SUPPRESS_WARNINGS = mySuppressWay.isSelected();
   }
 
   public JPanel getPanel(){
@@ -49,7 +44,6 @@ public class ErrorHighlightingPanel {
     
     isModified |= getErrorStripeMarkMinHeight() != settings.ERROR_STRIPE_MARK_MIN_HEIGHT;
     isModified |= myNextErrorGoesToErrorsFirst.isSelected() != settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST;
-    isModified |= mySuppressWay.isSelected() != settings.SUPPRESS_WARNINGS;
     if (isModified) return true;
     return false;
   }
