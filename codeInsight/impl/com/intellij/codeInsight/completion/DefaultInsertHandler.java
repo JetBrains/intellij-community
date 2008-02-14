@@ -469,7 +469,10 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
           String lookupString = editor.getDocument().getCharsSequence().subSequence(startOffset, endOffset).toString();
           myLookupItem.setLookupString(lookupString);
 
-          CompletionContext newContext = new CompletionContext(myContext.project, editor, myContext.file, myContext.getOffsetMap());
+          final OffsetMap offsetMap = myContext.getOffsetMap();
+          offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, endOffset);
+          offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, endOffset);
+          CompletionContext newContext = new CompletionContext(myContext.project, editor, myContext.file, offsetMap);
           handleInsert(newContext, myContext.getStartOffset(), myLookupData, myLookupItem, signatureSelected, completionChar);
         }
       }
