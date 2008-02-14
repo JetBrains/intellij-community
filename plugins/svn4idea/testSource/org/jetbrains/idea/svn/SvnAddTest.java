@@ -1,6 +1,6 @@
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,7 +29,7 @@ public class SvnAddTest extends SvnTestCase {
   @Test
   public void testDirAndFileInCommand() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+    new WriteCommandAction.Simple(myProject) {
       public void run() {
         try {
           VirtualFile dir = myWorkingCopyDir.createChildDirectory(this, "child");
@@ -39,7 +39,8 @@ public class SvnAddTest extends SvnTestCase {
           throw new RuntimeException(e);
         }
       }
-    }, "", null);
+    }.execute();
+    
     final RunResult result = runSvn("status");
     verify(result, "A child", "A child\\a.txt");
   }

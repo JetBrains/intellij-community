@@ -1,6 +1,6 @@
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -277,7 +277,7 @@ public class SvnRenameTest extends SvnTestCase {
   }
 
   @Test
-  public void testMoveToNewPackage() throws Exception {
+  public void testMoveToNewPackage() throws Throwable {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     moveToNewPackage(file, "child");
@@ -285,7 +285,7 @@ public class SvnRenameTest extends SvnTestCase {
   }
 
   @Test
-  public void testMoveToNewPackageCommitted() throws Exception {
+  public void testMoveToNewPackageCommitted() throws Throwable {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     checkin();
@@ -293,8 +293,8 @@ public class SvnRenameTest extends SvnTestCase {
     verifySorted(runSvn("status"), "A child", "A + child\\a.txt", "D a.txt");
   }
 
-  private void moveToNewPackage(final VirtualFile file, final String packageName) {
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+  private void moveToNewPackage(final VirtualFile file, final String packageName) throws Throwable {
+    new WriteCommandAction.Simple(myProject) {
       public void run() {
         try {
           final VirtualFile dir = myWorkingCopyDir.createChildDirectory(this, packageName);
@@ -305,6 +305,6 @@ public class SvnRenameTest extends SvnTestCase {
         }
 
       }
-    }, "", null);
+    }.execute().throwException();
   }
 }
