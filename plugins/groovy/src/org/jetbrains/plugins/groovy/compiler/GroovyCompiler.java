@@ -27,7 +27,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
@@ -44,8 +43,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 
 /**
@@ -135,17 +132,6 @@ public class GroovyCompiler implements TranslatingCompiler {
           category = getMessageCategory(compilerMessage);
 
           final String url = compilerMessage.getUrl();
-
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              try {
-                final VirtualFile vFile = VfsUtil.findFileByURL(new URL("file://" + url));
-                assert vFile != null;
-              } catch (MalformedURLException e) {
-                LOG.error(e);
-              }
-            }
-          });
 
           compileContext.addMessage(category, compilerMessage.getMessage(),
               url.replace('\\', '/'),
