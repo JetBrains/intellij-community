@@ -142,8 +142,8 @@ public class EnterHandler extends EditorWriteActionHandler {
     Lexer lexer = LanguageParserDefinitions.INSTANCE.forLanguage(language).createLexer(containingFile.getProject());
     lexer.start(commentText, commenter.getDocumentationCommentPrefix().length(), commentText.length(),0);
     QuoteHandler fileTypeHandler = TypedHandler.getQuoteHandler(containingFile);
-    TypedHandler.JavaLikeQuoteHandler javaLikeQuoteHandler = fileTypeHandler instanceof TypedHandler.JavaLikeQuoteHandler ?
-                                                             (TypedHandler.JavaLikeQuoteHandler)fileTypeHandler:null;
+    JavaLikeQuoteHandler javaLikeQuoteHandler = fileTypeHandler instanceof JavaLikeQuoteHandler ?
+                                                             (JavaLikeQuoteHandler)fileTypeHandler:null;
 
     while (true) {
       IElementType tokenType = lexer.getTokenType();

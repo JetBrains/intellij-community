@@ -12,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.codeInsight.editorActions.QuoteHandler;
 import com.intellij.codeInsight.editorActions.TypedHandler;
+import com.intellij.codeInsight.editorActions.JavaLikeQuoteHandler;
 
 public class EnterInStringLiteralHandler implements EnterHandlerDelegate {
   public Result preprocessEnter(final PsiFile file, final Editor editor, Ref<Integer> caretOffsetRef, final Ref<Integer> caretAdvanceRef, 
@@ -24,8 +25,8 @@ public class EnterInStringLiteralHandler implements EnterHandlerDelegate {
       CharSequence text = document.getText();
       ASTNode token = psiAtOffset.getNode();
       final QuoteHandler fileTypeQuoteHandler = TypedHandler.getQuoteHandler(psiAtOffset.getContainingFile());
-      TypedHandler.JavaLikeQuoteHandler quoteHandler = fileTypeQuoteHandler instanceof TypedHandler.JavaLikeQuoteHandler ?
-                                                       (TypedHandler.JavaLikeQuoteHandler) fileTypeQuoteHandler:null;
+      JavaLikeQuoteHandler quoteHandler = fileTypeQuoteHandler instanceof JavaLikeQuoteHandler ?
+                                                       (JavaLikeQuoteHandler) fileTypeQuoteHandler:null;
 
       if (quoteHandler != null &&
           quoteHandler.getConcatenatableStringTokenTypes() != null &&

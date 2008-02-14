@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
 */
-public class JavaQuoteHandler extends TypedHandler.SimpleTokenSetQuoteHandler implements TypedHandler.JavaLikeQuoteHandler {
+public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements JavaLikeQuoteHandler {
   private final TokenSet concatenatableStrings;
 
   public JavaQuoteHandler() {
