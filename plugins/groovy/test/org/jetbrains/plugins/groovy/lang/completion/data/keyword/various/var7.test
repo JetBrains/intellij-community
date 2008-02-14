@@ -1,0 +1,22 @@
+package a.b.c
+
+import org.*
+
+class A  {
+  def <caret> foo() {
+    switch (k){
+
+    }
+  }
+}
+-----
+boolean
+byte
+char
+double
+final
+float
+int
+long
+short
+void

@@ -222,7 +222,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
   public GrModifierList getModifierList() {
     PsiElement parent = getParent();
     if (parent instanceof GrVariableDeclaration) {
-      return ((GrVariableDeclaration) parent).getModifierList();
+      return ((GrVariableDeclaration) parent).getModifierListGroovy();
     }
     return null;
   }

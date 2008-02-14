@@ -29,12 +29,14 @@ import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -158,6 +160,17 @@ public abstract class GroovyCompletionUtil {
         isNewStatement(context, true);
   }
 
+  public static boolean inMemberDeclaration(PsiElement context) {
+    if (context.getParent() instanceof GrReferenceElement &&
+        context.getParent().getParent() instanceof GrTypeElement) {
+      PsiElement parent = context.getParent().getParent().getParent();
+      if (parent instanceof GrMethod || parent instanceof GrVariableDeclaration) {
+        return parent.getParent() instanceof GrTypeDefinitionBody || parent.getParent() instanceof GroovyFile;
+      }
+    }
+    return false;
+  }
+
   public static boolean asTypedMethod(PsiElement context) {
     return context.getParent() instanceof GrReferenceElement &&
         context.getParent().getParent() instanceof GrTypeElement &&
@@ -166,6 +179,7 @@ public abstract class GroovyCompletionUtil {
         context.getTextRange().getStartOffset() == context.getParent().getParent().getParent().getParent().getTextRange().getStartOffset();
 
   }
+
 
   public static Object[] getCompletionVariants(GroovyResolveResult[] candidates) {
     Object[] result = new Object[candidates.length];

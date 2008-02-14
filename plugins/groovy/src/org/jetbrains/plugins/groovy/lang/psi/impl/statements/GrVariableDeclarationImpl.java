@@ -7,6 +7,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -46,8 +47,11 @@ public class GrVariableDeclarationImpl extends GroovyPsiElementImpl implements G
     return true;
   }
 
-  public GrModifierList getModifierList() {
-    return findChildByClass(GrModifierList.class);
+  @NotNull
+  public GrModifierList getModifierListGroovy() {
+    GrModifierList list = findChildByClass(GrModifierList.class);
+    assert list != null;
+    return list;
   }
 
   public GrVariable[] getVariables() {

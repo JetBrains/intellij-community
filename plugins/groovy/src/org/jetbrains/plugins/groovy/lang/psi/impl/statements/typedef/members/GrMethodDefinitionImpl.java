@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
@@ -320,8 +321,15 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   }
 
   @NotNull
+  public GrModifierList getModifierListGroovy() {
+    GrModifierListImpl list = findChildByClass(GrModifierListImpl.class);
+    assert list != null;
+    return list;
+  }
+
+  @Nullable
   public PsiModifierList getModifierList() {
-    return findChildByClass(GrModifierListImpl.class);
+    return getModifierListGroovy();
   }
 
   public boolean hasModifierProperty(@NonNls @NotNull String name) {
@@ -330,7 +338,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
       if (containingClass != null && containingClass.isInterface()) return true;
     }
 
-    return getModifierList().hasModifierProperty(name);
+    return getModifierListGroovy().hasModifierProperty(name);
   }
 
   @NotNull

@@ -296,7 +296,7 @@ public class GroovyAnnotator implements Annotator {
 
     PsiElement typeDef = parent.getParent();
     if (typeDef != null && typeDef instanceof GrTypeDefinition) {
-      PsiModifierList modifiersList = variableDeclaration.getModifierList();
+      PsiModifierList modifiersList = variableDeclaration.getModifierListGroovy();
       checkAccessModifiers(holder, modifiersList);
 
       if (modifiersList.hasExplicitModifier(PsiModifier.VOLATILE)

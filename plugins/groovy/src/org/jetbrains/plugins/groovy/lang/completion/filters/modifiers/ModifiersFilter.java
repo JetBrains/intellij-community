@@ -24,8 +24,16 @@ import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 
 /**
  * @author ilyas
@@ -33,9 +41,23 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public class ModifiersFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
     if (GroovyCompletionUtil.asSimpleVariable(context) ||
-
         GroovyCompletionUtil.asTypedMethod(context)) {
       return true;
+    }
+    if (context.getParent() instanceof GrReferenceElement &&
+        context.getParent().getParent() instanceof GrTypeElement) {
+      PsiElement parent = context.getParent().getParent().getParent();
+      if (parent instanceof GrVariableDeclaration &&
+          (parent.getParent() instanceof GrTypeDefinitionBody ||
+          parent.getParent() instanceof GroovyFile)
+          || parent instanceof GrMethod) {
+        GrModifierList list = ((GrMembersDeclaration) parent).getModifierListGroovy();
+        for (PsiElement modifier : list.getModifiers()) {
+          if (!(modifier instanceof GrAnnotation)) return false;
+          if ("def".equals(modifier.getText())) return false;
+        }
+        return true;
+      }
     }
     if (context.getParent() instanceof GrExpression &&
         context.getParent().getParent() instanceof GroovyFile &&

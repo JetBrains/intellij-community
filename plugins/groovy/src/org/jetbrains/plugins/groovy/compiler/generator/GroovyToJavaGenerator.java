@@ -606,7 +606,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     String initValueText = getDefaultValueText(varQualifiedTypeName);
 
     //append method name
-    PsiModifierList modifierList = variableDeclaration.getModifierList();
+    PsiModifierList modifierList = variableDeclaration.getModifierListGroovy();
     GrVariable[] variables = variableDeclaration.getVariables();
     GrVariable variable;
     int i = 0;

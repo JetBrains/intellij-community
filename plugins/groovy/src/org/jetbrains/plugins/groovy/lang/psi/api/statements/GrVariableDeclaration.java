@@ -19,8 +19,6 @@ public interface GrVariableDeclaration extends GrStatement, GrMembersDeclaration
   @Nullable
   GrTypeElement getTypeElementGroovy();
 
-  GrModifierList getModifierList();
-
   GrVariable[] getVariables();
 
 }

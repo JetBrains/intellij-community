@@ -51,6 +51,4 @@ public interface GrMethod extends GrMember, GrMembersDeclaration, GrNamedElement
   @NotNull
   GrParameterList getParameterList();
 
-  @NotNull
-  PsiModifierList getModifierList();
 }
