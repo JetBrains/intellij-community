@@ -141,9 +141,7 @@ import java.util.Collection;
         final Library.ModifiableModel libraryModel = library.getModifiableModel();
         for (String jar : jarArr) {
           final String path = libPath + jar;
-          final String newPath = model.getContentRoots()[0].getPath() + "/" + jar;
-          FileUtil.copy(new File(path), new File(newPath));
-          final VirtualFile root = JarFileSystem.getInstance().refreshAndFindFileByPath(newPath + "!/");
+          final VirtualFile root = JarFileSystem.getInstance().refreshAndFindFileByPath(path + "!/");
           assert root != null;
           libraryModel.addRoot(root, OrderRootType.CLASSES);
         }
