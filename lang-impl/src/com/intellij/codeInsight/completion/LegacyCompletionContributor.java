@@ -4,17 +4,16 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -49,11 +48,10 @@ public class LegacyCompletionContributor extends CompletionContributor{
         if (ref != null) {
           completionData.completeReference(ref, lookupSet, insertedElement, result.getPrefixMatcher(), context.file, context.getStartOffset());
         }
-        if (lookupSet.isEmpty() || !CodeInsightUtil.isAntFile(file)) {
-          final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-          completionData.addKeywordVariants(keywordVariants, insertedElement, context.file);
-          completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), context.file);
-        }
+
+        final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
+        completionData.addKeywordVariants(keywordVariants, insertedElement, context.file);
+        completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), context.file);
         result.addAllElements(lookupSet);
       }
     });
