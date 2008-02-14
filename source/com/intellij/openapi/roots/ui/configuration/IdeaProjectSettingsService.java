@@ -1,12 +1,15 @@
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -42,5 +45,19 @@ public class IdeaProjectSettingsService extends ProjectSettingsService {
         }
       }
     });
+  }
+
+  public boolean processModulesMoved(final Module[] modules, @Nullable final ModuleGroup targetGroup) {
+    final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myProject);
+    if (rootConfigurable.updateProjectTree(modules, targetGroup)) { //inside project root editor
+      if (targetGroup != null) {
+        rootConfigurable.selectNodeInTree(targetGroup.toString());
+      }
+      else {
+        rootConfigurable.selectNodeInTree(modules[0].getName());
+      }
+      return true;
+    }
+    return false;
   }
 }

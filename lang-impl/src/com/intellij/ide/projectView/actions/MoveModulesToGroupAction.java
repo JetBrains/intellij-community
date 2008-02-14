@@ -13,7 +13,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 
 public class MoveModulesToGroupAction extends AnAction {
   protected final ModuleGroup myModuleGroup;
@@ -58,16 +58,7 @@ public class MoveModulesToGroupAction extends AnAction {
       pane.updateFromRoot(true);
     }
 
-    final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(project);
-    if (rootConfigurable.updateProjectTree(modules, group)) { //inside project root editor
-      if (group != null) {
-        rootConfigurable.selectNodeInTree(group.toString());
-      }
-      else {
-        rootConfigurable.selectNodeInTree(modules[0].getName());
-      }
-    }
-    else if (pane != null) {
+    if (!ProjectSettingsService.getInstance(project).processModulesMoved(modules, group) && pane != null) {
       if (group != null) {
         pane.selectModuleGroup(group, true);
       }

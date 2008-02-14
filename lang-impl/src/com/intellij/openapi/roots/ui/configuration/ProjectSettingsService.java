@@ -1,9 +1,11 @@
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.module.Module;
+import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -23,5 +25,9 @@ public class ProjectSettingsService {
   }
 
   public void openProjectLibrarySettings(final NamedLibraryElement value) {
+  }
+
+  public boolean processModulesMoved(final Module[] modules, @Nullable final ModuleGroup targetGroup) {
+    return false;
   }
 }
