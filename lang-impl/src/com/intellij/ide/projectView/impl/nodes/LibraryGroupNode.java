@@ -10,8 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -98,6 +97,6 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
 
   public void navigate(final boolean requestFocus) {
     Module module = getValue().getModule();
-    ModulesConfigurator.showDialog(getProject(), module.getName(), ClasspathEditor.NAME, false);
+    ProjectSettingsService.getInstance(myProject).openModuleLibrarySettings(module);
   }
 }

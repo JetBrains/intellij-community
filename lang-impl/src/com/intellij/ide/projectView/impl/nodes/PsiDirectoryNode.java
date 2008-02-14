@@ -13,8 +13,7 @@ import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -127,7 +126,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
   public void navigate(final boolean requestFocus) {
     Module module = ModuleUtil.findModuleForPsiElement(getValue());
     if (module != null) {
-      ModulesConfigurator.showDialog(getProject(), module.getName(), ContentEntriesEditor.NAME, false);
+      ProjectSettingsService.getInstance(myProject).openContentEntriesSettings(module);
     }
   }
 

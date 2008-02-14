@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -102,18 +103,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   }
 
   public void navigate(final boolean requestFocus) {
-    final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(getProject());
-    ShowSettingsUtil.getInstance().editConfigurable(getProject(), config, new Runnable() {
-      public void run() {
-        final NamedLibraryElement element = getValue();
-        final OrderEntry orderEntry = element.getOrderEntry();
-        if (orderEntry instanceof JdkOrderEntry) {
-          config.select(((JdkOrderEntry)orderEntry).getJdk(), true);
-        } else {
-          config.select((LibraryOrderEntry)orderEntry, true);
-        }
-      }
-    });
+    ProjectSettingsService.getInstance(myProject).openProjectLibrarySettings(getValue());
   }
 
   public boolean canNavigate() {

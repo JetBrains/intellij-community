@@ -31,6 +31,8 @@
                     serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper"/>
     <projectService serviceInterface="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"
                     serviceImplementation="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"
+                    serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"/>
 
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler"/>
