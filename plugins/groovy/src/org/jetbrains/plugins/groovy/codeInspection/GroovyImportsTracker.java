@@ -33,6 +33,7 @@ public class GroovyImportsTracker implements ProjectComponent {
   private Map<GroovyFile, Set<GrImportStatement>> myUnusedImportStatements = new HashMap<GroovyFile, Set<GrImportStatement>>();
 
   public void registerImportUsed(GrImportStatement importStatement) {
+    if (importStatement.getParent() == null) return;
     PsiFile file = importStatement.getContainingFile();
     if (file == null || !(file instanceof GroovyFile)) return;
     GroovyFile groovyFile = (GroovyFile) file;
