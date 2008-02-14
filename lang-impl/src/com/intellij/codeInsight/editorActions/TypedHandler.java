@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaTokenType;
@@ -32,7 +31,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -309,14 +307,13 @@ public class TypedHandler implements TypedActionHandler {
 
     if (!iterator.atEnd()){
       IElementType tokenType = iterator.getTokenType();
-      if (fileType == StdFileTypes.JAVA || fileType == StdFileTypes.JSP){
-        if (tokenType instanceof IJavaElementType){
-          if (!JavaQuoteHandler.isAppropriateElementTypeForLiteralStatic(tokenType)) return false;
-        }
-      } else if (quoteHandler instanceof JavaLikeQuoteHandler) {
+      if (quoteHandler instanceof JavaLikeQuoteHandler) {
         try {
           if (!((JavaLikeQuoteHandler)quoteHandler).isAppropriateElementTypeForLiteral(tokenType)) return false;
-        } catch (AbstractMethodError incompatiblePluginErrorThatDoesNotInterestUs) {}
+        }
+        catch (AbstractMethodError incompatiblePluginErrorThatDoesNotInterestUs) {
+          // ignore
+        }
       }
     }
 
