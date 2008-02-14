@@ -43,7 +43,7 @@
       <exclude name="boot.jar"/>
     </fileset>
     <fileset dir="${idea.plugins}">
-      <include name="**/JavascriptLanguage.jar"/>
+        <include name="**/JavascriptLanguage.jar"/>
     </fileset>
   </path>
 
@@ -136,7 +136,7 @@
       <pathelement path="${stubsOutput}"/>
     </path>
 
-    <javac2 destdir="${production.dest.groovy}" debug="on">
+    <javac2 destdir="${production.dest.groovy}" debug = "on">
       <src refId="javaToCompile"/>
 
       <classpath refid="idea.lib.path"/>
@@ -236,17 +236,6 @@
       </classpath>
 
     </javac>
-
-    <groovyc srcDir="../test"
-             destdir="${test.dest}"
-             debug="on">
-      <classpath>
-        <path refid="idea.lib.path"/>
-        <path refid="groovy.path"/>
-        <path refid="output.path"/>
-      </classpath>
-    </groovyc>
-
 
     <copy toDir="${test.dest}/testdata">
       <fileset dir="${project.dir}/testdata"/>
