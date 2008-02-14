@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -14,31 +13,20 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.Nullable;
 
-public class CompletionContext implements Cloneable {
+public class CompletionContext {
   public static final Key<CompletionContext> COMPLETION_CONTEXT_KEY = Key.create("CompletionContext");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionContext");
-
-  protected Object clone() {
-    try {
-      return super.clone();
-    }
-    catch (CloneNotSupportedException e) {
-      LOG.error(e);
-      return null;
-    }
-  }
+  private static final Key START_OFFSET = Key.create("start");
+  private static final Key SEL_END_OFFSET = Key.create("selEnd");
+  private static final Key ID_END_OFFSET = Key.create("idEnd");
+  private static final Key LPAREN_OFFSET = Key.create("lparen");
+  private static final Key RPAREN_OFFSET = Key.create("rparen");
+  private static final Key ARG_LIST_END_OFFSET = Key.create("argListEnd");
 
   public final Project project;
   public final Editor editor;
   public final PsiFile file;
-  private int startOffset;
-  public int selectionEndOffset;
-
-  public int identifierEndOffset = -1;
-  public int lparenthOffset = -1;
-  public int rparenthOffset = -1;
-  public int argListEndOffset = -1;
   public boolean hasArgs = false;
+  private OffsetMap myOffsetMap;
 
   private String myPrefix = "";
 
@@ -46,39 +34,41 @@ public class CompletionContext implements Cloneable {
     this.project = project;
     this.editor = editor;
     this.file = file;
+    myOffsetMap = new OffsetMap(editor.getDocument());
 
-    startOffset = offset1;
-    selectionEndOffset = offset2;
+
+    setStartOffset(offset1);
+    setSelectionEndOffset(offset2);
 
     init();
   }
 
   public void init(){
-    identifierEndOffset = selectionEndOffset;
+    setIdentifierEndOffset(getSelectionEndOffset());
 
-    PsiElement element = file.findElementAt(selectionEndOffset);
+    PsiElement element = file.findElementAt(getSelectionEndOffset());
     if (element == null) return;
 
-    final PsiReference reference = file.findReferenceAt(selectionEndOffset);
+    final PsiReference reference = file.findReferenceAt(getSelectionEndOffset());
     if(reference != null){
       if(reference instanceof PsiJavaCodeReferenceElement){
-        identifierEndOffset = element.getParent().getTextRange().getEndOffset();
+        setIdentifierEndOffset(element.getParent().getTextRange().getEndOffset());
       }
       else{
-        identifierEndOffset = reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset();
+        setIdentifierEndOffset(reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset());
       }
 
-      element = file.findElementAt(identifierEndOffset);
+      element = file.findElementAt(getIdentifierEndOffset());
     }
     else if (isWord(element)){
       if(element instanceof PsiIdentifier && element.getParent() instanceof PsiJavaCodeReferenceElement){
-        identifierEndOffset = element.getParent().getTextRange().getEndOffset();
+        setIdentifierEndOffset(element.getParent().getTextRange().getEndOffset());
       }
       else{
-        identifierEndOffset = element.getTextRange().getEndOffset();
+        setIdentifierEndOffset(element.getTextRange().getEndOffset());
       }
 
-      element = file.findElementAt(identifierEndOffset);
+      element = file.findElementAt(getIdentifierEndOffset());
       if (element == null) return;
     }
 
@@ -93,18 +83,18 @@ public class CompletionContext implements Cloneable {
     if (element instanceof PsiJavaToken
         && ((PsiJavaToken)element).getTokenType() == JavaTokenType.LPARENTH){
 
-      if(element.getParent() instanceof PsiExpressionList || ".".equals(file.findElementAt(selectionEndOffset - 1).getText())
+      if(element.getParent() instanceof PsiExpressionList || ".".equals(file.findElementAt(getSelectionEndOffset() - 1).getText())
         || PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement(JavaTokenType.NEW_KEYWORD)).accepts(element)) {
-        lparenthOffset = element.getTextRange().getStartOffset();
+        setLparenthOffset(element.getTextRange().getStartOffset());
         PsiElement list = element.getParent();
         PsiElement last = list.getLastChild();
         if (last instanceof PsiJavaToken && ((PsiJavaToken)last).getTokenType() == JavaTokenType.RPARENTH){
-          rparenthOffset = last.getTextRange().getStartOffset();
+          setRparenthOffset(last.getTextRange().getStartOffset());
         }
 
 
 
-        argListEndOffset = list.getTextRange().getEndOffset();
+        setArgListEndOffset(list.getTextRange().getEndOffset());
         if(element instanceof PsiExpressionList)
           hasArgs = ((PsiExpressionList)element).getExpressions().length > 0;
       }
@@ -142,26 +132,13 @@ public class CompletionContext implements Cloneable {
   }
 
   public void shiftOffsets(int shift){
-    if (shift != 0){
-      selectionEndOffset += shift; //?
-      identifierEndOffset += shift;
-      if (lparenthOffset >= 0){
-        lparenthOffset += shift;
-      }
-      if (rparenthOffset >= 0){
-        rparenthOffset += shift;
-      }
-      if (argListEndOffset >= 0){
-        argListEndOffset += shift;
-      }
-    }
   }
 
   public void resetParensInfo(){
-    rparenthOffset = -1;
-    argListEndOffset = -1;
-    identifierEndOffset = -1;
-    lparenthOffset = -1;
+    myOffsetMap.removeOffset(LPAREN_OFFSET);
+    myOffsetMap.removeOffset(RPAREN_OFFSET);
+    myOffsetMap.removeOffset(ARG_LIST_END_OFFSET);
+    myOffsetMap.removeOffset(ID_END_OFFSET);
   }
 
   public String getPrefix() {
@@ -177,11 +154,51 @@ public class CompletionContext implements Cloneable {
   }
 
   public int getStartOffset() {
-    return startOffset;
+    return myOffsetMap.getOffset(START_OFFSET);
   }
 
-  public void setStartOffset(final int offset) {
-    startOffset = offset;
+  public void setStartOffset(final int newStartOffset) {
+    myOffsetMap.addOffset(START_OFFSET, newStartOffset, false);
+  }
+
+  public int getSelectionEndOffset() {
+    return myOffsetMap.getOffset(SEL_END_OFFSET);
+  }
+
+  public void setSelectionEndOffset(final int selectionEndOffset) {
+    myOffsetMap.addOffset(SEL_END_OFFSET, selectionEndOffset, true);
+  }
+
+  public int getIdentifierEndOffset() {
+    return myOffsetMap.getOffset(ID_END_OFFSET);
+  }
+
+  public void setIdentifierEndOffset(final int identifierEndOffset) {
+    myOffsetMap.addOffset(ID_END_OFFSET, identifierEndOffset, true);
+  }
+
+  public int getLparenthOffset() {
+    return myOffsetMap.getOffset(LPAREN_OFFSET);
+  }
+
+  public void setLparenthOffset(final int lparenthOffset) {
+    myOffsetMap.addOffset(LPAREN_OFFSET, lparenthOffset, true);
+  }
+
+  public int getRparenthOffset() {
+    return myOffsetMap.getOffset(RPAREN_OFFSET);
+  }
+
+  public void setRparenthOffset(final int rparenthOffset) {
+    myOffsetMap.addOffset(RPAREN_OFFSET, rparenthOffset, true);
+  }
+
+  public int getArgListEndOffset() {
+    return myOffsetMap.getOffset(ARG_LIST_END_OFFSET);
+  }
+
+  public void setArgListEndOffset(final int argListEndOffset) {
+    myOffsetMap.addOffset(ARG_LIST_END_OFFSET, argListEndOffset, true);
   }
 }
 

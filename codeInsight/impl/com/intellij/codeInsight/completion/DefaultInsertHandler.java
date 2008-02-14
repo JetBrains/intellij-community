@@ -51,7 +51,6 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   protected static final Object EXPANDED_TEMPLATE_ATTR = Key.create("EXPANDED_TEMPLATE_ATTR");
 
   protected CompletionContext myContext;
-  private int myStartOffset;
   private LookupData myLookupData;
   private LookupItem myLookupItem;
 
@@ -129,7 +128,6 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     LOG.assertTrue(CommandProcessor.getInstance().getCurrentCommand() != null);
     PsiDocumentManager.getInstance(context.project).commitDocument(context.editor.getDocument());
     myContext = context;
-    myStartOffset = startOffset;
     myLookupData = data;
     myLookupItem = item;
 
@@ -148,14 +146,14 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     TailType tailType = getTailType(completionChar);
 
     //adjustContextAfterLookupStringInsertion();
-    myState = new InsertHandlerState(myContext.selectionEndOffset, myContext.selectionEndOffset);
+    myState = new InsertHandlerState(myContext.getSelectionEndOffset(), myContext.getSelectionEndOffset());
 
     final boolean needLeftParenth = isToInsertParenth();
     final boolean hasParams = needLeftParenth && hasParams();
 
     if (CompletionUtil.isOverwrite(item, completionChar))
       removeEndOfIdentifier(needLeftParenth && hasParams);
-    else if(myContext.identifierEndOffset != myContext.selectionEndOffset)
+    else if(myContext.getIdentifierEndOffset() != myContext.getSelectionEndOffset())
       context.resetParensInfo();
 
     handleParenses(hasParams, needLeftParenth, tailType);
@@ -175,9 +173,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     myEditor.getSelectionModel().removeSelection();
 
     try{
-      final int previousStartOffset = myStartOffset;
-      myStartOffset = addImportForItem(myFile, previousStartOffset, myLookupItem);
-      myContext.setStartOffset(myContext.getStartOffset() + (myStartOffset - previousStartOffset));
+      addImportForItem(myFile, myContext.getStartOffset(), myLookupItem);
     }
     catch(IncorrectOperationException e){
       LOG.error(e);
@@ -266,24 +262,23 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
                                  || tailType != TailType.NONE) && tailType != TailTypes.SMART_COMPLETION;
 
     if (needParenth){
-      if (myContext.lparenthOffset >= 0){
-        myState.tailOffset = myContext.argListEndOffset;
-        if (myContext.rparenthOffset < 0 && insertRightParenth){
+      if (myContext.getLparenthOffset() >= 0){
+        myState.tailOffset = myContext.getArgListEndOffset();
+        if (myContext.getRparenthOffset() < 0 && insertRightParenth){
           myDocument.insertString(myState.tailOffset, ")");
           myState.tailOffset += 1;
-          myContext.argListEndOffset = myState.tailOffset;
         }
         if (hasParams){
-          myState.caretOffset = myContext.lparenthOffset + 1;
+          myState.caretOffset = myContext.getLparenthOffset() + 1;
         }
         else{
-          myState.caretOffset = myContext.argListEndOffset;
+          myState.caretOffset = myContext.getArgListEndOffset();
         }
       }
       else{
         final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
-        myState.tailOffset = myContext.selectionEndOffset;
-        myState.caretOffset = myContext.selectionEndOffset;
+        myState.tailOffset = myContext.getSelectionEndOffset();
+        myState.caretOffset = myContext.getSelectionEndOffset();
 
         if(styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES){
           myDocument.insertString(myState.tailOffset++, " ");
@@ -331,7 +326,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       needParens = true;
       final PsiClass aClass = (PsiClass)myLookupItem.getObject();
 
-      PsiElement place = myFile.findElementAt(myStartOffset);
+      PsiElement place = myFile.findElementAt(myContext.getStartOffset());
 
       if(myLookupItem.getAttribute(LookupItem.DONT_CHECK_FOR_INNERS) == null){
         PsiClass[] classes = aClass.getInnerClasses();
@@ -354,7 +349,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
       final PsiClass aClass = (PsiClass)myLookupItem.getObject();
 
-      final PsiElement place = myFile.findElementAt(myStartOffset);
+      final PsiElement place = myFile.findElementAt(myContext.getStartOffset());
 
       final PsiMethod[] constructors = aClass.getConstructors();
       for (PsiMethod constructor : constructors) {
@@ -368,7 +363,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     else {
       final String lookupString = myLookupItem.getLookupString();
       if (PsiKeyword.SYNCHRONIZED.equals(lookupString)) {
-        final PsiElement place = myFile.findElementAt(myStartOffset);
+        final PsiElement place = myFile.findElementAt(myContext.getStartOffset());
         hasParms = PsiTreeUtil.getParentOfType(place, PsiMember.class, PsiCodeBlock.class) instanceof PsiCodeBlock;
       }
       else if(PsiKeyword.CATCH.equals(lookupString) ||
@@ -423,12 +418,9 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
   protected void removeEndOfIdentifier(boolean needParenth){
     myContext.init();
-    myDocument.deleteString(myContext.selectionEndOffset, myContext.identifierEndOffset);
-    int shift = -(myContext.identifierEndOffset - myContext.selectionEndOffset);
-    myContext.shiftOffsets(shift);
-    myContext.selectionEndOffset = myContext.identifierEndOffset;
-    if(myContext.lparenthOffset > 0 && !needParenth){
-      myDocument.deleteString(myContext.lparenthOffset, myContext.argListEndOffset);
+    myDocument.deleteString(myContext.getSelectionEndOffset(), myContext.getIdentifierEndOffset());
+    if(myContext.getLparenthOffset() > 0 && !needParenth){
+      myDocument.deleteString(myContext.getLparenthOffset(), myContext.getArgListEndOffset());
       myContext.resetParensInfo();
     }
   }
@@ -477,7 +469,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
           myLookupItem.setLookupString(lookupString);
 
           CompletionContext newContext = new CompletionContext(myContext.project, editor, myContext.file, startOffset, endOffset);
-          handleInsert(newContext, myStartOffset, myLookupData, myLookupItem, signatureSelected, completionChar);
+          handleInsert(newContext, myContext.getStartOffset(), myLookupData, myLookupItem, signatureSelected, completionChar);
         }
       }
     );
@@ -605,20 +597,20 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     }
   }
 
-  private static int addImportForItem(PsiFile file, int startOffset, LookupItem item) throws IncorrectOperationException {
+  private static void addImportForItem(PsiFile file, int startOffset, LookupItem item) throws IncorrectOperationException {
     PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
 
     Object o = item.getObject();
     if (o instanceof PsiClass){
       PsiClass aClass = (PsiClass)o;
-      if (aClass.getQualifiedName() == null) return startOffset;
+      if (aClass.getQualifiedName() == null) return;
       final String lookupString = item.getLookupString();
       int length = lookupString.length();
       final int i = lookupString.indexOf('<');
       if (i >= 0) length = i;
       final int newOffset = addImportForClass(file, startOffset, startOffset + length, aClass);
       shortenReference(file, newOffset);
-      return newOffset;
+      return;
     }
     else if (o instanceof PsiType){
       PsiType type = ((PsiType)o).getDeepComponentType();
@@ -626,7 +618,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
         PsiClass refClass = ((PsiClassType) type).resolve();
         if (refClass != null){
           int length = refClass.getName().length();
-          return addImportForClass(file, startOffset, startOffset + length, refClass);
+          addImportForClass(file, startOffset, startOffset + length, refClass);
         }
       }
     }
@@ -639,12 +631,10 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
         }
         if (aClass != null){
           int length = method.getName().length();
-          return addImportForClass(file, startOffset, startOffset + length, aClass);
+          addImportForClass(file, startOffset, startOffset + length, aClass);
         }
       }
     }
-
-    return startOffset;
   }
 
   //need to shorten references in type argument list

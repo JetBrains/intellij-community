@@ -87,7 +87,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       handleEmptyLookup(context, data);
       return;
     }
-    final int startOffset = offset1 - prefix.length();
+    context.setStartOffset(offset1 - prefix.length());
 
     String uniqueText = null;
     LookupItem item = null;
@@ -115,7 +115,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         item = null;
       }
     }
-    if (item != null && context.identifierEndOffset != context.selectionEndOffset) { // give a chance to use Tab
+    if (item != null && context.getIdentifierEndOffset() != context.getSelectionEndOffset()) { // give a chance to use Tab
       if (item.getAttribute(LookupItem.DO_AUTOCOMPLETE_ATTR) == null) {
         item = null;
       }
@@ -128,7 +128,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         }
 
         uniqueText = item.getLookupString(); // text may be not ready yet
-        context.setStartOffset(context.getStartOffset() - prefix.length());
         data.prefix = "";
         context.setPrefix(""); // prefix may be of no interest
       }
@@ -137,29 +136,24 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.camelHumps");
       }
 
-      insertLookupString(context, offset2, uniqueText, startOffset);
+      insertLookupString(context, offset2, uniqueText);
       context.editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
-      lookupItemSelected(context, startOffset, data, item, false, (char)0);
+      lookupItemSelected(context, data, item, false, (char)0);
     }
     else {
       if (isAutocompleteCommonPrefixOnInvocation() && !doNotAutocomplete) {
-        final int offset = context.getStartOffset();
-        final String newPrefix = fillInCommonPrefix(items, prefix, context);
+        final String newPrefix = fillInCommonPrefix(items, prefix, context.editor);
 
         if (!newPrefix.equals(prefix)) {
-          final int shift = newPrefix.length() - prefix.length();
+          editor.getCaretModel().moveToOffset(offset1 - prefix.length() + newPrefix.length());
           context.setPrefix(newPrefix);
           prefix = newPrefix;
-          context.shiftOffsets(shift);
-          //context.offset1 += shift;
-          editor.getCaretModel().moveToOffset(offset + shift);
           editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         }
       }
 
       PsiDocumentManager.getInstance(project).commitAllDocuments();
-      final RangeMarker startOffsetMarker = document.createRangeMarker(startOffset, startOffset);
       final Lookup lookup = showLookup(project, editor, items, prefix, data, file, appendSuggestion(null, data));
       
       if (lookup != null) {
@@ -171,7 +165,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
             if (item == null) return;
 
             selectLookupItem(item, settings.SHOW_SIGNATURES_IN_LOOKUPS || item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null,
-                             event.getCompletionChar(), startOffsetMarker.getStartOffset(), context, data);
+                             event.getCompletionChar(), context, data);
             
           }
         });
@@ -185,35 +179,28 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return prefix + "; " + data.adText;
   }
 
-  private static void insertLookupString(final CompletionContext context, final int currentOffset, final String newText,
-                                         final int startOffset) {
+  private static void insertLookupString(final CompletionContext context, final int currentOffset, final String newText) {
     final Editor editor = context.editor;
-    editor.getDocument().replaceString(startOffset, currentOffset, newText);
-    context.shiftOffsets(startOffset + newText.length() - currentOffset);
-    editor.getCaretModel().moveToOffset(startOffset + newText.length());
+    editor.getDocument().replaceString(context.getStartOffset(), currentOffset, newText);
+    editor.getCaretModel().moveToOffset(context.getStartOffset() + newText.length());
     editor.getSelectionModel().removeSelection();
   }
 
-  protected final void selectLookupItem(final LookupItem item,
-                                  final boolean signatureSelected,
-                                  final char completionChar,
-                                  final int startOffset,
-                                  final CompletionContext context, final LookupData data) {
-    context.shiftOffsets(context.editor.getCaretModel().getOffset() - context.getStartOffset());
-    context.shiftOffsets(startOffset - (context.getStartOffset() - context.getPrefix().length()));
-    insertLookupString(context, context.editor.getCaretModel().getOffset(), item.getLookupString(), startOffset);
+  protected final void selectLookupItem(final LookupItem item, final boolean signatureSelected, final char completionChar, final CompletionContext context,
+                                        final LookupData data) {
+    insertLookupString(context, context.editor.getCaretModel().getOffset(), item.getLookupString());
     final int caretOffset = context.editor.getCaretModel().getOffset();
-    final int previousSelectionEndOffset = context.selectionEndOffset;
 
-    context.selectionEndOffset = caretOffset;
-    context.identifierEndOffset =
-      CompletionUtil.isOverwrite(item, completionChar) && previousSelectionEndOffset == context.identifierEndOffset ?
-      caretOffset:Math.max(caretOffset, context.identifierEndOffset);
-    lookupItemSelected(context, startOffset, data, item, signatureSelected, completionChar);
+    final int previousSelectionEndOffset = context.getSelectionEndOffset();
+
+    context.setSelectionEndOffset(caretOffset);
+    context.setIdentifierEndOffset(
+      CompletionUtil.isOverwrite(item, completionChar) && previousSelectionEndOffset == context.getIdentifierEndOffset() ?
+      caretOffset:Math.max(caretOffset, context.getIdentifierEndOffset()));
+    lookupItemSelected(context, data, item, signatureSelected, completionChar);
   }
 
-  private static String fillInCommonPrefix(LookupItem[] items, final String prefix, CompletionContext context) {
-    final Editor editor = context.editor;
+  private static String fillInCommonPrefix(LookupItem[] items, final String prefix, final Editor editor) {
     String commonPrefix = null;
     boolean isStrict = false;
 
@@ -223,10 +210,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       if (!StringUtil.startsWithIgnoreCase(lookupString, prefix)) {
         // since camel humps
         return prefix;
-        //throw new RuntimeException("Hmm... Some lookup items have other than $prefix prefix.");
       }
-
-      //final String afterPrefix = lookupString.substring(prefix.length());
 
       if (commonPrefix != null) {
         int matchingRegLength = lookupString.length();
@@ -256,16 +240,10 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       final CharSequence sequence = editor.getDocument().getCharsSequence();
       final int sequenceLength = sequence.length();
 
-      for(;
-          replacedLength < commonPrefixLength &&
-          lookupStart + replacedLength < sequenceLength &&
-          sequence.charAt(lookupStart + replacedLength) == commonPrefix.charAt(replacedLength)
-          ;
-          ++replacedLength
-      ) {
-        context.selectionEndOffset++;
-        context.setStartOffset(context.getStartOffset() + 1);
-        context.shiftOffsets(-1); // compensation of next adjustment
+      while (replacedLength < commonPrefixLength &&
+      lookupStart + replacedLength < sequenceLength &&
+      sequence.charAt(lookupStart + replacedLength) == commonPrefix.charAt(replacedLength)) {
+        replacedLength++;
       }
     }
     
@@ -328,7 +306,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       if (newEditor instanceof EditorWindow) {
         EditorWindow injectedEditor = (EditorWindow)newEditor;
         int newOffset1 = injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(oldEditor.offsetToLogicalPosition(context.getStartOffset())));
-        int newOffset2 = injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(oldEditor.offsetToLogicalPosition(context.selectionEndOffset)));
+        int newOffset2 = injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(oldEditor.offsetToLogicalPosition(context.getSelectionEndOffset())));
         PsiFile injectedFile = injectedEditor.getInjectedFile();
         CompletionContext newContext = new CompletionContext(context.project, injectedEditor, injectedFile, newOffset1, newOffset2);
         PsiElement element = findElementAt(injectedFile, newContext.getStartOffset());
@@ -388,9 +366,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  private void lookupItemSelected(final CompletionContext context,
-                                  final int startOffset,
-                                  final LookupData data,
+  private void lookupItemSelected(final CompletionContext context, final LookupData data,
                                   @NotNull final LookupItem item,
                                   final boolean signatureSelected,
                                   final char completionChar) {
@@ -399,10 +375,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       public void run() {
         PsiDocumentManager.getInstance(context.project).commitAllDocuments();
         context.setPrefix(data.prefix);
-        final PsiElement position =
-          context.file.findElementAt(context.getStartOffset() - context.getPrefix().length() + item.getLookupString().length() - 1);
+        final PsiElement position = context.file.findElementAt(context.getStartOffset() + item.getLookupString().length() - 1);
         analyseItem(item, position, context);
-        handler.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+        handler.handleInsert(context, context.getStartOffset(), data, item, signatureSelected, completionChar);
       }
     });
   }

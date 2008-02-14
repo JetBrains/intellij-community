@@ -15,17 +15,14 @@ public class BasicInsertHandler implements InsertHandler {
       char completionChar) {
     //context.shiftOffsets(item.getLookupString().length() - data.prefix.length() - (context.selectionEndOffset - context.startOffset));
 
-    if (context.identifierEndOffset != context.selectionEndOffset){
+    if (context.getIdentifierEndOffset() != context.getSelectionEndOffset()){
       if (!CompletionUtil.isOverwrite(item, completionChar)){
-        context.lparenthOffset = -1;
-        context.rparenthOffset = -1;
-        context.argListEndOffset = -1;
+        context.setLparenthOffset(-1);
+        context.setRparenthOffset(-1);
+        context.setArgListEndOffset(-1);
       }
       else{
-        context.editor.getDocument().deleteString(context.selectionEndOffset, context.identifierEndOffset);
-        int shift = -(context.identifierEndOffset - context.selectionEndOffset);
-        context.shiftOffsets(shift);
-        context.selectionEndOffset = context.identifierEndOffset;
+        context.editor.getDocument().deleteString(context.getSelectionEndOffset(), context.getIdentifierEndOffset());
       }
     }
   }

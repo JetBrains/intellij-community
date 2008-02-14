@@ -93,7 +93,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     if (!isValid) return;
 
     // Process if one point.
-    if (myStart == myEnd && !isExpandToRight && !isExpandToLeft) {
+    if (myStart == myEnd) {
       processIfOnePoint(e);
       return;
     }
@@ -141,10 +141,16 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     int offset = e.getOffset();
     int oldLength = e.getOldLength();
     int oldEnd = offset + oldLength;
-    if (myStart > offset && myStart < oldEnd) {
+    if (offset < myStart && myStart < oldEnd) {
       invalidate();
       return;
     }
+
+    if (offset == myStart && oldLength == 0 && isExpandToRight) {
+      myEnd += e.getNewLength();
+      return;
+    }
+
     if (myStart > oldEnd || myStart == oldEnd  && oldLength > 0) {
       myStart += e.getNewLength() - oldLength;
       myEnd += e.getNewLength() - oldLength;

@@ -57,7 +57,6 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
 
-    final RangeMarker rangeMarker = document.createRangeMarker(startOffset, startOffset);
     final int caretOffset = editor.getCaretModel().getOffset();
     final RangeMarker caretMarker = document.createRangeMarker(caretOffset, caretOffset);
 
@@ -70,13 +69,12 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
         public void run(final String namespacePrefix) {
 
           PsiDocumentManager.getInstance(project).commitDocument(document);
-          final PsiElement element = file.findElementAt(rangeMarker.getStartOffset());
+          final PsiElement element = file.findElementAt(context.getStartOffset());
           if (element != null) {
             qualifyWithPrefix(namespacePrefix, element, document);
             PsiDocumentManager.getInstance(project).commitDocument(document);
           }
-          final int offset = rangeMarker.getStartOffset();
-          context.setStartOffset(rangeMarker.getStartOffset());
+          final int offset = context.getStartOffset();
           editor.getCaretModel().moveToOffset(caretMarker.getStartOffset());
           PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
           doDefault(context, offset, data, item, signatureSelected, completionChar);
