@@ -3,13 +3,12 @@
  */
 package com.intellij.patterns;
 
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-
-import com.intellij.util.ProcessingContext;
 
 /**
  * @author peter
@@ -56,7 +55,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
   }
 
   @NotNull
-  public StringPattern contains(@NonNls @NotNull final ElementPattern pattern) {
+  public StringPattern contains(@NonNls @NotNull final ElementPattern<Character> pattern) {
     return with(new PatternCondition<String>("contains") {
       public boolean accepts(@NotNull final String str, final ProcessingContext context) {
         for (int i = 0; i < str.length(); i++) {

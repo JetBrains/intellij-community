@@ -93,7 +93,7 @@ public class StandardPatterns {
     });
   }
 
-  public static <E> ElementPattern and(final ElementPattern... patterns) {
+  public static <E> ElementPattern<E> and(final ElementPattern<? extends E>... patterns) {
     return new ObjectPattern.Capture<E>(new InitialPatternCondition(Object.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         for (final ElementPattern pattern : patterns) {
@@ -115,7 +115,7 @@ public class StandardPatterns {
     });
   }
 
-  public static <E> ElementPattern not(final ElementPattern pattern) {
+  public static <E> ElementPattern<E> not(final ElementPattern<E> pattern) {
     return new ObjectPattern.Capture<E>(new InitialPatternCondition(Object.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return !pattern.getCondition().accepts(o, context);
@@ -128,7 +128,7 @@ public class StandardPatterns {
     });
   }
 
-  public static <T> ObjectPattern.Capture<T> optional(final ElementPattern pattern) {
+  public static <T> ObjectPattern.Capture<T> optional(final ElementPattern<T> pattern) {
     return new ObjectPattern.Capture<T>(new InitialPatternCondition(Object.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         pattern.getCondition().accepts(o, context);
