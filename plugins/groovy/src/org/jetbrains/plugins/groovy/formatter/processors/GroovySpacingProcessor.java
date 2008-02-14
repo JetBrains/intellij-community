@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.tree.IElementType;
 import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
@@ -196,9 +197,13 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
     }
 
     public void visitTypeDefinitionBody(GrTypeDefinitionBody typeDefinitionBody) {
-      if (myChild1.getElementType() == mLCURLY || myChild2.getElementType() == mRCURLY) {
+      if (myChild1.getElementType() == mLCURLY && myChild2.getElementType() == mRCURLY) {
+        myResult = Spacing.createSpacing(0, 0, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+      } else if (myChild1.getElementType() == mLCURLY) {
         myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER,
             mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      } else if (myChild2.getElementType() == mRCURLY) {
+        myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
     }
 
@@ -287,7 +292,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
     public void visitIfStatement(GrIfStatement ifStatement) {
       if (myChild2.getElementType() == kELSE) {
         if (myChild1.getElementType() != OPEN_BLOCK) {
-          myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+          myResult = Spacing.createSpacing(1, 1, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
         } else {
           if (mySettings.ELSE_ON_NEW_LINE) {
             myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);

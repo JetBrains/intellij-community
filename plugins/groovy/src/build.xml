@@ -237,6 +237,20 @@
 
     </javac>
 
+    <taskdef name="groovyc" classname="org.codehaus.groovy.ant.Groovyc" classpathref="groovy.path"/>
+    <path id="output.path">
+      <pathelement path="${production.dest.groovy}"/>
+    </path>
+
+    <groovyc destdir="${test.dest}" srcDir="../test">
+      <classpath>
+        <path refid="idea.lib.path"/>
+        <path refid="groovy.path"/>
+        <path refid="output.path"/>
+      </classpath>
+    </groovyc>
+
+
     <copy toDir="${test.dest}/testdata">
       <fileset dir="${project.dir}/testdata"/>
     </copy>

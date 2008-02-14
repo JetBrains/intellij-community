@@ -108,5 +108,7 @@ public class ExtractMethodTest extends ActionTestCase {
     return builder.getFixture();
   }
 
-
+  protected void setUp() {
+    super.setUp();
+  }
 }
