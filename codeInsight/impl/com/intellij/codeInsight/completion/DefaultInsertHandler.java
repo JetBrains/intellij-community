@@ -473,6 +473,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
           offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, endOffset);
           offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, endOffset);
           CompletionContext newContext = new CompletionContext(myContext.project, editor, myContext.file, offsetMap);
+          JavaCompletionUtil.initOffsets(myFile, myProject, offsetMap);
           handleInsert(newContext, myContext.getStartOffset(), myLookupData, myLookupItem, signatureSelected, completionChar);
         }
       }
