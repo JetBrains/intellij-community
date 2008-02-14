@@ -126,8 +126,12 @@ public class XBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
   }
 
   private void onCheckboxChanged() {
-    myLogExpressionComboBox.setEnabled(myLogExpressionCheckBox.isSelected());
-    myConditionComboBox.setEnabled(myConditionCheckBox.isSelected());
+    if (myLogExpressionComboBox != null) {
+      myLogExpressionComboBox.setEnabled(myLogExpressionCheckBox.isSelected());
+    }
+    if (myConditionComboBox != null) {
+      myConditionComboBox.setEnabled(myConditionCheckBox.isSelected());
+    }
   }
 
   private void loadProperties() {
