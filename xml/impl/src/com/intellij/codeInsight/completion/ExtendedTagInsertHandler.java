@@ -11,6 +11,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
@@ -83,10 +84,11 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
       };
 
     try {
-      if (isDeclarationMissed(psiElement, namespaces)) {
+      @Nullable String prefix = getExistingPrefix(file, namespaces);
+      if (prefix == null) {
         XmlExtension.getExtension(file).insertNamespaceDeclaration(file, editor, namespaces, nsPrefix, runAfter);
       } else {
-        runAfter.run(nsPrefix);    // qualify && complete
+        runAfter.run(prefix);    // qualify && complete
       }
     }
     catch (IncorrectOperationException e) {
@@ -107,14 +109,18 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     return (tagDescriptor != null && !(tagDescriptor instanceof AnyXmlElementDescriptor) && !StringUtil.isEmpty(tagNamespace));
   }
 
-  protected boolean isDeclarationMissed(PsiElement psiElement, Set<String> namespaces) {
-    final XmlTag tag = (XmlTag)psiElement.getParent();
+  @Nullable
+  private static String getExistingPrefix(XmlFile file, Set<String> namespaces) {
+    final XmlDocument document = file.getDocument();
+    assert document != null;
+    final XmlTag tag = document.getRootTag();
+    assert tag != null;
     for (String ns: tag.knownNamespaces()) {
       if (namespaces.contains(ns)) {
-        return false;
+        return tag.getPrefixByNamespace(ns);
       }
     }
-    return true;
+    return null;
   }
 
   @Nullable
