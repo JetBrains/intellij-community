@@ -4,10 +4,10 @@ import com.intellij.ide.highlighter.JavaHighlighterFactory;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
@@ -19,7 +19,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,9 +29,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final String MACINTOSH_STRING = ApplicationBundle.message("combobox.crlf.mac");
 
   private JCheckBox myCbUseSameIndents;
-  private IndentOptionsEditor myJavaIndentOptions = new IndentOptionsEditor(IndentOptionsEditor.LIST_LABEL_INDENT +
-                                                                IndentOptionsEditor.LIST_CONT_INDENT
-                                                                + IndentOptionsEditor.LIST_SMART_TABS);
+  private IndentOptionsEditor myJavaIndentOptions = new JavaIndentOptionsEditor();
   private IndentOptionsEditor myJspIndentOptions = new IndentOptionsEditor(
     IndentOptionsEditor.LIST_CONT_INDENT + IndentOptionsEditor.LIST_SMART_TABS);
   private IndentOptionsEditor myXMLIndentOptions = new IndentOptionsEditor(

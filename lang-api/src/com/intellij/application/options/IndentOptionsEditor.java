@@ -8,7 +8,6 @@ import javax.swing.*;
 
 public class IndentOptionsEditor extends OptionGroup {
   public static final int LIST_CONT_INDENT = 1;
-  public static final int LIST_LABEL_INDENT = 2;
   public static final int LIST_SMART_TABS = 4;
   private final int myListFlags;
 
@@ -20,10 +19,6 @@ public class IndentOptionsEditor extends OptionGroup {
     return (myListFlags & LIST_CONT_INDENT) != 0;
   }
 
-  private boolean isListLabelIndent() {
-    return (myListFlags & LIST_LABEL_INDENT) != 0;
-  }
-
   private JTextField myIndentField;
   private JTextField myContinuationIndentField;
   private JCheckBox myCbUseTab;
@@ -33,17 +28,19 @@ public class IndentOptionsEditor extends OptionGroup {
   private JLabel myIndentLabel;
   private JLabel myContinuationIndentLabel;
 
-  private JTextField myLabelIndent;
-  private JLabel myLabelIndentLabel;
-
-  private JCheckBox myLabelIndentAbsolute;
-  private JCheckBox myCbDontIndentTopLevelMembers;
-
   public IndentOptionsEditor(int listFlags) {
     myListFlags = listFlags;
   }
 
   public JPanel createPanel() {
+    addComponents();
+
+    final JPanel result = super.createPanel();
+    result.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+    return result;
+  }
+
+  protected void addComponents() {
     myCbUseTab = new JCheckBox(ApplicationBundle.message("checkbox.indent.use.tab.character"));
     add(myCbUseTab);
 
@@ -68,28 +65,13 @@ public class IndentOptionsEditor extends OptionGroup {
       myContinuationIndentLabel = new JLabel(ApplicationBundle.message("editbox.indent.continuation.indent"));
       add(myContinuationIndentLabel, myContinuationIndentField);
     }
-
-    if (isListLabelIndent()) {
-      myLabelIndent = new JTextField(4);
-      add(myLabelIndentLabel = new JLabel(ApplicationBundle.message("editbox.indent.label.indent")), myLabelIndent);
-
-      myLabelIndentAbsolute = new JCheckBox(ApplicationBundle.message("checkbox.indent.absolute.label.indent"));
-      add(myLabelIndentAbsolute, true);
-
-      myCbDontIndentTopLevelMembers = new JCheckBox(ApplicationBundle.message("checkbox.do.not.indent.top.level.class.members"));
-      add(myCbDontIndentTopLevelMembers);
-    }
-
-    final JPanel result = super.createPanel();
-    result.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
-    return result;
   }
 
-  private boolean isModified(JCheckBox checkBox, boolean value) {
+  protected static boolean isFieldModified(JCheckBox checkBox, boolean value) {
     return checkBox.isSelected() != value;
   }
 
-  private boolean isModified(JTextField textField, int value) {
+  protected static boolean isFieldModified(JTextField textField, int value) {
     try {
       int fieldValue = Integer.parseInt(textField.getText().trim());
       return fieldValue != value;
@@ -101,23 +83,18 @@ public class IndentOptionsEditor extends OptionGroup {
 
   public boolean isModified(final CodeStyleSettings settings, CodeStyleSettings.IndentOptions options) {
     boolean isModified;
-    isModified = isModified(myTabSizeField, options.TAB_SIZE);
-    isModified |= isModified(myCbUseTab, options.USE_TAB_CHARACTER);
-    isModified |= isModified(myIndentField, options.INDENT_SIZE);
+    isModified = isFieldModified(myTabSizeField, options.TAB_SIZE);
+    isModified |= isFieldModified(myCbUseTab, options.USE_TAB_CHARACTER);
+    isModified |= isFieldModified(myIndentField, options.INDENT_SIZE);
 
     if (isListSmartTabs()) {
-      isModified |= isModified(myCbSmartTabs, options.SMART_TABS);
+      isModified |= isFieldModified(myCbSmartTabs, options.SMART_TABS);
     }
 
     if (isListContIndent()) {
-      isModified |= isModified(myContinuationIndentField, options.CONTINUATION_INDENT_SIZE);
+      isModified |= isFieldModified(myContinuationIndentField, options.CONTINUATION_INDENT_SIZE);
     }
 
-    if (isListLabelIndent()) {
-      isModified |= isModified(myLabelIndent, options.LABEL_INDENT_SIZE);
-      isModified |= isModified(myLabelIndentAbsolute, options.LABEL_INDENT_ABSOLUTE);
-      isModified |= isModified(myCbDontIndentTopLevelMembers, settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS);
-    }
     return isModified;
   }
 
@@ -160,17 +137,6 @@ public class IndentOptionsEditor extends OptionGroup {
     if (isListSmartTabs()) {
       options.SMART_TABS = isSmartTabValid(options.INDENT_SIZE, options.TAB_SIZE) && myCbSmartTabs.isSelected();
     }
-
-    if (isListLabelIndent()) {
-      try {
-        options.LABEL_INDENT_SIZE = Integer.parseInt(myLabelIndent.getText());
-      }
-      catch (NumberFormatException e) {
-        //stay with default
-      }
-      options.LABEL_INDENT_ABSOLUTE = myLabelIndentAbsolute.isSelected();
-      settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = myCbDontIndentTopLevelMembers.isSelected();
-    }
   }
 
   public void reset(final CodeStyleSettings settings, CodeStyleSettings.IndentOptions options) {
@@ -179,11 +145,6 @@ public class IndentOptionsEditor extends OptionGroup {
 
     myIndentField.setText(String.valueOf(options.INDENT_SIZE));
     if (isListContIndent()) myContinuationIndentField.setText(String.valueOf(options.CONTINUATION_INDENT_SIZE));
-    if (isListLabelIndent()) {
-      myLabelIndent.setText(Integer.toString(options.LABEL_INDENT_SIZE));
-      myLabelIndentAbsolute.setSelected(options.LABEL_INDENT_ABSOLUTE);
-      myCbDontIndentTopLevelMembers.setSelected(settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS);
-    }
     if (isListSmartTabs()) myCbSmartTabs.setSelected(options.SMART_TABS);
   }
 
@@ -200,14 +161,9 @@ public class IndentOptionsEditor extends OptionGroup {
       myCbSmartTabs.setToolTipText(
         smartTabsChecked && !smartTabsValid ? ApplicationBundle.message("tooltip.indent.must.be.multiple.of.tab.size.for.smart.tabs.to.operate") : null);
     }
-    if (isListLabelIndent()) {
+    if (isListContIndent()) {
       myContinuationIndentField.setEnabled(enabled);
       myContinuationIndentLabel.setEnabled(enabled);
-    }
-    if (isListLabelIndent()) {
-      myLabelIndent.setEnabled(enabled);
-      myLabelIndentLabel.setEnabled(enabled);
-      myLabelIndentAbsolute.setEnabled(enabled);
     }
   }
 
