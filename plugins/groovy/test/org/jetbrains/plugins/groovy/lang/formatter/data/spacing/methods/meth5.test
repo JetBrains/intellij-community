@@ -3,7 +3,6 @@ def foo (  )
 3
 }
 -----
-def foo()
-{
+def foo() {
   3
 }

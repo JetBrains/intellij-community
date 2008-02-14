@@ -6,8 +6,7 @@ case 2: println '2'
 }
 -----
 x = 5
-switch (x)
-{
+switch (x) {
   case 1: println 'a'
   case 2: println '2'
 }

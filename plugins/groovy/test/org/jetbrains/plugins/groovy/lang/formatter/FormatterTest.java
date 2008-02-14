@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
@@ -77,6 +78,12 @@ public class FormatterTest extends SimpleGroovyFileSetTestCase {
     return text;
   }
 
+  protected void setUp() {
+    super.setUp();
+    mySettings.CLASS_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    mySettings.METHOD_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    mySettings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+  }
 
   public static Test suite() {
     return new FormatterTest(null);

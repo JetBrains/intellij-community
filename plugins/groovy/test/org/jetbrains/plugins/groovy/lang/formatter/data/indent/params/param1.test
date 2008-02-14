@@ -7,7 +7,6 @@ a+b+c
 -----
 def foo(def a,
         def int b,
-        def final c)
-{
+        def final c) {
   a + b + c
 }

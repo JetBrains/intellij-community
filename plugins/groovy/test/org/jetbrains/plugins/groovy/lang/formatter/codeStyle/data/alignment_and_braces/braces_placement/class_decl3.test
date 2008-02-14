@@ -1,0 +1,5 @@
+<option>CLASS_BRACE_STYLE=END_OF_LINE</option>
+class A    {}
+-----
+class A {
+}

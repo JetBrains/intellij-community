@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 /**
  * @author ilyas
  */
-public abstract class GroovySpacingProcessor1 extends SpacingTokens implements GroovyElementTypes {
+public abstract class GroovySpacingProcessorBasic extends SpacingTokens implements GroovyElementTypes {
 
   private static final Spacing NO_SPACING_WITH_NEWLINE = Spacing.createSpacing(0, 0, 0, true, 1);
   private static final Spacing NO_SPACING = Spacing.createSpacing(0, 0, 0, false, 0);
@@ -52,11 +52,6 @@ public abstract class GroovySpacingProcessor1 extends SpacingTokens implements G
     ASTNode rightNode = child2.getNode();
 
     //Braces Placement
-    Spacing definedSpacing = null;
-    if ((definedSpacing = processBracesPlacement(leftNode, rightNode, settings)) != null) {
-      return definedSpacing;
-    }
-
     // For multi-line strings
     if (!child1.getNode().getTextRange().equals(child1.getTextRange()) ||
         !child2.getNode().getTextRange().equals(child2.getTextRange())) {
@@ -189,46 +184,6 @@ public abstract class GroovySpacingProcessor1 extends SpacingTokens implements G
     }
 
     return COMMON_SPACING;
-  }
-
-  /*
-    Brace Placement section
-   */
-  private static Spacing processBracesPlacement(ASTNode leftNode, ASTNode rightNode, CodeStyleSettings settings) {
-    IElementType leftType = leftNode.getElementType();
-    IElementType rightType = rightNode.getElementType();
-
-/*
-    if (rightType == mLCURLY) {
-      ASTNode parent = leftNode.getTreeParent();
-      if (parent != null) {
-        PsiElement parentPsi = parent.getPsi();
-        if (parentPsi instanceof GrTypeDefinition) {
-          switch (settings.CLASS_BRACE_STYLE) {
-            case END_OF_LINE: return Spacing.createSpacing(1, 1, 0, )
-          }
-        } else if (parentPsi instanceof GrMethod) {
-
-        } else {
-
-        }
-      }
-    }
-*/
-
-    if (CLASS_MEMBER_DEFS.contains(leftType) && CLASS_BODY_SET.contains(leftNode.getTreeParent().getElementType())) {
-      if (mRCURLY.equals(rightNode.getElementType())) {
-        return Spacing.createSpacing(0, 0, 1, false, 100);
-      }
-    }
-    if (CLASS_MEMBER_DEFS.contains(rightNode.getElementType()) && CLASS_BODY_SET.contains(rightNode.getTreeParent().getElementType())) {
-      if (mLCURLY.equals(leftType)) {
-        return Spacing.createSpacing(0, 0, 1, false, 100);
-      }
-    }
-
-
-    return null;
   }
 
 

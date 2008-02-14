@@ -17,29 +17,44 @@ package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNewExpression;
-import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.tree.IElementType;
 import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.COMMENT_SET;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kELSE;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kNEW;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kSWITCH;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kSYNCHRONIZED;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLBRACK;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLCURLY;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLPAREN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mML_COMMENT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRBRACK;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRPAREN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSL_COMMENT;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 /**
  * @author ilyas
  */
 public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
-
   private static final ThreadLocal<GroovySpacingProcessor> mySharedProcessorAllocator = new ThreadLocal<GroovySpacingProcessor>();
   protected MyGroovySpacingVisitor myGroovyElementVisitor;
   protected static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessor");
@@ -62,7 +77,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
       } else {
         spacingProcessor.setVisitor(new MyGroovySpacingVisitor(node, settings));
       }
-      spacingProcessor.doInit(node, settings);
+      spacingProcessor.doInit();
       return spacingProcessor.getResult();
     }
     catch (Exception e) {
@@ -75,7 +90,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
   }
 
 
-  private void doInit(ASTNode node, CodeStyleSettings settings) {
+  private void doInit() {
     myGroovyElementVisitor.doInit();
   }
 
@@ -141,25 +156,260 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
           ((GroovyPsiElement) myParent).accept(this);
           if (myResult == null) {
             final ASTNode prev = SpacingUtil.getPrevElementType(myChild2);
-            if (prev != null && prev.getElementType() == GroovyTokenTypes.mSL_COMMENT) {
+            if (prev != null && prev.getElementType() == mSL_COMMENT) {
               myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
             } else if (!CodeEditUtil.canStickChildrenTogether(myChild1, myChild2)) {
               myResult = Spacing.createSpacing(1, Integer.MIN_VALUE, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
-            } else if (myChild1.getElementType() == GroovyTokenTypes.mML_COMMENT) {
+            } else if (myChild1.getElementType() == mML_COMMENT) {
               myResult = null;
             } else if (!SpacingUtil.shouldKeepSpace(myParent)) {
-              myResult = Spacing.createSpacing(0, 0, 0, true, mySettings.KEEP_BLANK_LINES_IN_CODE);
+              // todo [ilyas] rewrite all pacings via this processor
+//              myResult = Spacing.createSpacing(0, 0, 0, true, mySettings.KEEP_BLANK_LINES_IN_CODE);
             }
           }
         }
       }
     }
 
+    public void visitArgumentList(GrArgumentList list) {
+      if (myChild1.getElementType() == mLBRACK || myChild2.getElementType() == mRBRACK) {
+        createSpaceInCode(mySettings.SPACE_WITHIN_BRACKETS);
+      }
+      // todo add other cases
+    }
+
     public void visitNewExpression(GrNewExpression newExpression) {
-      if (myChild1.getElementType() == GroovyTokenTypes.kNEW) {
+      if (myChild1.getElementType() == kNEW) {
         createSpaceInCode(true);
-      } else if (myChild2.getElementType() == GroovyElementTypes.ARGUMENTS) {
+      } else if (myChild2.getElementType() == ARGUMENTS) {
         createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
+      }
+    }
+
+    public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+      if (myChild2.getElementType() == CLASS_BODY) {
+        PsiIdentifier nameIdentifier = typeDefinition.getNameIdentifier();
+        int dependanceStart = nameIdentifier == null ? myParent.getTextRange().getStartOffset() : nameIdentifier.getTextRange().getStartOffset();
+        myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_CLASS_LBRACE, mySettings.CLASS_BRACE_STYLE,
+            new TextRange(dependanceStart, myChild1.getTextRange().getEndOffset()), false);
+      }
+    }
+
+    public void visitTypeDefinitionBody(GrTypeDefinitionBody typeDefinitionBody) {
+      if (myChild1.getElementType() == mLCURLY || myChild2.getElementType() == mRCURLY) {
+        myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER,
+            mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      }
+    }
+
+    public void visitMethod(GrMethod method) {
+      if (myChild2.getElementType() == mLPAREN) {
+        createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_PARENTHESES);
+      } else if (myChild2.getElementType() == mRPAREN && myChild2.getElementType() == THROW_CLAUSE) {
+        createSpaceInCode(true);
+      } else if (myChild2.getElementType() == OPEN_BLOCK) {
+        PsiElement methodName = method.getNameIdentifier();
+        int dependancyStart = methodName == null ? myParent.getTextRange().getStartOffset() : methodName.getTextRange().getStartOffset();
+        myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_METHOD_LBRACE, mySettings.METHOD_BRACE_STYLE,
+            new TextRange(dependancyStart, myChild1.getTextRange().getEndOffset()), mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE);
+      } else if (myChild1.getElementType() == MODIFIERS) {
+        processModifierList();
+      } else if (COMMENT_SET.contains(myChild1.getElementType())
+          && (myChild2.getElementType() == MODIFIERS || myChild2.getElementType() == REFERENCE_ELEMENT)) {
+        myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
+      }
+
+    }
+
+    public void visitWhileStatement(GrWhileStatement statement) {
+      if (myChild2.getElementType() == mLPAREN) {
+        createSpaceInCode(mySettings.SPACE_BEFORE_WHILE_PARENTHESES);
+      } else if (myChild1.getElementType() == mLPAREN || myChild2.getElementType() == mRPAREN) {
+        createSpaceInCode(mySettings.SPACE_WITHIN_WHILE_PARENTHESES);
+      } else if (myChild2.getPsi() instanceof GrBlockStatement) {
+        myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_WHILE_LBRACE, mySettings.BRACE_STYLE,
+            new TextRange(myParent.getTextRange().getStartOffset(), myChild1.getTextRange().getEndOffset()), mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
+      } else {
+        createSpacingBeforeElementInsideControlStatement();
+      }
+    }
+
+    public void visitCatchClause(GrCatchClause catchClause) {
+      if (myChild2.getElementType() == OPEN_BLOCK) {
+        myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_TRY_LBRACE, mySettings.BRACE_STYLE, null,
+            mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
+      }
+    }
+
+    public void visitFinallyClause(GrFinallyClause catchClause) {
+      if (myChild2.getElementType() == OPEN_BLOCK) {
+        myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_TRY_LBRACE, mySettings.BRACE_STYLE, null,
+            mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
+      }
+    }
+
+    public void visitTryStatement(GrTryCatchStatement tryCatchStatement) {
+      if (myChild2.getElementType() == FINALLY_CLAUSE) {
+        processOnNewLineCondition(mySettings.FINALLY_ON_NEW_LINE);
+      } else if (myChild2.getElementType() == OPEN_BLOCK) {
+        myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_TRY_LBRACE, mySettings.BRACE_STYLE, null,
+            mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
+      } else if (myChild2.getElementType() == CATCH_CLAUSE) {
+        processOnNewLineCondition(mySettings.CATCH_ON_NEW_LINE);
+      }
+    }
+
+    public void visitSwitchStatement(GrSwitchStatement switchStatement) {
+      if (myChild1.getElementType() == kSWITCH && myChild2.getElementType() == mLPAREN) {
+        createSpaceInCode(mySettings.SPACE_BEFORE_SWITCH_PARENTHESES);
+      } else if (myChild1.getElementType() == mLPAREN || myChild2.getElementType() == mRPAREN) {
+        createSpaceInCode(mySettings.SPACE_WITHIN_SWITCH_PARENTHESES);
+      } else if (myChild2.getElementType() == mLCURLY) {
+        myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_SWITCH_LBRACE, mySettings.BRACE_STYLE, null,
+            mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
+      }
+    }
+
+    public void visitSynchronizedStatement(GrSynchronizedStatement synchronizedStatement) {
+      if (myChild1.getElementType() == kSYNCHRONIZED || myChild2.getElementType() == mLPAREN) {
+        createSpaceInCode(mySettings.SPACE_BEFORE_SYNCHRONIZED_PARENTHESES);
+      } else if (myChild1.getElementType() == mLPAREN || myChild2.getElementType() == mRPAREN) {
+        createSpaceInCode(mySettings.SPACE_WITHIN_SYNCHRONIZED_PARENTHESES);
+      } else if (myChild2.getElementType() == OPEN_BLOCK) {
+        myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_SYNCHRONIZED_LBRACE,
+            mySettings.BRACE_STYLE, null,
+            mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
+      }
+
+    }
+
+
+    public void visitIfStatement(GrIfStatement ifStatement) {
+      if (myChild2.getElementType() == kELSE) {
+        if (myChild1.getElementType() != OPEN_BLOCK) {
+          myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        } else {
+          if (mySettings.ELSE_ON_NEW_LINE) {
+            myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+          } else {
+            createSpaceProperty(true, false, 0);
+          }
+        }
+      } else if (myChild1.getElementType() == kELSE) {
+        if (myChild2.getElementType() == IF_STATEMENT) {
+          if (mySettings.SPECIAL_ELSE_IF_TREATMENT) {
+            createSpaceProperty(false, false, 0);
+          } else {
+            myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+          }
+        } else {
+          if (myChild2.getElementType() == BLOCK_STATEMENT || myChild2.getElementType() == OPEN_BLOCK) {
+            myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_ELSE_LBRACE, mySettings.BRACE_STYLE,
+                null,
+                mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
+          } else {
+            createSpacingBeforeElementInsideControlStatement();
+          }
+        }
+      } else if (myChild2.getElementType() == BLOCK_STATEMENT || myChild2.getElementType() == OPEN_BLOCK) {
+        boolean space = myChild2.getPsi() == ((GrIfStatement) myParent).getElseBranch() ? mySettings.SPACE_BEFORE_ELSE_LBRACE : mySettings.SPACE_BEFORE_IF_LBRACE;
+        myResult = getSpaceBeforeLBrace(space, mySettings.BRACE_STYLE, new TextRange(myParent.getTextRange().getStartOffset(),
+            myChild1.getTextRange().getEndOffset()),
+            mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
+      } else if (myChild2.getElementType() == mLPAREN) {
+        createSpaceInCode(mySettings.SPACE_BEFORE_IF_PARENTHESES);
+      } else if (myChild1.getElementType() == mLPAREN) {
+        createSpaceInCode(mySettings.SPACE_WITHIN_IF_PARENTHESES);
+      } else if (myChild2.getElementType() == mRPAREN) {
+        createSpaceInCode(mySettings.SPACE_WITHIN_IF_PARENTHESES);
+      } else if (((GrIfStatement) myParent).getThenBranch() == myChild2.getPsi()) {
+        createSpacingBeforeElementInsideControlStatement();
+      }
+    }
+
+    public void visitForStatement(GrForStatement forStatement) {
+      if (myChild2.getElementType() == mLPAREN) {
+        createSpaceInCode(mySettings.SPACE_BEFORE_FOR_PARENTHESES);
+      } else if (myChild1.getElementType() == mLPAREN) {
+        ASTNode rparenth = findFrom(myChild2, mRPAREN, true);
+        if (rparenth == null) {
+          createSpaceInCode(mySettings.SPACE_WITHIN_FOR_PARENTHESES);
+        } else {
+          createParenSpace(mySettings.FOR_STATEMENT_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_FOR_PARENTHESES,
+              new TextRange(myChild1.getTextRange().getStartOffset(), rparenth.getTextRange().getEndOffset()));
+        }
+      } else if (myChild2.getElementType() == mRPAREN) {
+        ASTNode lparenth = findFrom(myChild2, mLPAREN, false);
+        if (lparenth == null) {
+          createSpaceInCode(mySettings.SPACE_WITHIN_FOR_PARENTHESES);
+        } else {
+          createParenSpace(mySettings.FOR_STATEMENT_RPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_FOR_PARENTHESES,
+              new TextRange(lparenth.getTextRange().getStartOffset(), myChild2.getTextRange().getEndOffset()));
+        }
+
+      } else if (myChild2.getElementType() == BLOCK_STATEMENT || myChild2.getElementType() == OPEN_BLOCK) {
+        if (myChild2.getElementType() == BLOCK_STATEMENT) {
+          myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_FOR_LBRACE, mySettings.BRACE_STYLE,
+              new TextRange(myParent.getTextRange().getStartOffset(), myChild1.getTextRange().getEndOffset()), mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
+        } else if (mySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE) {
+          myResult = Spacing.createDependentLFSpacing(1, 1, myParent.getTextRange(), false, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        } else {
+          myResult = Spacing.createSpacing(0, 0, 1, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        }
+      }
+    }
+
+    private void createParenSpace(final boolean onNewLine, final boolean space) {
+      createParenSpace(onNewLine, space, myParent.getTextRange());
+    }
+
+    private void createParenSpace(final boolean onNewLine, final boolean space, final TextRange dependance) {
+      if (onNewLine) {
+        final int spaces = space ? 1 : 0;
+        myResult = Spacing
+            .createDependentLFSpacing(spaces, spaces, dependance, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      } else {
+        createSpaceInCode(space);
+      }
+    }
+
+
+    private static ASTNode findFrom(ASTNode current, final IElementType expected, boolean forward) {
+      while (current != null) {
+        if (current.getElementType() == expected) return current;
+        current = forward ? current.getTreeNext() : current.getTreePrev();
+      }
+      return null;
+    }
+
+
+    private void processOnNewLineCondition(final boolean onNewLine) {
+      if (onNewLine) {
+        if (!mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE) {
+          myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        } else {
+          myResult = Spacing.createDependentLFSpacing(0, 1, myParent.getTextRange(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        }
+      } else {
+        createSpaceProperty(true, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      }
+    }
+
+
+    private void createSpacingBeforeElementInsideControlStatement() {
+      if (mySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE && myChild1.getElementType() != mSL_COMMENT) {
+        createSpaceProperty(true, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      } else {
+        myResult = Spacing.createSpacing(1, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      }
+    }
+
+
+    private void processModifierList() {
+      if (mySettings.MODIFIER_LIST_WRAP) {
+        myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      } else {
+        createSpaceProperty(true, false, 0);
       }
     }
 
@@ -186,7 +436,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
 
     private void createSpaceProperty(boolean space, boolean keepLineBreaks, final int keepBlankLines) {
       final ASTNode prev = SpacingUtil.getPrevElementType(myChild2);
-      if (prev != null && prev.getElementType() == GroovyTokenTypes.mSL_COMMENT) {
+      if (prev != null && prev.getElementType() == mSL_COMMENT) {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
       } else {
         if (!space && !CodeEditUtil.canStickChildrenTogether(myChild1, myChild2)) {
@@ -196,8 +446,33 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
       }
     }
 
+    private Spacing getSpaceBeforeLBrace(final boolean spaceBeforeLbrace, int braceStyle, TextRange dependantRange, boolean keepOneLine) {
+      if (dependantRange != null && braceStyle == CodeStyleSettings.NEXT_LINE_IF_WRAPPED) {
+        int space = spaceBeforeLbrace ? 1 : 0;
+        return createNonLFSpace(space, dependantRange, false);
+      } else if (braceStyle == CodeStyleSettings.END_OF_LINE || braceStyle == CodeStyleSettings.NEXT_LINE_IF_WRAPPED) {
+        int space = spaceBeforeLbrace ? 1 : 0;
+        return createNonLFSpace(space, null, false);
+      } else if (keepOneLine) {
+        int space = spaceBeforeLbrace ? 1 : 0;
+        return Spacing.createDependentLFSpacing(space, space, myParent.getTextRange(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      } else {
+        return Spacing.createSpacing(0, 0, 1, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      }
+    }
+
+    private Spacing createNonLFSpace(int spaces, final TextRange dependantRange, final boolean keepLineBreaks) {
+      final ASTNode prev = SpacingUtil.getPrevElementType(myChild2);
+      if (prev != null && prev.getElementType() == mSL_COMMENT) {
+        return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, keepLineBreaks, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      } else if (dependantRange != null) {
+        return Spacing.createDependentLFSpacing(spaces, spaces, dependantRange, keepLineBreaks, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      } else {
+        return Spacing.createSpacing(spaces, spaces, 0, keepLineBreaks, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      }
+    }
+
 
   }
-
 }
 

@@ -1,0 +1,4 @@
+<option>SPACE_BEFORE_METHOD_CALL_PARENTHESES=false</option>
+new  A  ()
+-----
+new A()

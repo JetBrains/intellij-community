@@ -22,14 +22,12 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.formatter.java.JavaBlock;
-import com.intellij.psi.formatter.java.LeafBlock;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.ChameleonElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessor1;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessor;
+import org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessorBasic;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -109,8 +107,8 @@ public class GroovyBlock implements Block, GroovyElementTypes {
   @Nullable
   public Spacing getSpacing(Block child1, Block child2) {
     if ((child1 instanceof GroovyBlock) && (child2 instanceof GroovyBlock)) {
-      return GroovySpacingProcessor1.getSpacing(((GroovyBlock) child1), ((GroovyBlock) child2), mySettings);
-//      return GroovySpacingProcessor.getSpacing(((GroovyBlock) child1), ((GroovyBlock) child2), mySettings);
+      Spacing spacing = GroovySpacingProcessor.getSpacing(((GroovyBlock) child1), ((GroovyBlock) child2), mySettings);
+      return spacing != null ? spacing : GroovySpacingProcessorBasic.getSpacing(((GroovyBlock) child1), ((GroovyBlock) child2), mySettings);
     }
     return null;
   }
