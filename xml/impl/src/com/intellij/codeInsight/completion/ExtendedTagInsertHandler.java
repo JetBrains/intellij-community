@@ -117,7 +117,9 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     assert tag != null;
     for (String ns: tag.knownNamespaces()) {
       if (namespaces.contains(ns)) {
-        return tag.getPrefixByNamespace(ns);
+        final String prefix = tag.getPrefixByNamespace(ns);
+        if (!StringUtil.isEmpty(prefix))
+          return prefix;
       }
     }
     return null;
