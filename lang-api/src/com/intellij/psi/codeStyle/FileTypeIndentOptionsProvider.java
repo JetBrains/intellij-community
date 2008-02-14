@@ -22,11 +22,12 @@
  */
 package com.intellij.psi.codeStyle;
 
-import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.extensions.ExtensionPointName;
 
 public interface FileTypeIndentOptionsProvider {
+  ExtensionPointName<FileTypeIndentOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileTypeIndentOptionsProvider");
+  
   CodeStyleSettings.IndentOptions createIndentOptions();
 
   FileType getFileType();

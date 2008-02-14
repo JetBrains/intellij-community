@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -50,7 +49,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       }
 
       final FileTypeIndentOptionsProvider[] fileTypeIndentOptionsProviders =
-        ApplicationManager.getApplication().getComponents(FileTypeIndentOptionsProvider.class);
+        Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
       for (final FileTypeIndentOptionsProvider provider : fileTypeIndentOptionsProviders) {
         registerAdditionalIndentOptions(provider.getFileType(),provider.createIndentOptions());
       }
