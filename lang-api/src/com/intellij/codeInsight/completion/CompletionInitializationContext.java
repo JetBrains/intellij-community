@@ -7,7 +7,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NonNls;
@@ -17,9 +16,9 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class CompletionInitializationContext {
-  public static final Key START_OFFSET = Key.create("startOffset");
-  public static final Key SELECTION_END_OFFSET = Key.create("selectionEnd");
-  public static final Key IDENTIFIER_END_OFFSET = Key.create("identifierEnd");
+  public static final OffsetKey START_OFFSET = OffsetKey.create("startOffset");
+  public static final OffsetKey SELECTION_END_OFFSET = OffsetKey.create("selectionEnd");
+  public static final OffsetKey IDENTIFIER_END_OFFSET = OffsetKey.create("identifierEnd");
 
   public static @NonNls String DUMMY_IDENTIFIER = "IntellijIdeaRulezzz ";
   private final Editor myEditor;

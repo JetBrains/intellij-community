@@ -15,18 +15,15 @@ public class BasicInsertHandler implements InsertHandler {
       char completionChar) {
     //context.shiftOffsets(item.getLookupString().length() - data.prefix.length() - (context.selectionEndOffset - context.startOffset));
 
-    if (context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != context.getSelectionEndOffset()){
+    final int idEndOffset = context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
+    if (idEndOffset != context.getSelectionEndOffset()){
       if (!CompletionUtil.isOverwrite(item, completionChar)){
-        final int lparenthOffset = -1;
-        context.getOffsetMap().addOffset(JavaCompletionUtil.LPAREN_OFFSET, lparenthOffset, true);
-        final int rparenthOffset = -1;
-        context.getOffsetMap().addOffset(JavaCompletionUtil.RPAREN_OFFSET, rparenthOffset, true);
-        final int argListEndOffset = -1;
-        context.getOffsetMap().addOffset(JavaCompletionUtil.ARG_LIST_END_OFFSET, argListEndOffset, true);
+        context.getOffsetMap().removeOffset(JavaCompletionUtil.LPAREN_OFFSET);
+        context.getOffsetMap().removeOffset(JavaCompletionUtil.RPAREN_OFFSET);
+        context.getOffsetMap().removeOffset(JavaCompletionUtil.ARG_LIST_END_OFFSET);
       }
       else{
-        context.editor.getDocument().deleteString(context.getSelectionEndOffset(),
-                                                  context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
+        context.editor.getDocument().deleteString(context.getSelectionEndOffset(), idEndOffset);
       }
     }
   }

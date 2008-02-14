@@ -68,9 +68,9 @@ public class JavaCompletionUtil {
   @NonNls
   public static final String IS_PREFIX = "is";
   private static final int MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED = 50000;
-  public static final Key LPAREN_OFFSET = Key.create("lparen");
-  public static final Key RPAREN_OFFSET = Key.create("rparen");
-  public static final Key ARG_LIST_END_OFFSET = Key.create("argListEnd");
+  public static final OffsetKey LPAREN_OFFSET = OffsetKey.create("lparen");
+  public static final OffsetKey RPAREN_OFFSET = OffsetKey.create("rparen");
+  public static final OffsetKey ARG_LIST_END_OFFSET = OffsetKey.create("argListEnd");
 
   public static void completeLocalVariableName(Set<LookupItem> set, PrefixMatcher matcher, PsiVariable var){
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
