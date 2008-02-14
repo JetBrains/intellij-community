@@ -6,11 +6,12 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlExtension;
-import com.intellij.xml.XmlSchemaProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -24,15 +25,15 @@ import java.util.Set;
 public class ImportNSAction implements QuestionAction {
   private final Set<String> myNamespaces;
   private final XmlFile myFile;
-  @Nullable private final XmlTag myTag;
+  @Nullable private final PsiElement myElement;
   private final Editor myEditor;
   private final String myTitle;
 
-  public ImportNSAction(final Set<String> namespaces, XmlFile file, @Nullable XmlTag tag, Editor editor, final String title) {
+  public ImportNSAction(final Set<String> namespaces, XmlFile file, @NotNull PsiElement element, Editor editor, final String title) {
 
     myNamespaces = namespaces;
     myFile = file;
-    myTag = tag;
+    myElement = element;
     myEditor = editor;
     myTitle = title;
   }
@@ -52,22 +53,21 @@ public class ImportNSAction implements QuestionAction {
             new WriteCommandAction.Simple(project, myFile) {
 
               protected void run() throws Throwable {
-                final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(myFile);
-                final String prefix = provider == null ? null : provider.getDefaultPrefix(namespace, myFile);
-                XmlExtension.getExtension(myFile).insertNamespaceDeclaration(myFile,
-                                                                             myEditor,
-                                                                             Collections.singleton(namespace),
-                                                                             prefix,
-                                                                             new XmlExtension.Runner<String, IncorrectOperationException>() {
+                final XmlExtension extension = XmlExtension.getExtension(myFile);
+                final String prefix = extension.getNamespacePrefix(myElement);
+                extension.insertNamespaceDeclaration(myFile,
+                                                     myEditor,
+                                                     Collections.singleton(namespace),
+                                                     prefix,
+                                                     new XmlExtension.Runner<String, IncorrectOperationException>() {
                     public void run(final String s) throws IncorrectOperationException {
-                      if (prefix != null && myTag != null && myTag.isValid() && !myTag.getNamespacePrefix().equals(prefix)) {
-                          myTag.setName(prefix + ":" + myTag.getLocalName());
-                      }
+                      PsiDocumentManager.getInstance(myFile.getProject()).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
+                      extension.qualifyWithPrefix(s, myElement, myEditor.getDocument());
                     }
                   }
                 );
               }
-            }.executeSilently();
+            }.execute();
         }
       }
     };

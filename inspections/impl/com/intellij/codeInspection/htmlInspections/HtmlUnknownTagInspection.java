@@ -190,7 +190,7 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
           final PsiElement startTagName = XmlTagUtil.getStartTagNameElement(tag);
           final PsiElement endTagName = XmlTagUtil.getEndTagNameElement(tag);
 
-          final CreateNSDeclarationIntentionFix declarationIntentionFix = new CreateNSDeclarationIntentionFix(tag, "");
+          final CreateNSDeclarationIntentionFix declarationIntentionFix = new CreateNSDeclarationIntentionFix(startTagName, "");
           holder.registerProblem(startTagName, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, action, declarationIntentionFix);
 
           if (endTagName != null) {

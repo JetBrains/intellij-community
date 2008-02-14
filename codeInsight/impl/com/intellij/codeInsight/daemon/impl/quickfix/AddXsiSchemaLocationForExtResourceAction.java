@@ -40,7 +40,7 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
         if (currentUri.equals(uri) && url != null) schemaLocations.add(url);
       }
 
-    });
+    }, true);
 
     CreateNSDeclarationIntentionFix.runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(
       schemaLocations.toArray(new String[schemaLocations.size()]),

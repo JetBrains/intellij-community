@@ -7,7 +7,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.*;
@@ -73,16 +72,22 @@ public class DefaultXmlExtension extends XmlExtension {
   }
 
   @NotNull
-  public Set<String> guessUnboundNamespaces(@NotNull final PsiElement element) {
+  public Set<String> guessUnboundNamespaces(@NotNull final PsiElement element, final XmlFile file) {
     if (!(element instanceof XmlTag)) {
       return Collections.emptySet();
     }
-    return doGuess((XmlTag)element, element.getContainingFile());
-  }
-
-  public static Set<String> doGuess(final XmlTag tag, final PsiFile psiFile) {
-    final String[] strings = CreateNSDeclarationIntentionFix.guessNamespace(psiFile, tag.getLocalName());
-    return new HashSet<String>(Arrays.asList(strings));
+    final XmlTag tag = (XmlTag)element;
+    final String name = tag.getLocalName();
+    final Set<String> byTagName = getNamespacesByTagName(name, file);
+    if (!byTagName.isEmpty()) {
+      byTagName.removeAll(Arrays.asList(tag.knownNamespaces()));
+      return byTagName;
+    }
+    final String[] strings = CreateNSDeclarationIntentionFix.guessNamespace(file, name, false);
+    final List<String> list = Arrays.asList(strings);
+    final HashSet<String> set = new HashSet<String>(list);
+    set.removeAll(Arrays.asList(tag.knownNamespaces()));
+    return set;
   }
 
   public void insertNamespaceDeclaration(@NotNull final XmlFile file,

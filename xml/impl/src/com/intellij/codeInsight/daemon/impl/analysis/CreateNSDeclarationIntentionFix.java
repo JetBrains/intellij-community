@@ -12,6 +12,7 @@ import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -25,14 +26,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
-import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,22 +52,19 @@ import java.util.*;
 * To change this template use File | Settings | File Templates.
 */
 public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFix {
-  @NotNull private final XmlTag myTag;
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix");
+
   private final String myNamespacePrefix;
-  @Nullable private final PsiElement myElement;
+  private final PsiElement myElement;
   private final XmlFile myFile;
 
-  public CreateNSDeclarationIntentionFix(@NotNull final XmlTag tag, @NotNull final String namespacePrefix) {
-    this(tag, namespacePrefix, null);
-  }
-
-  public CreateNSDeclarationIntentionFix(@NotNull final XmlTag tag,
-                                         @NotNull final String namespacePrefix,
-                                         @Nullable final PsiElement element) {
-    myTag = tag;
+  public CreateNSDeclarationIntentionFix(@NotNull final PsiElement element,
+                                         @NotNull final String namespacePrefix
+                                         ) {
     myNamespacePrefix = namespacePrefix;
     myElement = element;
-    myFile = (XmlFile)tag.getContainingFile();
+    myFile = (XmlFile)element.getContainingFile();
   }
 
   @NotNull
@@ -89,14 +89,16 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     final PsiFile file = editor != null ? PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()):null;
     if (file == null || file.getVirtualFile() != containingFile.getVirtualFile()) return;
 
-    try { invoke(project, editor, containingFile); } catch (IncorrectOperationException ex) { ex.printStackTrace(); }
+    try { invoke(project, editor, containingFile); } catch (IncorrectOperationException ex) {
+      LOG.error(ex);
+    }
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
   }
 
-  public static String[] guessNamespace(final PsiFile file, String name) {
+  public static String[] guessNamespace(final PsiFile file, String name, final boolean showProgress) {
     final Set<String> possibleUris = new LinkedHashSet<String>();
     final ExternalUriProcessor processor = new ExternalUriProcessor() {
       public void process(@NotNull String ns, final String url) {
@@ -104,7 +106,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       }
     };
 
-    processExternalUris(new TagMetaHandler(name), file, processor);
+    processExternalUris(new TagMetaHandler(name), file, processor, showProgress);
 
     return possibleUris.toArray( new String[possibleUris.size()] );
   }
@@ -113,7 +115,8 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
     String[] namespaces;
-    final Set<String> set = XmlExtension.getExtension((XmlFile)file).guessUnboundNamespaces(myElement == null ? myTag : myElement);
+
+    final Set<String> set = XmlExtension.getExtension((XmlFile)file).guessUnboundNamespaces(myElement, (XmlFile)file);
     namespaces = set.toArray(new String[set.size()]);
     Arrays.sort(namespaces);
 
@@ -148,25 +151,27 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   public boolean showHint(final Editor editor) {
-    if (!myTag.isValid()) {
+    if (!myElement.isValid() || myNamespacePrefix.length() == 0) {
       return false;
     }
-    final XmlFile xmlFile = (XmlFile)myTag.getContainingFile();
-    final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(xmlFile);
-    if (provider == null) {
-      return false;
-    }
-    final Set<String> namespaces = provider.getAvailableNamespaces(xmlFile);
+    final Set<String> namespaces = XmlExtension.getExtension(myFile).guessUnboundNamespaces(myElement, myFile);
     if (!namespaces.isEmpty()) {
       final String message = ShowAutoImportPass.getMessage(namespaces.size() > 1, namespaces.iterator().next());
       final String title = getTitle();
-      final PsiElement element = myElement == null ? myTag : myElement;
-      if (!element.isValid()) {
-        return false;
+      final ImportNSAction action = new ImportNSAction(namespaces, myFile, myElement, editor, title);
+      if (myElement instanceof XmlTag) {
+        final XmlToken nameElement = XmlTagUtil.getStartTagNameElement((XmlTag)myElement);
+        assert nameElement != null;
+        HintManager.getInstance().showQuestionHint(editor, message,
+                                                   nameElement.getTextOffset(),
+                                                   nameElement.getTextOffset() + myNamespacePrefix.length(), action);
+        return true;
+      } else {
+        HintManager.getInstance().showQuestionHint(editor, message,
+                                                   myElement.getTextOffset(),
+                                                   myElement.getTextRange().getEndOffset(), action);
+        return true;
       }
-      final ImportNSAction action = new ImportNSAction(namespaces, myFile, myElement != null ? null : myTag, editor, title);
-      HintManager.getInstance().showQuestionHint(editor, message, element.getTextOffset(), element.getTextRange().getEndOffset(), action);
-      return true;
     }
     return false;
   }
@@ -259,10 +264,11 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     }
   }
 
-  public static void processExternalUris(final MetaHandler metaHandler,
-                                 final PsiFile file,
-                                 final ExternalUriProcessor processor) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) processExternalUrisImpl(metaHandler, file, processor);
+  public static void processExternalUris(final MetaHandler metaHandler, final PsiFile file, final ExternalUriProcessor processor,
+                                         final boolean showProgress) {
+    if (!showProgress || ApplicationManager.getApplication().isUnitTestMode()) {
+      processExternalUrisImpl(metaHandler, file, processor);
+    }
     else {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(
         new Runnable() {
@@ -328,7 +334,9 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       if (xmlFile != null) {
         final boolean wordFound = checkIfGivenXmlHasTheseWords(searchFor, xmlFile);
         if (!wordFound) continue;
-        final PsiMetaData metaData = xmlFile.getDocument().getMetaData();
+        final XmlDocument document = xmlFile.getDocument();
+        assert document != null;
+        final PsiMetaData metaData = document.getMetaData();
 
         if (metaHandler.isAcceptableMetaData(metaData, url)) {
           final XmlNSDescriptorImpl descriptor = metaData instanceof XmlNSDescriptorImpl ? (XmlNSDescriptorImpl)metaData:null;

@@ -2,6 +2,7 @@ package com.intellij.xml;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
@@ -50,7 +51,7 @@ public abstract class XmlExtension {
   public abstract Set<String> getNamespacesByTagName(@NotNull final String tagName, @NotNull final XmlFile context);
 
   @NotNull
-  public abstract Set<String> guessUnboundNamespaces(@NotNull PsiElement element);
+  public abstract Set<String> guessUnboundNamespaces(@NotNull PsiElement element, final XmlFile file);
 
   public static interface Runner<P, T extends Throwable> {
     void run(P param) throws T;
@@ -61,6 +62,30 @@ public abstract class XmlExtension {
                                                     @NotNull final Set<String> possibleNamespaces,
                                                     @Nullable final String nsPrefix,
                                                     @Nullable Runner<String, IncorrectOperationException> runAfter) throws IncorrectOperationException;
+
+  @Nullable
+  public String getNamespacePrefix(PsiElement element) {
+    final PsiElement tag = element instanceof XmlTag ? element : element.getParent();
+    if (tag instanceof XmlTag) {
+      return ((XmlTag)tag).getNamespacePrefix();
+    } else {
+      return null;
+    }
+  }
+
+  public boolean qualifyWithPrefix(final String namespacePrefix, final PsiElement element, final Document document) throws
+                                                                                                                 IncorrectOperationException {
+    final PsiElement tag = element instanceof XmlTag ? element : element.getParent();
+    if (tag instanceof XmlTag) {
+      final String prefix = ((XmlTag)tag).getNamespacePrefix();
+      if (!prefix.equals(namespacePrefix)) {
+        final String name = namespacePrefix + ":" + ((XmlTag)tag).getLocalName();
+        ((XmlTag)tag).setName(name);
+      }
+      return true;
+    }
+    return false;
+  }
 
   public String getNamespaceAlias(@NotNull final XmlFile file) {
     return XmlBundle.message("namespace.alias");
