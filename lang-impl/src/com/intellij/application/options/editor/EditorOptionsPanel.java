@@ -1,8 +1,7 @@
-package com.intellij.application.options;
+package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -11,6 +10,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
@@ -22,7 +23,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class EditorOptionsPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.EditorOptionsPanel");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.editor.EditorOptionsPanel");
 
   private JPanel myBehaviourPanel;
   private JPanel myAppearancePanel;
@@ -30,19 +31,13 @@ public class EditorOptionsPanel {
   private JCheckBox myCbBlinkCaret;
   private JTextField myBlinkIntervalField;
   private JCheckBox myCbRightMargin;
-  private JCheckBox myCbShowMethodSeparators;
   private JCheckBox myCbHighlightBraces;
   private JCheckBox myCbShowLineNumbers;
-
   private static final String STRIP_CHANGED = ApplicationBundle.message("combobox.strip.modified.lines");
+
   private static final String STRIP_ALL = ApplicationBundle.message("combobox.strip.all");
   private static final String STRIP_NONE = ApplicationBundle.message("combobox.strip.none");
   private JComboBox myStripTrailingSpacesCombo;
-
-  private static final String INSERT_IMPORTS_ALWAYS = ApplicationBundle.message("combobox.insert.imports.all");
-  private static final String INSERT_IMPORTS_ASK = ApplicationBundle.message("combobox.insert.imports.ask");
-  private static final String INSERT_IMPORTS_NONE = ApplicationBundle.message("combobox.insert.imports.none");
-  private JComboBox mySmartPasteCombo;
 
   private static final String NO_REFORMAT = ApplicationBundle.message("combobox.paste.reformat.none");
   private static final String INDENT_BLOCK = ApplicationBundle.message("combobox.paste.reformat.indent.block");
@@ -72,9 +67,7 @@ public class EditorOptionsPanel {
   private JCheckBox myCbHighlightScope;
   private JCheckBox myCbFolding;
   private JCheckBox myCbBlockCursor;
-  private JCheckBox myCbInsertPairCurlyBraceOnEnter;
-  private JCheckBox myCbInsertScriptletEndOnEnter;
-  private JCheckBox myCbInsertJavadocStubOnEnter;
+
   private JCheckBox myCbInsertPairBracket;
   private JCheckBox myCbInsertPairQuote;
   private JCheckBox myCbCollapseImports;
@@ -94,7 +87,7 @@ public class EditorOptionsPanel {
   private JCheckBox myCbEnableDnD;
   private JCheckBox myCbEnableWheelFontChange;
   private JCheckBox myCbHonorCamelHumpsWhenSelectingByClicking;
-  private JCheckBox myCbRenameLocalVariablesInplace;
+
   private JPanel myHighlightSettingsPanel;
   private JRadioButton myRbPreferScrolling;
   private JRadioButton myRbPreferMovingCaret;
@@ -107,7 +100,6 @@ public class EditorOptionsPanel {
   }
 
   public EditorOptionsPanel(){
-
       myCbBlinkCaret.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent event) {
@@ -124,10 +116,6 @@ public class EditorOptionsPanel {
     myReformatOnPasteCombo.addItem(INDENT_BLOCK);
     myReformatOnPasteCombo.addItem(INDENT_EACH_LINE);
     myReformatOnPasteCombo.addItem(REFORMAT_BLOCK);
-
-    mySmartPasteCombo.addItem(INSERT_IMPORTS_ALWAYS);
-    mySmartPasteCombo.addItem(INSERT_IMPORTS_ASK);
-    mySmartPasteCombo.addItem(INSERT_IMPORTS_NONE);
 
     myStripTrailingSpacesCombo.addItem(STRIP_CHANGED);
     myStripTrailingSpacesCombo.addItem(STRIP_ALL);
@@ -155,6 +143,9 @@ public class EditorOptionsPanel {
     myTabbedPaneWrapper = new TabbedPaneWrapper();
     myTabbedPaneWrapper.addTab(ApplicationBundle.message("tab.editor.settings.behavior"), myBehaviourPanel);
     myTabbedPaneWrapper.addTab(ApplicationBundle.message("tab.editor.settings.appearance"), myAppearancePanel);
+    for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
+      myTabbedPaneWrapper.addTab(provider.getDisplayName(), provider.createComponent());
+    }
   }
 
 
@@ -163,7 +154,6 @@ public class EditorOptionsPanel {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     CodeFoldingSettings codeFoldingSettings = CodeFoldingSettings.getInstance();
-    DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
     UISettings uiSettings=UISettings.getInstance();
 
     // Display
@@ -179,7 +169,7 @@ public class EditorOptionsPanel {
 
     myCbShowLineNumbers.setSelected(editorSettings.isLineNumbersShown());
 
-    myCbShowMethodSeparators.setSelected(daemonSettings.SHOW_METHOD_SEPARATORS);
+
     myCbShowWhitespaces.setSelected(editorSettings.isWhitespacesShown());
     myCbSmoothScrolling.setSelected(editorSettings.isSmoothScrolling());
 
@@ -216,19 +206,7 @@ public class EditorOptionsPanel {
       break;
     }
 
-    switch(codeInsightSettings.ADD_IMPORTS_ON_PASTE){
-      case CodeInsightSettings.YES:
-        mySmartPasteCombo.setSelectedItem(INSERT_IMPORTS_ALWAYS);
-      break;
 
-      case CodeInsightSettings.NO:
-        mySmartPasteCombo.setSelectedItem(INSERT_IMPORTS_NONE);
-      break;
-
-      case CodeInsightSettings.ASK:
-        mySmartPasteCombo.setSelectedItem(INSERT_IMPORTS_ASK);
-      break;
-    }
 
     // Strip trailing spaces on save
 
@@ -249,9 +227,6 @@ public class EditorOptionsPanel {
     myCbSmartEnd.setSelected(codeInsightSettings.SMART_END_ACTION);
 
     myCbSmartIndentOnEnter.setSelected(codeInsightSettings.SMART_INDENT_ON_ENTER);
-    myCbInsertPairCurlyBraceOnEnter.setSelected(codeInsightSettings.INSERT_BRACE_ON_ENTER);
-    myCbInsertScriptletEndOnEnter.setSelected(codeInsightSettings.INSERT_SCRIPTLET_END_ON_ENTER);
-    myCbInsertJavadocStubOnEnter.setSelected(codeInsightSettings.JAVADOC_STUB_ON_ENTER);
 
     myCbInsertPairBracket.setSelected(codeInsightSettings.AUTOINSERT_PAIR_BRACKET);
     myCbInsertPairQuote.setSelected(codeInsightSettings.AUTOINSERT_PAIR_QUOTE);
@@ -279,8 +254,6 @@ public class EditorOptionsPanel {
     myRbPreferMovingCaret.setSelected(editorSettings.isRefrainFromScrolling());
     myRbPreferScrolling.setSelected(!editorSettings.isRefrainFromScrolling());
 
-    // Refactoring
-    myCbRenameLocalVariablesInplace.setSelected(editorSettings.isVariableInplaceRenameEnabled());
 
     // Editor Tabs
     myScrollTabLayoutInEditorCheckBox.setSelected(uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR);
@@ -302,13 +275,15 @@ public class EditorOptionsPanel {
     myEditorTabLimitField.setText(Integer.toString(uiSettings.EDITOR_TAB_LIMIT));
     myRecentFilesLimitField.setText(Integer.toString(uiSettings.RECENT_FILES_LIMIT));
     myErrorHighlightingPanel.reset();
+    for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
+      provider.reset();
+    }
   }
 
-  public void apply() {
+  public void apply() throws ConfigurationException {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     CodeFoldingSettings codeFoldingSettings = CodeFoldingSettings.getInstance();
-    DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
     UISettings uiSettings=UISettings.getInstance();
 
     // Display
@@ -328,7 +303,7 @@ public class EditorOptionsPanel {
     editorSettings.setRightMarginShown(myCbRightMargin.isSelected());
 
     editorSettings.setLineNumbersShown(myCbShowLineNumbers.isSelected());
-    daemonSettings.SHOW_METHOD_SEPARATORS = myCbShowMethodSeparators.isSelected();
+
     editorSettings.setWhitespacesShown(myCbShowWhitespaces.isSelected());
     editorSettings.setSmoothScrolling(myCbSmoothScrolling.isSelected());
 
@@ -361,7 +336,7 @@ public class EditorOptionsPanel {
     // Paste
 
     codeInsightSettings.REFORMAT_ON_PASTE = getReformatPastedBlockValue();
-    codeInsightSettings.ADD_IMPORTS_ON_PASTE = getSmartPasteValue();
+
 
     // Strip trailing spaces on save
 
@@ -381,9 +356,6 @@ public class EditorOptionsPanel {
     codeInsightSettings.SMART_END_ACTION = myCbSmartEnd.isSelected();
 
     codeInsightSettings.SMART_INDENT_ON_ENTER = myCbSmartIndentOnEnter.isSelected();
-    codeInsightSettings.INSERT_BRACE_ON_ENTER = myCbInsertPairCurlyBraceOnEnter.isSelected();
-    codeInsightSettings.INSERT_SCRIPTLET_END_ON_ENTER = myCbInsertScriptletEndOnEnter.isSelected();
-    codeInsightSettings.JAVADOC_STUB_ON_ENTER = myCbInsertJavadocStubOnEnter.isSelected();
 
     codeInsightSettings.AUTOINSERT_PAIR_BRACKET = myCbInsertPairBracket.isSelected();
     codeInsightSettings.AUTOINSERT_PAIR_QUOTE = myCbInsertPairQuote.isSelected();
@@ -404,7 +376,7 @@ public class EditorOptionsPanel {
     codeFoldingSettings.setCollapseAnnotations( myCbCollapseAnnotations.isSelected() );
 
     editorSettings.setDndEnabled(myCbEnableDnD.isSelected());
-    editorSettings.setVariableInplaceRenameEnabled(myCbRenameLocalVariablesInplace.isSelected());
+
     editorSettings.setWheelFontChangeEnabled(myCbEnableWheelFontChange.isSelected());
     editorSettings.setMouseClickSelectionHonorsCamelWords(myCbHonorCamelHumpsWhenSelectingByClicking.isSelected());
     editorSettings.setRefrainFromScrolling(myRbPreferMovingCaret.isSelected());
@@ -452,6 +424,9 @@ public class EditorOptionsPanel {
       uiSettings.fireUISettingsChanged();
     }
     myErrorHighlightingPanel.apply();
+     for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
+      provider.apply();
+    }
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       DaemonCodeAnalyzer.getInstance(project).settingsChanged();
@@ -473,7 +448,6 @@ public class EditorOptionsPanel {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     CodeFoldingSettings codeFoldingSettings = CodeFoldingSettings.getInstance();
-    DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
     UISettings uiSettings=UISettings.getInstance();
 
     // Display
@@ -486,7 +460,6 @@ public class EditorOptionsPanel {
     isModified |= isModified(myCbRightMargin, editorSettings.isRightMarginShown());
 
     isModified |= isModified(myCbShowLineNumbers, editorSettings.isLineNumbersShown());
-    isModified |= isModified(myCbShowMethodSeparators, daemonSettings.SHOW_METHOD_SEPARATORS);
     isModified |= isModified(myCbShowWhitespaces, editorSettings.isWhitespacesShown());
     isModified |= isModified(myCbSmoothScrolling, editorSettings.isSmoothScrolling());
 
@@ -505,7 +478,7 @@ public class EditorOptionsPanel {
     isModified |= getMaxClipboardContents() != uiSettings.MAX_CLIPBOARD_CONTENTS;
 
     // Paste
-    isModified |= getSmartPasteValue() != codeInsightSettings.ADD_IMPORTS_ON_PASTE;
+
     isModified |= getReformatPastedBlockValue() != codeInsightSettings.REFORMAT_ON_PASTE;
 
     // Strip trailing spaces on save
@@ -517,9 +490,6 @@ public class EditorOptionsPanel {
     isModified |= isModified(myCbSmartEnd, codeInsightSettings.SMART_END_ACTION);
 
     isModified |= isModified(myCbSmartIndentOnEnter, codeInsightSettings.SMART_INDENT_ON_ENTER);
-    isModified |= isModified(myCbInsertPairCurlyBraceOnEnter, codeInsightSettings.INSERT_BRACE_ON_ENTER);
-    isModified |= isModified(myCbInsertScriptletEndOnEnter, codeInsightSettings.INSERT_SCRIPTLET_END_ON_ENTER);
-    isModified |= isModified(myCbInsertJavadocStubOnEnter, codeInsightSettings.JAVADOC_STUB_ON_ENTER);
 
     isModified |= isModified(myCbInsertPairBracket, codeInsightSettings.AUTOINSERT_PAIR_BRACKET);
     isModified |= isModified(myCbInsertPairQuote, codeInsightSettings.AUTOINSERT_PAIR_QUOTE);
@@ -546,8 +516,6 @@ public class EditorOptionsPanel {
 
     isModified |= myRbPreferMovingCaret.isSelected() != editorSettings.isRefrainFromScrolling();
 
-    // Refactoring
-    isModified |= isModified(myCbRenameLocalVariablesInplace, editorSettings.isVariableInplaceRenameEnabled());
 
     isModified |= isModified(myCloseNonModifiedFilesFirstRadio, uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST);
     isModified |= isModified(myActivateMRUEditorOnCloseRadio, uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE);
@@ -562,6 +530,9 @@ public class EditorOptionsPanel {
     isModified |= myScrollTabLayoutInEditorCheckBox.isSelected() != uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR;
 
     isModified |= myErrorHighlightingPanel.isModified();
+    for (EditorOptionsProvider provider : Extensions.getExtensions(EditorOptionsProvider.EP_NAME)) {
+      isModified |= provider.isModified();
+    }
     return isModified;
   }
 
@@ -589,20 +560,6 @@ public class EditorOptionsPanel {
     }
     else {
       return EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE;
-    }
-  }
-
-
-  private int getSmartPasteValue() {
-    Object selectedItem = mySmartPasteCombo.getSelectedItem();
-    if(INSERT_IMPORTS_ALWAYS.equals(selectedItem)) {
-      return CodeInsightSettings.YES;
-    }
-    else if(INSERT_IMPORTS_NONE.equals(selectedItem)) {
-      return CodeInsightSettings.NO;
-    }
-    else {
-      return CodeInsightSettings.ASK;
     }
   }
 

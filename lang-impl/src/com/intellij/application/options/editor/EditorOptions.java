@@ -1,6 +1,7 @@
-package com.intellij.application.options;
+package com.intellij.application.options.editor;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.SortableConfigurable;
 import com.intellij.openapi.util.IconLoader;
@@ -32,7 +33,7 @@ public class EditorOptions implements SearchableConfigurable, SortableConfigurab
     myPanel.reset();
   }
 
-  public void apply() {
+  public void apply() throws ConfigurationException {
     myPanel.apply();
   }
 

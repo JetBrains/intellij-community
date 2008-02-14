@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.application.options.EditorOptions;
+import com.intellij.application.options.editor.EditorOptions;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.ui.search.DefaultSearchableConfigurable;
 import com.intellij.openapi.application.ApplicationBundle;
