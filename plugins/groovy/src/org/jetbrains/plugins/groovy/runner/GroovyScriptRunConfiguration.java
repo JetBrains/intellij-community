@@ -159,8 +159,6 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   }
 
   private void configureGroovyStarter(JavaParameters params) {
-    GroovyGrailsConfiguration config = GroovyGrailsConfiguration.getInstance();
-
     // add GroovyStarter parameters
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add(GROOVY_MAIN);
@@ -172,10 +170,10 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     ProjectJdk jdk = params.getJdk();
     StringBuffer buffer = new StringBuffer();
     if (jdk != null) {
-      String jdkUrl = jdk.getHomeDirectory().getPresentableUrl();
-      String jreLib = jdkUrl + File.separator + "jre" + File.separator + "lib";
+      String jdkLibDir = new File(jdk.getRtLibraryPath()).getParentFile().getAbsolutePath();
+
       for (String libPath : list) {
-        if (!libPath.contains(jreLib)) {
+        if (!libPath.contains(jdkLibDir)) {
           buffer.append(libPath).append(File.pathSeparator);
         }
       }
