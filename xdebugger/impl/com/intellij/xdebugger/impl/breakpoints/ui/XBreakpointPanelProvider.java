@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,7 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
 
   @NotNull
   public Collection<AbstractBreakpointPanel<XBreakpoint>> getBreakpointPanels(@NotNull final Project project, @NotNull final DialogWrapper parentDialog) {
-    XBreakpointType<?,?>[] types = XBreakpointType.getBreakpointTypes();
+    XBreakpointType<?,?>[] types = XBreakpointUtil.getBreakpointTypes();
     ArrayList<AbstractBreakpointPanel<XBreakpoint>> panels = new ArrayList<AbstractBreakpointPanel<XBreakpoint>>();
     for (XBreakpointType<? extends XBreakpoint<?>, ?> type : types) {
       XBreakpointsPanel<?> panel = createBreakpointsPanel(project, parentDialog, type);

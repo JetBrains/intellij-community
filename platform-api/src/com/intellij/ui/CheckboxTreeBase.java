@@ -20,10 +20,7 @@ import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeCellRenderer;
-import javax.swing.tree.TreeModel;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -144,6 +141,30 @@ public class CheckboxTreeBase extends Tree {
       child.setChecked(false);
       uncheckChildren(child);
     }
+  }
+
+  protected static void adjustParents(final CheckedTreeNode node, final boolean checked) {
+    TreeNode parentNode = node.getParent();
+    if (!(parentNode instanceof CheckedTreeNode)) return;
+    CheckedTreeNode parent = (CheckedTreeNode)parentNode;
+
+    if (checked) {
+      parent.setChecked(true);
+      adjustParents(parent, true);
+    }
+    else if (isAllChildrenUnchecked(parent)) {
+      parent.setChecked(false);
+      adjustParents(parent, false);
+    }
+  }
+
+  private static boolean isAllChildrenUnchecked(final CheckedTreeNode node) {
+    for (int i = 0; i < node.getChildCount(); i++) {
+      if (((CheckedTreeNode)node.getChildAt(i)).isChecked()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public static abstract class CheckboxTreeCellRendererBase extends JPanel implements TreeCellRenderer {

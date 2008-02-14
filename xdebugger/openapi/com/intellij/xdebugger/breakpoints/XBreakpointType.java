@@ -17,15 +17,20 @@
 package com.intellij.xdebugger.breakpoints;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.xdebugger.ui.DebuggerIcons;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.ui.DebuggerIcons;
+import com.intellij.xdebugger.XDebuggerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Comparator;
 
 /**
  * @author nik
@@ -47,21 +52,6 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   }
 
   @Nullable
-  public static XBreakpointType<?,?> findType(@NotNull @NonNls String id) {
-    XBreakpointType[] breakpointTypes = getBreakpointTypes();
-    for (XBreakpointType breakpointType : breakpointTypes) {
-      if (id.equals(breakpointType.getId())) {
-        return breakpointType;
-      }
-    }
-    return null;
-  }
-
-  public static XBreakpointType<?,?>[] getBreakpointTypes() {
-    return Extensions.getExtensions(EXTENSION_POINT_NAME);
-  }
-
-  @Nullable 
   public P createProperties() {
     return null;
   }
@@ -106,4 +96,14 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   public XDebuggerEditorsProvider getEditorsProvider() {
     return null;
   }
+
+  public List<XBreakpointGroupingRule<B, ?>> getGroupingRules() {
+    return Collections.emptyList();
+  }
+
+  @NotNull 
+  public Comparator<B> getBreakpointComparator() {
+    return XDebuggerUtil.getInstance().getDefaultBreakpointComparator(this);
+  }
+
 }

@@ -13,14 +13,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author nik
@@ -31,7 +31,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   public XLineBreakpointType<?>[] getLineBreakpointTypes() {
     if (myLineBreakpointTypes == null) {
-      XBreakpointType[] types = XBreakpointType.getBreakpointTypes();
+      XBreakpointType[] types = XBreakpointUtil.getBreakpointTypes();
       List<XLineBreakpointType<?>> lineBreakpointTypes = new ArrayList<XLineBreakpointType<?>>();
       for (XBreakpointType type : types) {
         if (type instanceof XLineBreakpointType<?>) {
@@ -80,7 +80,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   public <B extends XBreakpoint<?>> XBreakpointType<B, ?> findBreakpointType(@NotNull Class<? extends XBreakpointType<B, ?>> typeClass) {
     if (myTypeByClass == null) {
       myTypeByClass = new HashMap<Class<? extends XBreakpointType<?,?>>, XBreakpointType<?,?>>();
-      for (XBreakpointType<?, ?> breakpointType : XBreakpointType.getBreakpointTypes()) {
+      for (XBreakpointType<?, ?> breakpointType : XBreakpointUtil.getBreakpointTypes()) {
         if (breakpointType.getClass().equals(typeClass)) {
           myTypeByClass.put(typeClass, breakpointType);
         }
@@ -94,6 +94,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   @Nullable 
   public XSourcePosition createPosition(@NotNull final VirtualFile file, final int line) {
     return XSourcePositionImpl.create(file, line);
+  }
+
+  public <B extends XLineBreakpoint<?>> XBreakpointGroupingRule<B, ?> getGroupingByFileRule() {
+    return new XBreakpointFileGroupingRule<B>();
   }
 
   @Nullable
@@ -118,4 +122,21 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return editor;
   }
 
+  public <B extends XBreakpoint<?>> Comparator<B> getDefaultBreakpointComparator(final XBreakpointType<B, ?> type) {
+    return new Comparator<B>() {
+      public int compare(final B o1, final B o2) {
+        return type.getDisplayText(o1).compareTo(type.getDisplayText(o2));
+      }
+    };
+  }
+
+  public <P extends XBreakpointProperties> Comparator<XLineBreakpoint<P>> getDefaultLineBreakpointComparator() {
+    return new Comparator<XLineBreakpoint<P>>() {
+      public int compare(final XLineBreakpoint<P> o1, final XLineBreakpoint<P> o2) {
+        int fileCompare = o1.getFileUrl().compareTo(o2.getFileUrl());
+        if (fileCompare != 0) return fileCompare;
+        return o1.getLine() - o2.getLine();
+      }
+    };
+  }
 }

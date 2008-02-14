@@ -1,14 +1,15 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
@@ -23,6 +24,7 @@ import java.util.*;
 public class XBreakpointManagerImpl implements XBreakpointManager, PersistentStateComponent<XBreakpointManagerImpl.BreakpointManagerState> {
   private MultiValuesMap<XBreakpointType, XBreakpointBase<?,?,?>> myBreakpoints = new MultiValuesMap<XBreakpointType, XBreakpointBase<?,?,?>>(true);
   private Map<XBreakpointType, EventDispatcher<XBreakpointListener>> myDispatchers = new HashMap<XBreakpointType, EventDispatcher<XBreakpointListener>>();
+  private Map<XBreakpointType<?,?>, XBreakpointTypeDialogState> myBreakpointsDialogSettings = new HashMap<XBreakpointType<?,?>, XBreakpointTypeDialogState>();
   private EventDispatcher<XBreakpointListener> myAllBreakpointsDispatcher;
   private final XLineBreakpointManager myLineBreakpointManager;
   private final Project myProject;
@@ -198,10 +200,21 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     for (XBreakpointBase<?,?,?> breakpoint : myBreakpoints.values()) {
       state.getBreakpoints().add(breakpoint.getState());
     }
+    for (Map.Entry<XBreakpointType<?,?>, XBreakpointTypeDialogState> entry : myBreakpointsDialogSettings.entrySet()) {
+      state.getBreakpointTypeDialogProperties().put(entry.getKey().getId(), entry.getValue());
+    }
     return state;
   }
 
   public void loadState(final BreakpointManagerState state) {
+    myBreakpointsDialogSettings.clear();
+    for (Map.Entry<String, XBreakpointTypeDialogState> entry : state.getBreakpointTypeDialogProperties().entrySet()) {
+      XBreakpointType<?, ?> type = XBreakpointUtil.findType(entry.getKey());
+      if (type != null) {
+        myBreakpointsDialogSettings.put(type, entry.getValue());
+      }
+    }
+
     removeAllBreakpoints();
     for (XBreakpointBase.BreakpointState breakpointState : state.getBreakpoints()) {
       XBreakpointBase<?,?,?> breakpoint = createBreakpoint(breakpointState);
@@ -213,6 +226,15 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     myLineBreakpointManager.updateBreakpointsUI();
   }
 
+  @Nullable
+  public XBreakpointTypeDialogState getDialogState(@NotNull XBreakpointType<?, ?> type) {
+    return myBreakpointsDialogSettings.get(type);
+  }
+
+  public void putDialogState(@NotNull XBreakpointType<?, ?> type, XBreakpointTypeDialogState dialogState) {
+    myBreakpointsDialogSettings.put(type, dialogState);
+  }
+
   private void removeAllBreakpoints() {
     for (XBreakpointBase<?,?,?> breakpoint : myBreakpoints.values()) {
       removeBreakpoint(breakpoint);
@@ -221,7 +243,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
 
   @Nullable
   private XBreakpointBase<?,?,?> createBreakpoint(final XBreakpointBase.BreakpointState breakpointState) {
-    XBreakpointType<?,?> type = XBreakpointType.findType(breakpointState.getTypeId());
+    XBreakpointType<?,?> type = XBreakpointUtil.findType(breakpointState.getTypeId());
     if (type == null) return null;                    
     return breakpointState.createBreakpoint(type, this);
   }
@@ -230,6 +252,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   @Tag("breakpoint-manager")
   public static class BreakpointManagerState {
     private List<XBreakpointBase.BreakpointState> myBreakpoints = new ArrayList<XBreakpointBase.BreakpointState>();
+    private Map<String, XBreakpointTypeDialogState> myBreakpointTypeDialogProperties = new HashMap<String, XBreakpointTypeDialogState>();
 
     @Tag("breakpoints")
     @AbstractCollection(surroundWithTag = false, elementTypes = {XBreakpointBase.BreakpointState.class, XLineBreakpointImpl.LineBreakpointState.class})
@@ -237,8 +260,19 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
       return myBreakpoints;
     }
 
+    @Tag("dialog-properties")
+    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, keyAttributeName = "type-id",
+                   entryTagName = "breakpoints-dialog")
+    public Map<String, XBreakpointTypeDialogState> getBreakpointTypeDialogProperties() {
+      return myBreakpointTypeDialogProperties;
+    }
+
     public void setBreakpoints(final List<XBreakpointBase.BreakpointState> breakpoints) {
       myBreakpoints = breakpoints;
+    }
+
+    public void setBreakpointTypeDialogProperties(final Map<String, XBreakpointTypeDialogState> breakpointTypeDialogProperties) {
+      myBreakpointTypeDialogProperties = breakpointTypeDialogProperties;
     }
   }
 }

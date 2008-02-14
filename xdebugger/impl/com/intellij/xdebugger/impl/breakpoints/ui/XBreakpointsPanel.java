@@ -8,8 +8,11 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.ui.actions.GoToBreakpointAction;
 import com.intellij.xdebugger.impl.breakpoints.ui.actions.RemoveBreakpointAction;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeDialogState;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -18,10 +21,8 @@ import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author nik
@@ -39,13 +40,19 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
   private XBreakpointPanelAction<B>[] myActions;
   private Map<XBreakpointPanelAction<B>, JButton> myButtons;
   private XBreakpointPropertiesPanel<B> mySelectedPropertiesPanel;
+  private Set<XBreakpointGroupingRule<B, ?>> mySelectedGroupingRules;
+  private List<XBreakpointGroupingRule<B, ?>> myAllGroupingRules;
 
   public XBreakpointsPanel(@NotNull Project project, @NotNull DialogWrapper parentDialog, @NotNull XBreakpointType<B, ?> type) {
     super(type.getTitle(), null, XBreakpoint.class);
     myProject = project;
     myParentDialog = parentDialog;
     myType = type;
-    myTree = XBreakpointsTree.createTree();
+
+    myAllGroupingRules = new ArrayList<XBreakpointGroupingRule<B,?>>(myType.getGroupingRules());
+    mySelectedGroupingRules = getInitialGroupingRules();
+
+    myTree = XBreakpointsTree.createTree(myType, mySelectedGroupingRules);
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(final TreeSelectionEvent e) {
         onSelectionChanged();
@@ -62,6 +69,19 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
     initButtons();
     onSelectionChanged();
+  }
+
+  private Set<XBreakpointGroupingRule<B, ?>> getInitialGroupingRules() {
+    HashSet<XBreakpointGroupingRule<B, ?>> rules = new HashSet<XBreakpointGroupingRule<B, ?>>();
+    XBreakpointTypeDialogState settings = ((XBreakpointManagerImpl)getBreakpointManager()).getDialogState(myType);
+    if (settings != null) {
+      for (XBreakpointGroupingRule<B, ?> rule : myAllGroupingRules) {
+        if (settings.getSelectedGroupingRules().contains(rule.getId())) {
+          rules.add(rule);
+        }
+      }
+    }
+    return rules;
   }
 
   private void onSelectionChanged() {
@@ -97,15 +117,45 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
 
   private void initButtons() {
     myButtons = new HashMap<XBreakpointPanelAction<B>, JButton>();
+    GridBagConstraints constraints = new GridBagConstraints();
+    constraints.gridx = 0;
+    constraints.fill = GridBagConstraints.HORIZONTAL;
+    constraints.insets = new Insets(0, 2, 2, 2);
     for (final XBreakpointPanelAction<B> action : myActions) {
       JButton button = createButton(action);
-      GridBagConstraints constraints = new GridBagConstraints();
-      constraints.gridx = 0;
-      constraints.fill = GridBagConstraints.HORIZONTAL;
-      constraints.insets = new Insets(0, 2, 2, 2);
       myButtonsPanel.add(button, constraints);
       myButtons.put(action, button);
     }
+    for (XBreakpointGroupingRule<B, ?> groupingRule : myAllGroupingRules) {
+      myButtonsPanel.add(createGroupingRuleCheckBox(groupingRule), constraints);
+    }
+  }
+
+  private JCheckBox createGroupingRuleCheckBox(final XBreakpointGroupingRule<B, ?> groupingRule) {
+    final JCheckBox checkBox = new JCheckBox(groupingRule.getPresentableName());
+    checkBox.setSelected(mySelectedGroupingRules.contains(groupingRule));
+    checkBox.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        if (checkBox.isSelected()) {
+          mySelectedGroupingRules.add(groupingRule);
+        }
+        else {
+          mySelectedGroupingRules.remove(groupingRule);
+        }
+        myTree.setGroupingRules(getSelectedGroupingRules());
+      }
+    });
+    return checkBox;
+  }
+
+  private List<XBreakpointGroupingRule<B, ?>> getSelectedGroupingRules() {
+    ArrayList<XBreakpointGroupingRule<B, ?>> rules = new ArrayList<XBreakpointGroupingRule<B, ?>>();
+    for (XBreakpointGroupingRule<B, ?> rule : myAllGroupingRules) {
+      if (mySelectedGroupingRules.contains(rule)) {
+        rules.add(rule);
+      }
+    }
+    return rules;
   }
 
   private JButton createButton(final XBreakpointPanelAction<B> action) {
@@ -137,6 +187,13 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
   public void saveBreakpoints() {
     if (mySelectedPropertiesPanel != null) {
       mySelectedPropertiesPanel.saveProperties();
+    }
+    if (!mySelectedGroupingRules.isEmpty()) {
+      XBreakpointTypeDialogState state = new XBreakpointTypeDialogState();
+      for (XBreakpointGroupingRule<B, ?> rule : mySelectedGroupingRules) {
+        state.getSelectedGroupingRules().add(rule.getId());
+      }
+      ((XBreakpointManagerImpl)getBreakpointManager()).putDialogState(myType, state);
     }
   }
 
@@ -175,7 +232,9 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
     if (mySelectedPropertiesPanel != null) {
       mySelectedPropertiesPanel.dispose();
       mySelectedPropertiesPanel = null;
+      myPropertiesPanel.removeAll();
       updatePropertiesWrapper();
     }
   }
+
 }

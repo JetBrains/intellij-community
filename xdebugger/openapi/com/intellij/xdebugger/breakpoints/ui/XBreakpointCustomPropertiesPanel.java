@@ -1,8 +1,10 @@
-package com.intellij.xdebugger.breakpoints;
+package com.intellij.xdebugger.breakpoints.ui;
 
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 
 /**
  * @author nik

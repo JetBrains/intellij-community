@@ -28,7 +28,7 @@ public class XDependentBreakpointsTest extends XBreakpointsTestCase {
     
     myBreakpointManager.removeBreakpoint(master);
     assertNull(myDependentBreakpointManager.getMasterBreakpoint(slave));
-    assertTrue(myDependentBreakpointManager.getAllSlaveBreakpoints().isEmpty());
+    assertEmpty(myDependentBreakpointManager.getAllSlaveBreakpoints());
   }
 
   public void testSerialize() throws Exception {

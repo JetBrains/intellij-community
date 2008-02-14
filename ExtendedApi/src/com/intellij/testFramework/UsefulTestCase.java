@@ -76,7 +76,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static <T> void assertOrderedEquals(final Collection<? extends T> actual, final Collection<? extends T> expected) {
-    if (!new ArrayList<T>(actual).equals(expected)) {
+    if (!new ArrayList<T>(actual).equals(new ArrayList<T>(expected))) {
       assertEquals(toString(expected), toString(actual));
       fail();
     }

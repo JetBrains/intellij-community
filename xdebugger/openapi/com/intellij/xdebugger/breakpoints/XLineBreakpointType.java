@@ -18,11 +18,13 @@ package com.intellij.xdebugger.breakpoints;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.ui.DebuggerIcons;
+import com.intellij.xdebugger.XDebuggerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Comparator;
 
 /**
  * @author nik
@@ -42,4 +44,10 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   public Icon getDisabledDependentIcon() {
     return DebuggerIcons.DISABLED_DEPENDENT_BREAKPOINT_ICON;
   }
+
+  @NotNull
+  public Comparator<XLineBreakpoint<P>> getBreakpointComparator() {
+    return XDebuggerUtil.getInstance().getDefaultLineBreakpointComparator();
+  }
+
 }
