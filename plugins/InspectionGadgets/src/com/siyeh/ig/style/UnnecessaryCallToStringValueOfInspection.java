@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -32,14 +33,16 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
     @Nls
     @NotNull
     public String getDisplayName() {
-        return "Unnecessary call to 'String.valueOf()'";
+        return InspectionGadgetsBundle.message(
+                "unnecessary.call.to.string.valueof.display.name");
     }
 
     @NotNull
     protected String buildErrorString(Object... infos) {
         final PsiExpression expression = (PsiExpression) infos[0];
-        return "<code>#ref</code> can be simplified to '" +
-                expression.getText() + '\'';
+        return InspectionGadgetsBundle.message(
+                "unnecessary.call.to.string.valueof.problem.descriptor",
+                expression);
     }
 
     @Nullable
@@ -59,7 +62,9 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
 
         @NotNull
         public String getName() {
-            return "Replace with '" + replacementText + '\'';
+            return InspectionGadgetsBundle.message(
+                    "unnecessary.call.to.string.valueof.quickfix",
+                    replacementText);
         }
 
         protected void doFix(Project project, ProblemDescriptor descriptor)
@@ -128,13 +133,5 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
             }
             registerError(expression, argument);
         }
-    }
-
-    public static void main(String[] args) {
-        char[] chars = {'a', 'b'};
-        System.out.println("bla: " + chars); // how's this work?
-
-        final boolean b = new StringBuilder().toString().length() == 0;
-        System.out.println("b: " + b);
     }
 }
