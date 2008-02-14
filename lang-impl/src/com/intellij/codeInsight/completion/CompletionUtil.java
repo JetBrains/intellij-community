@@ -17,12 +17,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.TrueFilter;
-import com.intellij.psi.filters.position.SuperParentFilter;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
 import org.apache.oro.text.regex.MalformedPatternException;
@@ -115,7 +114,7 @@ public class CompletionUtil {
     if (completionDataByFileType != null) return completionDataByFileType;
 
     if ((file.getViewProvider().getPsi(StdLanguages.JAVA) != null)) {
-      if (element != null && new SuperParentFilter(new ClassFilter(PsiDocComment.class)).isAcceptable(element, element.getParent())) {
+      if (element != null && PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null) {
         return JavaCompletionUtil.ourJavaDocCompletionData.getValue();
       }
       return element != null && PsiUtil.getLanguageLevel(element).equals(LanguageLevel.JDK_1_5)

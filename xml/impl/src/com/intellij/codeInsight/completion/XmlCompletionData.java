@@ -45,7 +45,7 @@ public class XmlCompletionData extends JavaAwareCompletionData {
     {
       final CompletionVariant variant = new CompletionVariant(createTagCompletionFilter());
       variant.includeScopeClass(XmlTag.class);
-      variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
+      variant.addCompletionFilter(TrueFilter.INSTANCE);
       variant.setInsertHandler(new XmlTagInsertHandler());
       registerVariant(variant);
     }
@@ -53,7 +53,7 @@ public class XmlCompletionData extends JavaAwareCompletionData {
     {
       final CompletionVariant variant = new CompletionVariant(createAttributeCompletionFilter());
       variant.includeScopeClass(XmlAttribute.class);
-      variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
+      variant.addCompletionFilter(TrueFilter.INSTANCE);
       variant.setInsertHandler(new XmlAttributeInsertHandler());
       registerVariant(variant);
     }

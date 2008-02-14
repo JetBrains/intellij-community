@@ -1,12 +1,9 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.TailType;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPlainText;
 import com.intellij.psi.filters.TrueFilter;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.codeInsight.TailType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -23,10 +20,8 @@ public class SyntaxTableCompletionData extends CompletionData{
     mySyntaxTable.getKeywords1();
 
     final CompletionVariant variant = new CompletionVariant(TrueFilter.INSTANCE);
-    variant.includeScopeClass(PsiPlainText.class, true);
-    variant.includeScopeClass(XmlToken.class, true); // for embedding custom file types into xml
-    variant.includeScopeClass(LeafPsiElement.class, true); // for embedding custom file types into xml
-    variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
+    variant.includeScopeClass(PsiElement.class, true);
+    variant.addCompletionFilter(TrueFilter.INSTANCE);
     final String[] empty = {};
 
     variant.addCompletion(mySyntaxTable.getKeywords1().toArray(empty), TailType.NONE);

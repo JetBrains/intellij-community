@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.ContextGetter;
-import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.PatternFilter;
 import com.intellij.util.ReflectionCache;
@@ -119,14 +118,6 @@ public class CompletionVariant {
 
   public void includeScopeClass(Class<?> aClass, boolean isFinalScope){
     myScopeClasses.add(new Scope(aClass, isFinalScope));
-  }
-
-  public void addCompletionFilterOnElement(ElementFilter filter){
-    addCompletionFilterOnElement(filter, TailType.NONE);
-  }
-
-  public void addCompletionFilterOnElement(ElementFilter filter, TailType tailType){
-    addCompletion(new ElementExtractorFilter(filter), tailType);
   }
 
   public void addCompletionFilter(ElementFilter filter, TailType tailType){
