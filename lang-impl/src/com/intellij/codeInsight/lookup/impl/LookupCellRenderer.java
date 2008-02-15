@@ -2,8 +2,6 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesHighlighter;
@@ -13,7 +11,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -28,6 +29,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,8 +66,8 @@ class LookupCellRenderer implements ListCellRenderer {
   private StrikeoutLabel myLabel2; // parameters and tail text
   private JLabel myLabel3; // type
   private JPanel myPanel;
-  private boolean myHasNonTemplates;
-  private int myMaxTemplateDescriptionLength = 0;
+
+  private LookupElementPresentationImpl myLookupElementPresentation = new LookupElementPresentationImpl();
 
   public LookupCellRenderer(LookupImpl lookup) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -111,95 +113,85 @@ class LookupCellRenderer implements ListCellRenderer {
     final LookupItem[] items = lookup.getItems();
     if (items.length > 0) lookup.getList().setPrototypeCellValue(items[0]);
 
-    for (LookupItem item : items) {
-      if (!(item.getObject() instanceof Template)) {
-        myHasNonTemplates = true;
-        break;
-      }
-      else {
-        Template template = (Template)item.getObject();
-        final String description = template.getDescription();
-        if (description != null) {
-          myMaxTemplateDescriptionLength = Math.max(myMaxTemplateDescriptionLength, description.length());
-        }
-      }
-    }
+    myLookupElementPresentation.setItems(items);
 
     UIUtil.removeQuaquaVisualMarginsIn(myPanel);
   }
 
   public Component getListCellRendererComponent(
-    JList list,
+    final JList list,
     Object value,
     int index,
     boolean isSelected,
     boolean hasFocus) {
 
-    LookupItem item = (LookupItem)value;
+    final LookupItem item = (LookupItem)value;
     Color background = isSelected ? SELECTED_BACKGROUND_COLOR : BACKGROUND_COLOR;
-    Color foreground = isSelected ? SELECTED_FOREGROUND_COLOR : FOREGROUND_COLOR;
+    final Color foreground = isSelected ? SELECTED_FOREGROUND_COLOR : FOREGROUND_COLOR;
     final int preferredCount = myLookup.getPreferredItemsCount();
     if (index <= preferredCount - 1 && preferredCount < list.getModel().getSize() - 1) {
       background = isSelected ? SELECTED_BACKGROUND_COLOR : new Color(220, 245, 220);
     }
-    getLabel0(item, background, isSelected);
-    getLabel1(item, background, foreground);
-    getLabel2(item, background, foreground, isSelected);
-    getLabel3(item, background, foreground, list);
+
+    myLookupElementPresentation.setContext(item, background, foreground, list, isSelected);
+
+    ElementLookupRenderer renderer = getRendererForItem(item);
+    if (renderer != null) {
+      myLabel2.setBackground(background);
+      renderer.renderElement(item.getObject(), myLookupElementPresentation);
+    }
+    else {
+      setItemTextLabels(item, background, foreground, isSelected, getName(item));
+      getLabel2(item, background, foreground, isSelected);
+      setTypeTextLabel(item, background, foreground, list, getText3(item));
+    }
 
     return myPanel;
   }
 
-  private void getLabel0(LookupItem item, final Color background, final boolean selected){
-    Object o = item.getObject();
+  @Nullable
+  private static ElementLookupRenderer getRendererForItem(final LookupItem item) {
+    for(ElementLookupRenderer renderer: Extensions.getExtensions(ElementLookupRenderer.EP_NAME)) {
+      if (renderer.handlesItem(item.getObject())) return renderer;
+    }
+    return null;
+  }
+
+  private void setItemTextLabels(LookupItem item, final Color background, final Color foreground, final boolean selected, final String name){
     final String prefix = myLookup.getPrefix();
-    String name = getName(item);
     String text;
     Icon icon;
     if (prefix.length() > 0 && StringUtil.startsWithIgnoreCase(name, prefix)){
       text = name.substring(0, prefix.length());
       icon = getIcon(item);
+      setItemTextLabel(item, background, text, icon, myLabel0, selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR);
+
+      text = name.substring(prefix.length());
+      icon = null;
+      setItemTextLabel(item, background, text, icon, myLabel1, foreground);
     }
     else{
       text = "";
       icon = null;
+      setItemTextLabel(item, background, text, icon, myLabel0, selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR);
+
+      text = name;
+      icon = getIcon(item);
+      setItemTextLabel(item, background, text, icon, myLabel1, foreground);
     }
+  }
+
+  private void setItemTextLabel(final LookupItem item, final Color background, final String text, final Icon icon,
+                                final StrikeoutLabel label, final Color fg) {
     boolean bold = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
     boolean strikeout = isToStrikeout(item);
 
-    StrikeoutLabel label = myLabel0;
     label.setText(text);
     label.setIcon(icon);
     label.setFont(bold ? BOLD_FONT : NORMAL_FONT);
     label.setStrikeout(strikeout);
     label.setBackground(background);
-    label.setForeground(selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR);
-  }
-
-  private void getLabel1(LookupItem item, final Color background, final Color foreground){
-    Object o = item.getObject();
-    final String prefix = myLookup.getPrefix();
-    String name = getName(item);
-    String text;
-    Icon icon;
-    if (prefix.length() > 0 && StringUtil.startsWithIgnoreCase(name, prefix)){
-      text = name.substring(prefix.length());
-      icon = null;
-    }
-    else{
-      text = name;
-      icon = getIcon(item);
-    }
-    boolean bold = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
-    boolean overstrike = isToStrikeout(item);
-
-    StrikeoutLabel label = myLabel1;
-    label.setText(text);
-    label.setIcon(icon);
-    label.setFont(bold ? BOLD_FONT : NORMAL_FONT);
-    label.setStrikeout(overstrike);
-    label.setBackground(background);
-    label.setForeground(foreground);
+    label.setForeground(fg);
   }
 
   private void getLabel2(final LookupItem item, Color background, Color foreground, final boolean selected){
@@ -291,10 +283,10 @@ class LookupCellRenderer implements ListCellRenderer {
     return SHOW_SIGNATURES || item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null;
   }
 
-  private void getLabel3(LookupItem item, final Color background, Color foreground, JList list){
+  private void setTypeTextLabel(LookupItem item, final Color background, Color foreground, JList list, final String text3){
     myLabel3.setHorizontalTextPosition(SwingConstants.RIGHT);
 
-    String text = getText3(item);
+    String text = text3;
 
     final int maxWidth =
       (list.getFixedCellWidth() - myLabel0.getPreferredSize().width - myLabel1.getPreferredSize().width - myLabel2.getPreferredSize().width) / FONT_WIDTH - 3;
@@ -381,9 +373,6 @@ class LookupCellRenderer implements ListCellRenderer {
         }
       }
     }
-    else if (o instanceof Template){
-      text = getTemplateDescriptionString((Template)o);
-    }
     else if (o instanceof LookupValueWithUIHint) {
       text = ((LookupValueWithUIHint)o).getTypeHint();
     }
@@ -430,9 +419,6 @@ class LookupCellRenderer implements ListCellRenderer {
     }
     else if (o instanceof PsiType){
       name = ((PsiType)o).getPresentableText();
-    }
-    else if (o instanceof Template){
-      name = getKeyString((Template)o);
     }
     else if (o instanceof XmlElementDescriptor) {
       name = ((XmlElementDescriptor)o).getDefaultName();
@@ -503,13 +489,18 @@ class LookupCellRenderer implements ListCellRenderer {
    * @return width in pixels
    */
   private int getTextWidth(LookupItem item){
-    String text = getName(item);
+    ElementLookupRenderer renderer = getRendererForItem(item);
+    if (renderer != null) {
+      WidthCalculatingPresentation p = new WidthCalculatingPresentation(myLookupElementPresentation);
+      renderer.renderElement(item.getObject(), p);
+      return p.myTotalWidth;
+    }
 
+    String text = getName(item);
     final @NonNls String TYPE_GAP = "XXX";
     text += getText3(item) + TYPE_GAP;
 
     int width = myPanel.getFontMetrics(NORMAL_FONT).stringWidth(text) + 2;
-
     String text2 = getText2(item, true);
     if (text2 != null){
       boolean isSmall = item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null;
@@ -555,33 +546,6 @@ class LookupCellRenderer implements ListCellRenderer {
     return element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated();
   }
 
-  private static String getKeyString(Template template) {
-    return template.getKey();
-  }
-
-  private String getTemplateDescriptionString(Template template) {
-    final int KEY_LENGTH_LIMIT = 10; // longer keys are not really useful, but make popup ugly
-    int max = MAX_LENGTH - Math.min(KEY_LENGTH_LIMIT, TemplateSettings.getInstance().getMaxKeyLength());
-    max = Math.min(max, myMaxTemplateDescriptionLength + 1);
-
-    StringBuilder buffer = new StringBuilder(max);
-    buffer.append(' ');
-    buffer.append(template.getDescription());
-    if (buffer.length() > max){
-      final String ellipsis = "...";
-      if (max > ellipsis.length()){
-        buffer.setLength(max - ellipsis.length());
-        buffer.append(ellipsis);
-      }
-    }
-    else if (!myHasNonTemplates){
-      while(buffer.length() < max){
-        buffer.append(' ');
-      }
-    }
-    return buffer.toString();
-  }
-
   private static String formatTypeName(final PsiClass element, final PsiSubstitutor substitutor) {
     final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(element.getProject());
     String name = element.getName();
@@ -608,5 +572,75 @@ class LookupCellRenderer implements ListCellRenderer {
       }
     }
     return name;
+  }
+
+  private class LookupElementPresentationImpl extends UserDataHolderBase implements LookupElementPresentation {
+    private LookupItem myItem;
+    private Color myBackground;
+    private Color myForeground;
+    private JList myList;
+    private boolean mySelected;
+    private LookupItem[] myItems;
+
+    public void setItemText(final String text) {
+      setItemTextLabels(myItem, myBackground, myForeground, mySelected, text);
+    }
+
+    public void setTailText(final String text) {
+      setTypeTextLabel(myItem, myBackground, myForeground, myList, text);
+    }
+
+    public void setContext(final LookupItem item, final Color background, final Color foreground, final JList list, final boolean selected) {
+      myItem = item;
+      myBackground = background;
+      myForeground = foreground;
+      myList = list;
+      mySelected = selected;
+    }
+
+    public void setItems(final LookupItem[] items) {
+      myItems = items;
+    }
+
+    public LookupItem[] getItems() {
+      return myItems;
+    }
+
+    public int getMaxLength() {
+      return MAX_LENGTH;
+    }
+  }
+
+  private class WidthCalculatingPresentation extends LookupElementPresentationImpl {
+    private LookupElementPresentationImpl myBasePresentation;
+    private int myTotalWidth = 2;
+
+    private WidthCalculatingPresentation(final LookupElementPresentationImpl basePresentation) {
+      myBasePresentation = basePresentation;
+    }
+
+    public void setItemText(final String text) {
+      myTotalWidth += calculateTextWidth(text);
+    }
+
+    public void setTailText(final String text) {
+      myTotalWidth += calculateTextWidth(text + "XXX");
+    }
+
+    private int calculateTextWidth(final String text) {
+      return myPanel.getFontMetrics(NORMAL_FONT).stringWidth(text);
+    }
+
+    public LookupItem[] getItems() {
+      return myBasePresentation.getItems();
+    }
+
+    public <T> T getUserData(final Key<T> key) {
+      return myBasePresentation.getUserData(key);
+    }
+
+    public <T> void putUserData(final Key<T> key, final T value) {
+      myBasePresentation.putUserData(key, value);
+    }
   }
 }
