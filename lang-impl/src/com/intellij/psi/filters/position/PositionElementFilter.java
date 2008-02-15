@@ -10,8 +10,7 @@ import com.intellij.psi.filters.ElementFilter;
  * Time: 13:51:02
  * To change this template use Options | File Templates.
  */
-public abstract class PositionElementFilter
-  implements ElementFilter{
+public abstract class PositionElementFilter implements ElementFilter {
   private ElementFilter myFilter;
 
   public void setFilter(ElementFilter filter){
@@ -26,7 +25,7 @@ public abstract class PositionElementFilter
     return true;
   }
 
-  protected static final PsiElement getOwnerChild(final PsiElement scope, PsiElement element){
+  protected static PsiElement getOwnerChild(final PsiElement scope, PsiElement element){
     while(element != null && element.getParent() != scope){
       element = element.getParent();
     }
