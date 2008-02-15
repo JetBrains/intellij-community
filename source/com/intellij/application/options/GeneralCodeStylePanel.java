@@ -30,11 +30,9 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   private JCheckBox myCbUseSameIndents;
   private IndentOptionsEditor myJavaIndentOptions = new JavaIndentOptionsEditor();
-  private IndentOptionsEditor myJspIndentOptions = new IndentOptionsEditor(
-    IndentOptionsEditor.LIST_CONT_INDENT + IndentOptionsEditor.LIST_SMART_TABS);
-  private IndentOptionsEditor myXMLIndentOptions = new IndentOptionsEditor(
-    IndentOptionsEditor.LIST_CONT_INDENT + IndentOptionsEditor.LIST_SMART_TABS);
-  private IndentOptionsEditor myOtherIndentOptions = new IndentOptionsEditor(0);
+  private IndentOptionsEditor myJspIndentOptions = new SmartIndentOptionsEditor();
+  private IndentOptionsEditor myXMLIndentOptions = new SmartIndentOptionsEditor();
+  private IndentOptionsEditor myOtherIndentOptions = new IndentOptionsEditor();
 
   private Map<FileType, IndentOptionsEditor> myAdditionalIndentOptions = new HashMap<FileType, IndentOptionsEditor>();
 

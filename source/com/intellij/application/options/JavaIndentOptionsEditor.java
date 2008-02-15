@@ -8,16 +8,12 @@ import javax.swing.*;
 /**
  * @author yole
  */
-public class JavaIndentOptionsEditor extends IndentOptionsEditor {
+public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
   private JTextField myLabelIndent;
   private JLabel myLabelIndentLabel;
 
   private JCheckBox myLabelIndentAbsolute;
   private JCheckBox myCbDontIndentTopLevelMembers;
-
-  public JavaIndentOptionsEditor() {
-    super(LIST_CONT_INDENT | LIST_SMART_TABS);
-  }
 
   protected void addComponents() {
     super.addComponents();
