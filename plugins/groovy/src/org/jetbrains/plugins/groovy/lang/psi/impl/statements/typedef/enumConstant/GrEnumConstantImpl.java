@@ -18,21 +18,19 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConsta
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
