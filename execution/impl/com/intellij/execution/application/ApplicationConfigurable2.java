@@ -1,10 +1,10 @@
 package com.intellij.execution.application;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.junit2.configuration.ClassBrowser;
 import com.intellij.execution.junit2.configuration.CommonJavaParameters;
 import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
-import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.openapi.options.ConfigurationException;
