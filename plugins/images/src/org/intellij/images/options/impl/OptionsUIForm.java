@@ -23,6 +23,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Computable;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.DocumentAdapter;
 import org.intellij.images.ImagesBundle;
@@ -230,24 +231,21 @@ final class OptionsUIForm {
     private final class ExternalEditorPathActionListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             Application application = ApplicationManager.getApplication();
-            application.runWriteAction(new Runnable() {
-                public void run() {
-                    VirtualFile previous = LocalFileSystem.getInstance().refreshAndFindFileByPath(
-                        externalEditorPath.getText().replace('\\', '/')
-                    );
-
-                    FileChooserDescriptor fileDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
-                    fileDescriptor.setShowFileSystemRoots(true);
-                    fileDescriptor.setTitle(ImagesBundle.message("select.external.executable.title"));
-                    fileDescriptor.setDescription(ImagesBundle.message("select.external.executable.message"));
-                    VirtualFile[] virtualFiles = FileChooser.chooseFiles(externalEditorPath, fileDescriptor, previous);
-
-                    if (virtualFiles != null && virtualFiles.length > 0) {
-                        String path = virtualFiles[0].getPath();
-                        externalEditorPath.setText(path);
-                    }
-                }
+            VirtualFile previous = application.runWriteAction(new Computable<VirtualFile>() {
+                public VirtualFile compute() {
+                    return LocalFileSystem.getInstance().refreshAndFindFileByPath(externalEditorPath.getText().replace('\\', '/'));
+               }
             });
+            FileChooserDescriptor fileDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
+            fileDescriptor.setShowFileSystemRoots(true);
+            fileDescriptor.setTitle(ImagesBundle.message("select.external.executable.title"));
+            fileDescriptor.setDescription(ImagesBundle.message("select.external.executable.message"));
+            VirtualFile[] virtualFiles = FileChooser.chooseFiles(externalEditorPath, fileDescriptor, previous);
+
+            if (virtualFiles.length > 0) {
+                String path = virtualFiles[0].getPath();
+                externalEditorPath.setText(path);
+            }
         }
     }
 }
