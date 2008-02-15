@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
@@ -115,6 +116,14 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
   }
 
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
+    private PsiModificationTracker myModificationTracker;
+    private long myOutOfCodeBlockModificationCount;
+
+    private MyPsiTreeChangeListener() {
+      myModificationTracker = PsiManager.getInstance(myProject).getModificationTracker();
+      myOutOfCodeBlockModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
+    }
+
     public void childRemoved(PsiTreeChangeEvent event) {
       PsiElement child = event.getOldChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
@@ -133,7 +142,6 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
       PsiElement oldChild = event.getOldChild();
       PsiElement newChild = event.getNewChild();
       if (oldChild instanceof PsiWhiteSpace && newChild instanceof PsiWhiteSpace) return; //optimization
-      if (oldChild instanceof PsiCodeBlock && newChild instanceof PsiCodeBlock) return; //optimization
       childrenChanged();
     }
 
@@ -146,6 +154,9 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     }
 
     private void childrenChanged() {
+      long newModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
+      if (newModificationCount == myOutOfCodeBlockModificationCount) return;
+      myOutOfCodeBlockModificationCount = newModificationCount;
       setupUpdateAlarm();
     }
 
