@@ -29,7 +29,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.*;
 import com.intellij.util.ui.UIUtil;
@@ -241,8 +241,7 @@ public class CommanderPanel extends JPanel {
 
   protected boolean shouldDrillDownOnEmptyElement(final Object value) {
     return value instanceof PsiClass ||
-           (value instanceof PsiJavaFile && ((PsiJavaFile) value).getFileType() != StdFileTypes.JSP &&
-                                            ((PsiJavaFile) value).getFileType() != StdFileTypes.JSPX) ||
+           (value instanceof PsiFile && ((PsiFile) value).getFileType() == StdFileTypes.JAVA) ||
            value instanceof PsiDirectory;
   }
 

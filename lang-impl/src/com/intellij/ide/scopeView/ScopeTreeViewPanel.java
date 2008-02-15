@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -433,7 +434,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     public void childrenChanged(PsiTreeChangeEvent event) {
       final PsiElement parent = event.getParent();
       final PsiFile file = parent.getContainingFile();
-      if (file instanceof PsiJavaFile) {
+      if (file != null && file.getFileType() == StdFileTypes.JAVA) {
         if (!file.getViewProvider().isPhysical()) return;
         queueUpdate(new Runnable() {
           public void run() {
