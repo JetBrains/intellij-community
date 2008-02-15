@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Alarm;
 
 import java.awt.datatransfer.Transferable;
@@ -116,6 +117,14 @@ public class ProjectListBuilder extends AbstractListBuilder {
   protected void refreshSelection() {}
 
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
+    private PsiModificationTracker myModificationTracker;
+    private long myOutOfCodeBlockModificationCount;
+
+    private MyPsiTreeChangeListener() {
+      myModificationTracker = PsiManager.getInstance(myProject).getModificationTracker();
+      myOutOfCodeBlockModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
+    }
+
     public void childRemoved(final PsiTreeChangeEvent event) {
       final PsiElement child = event.getOldChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
@@ -132,7 +141,6 @@ public class ProjectListBuilder extends AbstractListBuilder {
       final PsiElement oldChild = event.getOldChild();
       final PsiElement newChild = event.getNewChild();
       if (oldChild instanceof PsiWhiteSpace && newChild instanceof PsiWhiteSpace) return; //optimization
-      if (oldChild instanceof PsiCodeBlock && newChild instanceof PsiCodeBlock) return; //optimization
       childrenChanged();
     }
 
@@ -145,6 +153,9 @@ public class ProjectListBuilder extends AbstractListBuilder {
     }
 
     private void childrenChanged() {
+      long newModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
+      if (newModificationCount == myOutOfCodeBlockModificationCount) return;
+      myOutOfCodeBlockModificationCount = newModificationCount;
       addUpdateRequest();
     }
 
