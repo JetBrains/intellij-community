@@ -234,6 +234,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
     int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
+    boolean hasBlockSelection = myEditor.getSelectionModel().hasBlockSelection();
     int selectionStart = myEditor.getSelectionModel().getSelectionStart();
     int selectionEnd = myEditor.getSelectionModel().getSelectionEnd();
 
@@ -266,7 +267,9 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     myCaretPositionSaved = oldCaretPositionSaved;
 
-    myEditor.getSelectionModel().setSelection(selectionStart, selectionEnd);
+    if (!hasBlockSelection) {
+      myEditor.getSelectionModel().setSelection(selectionStart, selectionEnd);
+    }
 
     if (mySavedCaretShift > 0) {
       myEditor.getScrollingModel().disableAnimation();
