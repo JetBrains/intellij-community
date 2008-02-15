@@ -160,12 +160,20 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
 
   public void disposeComponent() {
+    myInvalidationService.shutdown();
+    try {
+      myInvalidationService.awaitTermination(30, TimeUnit.SECONDS);
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+    }
+
     for (ID<?, ?> indexId : myIndices.keySet()) {
       getIndex(indexId).dispose();
     }
+    
     myVfManager.removeVirtualFileListener(myChangedFilesUpdater);
     myVfManager.unregisterRefreshUpdater(myChangedFilesUpdater);
-    myInvalidationService.shutdown();
   }
                 
   public FileBasedIndexState getState() {
