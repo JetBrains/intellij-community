@@ -1,14 +1,14 @@
 package com.intellij.application.options;
 
-import com.intellij.ide.highlighter.JavaHighlighterFactory;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
 import com.intellij.ui.OptionGroup;
@@ -17,10 +17,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
@@ -33,6 +37,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private IndentOptionsEditor myOtherIndentOptions = new IndentOptionsEditor();
 
   private Map<FileType, IndentOptionsEditor> myAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptionsEditor>();
+  private List<FileTypeIndentOptionsProvider> myIndentOptionsProviders = new ArrayList<FileTypeIndentOptionsProvider>();
 
   private TabbedPaneWrapper myIndentOptionsTabs;
   private JPanel myIndentPanel;
@@ -41,6 +46,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JComboBox myLineSeparatorCombo;
   private JPanel myPanel;
   private int myRightMargin;
+  private int myLastSelectedTab = 0;
 
 
   public GeneralCodeStylePanel(CodeStyleSettings settings) {
@@ -48,6 +54,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     final FileTypeIndentOptionsProvider[] indentOptionsProviders = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
     for (FileTypeIndentOptionsProvider indentOptionsProvider : indentOptionsProviders) {
+      myIndentOptionsProviders.add(indentOptionsProvider);
       myAdditionalIndentOptions.put(indentOptionsProvider.getFileType(), indentOptionsProvider.createOptionsEditor());
     }
 
@@ -123,7 +130,18 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     myIndentOptionsTabs.addTab(ApplicationBundle.message("tab.indent.other"), myOtherIndentOptions.createPanel());
 
+    myIndentOptionsTabs.addChangeListener(new ChangeListener() {
+      public void stateChanged(final ChangeEvent e) {
+        final int selIndex = myIndentOptionsTabs.getSelectedIndex();
+        if (selIndex != myLastSelectedTab) {
+          myLastSelectedTab = selIndex;
+          updatePreviewEditor();
+        }
+      }
+    });
+
     optionGroup.add(myIndentOptionsTabs.getComponent());
+    updatePreviewEditor();
 
     return optionGroup.createPanel();
   }
@@ -135,65 +153,25 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   @NotNull
   protected FileType getFileType() {
-    return StdFileTypes.JAVA;
+    FileTypeIndentOptionsProvider provider = getSelectedIndentProvider();
+    if (provider == null) return FileTypes.PLAIN_TEXT;
+    return provider.getFileType();
   }
 
   protected String getPreviewText() {
-    return "public class Foo {\n" +
-           "  public int[] X = new int[] { 1, 3, 5\n" +
-           "  7, 9, 11};\n" +
-           "  public void foo(boolean a, int x,\n" +
-           "    int y, int z) {\n" +
-           "    label1: do {\n" +
-           "      try {\n" +
-           "        if(x > 0) {\n" +
-           "          int someVariable = a ? \n" +
-           "             x : \n" +
-           "             y;\n" +
-           "        } else if (x < 0) {\n" +
-           "          int someVariable = (y +\n" +
-           "          z\n" +
-           "          );\n" +
-           "          someVariable = x = \n" +
-           "          x +\n" +
-           "          y;\n" +
-           "        } else {\n" +
-           "          label2:\n" +
-           "          for (int i = 0;\n" +
-           "               i < 5;\n" +
-           "               i++) doSomething(i);\n" +
-           "        }\n" +
-           "        switch(a) {\n" +
-           "          case 0: \n" +
-           "           doCase0();\n" +
-           "           break;\n" +
-           "          default: \n" +
-           "           doDefault();\n" +
-           "        }\n" +
-           "      }\n" +
-           "      catch(Exception e) {\n" +
-           "        processException(e.getMessage(),\n" +
-           "          x + y, z, a);\n" +
-           "      }\n" +
-           "      finally {\n" +
-           "        processFinally();\n" +
-           "      }\n" +
-           "    }while(true);\n" +
-           "\n" +
-           "    if (2 < 3) return;\n" +
-           "    if (3 < 4)\n" +
-           "       return;\n" +
-           "    do x++ while (x < 10000);\n" +
-           "    while (x < 50000) x++;\n" +
-           "    for (int i = 0; i < 5; i++) System.out.println(i);\n" +
-           "  }\n" +
-           "  private class InnerClass implements I1,\n" +
-           "  I2 {\n" +
-           "    public void bar() throws E1,\n" +
-           "     E2 {\n" +
-           "    }\n" +
-           "  }\n" +
-           "}";
+    final FileTypeIndentOptionsProvider provider = getSelectedIndentProvider();
+    if (provider != null) return provider.getPreviewText();
+    return "";
+  }
+
+  @Nullable
+  private FileTypeIndentOptionsProvider getSelectedIndentProvider() {
+    if (myIndentOptionsTabs == null) return null;
+    final int selIndex = myIndentOptionsTabs.getSelectedIndex();
+    if (selIndex < myIndentOptionsProviders.size()) {
+      return myIndentOptionsProviders.get(selIndex);
+    }
+    return null;
   }
 
   public void apply(CodeStyleSettings settings) {
@@ -293,7 +271,13 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
-    return JavaHighlighterFactory.createJavaHighlighter(scheme, LanguageLevel.HIGHEST);
+    return EditorHighlighterFactory.getInstance().createEditorHighlighter(getFileType(), scheme, null);
   }
 
+  protected void prepareForReformat(final PsiFile psiFile) {
+    final FileTypeIndentOptionsProvider provider = getSelectedIndentProvider();
+    if (provider != null) {
+      provider.prepareForReformat(psiFile);
+    }
+  }
 }

@@ -41,7 +41,10 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Icons;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -262,12 +265,16 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   }
 
   protected String getPreviewText() {
-    return readFromFile("preview.html.template");
+    return readFromFile(this.getClass(), "preview.html.template");
 
   }
 
   @NotNull
   protected FileType getFileType() {
     return StdFileTypes.HTML;
+  }
+
+  protected void prepareForReformat(final PsiFile psiFile) {
+    psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
   }
 }

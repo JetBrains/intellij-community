@@ -64,8 +64,9 @@ public class IndentOptionsEditor extends OptionGroup {
   }
 
   protected int getUIIndent() {
+    final String indentText = myIndentField.getText();
     try {
-      return Math.max(Integer.parseInt(myIndentField.getText()), 1);
+      return Math.max(Integer.parseInt(indentText), 1);
     }
     catch (NumberFormatException e) {
       //stay with default

@@ -8,6 +8,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OptionGroup;
 import org.jetbrains.annotations.NotNull;
@@ -206,4 +208,7 @@ public class CodeStyleBlankLinesPanel extends CodeStyleAbstractPanel {
     return myPanel;
   }
 
+  protected void prepareForReformat(final PsiFile psiFile) {
+    psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
+  }
 }

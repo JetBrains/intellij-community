@@ -37,6 +37,9 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -159,11 +162,15 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   }
 
   protected String getPreviewText() {
-    return readFromFile("preview.xml.template");
+    return readFromFile(getClass(), "preview.xml.template");
   }
 
   @NotNull
   protected FileType getFileType() {
     return StdFileTypes.XML;
+  }
+
+  protected void prepareForReformat(final PsiFile psiFile) {
+    psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
   }
 }

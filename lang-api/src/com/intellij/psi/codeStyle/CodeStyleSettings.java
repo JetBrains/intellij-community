@@ -19,7 +19,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
@@ -115,9 +114,6 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       clon.PACKAGES_TO_USE_IMPORT_ON_DEMAND = (PackageTable)PACKAGES_TO_USE_IMPORT_ON_DEMAND.clone();
       clon.IMPORT_LAYOUT_TABLE = (ImportLayoutTable)IMPORT_LAYOUT_TABLE.clone();
 
-      clon.JAVA_INDENT_OPTIONS = (IndentOptions)JAVA_INDENT_OPTIONS.clone();
-      clon.JSP_INDENT_OPTIONS = (IndentOptions)JSP_INDENT_OPTIONS.clone();
-      clon.XML_INDENT_OPTIONS = (IndentOptions)XML_INDENT_OPTIONS.clone();
       clon.OTHER_INDENT_OPTIONS = (IndentOptions)OTHER_INDENT_OPTIONS.clone();
 
       clon.ourAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptions>();
@@ -1150,13 +1146,11 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   }
 
   public IndentOptions getIndentOptions(FileType fileType) {
-    if (USE_SAME_INDENTS || fileType == null || fileType == StdFileTypes.JAVA) return JAVA_INDENT_OPTIONS;
+    if (USE_SAME_INDENTS || fileType == null) return OTHER_INDENT_OPTIONS;
 
     final IndentOptions indentOptions = ourAdditionalIndentOptions.get(fileType);
     if (indentOptions != null) return indentOptions;
 
-    if (fileType == StdFileTypes.JSP) return JSP_INDENT_OPTIONS;
-    if (fileType == StdFileTypes.XML) return XML_INDENT_OPTIONS;
     return OTHER_INDENT_OPTIONS;
   }
 

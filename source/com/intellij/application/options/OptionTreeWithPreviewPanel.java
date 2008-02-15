@@ -9,6 +9,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.Tree;
@@ -338,6 +340,10 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
     }
     catch (SecurityException e) {
     }
+  }
+
+  protected void prepareForReformat(final PsiFile psiFile) {
+    psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
   }
 
   protected class MyTreeCellRenderer implements TreeCellRenderer {

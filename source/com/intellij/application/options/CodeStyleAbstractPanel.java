@@ -48,12 +48,11 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.Alarm;
@@ -120,12 +119,25 @@ public abstract class CodeStyleAbstractPanel {
     EditorSettings editorSettings = editor.getSettings();
     fillEditorSettings(editorSettings);
 
+    updatePreviewHighlighter(editor);
+
+    return editor;
+  }
+
+  private void updatePreviewHighlighter(final EditorEx editor) {
     EditorColorsScheme scheme = editor.getColorsScheme();
     scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
 
     editor.setHighlighter(createHighlighter(scheme));
+  }
 
-    return editor;
+  protected void updatePreviewEditor() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        myEditor.getDocument().setText(getPreviewText());
+      }
+    });
+    updatePreviewHighlighter((EditorEx) myEditor);
   }
 
   protected abstract EditorHighlighter createHighlighter(final EditorColorsScheme scheme);
@@ -178,7 +190,7 @@ public abstract class CodeStyleAbstractPanel {
                                                                                    getFileType(), myTextToReformat,
                                                                                    LocalTimeCounter.currentTime(), false, false);
 
-          psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
+          prepareForReformat(psiFile);
           apply(mySettings);
           CodeStyleSettings clone = (CodeStyleSettings)mySettings.clone();
           if (getRightMargin() > 0) {
@@ -200,6 +212,8 @@ public abstract class CodeStyleAbstractPanel {
       }
     });
   }
+
+  protected abstract void prepareForReformat(PsiFile psiFile);
 
   @NotNull
   protected abstract FileType getFileType();
@@ -246,9 +260,9 @@ public abstract class CodeStyleAbstractPanel {
     wrapCombo.addItem(ApplicationBundle.message("combobox.codestyle.wrap.always"));
   }
 
-  protected String readFromFile(@NonNls final String fileName) {
+  public static String readFromFile(final Class resourceContainerClass, @NonNls final String fileName) {
     try {
-      final InputStream stream = getClass().getClassLoader().getResourceAsStream("codeStyle/preview/" + fileName);
+      final InputStream stream = resourceContainerClass.getClassLoader().getResourceAsStream("codeStyle/preview/" + fileName);
       final InputStreamReader reader = new InputStreamReader(stream);
       final LineNumberReader lineNumberReader = new LineNumberReader(reader);
       final StringBuffer result;

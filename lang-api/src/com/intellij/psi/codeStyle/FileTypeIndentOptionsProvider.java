@@ -25,6 +25,8 @@ package com.intellij.psi.codeStyle;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NonNls;
 
 public interface FileTypeIndentOptionsProvider {
   ExtensionPointName<FileTypeIndentOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileTypeIndentOptionsProvider");
@@ -34,4 +36,9 @@ public interface FileTypeIndentOptionsProvider {
   FileType getFileType();
 
   IndentOptionsEditor createOptionsEditor();
+
+  @NonNls
+  String getPreviewText();
+
+  void prepareForReformat(final PsiFile psiFile);
 }
