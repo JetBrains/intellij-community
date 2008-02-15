@@ -7,7 +7,6 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.ide.structureView.impl.java.InheritedMembersFilter;
 import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -21,7 +20,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -36,6 +34,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +50,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class FileStructureDialog extends DialogWrapper {
   private final Editor myEditor;
@@ -144,6 +144,17 @@ public class FileStructureDialog extends DialogWrapper {
     myCommanderPanel = new MyCommanderPanel(myProject);
     myTreeStructure = new MyStructureTreeStructure();
 
+    List<FileStructureFilter> fileStructureFilters = new ArrayList<FileStructureFilter>();
+    if (myTreeActionsOwner != null) {
+      for(Filter filter: myBaseTreeModel.getFilters()) {
+        if (filter instanceof FileStructureFilter) {
+          final FileStructureFilter fsFilter = (FileStructureFilter)filter;
+          myTreeActionsOwner.setFilterIncluded(fsFilter, true);
+          fileStructureFilters.add(fsFilter);
+        }
+      }
+    }
+
     PsiFile psiFile = getPsiFile(myProject);
     StructureViewBuilder viewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(psiFile);
     boolean showRoot =
@@ -186,23 +197,14 @@ public class FileStructureDialog extends DialogWrapper {
 
     addNarrowDownCheckbox(panel);
 
-    if (myTreeActionsOwner != null && isInheritorFilterAvailable()) {
-      addShowInheritedCheckbox(panel);
+    for(FileStructureFilter filter: fileStructureFilters) {
+      addFilterCheckbox(panel, filter);
     }
 
     panel.add(myCommanderPanel,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
     return panel;
-  }
-
-  private boolean isInheritorFilterAvailable() {
-    for(Filter filter: myBaseTreeModel.getFilters()) {
-      if (filter.getName().equals(InheritedMembersFilter.ID)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private void addNarrowDownCheckbox(final JPanel panel) {
@@ -226,11 +228,11 @@ public class FileStructureDialog extends DialogWrapper {
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 5), 0, 0));
   }
 
-  private void addShowInheritedCheckbox(final JPanel panel) {
-    final JCheckBox chkIncludeInherited = new JCheckBox();
-    chkIncludeInherited.addActionListener(new ActionListener() {
+  private void addFilterCheckbox(final JPanel panel, final FileStructureFilter fileStructureFilter) {
+    final JCheckBox chkFilter = new JCheckBox();
+    chkFilter.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        myTreeActionsOwner.setIncludeInherited(chkIncludeInherited.isSelected());
+        myTreeActionsOwner.setFilterIncluded(fileStructureFilter, !chkFilter.isSelected());
         myTreeStructure.rebuildTree();
         ProjectListBuilder builder = (ProjectListBuilder)myCommanderPanel.getBuilder();
         if (builder != null) {
@@ -238,19 +240,19 @@ public class FileStructureDialog extends DialogWrapper {
         }
       }
     });
-    chkIncludeInherited.setFocusable(false);
-    String text = IdeBundle.message("file.structure.toggle.show.inherited");
-    final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("FileStructurePopup");
+    chkFilter.setFocusable(false);
+    String text = fileStructureFilter.getCheckBoxText();
+    final Shortcut[] shortcuts = fileStructureFilter.getShortcut();
     if (shortcuts.length > 0) {
       text += " (" + KeymapUtil.getShortcutText(shortcuts [0]) + ")";
       new AnAction() {
         public void actionPerformed(final AnActionEvent e) {
-          chkIncludeInherited.doClick();
+          chkFilter.doClick();
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), panel);
     }
-    chkIncludeInherited.setText(text);
-    panel.add(chkIncludeInherited,
+    chkFilter.setText(text);
+    panel.add(chkFilter,
                 new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 5), 0, 0));
   }
 
@@ -401,11 +403,7 @@ public class FileStructureDialog extends DialogWrapper {
   }
 
   private class MyTreeActionsOwner implements TreeActionsOwner {
-    private boolean myIncludeInherited = false;
-
-    public void setIncludeInherited(final boolean includeInherited) {
-      myIncludeInherited = includeInherited;
-    }
+    private Set<Filter> myFilters = new HashSet<Filter>();
 
     public void setActionActive(String name, boolean state) {
     }
@@ -416,8 +414,19 @@ public class FileStructureDialog extends DialogWrapper {
           if (!sorter.isVisible()) return true;
         }
       }
-      return (!myIncludeInherited && InheritedMembersFilter.ID.equals(name)) ||
-             Sorter.ALPHA_SORTER_ID.equals(name);
+      for(Filter filter: myFilters) {
+        if (filter.getName().equals(name)) return true;
+      }
+      return Sorter.ALPHA_SORTER_ID.equals(name);
+    }
+
+    public void setFilterIncluded(final FileStructureFilter filter, final boolean selected) {
+      if (selected) {
+        myFilters.add(filter);
+      }
+      else {
+        myFilters.remove(filter);
+      }
     }
   }
 }
