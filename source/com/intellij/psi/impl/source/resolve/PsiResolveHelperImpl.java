@@ -621,7 +621,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       final PsiSubstitutor finalSubstitutor = substitutor.put(typeParameter, null);
       PsiType superType = finalSubstitutor.substitute(typeParameter.getSuperTypes()[0]);
       if (superType == null) superType = PsiType.getJavaLangObject(manager, scope);
-      if (forCompletion && !(superType instanceof PsiWildcardType)) {
+      if (forCompletion && superType != null && !(superType instanceof PsiWildcardType)) {
         result = new Pair<PsiType, ConstraintType>(PsiWildcardType.createExtends(manager, superType), ConstraintType.EQUALS);
       }
       else {
@@ -631,7 +631,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     else {
       PsiType guess = constraint.getFirst();
       if (guess == null) guess = TypeConversionUtil.typeParameterErasure(typeParameter);
-      if (forCompletion && !(guess instanceof PsiWildcardType)) guess = PsiWildcardType.createExtends(manager, guess);
+      if (forCompletion && guess != null && !(guess instanceof PsiWildcardType)) guess = PsiWildcardType.createExtends(manager, guess);
 
       //The following code is the result of deep thought, do not shit it out before discussing with [ven]
       if (returnType instanceof PsiClassType && typeParameter.equals(((PsiClassType)returnType).resolve())) {
