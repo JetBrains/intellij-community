@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,7 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public interface LookupElement<T> {
+public interface LookupElement<T> extends UserDataHolder{
   LookupElement[] EMPTY_ARRAY = new LookupElement[0];
 
   @NotNull
