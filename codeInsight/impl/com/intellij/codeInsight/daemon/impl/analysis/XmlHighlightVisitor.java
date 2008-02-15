@@ -31,7 +31,6 @@ import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdReferenceProvider;
 import com.intellij.psi.jsp.JspDirectiveKind;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
@@ -56,7 +55,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 /**
- * @author Mike                                  
+ * @author Mike
  */
 public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightVisitor, Validator.ValidationHost {
   private static final Logger LOG = LoggerFactory.getInstance().getLoggerInstance(
@@ -64,7 +63,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   );
   public static final Key<String> DO_NOT_VALIDATE_KEY = Key.create("do not validate");
   private List<HighlightInfo> myResult;
-  @Nullable private XmlRefCountHolder myRefCountHolder;
 
   private static boolean ourDoJaxpTesting;
 
@@ -504,22 +502,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
     final RemoveAttributeIntentionFix removeAttributeIntention = new RemoveAttributeIntentionFix(localName,attribute);
 
-    if (tag instanceof HtmlTag) {
-      //final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
-      //LocalInspectionToolWrapper toolWrapper =
-      //  (LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME);
-      //HtmlStyleLocalInspection inspection = (HtmlStyleLocalInspection)toolWrapper.getTool();
-      //if (isAdditionallyDeclared(inspection.getAdditionalEntries(XmlEntitiesInspection.UNKNOWN_ATTRIBUTE), localName)) return null;
-      //key = HighlightDisplayKey.find(HtmlStyleLocalInspection.SHORT_NAME);
-      //if (!inspectionProfile.isToolEnabled(key)) return null;
-      //
-      //quickFixes = new IntentionAction[]{inspection.getIntentionAction(localName, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE),
-      //                                   removeAttributeIntention};
-      //
-      //
-      //tagProblemInfoType = SeverityRegistrar.getHighlightInfoTypeBySeverity(inspectionProfile.getErrorLevel(key).getSeverity());
-    }
-    else {
+    if (!(tag instanceof HtmlTag)) {
       final HighlightInfoType tagProblemInfoType = HighlightInfoType.WRONG_REF;
       IntentionAction[] quickFixes = new IntentionAction[]{removeAttributeIntention};
 
@@ -612,32 +595,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       }
     }
 
-    PsiReference[] refs = null;
-    final XmlRefCountHolder refCountHolder = myRefCountHolder;  // To make sure it doesn't get null in multi-threaded envir.
-
-    if (refCountHolder != null && value.getUserData(DO_NOT_VALIDATE_KEY) == null) {
-      if (attributeDescriptor.hasIdType()) {
-        if (doAddValueWithIdType(value, refCountHolder, false)) return;
-      } else {
-        refs = value.getReferences();
-        for(PsiReference r:refs) {
-          if (r instanceof IdReferenceProvider.GlobalAttributeValueSelfReference) {
-            if (doAddValueWithIdType(value, refCountHolder, r.isSoft())) return;
-          }
-        }
-      }
-    }
-
-    if (refs == null) refs = value.getReferences();
-
-    doCheckRefs(value, refs);
-  }
-
-  private static boolean doAddValueWithIdType(final XmlAttributeValue value,
-                                       final XmlRefCountHolder refCountHolder, boolean soft) {
-    refCountHolder.registerPossiblyDuplicateElement(value, soft ? Boolean.TRUE: Boolean.FALSE);
-
-    return false;
+    checkReferences(value);
   }
 
   private void checkReferences(PsiElement value) {
@@ -745,16 +703,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   public boolean init(final boolean updateWholeFile, final PsiFile file) {
-    if (!(file instanceof XmlFile))
-      return true;
-    if (updateWholeFile) {
-      final XmlRefCountHolder countHolder = XmlRefCountHolder.getInstance((XmlFile)file);
-      countHolder.clear();
-      myRefCountHolder = countHolder;
-    }
-    else {
-      myRefCountHolder = null;
-    }
     return true;
   }
 
