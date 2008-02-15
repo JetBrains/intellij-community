@@ -1,16 +1,16 @@
 package com.intellij.psi.formatter.java;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.formatting.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.formatter.FormatterUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class LabeledJavaBlock extends AbstractJavaBlock{
   public LabeledJavaBlock(final ASTNode node,
@@ -41,7 +41,7 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
   }
 
   private Indent getLabelIndent() {
-    if (mySettings.JAVA_INDENT_OPTIONS.LABEL_INDENT_ABSOLUTE) {
+    if (mySettings.getIndentOptions(StdFileTypes.JAVA).LABEL_INDENT_ABSOLUTE) {
       return Indent.getAbsoluteLabelIndent();
     } else {
       return Indent.getLabelIndent();

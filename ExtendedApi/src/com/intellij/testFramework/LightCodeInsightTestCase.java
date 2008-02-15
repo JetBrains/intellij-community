@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -147,7 +148,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
       int caretLine = StringUtil.offsetToLineNumber(fileText, caretMarker.getStartOffset());
       int caretCol = EditorUtil.calcColumnNumber(null, myEditor.getDocument().getText(),
                                                  myEditor.getDocument().getLineStartOffset(caretLine), caretMarker.getStartOffset(),
-                                                 CodeStyleSettingsManager.getSettings(getProject()).JAVA_INDENT_OPTIONS.TAB_SIZE);
+                                                 CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
       LogicalPosition pos = new LogicalPosition(caretLine, caretCol);
       myEditor.getCaretModel().moveToLogicalPosition(pos);
     }
@@ -363,7 +364,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
       int caretCol = EditorUtil.calcColumnNumber(null, newFileText,
                                                  StringUtil.lineColToOffset(newFileText, caretLine, 0),
                                                  caretMarker.getStartOffset(),
-                                                 CodeStyleSettingsManager.getSettings(getProject()).JAVA_INDENT_OPTIONS.TAB_SIZE);
+                                                 CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
 
       assertEquals(getMessage("caretLine", message), caretLine + 1, myEditor.getCaretModel().getLogicalPosition().line + 1);
       assertEquals(getMessage("caretColumn", message), caretCol + 1, myEditor.getCaretModel().getLogicalPosition().column + 1);

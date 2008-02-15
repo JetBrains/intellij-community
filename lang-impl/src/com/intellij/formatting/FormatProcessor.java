@@ -3,6 +3,7 @@ package com.intellij.formatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -146,7 +147,7 @@ class FormatProcessor {
     myLastTokenBlock = null;
     myDisposed = true;
 
-    doModify(blocksToModify, model,myIndentOption,mySettings.JAVA_INDENT_OPTIONS); 
+    doModify(blocksToModify, model,myIndentOption,mySettings.getIndentOptions(StdFileTypes.JAVA));
   }
 
   private static void doModify(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,
