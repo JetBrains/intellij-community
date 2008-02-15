@@ -3,18 +3,13 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.lang.properties.PropertiesFileType;
-import com.intellij.lang.properties.PropertiesHighlighter;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -142,8 +137,10 @@ class LookupCellRenderer implements ListCellRenderer {
     }
     else {
       setItemTextLabels(item, background, foreground, isSelected, getName(item));
-      getLabel2(item, background, foreground, isSelected);
-      setTypeTextLabel(item, background, foreground, list, getText3(item));
+      String text = getText2(item, false);
+
+      setTailTextLabel(item, background, foreground, isSelected, text, null);
+      setTypeTextLabel(item, background, foreground, list, getText3(item), null);
     }
 
     return myPanel;
@@ -194,9 +191,8 @@ class LookupCellRenderer implements ListCellRenderer {
     label.setForeground(fg);
   }
 
-  private void getLabel2(final LookupItem item, Color background, Color foreground, final boolean selected){
-    String text = getText2(item, false);
-
+  private void setTailTextLabel(final LookupItem item, final Color background, Color foreground, final boolean selected, final String text,
+                             final Font forceFont) {
     StrikeoutLabel label = myLabel2;
     if (text != null){
       String s = text;
@@ -214,16 +210,11 @@ class LookupCellRenderer implements ListCellRenderer {
       label.setText("");
     }
     boolean isSmall = item.getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null;
-    Font font = isSmall ? SMALL_FONT : NORMAL_FONT;
+    Font font = forceFont;
+    if (font == null) font = isSmall ? SMALL_FONT : NORMAL_FONT;
     boolean overstrike = isToStrikeout(item);
     label.setStrikeout(overstrike);
 
-    if (item.getObject() instanceof Property) {
-      TextAttributes value = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_VALUE);
-      //background = value.getBackgroundColor();
-      foreground = selected ? SELECTED_FOREGROUND_COLOR : value.getForegroundColor();
-      font = BOLD_FONT;
-    }
     label.setBackground(background);
     label.setForeground(foreground);
     label.setFont(font);
@@ -248,15 +239,6 @@ class LookupCellRenderer implements ListCellRenderer {
                                             PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
         }
       }
-    }
-    if (o instanceof Property) {
-      Property property = (Property)o;
-      PropertiesFile propertiesFile = property.getContainingFile();
-      PropertiesFile defaultPropertiesFile = propertiesFile.getResourceBundle().getDefaultPropertiesFile(propertiesFile.getProject());
-      Property defaultProperty = defaultPropertiesFile.findPropertyByKey(property.getUnescapedKey());
-      String value = defaultProperty == null ? property.getValue() : defaultProperty.getValue();
-      if (trim && value != null && value.length() > 10) value = value.substring(0, 10) + "...";
-      text = "="+ value;
     }
 
     String tailText = (String)item.getAttribute(LookupItem.TAIL_TEXT_ATTR);
@@ -283,8 +265,9 @@ class LookupCellRenderer implements ListCellRenderer {
     return SHOW_SIGNATURES || item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null;
   }
 
-  private void setTypeTextLabel(LookupItem item, final Color background, Color foreground, JList list, final String text3){
+  private void setTypeTextLabel(LookupItem item, final Color background, Color foreground, JList list, final String text3, final Icon icon){
     myLabel3.setHorizontalTextPosition(SwingConstants.RIGHT);
+    myLabel3.setIcon(icon);
 
     String text = text3;
 
@@ -330,7 +313,6 @@ class LookupCellRenderer implements ListCellRenderer {
   private String getText3(final LookupItem item) {
     Object o = item.getObject();
     String text = null;
-    myLabel3.setIcon(null);
     if (o instanceof PsiElement){
       if (showSignature(item)) {
         PsiType typeAttr = (PsiType)item.getAttribute(LookupItem.TYPE_ATTR);
@@ -363,11 +345,6 @@ class LookupCellRenderer implements ListCellRenderer {
               if (type != null){
                 text = type.getPresentableText();
               }
-            }
-            else if (o instanceof Property) {
-              Property property = (Property)o;
-              text = property.getContainingFile().getResourceBundle().getBaseName();
-              myLabel3.setIcon(PropertiesFileType.FILE_ICON);
             }
           }
         }
@@ -407,10 +384,6 @@ class LookupCellRenderer implements ListCellRenderer {
         }
         else if (element instanceof PsiKeyword || element instanceof PsiExpression || element instanceof PsiTypeElement){
           name = element.getText();
-        }
-        else if (o instanceof Property) {
-          Property property = (Property)o;
-          name = property.getUnescapedKey();
         }
       }
     }
@@ -587,7 +560,20 @@ class LookupCellRenderer implements ListCellRenderer {
     }
 
     public void setTailText(final String text) {
-      setTypeTextLabel(myItem, myBackground, myForeground, myList, text);
+      setTailTextLabel(myItem, myBackground, myForeground, mySelected, text, null);
+    }
+
+    public void setTailText(final String text, final Color foreground, final boolean bold) {
+      setTailTextLabel(myItem, myBackground,
+                    mySelected ? SELECTED_FOREGROUND_COLOR : foreground, mySelected, text, bold ? BOLD_FONT : null);
+    }
+
+    public void setTypeText(final String text) {
+      setTypeTextLabel(myItem, myBackground, myForeground, myList, text, null);
+    }
+
+    public void setTypeText(final String text, final Icon icon) {
+      setTypeTextLabel(myItem, myBackground, myForeground, myList, text, icon);
     }
 
     public void setContext(final LookupItem item, final Color background, final Color foreground, final JList list, final boolean selected) {
@@ -609,6 +595,10 @@ class LookupCellRenderer implements ListCellRenderer {
     public int getMaxLength() {
       return MAX_LENGTH;
     }
+
+    public boolean trimText() {
+      return false;
+    }
   }
 
   private class WidthCalculatingPresentation extends LookupElementPresentationImpl {
@@ -620,15 +610,32 @@ class LookupCellRenderer implements ListCellRenderer {
     }
 
     public void setItemText(final String text) {
-      myTotalWidth += calculateTextWidth(text);
+      addWidth(text);
     }
 
     public void setTailText(final String text) {
-      myTotalWidth += calculateTextWidth(text + "XXX");
+      addWidth(text);
     }
 
-    private int calculateTextWidth(final String text) {
-      return myPanel.getFontMetrics(NORMAL_FONT).stringWidth(text);
+    public void setTypeText(final String text) {
+      addWidth(text + "XXX");
+    }
+
+    public void setTailText(final String text, final Color foreground, final boolean bold) {
+      addWidth(text);
+    }
+
+    public void setTypeText(final String text, final Icon icon) {
+      setTypeText(text);
+      myTotalWidth += icon.getIconWidth()+2;
+    }
+
+    public boolean trimText() {
+      return true;
+    }
+
+    private void addWidth(final String text) {
+      myTotalWidth += myPanel.getFontMetrics(NORMAL_FONT).stringWidth(text);
     }
 
     public LookupItem[] getItems() {

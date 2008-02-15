@@ -16,7 +16,7 @@ public class TemplateLookupRenderer implements ElementLookupRenderer<Template> {
 
   public void renderElement(final Template element, final LookupElementPresentation presentation) {
     presentation.setItemText(element.getKey());
-    presentation.setTailText(getTemplateDescriptionString(element, presentation));
+    presentation.setTypeText(getTemplateDescriptionString(element, presentation));
   }
 
   private static String getTemplateDescriptionString(Template template, final LookupElementPresentation presentation) {
