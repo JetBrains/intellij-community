@@ -18,6 +18,7 @@ package com.intellij.psi.codeStyle;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,12 +47,6 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       final CodeStyleSettingsProvider[] codeStyleSettingsProviders = Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME);
       for (final CodeStyleSettingsProvider provider : codeStyleSettingsProviders) {
         addCustomSettings(provider.createCustomSettings(this));
-      }
-
-      final FileTypeIndentOptionsProvider[] fileTypeIndentOptionsProviders =
-        Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
-      for (final FileTypeIndentOptionsProvider provider : fileTypeIndentOptionsProviders) {
-        registerAdditionalIndentOptions(provider.getFileType(),provider.createIndentOptions());
       }
     }
   }
@@ -193,9 +188,13 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     }
   }
 
+  @Deprecated
   public IndentOptions JAVA_INDENT_OPTIONS = new IndentOptions();
+  @Deprecated
   public IndentOptions JSP_INDENT_OPTIONS = new IndentOptions();
+  @Deprecated
   public IndentOptions XML_INDENT_OPTIONS = new IndentOptions();
+
   public IndentOptions OTHER_INDENT_OPTIONS = new IndentOptions();
 
   private Map<FileType,IndentOptions> ourAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptions>();
@@ -1069,6 +1068,17 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
         }
       }
     }
+
+    copyOldIndentOptions("java", JAVA_INDENT_OPTIONS);
+    copyOldIndentOptions("jsp", JSP_INDENT_OPTIONS);
+    copyOldIndentOptions("xml", XML_INDENT_OPTIONS);
+  }
+
+  private void copyOldIndentOptions(@NonNls final String extension, final IndentOptions options) {
+    final FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(extension);
+    if (fileType != FileTypes.UNKNOWN && !ourAdditionalIndentOptions.containsKey(fileType)) {
+      registerAdditionalIndentOptions(fileType, options);
+    }
   }
 
   private void importOldIndentOptions(@NonNls Element element) {
@@ -1589,11 +1599,18 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     ourAdditionalIndentOptions.put(fileType, options);
   }
 
-  public Collection<FileType> getFileTypesWithAdditionalIndentOptions() {
-    return ourAdditionalIndentOptions.keySet();
-  }
-
   public IndentOptions getAdditionalIndentOptions(FileType fileType) {
-    return ourAdditionalIndentOptions.get(fileType);
+    IndentOptions result = ourAdditionalIndentOptions.get(fileType);
+    if (result == null) {
+      final FileTypeIndentOptionsProvider[] fileTypeIndentOptionsProviders =
+        Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
+      for (final FileTypeIndentOptionsProvider provider : fileTypeIndentOptionsProviders) {
+        if (fileType == provider.getFileType()) {
+          result = provider.createIndentOptions();
+          registerAdditionalIndentOptions(provider.getFileType(), result);
+        }
+      }
+    }
+    return result;
   }
 }

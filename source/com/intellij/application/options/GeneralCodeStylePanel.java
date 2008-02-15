@@ -14,12 +14,13 @@ import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.TabbedPaneWrapper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
@@ -29,12 +30,9 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final String MACINTOSH_STRING = ApplicationBundle.message("combobox.crlf.mac");
 
   private JCheckBox myCbUseSameIndents;
-  private IndentOptionsEditor myJavaIndentOptions = new JavaIndentOptionsEditor();
-  private IndentOptionsEditor myJspIndentOptions = new SmartIndentOptionsEditor();
-  private IndentOptionsEditor myXMLIndentOptions = new SmartIndentOptionsEditor();
   private IndentOptionsEditor myOtherIndentOptions = new IndentOptionsEditor();
 
-  private Map<FileType, IndentOptionsEditor> myAdditionalIndentOptions = new HashMap<FileType, IndentOptionsEditor>();
+  private Map<FileType, IndentOptionsEditor> myAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptionsEditor>();
 
   private TabbedPaneWrapper myIndentOptionsTabs;
   private JPanel myIndentPanel;
@@ -93,20 +91,17 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   private void update() {
-    myJavaIndentOptions.setEnabled(true);
     boolean enabled = !myCbUseSameIndents.isSelected();
     if (!enabled && myIndentOptionsTabs.getSelectedIndex() != 0) {
       myIndentOptionsTabs.setSelectedIndex(0);
     }
-    myJspIndentOptions.setEnabled(enabled);
-    myIndentOptionsTabs.setEnabledAt(1, enabled);
-    myXMLIndentOptions.setEnabled(enabled);
-    myIndentOptionsTabs.setEnabledAt(2, enabled);
 
-    int index = 3;
+    int index = 0;
     for(IndentOptionsEditor options:myAdditionalIndentOptions.values()) {
-      options.setEnabled(enabled);
-      myIndentOptionsTabs.setEnabledAt(index, enabled);
+      if (index > 0) {
+        options.setEnabled(enabled);
+        myIndentOptionsTabs.setEnabledAt(index, enabled);
+      }
       index++;
     }
 
@@ -121,9 +116,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     optionGroup.add(myCbUseSameIndents);
 
     myIndentOptionsTabs = new TabbedPaneWrapper(JTabbedPane.RIGHT);
-    myIndentOptionsTabs.addTab(ApplicationBundle.message("tab.indent.java"), myJavaIndentOptions.createPanel());
-    myIndentOptionsTabs.addTab(ApplicationBundle.message("tab.indent.jsp"), myJspIndentOptions.createPanel());
-    myIndentOptionsTabs.addTab(ApplicationBundle.message("tab.indent.xml"), myXMLIndentOptions.createPanel());
 
     for(Map.Entry<FileType, IndentOptionsEditor> entry:myAdditionalIndentOptions.entrySet()) {
       myIndentOptionsTabs.addTab(entry.getKey().getName(), entry.getValue().createPanel());
@@ -207,12 +199,9 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   public void apply(CodeStyleSettings settings) {
     settings.LINE_SEPARATOR = getSelectedLineSeparator();
     settings.USE_SAME_INDENTS = myCbUseSameIndents.isSelected();
-    myJavaIndentOptions.apply(settings, settings.JAVA_INDENT_OPTIONS);
-    myJspIndentOptions.apply(settings, settings.JSP_INDENT_OPTIONS);
-    myXMLIndentOptions.apply(settings, settings.XML_INDENT_OPTIONS);
     myOtherIndentOptions.apply(settings, settings.OTHER_INDENT_OPTIONS);
 
-    for(FileType fileType:settings.getFileTypesWithAdditionalIndentOptions()) {
+    for(FileType fileType: myAdditionalIndentOptions.keySet()) {
       myAdditionalIndentOptions.get(fileType).apply(settings, settings.getAdditionalIndentOptions(fileType));
     }
 
@@ -233,6 +222,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     }
   }
 
+  @Nullable
   private String getSelectedLineSeparator() {
     if (UNIX_STRING.equals(myLineSeparatorCombo.getSelectedItem())) {
       return "\n";
@@ -254,20 +244,11 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     if (myCbUseSameIndents.isSelected() != settings.USE_SAME_INDENTS) {
       return true;
     }
-    if (myJavaIndentOptions.isModified(settings, settings.JAVA_INDENT_OPTIONS)) {
-      return true;
-    }
-    if (myJspIndentOptions.isModified(settings, settings.JSP_INDENT_OPTIONS)) {
-      return true;
-    }
-    if (myXMLIndentOptions.isModified(settings, settings.XML_INDENT_OPTIONS)) {
-      return true;
-    }
     if (myOtherIndentOptions.isModified(settings, settings.OTHER_INDENT_OPTIONS)) {
       return true;
     }
 
-    for(FileType fileType:settings.getFileTypesWithAdditionalIndentOptions()) {
+    for(FileType fileType: myAdditionalIndentOptions.keySet()) {
       if (myAdditionalIndentOptions.get(fileType).isModified(settings, settings.getAdditionalIndentOptions(fileType))) {
         return true;
       }
@@ -287,12 +268,9 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   protected void resetImpl(final CodeStyleSettings settings) {
     myCbUseSameIndents.setSelected(settings.USE_SAME_INDENTS);
 
-    myJavaIndentOptions.reset(settings, settings.JAVA_INDENT_OPTIONS);
-    myJspIndentOptions.reset(settings, settings.JSP_INDENT_OPTIONS);
-    myXMLIndentOptions.reset(settings, settings.XML_INDENT_OPTIONS);
     myOtherIndentOptions.reset(settings, settings.OTHER_INDENT_OPTIONS);
 
-    for(FileType fileType:settings.getFileTypesWithAdditionalIndentOptions()) {
+    for(FileType fileType: myAdditionalIndentOptions.keySet()) {
       myAdditionalIndentOptions.get(fileType).reset(settings, settings.getAdditionalIndentOptions(fileType));
     }
 
