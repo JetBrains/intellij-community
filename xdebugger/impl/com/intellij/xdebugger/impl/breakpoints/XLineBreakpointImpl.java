@@ -56,8 +56,10 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     MarkupModelEx markupModel = (MarkupModelEx)document.getMarkupModel(getProject());
     RangeHighlighter highlighter = markupModel.addPersistentLineHighlighter(getLine(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER,
                                                                             attributes);
-    updateIcon();
-    setupGutterRenderer(highlighter);
+    if (highlighter != null) {
+      updateIcon();
+      setupGutterRenderer(highlighter);
+    }
     myHighlighter = highlighter;
   }
 
