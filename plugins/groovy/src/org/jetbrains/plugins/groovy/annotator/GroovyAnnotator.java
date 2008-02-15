@@ -650,7 +650,7 @@ public class GroovyAnnotator implements Annotator {
       }
       if (!resolveResult.isAccessible()) {
         String message = GroovyBundle.message("cannot.access", refExpr.getReferenceName());
-        holder.createWarningAnnotation(refExpr, message);
+        holder.createWarningAnnotation(refExpr.getReferenceNameElement(), message);
       }
       if (!resolveResult.isStaticsOK() && resolved instanceof PsiModifierListOwner) {
         final String key = ((PsiModifierListOwner) resolved).hasModifierProperty(PsiModifier.STATIC) ?
@@ -867,7 +867,7 @@ public class GroovyAnnotator implements Annotator {
       annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
     } else if (!resolveResult.isAccessible()) {
       String message = GroovyBundle.message("cannot.access", refElement.getReferenceName());
-      holder.createWarningAnnotation(refElement, message);
+      holder.createWarningAnnotation(refElement.getReferenceNameElement(), message);
     }
   }
 
