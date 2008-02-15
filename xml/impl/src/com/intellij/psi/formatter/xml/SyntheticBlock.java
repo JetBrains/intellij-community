@@ -154,7 +154,8 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
   }
 
   private boolean isTextFragment(final ASTNode node) {
-    return node.getTreeParent().getElementType() == XmlElementType.XML_TEXT
+    final ASTNode parent = node.getTreeParent();
+    return parent != null && parent.getElementType() == XmlElementType.XML_TEXT
            || node.getElementType() == XmlElementType.XML_DATA_CHARACTERS
            || node.getElementType() == JspElementType.JSP_SCRIPTLET
            || node.getElementType() == JspElementType.JSP_DECLARATION
