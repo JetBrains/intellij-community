@@ -38,6 +38,11 @@ public class UpdateHighlightersUtil {
   private static final Key<List<HighlightInfo>> FILE_LEVEL_HIGHLIGHTS = Key.create("FILE_LEVEL_HIGHLIGHTS");
   private static final Comparator<TextRange> BY_START_OFFSET = new Comparator<TextRange>() {
     public int compare(final TextRange o1, final TextRange o2) {
+      return o1.getStartOffset() - o2.getStartOffset();
+    }
+  };
+  private static final Comparator<TextRange> BY_START_OFFSET_OR_CONTAINS = new Comparator<TextRange>() {
+    public int compare(final TextRange o1, final TextRange o2) {
       if (o1.contains(o2) || o2.contains(o1)) return 0;
       return o1.getStartOffset() - o2.getStartOffset();
     }
@@ -110,7 +115,7 @@ public class UpdateHighlightersUtil {
         RangeHighlighter highlighter = info.highlighter;
         boolean toRemove = !highlighter.isValid() ||
                            info.group == group && Collections.binarySearch(ranges, new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset()),
-                                                                           BY_START_OFFSET) >= 0;
+                                                                           BY_START_OFFSET_OR_CONTAINS) >= 0;
         if (toRemove) {
           document.getMarkupModel(project).removeHighlighter(highlighter);
           changed = true;
