@@ -27,10 +27,14 @@ import java.util.Set;
 public class AdvancedProxy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.AdvancedProxy");
   public static Method FINALIZE_METHOD;
+  public static Method EQUALS_METHOD;
+  public static Method HASHCODE_METHOD;
 
   static {
     try {
       FINALIZE_METHOD = Object.class.getDeclaredMethod("finalize");
+      EQUALS_METHOD = Object.class.getDeclaredMethod("equals", Object.class);
+      HASHCODE_METHOD = Object.class.getDeclaredMethod("hashCode");
     }
     catch (NoSuchMethodException e) {
       LOG.error(e);

@@ -3,6 +3,7 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
@@ -48,9 +49,7 @@ class StableInvocationHandler<T extends DomElement> implements InvocationHandler
       }
     }
 
-    if (AdvancedProxy.FINALIZE_METHOD.equals(method)) {
-      return null;
-    }
+    if (AdvancedProxy.FINALIZE_METHOD.equals(method)) return null;
 
     if (isNotValid(myCachedValue)) {
       if (myCachedValue != null) {
@@ -58,6 +57,17 @@ class StableInvocationHandler<T extends DomElement> implements InvocationHandler
       }
       myCachedValue = myProvider.create();
       if (isNotValid(myCachedValue)) {
+        if (AdvancedProxy.EQUALS_METHOD.equals(method)) {
+
+          final Object arg = args[0];
+          if (!(arg instanceof StableElement)) return false;
+
+          final StableInvocationHandler handler = DomManagerImpl.getStableInvocationHandler(arg);
+          if (handler == null || handler.getWrappedElement() != null) return false;
+
+          return Comparing.equal(myOldValue, handler.myOldValue);
+        }
+
         if (myOldValue != null && Object.class.equals(method.getDeclaringClass())) {
           return method.invoke(myOldValue, args);
         }
@@ -67,6 +77,16 @@ class StableInvocationHandler<T extends DomElement> implements InvocationHandler
         }
         throw new AssertionError("Calling methods on invalid value");
       }
+    }
+
+    if (AdvancedProxy.EQUALS_METHOD.equals(method)) {
+      final Object arg = args[0];
+      if (!(arg instanceof StableElement)) return false;
+
+      myCachedValue.equals(((StableElement)arg).getWrappedElement());
+    }
+    if (AdvancedProxy.HASHCODE_METHOD.equals(method)) {
+      return myCachedValue.hashCode();
     }
 
     try {

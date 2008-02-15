@@ -69,20 +69,14 @@ public class InvocationCache {
       if ("equals".equals(method.getName())) {
         ourCoreInvocations.put(JavaMethodSignature.getSignature(method), new Invocation() {
           public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
-            return _equals(handler.getProxy(), args[0]);
-          }
-          private boolean _equals(final DomElement proxy, final Object o) {
-            if (proxy == o) return true;
-            if (o == null) return false;
+            final DomElement proxy = handler.getProxy();
+            final Object arg = args[0];
+            if (proxy == arg) return true;
+            if (arg == null) return false;
 
-            if (o instanceof StableElement) {
-              final StableInvocationHandler handler = DomManagerImpl.getStableInvocationHandler(o);
-              return _equals(proxy, handler.getWrappedElement()) || _equals(proxy, handler.getOldValue());
-            }
-
-            if (o instanceof DomElement) {
-              final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(proxy);
-              return handler != null && handler.equals(DomManagerImpl.getDomInvocationHandler((DomElement)o));
+            if (arg instanceof DomElement) {
+              final DomInvocationHandler handler1 = DomManagerImpl.getDomInvocationHandler(proxy);
+              return handler1 != null && handler1.equals(DomManagerImpl.getDomInvocationHandler((DomElement)arg));
             }
 
             return false;
