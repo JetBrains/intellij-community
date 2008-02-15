@@ -3,5 +3,5 @@
 <option>SPACE_BEFORE_WHILE_PARENTHESES=true</option>
 while   (true)    {}
 -----
-while (true )
+while (true)
 {}

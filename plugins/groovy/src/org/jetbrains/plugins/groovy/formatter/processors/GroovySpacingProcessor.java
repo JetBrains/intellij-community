@@ -53,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 /**
+ *
  * @author ilyas
  */
 public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
@@ -151,7 +152,9 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
       }
 
       if (myChild2 != null && mySettings.KEEP_FIRST_COLUMN_COMMENT && SpacingUtil.COMMENT_BIT_SET.contains(myChild2.getElementType())) {
-        myResult = Spacing.createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, 1);
+        if (myChild1.getElementType() != IMPORT_STATEMENT) {
+          myResult = Spacing.createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, 1);
+        }
       } else {
         if (myParent instanceof GroovyPsiElement) {
           ((GroovyPsiElement) myParent).accept(this);
@@ -291,7 +294,7 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
 
     public void visitIfStatement(GrIfStatement ifStatement) {
       if (myChild2.getElementType() == kELSE) {
-        if (myChild1.getElementType() != OPEN_BLOCK) {
+        if (myChild1.getElementType() != OPEN_BLOCK && myChild1.getElementType() != BLOCK_STATEMENT) {
           myResult = Spacing.createSpacing(1, 1, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
         } else {
           if (mySettings.ELSE_ON_NEW_LINE) {

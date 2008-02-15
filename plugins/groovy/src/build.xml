@@ -302,6 +302,9 @@
         <fileset dir="${test.dir}">
           <include name="**/*Test.java"/>
         </fileset>
+        <fileset dir="${production.dest}">
+          <include name="**/Groovy*Test.class"/>
+        </fileset>
       </batchtest>
 
     </junit>
