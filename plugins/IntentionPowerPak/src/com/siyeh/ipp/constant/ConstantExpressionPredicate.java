@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package com.siyeh.ipp.constant;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.openapi.project.Project;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ConstantExpressionPredicate implements PsiElementPredicate{
@@ -42,10 +44,18 @@ class ConstantExpressionPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiManager manager= element.getManager();
-      final PsiConstantEvaluationHelper helper = JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
-        final Object value = helper.computeConstantExpression(expression);
-        if(value == null){
-	        return false;
+        final Project project = manager.getProject();
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+        final PsiConstantEvaluationHelper helper =
+                facade.getConstantEvaluationHelper();
+        try{
+            final Object value =
+                    helper.computeConstantExpression(expression, true);
+            if(value == null){
+                return false;
+            }
+        } catch (ConstantEvaluationOverflowException ignore){
+            return false;
         }
         final PsiElement parent = element.getParent();
 	    return !(parent instanceof PsiExpression &&
