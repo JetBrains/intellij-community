@@ -15,8 +15,10 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.graph.Graph;
+import gnu.trove.THashSet;
 import junit.runner.BaseTestRunner;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -73,9 +75,9 @@ public class JUnitUtil {
   }
 
   public static boolean isTestClass(final PsiClass psiClass) {
-    return isTestClass(psiClass, true);
+    return isTestClass(psiClass, true, null);
   }
-  private static boolean isTestClass(final PsiClass psiClass, boolean checkAbstract) {
+  private static boolean isTestClass(final PsiClass psiClass, boolean checkAbstract, @Nullable Set<PsiClass> visited) {
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
     if (isTestCaseInheritor(psiClass)) return true;
     final PsiModifierList modifierList = psiClass.getModifierList();
@@ -89,12 +91,18 @@ public class JUnitUtil {
 
     PsiClass superClass = psiClass.getSuperClass();
     if (superClass != null && !"java.lang.Object".equals(superClass.getQualifiedName()) && !superClass.isInterface()) {
-      return isTestClass(superClass, false);
+      if (visited != null && visited.contains(psiClass)) return false;
+      if (visited == null) visited = new THashSet<PsiClass>();
+      visited.add(psiClass);
+      return isTestClass(superClass, false, null);
     }
     return false;
   }
 
   public static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract) {
+    return isJUnit4TestClass(psiClass,checkAbstract,null);
+  }
+  private static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract, @Nullable Set<PsiClass> visited) {
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
 
     final PsiModifierList modifierList = psiClass.getModifierList();
@@ -105,7 +113,10 @@ public class JUnitUtil {
     }
     PsiClass superClass = psiClass.getSuperClass();
     if (superClass != null && !"java.lang.Object".equals(superClass.getQualifiedName()) && !superClass.isInterface()) {
-      return isJUnit4TestClass(superClass, false);
+      if (visited != null && visited.contains(psiClass)) return false;
+      if (visited == null) visited = new THashSet<PsiClass>();
+      visited.add(psiClass);
+      return isJUnit4TestClass(superClass, false, visited);
     }
     return false;
   }
