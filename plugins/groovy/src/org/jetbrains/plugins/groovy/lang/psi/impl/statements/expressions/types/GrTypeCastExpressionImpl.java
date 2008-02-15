@@ -17,12 +17,15 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author ilyas
@@ -53,5 +56,19 @@ public class GrTypeCastExpressionImpl extends GrExpressionImpl implements GrType
 
   public GrExpression getOperand() {
     return findChildByClass(GrExpression.class);
+  }
+
+  @NotNull
+  public PsiElement getLeftParen() {
+    ASTNode paren = getNode().findChildByType(GroovyTokenTypes.mLPAREN);
+    assert paren != null;
+    return paren.getPsi();
+  }
+
+  @NotNull
+  public PsiElement getRightParen() {
+    ASTNode paren = getNode().findChildByType(GroovyTokenTypes.mRPAREN);
+    assert paren != null;
+    return paren.getPsi();
   }
 }
