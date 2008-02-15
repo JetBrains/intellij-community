@@ -13,6 +13,10 @@ public class MarkupModelEvent extends EventObject {
     myHighlighter = segmentHighlighter;
   }
 
+  public MarkupModel getMarkupModel() {
+    return (MarkupModel) getSource();
+  }
+
   public RangeHighlighter getHighlighter() {
     return myHighlighter;
   }

@@ -98,7 +98,8 @@ public class DaemonListeners {
     myDocumentListener = new DocumentAdapter() {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
       public void beforeDocumentChange(final DocumentEvent e) {
-        if (!worthBothering(e.getDocument())) return; //no need to stop daemon if something happened in the console
+        Document document = e.getDocument();
+        if (!worthBothering(document)) return; //no need to stop daemon if something happened in the console
 
         stopDaemon(true);
         UpdateHighlightersUtil.updateHighlightersByTyping(myProject, e);

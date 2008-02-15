@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NonNls;
  * Defines a highlighting severity level for an annotation.
  *
  * @author max
- * @see com.intellij.lang.annotation.Annotation
+ * @see Annotation
  */
 
 public class HighlightSeverity implements Comparable<HighlightSeverity>, JDOMExternalizable {
@@ -117,6 +117,8 @@ public class HighlightSeverity implements Comparable<HighlightSeverity>, JDOMExt
   }
 
   public int hashCode() {
-    return myName.hashCode();
+    int result;
+    result = myName.hashCode();
+    return result;
   }
 }
