@@ -182,7 +182,14 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   public PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
-    return (PsiLanguageInjectionHost)file.getContext();
+    Document document = PsiDocumentManager.getInstance(element.getProject()).getCachedDocument(file);
+    if (document instanceof DocumentWindow) {
+      PsiElement host = file.getContext();
+      if (host != null) {
+        return (PsiLanguageInjectionHost)host;
+      }
+    }
+    return null;
   }
 
   public TextRange injectedToHost(@NotNull PsiElement element, @NotNull TextRange textRange) {
