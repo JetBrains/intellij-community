@@ -366,7 +366,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     int lastSize = buffer.length();
     for(PsiAnnotation a: list.getAnnotations()) {
       if (lastSize != buffer.length()) buffer.append(" ");
-      buffer.append("@").append(a.getNameReferenceElement().getText());
+      final PsiJavaCodeReferenceElement element = a.getNameReferenceElement();
+      if (element != null) buffer.append("@").append(element.getText());
     }
     if (lastSize != buffer.length()) buffer.append(" ");
   }
