@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -288,6 +289,13 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   public PsiElement getContext() {
     return myContext;
+  }
+
+  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
+  protected GroovyFileImpl clone() {
+    GroovyFileImpl clone = (GroovyFileImpl) super.clone();
+    clone.myContext = myContext;
+    return clone;
   }
 
   public void setContext(PsiElement context) {
