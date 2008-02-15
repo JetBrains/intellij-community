@@ -44,12 +44,13 @@ public class PagePool {
   };
 
   private int finalizationId = 0;
+  private boolean flushNow = false;
 
   private final Map<PoolPageKey, Page> myProbationalQueue = new LinkedHashMap<PoolPageKey, Page>() {
     @Override
     protected boolean removeEldestEntry(final Map.Entry<PoolPageKey, Page> eldest) {
       if (size() > myProbationalPagesLimit) {
-        scheduleFinalization(eldest.getValue());
+        flushNow = scheduleFinalization(eldest.getValue());
         return true;
       }
       return false;
@@ -81,38 +82,48 @@ public class PagePool {
   @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
   @NotNull
   public Page alloc(RandomAccessDataFile owner, long offset) {
-    synchronized (lock) {
-      hits++;
-      offset -= offset % Page.PAGE_SIZE;
-      PoolPageKey key = setupKey(owner, offset);
+    boolean flushQueueNow = false;
+    try {
+      synchronized (lock) {
+        flushNow = false;
+        hits++;
+        offset -= offset % Page.PAGE_SIZE;
+        PoolPageKey key = setupKey(owner, offset);
 
-      Page page = myProtectedQueue.remove(key);
-      if (page != null) {
-        protected_queue_hits++;
-        toProtectedQueue(page);
+        Page page = myProtectedQueue.remove(key);
+        if (page != null) {
+          protected_queue_hits++;
+          toProtectedQueue(page);
+          return page;
+        }
+
+        page = myProbationalQueue.remove(key);
+        if (page != null) {
+          probational_queue_hits++;
+          toProtectedQueue(page);
+          return page;
+        }
+
+        final FinalizationRequest request = myFinalizationQueue.remove(key);
+        if (request != null) {
+          page = request.page;
+          finalization_queue_hits++;
+          toProtectedQueue(page);
+          return page;
+        }
+
+        cache_misses++;
+        page = new Page(owner, offset);
+
+        myProbationalQueue.put(keyForPage(page), page);
+        flushQueueNow = flushNow;
         return page;
       }
-
-      page = myProbationalQueue.remove(key);
-      if (page != null) {
-        probational_queue_hits++;
-        toProtectedQueue(page);
-        return page;
+    }
+    finally {
+      if (flushQueueNow) {
+        flushFinalizationQueue(5000);
       }
-
-      final FinalizationRequest request = myFinalizationQueue.remove(key);
-      if (request != null) {
-        page = request.page;
-        finalization_queue_hits++;
-        toProtectedQueue(page);
-        return page;
-      }
-
-      cache_misses++;
-      page = new Page(owner, offset);
-
-      myProbationalQueue.put(keyForPage(page), page);
-      return page;
     }
   }
 
@@ -185,16 +196,14 @@ public class PagePool {
     return hasFlushes;
   }
 
-  private void scheduleFinalization(final Page page) {
+  private boolean scheduleFinalization(final Page page) {
     final int curFinalizationId;
     synchronized (lock) {
       curFinalizationId = ++finalizationId;
     }
 
     final FinalizationRequest request = page.prepareForFinalization(curFinalizationId);
-    if (request == null) return;
-
-    boolean flushQueueNow = false;
+    if (request == null) return false;
 
     synchronized (lock) {
       if (myFinalizerThread == null) {
@@ -204,18 +213,15 @@ public class PagePool {
 
       myFinalizationQueue.put(keyForPage(page), request);
       if (myFinalizationQueue.size() > 5000) {
-        flushQueueNow = true;
+        return true;
       }
     }
 
-    if (flushQueueNow) {
-      flushFinalizationQueue(4000);
+    synchronized (finalizationMonitor) {
+      finalizationMonitor.notifyAll();
     }
-    else {
-      synchronized (finalizationMonitor) {
-        finalizationMonitor.notifyAll();
-      }
-    }
+
+    return false;
   }
 
   private class FinalizationThreadWorker implements Runnable {
