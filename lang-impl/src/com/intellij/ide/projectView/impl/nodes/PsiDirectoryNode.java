@@ -159,4 +159,9 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
   public int getTypeSortWeight(final boolean sortByType) {
     return 3;
   }
+
+  @Override
+  public boolean shouldDrillDownOnEmptyElement() {
+    return true;
+  }
 }

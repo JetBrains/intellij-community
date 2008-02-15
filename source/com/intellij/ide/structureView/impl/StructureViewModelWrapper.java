@@ -52,6 +52,10 @@ public class StructureViewModelWrapper implements StructureViewModel {
     myStructureViewModel.dispose();
   }
 
+  public boolean shouldEnterElement(final Object element) {
+    return false;
+  }
+
   @NotNull
   public Grouper[] getGroupers() {
     return myStructureViewModel.getGroupers();

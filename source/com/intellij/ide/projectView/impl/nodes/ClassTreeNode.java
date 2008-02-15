@@ -129,4 +129,9 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
       return getClassPosition(getValue());
     }
   }
+
+  @Override
+  public boolean shouldDrillDownOnEmptyElement() {
+    return true;
+  }
 }

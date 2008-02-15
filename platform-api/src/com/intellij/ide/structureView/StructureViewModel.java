@@ -79,4 +79,6 @@ public interface StructureViewModel extends TreeModel {
    * Disposes of the model.
    */
   void dispose();
+
+  boolean shouldEnterElement(Object element);
 }

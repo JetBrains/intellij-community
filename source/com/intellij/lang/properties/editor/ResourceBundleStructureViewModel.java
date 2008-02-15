@@ -83,4 +83,8 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
   public void dispose() {
 
   }
+
+  public boolean shouldEnterElement(final Object element) {
+    return false;
+  }
 }

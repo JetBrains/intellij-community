@@ -3,6 +3,7 @@ package com.intellij.ide.projectView.impl.nodes;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -80,5 +81,11 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
       ExtensionSortKey rhs = (ExtensionSortKey) o;
       return myExtension.compareTo(rhs.myExtension);
     }
+  }
+
+  @Override
+  public boolean shouldDrillDownOnEmptyElement() {
+    final PsiFile file = getValue();
+    return file != null && file.getFileType() == StdFileTypes.JAVA;
   }
 }

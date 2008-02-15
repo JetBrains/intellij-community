@@ -33,6 +33,10 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel {
     return new JavaFileTreeElement(myFile);
   }
 
+  public boolean shouldEnterElement(final Object element) {
+    return element instanceof PsiClass;
+  }
+
   @NotNull
   public Sorter[] getSorters() {
     return new Sorter[]{KindSorter.INSTANCE, VisibilitySorter.INSTANCE, Sorter.ALPHA_SORTER};

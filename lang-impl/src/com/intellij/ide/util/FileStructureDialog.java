@@ -93,7 +93,7 @@ public class FileStructureDialog extends DialogWrapper {
     init();
 
     if (psiElement != null) {
-      if (myCommanderPanel.shouldEnterElement(psiElement)) {
+      if (structureViewModel.shouldEnterElement(psiElement)) {
         myCommanderPanel.getBuilder().enterElement(psiElement, PsiUtilBase.getVirtualFile(psiElement));
       }
       else {
@@ -264,7 +264,8 @@ public class FileStructureDialog extends DialogWrapper {
   }
 
   private class MyCommanderPanel extends CommanderPanel implements DataProvider {
-    protected boolean shouldDrillDownOnEmptyElement(final Object value) {
+    @Override
+    protected boolean shouldDrillDownOnEmptyElement(final AbstractTreeNode node) {
       return false;
     }
 

@@ -182,4 +182,8 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
   public String getQualifiedNameSortKey() {
     return null;
   }
+
+  public boolean shouldDrillDownOnEmptyElement() {
+    return false;
+  }
 }

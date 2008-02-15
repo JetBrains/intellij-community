@@ -3,6 +3,7 @@ package com.intellij.ide.commander;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.*;
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
@@ -20,16 +21,13 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.*;
 import com.intellij.util.ui.UIUtil;
@@ -214,7 +212,7 @@ public class CommanderPanel extends JPanel {
 
     final AbstractTreeNode element = getSelectedNode();
     if (element.getChildren().size() == 0) {
-      if (!shouldDrillDownOnEmptyElement(element.getValue())) {
+      if (!shouldDrillDownOnEmptyElement(element)) {
         navigateSelectedElement();
         return;
       }
@@ -239,14 +237,8 @@ public class CommanderPanel extends JPanel {
     return false;
   }
 
-  protected boolean shouldDrillDownOnEmptyElement(final Object value) {
-    return value instanceof PsiClass ||
-           (value instanceof PsiFile && ((PsiFile) value).getFileType() == StdFileTypes.JAVA) ||
-           value instanceof PsiDirectory;
-  }
-
-  public boolean shouldEnterElement(PsiElement element) {
-    return element instanceof PsiClass;
+  protected boolean shouldDrillDownOnEmptyElement(final AbstractTreeNode node) {
+    return node instanceof ProjectViewNode && ((ProjectViewNode)node).shouldDrillDownOnEmptyElement();
   }
 
   private boolean topElementIsSelected() {

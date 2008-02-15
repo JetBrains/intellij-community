@@ -110,6 +110,10 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     EditorFactory.getInstance().getEventMulticaster().removeCaretListener(myCaretListener);
   }
 
+  public boolean shouldEnterElement(final Object element) {
+    return false;
+  }
+
   public Object getCurrentEditorElement() {
     if (myEditor == null) return null;
     final int offset = myEditor.getCaretModel().getOffset();

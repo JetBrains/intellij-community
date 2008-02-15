@@ -82,6 +82,10 @@ public class TreeModelWrapper implements StructureViewModel {
     myModel.dispose();
   }
 
+  public boolean shouldEnterElement(final Object element) {
+    return false;
+  }
+
   public void addModelListener(ModelListener modelListener) {
     myModel.addModelListener(modelListener);
   }
