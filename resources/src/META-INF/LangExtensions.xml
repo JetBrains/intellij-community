@@ -46,6 +46,9 @@
   <applicationService serviceInterface="com.intellij.navigation.ChooseByNameRegistry"
                       serviceImplementation="com.intellij.navigation.ChooseByNameRegistry"/>
 
+  <applicationService serviceInterface="com.intellij.application.options.CodeStyleSettingsUtil"
+                      serviceImplementation="com.intellij.application.options.CodeStyleSettingsUtilImpl"/>
+
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
   <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"
@@ -94,11 +97,17 @@
   <!-- File Templates-->
   <applicationConfigurable implementation="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable"/>
 
+  <!-- External Tools -->
+  <applicationConfigurable implementation="com.intellij.tools.ToolConfigurable"/>
+
+  <!-- Global Code Style -->
+  <applicationConfigurable implementation="com.intellij.application.options.CodeStyleSchemesConfigurable"/>
+
   <!-- Errors -->
   <projectConfigurable implementation="com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable"/>
 
-  <!-- External Tools -->
-  <applicationConfigurable implementation="com.intellij.tools.ToolConfigurable"/>
+  <!-- Project Code Style -->
+  <projectConfigurable implementation="com.intellij.application.options.ProjectCodeStyleConfigurable"/>
 
   <lang.parserDefinition language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextParserDefinition"/>
   <lang.syntaxHighlighterFactory language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainSyntaxHighlighterFactory"/>
