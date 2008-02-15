@@ -19,14 +19,14 @@
 
 
   <property name="production.dest" location="${project.dir}/classes/production"/>
-  <property name="production.dest.groovy" location="${production.dest}/Groovy"/>
+  <property name="production.dest.groovy" location="${production.dest}/groovy"/>
   <property name="production.dest.groovy_rt" location="${production.dest}/groovy_rt"/>
   <property name="idea.dir" value="${project.dir}/lib/idea"/>
   <property name="idea.lib" location="${idea.dir}/lib"/>
   <property name="idea.plugins" location="${idea.dir}/plugins"/>
   <property name="groovy.lib" value="${project.dir}/GDK"/>
   <property name="test.dir" value="${project.dir}/test"/>
-  <property name="test.dest" value="${project.dir}/classes/test/Groovy"/>
+  <property name="test.dest" value="${project.dir}/classes/test/groovy"/>
   <property name="tools.jar.dir" value="${env.JAVA_HOME}/lib"/>
   <property name="resources.file" value="resources_en.jar"/>
 
@@ -245,7 +245,8 @@
       <pathelement path="${test.dest}"/>
     </path>
 
-    <groovyc destdir="${test.dest}" srcDir="../test">
+    <groovyc destdir="../test" srcDir="../test">
+      <include name="**/Groovy*Test.groovy"/>
       <classpath>
         <path refid="idea.lib.path"/>
         <path refid="test.out"/>
@@ -302,12 +303,16 @@
         <fileset dir="${test.dir}">
           <include name="**/*Test.java"/>
         </fileset>
-        <fileset dir="${production.dest}">
+        <fileset dir="${test.dir}">
           <include name="**/Groovy*Test.class"/>
         </fileset>
       </batchtest>
-
     </junit>
+
+    <!--cleanup-->
+    <delete dir="../test">
+      <include name="**/Groovy*.class"/>
+    </delete>
 
   </target>
 
