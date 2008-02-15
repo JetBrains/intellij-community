@@ -26,7 +26,7 @@
   <property name="idea.plugins" location="${idea.dir}/plugins"/>
   <property name="groovy.lib" value="${project.dir}/GDK"/>
   <property name="test.dir" value="${project.dir}/test"/>
-  <property name="test.dest" value="${project.dir}/classes/test/groovy"/>
+  <property name="test.dest" value="${project.dir}/classes/test/Groovy"/>
   <property name="tools.jar.dir" value="${env.JAVA_HOME}/lib"/>
   <property name="resources.file" value="resources_en.jar"/>
 
@@ -254,6 +254,15 @@
         <path refid="output.path"/>
       </classpath>
     </groovyc>
+    <groovyc destdir="${test.dest}" srcDir="../test">
+      <include name="**/Groovy*Test.groovy"/>
+      <classpath>
+        <path refid="idea.lib.path"/>
+        <path refid="test.out"/>
+        <path refid="groovy.path"/>
+        <path refid="output.path"/>
+      </classpath>
+    </groovyc>
 
 
     <copy toDir="${test.dest}/testdata">
@@ -276,6 +285,7 @@
 
       <classpath>
         <path location="${test.dest}"/>
+        <path location="${test.dir}"/>
         <path location="${production.dest.groovy}"/>
 
         <path refid="idea.lib.path"/>
