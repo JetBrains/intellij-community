@@ -31,7 +31,7 @@ public class EmptyClassInspection extends BaseInspection {
 
     @NotNull
     protected String buildErrorString(Object... infos) {
-      Object element = infos[0];
+      final Object element = infos[0];
       if (element instanceof PsiAnonymousClass) {
             return InspectionGadgetsBundle.message(
                      "empty.anonymous.class.problem.descriptor");
@@ -51,12 +51,16 @@ public class EmptyClassInspection extends BaseInspection {
 
     private static class EmptyClassVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitFile(final PsiFile file) {
+        @Override public void visitFile(PsiFile file) {
             if (!(file instanceof PsiJavaFile)) {
                 return;
             }
             final PsiJavaFile javaFile = (PsiJavaFile)file;
             if (javaFile.getClasses().length != 0) {
+                return;
+            }
+            final String fileName = javaFile.getName();
+            if ("package-info.java".equals(fileName)) {
                 return;
             }
             registerError(file, file);
