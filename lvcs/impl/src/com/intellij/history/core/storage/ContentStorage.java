@@ -39,7 +39,7 @@ public class ContentStorage implements IContentStorage {
       r.close();
       return r.getRecordId();
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       throw new BrokenStorageException(e);
     }
   }
@@ -52,7 +52,7 @@ public class ContentStorage implements IContentStorage {
       r.close();
       return buffer;
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       throw new BrokenStorageException(e);
     }
   }
