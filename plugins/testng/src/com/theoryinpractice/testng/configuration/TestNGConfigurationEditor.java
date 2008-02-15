@@ -7,10 +7,10 @@
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.junit2.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.junit2.configuration.CommonJavaParameters;
 import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
-import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.ide.util.TreeClassChooser;

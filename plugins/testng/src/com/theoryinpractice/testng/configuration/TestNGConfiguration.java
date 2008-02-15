@@ -8,10 +8,10 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
+import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.junit.RefactoringListeners;
-import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.actionSystem.DataContext;

@@ -167,7 +167,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="cb5e4" class="com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent" binding="envVariablesComponent">
+              <component id="cb5e4" class="com.intellij.execution.configuration.EnvironmentVariablesComponent" binding="envVariablesComponent">
                 <constraints>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
                   <forms top="0" left="2" bottom="0" right="0"/>

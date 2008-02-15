@@ -18,10 +18,10 @@ package com.intellij.execution.junit;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
+import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.junit.coverage.JUnitCoverageConfigurable;
-import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.testframework.TestSearchScope;
