@@ -365,7 +365,7 @@ public class FSRecords implements Disposable, Forceable {
   private void addToFreeRecordsList(int id) throws IOException {
     final int next = getRecords().getInt(HEADER_FREE_RECORD_OFFSET);
     setNextFree(id, next);
-    setFlags(id, FREE_RECORD_FLAG);
+    setFlags(id, FREE_RECORD_FLAG, false);
     getRecords().putInt(HEADER_FREE_RECORD_OFFSET, id);
   }
 
@@ -641,11 +641,13 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
-  public void setFlags(int id, int flags) {
+  public void setFlags(int id, int flags, final boolean markAsChange) {
     synchronized (lock) {
       try {
-        DbConnection.markDirty();
-        incModCount(id);
+        if (markAsChange) {
+          DbConnection.markDirty();
+          incModCount(id);
+        }
         getRecords().putInt(id * RECORD_SIZE + FLAGS_OFFSET, flags);
       }
       catch (IOException e) {

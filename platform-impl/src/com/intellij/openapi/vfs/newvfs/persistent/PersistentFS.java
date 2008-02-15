@@ -133,7 +133,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
     myRecords.updateList(id, childrenIds);
     int flags = myRecords.getFlags(id);
-    myRecords.setFlags(id, flags | CHILDREN_CACHED_FLAG);
+    myRecords.setFlags(id, flags | CHILDREN_CACHED_FLAG, true);
 
     return names;
   }
@@ -190,7 +190,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     myRecords.setName(id, name);
 
     myRecords.setTimestamp(id, delegate.getTimeStamp(file));
-    myRecords.setFlags(id, (delegate.isDirectory(file) ? IS_DIRECTORY_FLAG : 0) | (!delegate.isWritable(file) ? IS_READ_ONLY : 0));
+    myRecords.setFlags(id, (delegate.isDirectory(file) ? IS_DIRECTORY_FLAG : 0) | (!delegate.isWritable(file) ? IS_READ_ONLY : 0), true);
 
     myRecords.setLength(id, -1L);
 
@@ -721,7 +721,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     int flags = value ? (oldFlags | mask) : (oldFlags & (~mask));
 
     if (oldFlags != flags) {
-      myRecords.setFlags(id, flags);
+      myRecords.setFlags(id, flags, true);
     }
   }
 
