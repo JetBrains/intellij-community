@@ -5,13 +5,10 @@ import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.util.FileStructureDialog;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,7 +42,7 @@ public class ViewStructureAction extends AnAction {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file.structure");
 
     Navigatable navigatable = e.getData(PlatformDataKeys.NAVIGATABLE);
-    DialogWrapper dialog = createDialog(psiFile, editor, project, navigatable, fileEditor);
+    DialogWrapper dialog = createDialog(editor, project, navigatable, fileEditor);
     if (dialog != null) {
       final VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
@@ -56,12 +53,8 @@ public class ViewStructureAction extends AnAction {
   }
 
   @Nullable
-  private DialogWrapper createDialog(PsiFile psiFile,
-                                     final Editor editor, Project project, Navigatable navigatable, final FileEditor fileEditor) {
-
-    Language language = ((LanguageFileType)psiFile.getFileType()).getLanguage();
-    final StructureViewBuilder structureViewBuilder =
-      LanguageStructureViewBuilder.INSTANCE.forLanguage(language).getStructureViewBuilder(psiFile);
+  private static DialogWrapper createDialog(final Editor editor, Project project, Navigatable navigatable, final FileEditor fileEditor) {
+    final StructureViewBuilder structureViewBuilder = fileEditor.getStructureViewBuilder();
     if (structureViewBuilder == null) return null;
     StructureView structureView = structureViewBuilder.createStructureView(fileEditor, project);
     return createStructureViewBasedDialog(structureView.getTreeModel(), editor, project, navigatable, structureView);
