@@ -126,6 +126,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     reloadScopes();
 
     myInitialized = true;
+    myDisposed = false;
     myFileStatusMap.markAllFilesDirty();
   }
   public void projectClosed() {
