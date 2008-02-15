@@ -77,6 +77,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
@@ -778,6 +779,8 @@ public class GroovyAnnotator implements Annotator {
   private void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {
     boolean isStatic = member.hasModifierProperty(PsiModifier.STATIC);
     Annotation annotation = holder.createInfoAnnotation(refExpr.getReferenceNameElement(), null);
+    if (member instanceof AccessorMethod) member = ((AccessorMethod) member).getProperty();
+    
     if (member instanceof PsiField && isStatic) {
       annotation.setTextAttributes(DefaultHighlighter.STATIC_FIELD);
       return;
