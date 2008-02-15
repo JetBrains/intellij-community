@@ -32,8 +32,9 @@ public class DefaultXmlExtension extends XmlExtension {
 
     final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
     if (provider != null) {
-      final Set<String> strings = provider.getAvailableNamespaces(file);
-      final String[] nameVariants = TagNameReference.getTagNameVariants(context, new ArrayList<XmlElementDescriptor>(), strings);      final HashSet<String> set = new HashSet<String>(nameVariants.length);
+      final Set<String> namespaces = provider.getAvailableNamespaces(file);
+      final String[] nameVariants = TagNameReference.getTagNameVariants(context, new ArrayList<XmlElementDescriptor>(), namespaces);
+      final HashSet<String> set = new HashSet<String>(nameVariants.length);
       for (String nameVariant : nameVariants) {
         final int pos = nameVariant.indexOf(':');
         set.add(pos >= 0 ? nameVariant.substring(pos + 1) : nameVariant);
@@ -60,8 +61,7 @@ public class DefaultXmlExtension extends XmlExtension {
         assert nsDescriptor != null;
         final XmlElementDescriptor[] elementDescriptors = nsDescriptor.getRootElementsDescriptors(document);
         for (XmlElementDescriptor elementDescriptor : elementDescriptors) {
-          final String name = elementDescriptor.getDefaultName();
-          if (name.equals(tagName)) {
+          if (hasTag(elementDescriptor, tagName, new HashSet<XmlElementDescriptor>())) {
             set.add(namespace);
             break;
           }
@@ -69,6 +69,22 @@ public class DefaultXmlExtension extends XmlExtension {
       }
     }
     return set;
+  }
+
+  private static boolean hasTag(XmlElementDescriptor elementDescriptor, String tagName, Set<XmlElementDescriptor> visited) {
+    final String name = elementDescriptor.getDefaultName();
+    if (name.equals(tagName)) {
+      return true;
+    }
+    for (XmlElementDescriptor descriptor : elementDescriptor.getElementsDescriptors(null)) {
+      if (!visited.contains(elementDescriptor)) {
+        visited.add(elementDescriptor);
+        if (hasTag(descriptor, tagName, visited)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @NotNull
