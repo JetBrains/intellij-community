@@ -211,8 +211,8 @@ public class PsiSuperMethodImplUtil {
 
   private static PsiSubstitutor obtainFinalSubstitutor(PsiClass superClass,
                                                        PsiSubstitutor superSubstitutor, final PsiClass derivedClass, PsiSubstitutor derivedSubstitutor) {
-    PsiTypeParameter[] superTypeParams = superClass.getTypeParameters();
-    if (superTypeParams.length == 0) return PsiSubstitutor.EMPTY;
+    Iterator<PsiTypeParameter> superTypeParams = PsiUtil.typeParametersIterator(superClass);
+    if (!superTypeParams.hasNext()) return PsiSubstitutor.EMPTY;
 
     if (PsiUtil.isRawSubstitutor(derivedClass, derivedSubstitutor)) {
       Map<PsiTypeParameter, PsiType> substitutionMap = derivedSubstitutor.getSubstitutionMap();
@@ -237,7 +237,8 @@ public class PsiSuperMethodImplUtil {
 
     final Map<PsiTypeParameter, PsiType> map = superSubstitutor.getSubstitutionMap();
     final Map<PsiTypeParameter, PsiType> m1 = new HashMap<PsiTypeParameter, PsiType>();
-    for (PsiTypeParameter typeParameter : superTypeParams) {
+    while (superTypeParams.hasNext()) {
+      PsiTypeParameter typeParameter = superTypeParams.next();
       if (map.containsKey(typeParameter)) { //optimization
         PsiType type = superSubstitutor.substitute(typeParameter);
         final PsiType t = derivedSubstitutor.substituteNoErase(type);

@@ -847,7 +847,6 @@ public final class PsiUtil extends PsiUtilBase {
   /**
    * Returns iterator of type parameters visible in owner. Type parameters are iterated in
    * inner-to-outer, right-to-left order.
-   * @param owner
    */
   public static Iterator<PsiTypeParameter> typeParametersIterator(@NotNull PsiTypeParameterListOwner owner) {
     return new TypeParameterIterator(owner);
