@@ -27,16 +27,17 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
 public class GrFieldImpl extends GrVariableImpl implements GrField {
-  private AccessorMethod mySetter;
-  private AccessorMethod myGetter;
+  private GrAccessorMethod mySetter;
+  private GrAccessorMethod myGetter;
   private boolean myGetterInitialized = false;
   private boolean mySetterInitialized = false;
 
@@ -89,7 +90,7 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
   public PsiMethod getSetter() {
     mySetterInitialized = true;
     if (!isProperty()) return null;
-    final AccessorMethod setter = new AccessorMethod(this, true);
+    final GrAccessorMethod setter = new GrAccessorMethodImpl(this, true);
     final PsiClass clazz = getContainingClass();
     if (!hasContradictingMethods(setter, clazz)) {
       mySetter = setter;
@@ -110,7 +111,7 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
   public PsiMethod getGetter() {
     myGetterInitialized = true;
     if (!isProperty()) return null;
-    final AccessorMethod getter = new AccessorMethod(this, false);
+    final GrAccessorMethod getter = new GrAccessorMethodImpl(this, false);
     final PsiClass clazz = getContainingClass();
     if (!hasContradictingMethods(getter, clazz)) {
       myGetter = getter;
@@ -121,7 +122,7 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
     return myGetter;
   }
 
-  private boolean hasContradictingMethods(AccessorMethod proto, PsiClass clazz) {
+  private boolean hasContradictingMethods(GrAccessorMethod proto, PsiClass clazz) {
     for (PsiMethod method : clazz.findMethodsBySignature(proto, true)) {
       if (clazz.equals(method.getContainingClass())) return true;
       

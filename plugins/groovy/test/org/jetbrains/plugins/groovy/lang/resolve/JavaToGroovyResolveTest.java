@@ -10,7 +10,7 @@ import com.intellij.psi.PsiJavaReference;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptMethod;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -32,7 +32,7 @@ public class JavaToGroovyResolveTest extends GroovyResolveTestCase {
   public void testAccessorRefToProperty() throws Exception {
     PsiReference ref = configureByFile("accessorRefToProperty/A.java");
     PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof AccessorMethod);
+    assertTrue(resolved instanceof GrAccessorMethod);
   }
 
   public void testMethod1() throws Exception {

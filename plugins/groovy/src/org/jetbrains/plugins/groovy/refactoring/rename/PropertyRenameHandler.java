@@ -16,7 +16,7 @@ import com.intellij.refactoring.rename.RenameHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrAccessorMethod;
 
 /**
  * @author ven
@@ -29,7 +29,7 @@ public class PropertyRenameHandler implements RenameHandler {
   private GrField getProperty(DataContext dataContext) {
     final PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
     if (element instanceof GrField && ((GrField) element).isProperty()) return (GrField) element;
-    if (element instanceof AccessorMethod) return ((AccessorMethod) element).getProperty();
+    if (element instanceof GrAccessorMethod) return ((GrAccessorMethod) element).getProperty();
     return null;
   }
 

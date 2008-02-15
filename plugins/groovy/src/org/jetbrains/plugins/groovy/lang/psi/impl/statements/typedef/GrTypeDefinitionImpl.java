@@ -62,12 +62,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
@@ -294,7 +294,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   private boolean isSameDeclaration(PsiElement place, PsiElement element) {
-    if (element instanceof AccessorMethod) element = ((AccessorMethod) element).getProperty();
+    if (element instanceof GrAccessorMethod) element = ((GrAccessorMethod) element).getProperty();
 
     return element instanceof GrField && PsiTreeUtil.isAncestor(element.getParent(), place, true);
   }

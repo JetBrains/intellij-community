@@ -29,6 +29,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.*;
@@ -36,8 +37,8 @@ import java.util.*;
 /**
  * @author ven
  */
-public class AccessorMethod extends LightElement implements PsiMethod {
-  public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod");
+public class GrAccessorMethodImpl extends LightElement implements GrAccessorMethod {
+  public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl");
   private GrField myProperty;
 
   private boolean myIsSetter;
@@ -47,7 +48,7 @@ public class AccessorMethod extends LightElement implements PsiMethod {
   private LightModifierList myModifierList = null;
 
 
-  public AccessorMethod(GrField property, boolean isSetter) {
+  public GrAccessorMethodImpl(GrField property, boolean isSetter) {
     super(property.getManager());
     myProperty = property;
     myIsSetter = isSetter;
@@ -82,7 +83,7 @@ public class AccessorMethod extends LightElement implements PsiMethod {
             if (type == null) {
               type = TypesUtil.createJavaLangObject(myProperty);
             }
-            return new LightParameter[]{new LightParameter(manager, "p", null, type, AccessorMethod.this)};
+            return new LightParameter[]{new LightParameter(manager, "p", null, type, GrAccessorMethodImpl.this)};
           }
 
           return LightParameter.EMPTY_ARRAY;

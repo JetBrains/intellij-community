@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -61,12 +61,12 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
 
   public void testFromGetter() throws Exception {
     PsiReference ref = configureByFile("fromGetter/A.groovy");
-    assertTrue(ref.resolve() instanceof AccessorMethod);
+    assertTrue(ref.resolve() instanceof GrAccessorMethod);
   }
 
   public void testFromSetter() throws Exception {
     PsiReference ref = configureByFile("fromGetter/A.groovy");
-    assertTrue(ref.resolve() instanceof AccessorMethod);
+    assertTrue(ref.resolve() instanceof GrAccessorMethod);
   }
 
   public void testForVariable2() throws Exception {
@@ -180,7 +180,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
 
   public void testGRVY747() throws Exception {
     PsiReference ref = configureByFile("GRVY747/A.groovy");
-    assertTrue(ref.resolve() instanceof AccessorMethod);
+    assertTrue(ref.resolve() instanceof GrAccessorMethod);
   }
 
   private void doTest(String fileName) throws Exception {

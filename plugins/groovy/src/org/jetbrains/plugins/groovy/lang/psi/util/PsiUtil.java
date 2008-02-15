@@ -44,8 +44,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 
 import java.util.ArrayList;
@@ -302,7 +302,7 @@ public class PsiUtil {
   private static boolean checkPropertyName(PsiMethod method, @NotNull String propertyName) {
     String methodName = method.getName();
     String accessorNamePart;
-    if (method instanceof AccessorMethod) accessorNamePart = ((AccessorMethod) method).getProperty().getName();
+    if (method instanceof GrAccessorMethod) accessorNamePart = ((GrAccessorMethod) method).getProperty().getName();
     else {
       accessorNamePart = methodName.substring(3); //"set" or "get"
       if (Character.isLowerCase(accessorNamePart.charAt(0))) return false;

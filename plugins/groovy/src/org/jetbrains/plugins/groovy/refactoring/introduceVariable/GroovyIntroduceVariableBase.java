@@ -41,7 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.NameValidator;
@@ -310,7 +310,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
   }
 
   private String getFieldName(PsiElement element) {
-    if (element instanceof AccessorMethod) element = ((AccessorMethod) element).getProperty();
+    if (element instanceof GrAccessorMethod) element = ((GrAccessorMethod) element).getProperty();
     return element instanceof GrField ? ((GrField) element).getName() : null;
   }
 
