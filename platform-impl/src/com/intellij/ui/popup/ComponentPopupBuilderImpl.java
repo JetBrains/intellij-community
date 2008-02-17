@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,6 +52,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myInStack = true;
   private boolean myModalContext = true;
   private Component[] myFocusOwners = new Component[0];
+
+  private String myAd;
 
   public ComponentPopupBuilderImpl(final JComponent component,
                                    final JComponent prefferedFocusedComponent) {
@@ -144,7 +147,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
                                               myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null,
                                               myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton,
                                               myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
-                                              myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners);
+                                              myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd);
     if (myProject != null) {
       popup.setProject(myProject);
     }
@@ -226,6 +229,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   public ComponentPopupBuilder setFocusOwners(@NotNull final Component[] focusOwners) {
     myFocusOwners = focusOwners;
+    return this;
+  }
+
+  @NotNull
+  public ComponentPopupBuilder setAdText(@Nullable final String text) {
+    myAd = text;
     return this;
   }
 }

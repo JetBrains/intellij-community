@@ -56,6 +56,7 @@ public class PopupChooserBuilder {
   private boolean myCancelKeyEnabled = true;
 
   ArrayList<JBPopupListener> myListeners = new ArrayList<JBPopupListener>();
+  private String myAd;
 
 
   public PopupChooserBuilder(@NotNull JList list) {
@@ -197,6 +198,7 @@ public class PopupChooserBuilder {
       .setAlpha(myAlpha)
       .setFocusOwners(myFocusOwners)
       .setCancelKeyEnabled(myCancelKeyEnabled)
+      .setAdText(myAd)
       .createPopup();
     return myPopup;
   }
@@ -367,6 +369,12 @@ public class PopupChooserBuilder {
   @NotNull
   public PopupChooserBuilder setFocusOwners(@NotNull Component[] focusOwners) {
     myFocusOwners = focusOwners;
+    return this;
+  }
+
+  @NotNull
+  public PopupChooserBuilder setAdText(String ad) {
+    myAd = ad;
     return this;
   }
 

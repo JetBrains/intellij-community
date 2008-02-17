@@ -7,6 +7,7 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class HintUtil {
@@ -103,6 +104,16 @@ public class HintUtil {
 
   private static Font getBoldFont() {
     return UIUtil.getLabelFont().deriveFont(Font.BOLD);
+  }
+
+  public static JComponent createAdComponent(final String bottomText) {
+    JLabel label = new JLabel();
+    label.setText(bottomText);
+    label.setFont(label.getFont().deriveFont((float)(label.getFont().getSize() - 2)));
+    if (bottomText != null) {
+      label.setBorder(new EmptyBorder(1, 2, 1, 2));
+    }
+    return label;
   }
 
   private static class HintLabel extends JLabel {

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.CompletionBundle;
 import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeEventQueue;
@@ -35,7 +36,6 @@ import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -75,7 +75,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private boolean myCanceled = true;
   private boolean myDisposed = false;
   private int myIndex;
-  private JLabel myBottomLabel;
+  private JComponent myBottomLabel;
 
   public LookupImpl(Project project,
                     Editor editor,
@@ -98,10 +98,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
     myInitialPrefix = myPrefix;
 
-    myBottomLabel = new JLabel();
-    myBottomLabel.setText(bottomText);
-    myBottomLabel.setFont(myBottomLabel.getFont().deriveFont((float) (CodeInsightSettings.getInstance().LOOKUP_HEIGHT*10.0/11)));
-    myBottomLabel.setBorder(new EmptyBorder(1, 2, 1, 2));
+    myBottomLabel = HintUtil.createAdComponent(bottomText);
 
     myList = new JList() ;
     myList.setFocusable(false);

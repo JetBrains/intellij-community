@@ -94,4 +94,7 @@ public interface ComponentPopupBuilder {
 
   @NotNull
   ComponentPopupBuilder setFocusOwners(@NotNull Component[] focusOwners);
+
+  @NotNull
+  ComponentPopupBuilder setAdText(@Nullable String text);
 }
