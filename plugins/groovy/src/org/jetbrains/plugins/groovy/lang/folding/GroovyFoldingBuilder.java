@@ -21,6 +21,7 @@ import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 import java.util.ArrayList;
@@ -32,43 +33,44 @@ import java.util.List;
 public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes {
 
   public FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document) {
-    node.getPsi().getChildren();
     List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
-    appendDescriptors(node, document, descriptors);
+    appendDescriptors(node.getPsi(), document, descriptors);
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
   }
 
-  private void appendDescriptors(ASTNode node, Document document, List<FoldingDescriptor> descriptors) {
+  private void appendDescriptors(PsiElement element, Document document, List<FoldingDescriptor> descriptors) {
+    ASTNode node = element.getNode();
+    if (node == null) return;
     IElementType type = node.getElementType();
 
     if (GroovyElementTypes.BLOCK_SET.contains(type) || type == GroovyElementTypes.CLOSABLE_BLOCK) {
-      if (isMultiline(node, document)) {
+      if (isMultiline(element, document)) {
         descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
       }
     }
 
     // comments
     if ((type.equals(mML_COMMENT) || type.equals(GROOVY_DOC_COMMENT)) &&
-        isMultiline(node, document) &&
-        isWellEndedComment(node)) {
+        isMultiline(element, document) &&
+        isWellEndedComment(element)) {
       descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
     }
 
-    ASTNode child = node.getFirstChildNode();
+    PsiElement child = element.getFirstChild();
     while (child != null) {
       appendDescriptors(child, document, descriptors);
-      child = child.getTreeNext();
+      child = child.getNextSibling();
     }
 
   }
 
-  private boolean isWellEndedComment(ASTNode node) {
-    String text = node.getText();
+  private boolean isWellEndedComment(PsiElement element) {
+    String text = element.getText();
     return text != null && text.endsWith("*/");
   }
 
-  private boolean isMultiline(ASTNode node, Document document) {
-    final TextRange range = node.getTextRange();
+  private boolean isMultiline(PsiElement element, Document document) {
+    final TextRange range = element.getTextRange();
     return document.getLineNumber(range.getStartOffset()) < document.getLineNumber(range.getEndOffset());
   }
 
