@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.util.io.FileUtil;
 
 import java.util.ArrayList;
 
@@ -23,12 +24,12 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
 
   public boolean isExcludeRoot(final VirtualFile f) {
     CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(myProject);
-    if (DirectoryIndexImpl.isEqualWithFileOrUrl(f, compilerProjectExtension.getCompilerOutput(), compilerProjectExtension.getCompilerOutputUrl())) return true;
+    if (isEqualWithFileOrUrl(f, compilerProjectExtension.getCompilerOutput(), compilerProjectExtension.getCompilerOutputUrl())) return true;
 
     for (Module m : ModuleManager.getInstance(myProject).getModules()) {
       CompilerModuleExtension rm = CompilerModuleExtension.getInstance(m);
-      if (DirectoryIndexImpl.isEqualWithFileOrUrl(f, rm.getCompilerOutputPath(), rm.getCompilerOutputUrl())) return true;
-      if (DirectoryIndexImpl.isEqualWithFileOrUrl(f, rm.getCompilerOutputPathForTests(), rm.getCompilerOutputUrlForTests())) return true;
+      if (isEqualWithFileOrUrl(f, rm.getCompilerOutputPath(), rm.getCompilerOutputUrl())) return true;
+      if (isEqualWithFileOrUrl(f, rm.getCompilerOutputPathForTests(), rm.getCompilerOutputUrlForTests())) return true;
     }
     return false;
   }
@@ -59,5 +60,15 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
       if (outputPathForTests != null) result.add(outputPathForTests);
     }
     return result.isEmpty() ? VirtualFilePointer.EMPTY_ARRAY : result.toArray(new VirtualFilePointer[result.size()]);
+  }
+
+  private boolean isEqualWithFileOrUrl(VirtualFile f, VirtualFile fileToCompareWith, String url) {
+    if (fileToCompareWith != null) {
+      if (fileToCompareWith == f) return true;
+    }
+    else if (url != null) {
+      if (FileUtil.pathsEqual(url, f.getUrl())) return true;
+    }
+    return false;
   }
 }

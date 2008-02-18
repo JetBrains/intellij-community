@@ -8,6 +8,7 @@ import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 
 import java.io.File;
@@ -184,6 +185,32 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     refreshVFS();
 
     assertFalse(hasVcsEntry(path));
+  }
+
+  public void testCreationOfExcludedDirWithFilesDuringRefreshShouldNotThrowException() throws Exception {
+    // there was a problem with the DirectoryIndex - the files that were created during the refresh
+    // were not correctly excluded, thereby causing the LocalHistory to fail during addition of 
+    // files under the excluded dir.
+
+    File targetDir = createTargetDir();
+
+    FileUtil.copyDir(targetDir, new File(root.getPath(), "target"));
+    VirtualFileManager.getInstance().refresh(false);
+
+    VirtualFile classes = root.findFileByRelativePath("target/classes");
+    addExcludedDir(classes);
+    classes.getParent().delete(null);
+
+    FileUtil.copyDir(targetDir, new File(root.getPath(), "target"));
+    VirtualFileManager.getInstance().refresh(false); // shouldn't throw
+  }
+
+  private File createTargetDir() throws IOException {
+    File result = createTempDirectory();
+    File classes = new File(result, "classes");
+    classes.mkdir();
+    new File(classes, "bak.txt").createNewFile();
+    return result;
   }
 
   private void refreshVFS() {
