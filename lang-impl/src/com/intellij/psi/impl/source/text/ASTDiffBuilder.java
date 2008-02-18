@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
@@ -35,7 +36,7 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
     myEvent = new TreeChangeEventImpl(PomManager.getModel(fileImpl.getProject()).getModelAspect(TreeAspect.class), fileImpl.getTreeElement());
   }
 
-  public void nodeReplaced(ASTNode oldNode, final ASTNode newNode) {
+  public void nodeReplaced(ASTNode oldNode, ASTNode newNode) {
     if (oldNode instanceof FileElement && newNode instanceof FileElement) {
       BlockSupportImpl.replaceFileElement(myFile, (FileElement)oldNode, (FileElement)newNode, myPsiManager);
     }
@@ -43,6 +44,8 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
       if (oldNode instanceof ChameleonElement) {
         oldNode = ChameleonTransforming.transform((ChameleonElement)oldNode);
       }
+
+      newNode = transformNewChameleon(oldNode, newNode);
 
       myRepositoryManager.beforeChildAddedOrRemoved(myFile, oldNode);
 
@@ -61,6 +64,15 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
 
       //System.out.println("REPLACED: " + oldNode + " to " + newNode);
     }
+  }
+
+  private static ASTNode transformNewChameleon(final ASTNode oldNode, ASTNode newNode) {
+    if (newNode instanceof ChameleonElement) {
+      final FileElement dummyRoot = new DummyHolder(oldNode.getPsi().getManager(), null, SharedImplUtil.findCharTableByTree(oldNode)).getTreeElement();
+      TreeUtil.addChildren(dummyRoot, (TreeElement)newNode);
+      newNode = ChameleonTransforming.transform((ChameleonElement)newNode);
+    }
+    return newNode;
   }
 
   public void nodeDeleted(ASTNode parent, final ASTNode child) {
@@ -88,7 +100,9 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
     //System.out.println("DELETED from " + parent + ": " + child);
   }
 
-  public void nodeInserted(final ASTNode oldParent, final ASTNode node, final int pos) {
+  public void nodeInserted(final ASTNode oldParent, ASTNode node, final int pos) {
+    node = transformNewChameleon(oldParent, node);
+
     myRepositoryManager.beforeChildAddedOrRemoved(myFile, oldParent);
 
     ASTNode anchor = null;
