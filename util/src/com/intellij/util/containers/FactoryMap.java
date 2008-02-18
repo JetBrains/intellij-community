@@ -115,6 +115,6 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   }
 
   public Set<Entry<K, V>> entrySet() {
-    throw new RuntimeException("Not implemented");
+    return myMap.entrySet();
   }
 }
