@@ -5,7 +5,7 @@
 
   <applicationService serviceInterface="com.intellij.codeInsight.completion.impl.CompletionService"
                       serviceImplementation="com.intellij.codeInsight.completion.impl.CompletionService"/>
-  
+
   <applicationService serviceInterface="com.intellij.lang.cacheBuilder.CacheBuilderRegistry"
                       serviceImplementation="com.intellij.lang.cacheBuilder.CacheBuilderRegistryImpl"/>
 
@@ -154,6 +154,9 @@
   <completion.contributor implementation="com.intellij.codeInsight.completion.LegacyCompletionContributor"/>
 
   <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor"/>
+
+  <applicationService serviceInterface="com.intellij.psi.WeighingService" serviceImplementation="com.intellij.psi.WeighingService"/>
+  <weighingContributor implementation="com.intellij.psi.util.proximity.ProximityWeighingContributor"/>
 
   <selectInTarget implementation="com.intellij.ide.navigationToolbar.SelectInNavBarTarget"/>
   <selectInTarget implementation="com.intellij.ide.impl.StructureViewSelectInTarget"/>

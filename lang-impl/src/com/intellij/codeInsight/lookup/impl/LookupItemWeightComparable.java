@@ -12,9 +12,9 @@ import java.util.Arrays;
 */
 public class LookupItemWeightComparable implements Comparable<LookupItemWeightComparable> {
   private final double myPriority;
-  private final int[] myWeight;
+  private final Comparable[] myWeight;
 
-  public LookupItemWeightComparable(final double priority, final int[] weight) {
+  public LookupItemWeightComparable(final double priority, final Comparable[] weight) {
     myPriority = priority;
     myWeight = weight;
   }

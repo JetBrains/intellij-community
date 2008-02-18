@@ -17,7 +17,7 @@ import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiProximityComparator;
+import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
@@ -211,7 +211,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
 
   protected void sortItems(PsiElement context, LookupItem[] items, final LookupItemPreferencePolicy itemPreferencePolicy) {
     if (context == null || shouldSortItems(context.getContainingFile(), items)) {
-      final PsiProximityComparator proximityComparator = new PsiProximityComparator(context, myProject);
+      final PsiProximityComparator proximityComparator = new PsiProximityComparator(context);
       if (isUseNewSorting()) {
         if (itemPreferencePolicy instanceof CompletionPreferencePolicy) {
           final ExpectedTypeInfo[] expectedInfos = ((CompletionPreferencePolicy)itemPreferencePolicy).getExpectedInfos();

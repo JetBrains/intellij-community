@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.PsiProximityComparator;
+import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -125,7 +125,7 @@ public class CodeInsightUtil {
   public static void sortIdenticalShortNameClasses(PsiClass[] classes, @NotNull PsiElement context) {
     if (classes.length <= 1) return;
 
-    Arrays.sort(classes, new PsiProximityComparator(context, context.getProject()));
+    Arrays.sort(classes, new PsiProximityComparator(context));
   }
 
   public static PsiExpression[] findExpressionOccurrences(PsiElement scope, PsiExpression expr) {

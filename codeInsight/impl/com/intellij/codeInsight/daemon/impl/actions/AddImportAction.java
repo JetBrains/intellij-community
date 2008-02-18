@@ -16,7 +16,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.psi.util.PsiProximityComparator;
+import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,7 +64,7 @@ public class AddImportAction implements QuestionAction {
   }
 
   private void chooseClassAndImport() {
-    Arrays.sort(myTargetClasses, new PsiProximityComparator(myReference.getElement(), myProject));
+    Arrays.sort(myTargetClasses, new PsiProximityComparator(myReference.getElement()));
     final JList list = new JList(myTargetClasses);
     list.setCellRenderer(new FQNameCellRenderer());
     Runnable runnable = new Runnable() {

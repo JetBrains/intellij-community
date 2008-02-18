@@ -21,7 +21,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.psi.util.PsiProximityComparator;
+import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.popup.PopupOwner;
@@ -1023,7 +1023,7 @@ public abstract class ChooseByNameBase{
   }
 
   private void sortByProximity(final List<Object> sameNameElements) {
-    Collections.sort(sameNameElements, new PsiProximityComparator(myContext.get(), myProject));
+    Collections.sort(sameNameElements, new PsiProximityComparator(myContext.get()));
   }
 
   private List<String> split(String s) {

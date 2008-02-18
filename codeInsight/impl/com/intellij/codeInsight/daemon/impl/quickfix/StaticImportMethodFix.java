@@ -17,7 +17,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiProximityComparator;
+import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +94,7 @@ public class StaticImportMethodFix implements IntentionAction {
       }
     }
     List<PsiMethod> result = applicableList.isEmpty() ? list : applicableList;
-    Collections.sort(result, new PsiProximityComparator(argumentList, argumentList.getProject()));
+    Collections.sort(result, new PsiProximityComparator(argumentList));
     return result;
   }
 

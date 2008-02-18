@@ -14,9 +14,8 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiProximity;
-import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
@@ -49,7 +48,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   public CompletionPreferencePolicy(PsiManager manager, LookupItem[] allItems, ExpectedTypeInfo[] expectedInfos, String prefix, @NotNull PsiElement position) {
     myPosition = position;
     setPrefix( prefix );
-    myProximityComparator = new PsiProximityComparator(position, manager.getProject());
+    myProximityComparator = new PsiProximityComparator(position);
     myPrefixCapitals = capitalsOnly(prefix);
     myCodeStyleManager = JavaCodeStyleManager.getInstance(manager.getProject());
     if(expectedInfos != null){
@@ -100,10 +99,10 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     }
   }
 
-  public int[] getWeight(final LookupItem<?> item) {
+  public Comparable[] getWeight(final LookupItem<?> item) {
     if (item.getAttribute(LookupItem.WEIGHT) != null) return item.getAttribute(LookupItem.WEIGHT);
 
-    final int[] result = new int[12];
+    final Comparable[] result = new Comparable[12];
 
     String item1StringCap = capitalsOnly(item.getLookupString());
     result[0] = item1StringCap.startsWith(myPrefixCapitals) ? 1 : 0;
@@ -145,8 +144,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     }
 
     if (object instanceof PsiElement) {
-      final PsiProximity proximity = myProximityComparator.getProximity((PsiElement)object);
-      result[8] = proximity ==null ? -1 : 239 - proximity.ordinal();
+      result[8] = myProximityComparator.getProximity((PsiElement)object);
     }
 
     if (name != null && myExpectedInfos != null) {
@@ -218,7 +216,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     return doCompare(item1.getPriority(), item2.getPriority(), getWeight(item1), getWeight(item2));
   }
 
-  public static int doCompare(final double priority1, final double priority2, final int[] weight1, final int[] weight2) {
+  public static int doCompare(final double priority1, final double priority2, final Comparable[] weight1, final Comparable[] weight2) {
     if (priority1 != priority2) {
       final double v = priority1 - priority2;
       if (v > 0) return -1;
@@ -226,10 +224,14 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     }
 
     for (int i = 0; i < weight1.length; i++) {
-      final int w1 = weight1[i];
-      final int w2 = weight2[i];
-      if (w2 > w1) return 1;
-      if (w2 < w1) return -1;
+      final Comparable w1 = weight1[i];
+      final Comparable w2 = weight2[i];
+      if (w1 != null || w2 != null) {
+        if (w1 == null) return 1;
+        if (w2 == null) return -1;
+        final int res = w1.compareTo(w2);
+        if (res != 0) return -res;
+      }
     }
 
     return 0;
