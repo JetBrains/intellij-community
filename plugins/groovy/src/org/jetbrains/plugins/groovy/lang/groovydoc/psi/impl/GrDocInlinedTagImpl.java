@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,6 +27,10 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
 
   public GrDocInlinedTagImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitDocTag(this);
   }
 
   public String toString() {

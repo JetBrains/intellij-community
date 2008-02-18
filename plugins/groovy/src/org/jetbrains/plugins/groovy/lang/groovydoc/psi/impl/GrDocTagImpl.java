@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author ilyas
@@ -26,6 +27,10 @@ public class GrDocTagImpl extends GroovyDocPsiElementImpl implements GrDocTag {
 
   public GrDocTagImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitDocTag(this);
   }
 
   public String toString() {

@@ -118,7 +118,8 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
 
     if ((psiParent instanceof GrDocComment &&
         child.getElementType() != mGDOC_COMMENT_START) ||
-        psiParent instanceof GrDocTag) {
+        psiParent instanceof GrDocTag &&
+            child.getElementType() != mGDOC_TAG_NAME) {
       return Indent.getSpaceIndent(GDOC_COMMENT_INDENT);
     }
 
