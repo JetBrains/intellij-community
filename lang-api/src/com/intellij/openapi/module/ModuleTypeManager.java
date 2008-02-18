@@ -16,6 +16,7 @@
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ModuleTypeManager {
   public static ModuleTypeManager getInstance() {
@@ -26,9 +27,11 @@ public abstract class ModuleTypeManager {
 
   public abstract ModuleType[] getRegisteredTypes();
 
-  public abstract ModuleType findByID(String moduleTypeID);
+  public abstract ModuleType findByID(@Nullable String moduleTypeID);
 
   public abstract void registerModuleType(ModuleType type, boolean classpathProvider);
 
   public abstract boolean isClasspathProvider(final ModuleType moduleType);
+
+  public abstract ModuleType getDefaultModuleType();
 }

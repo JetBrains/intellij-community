@@ -32,11 +32,10 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.module.UnknownModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.LinkedHashMap;
 
@@ -44,10 +43,10 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleTypeManagerImpl");
 
   private LinkedHashMap<ModuleType, Boolean> myModuleTypes = new LinkedHashMap<ModuleType, Boolean>();
-  @NonNls private static final String JAVA_MODULE_ID_OLD = "JAVA";
+
 
   public ModuleTypeManagerImpl() {
-    registerDefaultTypes();
+    registerModuleType(getDefaultModuleType(), true);
   }
 
   public void registerModuleType(ModuleType type) {
@@ -69,9 +68,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   public ModuleType findByID(String moduleTypeID) {
-    if (JAVA_MODULE_ID_OLD.equals(moduleTypeID)) {
-      return StdModuleTypes.JAVA; // for compatibility with the previous ID that Java modules had
-    }
+    if (moduleTypeID == null) return getDefaultModuleType();
     for (ModuleType type : myModuleTypes.keySet()) {
       if (type.getId().equals(moduleTypeID)) {
         return type;
@@ -86,7 +83,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
     return provider != null && provider.booleanValue();
   }
 
-  private void registerDefaultTypes() {
-    registerModuleType(StdModuleTypes.JAVA, true);
+  public ModuleType getDefaultModuleType() {
+    return EmptyModuleType.getInstance();
   }
 }
