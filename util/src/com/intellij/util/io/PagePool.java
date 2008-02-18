@@ -122,11 +122,20 @@ public class PagePool {
     }
     finally {
       if (flushQueueNow) {
+        //long start = System.currentTimeMillis();
+        //if (lastFlushTime != 0) {
+        //  System.out.print("Time between flushes: " + (start - lastFlushTime));
+        //}
+        //lastFlushTime = start;
         flushFinalizationQueue(5000);
+        //long delta = System.currentTimeMillis() - start;
+        //System.out.println(". Flushing queue, done for " + delta + " msec.");
       }
     }
   }
 
+  //private long lastFlushTime = 0;
+  
   private static double percent(int part, int whole) {
     return ((double)part * 1000 / whole) / 10;
   }

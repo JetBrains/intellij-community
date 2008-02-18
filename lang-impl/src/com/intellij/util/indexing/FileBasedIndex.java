@@ -160,6 +160,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
 
   public void disposeComponent() {
+    myChangedFilesUpdater.forceUpdate();
     myInvalidationService.shutdown();
     try {
       myInvalidationService.awaitTermination(30, TimeUnit.SECONDS);
