@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,56 +44,45 @@ public class HighlightInfoComposite extends HighlightInfo {
 
   @Nullable
   private static String createCompositeDescription(List<HighlightInfo> infos) {
-    StringBuilder description = StringBuilderSpinAllocator.alloc();
-    try {
-      boolean isNull = true;
-      for (HighlightInfo info : infos) {
-        String itemDescription = info.description;
-        if (itemDescription != null) {
-          itemDescription = itemDescription.trim();
-          description.append(itemDescription);
-          if (!itemDescription.endsWith(".")) {
-            description.append('.');
-          }
-          description.append(' ');
-
-          isNull = false;
+    StringBuilder description = new StringBuilder();
+    boolean isNull = true;
+    for (HighlightInfo info : infos) {
+      String itemDescription = info.description;
+      if (itemDescription != null) {
+        itemDescription = itemDescription.trim();
+        description.append(itemDescription);
+        if (!itemDescription.endsWith(".")) {
+          description.append('.');
         }
+        description.append(' ');
+
+        isNull = false;
       }
-      return isNull ? null : description.toString();
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(description);
-    }
+    return isNull ? null : description.toString();
   }
 
   @Nullable
   private static String createCompositeTooltip(List<HighlightInfo> infos) {
-    StringBuilder result = StringBuilderSpinAllocator.alloc();
-    try {
-      for (HighlightInfo info : infos) {
-        String toolTip = info.toolTip;
-        if (toolTip != null) {
-          if (result.length() != 0) {
-            result.append(LINE_BREAK);
-          }
-          toolTip = StringUtil.trimStart(toolTip, HTML_HEADER);
-          toolTip = StringUtil.trimStart(toolTip, BODY_HEADER);
-          toolTip = StringUtil.trimEnd(toolTip, HTML_FOOTER);
-          toolTip = StringUtil.trimEnd(toolTip, BODY_FOOTER);
-          result.append(toolTip);
+    StringBuilder result = new StringBuilder();
+    for (HighlightInfo info : infos) {
+      String toolTip = info.toolTip;
+      if (toolTip != null) {
+        if (result.length() != 0) {
+          result.append(LINE_BREAK);
         }
+        toolTip = StringUtil.trimStart(toolTip, HTML_HEADER);
+        toolTip = StringUtil.trimStart(toolTip, BODY_HEADER);
+        toolTip = StringUtil.trimEnd(toolTip, HTML_FOOTER);
+        toolTip = StringUtil.trimEnd(toolTip, BODY_FOOTER);
+        result.append(toolTip);
       }
-      if (result.length() == 0) {
-        return null;
-      }
-      result.insert(0, HTML_HEADER);
-      result.append(HTML_FOOTER);
-      return result.toString();
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(result);
+    if (result.length() == 0) {
+      return null;
     }
+    result.insert(0, HTML_HEADER);
+    result.append(HTML_FOOTER);
+    return result.toString();
   }
-
 }

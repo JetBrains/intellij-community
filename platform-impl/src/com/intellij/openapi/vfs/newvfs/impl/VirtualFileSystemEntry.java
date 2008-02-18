@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,20 +83,15 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public void markDirtyRecursively() {
     markDirty();
     for (VirtualFile file : getCachedChildren()) {
-      ((VirtualFileSystemEntry)file).markDirtyRecursively();
+      ((NewVirtualFile)file).markDirtyRecursively();
     }
   }
 
   @NotNull
   public String getUrl() {
-    StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      appendPathOnFileSystem(builder, true);
-      return builder.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    StringBuilder builder = new StringBuilder();
+    appendPathOnFileSystem(builder, true);
+    return builder.toString();
   }
 
   @NotNull

@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,28 +57,23 @@ public class StringUtil {
 
     final String text1 = ignoreCase ? text.toLowerCase() : text;
     final String oldS1 = ignoreCase ? oldS.toLowerCase() : oldS;
-    final StringBuilder newText = StringBuilderSpinAllocator.alloc();
-    try {
-      int i = 0;
-      while (i < text1.length()) {
-        int i1 = text1.indexOf(oldS1, i);
-        if (i1 < 0) {
-          if (i == 0) return text;
-          newText.append(text, i, text.length());
-          break;
-        }
-        else {
-          if (newS == null) return null;
-          newText.append(text, i, i1);
-          newText.append(newS);
-          i = i1 + oldS.length();
-        }
+    final StringBuilder newText = new StringBuilder();
+    int i = 0;
+    while (i < text1.length()) {
+      int i1 = text1.indexOf(oldS1, i);
+      if (i1 < 0) {
+        if (i == 0) return text;
+        newText.append(text, i, text.length());
+        break;
       }
-      return newText.toString();
+      else {
+        if (newS == null) return null;
+        newText.append(text, i, i1);
+        newText.append(newS);
+        i = i1 + oldS.length();
+      }
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(newText);
-    }
+    return newText.toString();
   }
 
   @NotNull public static String getShortName(@NotNull String fqName) {
@@ -441,19 +435,14 @@ public class StringUtil {
   }
 
   @NotNull public static String escapeStringCharacters(@NotNull String s) {
-    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      escapeStringCharacters(s.length(), s, buffer);
-      return buffer.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+    StringBuilder buffer = new StringBuilder();
+    escapeStringCharacters(s.length(), s, buffer);
+    return buffer.toString();
   }
 
 
   @NotNull public static String unescapeStringCharacters(@NotNull String s) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     unescapeStringCharacters(s.length(), s, buffer);
     return buffer.toString();
   }
@@ -466,7 +455,7 @@ public class StringUtil {
     return s;
   }
 
-  private static void unescapeStringCharacters(int length, String s, StringBuffer buffer) {
+  private static void unescapeStringCharacters(int length, String s, StringBuilder buffer) {
     boolean escaped = false;
     for (int idx = 0; idx < length; idx++) {
       char ch = s.charAt(idx);
@@ -752,48 +741,38 @@ public class StringUtil {
   }
 
   @NotNull public static String repeatSymbol(final char aChar, final int count) {
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      repeatSymbol(buffer, aChar, count);
-      return buffer.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+    final StringBuilder buffer = new StringBuilder();
+    repeatSymbol(buffer, aChar, count);
+    return buffer.toString();
   }
 
   @NotNull
-   public static List<String> splitHonorQuotes(@NotNull String s, char separator) {
-     final ArrayList<String> result = new ArrayList<String>();
-     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-     try {
-       boolean inQuotes = false;
-       for (int i = 0; i < s.length(); i++) {
-         final char c = s.charAt(i);
-         if (c == separator && !inQuotes) {
-           if (builder.length() > 0) {
-             result.add(builder.toString());
-             builder.setLength(0);
-           }
-           continue;
-         }
+  public static List<String> splitHonorQuotes(@NotNull String s, char separator) {
+    final ArrayList<String> result = new ArrayList<String>();
+    final StringBuilder builder = new StringBuilder();
+    boolean inQuotes = false;
+    for (int i = 0; i < s.length(); i++) {
+      final char c = s.charAt(i);
+      if (c == separator && !inQuotes) {
+        if (builder.length() > 0) {
+          result.add(builder.toString());
+          builder.setLength(0);
+        }
+        continue;
+      }
 
-         if (c == '"' && !(i > 0 && s.charAt(i - 1) == '\\')) {
-           inQuotes = !inQuotes;
-         }
-         builder.append(c);
-       }
+      if (c == '"' && !(i > 0 && s.charAt(i - 1) == '\\')) {
+        inQuotes = !inQuotes;
+      }
+      builder.append(c);
+    }
 
-       if (builder.length() > 0) {
-         result.add(builder.toString());
-       }
-     }
-     finally {
-       StringBuilderSpinAllocator.dispose(builder);
-     }
-     return result;
-   }
-  
+    if (builder.length() > 0) {
+      result.add(builder.toString());
+    }
+    return result;
+  }
+
 
   @NotNull public static List<String> split(@NotNull String s, @NotNull String separator) {
     if (separator.length() == 0) {
@@ -864,17 +843,12 @@ public class StringUtil {
   }
 
   @NotNull public static String join(@NotNull final String[] strings, int startIndex, int endIndex, @NotNull final String separator) {
-    final StringBuilder result = StringBuilderSpinAllocator.alloc();
-    try {
-      for (int i = startIndex; i < endIndex; i++) {
-        if (i > startIndex) result.append(separator);
-        result.append(strings[i]);
-      }
-      return result.toString();
+    final StringBuilder result = new StringBuilder();
+    for (int i = startIndex; i < endIndex; i++) {
+      if (i > startIndex) result.append(separator);
+      result.append(strings[i]);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(result);
-    }
+    return result.toString();
   }
 
   @NotNull public static String[] zip(@NotNull String[] strings1, @NotNull String[] strings2, String separator) {
@@ -898,50 +872,35 @@ public class StringUtil {
   }
 
   @NotNull public static <T> String join(@NotNull Collection<T> items, @NotNull Function<T, String> f, @NotNull @NonNls String separator) {
-    final StringBuilder result = StringBuilderSpinAllocator.alloc();
-    try {
-      for (T item : items) {
-        String string = f.fun(item);
-        if (string != null && string.length() != 0) {
-          if (result.length() != 0) result.append(separator);
-          result.append(string);
-        }
+    final StringBuilder result = new StringBuilder();
+    for (T item : items) {
+      String string = f.fun(item);
+      if (string != null && string.length() != 0) {
+        if (result.length() != 0) result.append(separator);
+        result.append(string);
       }
-      return result.toString();
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(result);
-    }
+    return result.toString();
   }
 
   @NotNull public static String join(@NotNull Collection<String> strings, @NotNull final String separator) {
-    final StringBuilder result = StringBuilderSpinAllocator.alloc();
-    try {
-      for (String string : strings) {
-        if (string != null && string.length() != 0) {
-          if (result.length() != 0) result.append(separator);
-          result.append(string);
-        }
+    final StringBuilder result = new StringBuilder();
+    for (String string : strings) {
+      if (string != null && string.length() != 0) {
+        if (result.length() != 0) result.append(separator);
+        result.append(string);
       }
-      return result.toString();
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(result);
-    }
+    return result.toString();
   }
 
   @NotNull public static String join(@NotNull final int[] strings, @NotNull final String separator) {
-    final StringBuilder result = StringBuilderSpinAllocator.alloc();
-    try {
-      for (int i = 0; i < strings.length; i++) {
-        if (i > 0) result.append(separator);
-        result.append(strings[i]);
-      }
-      return result.toString();
+    final StringBuilder result = new StringBuilder();
+    for (int i = 0; i < strings.length; i++) {
+      if (i > 0) result.append(separator);
+      result.append(strings[i]);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(result);
-    }
+    return result.toString();
   }
 
   @NotNull public static String stripQuotesAroundValue(@NotNull String text) {
@@ -951,8 +910,8 @@ public class StringUtil {
   }
 
   public static boolean isQuotedString(@NotNull String text) {
-    return ( startsWithChar(text, '\"') && endsWithChar(text, '\"') ) ||
-           ( startsWithChar(text, '\'') && endsWithChar(text, '\''));
+    return startsWithChar(text, '\"') && endsWithChar(text, '\"')
+           || startsWithChar(text, '\'') && endsWithChar(text, '\'');
   }
 
   /**
@@ -1137,7 +1096,7 @@ public class StringUtil {
     return text.length() > length ? text.substring(0, length) + (appendEllipsis ? "..." : "") : text;
   }
 
-  public static String escapeQuotes(final @NotNull String str) {
+  public static String escapeQuotes(@NotNull final String str) {
     int idx = str.indexOf('"');
     if (idx < 0) return str;
     StringBuilder buf = new StringBuilder(str);
@@ -1167,7 +1126,7 @@ public class StringUtil {
   }
 
   public static String escapeToRegexp(String text) {
-    StringBuilder result = StringBuilderSpinAllocator.alloc();
+    StringBuilder result = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
       final char c = text.charAt(i);
       if (c == ' ' || Character.isLetter(c) || Character.isDigit(c)) {
@@ -1181,30 +1140,24 @@ public class StringUtil {
     return result.toString();
   }
 
-  @SuppressWarnings({"AssignmentToForLoopParameter"})
   private static String replace(final String text, final String[] from, final String[] to) {
-    final StringBuilder result = StringBuilderSpinAllocator.alloc();
-    try {
-      replace:
-      for (int i = 0; i < text.length(); i++) {
-        for (int j = 0; j < from.length; j += 1) {
-          String toReplace = from[j];
-          String replaceWith = to[j];
+    final StringBuilder result = new StringBuilder(text.length());
+    replace:
+    for (int i = 0; i < text.length(); i++) {
+      for (int j = 0; j < from.length; j += 1) {
+        String toReplace = from[j];
+        String replaceWith = to[j];
 
-          final int len = toReplace.length();
-          if (text.regionMatches(i, toReplace, 0, len)) {
-            result.append(replaceWith);
-            i += len - 1;
-            continue replace;
-          }
+        final int len = toReplace.length();
+        if (text.regionMatches(i, toReplace, 0, len)) {
+          result.append(replaceWith);
+          i += len - 1;
+          continue replace;
         }
-        result.append(text.charAt(i));
       }
-      return result.toString();
+      result.append(text.charAt(i));
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(result);
-    }
+    return result.toString();
   }
 
   public static String[] filterEmptyStrings(String[] strings) {
