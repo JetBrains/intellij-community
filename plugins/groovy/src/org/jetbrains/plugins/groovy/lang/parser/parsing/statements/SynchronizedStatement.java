@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
@@ -27,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @author ilyas
  */
 public class SynchronizedStatement implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
 
@@ -35,7 +34,7 @@ public class SynchronizedStatement implements GroovyElementTypes {
 
     if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
       marker.drop();
-      return WRONGWAY;
+      return false;
     }
 
     if (!StrictContextExpression.parse(builder)) {
@@ -50,7 +49,7 @@ public class SynchronizedStatement implements GroovyElementTypes {
       }
       if (!ParserUtils.getToken(builder, mRPAREN)) {
         marker.done(SYNCHRONIZED_STATEMENT);
-        return SYNCHRONIZED_STATEMENT;
+        return true;
       }
     }
 
@@ -59,20 +58,17 @@ public class SynchronizedStatement implements GroovyElementTypes {
       ParserUtils.getToken(builder, mNLS);
     }
 
-    GroovyElementType result = WRONGWAY;
     if (mLCURLY.equals(builder.getTokenType())) {
-      result = OpenOrClosableBlock.parseOpenBlock(builder);
-    }
-    if (result.equals(WRONGWAY) || result.equals(IMPORT_STATEMENT)) {
-      warn.rollbackTo();
-      builder.error(GroovyBundle.message("block.expression.expected"));
-      marker.done(SYNCHRONIZED_STATEMENT);
-      return SYNCHRONIZED_STATEMENT;
-    } else {
-      warn.drop();
-      marker.done(SYNCHRONIZED_STATEMENT);
-      return SYNCHRONIZED_STATEMENT;
+      if (!OpenOrClosableBlock.parseOpenBlock(builder)) {
+        warn.rollbackTo();
+        builder.error(GroovyBundle.message("block.expression.expected"));
+        marker.done(SYNCHRONIZED_STATEMENT);
+      } else {
+        warn.drop();
+        marker.done(SYNCHRONIZED_STATEMENT);
+      }
     }
 
+    return true;
   }
 }

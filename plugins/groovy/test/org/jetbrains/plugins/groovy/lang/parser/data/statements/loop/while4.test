@@ -13,17 +13,16 @@ Groovy script
       Literal
         PsiElement(Integer)('1')
     PsiElement())(')')
-    PsiErrorElement:Expression expected
-      <empty list>
-  PsiElement(new line)('\n')
-  Import statement
-    PsiElement(import)('import')
-    PsiWhiteSpace(' ')
-    Reference element
-      Reference element
+    PsiElement(new line)('\n')
+    PsiErrorElement:Imports are not allowed inside blocks
+      Import statement
+        PsiElement(import)('import')
+        PsiWhiteSpace(' ')
         Reference element
-          PsiElement(identifier)('a')
-        PsiElement(.)('.')
-        PsiElement(identifier)('b')
-      PsiElement(.)('.')
-      PsiElement(identifier)('c')
+          Reference element
+            Reference element
+              PsiElement(identifier)('a')
+            PsiElement(.)('.')
+            PsiElement(identifier)('b')
+          PsiElement(.)('.')
+          PsiElement(identifier)('c')

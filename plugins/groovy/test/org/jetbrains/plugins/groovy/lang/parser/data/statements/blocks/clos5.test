@@ -34,14 +34,17 @@ Groovy script
           PsiElement(;)(';')
           PsiWhiteSpace('  ')
           PsiElement(new line)('\n')
-          PsiErrorElement:Imports are not allowed in such block
-            PsiElement(import)('import')
-            PsiWhiteSpace(' ')
-            PsiElement(identifier)('java')
-            PsiElement(.)('.')
-            PsiElement(identifier)('lang')
-            PsiElement(.)('.')
-            PsiElement(*)('*')
+          PsiErrorElement:Imports are not allowed inside blocks
+            Import statement
+              PsiElement(import)('import')
+              PsiWhiteSpace(' ')
+              Reference element
+                Reference element
+                  PsiElement(identifier)('java')
+                PsiElement(.)('.')
+                PsiElement(identifier)('lang')
+              PsiElement(.)('.')
+              PsiElement(*)('*')
           PsiElement(;)(';')
           PsiElement(new line)('\n')
           Literal

@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class ImportStatement implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
 
     Marker impMarker = builder.mark();
 
@@ -41,7 +41,7 @@ public class ImportStatement implements GroovyElementTypes {
 
     impMarker.done(IMPORT_STATEMENT);
 
-    return IMPORT_STATEMENT;
+    return true;
   }
 
 }

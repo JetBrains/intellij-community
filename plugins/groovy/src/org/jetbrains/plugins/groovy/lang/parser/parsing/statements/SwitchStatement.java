@@ -21,7 +21,6 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
 import org.jetbrains.plugins.grails.lang.gsp.parsing.groovy.GspTemplateStmtParsing;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
@@ -34,13 +33,13 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class SwitchStatement implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, kSWITCH);
 
     if (!ParserUtils.getToken(builder, mLPAREN, GroovyBundle.message("lparen.expected"))) {
       marker.done(SWITCH_STATEMENT);
-      return SWITCH_STATEMENT;
+      return true;
     }
     if (!StrictContextExpression.parse(builder)) {
       builder.error(GroovyBundle.message("expression.expected"));
@@ -54,7 +53,7 @@ public class SwitchStatement implements GroovyElementTypes {
       }
       if (!ParserUtils.getToken(builder, mRPAREN)) {
         marker.done(SWITCH_STATEMENT);
-        return SWITCH_STATEMENT;
+        return true;
       }
     }
     PsiBuilder.Marker warn = builder.mark();
@@ -64,12 +63,12 @@ public class SwitchStatement implements GroovyElementTypes {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("case.block.expected"));
       marker.done(SWITCH_STATEMENT);
-      return SWITCH_STATEMENT;
+      return true;
     }
     warn.drop();
     parseCaseBlock(builder);
     marker.done(SWITCH_STATEMENT);
-    return SWITCH_STATEMENT;
+    return true;
 
   }
 
@@ -152,8 +151,8 @@ public class SwitchStatement implements GroovyElementTypes {
         mRCURLY.equals(builder.getTokenType())) {
       return;
     }
-    GroovyElementType result = Statement.parse(builder);
-    if (result.equals(WRONGWAY) && !GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
+
+    if (!Statement.parse(builder, false) && !GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
       builder.error(GroovyBundle.message("wrong.statement"));
       return;
     }
@@ -172,8 +171,8 @@ public class SwitchStatement implements GroovyElementTypes {
         mRCURLY.equals(builder.getTokenType())) {
       return;
     }
-    result = Statement.parse(builder);
-    while (!result.equals(WRONGWAY) && (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) ||
+    boolean result = Statement.parse(builder, false);
+    while (result && (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) ||
         GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
 
       if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
@@ -194,7 +193,7 @@ public class SwitchStatement implements GroovyElementTypes {
         break;
       }
 
-      result = Statement.parse(builder);
+      result = Statement.parse(builder, false);
       if (!GspTokenTypesEx.GSP_GROOVY_SEPARATORS.contains(builder.getTokenType())) {
         OpenOrClosableBlock.cleanAfterError(builder);
       }

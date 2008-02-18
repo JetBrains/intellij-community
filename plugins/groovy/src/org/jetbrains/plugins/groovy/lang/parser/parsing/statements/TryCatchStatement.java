@@ -30,20 +30,16 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class TryCatchStatement implements GroovyElementTypes {
 
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, kTRY);
     PsiBuilder.Marker warn = builder.mark();
     ParserUtils.getToken(builder, mNLS);
-    GroovyElementType result = WRONGWAY;
-    if (mLCURLY.equals(builder.getTokenType())) {
-      result = OpenOrClosableBlock.parseOpenBlock(builder);
-    }
-    if (result.equals(WRONGWAY)) {
+    if (!mLCURLY.equals(builder.getTokenType()) || !OpenOrClosableBlock.parseOpenBlock(builder)) {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("expression.expected"));
       marker.done(TRY_BLOCK_STATEMENT);
-      return TRY_BLOCK_STATEMENT;
+      return true;
     }
     warn.drop();
 
@@ -52,7 +48,7 @@ public class TryCatchStatement implements GroovyElementTypes {
         !(builder.getTokenType() == kFINALLY)) {
       builder.error(GroovyBundle.message("catch.or.finally.expected"));
       marker.done(TRY_BLOCK_STATEMENT);
-      return TRY_BLOCK_STATEMENT;
+      return true;
     }
 
     if (kCATCH.equals(builder.getTokenType())) {
@@ -66,11 +62,8 @@ public class TryCatchStatement implements GroovyElementTypes {
       warn = builder.mark();
       ParserUtils.getToken(builder, kFINALLY);
       ParserUtils.getToken(builder, mNLS);
-      result = WRONGWAY;
-      if (mLCURLY.equals(builder.getTokenType())) {
-        result = OpenOrClosableBlock.parseOpenBlock(builder);
-      }
-      if (result.equals(WRONGWAY)) {
+
+      if (!mLCURLY.equals(builder.getTokenType()) || !OpenOrClosableBlock.parseOpenBlock(builder)) {
         finallyMarker.drop();
         warn.rollbackTo();
         builder.error(GroovyBundle.message("expression.expected"));
@@ -80,7 +73,7 @@ public class TryCatchStatement implements GroovyElementTypes {
       }
     }
     marker.done(TRY_BLOCK_STATEMENT);
-    return TRY_BLOCK_STATEMENT;
+    return true;
   }
 
   /**
@@ -111,11 +104,7 @@ public class TryCatchStatement implements GroovyElementTypes {
 
     PsiBuilder.Marker warn = builder.mark();
     ParserUtils.getToken(builder, mNLS);
-    GroovyElementType result = WRONGWAY;
-    if (mLCURLY.equals(builder.getTokenType())) {
-      result = OpenOrClosableBlock.parseOpenBlock(builder);
-    }
-    if (result.equals(WRONGWAY)) {
+    if (!mLCURLY.equals(builder.getTokenType()) || !OpenOrClosableBlock.parseOpenBlock(builder)) {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("expression.expected"));
     } else {

@@ -109,10 +109,9 @@ public class VariableDefinitions implements GroovyElementTypes {
 
       ThrowClause.parse(builder);
 
-      GroovyElementType openBlock = null;
       if (builder.getTokenType() == mLCURLY || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
         ParserUtils.getToken(builder, mNLS);
-        openBlock = OpenOrClosableBlock.parseOpenBlock(builder);
+        OpenOrClosableBlock.parseOpenBlock(builder);
       }
 
 //      if (isAnnotationMember && !NONE.equals(paramDeclList) && OPEN_BLOCK.equals(openBlock)) {

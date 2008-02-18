@@ -38,7 +38,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  public static GroovyElementType parseOpenBlock(PsiBuilder builder) {
+  public static boolean parseOpenBlock(PsiBuilder builder) {
     return parseOpenBlockInDifferentContext(builder, false);
   }
 
@@ -48,7 +48,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  public static GroovyElementType parseBlockStatement(PsiBuilder builder) {
+  public static boolean parseBlockStatement(PsiBuilder builder) {
     return parseOpenBlockInDifferentContext(builder, true);
   }
 
@@ -58,13 +58,13 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  public static GroovyElementType parseOpenBlockInDifferentContext(PsiBuilder builder, boolean isBlockStatement) {
+  public static boolean parseOpenBlockInDifferentContext(PsiBuilder builder, boolean isBlockStatement) {
     PsiBuilder.Marker blockStatementMarker = builder.mark();
     PsiBuilder.Marker marker = builder.mark();
     if (!ParserUtils.getToken(builder, mLCURLY)) {
       marker.drop();
       blockStatementMarker.drop();
-      return WRONGWAY;
+      return false;
     }
     ParserUtils.getToken(builder, mNLS);
     parseBlockBody(builder);
@@ -80,7 +80,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     } else {
       blockStatementMarker.drop();
     }
-    return OPEN_BLOCK;
+    return true;
   }
 
 
@@ -125,9 +125,9 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
       Separators.parse(builder);
     }
 
-    GroovyElementType result = Statement.parse(builder);
+    boolean result = Statement.parse(builder, false);
 
-    while (!result.equals(WRONGWAY) &&
+    while (result &&
         (mSEMI.equals(builder.getTokenType()) ||
             mNLS.equals(builder.getTokenType()) ||
             GspTemplateStmtParsing.parseGspTemplateStmt(builder))) {
@@ -135,7 +135,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
       while (GspTemplateStmtParsing.parseGspTemplateStmt(builder)) {
         Separators.parse(builder);
       }
-      result = Statement.parse(builder);
+      result = Statement.parse(builder, false);
       if (!GspTokenTypesEx.GSP_GROOVY_SEPARATORS.contains(builder.getTokenType())) {
         cleanAfterError(builder);
       }
