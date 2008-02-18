@@ -43,7 +43,7 @@ import java.util.StringTokenizer;
 public class VfsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
 
-  public static String loadText(VirtualFile file) throws IOException{
+  public static String loadText(@NotNull VirtualFile file) throws IOException{
     InputStreamReader reader = new InputStreamReader(file.getInputStream(), file.getCharset());
     try {
       return new String(FileUtil.loadText(reader, (int)file.getLength()));
