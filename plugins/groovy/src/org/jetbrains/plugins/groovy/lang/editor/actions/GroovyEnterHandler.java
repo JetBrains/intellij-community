@@ -93,9 +93,6 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     if (handleBetweenSquareBraces(editor, caretOffset, dataContext, project)) {
       return true;
     }
-    if (handleInLineComment(editor, caretOffset, dataContext)) {
-      return true;
-    }
     if (handleDocComment(editor, caretOffset, dataContext)) {
       return true;
     }
@@ -200,23 +197,6 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
           return true;
         }
       }
-    }
-    return false;
-  }
-
-  private boolean handleInLineComment(Editor editor, int caret, DataContext dataContext) {
-    final EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
-    HighlighterIterator iterator = highlighter.createIterator(caret - 1);
-    if (GroovyTokenTypes.mSL_COMMENT == iterator.getTokenType()) {
-      String text = editor.getDocument().getText();
-      if (text.length() == caret) return false;
-      if (text.length() > caret && (text.charAt(caret) == '\n' || text.charAt(caret) == '\r')) {
-        return false;
-      }
-      myOriginalHandler.execute(editor, dataContext);
-      EditorModificationUtil.insertStringAtCaret(editor, "// ");
-      editor.getCaretModel().moveCaretRelatively(-3, 0, false, false, true);
-      return true;
     }
     return false;
   }
