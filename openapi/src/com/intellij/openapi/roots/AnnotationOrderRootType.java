@@ -21,6 +21,10 @@ public class AnnotationOrderRootType extends OrderRootType {
     super("ANNOTATIONS", "annotationsPath", "annotation-paths", true);
   }
 
+  public boolean skipWriteIfEmpty() {
+    return true;
+  }
+
   public static VirtualFile[] getFiles(OrderEntry entry) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     RecursiveRootPolicy<List<VirtualFile>> policy = new RecursiveRootPolicy<List<VirtualFile>>() {

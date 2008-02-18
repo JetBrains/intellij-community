@@ -87,6 +87,16 @@ public class OrderRootType {
     return myModulePathsName;
   }
 
+  /**
+   * Whether this root type should be skipped when writing a Library if the root type doesn't contain
+   * any roots.
+   *
+   * @return true if empty root type should be skipped, false otherwise.
+   */
+  public boolean skipWriteIfEmpty() {
+    return false;
+  }
+
   public static synchronized OrderRootType[] getAllTypes() {
     if (!ourExtensionsLoaded) {
       ourExtensionsLoaded = true;

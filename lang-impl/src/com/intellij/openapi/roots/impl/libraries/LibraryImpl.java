@@ -7,7 +7,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
-import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -226,7 +225,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     }
     for (OrderRootType rootType : OrderRootType.getSortedRootTypes()) {
       final VirtualFilePointerContainer roots = myRoots.get(rootType);
-      if (roots.size() == 0 && AnnotationOrderRootType.getInstance().equals(rootType)) continue; //compatibility iml/ipr
+      if (roots.size() == 0 && rootType.skipWriteIfEmpty()) continue; //compatibility iml/ipr
       final Element rootTypeElement = new Element(rootType.name());
       roots.writeExternal(rootTypeElement, ROOT_PATH_ELEMENT);
       element.addContent(rootTypeElement);
