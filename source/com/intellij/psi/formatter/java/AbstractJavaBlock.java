@@ -776,7 +776,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         return defaultWrap;
       }
       if (role == ChildRole.LOOP_BODY) {
-        return Wrap.createWrap(mySettings.BRACE_STYLE == CodeStyleSettings.END_OF_LINE ? WrapType.NONE : WrapType.NORMAL, true);
+        final boolean dontWrap = (childType == JavaElementType.CODE_BLOCK || childType == JavaElementType.BLOCK_STATEMENT) &&
+                                 mySettings.BRACE_STYLE == CodeStyleSettings.END_OF_LINE;
+        return Wrap.createWrap(dontWrap ? WrapType.NONE : WrapType.NORMAL, true);
       }
       else {
         return null;
