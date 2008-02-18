@@ -105,13 +105,10 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
   }
 
 
-  private static GroovyElementType closableBlockParamsOpt(PsiBuilder builder) {
+  private static void closableBlockParamsOpt(PsiBuilder builder) {
     ParameterList.parse(builder, mCLOSABLE_BLOCK_OP);
     ParserUtils.getToken(builder, mNLS);
-    if (ParserUtils.getToken(builder, mCLOSABLE_BLOCK_OP)) {
-      return PARAMETERS_LIST;
-    }
-    return WRONGWAY;
+    ParserUtils.getToken(builder, mCLOSABLE_BLOCK_OP);
   }
 
   public static void parseBlockBody(PsiBuilder builder) {
