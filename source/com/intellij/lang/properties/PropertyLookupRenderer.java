@@ -2,6 +2,7 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.lookup.impl.ElementLookupRenderer;
 import com.intellij.codeInsight.lookup.impl.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -15,7 +16,7 @@ public class PropertyLookupRenderer implements ElementLookupRenderer<Property> {
     return element instanceof Property;
   }
 
-  public void renderElement(final Property property, final LookupElementPresentation presentation) {
+  public void renderElement(final LookupItem item, final Property property, final LookupElementPresentation presentation) {
     presentation.setItemText(property.getUnescapedKey());
 
     PropertiesFile propertiesFile = property.getContainingFile();
