@@ -6,7 +6,7 @@ import java.util.EventListener;
  * User: Dmitry.Krasilschikov
  * Date: 11.01.2008
  */
-public interface DynamicPropertyChangeListener extends EventListener {
+public interface DynamicChangeListener extends EventListener {
   /*
    * Change property
    */

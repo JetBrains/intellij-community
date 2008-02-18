@@ -96,8 +96,8 @@
       <implementation-class>org.jetbrains.plugins.grails.GrailsProjectLoader</implementation-class>
     </component>
     <component>
-      <interface-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesManager</interface-class>
-      <implementation-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesManagerImpl</implementation-class>
+      <interface-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager</interface-class>
+      <implementation-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl</implementation-class>
     </component>
   </project-components>
   <module-components>

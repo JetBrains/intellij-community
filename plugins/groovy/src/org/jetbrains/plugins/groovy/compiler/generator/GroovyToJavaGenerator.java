@@ -668,7 +668,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     text.append("(");
 
-    //writes parameters
+    //writes myParameters
     int i = 0;
     while (i < parameters.length) {
       PsiParameter parameter = parameters[i];

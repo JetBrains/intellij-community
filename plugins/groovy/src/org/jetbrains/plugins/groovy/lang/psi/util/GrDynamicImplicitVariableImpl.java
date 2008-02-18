@@ -31,11 +31,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPContainingClassElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPPropertyElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.tree.DPClassNode;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.tree.DPPropertyNode;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DContainingClassElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualProperty;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DPClassNode;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DPPropertyNode;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -96,10 +98,11 @@ public class GrDynamicImplicitVariableImpl extends GrImplicitVariableImpl implem
         final GrReferenceExpression refExpression = (GrReferenceExpression) myScope;
         final PsiClass expression = QuickfixUtil.findTargetClass(refExpression);
 
-        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DPClassNode(new DPContainingClassElement(expression.getQualifiedName())));
+        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DPClassNode(new DContainingClassElement(expression.getQualifiedName())));
         if (classNode == null) return;
 
-        final DefaultMutableTreeNode desiredNode = TreeUtil.findNodeWithObject(classNode, new DPPropertyNode(new DPPropertyElement(myNameIdentifier.getText())));
+        final DynamicVirtualProperty property = new DynamicVirtualProperty(myNameIdentifier.getText(), expression.getQualifiedName(), null, null);
+        final DefaultMutableTreeNode desiredNode = TreeUtil.findNodeWithObject(classNode, new DPPropertyNode(new DPropertyElement(property)));
         if (desiredNode == null) return;
         final TreePath path = TreeUtil.getPathFromRoot(desiredNode);
 
@@ -135,9 +138,18 @@ public class GrDynamicImplicitVariableImpl extends GrImplicitVariableImpl implem
     return myScope.getProject().getAllScope();
   }
 
-  public GrReferenceExpression getContainingClassElement() {
-    if (myScope == null || !(myScope instanceof GrReferenceExpression)) return null;
+  public PsiClass getContextElement() {
+    if (myScope == null) return null;
+    if (myScope instanceof GroovyScriptClass) return ((GroovyScriptClass) myScope);
 
-    return ((GrReferenceExpression) myScope);
+    if (myScope instanceof GrReferenceExpression) {
+      final PsiType type = ((GrReferenceExpression) myScope).getType();
+
+      if (!(type instanceof PsiClassType)) return null;
+
+      return ((PsiClassType) type).resolve();
+    }
+
+    return null;
   }
 }

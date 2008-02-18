@@ -12,9 +12,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
@@ -30,14 +30,10 @@ import com.intellij.util.ui.treetable.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPContainingClassElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPPropertyElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPPropertyTypeElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.tree.DPClassNode;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.tree.DPPropertyNode;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.virtual.DynamicPropertyVirtual;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DPClassNode;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DPPropertyNode;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualProperty;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitVariable;
 
 import javax.swing.*;
@@ -64,8 +60,8 @@ public class DynamicToolWindowWrapper {
 
   private static ListTreeTableModelOnColumns myTreeTableModel;
 
-  private static final int CLASS_OR_PROPERTY_NAME_COLUMN = 0;
-  private static final int PROPERTY_TYPE_COLUMN = 1;
+  private static final int CLASS_OR_ELEMENT_NAME_COLUMN = 0;
+  private static final int TYPE_COLUMN = 1;
 
   private static String[] myColumnNames = {
       "Class and properties",
@@ -96,7 +92,7 @@ public class DynamicToolWindowWrapper {
     window.setTitle(GroovyBundle.message("toolwindow.dynamic.properties"));
     window.setToHideOnEmptyContent(true);
 
-    DynamicPropertiesManager.getInstance(project).addDynamicChangeListener(new DynamicPropertyChangeListener() {
+    DynamicManager.getInstance(project).addDynamicChangeListener(new DynamicChangeListener() {
       public void dynamicPropertyChange() {
         storeState(project);
         rebuildTreePanel(project);
@@ -166,23 +162,29 @@ public class DynamicToolWindowWrapper {
     final Module module = getModule(project);
     if (module == null) return new DefaultMutableTreeNode();
 
-    final Set<String> containingClasses = DynamicPropertiesManager.getInstance(project).getAllContainingClasses(module.getName());
+    final Set<String> containingClasses = DynamicManager.getInstance(project).getAllContainingClasses(module.getName());
 
     DefaultMutableTreeNode containingClassNode;
     for (String containingClassName : containingClasses) {
-      containingClassNode = new DefaultMutableTreeNode(new DPClassNode(new DPContainingClassElement(containingClassName)));
+      containingClassNode = new DefaultMutableTreeNode(new DPClassNode(new DContainingClassElement(containingClassName)));
 
-      final String[] properties = DynamicPropertiesManager.getInstance(project).findDynamicPropertiesOfClass(module.getName(), containingClassName);
+      final String[] properties = DynamicManager.getInstance(project).findDynamicPropertiesOfClass(module.getName(), containingClassName);
 
       if (properties.length == 0) continue;
 
       DefaultMutableTreeNode propertyTreeNode;
       for (String propertyName : properties) {
-        final String propertyType = DynamicPropertiesManager.getInstance(project).findDynamicPropertyType(module.getName(), containingClassName, propertyName);
+        final String propertyType = DynamicManager.getInstance(project).findDynamicPropertyType(module.getName(), containingClassName, propertyName);
         //TODO: simplify Hierarchy
-        propertyTreeNode = new DefaultMutableTreeNode(new DPPropertyNode(new DPPropertyElement(new DynamicPropertyVirtual(propertyName, containingClassName, module.getName(), propertyType))));
+        propertyTreeNode = new DefaultMutableTreeNode(new DPPropertyNode(new DPropertyElement(new DynamicVirtualProperty(propertyName, containingClassName, module.getName(), propertyType))));
         containingClassNode.add(propertyTreeNode);
       }
+
+//      final String[] methods = DynamicManager.getInstance(project).findDynamicMethodsOfClass(module.getName(), containingClassName);
+//      for (String method : methods) {
+//
+//      }
+
 
       rootNode.add(containingClassNode);
     }
@@ -190,7 +192,7 @@ public class DynamicToolWindowWrapper {
   }
 
   private static JScrollPane createTable(final Project project, MutableTreeNode myTreeRoot) {
-    ColumnInfo[] columnInfos = {new ClassColumnInfo(myColumnNames[CLASS_OR_PROPERTY_NAME_COLUMN]), new PropertyTypeColumnInfo(myColumnNames[PROPERTY_TYPE_COLUMN])};
+    ColumnInfo[] columnInfos = {new ClassColumnInfo(myColumnNames[CLASS_OR_ELEMENT_NAME_COLUMN]), new PropertyTypeColumnInfo(myColumnNames[TYPE_COLUMN])};
 
     myTreeTableModel = new ListTreeTableModelOnColumns(myTreeRoot, columnInfos);
 
@@ -230,13 +232,13 @@ public class DynamicToolWindowWrapper {
 //        final TreePath editingPath = tree.getSelectionPath();
 //        final TreePath parentPath = editingPath.getParentPath();
 //
-//        final Object editingCellObject = myTreeTable.getValueAt(tree.getRowForPath(editingPath), CLASS_OR_PROPERTY_NAME_COLUMN);
-//        final Object parentCellObject = myTreeTable.getValueAt(tree.getRowForPath(parentPath), CLASS_OR_PROPERTY_NAME_COLUMN);
+//        final Object editingCellObject = myTreeTable.getValueAt(tree.getRowForPath(editingPath), CLASS_OR_ELEMENT_NAME_COLUMN);
+//        final Object parentCellObject = myTreeTable.getValueAt(tree.getRowForPath(parentPath), CLASS_OR_ELEMENT_NAME_COLUMN);
 //
 //        if (editingCellObject == null || parentCellObject == null) return;
 //
-//        boolean isEditClass = editingCellObject instanceof DPContainingClassElement;
-//        boolean isEditProperty = editingCellObject instanceof DPPropertyElement && parentCellObject instanceof DPContainingClassElement;
+//        boolean isEditClass = editingCellObject instanceof DContainingClassElement;
+//        boolean isEditProperty = editingCellObject instanceof DPropertyElement && parentCellObject instanceof DContainingClassElement;
 //
 //        assert (isEditClass && !isEditProperty) || (!isEditClass && isEditProperty);
 //
@@ -244,13 +246,13 @@ public class DynamicToolWindowWrapper {
 //        if (isEditClass) {
 //
 //        } else {
-////          final String name = ((DPPropertyElement) editingCellObject).getPropertyName();
-////          final String type = ((DPPropertyElement) editingCellObject).getPropertyType();
-////          final String className = ((DPContainingClassElement) parentCellObject).getContainingClassName();
+////          final String name = ((DPropertyElement) editingCellObject).getPropertyName();
+////          final String type = ((DPropertyElement) editingCellObject).getPropertyType();
+////          final String className = ((DContainingClassElement) parentCellObject).getContainingClassName();
 ////
-////          DynamicPropertiesManager.getInstance(project).replaceDynamicProperty(
-////              new DynamicPropertyVirtual(name, className, getModule(project).getName(), type),
-////              new DynamicPropertyVirtual(fieldText.toString(), className, getModule(project).getName(), type));
+////          DynamicManager.getInstance(project).replaceDynamicProperty(
+////              new DynamicVirtualProperty(name, className, getModule(project).getName(), type),
+////              new DynamicVirtualProperty(fieldText.toString(), className, getModule(project).getName(), type));
 //          DynamicRenameHandler renameHandler = new DynamicRenameHandler();
 //
 //        }
@@ -266,38 +268,39 @@ public class DynamicToolWindowWrapper {
       public void editingStopped(ChangeEvent e) {
         final TreeTableTree tree = getTree();
 
-        final DPPropertyTypeElement newTypeValue = ((MyPropertyTypeCellEditor) e.getSource()).getCellEditorValue();
+        final String newTypeValue = ((MyPropertyTypeCellEditor) e.getSource()).getCellEditorValue();
 
         if (newTypeValue == null || tree == null) {
           myTreeTable.editingStopped(e);
           return;
         }
-        final String newType = newTypeValue.getPropertyType();
+//        final String newType = newTypeValue.getPropertyType();
+        final String newType = newTypeValue;
 
         final TreePath editingTypePath = tree.getSelectionPath();
         final TreePath editingClassPath = editingTypePath.getParentPath();
 
-        Object oldTypeValue = myTreeTable.getValueAt(tree.getRowForPath(editingTypePath), PROPERTY_TYPE_COLUMN);
+        Object oldTypeValue = myTreeTable.getValueAt(tree.getRowForPath(editingTypePath), TYPE_COLUMN);
 
-        if (!(oldTypeValue instanceof DPPropertyTypeElement)) {
+        if (!(oldTypeValue instanceof String)) {
           myTreeTable.editingStopped(e);
           return;
         }
 
-        final Object editingPropertyObject = myTreeTable.getValueAt(tree.getRowForPath(editingTypePath), CLASS_OR_PROPERTY_NAME_COLUMN);
-        final Object editingClassObject = myTreeTable.getValueAt(tree.getRowForPath(editingClassPath), CLASS_OR_PROPERTY_NAME_COLUMN);
+        final Object editingPropertyObject = myTreeTable.getValueAt(tree.getRowForPath(editingTypePath), CLASS_OR_ELEMENT_NAME_COLUMN);
+        final Object editingClassObject = myTreeTable.getValueAt(tree.getRowForPath(editingClassPath), CLASS_OR_ELEMENT_NAME_COLUMN);
 
-        if (!(editingPropertyObject instanceof DPPropertyElement) || !(editingClassObject instanceof DPContainingClassElement)) {
+        if (!(editingPropertyObject instanceof DPropertyElement) || !(editingClassObject instanceof DContainingClassElement)) {
           myTreeTable.editingStopped(e);
           return;
         }
 
-        final String name = ((DPPropertyElement) editingPropertyObject).getPropertyName();
-        final String className = ((DPContainingClassElement) editingClassObject).getContainingClassName();
+        final String name = ((DPropertyElement) editingPropertyObject).getDynamicVirtualElement().getName();
+        final String className = ((DContainingClassElement) editingClassObject).getContainingClassName();
 
-        DynamicPropertiesManager.getInstance(project).replaceDynamicProperty(
-            new DynamicPropertyVirtual(name, className, getModule(project).getName(), ((DPPropertyTypeElement) oldTypeValue).getPropertyType()),
-            new DynamicPropertyVirtual(name, className, getModule(project).getName(), newType));
+        DynamicManager.getInstance(project).replaceDynamicProperty(
+            new DynamicVirtualProperty(name, className, getModule(project).getName(), (String) oldTypeValue),
+            new DynamicVirtualProperty(name, className, getModule(project).getName(), newType));
       }
 
       public void editingCanceled(ChangeEvent e) {
@@ -321,15 +324,15 @@ public class DynamicToolWindowWrapper {
 
             private void renameElement(PsiElement newElement, Project project, PsiElement element) {
               final Module module = getModule(project);
-              final GrReferenceExpression qualifiedExpressionElement = ((GrDynamicImplicitVariable) element).getContainingClassElement();
+              final PsiClass psiClass = ((GrDynamicImplicitVariable) element).getContextElement();
 
-              final PsiType type = qualifiedExpressionElement.getType();
-              if (type == null) return;
+//              final PsiType type = psiClass.getType();
+//              if (type == null) return;
 
-              String typeText = type.getCanonicalText();
-              if (typeText == null) typeText = type.getPresentableText();
+              String typeText = psiClass.getQualifiedName();
+//              if (typeText == null) typeText = type.getPresentableText();
 
-              DynamicPropertiesManager.getInstance(project).replaceDynamicProperty(module.getName(),
+              DynamicManager.getInstance(project).replaceDynamicProperty(module.getName(),
                   typeText, ((GrDynamicImplicitVariable) element).getName(), newElement.getText());
             }
           };
@@ -358,7 +361,7 @@ public class DynamicToolWindowWrapper {
           public void actionPerformed(ActionEvent event) {
             storeState(project);
             final int selectionRow = myTreeTable.getTree().getLeadSelectionRow();
-            myTreeTable.editCellAt(selectionRow, CLASS_OR_PROPERTY_NAME_COLUMN, event);
+            myTreeTable.editCellAt(selectionRow, CLASS_OR_ELEMENT_NAME_COLUMN, event);
             restoreState(project);
           }
         },
@@ -371,7 +374,7 @@ public class DynamicToolWindowWrapper {
           public void actionPerformed(ActionEvent event) {
             storeState(project);
             final int selectionRow = myTreeTable.getTree().getLeadSelectionRow();
-            myTreeTable.editCellAt(selectionRow, PROPERTY_TYPE_COLUMN, event);
+            myTreeTable.editCellAt(selectionRow, TYPE_COLUMN, event);
             restoreState(project);
           }
         },
@@ -385,8 +388,8 @@ public class DynamicToolWindowWrapper {
     myTreeTable.getTableHeader().setReorderingAllowed(false);
 
     myTreeTable.setPreferredScrollableViewportSize(new Dimension(300, myTreeTable.getRowHeight() * 10));
-    myTreeTable.getColumn(myColumnNames[CLASS_OR_PROPERTY_NAME_COLUMN]).setPreferredWidth(200);
-    myTreeTable.getColumn(myColumnNames[PROPERTY_TYPE_COLUMN]).setPreferredWidth(160);
+    myTreeTable.getColumn(myColumnNames[CLASS_OR_ELEMENT_NAME_COLUMN]).setPreferredWidth(200);
+    myTreeTable.getColumn(myColumnNames[TYPE_COLUMN]).setPreferredWidth(160);
 
     myTreeTable.addMouseListener(
         new MouseAdapter() {
@@ -429,7 +432,7 @@ public class DynamicToolWindowWrapper {
 
         doRemoveList.add(new Runnable() {
           public void run() {
-            DynamicPropertiesManager.getInstance(project).removeDynamicPropertiesOfClass(module.getName(), ((DPClassNode) containingClass).getElement().getContainingClassName());
+            DynamicManager.getInstance(project).removeDynamicPropertiesOfClass(module.getName(), ((DPClassNode) containingClass).getElement().getContainingClassName());
           }
         });
       } else {
@@ -447,14 +450,14 @@ public class DynamicToolWindowWrapper {
         if (!(propertyElement instanceof DPPropertyNode)) return;
 
         final String containingClassName = ((DPClassNode) classElement).getElement().getContainingClassName();
-        final String propertyName = ((DPPropertyNode) propertyElement).getElement().getPropertyName();
-        final String propertyType = ((DPPropertyNode) propertyElement).getElement().getPropertyType();
+        final String propertyName = ((DPPropertyNode) propertyElement).getElement().getDynamicVirtualElement().getName();
+        final String propertyType = ((DPPropertyNode) propertyElement).getElement().getDynamicVirtualElement().getType();
 
-        final DynamicPropertyVirtual dynamicProperty = new DynamicPropertyVirtual(propertyName, containingClassName, module.getName(), propertyType);
+        final DynamicVirtualProperty dynamicProperty = new DynamicVirtualProperty(propertyName, containingClassName, module.getName(), propertyType);
 
         doRemoveList.add(new Runnable() {
           public void run() {
-            DynamicPropertiesManager.getInstance(project).removeDynamicProperty(dynamicProperty);
+            DynamicManager.getInstance(project).removeDynamicElement(dynamicProperty);
           }
         });
       }
@@ -483,7 +486,7 @@ public class DynamicToolWindowWrapper {
     return myTreeTable;
   }
 
-  static class PropertyTypeColumnInfo extends ColumnInfo<DefaultMutableTreeNode, DPPropertyTypeElement> {
+  static class PropertyTypeColumnInfo extends ColumnInfo<DefaultMutableTreeNode, String> {
     private DPPropertyNode oldUserObject;
 
     public PropertyTypeColumnInfo(String name) {
@@ -496,11 +499,11 @@ public class DynamicToolWindowWrapper {
       return !(value instanceof DPClassNode);
     }
 
-    public DPPropertyTypeElement valueOf(DefaultMutableTreeNode treeNode) {
+    public String valueOf(DefaultMutableTreeNode treeNode) {
       Object userObject = treeNode.getUserObject();
 
       if (userObject instanceof DPPropertyNode)
-        return ((DPPropertyNode) userObject).getElement().getPropertyTypeElement();
+        return ((DPPropertyNode) userObject).getElement().getDynamicVirtualElement().getType();
 
       return null;
     }
@@ -512,7 +515,7 @@ public class DynamicToolWindowWrapper {
     }
   }
 
-  static class ClassColumnInfo extends ColumnInfo<DefaultMutableTreeNode, DPElement> {
+  static class ClassColumnInfo extends ColumnInfo<DefaultMutableTreeNode, DElement> {
     public ClassColumnInfo(String name) {
       super(name);
     }
@@ -527,7 +530,7 @@ public class DynamicToolWindowWrapper {
       return TreeTableModel.class;
     }
 
-    public DPElement valueOf(DefaultMutableTreeNode treeNode) {
+    public DElement valueOf(DefaultMutableTreeNode treeNode) {
       Object userObject = treeNode.getUserObject();
       if (userObject instanceof DPClassNode) return ((DPClassNode) userObject).getElement();
       if (userObject instanceof DPPropertyNode) return ((DPPropertyNode) userObject).getElement();
@@ -579,7 +582,7 @@ public class DynamicToolWindowWrapper {
           filterText = getFilter();
           if (filterText == null) break;
 
-          final String propertyName = ((DPPropertyNode) userObject).getElement().getPropertyName();
+          final String propertyName = ((DPPropertyNode) userObject).getElement().getDynamicVirtualElement().getName();
 
           if (propertyName == null || "".equals(filterText)) break;
 
@@ -706,7 +709,7 @@ public class DynamicToolWindowWrapper {
         } else if (value instanceof DPPropertyNode) {
           final DPPropertyNode propertyElement = (DPPropertyNode) value;
           final String substringToHighlight = propertyElement.getElement().getHightlightedText();
-          final String propertyName = propertyElement.getElement().getPropertyName();
+          final String propertyName = propertyElement.getElement().getDynamicVirtualElement().getName();
 
           if (substringToHighlight != null) {
             final int begin = propertyName.indexOf(substringToHighlight);
@@ -721,8 +724,8 @@ public class DynamicToolWindowWrapper {
             append(propertyName, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
           }
 
-        }/* else if (value instanceof DPPropertyTypeElement) {
-          append(((DPPropertyTypeElement) value).getPropertyType(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+        }/* else if (value instanceof DPropertyTypeElement) {
+          append(((DPropertyTypeElement) value).getPropertyType(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
         }*/
       }
     }
@@ -745,10 +748,13 @@ public class DynamicToolWindowWrapper {
     }
 
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-      if (value instanceof DPPropertyElement) {
-        field.setText(((DPPropertyElement) value).getPropertyName());
-      } else if (value instanceof DPContainingClassElement) {
-        field.setText(((DPContainingClassElement) value).getContainingClassName());
+      /*if (value instanceof DPropertyElement) {
+        field.setText(((DPropertyElement) value).getPropertyName());
+      }*/
+      if (value instanceof String) {
+        field.setText(((String) value));
+      } else if (value instanceof DContainingClassElement) {
+        field.setText(((DContainingClassElement) value).getContainingClassName());
       }
 //      return myRenderer.getTableCellRendererComponent(table, value, isSelected, false, row, column);
 //
@@ -759,13 +765,16 @@ public class DynamicToolWindowWrapper {
   private static class MyPropertyTypeCellEditor extends AbstractTableCellEditor {
     final JTextField field = new JTextField();
 
-    public DPPropertyTypeElement getCellEditorValue() {
-      return new DPPropertyTypeElement(field.getText());
+    public String getCellEditorValue() {
+      return field.getText();
     }
 
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-      if (value instanceof DPPropertyTypeElement) {
-        field.setText(((DPPropertyTypeElement) value).getPropertyType());
+//      if (value instanceof DPropertyTypeElement) {
+//        field.setText(((DPropertyTypeElement) value).getPropertyType());
+//      }
+      if (value instanceof String) {
+        field.setText(((String) value));
       }
 
       return field;

@@ -13,7 +13,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesManager;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -99,7 +99,7 @@ public class CompleteReferenceExpression {
     if (type == null) {
       return propertyVariants;
     }
-    dynamicPropertiesOfClass = DynamicPropertiesManager.getInstance(refExpr.getProject()).findDynamicPropertiesOfClass(module.getName(), type.getCanonicalText());
+    dynamicPropertiesOfClass = DynamicManager.getInstance(refExpr.getProject()).findDynamicPropertiesOfClass(module.getName(), type.getCanonicalText());
 
 //    if (type instanceof PsiPrimitiveType) {
 //      type = ((PsiPrimitiveType) type).getBoxedType(refExpr);
@@ -118,7 +118,7 @@ public class CompleteReferenceExpression {
       }
 
       for (PsiClass aSuper : supers) {
-        dynamicPropertiesOfClass = DynamicPropertiesManager.getInstance(refExpr.getProject()).findDynamicPropertiesOfClass(module.getName(), aSuper.getQualifiedName());
+        dynamicPropertiesOfClass = DynamicManager.getInstance(refExpr.getProject()).findDynamicPropertiesOfClass(module.getName(), aSuper.getQualifiedName());
         propertyVariants = ArrayUtil.mergeArrays(propertyVariants, dynamicPropertiesOfClass, Object.class);
       }
     }

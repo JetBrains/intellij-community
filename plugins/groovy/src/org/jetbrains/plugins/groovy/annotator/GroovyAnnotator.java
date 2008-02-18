@@ -43,9 +43,11 @@ import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesManager;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicProperty;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicPropertyBase;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicFix;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicVirtualElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualMethod;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualProperty;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
@@ -68,9 +70,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -705,10 +707,14 @@ public class GroovyAnnotator implements Annotator {
 
   private void registerReferenceFixes(GrReferenceExpression refExpr, Annotation annotation) {
     PsiClass targetClass = QuickfixUtil.findTargetClass(refExpr);
-    if (targetClass != null && isNeedsDynamic(refExpr, targetClass) && refExpr.resolve() == null) {
-      addDynamicAnnotation(annotation, refExpr);
+    if (targetClass == null) return;
+
+    final DynamicVirtualElement virtualElement = getDynamicAnnotation(refExpr, targetClass);
+
+    if (virtualElement != null && refExpr.resolve() == null) {
+      addDynamicAnnotation(annotation, refExpr, virtualElement);
     }
-    if (targetClass != null && targetClass instanceof GrMemberOwner) {
+    if (targetClass instanceof GrMemberOwner) {
       if (!(targetClass instanceof GroovyScriptClass)) {
         annotation.registerFix(new CreateFieldFromUsageFix(refExpr, (GrMemberOwner) targetClass));
       }
@@ -726,40 +732,69 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private boolean isNeedsDynamic(@NotNull GrReferenceExpression referenceExpression, final @NotNull PsiClass targetClass) {
+  private DynamicVirtualElement getDynamicAnnotation(@NotNull GrReferenceExpression referenceExpression, final @NotNull PsiClass targetClass) {
     if (targetClass instanceof GrTypeDefinition &&
-        PsiUtil.isInStaticContext(referenceExpression, (GrMemberOwner) targetClass)) return false;
-    
+        PsiUtil.isInStaticContext(referenceExpression, (GrMemberOwner) targetClass)) return null;
+
     final PsiFile containingFile = referenceExpression.getContainingFile();
 
     VirtualFile file;
     if (containingFile != null) {
       file = containingFile.getVirtualFile();
-      if (file == null) return false;
-    } else return false;
+      if (file == null) return null;
+    } else return null;
 
     Module module = ProjectRootManager.getInstance(referenceExpression.getProject()).getFileIndex().getModuleForFile(file);
 
-    if (module == null) return false;
+    if (module == null) return null;
 
     final String qualifiedName = targetClass.getQualifiedName();
-    if (qualifiedName == null) return false;
+    if (qualifiedName == null) return null;
 
-    final Element propertyElement = DynamicPropertiesManager.getInstance(referenceExpression.getProject()).findConcreteDynamicProperty(referenceExpression, module.getName(), qualifiedName, referenceExpression.getName());
-    if (propertyElement != null) return false;
+    final DynamicVirtualMethod methodVirtualElement = getDynamicMethodElement(referenceExpression, targetClass, module, qualifiedName);
+    if (methodVirtualElement != null) return methodVirtualElement;
+
+    final DynamicVirtualProperty propertyVirtualElement = getDynamicPropertyElement(referenceExpression, targetClass, module, qualifiedName);
+    if (propertyVirtualElement != null) return propertyVirtualElement;
+
+    return null;
+  }
+
+  private DynamicVirtualMethod getDynamicMethodElement(GrReferenceExpression referenceExpression, PsiClass targetClass, Module module, String qualifiedName) {
+    final PsiElement parent = referenceExpression.getParent();
+    if (!(parent instanceof GrMethodCallExpression)) return null;
+
+    GrArgumentList argumentList = ((GrMethodCallExpression) parent).getArgumentList();
+    final Element methodElement = DynamicManager.getInstance(referenceExpression.getProject()).findConcreteDynamicMethod(module.getName(), qualifiedName, referenceExpression.getName(), argumentList);
+//    if (methodElement != null) return new DynamicVirtualMethod(referenceExpression.getName(), targetClass.getQualifiedName(), module.getName(), null, argumentList);
+    if (methodElement != null) return null;
 
     final Set<PsiClass> supers = GroovyUtils.findAllSupers(targetClass);
     Element superDynamicProperty;
     for (PsiClass aSuper : supers) {
-      superDynamicProperty = DynamicPropertiesManager.getInstance(referenceExpression.getProject()).findConcreteDynamicProperty(referenceExpression, module.getName(), aSuper.getQualifiedName(), referenceExpression.getName());
+      superDynamicProperty = DynamicManager.getInstance(referenceExpression.getProject()).findConcreteDynamicProperty(module.getName(), aSuper.getQualifiedName(), referenceExpression.getName());
 
-      if (superDynamicProperty != null) return false;
+      if (superDynamicProperty != null) return null;
     }
 
-    return true;
+    return new DynamicVirtualMethod(referenceExpression.getName(), targetClass.getQualifiedName(), module.getName(), null, argumentList);
   }
 
-  private void addDynamicAnnotation(Annotation annotation, GrReferenceExpression referenceExpression) {
+  private DynamicVirtualProperty getDynamicPropertyElement(GrReferenceExpression referenceExpression, PsiClass targetClass, Module module, String qualifiedName) {
+    final Element propertyElement = DynamicManager.getInstance(referenceExpression.getProject()).findConcreteDynamicProperty(module.getName(), qualifiedName, referenceExpression.getName());
+    if (propertyElement != null) return null;
+
+    final Set<PsiClass> supers = GroovyUtils.findAllSupers(targetClass);
+    Element superDynamicProperty;
+    for (PsiClass aSuper : supers) {
+      superDynamicProperty = DynamicManager.getInstance(referenceExpression.getProject()).findConcreteDynamicProperty(module.getName(), aSuper.getQualifiedName(), referenceExpression.getName());
+
+      if (superDynamicProperty != null) return null;
+    }
+    return new DynamicVirtualProperty(referenceExpression.getName(), targetClass.getQualifiedName(), module.getName(), null);
+  }
+
+  private void addDynamicAnnotation(Annotation annotation, GrReferenceExpression referenceExpression, final DynamicVirtualElement dynamicElement) {
     final PsiFile containingFile = referenceExpression.getContainingFile();
     VirtualFile file;
     if (containingFile != null) {
@@ -767,20 +802,19 @@ public class GroovyAnnotator implements Annotator {
       if (file == null) return;
     } else return;
 
-    Module module = ProjectRootManager.getInstance(referenceExpression.getProject()).getFileIndex().getModuleForFile(file);
-    PsiClass targetClass = QuickfixUtil.findTargetClass(referenceExpression);
+//    Module module = ProjectRootManager.getInstance(referenceExpression.getProject()).getFileIndex().getModuleForFile(file);
+//    PsiClass targetClass = QuickfixUtil.findTargetClass(referenceExpression);
+//
+//    if (module == null) return;
 
-    if (module == null) return;
-
-    DynamicProperty dynamicProperty = new DynamicPropertyBase(referenceExpression.getName(), targetClass, module.getName());
-    annotation.registerFix(new AddDynamicPropertyFix(dynamicProperty, referenceExpression), referenceExpression.getTextRange());
+    annotation.registerFix(new DynamicFix(dynamicElement, referenceExpression), referenceExpression.getTextRange());
   }
 
   private void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {
     boolean isStatic = member.hasModifierProperty(PsiModifier.STATIC);
     Annotation annotation = holder.createInfoAnnotation(refExpr.getReferenceNameElement(), null);
     if (member instanceof GrAccessorMethod) member = ((GrAccessorMethod) member).getProperty();
-    
+
     if (member instanceof PsiField && isStatic) {
       annotation.setTextAttributes(DefaultHighlighter.STATIC_FIELD);
       return;
