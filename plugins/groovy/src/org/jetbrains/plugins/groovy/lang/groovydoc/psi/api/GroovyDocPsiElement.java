@@ -15,10 +15,10 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 
-import com.intellij.psi.PsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author ilyas
  */
-public interface GroovyDocPsiElement extends PsiElement{
+public interface GroovyDocPsiElement extends GroovyPsiElement{
 }

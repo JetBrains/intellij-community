@@ -15,13 +15,16 @@
 
 package org.jetbrains.plugins.groovy.highlighter;
 
-import com.intellij.lang.Commenter;
+import com.intellij.lang.CodeDocumentationAwareCommenter;
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nullable;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ilyas
  */
 
-public class GroovyCommenter implements Commenter {
+public class GroovyCommenter implements CodeDocumentationAwareCommenter {
   public String getLineCommentPrefix() {
     return "//";
   }
@@ -38,4 +41,33 @@ public class GroovyCommenter implements Commenter {
     return "*/";
   }
 
+  @Nullable
+  public IElementType getLineCommentTokenType() {
+    return mSL_COMMENT;
+  }
+
+  @Nullable
+  public IElementType getBlockCommentTokenType() {
+    return mML_COMMENT;
+  }
+
+  @Nullable
+  public IElementType getDocumentationCommentTokenType() {
+    return GROOVY_DOC_COMMENT;
+  }
+
+  @Nullable
+  public String getDocumentationCommentPrefix() {
+    return "/**";
+  }
+
+  @Nullable
+  public String getDocumentationCommentLinePrefix() {
+    return "*";
+  }
+
+  @Nullable
+  public String getDocumentationCommentSuffix() {
+    return "*/";
+  }
 }

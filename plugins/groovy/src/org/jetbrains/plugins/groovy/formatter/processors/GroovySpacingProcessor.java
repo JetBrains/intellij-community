@@ -51,9 +51,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.*;
 
 /**
- *
  * @author ilyas
  */
 public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
@@ -291,6 +293,16 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
 
     }
 
+    public void visitDocComment(GrDocComment comment) {
+      if (myChild1.getElementType() == GDOC_TAG &&
+          myChild2.getElementType() == GDOC_TAG &&
+          mySettings.JD_LEADING_ASTERISKS_ARE_ENABLED) {
+        IElementType type = myChild1.getLastChildNode().getElementType();
+        if (type == mGDOC_ASTERISKS) {
+          myResult = Spacing.createSpacing(1, 1, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        }
+      }
+    }
 
     public void visitIfStatement(GrIfStatement ifStatement) {
       if (myChild2.getElementType() == kELSE) {

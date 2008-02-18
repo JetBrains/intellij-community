@@ -15,7 +15,6 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.parser;
 
-import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.PsiElement;
 import com.intellij.lang.Language;

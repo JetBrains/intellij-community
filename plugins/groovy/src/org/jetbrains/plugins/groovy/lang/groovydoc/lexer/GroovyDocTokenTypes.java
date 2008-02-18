@@ -42,4 +42,24 @@ public interface GroovyDocTokenTypes {
   IElementType mGDOC_ASTERISKS = new GroovyDocElementType("GDOC_LEADING_ASTERISKS");
 
   IElementType mGDOC_COMMENT_BAD_CHARACTER = new GroovyDocElementType("DOC_COMMENT_BAD_CHARACTER");
+
+  TokenSet GROOVY_DOC_TOKENS = TokenSet.create(
+      mGDOC_COMMENT_START,
+      mGDOC_COMMENT_END,
+      mGDOC_COMMENT_DATA,
+      mGDOC_TAG_NAME,
+      mGDOC_WHITESPACE,
+      mGDOC_TAG_VALUE_TOKEN,
+      mGDOC_TAG_VALUE_LPAREN,
+      mGDOC_TAG_VALUE_RPAREN,
+      mGDOC_TAG_VALUE_GT,
+      mGDOC_TAG_VALUE_LT,
+      mGDOC_INLINE_TAG_END,
+      mGDOC_INLINE_TAG_START,
+      mGDOC_TAG_VALUE_COMMA,
+      mGDOC_TAG_VALUE_SHARP_TOKEN,
+      mGDOC_ASTERISKS,
+      mGDOC_COMMENT_BAD_CHARACTER
+  );
+
 }

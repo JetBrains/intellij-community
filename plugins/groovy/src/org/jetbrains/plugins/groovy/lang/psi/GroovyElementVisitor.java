@@ -28,6 +28,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 
 /**
  * @author ven
@@ -358,6 +360,14 @@ public abstract class GroovyElementVisitor {
 
   public void visitCatchClause(GrCatchClause catchClause) {
     visitElement(catchClause);
+  }
+
+  public void visitDocComment(GrDocComment comment) {
+    visitElement(comment);
+  }
+
+  public void visitDocTag(GrDocTag docTag) {
+    visitElement(docTag);
   }
 
   public void visitFinallyClause(GrFinallyClause catchClause) {

@@ -28,11 +28,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessor;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessorBasic;
+import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 
 import java.util.List;
 
@@ -135,6 +138,9 @@ public class GroovyBlock implements Block, GroovyElementTypes {
     }
     if (psiParent instanceof GrListOrMap) {
       return new ChildAttributes(Indent.getContinuationIndent(), null);
+    }
+    if (psiParent instanceof GrDocComment || psiParent instanceof GrDocTag) {
+      return new ChildAttributes(Indent.getSpaceIndent(GroovyIndentProcessor.GDOC_COMMENT_INDENT), null);
     }
     return new ChildAttributes(Indent.getNoneIndent(), null);
   }

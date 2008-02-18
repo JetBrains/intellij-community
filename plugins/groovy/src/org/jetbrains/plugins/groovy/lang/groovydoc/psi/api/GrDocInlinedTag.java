@@ -18,5 +18,5 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 /**
  * @author ilyas
  */
-public interface GrDocInlinedTag extends GroovyDocTag{
+public interface GrDocInlinedTag extends GrDocTag {
 }

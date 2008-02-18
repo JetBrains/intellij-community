@@ -34,11 +34,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 
 /**
  * @author ilyas
  */
 public abstract class GroovyIndentProcessor implements GroovyElementTypes {
+  public static final int GDOC_COMMENT_INDENT = 1;
 
   /**
    * Calculates indent, based on code style, between parent block and child node
@@ -111,6 +114,12 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
     // For arguments
     if (psiParent instanceof GrArgumentList) {
       return Indent.getContinuationIndent();
+    }
+
+    if ((psiParent instanceof GrDocComment &&
+        child.getElementType() != mGDOC_COMMENT_START) ||
+        psiParent instanceof GrDocTag) {
+      return Indent.getSpaceIndent(GDOC_COMMENT_INDENT);
     }
 
     return Indent.getNoneIndent();

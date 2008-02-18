@@ -33,9 +33,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.editor.HandlerUtils;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.*;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -92,10 +96,92 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     if (handleInLineComment(editor, caretOffset, dataContext)) {
       return true;
     }
+    if (handleDocComment(editor, caretOffset, dataContext)) {
+      return true;
+    }
     if (handleInString(editor, caretOffset, dataContext)) {
       return true;
     }
     return false;
+  }
+
+  private boolean handleDocComment(Editor editor, int caret, DataContext dataContext) {
+    if (caret == 0) return false;
+    Project project = DataKeys.PROJECT.getData(dataContext);
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+
+    final EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
+    HighlighterIterator iterator = highlighter.createIterator(caret);
+    Document document = editor.getDocument();
+    String text = document.getText();
+    PsiDocumentManager.getInstance(project).commitDocument(document);
+
+    IElementType type = iterator.getTokenType();
+    if (type == mGDOC_WHITESPACE && caret == text.length()) return false; 
+    if (GROOVY_DOC_TOKENS.contains(type) &&
+        mGDOC_COMMENT_END != type) {
+      int lineOffset = document.getLineStartOffset(document.getLineNumber(caret));
+      if (lineOffset > caret) return false;
+      String line = text.substring(lineOffset, caret).replaceAll(" ", "");
+      if (!line.startsWith("*") &&
+          !line.startsWith("/**") &&
+          type != mGDOC_COMMENT_START) {
+        return false;
+      }
+      iterator = highlighter.createIterator(caret - 1);
+      if (line.startsWith("/**")) {
+        if (caret == text.length() || isNotCompleteComment(iterator)) {
+          myOriginalHandler.execute(editor, dataContext);
+          if (settings.JD_LEADING_ASTERISKS_ARE_ENABLED) {
+            EditorModificationUtil.insertStringAtCaret(editor, "* ");
+            myOriginalHandler.execute(editor, dataContext);
+            EditorModificationUtil.insertStringAtCaret(editor, "*/");
+            if (caret < text.length() && (text.charAt(caret) != '\n' || text.charAt(caret) != '\r')) {
+              myOriginalHandler.execute(editor, dataContext);
+              editor.getCaretModel().moveCaretRelatively(3, -2, false, false, true);
+            } else {
+              editor.getCaretModel().moveCaretRelatively(0, -1, false, false, true);
+            }
+          } else {
+            EditorModificationUtil.insertStringAtCaret(editor, "");
+            myOriginalHandler.execute(editor, dataContext);
+            EditorModificationUtil.insertStringAtCaret(editor, "*/");
+            if (caret < text.length() && (text.charAt(caret) != '\n' || text.charAt(caret) != '\r')) {
+              myOriginalHandler.execute(editor, dataContext);
+              editor.getCaretModel().moveCaretRelatively(1, -2, false, false, true);
+            } else {
+              editor.getCaretModel().moveCaretRelatively(-1, -1, false, false, true);
+            }
+          }
+          return true;
+        }
+      }
+
+      if (!settings.JD_LEADING_ASTERISKS_ARE_ENABLED) {
+        myOriginalHandler.execute(editor, dataContext);
+        editor.getCaretModel().moveCaretRelatively(-1, 0, false, false, true);
+        return true;
+      }
+      String ast = "* ";
+      myOriginalHandler.execute(editor, dataContext);
+      if (type == mGDOC_TAG_NAME && text.charAt(caret) == '@') {
+        ast = "*";
+        editor.getCaretModel().moveCaretRelatively(-1, 0, false, false, true);
+        EditorModificationUtil.insertStringAtCaret(editor, ast);
+        editor.getCaretModel().moveCaretRelatively(1, 0, false, false, true);
+      } else {
+        EditorModificationUtil.insertStringAtCaret(editor, ast);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  private static boolean isNotCompleteComment(HighlighterIterator iterator) {
+    while (!iterator.atEnd() && iterator.getTokenType() != mGDOC_COMMENT_END) {
+      iterator.advance();
+    }
+    return iterator.atEnd();
   }
 
   private boolean handleBetweenSquareBraces(Editor editor, int caret, DataContext context, Project project) {

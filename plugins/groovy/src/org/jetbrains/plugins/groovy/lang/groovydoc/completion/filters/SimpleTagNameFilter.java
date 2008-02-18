@@ -21,7 +21,7 @@ import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocTag;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 
 /**
  * @author ilyas
@@ -31,7 +31,7 @@ public class SimpleTagNameFilter implements ElementFilter {
     if (context == null) return false;
     ASTNode node = context.getNode();
     return node != null && node.getElementType() == GroovyDocTokenTypes.mGDOC_TAG_NAME &&
-        context.getParent() instanceof GroovyDocTag && !(context.getParent() instanceof GrDocInlinedTag);
+        context.getParent() instanceof GrDocTag && !(context.getParent() instanceof GrDocInlinedTag);
   }
 
   public boolean isClassAcceptable(Class hintClass) {

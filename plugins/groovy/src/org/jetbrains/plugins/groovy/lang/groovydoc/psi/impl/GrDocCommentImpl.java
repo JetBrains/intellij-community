@@ -17,8 +17,11 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author ilyas
@@ -34,5 +37,20 @@ public class GrDocCommentImpl extends CompositePsiElement implements GroovyDocEl
 
   public IElementType getTokenType() {
     return getElementType();
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitElement(this);
+  }
+
+  public void acceptChildren(GroovyElementVisitor visitor) {
+    PsiElement child = getFirstChild();
+    while (child != null) {
+      if (child instanceof GroovyPsiElement) {
+        ((GroovyPsiElement) child).accept(visitor);
+      }
+
+      child = child.getNextSibling();
+    }
   }
 }
