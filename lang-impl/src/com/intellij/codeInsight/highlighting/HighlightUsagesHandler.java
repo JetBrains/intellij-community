@@ -4,6 +4,10 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.find.EditorSearchComponent;
+import com.intellij.find.FindManager;
+import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -28,7 +32,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +43,7 @@ import java.util.*;
 public class HighlightUsagesHandler extends HighlightHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.highlighting.HighlightUsagesHandler");
 
-  public void invoke(@NotNull Project project, @NotNull Editor editor, PsiFile file) {
+  public static void invoke(@NotNull Project project, @NotNull Editor editor, PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     SelectionModel selectionModel = editor.getSelectionModel();
@@ -180,9 +183,12 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     // in case of injected file, use host file to highlight all occurences of the target in each injected file
     PsiFile context = InjectedLanguageUtil.getTopLevelFile(file);
     SearchScope searchScope = new LocalSearchScope(context);
+
+    final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
+    final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(target);
     Collection<PsiReference> refs;
-    if (target instanceof PsiMethod) {
-      refs = MethodReferencesSearch.search((PsiMethod)target, searchScope, true).findAll();
+    if (handler != null) {
+      refs = handler.findReferencesToHighlight(target, searchScope);
     }
     else {
       refs = ReferencesSearch.search(target, searchScope, false).findAll();

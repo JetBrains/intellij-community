@@ -43,10 +43,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author peter
@@ -744,5 +741,12 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         }
       }
     );
+  }
+
+  public Collection<PsiReference> findReferencesToHighlight(final PsiElement target, final SearchScope searchScope) {
+    if (target instanceof PsiMethod) {
+      return MethodReferencesSearch.search((PsiMethod)target, searchScope, true).findAll();
+    }
+    return super.findReferencesToHighlight(target, searchScope);
   }
 }

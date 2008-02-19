@@ -12,11 +12,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 /**
  * @author peter
@@ -115,4 +118,9 @@ public class FindUsagesHandler {
   protected boolean isSearchForTextOccurencesAvailable(PsiElement psiElement, boolean isSingleFile) {
     return false;
   }
+
+  public Collection<PsiReference> findReferencesToHighlight(PsiElement target, SearchScope searchScope) {
+    return ReferencesSearch.search(target, searchScope, false).findAll();
+  }
+
 }
