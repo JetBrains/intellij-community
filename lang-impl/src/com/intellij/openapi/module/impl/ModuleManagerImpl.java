@@ -251,20 +251,24 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     if (module != null) {
       Disposer.dispose(module);
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        final int answer = Messages.showDialog(
-          ProjectBundle.message("module.remove.from.project.confirmation", message),
-          ProjectBundle.message("module.remove.from.project.title"),
-          new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()},
-          1,
-          Messages.getErrorIcon()
-        );
-        if (answer == 0) { // yes
-          myFailedModulePaths.remove(modulePath);
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      throw new RuntimeException(message);
+    } else {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          final int answer = Messages.showDialog(
+            ProjectBundle.message("module.remove.from.project.confirmation", message),
+            ProjectBundle.message("module.remove.from.project.title"),
+            new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()},
+            1,
+            Messages.getErrorIcon()
+          );
+          if (answer == 0) { // yes
+            myFailedModulePaths.remove(modulePath);
+          }
         }
-      }
-    }, ModalityState.NON_MODAL);
+      }, ModalityState.NON_MODAL);
+    }
   }
 
   @NotNull
