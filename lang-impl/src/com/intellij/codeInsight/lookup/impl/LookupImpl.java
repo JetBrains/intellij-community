@@ -599,10 +599,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
-  static boolean isNarrowDownMode(){
-    return CodeInsightSettings.getInstance().NARROW_DOWN_LOOKUP_LIST;
-  }
-
   public CharFilter getCharFilter() {
     return myCharFilter;
   }

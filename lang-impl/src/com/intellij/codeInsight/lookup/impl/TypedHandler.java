@@ -9,10 +9,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ListScrollingUtil;
 
-import javax.swing.*;
 import java.awt.*;
 
 class TypedHandler implements TypedActionHandler {
@@ -45,23 +42,10 @@ class TypedHandler implements TypedActionHandler {
     }, "", null);
 
     if (result == CharFilter.ADD_TO_PREFIX){
-      if (LookupImpl.isNarrowDownMode()){
-        lookup.updateList();
-        Point point=lookup.calculatePosition();
-        Dimension preferredSize = lookup.getComponent().getPreferredSize();
-        lookup.setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
-      }
-      else{
-        ListModel model = lookup.getList().getModel();
-        for(int i = 0; i < model.getSize(); i++){
-          LookupItem item = (LookupItem)model.getElementAt(i);
-          String s = item.getLookupString();
-          if (StringUtil.startsWithIgnoreCase(s, prefix)){
-            ListScrollingUtil.selectItem(lookup.getList(), i);
-            break;
-          }
-        }
-      }
+      lookup.updateList();
+      Point point=lookup.calculatePosition();
+      Dimension preferredSize = lookup.getComponent().getPreferredSize();
+      lookup.setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
 
       lookup.getList().repaint();
     }

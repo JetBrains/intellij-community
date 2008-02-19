@@ -86,7 +86,6 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
   public boolean INSERT_DOUBLE_PARENTH_WHEN_NO_ARGS = false;
   public boolean SHOW_STATIC_AFTER_INSTANCE = false;
 
-  public boolean NARROW_DOWN_LOOKUP_LIST = true;
   public boolean SHOW_SIGNATURES_IN_LOOKUPS = true;
   public int LOOKUP_HEIGHT = 11;
   public boolean SORT_XML_LOOKUP_ITEMS = true;
