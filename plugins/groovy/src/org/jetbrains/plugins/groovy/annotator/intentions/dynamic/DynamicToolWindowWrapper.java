@@ -758,16 +758,12 @@ public class DynamicToolWindowWrapper {
     }
 
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-      /*if (value instanceof DPropertyElement) {
-        field.setText(((DPropertyElement) value).getPropertyName());
-      }*/
       if (value instanceof String) {
         field.setText(((String) value));
       } else if (value instanceof DContainingClassElement) {
         field.setText(((DContainingClassElement) value).getContainingClassName());
       }
-//      return myRenderer.getTableCellRendererComponent(table, value, isSelected, false, row, column);
-//
+
       return field;
     }
   }
@@ -780,9 +776,6 @@ public class DynamicToolWindowWrapper {
     }
 
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-//      if (value instanceof DPropertyTypeElement) {
-//        field.setText(((DPropertyTypeElement) value).getPropertyType());
-//      }
       if (value instanceof String) {
         field.setText(((String) value));
       }

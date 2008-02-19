@@ -301,20 +301,11 @@ public class DynamicManagerImpl extends DynamicManager {
     return result.toArray(new String[result.size()]);
   }
 
-  @NotNull
+  @Nullable
   public String getPropertyType(String moduleName, String className, String propertyName) {
     final Element dynamicProperty = findConcreteDynamicProperty(getRootElement(moduleName), className, propertyName);
 
-    if (dynamicProperty == null) return "";
-
-//    final List types = dynamicProperty.getContent(DynamicFiltersFactory.createPropertyTypeTagFilter());
-//
-//    if (types == null || types.isEmpty()) return "";
-//    final Object typeTag = types.get(0);
-//
-//    if (typeTag == null || !(typeTag instanceof Element)) return "";
-//
-//    return ((Element) typeTag).getText();
+    if (dynamicProperty == null) return null;
     return dynamicProperty.getAttributeValue(TYPE_ATTRIBUTE);
   }
 
@@ -520,6 +511,7 @@ public class DynamicManagerImpl extends DynamicManager {
   /*
   * Changes dynamic property type
   */
+
   public String replaceClassName(String moduleName, String oldClassName, String newClassName) {
     final Element rootElement = getRootElement(moduleName);
     final Element oldClassElement = findDynamicClassElement(rootElement, oldClassName);
