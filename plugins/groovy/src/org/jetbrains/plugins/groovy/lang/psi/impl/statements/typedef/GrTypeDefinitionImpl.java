@@ -36,6 +36,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.IconUtil;
+import com.intellij.ui.RowIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -771,7 +773,9 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   public Icon getIcon(int flags) {
     Icon icon = getIconInner();
     final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !isWritable();
-    return ElementBase.createLayeredIcon(icon, ElementBase.getFlags(this, isLocked));
+    RowIcon rowIcon = ElementBase.createLayeredIcon(icon, ElementBase.getFlags(this, isLocked));
+    IconUtil.setVisibilityIcon(getModifierList(), rowIcon);
+    return rowIcon;
   }
 
   private Icon getIconInner() {

@@ -912,18 +912,29 @@ public class GroovyAnnotator implements Annotator {
     if (newExpression.getArrayCount() > 0) return;
     GrCodeReferenceElement refElement = newExpression.getReferenceElement();
     if (refElement == null) return;
-    final GroovyResolveResult resolveResult = newExpression.resolveConstructorGenerics();
-    if (resolveResult != null) {
-      checkMethodApplicability(resolveResult, refElement, holder);
+    final PsiElement element = refElement.resolve();
+    if (element instanceof PsiClass) {
+      PsiClass clazz = (PsiClass) element;
+      if (clazz.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        String message = clazz.isInterface() ? GroovyBundle.message("cannot.instantiate.interface", clazz.getName()) :
+            GroovyBundle.message("cannot.instantiate.abstract.class", clazz.getName());
+        holder.createErrorAnnotation(refElement, message);
+        return;
+      }
+    }
+
+    final GroovyResolveResult constructorResolveResult = newExpression.resolveConstructorGenerics();
+    if (constructorResolveResult != null) {
+      checkMethodApplicability(constructorResolveResult, refElement, holder);
     } else {
       final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
       final GrArgumentList argList = newExpression.getArgumentList();
       PsiElement toHighlight = argList != null ? argList : refElement.getReferenceNameElement();
+
       if (results.length > 0) {
         String message = GroovyBundle.message("ambiguous.constructor.call");
         holder.createWarningAnnotation(toHighlight, message);
       } else {
-        final PsiElement element = refElement.resolve();
         if (element instanceof PsiClass) {
           //default constructor invocation
           PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refElement, true);
