@@ -121,6 +121,9 @@ public class PagePool {
       }
     }
     finally {
+      flushFinalizationQueue(Integer.MAX_VALUE);
+
+      /*
       if (flushQueueNow) {
         //long start = System.currentTimeMillis();
         //if (lastFlushTime != 0) {
@@ -131,6 +134,7 @@ public class PagePool {
         //long delta = System.currentTimeMillis() - start;
         //System.out.println(". Flushing queue, done for " + delta + " msec.");
       }
+      */
     }
   }
 
@@ -215,10 +219,12 @@ public class PagePool {
     if (request == null) return false;
 
     synchronized (lock) {
+      /*
       if (myFinalizerThread == null) {
         myFinalizerThread = new Thread(new FinalizationThreadWorker(), FINALIZER_THREAD_NAME);
         myFinalizerThread.start();
       }
+      */
 
       myFinalizationQueue.put(keyForPage(page), request);
       if (myFinalizationQueue.size() > 5000) {
