@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
@@ -51,7 +52,7 @@ public class ProjectConfigurator {
     deleteObsoleteModules();
 
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
-
+    configSettings();
     configModules();
     configModuleGroups();
     resolveDependenciesAndCommit();
@@ -74,6 +75,10 @@ public class ProjectConfigurator {
     if (result == 1) return;// NO
 
     IdeaAPIHelper.deleteModules(myMapping.getObsoleteModules());
+  }
+
+  private void configSettings() {
+    ((ProjectEx)myProject).setSavePathsRelative(true);
   }
 
   private void configModules() {

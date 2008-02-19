@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 
@@ -9,6 +10,24 @@ import java.io.IOException;
 import java.io.File;
 
 public class BasicImportingTest extends ImportingTestCase {
+  public void testUsingRelativePathForTheProject() throws IOException {
+    assertFalse(((ProjectEx)myProject).isSavePathsRelative());
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertTrue(((ProjectEx)myProject).isSavePathsRelative());
+  }
+
+  public void testUsingRelativePathForModules() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertTrue(getModule("project").isSavePathsRelative());
+  }
+
   public void testLibraryDependency() throws IOException {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

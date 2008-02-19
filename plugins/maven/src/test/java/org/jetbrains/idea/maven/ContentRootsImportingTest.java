@@ -3,14 +3,6 @@ package org.jetbrains.idea.maven;
 import java.io.IOException;
 
 public class ContentRootsImportingTest extends ImportingTestCase {
-  public void testUsingRelativePath() throws IOException {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
-    
-    assertTrue(getModule("project").isSavePathsRelative());
-  }
-
   public void testSimpleProjectStructure() throws IOException {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
