@@ -76,7 +76,7 @@ public class MavenExternalExecutor extends MavenExecutor {
     if (myProcessHandler != null) {
       myProcessHandler.destroyProcess();
       myProcessHandler.waitFor();
-      TODO : setExitCode(myProcessHandler.getProcess().exitValue());
+      setExitCode(myProcessHandler.getProcess().exitValue());
     }
     super.stop();
   }
