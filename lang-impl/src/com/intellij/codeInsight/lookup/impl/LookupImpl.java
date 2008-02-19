@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionBundle;
 import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.lookup.*;
@@ -74,7 +75,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private boolean myCanceled = true;
   private boolean myDisposed = false;
   private int myIndex;
-  private JComponent myBottomLabel;
 
   public LookupImpl(Project project,
                     Editor editor,
@@ -97,7 +97,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
     myInitialPrefix = myPrefix;
 
-    myBottomLabel = HintUtil.createAdComponent(bottomText);
+    final JComponent bottomLabel = HintUtil.createAdComponent(bottomText);
 
     myList = new JList() ;
     myList.setFocusable(false);
@@ -117,7 +117,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     getComponent().add(scrollPane, BorderLayout.CENTER);
     scrollPane.setBorder(null);
     if (StringUtil.isNotEmpty(bottomText)) {
-      getComponent().add(myBottomLabel, BorderLayout.SOUTH);
+      getComponent().add(bottomLabel, BorderLayout.SOUTH);
     }
     getComponent().setBorder(new BegPopupMenuBorder());
 
@@ -200,17 +200,17 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myPreferredItemsCount;
   }
 
-  private SortedMap<LookupItemWeightComparable, List<LookupItem>> initWeightMap(final LookupItemPreferencePolicy itemPreferencePolicy) {
+  private SortedMap<LookupItemWeightComparable, List<LookupItem>> initWeightMap(final LookupItemPreferencePolicy policy) {
     final SortedMap<LookupItemWeightComparable, List<LookupItem>> map = new TreeMap<LookupItemWeightComparable, List<LookupItem>>();
 
-    if (LookupManagerImpl.isUseNewSorting()) {
+    if (policy instanceof CompletionPreferencePolicy && ((CompletionPreferencePolicy)policy).getCompletionType() == CompletionType.SMART) {
       final Document document = myEditor.getDocument();
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
       assert psiFile != null;
       final PsiElement element = psiFile.findElementAt(myEditor.getCaretModel().getOffset());
 
       for (final LookupItem item : myItems) {
-        final Comparable[] weight = getWeight(itemPreferencePolicy, element, item);
+        final Comparable[] weight = getWeight(policy, element, item);
         final LookupItemWeightComparable key = new LookupItemWeightComparable(item.getPriority(), weight);
         List<LookupItem> list = map.get(key);
         if (list == null) map.put(key, list = new ArrayList<LookupItem>());

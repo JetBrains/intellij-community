@@ -1,61 +1,28 @@
-
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
-import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.util.containers.HashMap;
-import gnu.trove.TObjectIntHashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
-  private final ExpectedTypeInfo[] myExpectedInfos;
-
-  private final TObjectIntHashMap<LookupItem> myItemToIndexMap = new TObjectIntHashMap<LookupItem>();
-
   private String myPrefix;
   private final CompletionParameters myParameters;
   private final CompletionType myCompletionType;
 
-  public CompletionPreferencePolicy(PsiManager manager, LookupItem[] allItems, ExpectedTypeInfo[] expectedInfos, String prefix, @NotNull PsiElement position,
-                                    final CompletionParameters parameters,
-                                    final CompletionType completionType) {
+  public CompletionPreferencePolicy(String prefix, final CompletionParameters parameters, final CompletionType completionType) {
     myParameters = parameters;
     myCompletionType = completionType;
-    setPrefix( prefix );
-    if(expectedInfos != null){
-      final Map<PsiType, ExpectedTypeInfo> map = new HashMap<PsiType, ExpectedTypeInfo>(expectedInfos.length);
-      for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
-        if (!map.containsKey(expectedInfo.getType())) {
-          map.put(expectedInfo.getType(), expectedInfo);
-        }
-      }
-      myExpectedInfos = map.values().toArray(new ExpectedTypeInfo[map.size()]);
-    }
-    else myExpectedInfos = null;
-    synchronized(myItemToIndexMap){
-      for(int i = 0; i < allItems.length; i++){
-        myItemToIndexMap.put(allItems[i], i + 1);
-      }
-    }
+    setPrefix(prefix);
+  }
+
+  public CompletionType getCompletionType() {
+    return myCompletionType;
   }
 
   public void setPrefix(String prefix) {
     myPrefix = prefix;
-  }
-
-  @Nullable
-  public ExpectedTypeInfo[] getExpectedInfos() {
-    return myExpectedInfos;
   }
 
   public void itemSelected(LookupItem item) {
@@ -82,7 +49,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   public int compare(final LookupItem item1, final LookupItem item2) {
     if (item1 == item2) return 0;
 
-    if (LookupManagerImpl.isUseNewSorting()) {
+    if (myCompletionType == CompletionType.SMART) {
       if (item2.getAttribute(LookupItem.DONT_PREFER) != null) return -1;
       return 0;
     }

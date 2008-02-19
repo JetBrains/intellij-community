@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -605,5 +606,20 @@ public class JavaCompletionUtil {
     offsetMap.removeOffset(RPAREN_OFFSET);
     offsetMap.removeOffset(ARG_LIST_END_OFFSET);
     offsetMap.removeOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
+  }
+
+  public static PsiElement[] getAllPsiElements(final LookupItem item) {
+    PsiMethod[] allMethods = (PsiMethod[])item.getAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE);
+    if (allMethods != null){
+      return allMethods;
+    }
+    else{
+      if (item.getObject() instanceof PsiElement){
+        return new PsiElement[]{(PsiElement)item.getObject()};
+      }
+      else{
+        return null;
+      }
+    }
   }
 }

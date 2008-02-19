@@ -1,12 +1,8 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
-import com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
@@ -16,13 +12,14 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBus;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,43 +186,9 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     }
   }
 
-  private static boolean shouldPrefer(final PsiClass psiClass) {
-    int toImplement = OverrideImplementUtil.getMethodSignaturesToImplement(psiClass).size();
-    if (toImplement > 2) return false;
-
-    for (final PsiMethod method : psiClass.getMethods()) {
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        toImplement++;
-        if (toImplement > 2) return false;
-      }
-    }
-
-    if (toImplement > 0) return true;
-
-    if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
-    if (CommonClassNames.JAVA_LANG_STRING.equals(psiClass.getQualifiedName())) return false;
-    if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) return false;
-    return true;
-  }
-
-
   protected void sortItems(PsiElement context, LookupItem[] items, final LookupItemPreferencePolicy itemPreferencePolicy) {
     if (context == null || shouldSortItems(context.getContainingFile(), items)) {
       final PsiProximityComparator proximityComparator = new PsiProximityComparator(context);
-      if (isUseNewSorting()) {
-        if (itemPreferencePolicy instanceof CompletionPreferencePolicy) {
-          final ExpectedTypeInfo[] expectedInfos = ((CompletionPreferencePolicy)itemPreferencePolicy).getExpectedInfos();
-          if (expectedInfos != null) {
-            final THashSet<PsiClass> set = getFirstClasses(expectedInfos);
-            for (final LookupItem item : items) {
-              final Object o = item.getObject();
-              if (set.contains(o) && !shouldPrefer((PsiClass)o)) {
-                item.setAttribute(LookupItem.DONT_PREFER, "");
-              }
-            }
-          }
-        }
-      }
 
       final Comparator<? super LookupItem> comparator = new Comparator<LookupItem>() {
         public int compare(LookupItem o1, LookupItem o2) {
@@ -247,10 +210,6 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
       };
       Arrays.sort(items, comparator);
     }
-  }
-
-  public static boolean isUseNewSorting() {
-    return SmartCodeCompletionAction.isDoingSmartCodeCompleteAction();
   }
 
   protected boolean shouldSortItems(final PsiFile containingFile, final LookupItem[] items) {
@@ -280,41 +239,8 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
 
-  public PsiElement[] getAllElementsForItem(LookupItem item) {
-    PsiMethod[] allMethods = (PsiMethod[])item.getAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE);
-    if (allMethods != null){
-      return allMethods;
-    }
-    else{
-      if (item.getObject() instanceof PsiElement){
-        return new PsiElement[]{(PsiElement)item.getObject()};
-      }
-      else{
-        return null;
-      }
-    }
-  }
-
   public boolean isDisposed() {
     return myIsDisposed;
-  }
-
-  public static THashSet<PsiClass> getFirstClasses(final ExpectedTypeInfo[] expectedInfos) {
-    final THashSet<PsiClass> set = new THashSet<PsiClass>();
-    for (final ExpectedTypeInfo info : expectedInfos) {
-      addFirstPsiType(set, info.getType());
-      addFirstPsiType(set, info.getDefaultType());
-    }
-    return set;
-  }
-
-  private static void addFirstPsiType(final THashSet<PsiClass> set, final PsiType type) {
-    if (type instanceof PsiClassType) {
-      final PsiClass psiClass = ((PsiClassType)type).resolve();
-      if (psiClass != null) {
-        set.add(psiClass);
-      }
-    }
   }
 
 }

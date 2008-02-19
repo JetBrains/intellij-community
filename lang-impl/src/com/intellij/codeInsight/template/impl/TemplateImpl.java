@@ -57,7 +57,7 @@ public class TemplateImpl implements Template {
     }
     int result;
     result = myKey.hashCode();
-    result = 29 * result + myString.hashCode();
+    result = 29 * result + (myString == null ? 0 : myString.hashCode());
     result = 29 * result + myGroupName.hashCode();
     return result;
   }

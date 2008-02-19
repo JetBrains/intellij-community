@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -107,7 +108,6 @@ public abstract class BaseCompleteMacro implements Macro {
       LookupItem item = event.getItem();
       if (item == null) return;
       final Project project = myContext.getProject();
-      final LookupManager lookupManager = LookupManager.getInstance(project);
 
 
       if (item.getAttribute(Expression.AUTO_POPUP_NEXT_LOOKUP) != null) {
@@ -119,7 +119,7 @@ public abstract class BaseCompleteMacro implements Macro {
         return;
       }
 
-      final PsiElement[] elements = lookupManager.getAllElementsForItem(item);
+      final PsiElement[] elements = JavaCompletionUtil.getAllPsiElements(item);
 
       boolean goNextTab;
 

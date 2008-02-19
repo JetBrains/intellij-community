@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
 import com.intellij.codeInsight.completion.DefaultCharFilter;
 import com.intellij.codeInsight.completion.CompletionType;
@@ -424,8 +423,7 @@ public class TemplateState implements Disposable {
         final Lookup lookup = lookupManager.showLookup(myEditor,
                                                        lookupItems,
                                                        "",
-                                                       new CompletionPreferencePolicy(PsiManager.getInstance(myProject), lookupItems, ExpectedTypeInfo.EMPTY, "", psiFile,
-                                                                                      new CompletionParametersImpl(psiFile, psiFile), CompletionType.BASIC),
+                                                       new CompletionPreferencePolicy("", new CompletionParametersImpl(psiFile, psiFile), CompletionType.BASIC),
                                                        new DefaultCharFilter(myEditor, psiFile, end));
         lookup.setCurrentItem(lookupItems[0]); // [Valentin] not absolutely correct but all existing macros return the first item as the result
         toProcessTab = false;
