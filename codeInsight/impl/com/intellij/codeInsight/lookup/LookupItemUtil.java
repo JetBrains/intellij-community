@@ -87,6 +87,9 @@ public class LookupItemUtil{
     }
   }
 
+  /**
+   * @deprecated {@see com.intellij.codeInsight.lookup.LookupElementFactory}
+  */
   public static LookupItem objectToLookupItem(Object object) {
     if (object instanceof LookupItem) return (LookupItem)object;
 

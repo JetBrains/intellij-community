@@ -43,6 +43,9 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
   private ReferenceProvidersRegistry() {
   }
 
+  /**
+   * @deprecated {@see com.intellij.psi.PsiReferenceContributor
+   */
   public void registerReferenceProvider(@Nullable ElementFilter elementFilter,
                                         @NotNull Class scope,
                                         @NotNull PsiReferenceProvider provider,
@@ -97,9 +100,12 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
     }
   }
 
+  /**
+   * @deprecated {@see com.intellij.psi.PsiReferenceContributor
+   */
   public void registerReferenceProvider(@Nullable ElementFilter elementFilter,
-                                                     @NotNull Class scope,
-                                                     @NotNull PsiReferenceProvider provider) {
+                                        @NotNull Class scope,
+                                        @NotNull PsiReferenceProvider provider) {
     registerReferenceProvider(elementFilter, scope, provider, DEFAULT_PRIORITY);
   }
 
@@ -122,6 +128,9 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
     providerBinding.registerProvider(names, pattern, caseSensitive, provider, priority);
   }
 
+  /**
+   * @deprecated {@see com.intellij.psi.PsiReferenceContributor
+   */
   public void registerReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
     registerReferenceProvider(null, scope, provider);
   }

@@ -24,13 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 30.01.2003
- * Time: 16:58:32
- * To change this template use Options | File Templates.
+ * @deprecated {@see com.intellij.codeInsight.completion.CompletionContributor}
  */
-@Deprecated
 public class CompletionData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionData");
   private final Set<Class> myFinalScopes = new HashSet<Class>();
@@ -78,6 +73,9 @@ public class CompletionData {
     }
   }
 
+  /**
+   * @deprecated {@see com.intellij.codeInsight.completion.CompletionContributor}
+   */
   protected void registerVariant(CompletionVariant variant){
     myCompletionVariants.add(variant);
   }
@@ -104,8 +102,8 @@ public class CompletionData {
   }
 
   public void completeKeywordsBySet(Set<LookupItem> set, Set<CompletionVariant> variants, PsiElement position,
-                                           final PrefixMatcher matcher,
-                                           final PsiFile file){
+                                    final PrefixMatcher matcher,
+                                    final PsiFile file){
     for (final CompletionVariant variant : variants) {
       variant.addKeywords(set, position, matcher, file, this);
     }
@@ -230,7 +228,7 @@ public class CompletionData {
 
   @Nullable
   protected LookupItem addLookupItem(Set<LookupItem> set, TailType tailType, @NotNull Object completion, PrefixMatcher matcher, final PsiFile file,
-                                         final CompletionVariant variant) {
+                                     final CompletionVariant variant) {
     LookupItem ret = objectToLookupItem(completion);
     if(ret == null) return null;
 
@@ -252,10 +250,10 @@ public class CompletionData {
   }
 
   protected void completeReference(final PsiReference reference, final PsiElement position, final Set<LookupItem> set, final TailType tailType,
-                                            final PrefixMatcher matcher,
-                                            final PsiFile file,
-                                            final ElementFilter filter,
-                                            final CompletionVariant variant) {
+                                   final PrefixMatcher matcher,
+                                   final PsiFile file,
+                                   final ElementFilter filter,
+                                   final CompletionVariant variant) {
     if (reference instanceof PsiMultiReference) {
       for (PsiReference ref : getReferences((PsiMultiReference)reference)) {
         completeReference(ref, position, set, tailType, matcher, file, filter, variant);
@@ -302,7 +300,7 @@ public class CompletionData {
   }
 
   protected void addKeywords(final Set<LookupItem> set, final PsiElement position, final PrefixMatcher matcher, final PsiFile file,
-                                  final CompletionVariant variant, final Object comp, final TailType tailType) {
+                             final CompletionVariant variant, final Object comp, final TailType tailType) {
     if (comp instanceof String) {
       addKeyword(set, tailType, comp, matcher, file, variant);
     }
@@ -325,8 +323,8 @@ public class CompletionData {
   }
 
   private void addKeyword(Set<LookupItem> set, final TailType tailType, final Object comp, final PrefixMatcher matcher,
-                                final PsiFile file,
-                                final CompletionVariant variant) {
+                          final PsiFile file,
+                          final CompletionVariant variant) {
     for (final LookupItem item : set) {
       if (item.getObject().toString().equals(comp.toString())) {
         return;
