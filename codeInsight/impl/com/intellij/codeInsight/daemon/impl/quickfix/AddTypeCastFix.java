@@ -64,7 +64,7 @@ public class AddTypeCastFix implements IntentionAction {
     
     if (element instanceof PsiConditionalExpression) {
       // we'd better cast one branch of ternary expression if we could
-      PsiConditionalExpression expression = (PsiConditionalExpression)element;
+      PsiConditionalExpression expression = (PsiConditionalExpression)element.copy();
       PsiExpression thenE = expression.getThenExpression();
       PsiExpression elseE = expression.getElseExpression();
       PsiType thenType = thenE == null ? null : thenE.getType();
