@@ -23,6 +23,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NonNls;
@@ -76,7 +77,7 @@ public class MavenExternalParameters {
   @NotNull
   private static Sdk getJdk(final String name) throws ExecutionException {
     if (name.equals(MavenRunnerSettings.USE_INTERNAL_JAVA)) {
-      return ProjectJdkTable.getInstance().getInternalJdk();
+      return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     }
 
     if (name.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
