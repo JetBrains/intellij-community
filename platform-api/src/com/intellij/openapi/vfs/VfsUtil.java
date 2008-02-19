@@ -385,6 +385,7 @@ public class VfsUtil {
    * @return converted URL or null if error has occured
    */
 
+  @Nullable
   public static URL convertToURL(String vfsUrl) {
     if (vfsUrl.startsWith(JAR)) {
       LOG.error("jar: protocol not supported.");
@@ -404,7 +405,7 @@ public class VfsUtil {
     String[] split = vfsUrl.split("://");
 
     if (split.length != 2) {
-      LOG.error("Malformed vfsurl.");
+      LOG.debug("Malformed VFS URL: " + vfsUrl);
       return null;
     }
 
@@ -420,7 +421,7 @@ public class VfsUtil {
       }
     }
     catch (MalformedURLException e) {
-      LOG.error("MalformedURLException occured:" + e.getMessage());
+      LOG.debug("MalformedURLException occured:" + e.getMessage());
       return null;
     }
   }
