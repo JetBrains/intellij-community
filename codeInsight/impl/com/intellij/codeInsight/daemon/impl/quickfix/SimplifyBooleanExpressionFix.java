@@ -3,6 +3,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,6 +51,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!isAvailable(project, editor, file)) return;
     LOG.assertTrue(mySubExpression.isValid());
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(mySubExpression)) return;
     PsiExpression expression;
     if (mySubExpressionValue == null) {
       expression = mySubExpression;
