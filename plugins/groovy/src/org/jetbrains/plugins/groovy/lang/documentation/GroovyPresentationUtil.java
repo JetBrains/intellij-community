@@ -28,11 +28,14 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.Processor;
 
 import java.util.Set;
+import java.util.LinkedHashSet;
 
 /**
  * @author ven
  */
 public class GroovyPresentationUtil {
+  private static final int CONSTRAINTS_NUMBER = 2;
+  
   public static String getParameterPresentation(GrParameter parameter) {
     StringBuilder builder = new StringBuilder();
     PsiType type = parameter.getTypeGroovy();
@@ -40,11 +43,17 @@ public class GroovyPresentationUtil {
       return builder.append(type.getPresentableText()).append(" ").append(parameter.getName()).toString();
     } else {
       builder.append(parameter.getName());
-      final Set<String> structural = new HashSet<String>();
+      final Set<String> structural = new LinkedHashSet<String>();
       ReferencesSearch.search(parameter).forEach(new Processor<PsiReference>() {
         public boolean process(PsiReference ref) {
           PsiElement parent = ref.getElement().getParent();
           if (parent instanceof GrReferenceExpression) {
+
+            if (structural.size() >= CONSTRAINTS_NUMBER) { //handle too many constraints
+              structural.add("...");
+              return false;
+            }
+
             StringBuilder builder1 = new StringBuilder();
             builder1.append(((GrReferenceElement) parent).getReferenceName());
             PsiType[] argTypes = PsiUtil.getArgumentTypes(parent, false);
