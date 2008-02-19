@@ -8,6 +8,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.execution.ui.layout.RunnerLayoutSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -264,8 +265,8 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
     }
   }
 
-  public DebuggerLayoutSettings getLayoutSettings() {
-    return ApplicationManager.getApplication().getComponent(DebuggerLayoutSettings.class);
+  public RunnerLayoutSettings getLayoutSettings() {
+    return ApplicationManager.getApplication().getComponent(RunnerLayoutSettings.class);
   }
 
 

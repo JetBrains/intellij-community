@@ -30,6 +30,8 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.layout.RunnerLayout;
+import com.intellij.execution.ui.layout.View;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
@@ -43,6 +45,7 @@ import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -100,6 +103,16 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     myProject = project;
     myManager = new LogFilesManager(project, this);
     myContentPanel = new JPanel(new BorderLayout());
+
+    final RunnerLayout layout = getLayout();
+    layout.setDefault(0, "Debugger", null);
+
+    layout.setDefault(DebuggerContentInfo.FRAME_CONTENT, 0, View.PlaceInGrid.left, false);
+    layout.setDefault(DebuggerContentInfo.VARIABLES_CONTENT, 0, View.PlaceInGrid.center, false);
+    layout.setDefault(DebuggerContentInfo.WATCHES_CONTENT, 0, View.PlaceInGrid.right, false);
+    layout.setDefault(DebuggerContentInfo.CONSOLE_CONTENT, 1, View.PlaceInGrid.bottom, false);
+
+
     final DebuggerSettings debuggerSettings = DebuggerSettings.getInstance();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       getContextManager().addListener(new DebuggerContextListener() {
@@ -123,7 +136,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
       });
     }
 
-    myContentUI = new NewDebuggerContentUI(getProject(), ActionManager.getInstance(), DebuggerSettings.getInstance(),
+    myContentUI = new NewDebuggerContentUI(getProject(), ActionManager.getInstance(), getLayoutSettings(),
                                            DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName);
 
     myViewsContentManager = getContentFactory().
@@ -191,6 +204,10 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     myViewsContentManager.setSelectedContent(myFramesContent);
     myContentPanel.add(myViewsContentManager.getComponent(), BorderLayout.CENTER);
+  }
+
+  private static RunnerLayout getLayoutSettings() {
+    return DebuggerSettings.getInstance().getLayoutSettings().getLayout("JavaDebugger");
   }
 
   public void showFramePanel() {
@@ -363,11 +380,11 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   }
 
   @Nullable
-  private Content findContent(Key key) {
+  private Content findContent(@NotNull String key) {
     if (myViewsContentManager != null) {
       Content[] contents = myViewsContentManager.getContents();
       for (Content content : contents) {
-        Key kind = content.getUserData(DebuggerContentInfo.CONTENT_ID);
+        String kind = content.getUserData(View.ID);
         if (key.equals(kind)) {
           return content;
         }
@@ -492,7 +509,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   }
 
   private Content addLogComponent(final AdditionalTabComponent tabComponent) {
-    Content logContent = createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), IconLoader.getIcon("/fileTypes/text.png"), Key.create("Log-" + tabComponent.getTabTitle()),
+    Content logContent = createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), IconLoader.getIcon("/fileTypes/text.png"), "Log-" + tabComponent.getTabTitle(),
                                        tabComponent.getPreferredFocusableComponent());
     logContent.setDescription(tabComponent.getTooltip());
     myAdditionalContent.put(tabComponent, logContent);
@@ -610,9 +627,10 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     }
   }
 
-  private static Content createContent(JComponent component, String displayName, Icon icon, Key kind, JComponent focusable) {
+  private static Content createContent(JComponent component, String displayName, Icon icon, String kind, JComponent focusable) {
     final Content content = getContentFactory().createContent(component, displayName, false);
-    content.putUserData(DebuggerContentInfo.CONTENT_ID, kind);
+    content.putUserData(DebuggerContentInfo.CONTENT_TYPE, kind);
+    content.putUserData(View.ID, kind);
     content.setIcon(icon);
     if (focusable != null) {
       content.setPreferredFocusableComponent(focusable);
@@ -622,5 +640,9 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
   private static ContentFactory getContentFactory() {
     return PeerFactory.getInstance().getContentFactory();
+  }
+
+  public static RunnerLayout getLayout() {
+    return getLayoutSettings();
   }
 }

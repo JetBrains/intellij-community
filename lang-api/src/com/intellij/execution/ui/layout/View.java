@@ -1,10 +1,12 @@
-package com.intellij.debugger.ui.content.newUI;
+package com.intellij.execution.ui.layout;
 
-import com.intellij.debugger.settings.DebuggerLayoutSettings;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.openapi.util.Key;
 import org.jdom.Element;
 
 public class View {
+
+  public static final Key<String> ID = Key.create("ViewID");
 
   private String myID;
 
@@ -22,11 +24,7 @@ public class View {
     myMinimizedInGrid = minimizedInGrid;
   }
 
-  public void setID(final String ID) {
-    myID = ID;
-  }
-
-  public View(DebuggerLayoutSettings settings, Element element) {
+  public View(RunnerLayout settings, Element element) {
     XmlSerializer.deserializeInto(this, element);
     assignTab(settings.getOrCreateTab(myTabIndex));
   }
@@ -48,6 +46,9 @@ public class View {
     return myMinimizedInGrid;
   }
 
+  public void setID(final String ID) {
+    myID = ID;
+  }
 
   public String getID() {
     return myID;
@@ -73,4 +74,33 @@ public class View {
   public void setTabIndex(final int tabIndex) {
     myTabIndex = tabIndex;
   }
+
+  public static enum PlaceInGrid {
+    left, center, right, bottom
+  }
+
+  public static class Default {
+
+    private String myID;
+    private int myTabID;
+    private PlaceInGrid myPlaceInGrid;
+    private boolean myMinimizedInGrid;
+
+    public Default(final String ID, final int tabID, final PlaceInGrid placeInGrid, final boolean minimizedInGrid) {
+      myID = ID;
+      myTabID = tabID;
+      myPlaceInGrid = placeInGrid;
+      myMinimizedInGrid = minimizedInGrid;
+    }
+
+    public View createView(RunnerLayout settings) {
+      final Tab tab = myTabID == Integer.MAX_VALUE ? settings.createNewTab() : settings.getOrCreateTab(myTabID);
+      return new View(myID, tab, myPlaceInGrid, myMinimizedInGrid);
+    }
+
+    public PlaceInGrid getPlaceInGrid() {
+      return myPlaceInGrid;
+    }
+  }
+
 }

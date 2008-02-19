@@ -2,7 +2,7 @@ package com.intellij.debugger.ui.content.newUI.actions;
 
 import com.intellij.debugger.ui.content.newUI.ViewContext;
 import com.intellij.debugger.ui.content.newUI.Grid;
-import com.intellij.debugger.ui.content.newUI.Tab;
+import com.intellij.execution.ui.layout.Tab;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.content.Content;
 

@@ -1,11 +1,12 @@
 package com.intellij.debugger.ui.content.newUI;
 
 import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.settings.DebuggerLayoutSettings;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.content.DebuggerContentUIFacade;
 import com.intellij.debugger.ui.content.newUI.actions.RestoreViewAction;
+import com.intellij.execution.ui.layout.RunnerLayout;
+import com.intellij.execution.ui.layout.Tab;
+import com.intellij.execution.ui.layout.View;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -37,7 +38,7 @@ public class NewDebuggerContentUI
              PropertyChangeListener {
 
   ContentManager myManager;
-  DebuggerSettings mySettings;
+  RunnerLayout mySettings;
 
   ActionManager myActionManager;
   String mySessionName;
@@ -64,7 +65,7 @@ public class NewDebuggerContentUI
   private Set<Object> myRestoreStateRequestors = new HashSet<Object>();
   public static final DataKey<NewDebuggerContentUI> KEY = DataKey.create("DebuggerContentUI");
 
-  public NewDebuggerContentUI(Project project, ActionManager actionManager, DebuggerSettings settings, String sessionName) {
+  public NewDebuggerContentUI(Project project, ActionManager actionManager, RunnerLayout settings, String sessionName) {
     myProject = project;
     mySettings = settings;
     myActionManager = actionManager;
@@ -342,7 +343,7 @@ public class NewDebuggerContentUI
   }
 
   private void restoreLastSelectedTab() {
-    int index = getSettings().getLayoutSettings().getDefaultSelectedTabIndex();
+    int index = mySettings.getDefaultSelectedTabIndex();
 
     if (myTabs.getTabCount() > 0) {
       myTabs.setSelected(myTabs.getTabAt(0), false);
@@ -399,7 +400,7 @@ public class NewDebuggerContentUI
 
 
   public void setHorizontalToolbar(final boolean state) {
-    getLayoutSettings().setToolbarHorizontal(state);
+    mySettings.setToolbarHorizontal(state);
     for (Grid each : getGrids()) {
       each.setToolbarHorizontal(state);
     }
@@ -442,7 +443,7 @@ public class NewDebuggerContentUI
       setStateIsBeingRestored(false, this);
     }
 
-    getSettings().getLayoutSettings().resetToDefault();
+    mySettings.resetToDefault();
     for (Content each : all) {
       myManager.addContent(each);
     }
@@ -619,8 +620,8 @@ public class NewDebuggerContentUI
     setStateIsBeingRestored(true, this);
     try {
       myManager.removeContent(content, false);
-      getStateFor(content).assignTab(getLayoutSettings().createNewTab());
-      getStateFor(content).setPlaceInGrid(PlaceInGrid.center);
+      getStateFor(content).assignTab(mySettings.createNewTab());
+      getStateFor(content).setPlaceInGrid(View.PlaceInGrid.center);
       myManager.addContent(content);
     }
     finally {
@@ -637,8 +638,8 @@ public class NewDebuggerContentUI
 
     try {
       myManager.removeContent(content, false);
-      getStateFor(content).assignTab(getLayoutSettings().getDefaultTab());
-      getStateFor(content).setPlaceInGrid(getLayoutSettings().getDefaultGridPlace(content));
+      getStateFor(content).assignTab(mySettings.getDefaultTab());
+      getStateFor(content).setPlaceInGrid(mySettings.getDefaultGridPlace(content));
       myManager.addContent(content);
     }
     finally {
@@ -653,9 +654,7 @@ public class NewDebuggerContentUI
 
   }
 
-  private DebuggerLayoutSettings getLayoutSettings() {
-    return mySettings.getLayoutSettings();
-  }
+
 
   public Project getProject() {
     return myProject;
@@ -673,16 +672,16 @@ public class NewDebuggerContentUI
     return myActionManager;
   }
 
-  public DebuggerSettings getSettings() {
-    return DebuggerSettings.getInstance();
+  public RunnerLayout getSettings() {
+    return mySettings;
   }
 
   public View getStateFor(final Content content) {
-    return getSettings().getLayoutSettings().getStateFor(content);
+    return mySettings.getStateFor(content);
   }
 
   public boolean isHorizontalToolbar() {
-    return getSettings().getLayoutSettings().isToolbarHorizontal();
+    return mySettings.isToolbarHorizontal();
   }
 
   public ActionCallback select(final Content content, final boolean requestFocus) {

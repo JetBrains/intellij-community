@@ -20,6 +20,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.execution.ui.layout.View;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,14 +41,14 @@ public class GridCell implements Disposable {
 
   private JBTabs myTabs;
   private Grid.Placeholder myPlaceholder;
-  private PlaceInGrid myPlaceInGrid;
+  private View.PlaceInGrid myPlaceInGrid;
 
   private ViewContext myContext;
   private CellTransform.Restore.List myRestoreFromDetach;
   private JBPopup myPopup;
   private boolean myDisposed;
 
-  public GridCell(ViewContext context, Grid container, Grid.Placeholder placeholder, PlaceInGrid placeInGrid) {
+  public GridCell(ViewContext context, Grid container, Grid.Placeholder placeholder, View.PlaceInGrid placeInGrid) {
     myContext = context;
     myContainer = container;
 
@@ -61,7 +62,7 @@ public class GridCell implements Disposable {
         return new JBTabs.UiDecoration(null, new Insets(0, -1, 0, -1));
       }
     });
-    myTabs.setSideComponentVertical(!context.getSettings().getLayoutSettings().isToolbarHorizontal());
+    myTabs.setSideComponentVertical(!context.getSettings().isToolbarHorizontal());
     myTabs.setStealthTabMode(true);
     myTabs.addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
@@ -90,7 +91,7 @@ public class GridCell implements Disposable {
     });
   }
 
-  public PlaceInGrid getPlaceInGrid() {
+  public View.PlaceInGrid getPlaceInGrid() {
     return myPlaceInGrid;
   }
 

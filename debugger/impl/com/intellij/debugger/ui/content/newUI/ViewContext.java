@@ -1,6 +1,8 @@
 package com.intellij.debugger.ui.content.newUI;
 
-import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.execution.ui.layout.RunnerLayout;
+import com.intellij.execution.ui.layout.Tab;
+import com.intellij.execution.ui.layout.View;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -32,7 +34,7 @@ public interface ViewContext extends Disposable {
 
   ContentManager getContentManager();
 
-  DebuggerSettings getSettings();
+  RunnerLayout getSettings();
 
   ActionManager getActionManager();
 

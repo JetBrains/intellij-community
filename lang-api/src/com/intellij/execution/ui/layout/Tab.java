@@ -1,4 +1,4 @@
-package com.intellij.debugger.ui.content.newUI;
+package com.intellij.execution.ui.layout;
 
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -126,7 +126,7 @@ public class Tab {
     return myIndex == 0;
   }
 
-  public boolean isDetached(PlaceInGrid place) {
+  public boolean isDetached(View.PlaceInGrid place) {
     switch (place) {
       case bottom:
         return isBottomDetached();
@@ -141,7 +141,7 @@ public class Tab {
     return false;
   }
 
-  public void setDetached(PlaceInGrid place, boolean detached) {
+  public void setDetached(View.PlaceInGrid place, boolean detached) {
     switch (place) {
       case bottom:
         setBottomDetached(detached);
@@ -158,5 +158,20 @@ public class Tab {
     }
   }
 
+  public static class Default {
+    private int myIndex;
+    private String myDisplayName;
+    private Icon myIcon;
+
+    public Default(final int index, final String displayName, final Icon icon) {
+      myIndex = index;
+      myDisplayName = displayName;
+      myIcon = icon;
+    }
+
+    public Tab createTab() {
+      return new Tab(myIndex, myDisplayName, myIcon);
+    }
+  }
 
 }
