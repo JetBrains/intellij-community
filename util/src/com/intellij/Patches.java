@@ -129,7 +129,9 @@ public class Patches {
   public static final boolean SUN_BUG_ID_4508058 = true;
 
   /**
-   * Huge int[] leak through VolatileImages cached in RepaintManager whenever screen configuration changes. For instance screen saver activates or computer goes hibernate.
+   * Huge int[] leak through VolatileImages cached in RepaintManager whenever screen configuration changes.
+   * For instance screen saver activates or computer goes hibernate. The problem still exists in 1.6 when two (or more)
+   * monitors exists
    */
-  public static final boolean SUN_BUG_ID_6209673 = SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.5");
+  public static final boolean SUN_BUG_ID_6209673 = SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.5") || SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.6");
 }
