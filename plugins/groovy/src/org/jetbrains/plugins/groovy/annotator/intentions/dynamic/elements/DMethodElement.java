@@ -9,10 +9,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicVirtualE
 public class DMethodElement extends DItemElement {
   DParameterElement[] myParametersElements;
 
-//  public DMethodElement(DynamicVirtualMethod virtualMethod) {
-//    super(virtualMethod);
-//  }
-
   public DMethodElement(DynamicVirtualElement virtualMethod) {
     super(virtualMethod);
   }

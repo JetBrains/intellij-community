@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DContainingClas
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualProperty;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DPClassNode;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DPPropertyNode;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DPropertyNode;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 
@@ -102,7 +102,7 @@ public class GrDynamicImplicitVariableImpl extends GrImplicitVariableImpl implem
         if (classNode == null) return;
 
         final DynamicVirtualProperty property = new DynamicVirtualProperty(myNameIdentifier.getText(), expression.getQualifiedName(), null, null);
-        final DefaultMutableTreeNode desiredNode = TreeUtil.findNodeWithObject(classNode, new DPPropertyNode(new DPropertyElement(property)));
+        final DefaultMutableTreeNode desiredNode = TreeUtil.findNodeWithObject(classNode, new DPropertyNode(new DPropertyElement(property)));
         if (desiredNode == null) return;
         final TreePath path = TreeUtil.getPathFromRoot(desiredNode);
 

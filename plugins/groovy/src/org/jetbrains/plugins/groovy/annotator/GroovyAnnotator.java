@@ -765,19 +765,31 @@ public class GroovyAnnotator implements Annotator {
     if (!(parent instanceof GrMethodCallExpression)) return null;
 
     GrArgumentList argumentList = ((GrMethodCallExpression) parent).getArgumentList();
-    final Element methodElement = DynamicManager.getInstance(referenceExpression.getProject()).findConcreteDynamicMethod(module.getName(), qualifiedName, referenceExpression.getName(), argumentList);
-//    if (methodElement != null) return new DynamicVirtualMethod(referenceExpression.getName(), targetClass.getQualifiedName(), module.getName(), null, argumentList);
+    final GrNamedArgument[] namedArguments;
+    if (argumentList == null) return null;
+    namedArguments = argumentList.getNamedArguments();
+
+    List<PsiType> types = new ArrayList<PsiType>();
+
+    for (GrNamedArgument namedArgument : namedArguments) {
+      final GrArgumentLabel argumentLabel = namedArgument.getLabel();
+      if (argumentLabel != null) {
+        types.add(argumentLabel.getExpectedArgumentType());
+      }
+    }
+    final Element methodElement = DynamicManager.getInstance(referenceExpression.getProject()).findConcreteDynamicMethod(module.getName(), qualifiedName, referenceExpression.getName(), types.toArray(PsiType.EMPTY_ARRAY));
+
     if (methodElement != null) return null;
 
     final Set<PsiClass> supers = GroovyUtils.findAllSupers(targetClass);
-    Element superDynamicProperty;
+    Element superDynamicMethod;
     for (PsiClass aSuper : supers) {
-      superDynamicProperty = DynamicManager.getInstance(referenceExpression.getProject()).findConcreteDynamicProperty(module.getName(), aSuper.getQualifiedName(), referenceExpression.getName());
+      superDynamicMethod = DynamicManager.getInstance(referenceExpression.getProject()).findConcreteDynamicMethod(module.getName(), aSuper.getQualifiedName(), referenceExpression.getName(), types.toArray(PsiType.EMPTY_ARRAY));
 
-      if (superDynamicProperty != null) return null;
+      if (superDynamicMethod != null) return null;
     }
 
-    return new DynamicVirtualMethod(referenceExpression.getName(), targetClass.getQualifiedName(), module.getName(), null, argumentList);
+    return new DynamicVirtualMethod(referenceExpression.getName(), targetClass.getQualifiedName(), module.getName(), null, types.toArray(PsiType.EMPTY_ARRAY));
   }
 
   private DynamicVirtualProperty getDynamicPropertyElement(GrReferenceExpression referenceExpression, PsiClass targetClass, Module module, String qualifiedName) {

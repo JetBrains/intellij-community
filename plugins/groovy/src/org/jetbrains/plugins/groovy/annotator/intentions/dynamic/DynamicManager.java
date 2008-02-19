@@ -2,12 +2,12 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.MethodSignature;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualProperty;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 
 import java.util.Set;
 
@@ -69,6 +69,7 @@ public abstract class DynamicManager implements ProjectComponent {
 
   /**
    * ********** Dymanic properties **************
+   *
    * @param virtualElement
    */
 
@@ -104,8 +105,8 @@ public abstract class DynamicManager implements ProjectComponent {
   /*
    * Gets type of property
    */
-  @Nullable
-  protected abstract String getTypeOfDynamicProperty(String moduleName, final String conatainingClassName, final String propertyName);
+//  @Nullable
+//  protected abstract String getTypeOfDynamicProperty(String moduleName, final String conatainingClassName, final String propertyName);
 
   /*
   * Finds dynamic properties of class
@@ -118,8 +119,8 @@ public abstract class DynamicManager implements ProjectComponent {
   * Finds dynamic property type
   */
 
-  @NotNull
-  public abstract String findDynamicPropertyType(String moduleName, String className, String propertyName);
+//  @NotNull
+  public abstract String getPropertyType(String moduleName, String className, String propertyName);
 
   /*
   * Returns all dynamic properties
@@ -139,22 +140,29 @@ public abstract class DynamicManager implements ProjectComponent {
   */
   public abstract String replaceDynamicProperty(String moduleName, String className, String oldPropertyName, String newPropertyName);
 
-  /************** Dynamic methods **********/
+  /**
+   * *********** Dynamic methods *********
+   */
 
   /*
   * Find dynamic property in class with name
   */
-
-  @Nullable
-  public abstract Element[] findConcreteDynamicMethodsWithName(String moduleName, final String conatainingClassName, final String name);
+//  @Nullable
+//  public abstract Element[] findConcreteDynamicMethodsWithName(String moduleName, final String conatainingClassName, final String name);
 
 /*
   * Find dynamic property in class with name
   */
 
-//  @Nullable
-  public abstract Element findConcreteDynamicMethod(String moduleName, final String conatainingClassName, final String name, final GrArgumentList argumentList);
+    @Nullable
+  public abstract Element findConcreteDynamicMethod(String moduleName, final String conatainingClassName, final String name, final PsiType[] types);
 
   @NotNull
-  public abstract DynamicVirtualMethod[] findDynamicMethodsOfClass(String moduleName, final String conatainingClassName);
+  public abstract Set<MethodSignature> findMethodsSignaturesOfClass(final String moduleName, final String conatainingClassName);
+
+  @NotNull
+  public abstract String getMethodReturnType(String moduleName, String className, String methodName, PsiType[] paramTypes);
+
+//  @NotNull
+//  public abstract Pair<String, String>[] getMethodsAttributes(final String moduleName, final String conatainingClassName, String methodName);
 }

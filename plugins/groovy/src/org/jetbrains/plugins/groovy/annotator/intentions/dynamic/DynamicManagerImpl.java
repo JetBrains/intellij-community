@@ -11,17 +11,23 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import static org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DElement.CONTAINIG_CLASS_TYPE_ATTRIBUTE;
-import static org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DElement.NAME_ATTRIBUTE;
+import static org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DElement.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualMethod;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualProperty;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -263,20 +269,20 @@ public class DynamicManagerImpl extends DynamicManager {
 //    return findConcreteDynamicProperty(getRootElement(moduleName), conatainingClassName, propertyName);
 //  }
 
-  @Nullable
-  protected String getTypeOfDynamicProperty(String moduleName, String containingClassName, String propertyName) {
-    if (containingClassName == null) return null;
-    final Element dynamicProperty = findConcreteDynamicProperty(moduleName, containingClassName, propertyName);
-    if (dynamicProperty == null) return null;
-
-    final List types = dynamicProperty.getContent(DynamicFiltersFactory.createPropertyTypeTagFilter());
-    if (types == null || (types.size() != 1)) return null;
-
-    final Object type = types.get(0);
-    if (!(type instanceof Element)) return null;
-
-    return ((Element) type).getText();
-  }
+//  @Nullable
+//  protected String getTypeOfDynamicProperty(String moduleName, String containingClassName, String propertyName) {
+//    if (containingClassName == null) return null;
+//    final Element dynamicProperty = findConcreteDynamicProperty(moduleName, containingClassName, propertyName);
+//    if (dynamicProperty == null) return null;
+//
+//    final List types = dynamicProperty.getContent(DynamicFiltersFactory.createPropertyTypeTagFilter());
+//    if (types == null || (types.size() != 1)) return null;
+//
+//    final Object type = types.get(0);
+//    if (!(type instanceof Element)) return null;
+//
+//    return ((Element) type).getText();
+//  }
 
   @NotNull
   public String[] findDynamicPropertiesOfClass(String moduleName, String className) {
@@ -296,19 +302,20 @@ public class DynamicManagerImpl extends DynamicManager {
   }
 
   @NotNull
-  public String findDynamicPropertyType(String moduleName, String className, String propertyName) {
+  public String getPropertyType(String moduleName, String className, String propertyName) {
     final Element dynamicProperty = findConcreteDynamicProperty(getRootElement(moduleName), className, propertyName);
 
     if (dynamicProperty == null) return "";
 
-    final List types = dynamicProperty.getContent(DynamicFiltersFactory.createPropertyTypeTagFilter());
-
-    if (types == null || types.isEmpty()) return "";
-    final Object typeTag = types.get(0);
-
-    if (typeTag == null || !(typeTag instanceof Element)) return "";
-
-    return ((Element) typeTag).getText();
+//    final List types = dynamicProperty.getContent(DynamicFiltersFactory.createPropertyTypeTagFilter());
+//
+//    if (types == null || types.isEmpty()) return "";
+//    final Object typeTag = types.get(0);
+//
+//    if (typeTag == null || !(typeTag instanceof Element)) return "";
+//
+//    return ((Element) typeTag).getText();
+    return dynamicProperty.getAttributeValue(TYPE_ATTRIBUTE);
   }
 
   @NotNull
@@ -326,7 +333,7 @@ public class DynamicManagerImpl extends DynamicManager {
 
       for (Object propertyTag : propertyTags) {
         final String propertyName = ((Element) propertyTag).getAttributeValue(NAME_ATTRIBUTE);
-        final String propertyType = findDynamicPropertyType(moduleName, qualifiedName, propertyName);
+        final String propertyType = getPropertyType(moduleName, qualifiedName, propertyName);
         result.add(new DynamicVirtualProperty(propertyName, qualifiedName, moduleName, propertyType));
       }
     }
@@ -400,11 +407,11 @@ public class DynamicManagerImpl extends DynamicManager {
   * Find dynamic property in class with name
   */
   @Nullable
-  public Element findConcreteDynamicMethod(Element rootElement, String conatainingClassName, String methodName, GrArgumentList argumentList) {
+  public Element findConcreteDynamicMethod(Element rootElement, String conatainingClassName, String methodName, PsiType[] parametersTypes) {
     Element definedClass = findDynamicClassElement(rootElement, conatainingClassName);
     if (definedClass == null) return null;
 
-    final List methodsresult = definedClass.getContent(DynamicFiltersFactory.createConcreteMethodWithParametersFilter(methodName, argumentList));
+    final List methodsresult = definedClass.getContent(DynamicFiltersFactory.createConcreteMethodWithParametersFilter(methodName, parametersTypes));
     if (methodsresult == null || methodsresult.size() != 1) return null;
 
     return ((Element) methodsresult.get(0));
@@ -426,27 +433,89 @@ public class DynamicManagerImpl extends DynamicManager {
   }
 
   //  @Nullable
-  public Element findConcreteDynamicMethod(String moduleName, String conatainingClassName, String name, GrArgumentList argumentList) {
-    return findConcreteDynamicMethod(getRootElement(moduleName), conatainingClassName, name, argumentList);
+  public Element findConcreteDynamicMethod(String moduleName, String conatainingClassName, String name, PsiType[] parameterTypes) {
+    return findConcreteDynamicMethod(getRootElement(moduleName), conatainingClassName, name, parameterTypes);
   }
 
   @NotNull
-  public DynamicVirtualMethod[] findDynamicMethodsOfClass(String moduleName, String className) {
-//    final Element rootElement = getRootElement(moduleName);
-//
-//    final Element containingClassElement = findDynamicClassElement(rootElement, className);
-//    if (containingClassElement == null) return new DynamicVirtualMethod[0];
-//
-//    final List methods = containingClassElement.getContent(DynamicFiltersFactory.createMethodTagFilter());
-//
-//    List<String> result = new ArrayList<String>();
-//    for (Object o : methods) {
-//      result.add(((Element) o).getAttributeValue(NAME_ATTRIBUTE));
-//    }
-//
-//    return result.toArray(new String[result.size()]);
-    return new DynamicVirtualMethod[0];
+  public Set<MethodSignature> findMethodsSignaturesOfClass(String moduleName, String className) {
+    final Element rootElement = getRootElement(moduleName);
+    Set<MethodSignature> methodSignatures = new HashSet<MethodSignature>();
+
+    final Element containingClassElement = findDynamicClassElement(rootElement, className);
+    if (containingClassElement == null) return methodSignatures;
+
+    final List methods = containingClassElement.getContent(DynamicFiltersFactory.createMethodTagFilter());
+
+//    Set<String> result = new HashSet<String>();
+    for (Object o : methods) {
+      final Element method = (Element) o;
+      final String methodName = method.getAttributeValue(NAME_ATTRIBUTE);
+
+      final List parameters = method.getContent(DynamicFiltersFactory.createMethodTagFilter());
+
+      List<PsiType> types = new ArrayList<PsiType>();
+      for (Object parameterElement : parameters) {
+        final Element parameter = (Element) parameterElement;
+
+        final String name = parameter.getAttributeValue(NAME_ATTRIBUTE);
+        final String type = parameter.getAttributeValue(TYPE_ATTRIBUTE);
+
+        GrTypeElement typeElement = null;
+        PsiType psiType = null;
+        try {
+          typeElement = GroovyPsiElementFactory.getInstance(myProject).createTypeElement(type);
+        } catch (IncorrectOperationException e) {
+          return methodSignatures;
+        }
+
+        if (typeElement != null) {
+          psiType = typeElement.getType();
+        }
+
+        types.add(psiType);
+      }
+
+      final MethodSignature signature = MethodSignatureUtil.createMethodSignature(methodName, types.toArray(PsiType.EMPTY_ARRAY), PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.UNKNOWN);
+      methodSignatures.add(signature);
+    }
+
+    return methodSignatures;
   }
+
+  @NotNull
+  public String getMethodReturnType(String moduleName, String className, String methodName, PsiType[] paramTypes) {
+    final Element dynamicProperty = findConcreteDynamicMethod(getRootElement(moduleName), className, methodName, paramTypes);
+
+    if (dynamicProperty == null) return "";
+
+    return dynamicProperty.getAttributeValue(TYPE_ATTRIBUTE);
+
+//    final List types = dynamicProperty.getContent(DynamicFiltersFactory.createPropertyTypeTagFilter());
+//
+//    if (types == null || types.isEmpty()) return "";
+//    final Object typeTag = types.get(0);
+//
+//    if (typeTag == null || !(typeTag instanceof Element)) return "";
+//
+//    return ((Element) typeTag).getText();
+  }
+
+//  @NotNull
+//  public Pair<String, String>[] getMethodsAttributes(String moduleName, String conatainingClassName, String methodName) {
+//    final Element dynamicProperty = findConcreteDynamicMethod(getRootElement(moduleName), conatainingClassName, methodName, propertyName);
+//
+//    if (dynamicProperty == null) return "";
+//
+//    final List types = dynamicProperty.getContent(DynamicFiltersFactory.createPropertyTypeTagFilter());
+//
+//    if (types == null || types.isEmpty()) return "";
+//    final Object typeTag = types.get(0);
+//
+//    final Pair<String, String>[] attributes;/* = new Pair<String, String>[0];*/
+//
+//    return attributes;
+//  }
 
   /*
   * Changes dynamic property type
