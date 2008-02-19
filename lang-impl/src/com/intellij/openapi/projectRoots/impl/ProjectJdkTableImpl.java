@@ -4,7 +4,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
@@ -13,7 +12,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,16 +25,13 @@ import java.util.Map;
 
 public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private ArrayList<Sdk> myJdks = new ArrayList<Sdk>();
-  private Sdk myInternalJdk;
+
   private EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
-  private JavaSdk myJavaSdk;
+
   @NonNls private static final String ELEMENT_JDK = "jdk";
 
   private final Map<String, ProjectJdkImpl> myCachedProjectJdks = new HashMap<String, ProjectJdkImpl>();
 
-  public ProjectJdkTableImpl(JavaSdk javaSdk) {
-    myJavaSdk = javaSdk;
-  }
 
   public void disposeComponent() {
   }
@@ -65,12 +60,11 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
 
   @Nullable
   public Sdk findJdk(String name, String type) {
-    final String sdkTypeName = type != null ? type : JavaSdk.getInstance().getName();
     Sdk projectJdk = findJdk(name);
     if (projectJdk != null){
       return projectJdk;
     }
-
+    final String sdkTypeName = getSdkTypeName(type);
     final String uniqueName = sdkTypeName + "." + name;
     projectJdk = myCachedProjectJdks.get(uniqueName);
     if (projectJdk != null) return projectJdk;
@@ -95,13 +89,8 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
     return null;
   }
 
-  public Sdk getInternalJdk() {
-    if (myInternalJdk == null) {
-      final String jdkHome = SystemProperties.getJavaHome();
-      final String versionName = ProjectBundle.message("sdk.java.name.template", SystemProperties.getJavaVersion());
-      myInternalJdk = myJavaSdk.createJdk(versionName, jdkHome);
-    }
-    return myInternalJdk;
+  protected String getSdkTypeName(final String type) {
+    return type;
   }
 
   public int getJdkCount() {
@@ -122,9 +111,6 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myEventDispatcher.getMulticaster().jdkRemoved(jdk);
     myJdks.remove(jdk);
-    if (jdk.equals(myInternalJdk)) {
-      myInternalJdk = null;
-    }
   }
 
   public void updateJdk(Sdk originalJdk, Sdk modifiedJdk) {
@@ -147,8 +133,11 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
     myEventDispatcher.removeListener(listener);
   }
 
+  public SdkType getDefaultSdkType() {
+    return UnknownSdkType.getInstance(null);
+  }
+
   public void readExternal(Element element) throws InvalidDataException {
-    myInternalJdk = null;
     myJdks.clear();
 
     final List children = element.getChildren(ELEMENT_JDK);
@@ -169,7 +158,6 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
           }
         }
       });
-      getInternalJdk();
     }
   }
 

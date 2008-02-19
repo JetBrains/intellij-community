@@ -31,8 +31,6 @@ public abstract class ProjectJdkTable {
   @Nullable
   public abstract Sdk findJdk(String name, String type);
 
-  public abstract Sdk getInternalJdk();
-
   public abstract Sdk[] getAllJdks();
 
   public abstract void addJdk(Sdk jdk);
@@ -52,4 +50,6 @@ public abstract class ProjectJdkTable {
   public abstract void addListener(Listener listener);
 
   public abstract void removeListener(Listener listener);
+
+  public abstract SdkType getDefaultSdkType();
 }

@@ -52,6 +52,9 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
   }
 
   public SdkType getSdkType() {
+    if (mySdkType == null) {
+      mySdkType = ProjectJdkTable.getInstance().getDefaultSdkType();
+    }
     return mySdkType;
   }
 
@@ -73,7 +76,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
     if (myVersionString == null && !myVersionDefined) {
       String homePath = getHomePath();
       if (homePath != null && homePath.length() > 0) {
-        setVersionString(mySdkType.getVersionString(this));
+        setVersionString(getSdkType().getVersionString(this));
       }
     }
     return myVersionString;
@@ -90,16 +93,12 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
     return LocalFileSystem.getInstance().findFileByPath(myHomePath);
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+   public void readExternal(Element element) throws InvalidDataException {
     myName = element.getChild(ELEMENT_NAME).getAttributeValue(ATTRIBUTE_VALUE);
     final Element typeChild = element.getChild(ELEMENT_TYPE);
     final String sdkTypeName = typeChild != null? typeChild.getAttributeValue(ATTRIBUTE_VALUE) : null;
     if (sdkTypeName != null) {
       mySdkType = getSdkTypeByName(sdkTypeName);
-    }
-    else {
-      // assume java sdk by default
-      mySdkType = JavaSdk.getInstance();
     }
     final Element version = element.getChild(ELEMENT_VERSION);
     setVersionString((version != null) ? version.getAttributeValue(ATTRIBUTE_VALUE) : null);
@@ -125,7 +124,13 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
     }
 
     final Element additional = element.getChild(ELEMENT_ADDITIONAL);
-    myAdditionalData = (additional != null)? mySdkType.loadAdditionalData(this, additional) : null;
+     if (additional != null) {
+       LOG.assertTrue(mySdkType != null);
+       myAdditionalData = mySdkType.loadAdditionalData(this, additional);
+     }
+     else {
+       myAdditionalData = null;
+     }
   }
 
   private static SdkType getSdkTypeByName(String sdkTypeName) {
@@ -167,6 +172,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
 
     Element additional = new Element(ELEMENT_ADDITIONAL);
     if (myAdditionalData != null) {
+      LOG.assertTrue(mySdkType != null);
       mySdkType.saveAdditionalData(myAdditionalData, additional);
     }
     element.addContent(additional);

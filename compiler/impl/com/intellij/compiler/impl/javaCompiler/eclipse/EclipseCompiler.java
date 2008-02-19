@@ -13,8 +13,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -114,7 +114,7 @@ public class EclipseCompiler extends ExternalCompiler {
                                     final boolean useTempFile) throws IOException {
     EclipseCompilerSettings compilerSettings = EclipseCompilerSettings.getInstance(myProject);
 
-    final Sdk projectJdk = ProjectJdkTable.getInstance().getInternalJdk();
+    final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     final String vmExePath = ((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk);
     commandLine.add(vmExePath);
     commandLine.add("-Xmx" + compilerSettings.MAXIMUM_HEAP_SIZE + "m");
