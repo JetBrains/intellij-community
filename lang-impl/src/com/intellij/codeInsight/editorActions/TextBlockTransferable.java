@@ -47,23 +47,26 @@ class TextBlockTransferable implements Transferable {
   }
 
   public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-    for(TextBlockTransferableData data: myExtraData) {
-      if (data.getFlavor().equals(flavor)) {
-        return data;
+    try {
+      for(TextBlockTransferableData data: myExtraData) {
+        if (data.getFlavor().equals(flavor)) {
+          return data;
+        }
+      }
+      if (RawText.FLAVOR.equals(flavor)) {
+        return myRawText;
+      }
+      else if (DataFlavor.stringFlavor.equals(flavor)) {
+        return myText;
+      }
+      else if (DataFlavor.plainTextFlavor.equals(flavor)) {
+        return new StringReader(myText);
       }
     }
-    if (RawText.FLAVOR.equals(flavor)) {
-      return myRawText;
+    catch(NoClassDefFoundError e) {
+      // ignore
     }
-    else if (DataFlavor.stringFlavor.equals(flavor)) {
-      return myText;
-    }
-    else if (DataFlavor.plainTextFlavor.equals(flavor)) {
-      return new StringReader(myText);
-    }
-    else {
-      throw new UnsupportedFlavorException(flavor);
-    }
+    throw new UnsupportedFlavorException(flavor);
   }
 
   public static String convertLineSeparators(String text,
