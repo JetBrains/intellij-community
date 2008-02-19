@@ -4,6 +4,7 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -59,7 +60,8 @@ public class GroovyDocumentationProvider implements DocumentationProvider {
       for (int i = 0; i < parameters.length; i++) {
         PsiParameter parameter = parameters[i];
         if (i > 0) buffer.append(", ");
-        appendTypeString(buffer, parameter.getType());
+        PsiType type = parameter instanceof GrParameter ? ((GrParameter) parameter).getTypeGroovy() : parameter.getType();
+        appendTypeString(buffer, type);
         buffer.append(" ");
         buffer.append(parameter.getName());
       }
