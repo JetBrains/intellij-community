@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -74,17 +73,6 @@ public class LookupItemUtil{
       ContainerUtil.addIfNotNull(addLookupItem(set, object, matcher), list);
     }
     return list;
-  }
-
-  public static void removeLookupItem(Set<LookupItem> set, Object object) {
-    Iterator iter = set.iterator();
-    while (iter.hasNext()) {
-      LookupItem item = (LookupItem)iter.next();
-      if (object.equals(item.getObject())) {
-        iter.remove();
-        break;
-      }
-    }
   }
 
   /**
