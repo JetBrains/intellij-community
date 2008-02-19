@@ -1,14 +1,17 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.StandardPatterns.character;
 import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TrueFilter;
@@ -187,10 +190,48 @@ public class CompletionData {
     return substr.substring(i).trim();
   }
 
+  private static LookupItem objectToLookupItem(Object object) {
+    if (object instanceof LookupItem) return (LookupItem)object;
+
+    String s = null;
+    LookupItem item = new LookupItem(object, "");
+    if (object instanceof PsiElement){
+      s = PsiUtilBase.getName((PsiElement) object);
+    }
+    TailType tailType = TailType.NONE;
+    if (object instanceof PsiMetaData) {
+      s = ((PsiMetaData)object).getName();
+    }
+    else if (object instanceof String) {
+      s = (String)object;
+    }
+    else if (object instanceof Template) {
+      s = ((Template) object).getKey();
+    }
+    else if (object instanceof PresentableLookupValue) {
+      s = ((PresentableLookupValue)object).getPresentation();
+    }
+
+    if (object instanceof LookupValueWithUIHint && ((LookupValueWithUIHint) object).isBold()) {
+      item.setBold();
+    }
+
+    if (s == null) {
+      LOG.assertTrue(false, "Null string for object: " + object + " of class " + (object != null ?object.getClass():null));
+    }
+    if (object instanceof LookupValueWithTail) {
+      item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " " + ((LookupValueWithTail)object).getTailText());
+    }
+    item.setLookupString(s);
+    item.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, tailType);
+    return item;
+  }
+
+
   @Nullable
   protected LookupItem addLookupItem(Set<LookupItem> set, TailType tailType, @NotNull Object completion, PrefixMatcher matcher, final PsiFile file,
                                          final CompletionVariant variant) {
-    LookupItem ret = LookupItemUtil.objectToLookupItem(completion);
+    LookupItem ret = objectToLookupItem(completion);
     if(ret == null) return null;
 
     final InsertHandler insertHandler = variant.getInsertHandler();

@@ -87,16 +87,6 @@ public class LookupItemUtil{
     }
   }
 
-  public static boolean containsItem(Set<LookupItem> set, Object object) {
-    for (final Object aSet : set) {
-      final LookupItem item = (LookupItem)aSet;
-      if (object != null && object.equals(item.getObject())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public static LookupItem objectToLookupItem(Object object) {
     if (object instanceof LookupItem) return (LookupItem)object;
 
