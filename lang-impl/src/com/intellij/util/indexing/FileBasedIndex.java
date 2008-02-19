@@ -130,7 +130,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
     myIndexIdToVersionMap.put(name, version);
     final File versionFile = getVersionFile(name);
-    if (readVersion(versionFile) != version || ourUnitTestMode) { // in test mode drop caches each time application starts
+    if (readVersion(versionFile) != version) {
       FileUtil.delete(getIndexRootDir(name));
       rewriteVersion(versionFile, version);
     }
@@ -258,7 +258,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
           final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
           final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
           for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
-            V value = valueIt.next();
+            final V value = valueIt.next();
             for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext();) {
               final int id = inputIdsIterator.next();
               VirtualFile file = findFileById(dirIndex, fs, id);
@@ -300,8 +300,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     synchronizer.setCancelable(false);
     for (Project project : projects) {
       synchronizer.registerCacheUpdater(new UnindexedFilesUpdater(project, ProjectRootManager.getInstance(project), this));
-    }
-    
+      }
+
     if (ApplicationManager.getApplication().isDispatchThread()) {
       new Task.Modal(null, "Updating index", false) {
         public void run(@NotNull final ProgressIndicator indicator) {
@@ -464,6 +464,12 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   private void rewriteVersion(final File file, final int version) throws IOException {
     FileUtil.delete(file);
+    try {
+      // need this to ensure the timestamp of the newly created file will be different 
+      Thread.sleep(501);
+    }
+    catch (InterruptedException ignored) {
+    }
     file.getParentFile().mkdirs();
     file.createNewFile();
     final DataOutputStream os = new DataOutputStream(new FileOutputStream(file));
@@ -515,7 +521,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
   }
 
-  private static int getFileId(final VirtualFile file) {
+  public static int getFileId(final VirtualFile file) {
     if (file instanceof VirtualFileWithId) {
       return ((VirtualFileWithId)file).getId();
     }
