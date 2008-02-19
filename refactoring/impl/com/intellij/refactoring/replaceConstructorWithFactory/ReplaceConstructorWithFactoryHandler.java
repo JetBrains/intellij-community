@@ -45,6 +45,17 @@ public class ReplaceConstructorWithFactoryHandler
           invoke(project, new PsiElement[] { method }, dataContext);
           return;
         }
+        // handle default constructor
+        if (element instanceof PsiNewExpression) {
+          final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)element).getClassReference();
+          if (classReference != null) {
+            final PsiElement classElement = classReference.resolve();
+            if (classElement instanceof PsiClass) {
+              invoke(project, new PsiElement[] { classElement }, dataContext);
+              return;
+            }
+          }
+        }
       }
 
       if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)
