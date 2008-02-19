@@ -9,6 +9,7 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.TestUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -178,6 +179,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
           if (!CommonRefactoringUtil.checkReadOnlyStatus(project, destClass.getContainingFile())) return;
 
+          ChangeContextUtil.encodeContextInfo(initializer, true);
           PsiField field = createField(fieldName, type, initializer, initializerPlace == IN_FIELD_DECLARATION && initializer != null);
           field.getModifierList().setModifierProperty(settings.getFieldVisibility(), true);
           if (settings.isDeclareFinal()) {
@@ -280,6 +282,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
               localVariable.getParent().delete();
             }
           }
+
+          ChangeContextUtil.clearContextInfo(initializer);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -420,7 +424,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           }
         }
         PsiStatement assignment = createAssignment(field, initializerExpression, body.getLastChild());
-        body.add(assignment);
+        assignment = (PsiStatement) body.add(assignment);
+        ChangeContextUtil.decodeContextInfo(assignment, field.getContainingClass(),
+                                            RefactoringUtil.createThisExpression(field.getManager(), null));
         added = true;
       }
       if (!added && enclosingConstructor == null) {
@@ -428,7 +434,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         PsiMethod constructor = (PsiMethod)aClass.add(factory.createConstructor());
         final PsiCodeBlock body = constructor.getBody();
         PsiStatement assignment = createAssignment(field, initializerExpression, body.getLastChild());
-        body.add(assignment);
+        assignment = (PsiStatement) body.add(assignment);
+        ChangeContextUtil.decodeContextInfo(assignment, field.getContainingClass(),
+                                            RefactoringUtil.createThisExpression(field.getManager(), null));
       }
     }
     catch (IncorrectOperationException e) {

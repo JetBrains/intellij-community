@@ -12,9 +12,11 @@ import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
  */
 public class MockIntroduceFieldHandler extends IntroduceFieldHandler {
   private InitializationPlace myInitializationPlace;
+  private boolean myDeclareStatic;
 
-  public MockIntroduceFieldHandler(final InitializationPlace initializationPlace) {
+  public MockIntroduceFieldHandler(final InitializationPlace initializationPlace, final boolean declareStatic) {
     myInitializationPlace = initializationPlace;
+    myDeclareStatic = declareStatic;
   }
 
   protected Settings showRefactoringDialog(Project project,
@@ -25,8 +27,7 @@ public class MockIntroduceFieldHandler extends IntroduceFieldHandler {
                                                                         PsiElement anchorElement,
                                                                         PsiElement anchorElementIfAll) {
     SuggestedNameInfo name = JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.FIELD, null, expr, type);
-    return new Settings(name.names[0], true,
-            true, true, myInitializationPlace,
+    return new Settings(name.names[0], true, myDeclareStatic, true, myInitializationPlace,
             PsiModifier.PUBLIC,
             null,
             type, true,

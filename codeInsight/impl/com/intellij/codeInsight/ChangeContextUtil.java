@@ -9,6 +9,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.FieldConflictsResolver;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -220,6 +221,12 @@ public class ChangeContextUtil {
               final PsiReferenceExpression qualifiedExpr = (PsiReferenceExpression)factory.createExpressionFromText(text, null);
               qualifiedExpr.getQualifierExpression().replace(thisAccessExpr);
               refExpr = (PsiReferenceExpression)refExpr.replace(qualifiedExpr);
+            }
+          }
+          else if (thisClass != null && realParentClass != null && PsiTreeUtil.isAncestor(realParentClass, thisClass, true)) {
+            PsiElement refElement = refExpr.resolve();
+            if (refElement != null && !manager.areElementsEquivalent(refMember, refElement)) {
+              refExpr = FieldConflictsResolver.qualifyReference(refExpr, refMember, null);
             }
           }
         }
