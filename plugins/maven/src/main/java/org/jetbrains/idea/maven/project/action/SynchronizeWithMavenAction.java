@@ -22,7 +22,7 @@ public class SynchronizeWithMavenAction extends AnAction {
       new MavenImportProcessor(project).synchronize();
     }
     catch (MavenException ex) {
-      project.getComponent(MavenImporter.class).displayImportErrors(ex);
+      MavenImporter.getInstance(project).displayImportErrors(ex);
     }
     catch (CanceledException ex) {
     }

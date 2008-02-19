@@ -45,7 +45,7 @@ public class MavenArtifactDownloader {
 
   public static void download(final Project project) throws CanceledException {
     final MavenProjectsState projectsState = MavenProjectsState.getInstance(project);
-    final MavenImporter importer = project.getComponent(MavenImporter.class);
+    final MavenImporter importer = MavenImporter.getInstance(project);
 
     final Map<MavenProject, Collection<String>> mavenProjects = new HashMap<MavenProject, Collection<String>>();
 

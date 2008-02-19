@@ -58,7 +58,7 @@ public class FoldersConfigurator {
   }
 
   private static void updateModuleExcludedFolders(Module m, MavenProjectReader r) throws MavenException {
-    MavenImporter importer = m.getProject().getComponent(MavenImporter.class);
+    MavenImporter importer = MavenImporter.getInstance(m.getProject());
     MavenImporterSettings settings = importer.getImporterSettings();
 
     VirtualFile f = importer.findPomForModule(m);
