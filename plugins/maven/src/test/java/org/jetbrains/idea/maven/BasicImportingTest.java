@@ -6,6 +6,7 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 
 import java.io.IOException;
+import java.io.File;
 
 public class BasicImportingTest extends ImportingTestCase {
   public void testLibraryDependency() throws IOException {
@@ -727,5 +728,16 @@ public class BasicImportingTest extends ImportingTestCase {
     assertModules("project");
 
     assertModuleLibDep("project", "junit:junit:4.0");
+  }
+
+  public void testRefreshFSAfterImport() throws Exception {
+    projectRoot.getChildren(); // make sure fs is cached
+    new File(projectRoot.getPath(), "foo").mkdirs();
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertNotNull(projectRoot.findChild("foo"));
   }
 }
