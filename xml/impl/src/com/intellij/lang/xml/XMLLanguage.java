@@ -5,14 +5,16 @@ import com.intellij.lang.CompositeLanguage;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
-import com.intellij.openapi.util.Condition;
+import static com.intellij.patterns.PlatformPatterns.or;
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import com.intellij.psi.impl.source.xml.behavior.CDATAOnAnyEncodedPolicy;
 import com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy;
-import com.intellij.psi.filters.OrFilter;
-import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.xml.*;
+import com.intellij.refactoring.rename.RenameInputValidator;
 import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,21 +31,20 @@ public class XMLLanguage extends CompositeLanguage {
 
   static {
     RenameInputValidatorRegistry.getInstance().registerInputValidator(
-      new OrFilter(new ClassFilter(XmlTag.class), new ClassFilter(XmlAttribute.class),
-                   new ClassFilter(XmlElementDecl.class), new ClassFilter(XmlAttributeDecl.class)),
-      new Condition<String>() {
-        public boolean value(final String s) {
-          return s.trim().matches("([\\d\\w\\_\\.\\-]+:)?[\\d\\w\\_\\.\\-]+");
+      or(psiElement(XmlTag.class), psiElement(XmlAttribute.class), psiElement(XmlElementDecl.class), psiElement(XmlAttributeDecl.class)),
+      new RenameInputValidator() {
+        public boolean isInputValid(final String newName, final PsiElement element, final ProcessingContext context) {
+          return newName.trim().matches("([\\d\\w\\_\\.\\-]+:)?[\\d\\w\\_\\.\\-]+");
         }
       });
 
     RenameInputValidatorRegistry.getInstance().registerInputValidator(
-      new ClassFilter(XmlAttributeValue.class),
-      new Condition<String>() {
-        public boolean value(final String s) {
-          return true;
-        }
-      });
+      psiElement(XmlAttributeValue.class), new RenameInputValidator() {
+
+      public boolean isInputValid(final String newName, final PsiElement element, final ProcessingContext context) {
+        return true;
+      }
+    });
   }
 
   public XMLLanguage() {

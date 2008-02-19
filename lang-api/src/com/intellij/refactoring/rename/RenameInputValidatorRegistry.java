@@ -21,8 +21,9 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.filters.ElementFilter;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,20 +37,25 @@ public class RenameInputValidatorRegistry {
     return ourInstance;
   }
 
-  private List<Pair<ElementFilter,Condition<String>>> myValidators = new ArrayList<Pair<ElementFilter,Condition<String>>>();
+  private List<Pair<ElementPattern<? extends PsiElement>,RenameInputValidator>> myValidators = new ArrayList<Pair<ElementPattern<? extends PsiElement>, RenameInputValidator>>();
 
   private RenameInputValidatorRegistry() {
   }
 
-  public void registerInputValidator(@NotNull ElementFilter filter, @NotNull Condition<String> validator) {
-    myValidators.add(new Pair<ElementFilter,Condition<String>>(filter, validator));
+  public void registerInputValidator(@NotNull final ElementPattern<? extends PsiElement> pattern, @NotNull final RenameInputValidator validator) {
+    myValidators.add(Pair.<ElementPattern<? extends PsiElement>, RenameInputValidator>create(pattern, validator));
   }
 
   @Nullable
-  public Condition<String> getInputValidator(PsiElement element) {
-    for (Pair<ElementFilter,Condition<String>> pair: myValidators) {
-      if (pair.first.isAcceptable(element, element)) {
-        return pair.second;
+  public Condition<String> getInputValidator(final PsiElement element) {
+    for (final Pair<ElementPattern<? extends PsiElement>, RenameInputValidator> pair: myValidators) {
+      final ProcessingContext context = new ProcessingContext();
+      if (pair.first.accepts(element, context)) {
+        return new Condition<String>() {
+          public boolean value(final String s) {
+            return pair.getSecond().isInputValid(s, element, context);
+          }
+        };
       }
     }
     return null;
