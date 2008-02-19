@@ -3,7 +3,6 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,8 +19,6 @@ import com.intellij.util.QueryExecutor;
  * @author max
  */
 public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
-  public static final boolean DEBUG = false;
-
   public boolean execute(final ReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
 
@@ -77,8 +74,6 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
 
     final PsiSearchHelper helper = PsiManager.getInstance(refElement.getProject()).getSearchHelper();
     return helper.processElementsWithWord(processor, searchScope, text, searchContext, 
-                                          refElement.getLanguage() == StdLanguages.JAVA //todo: temporary hack!!
-    );
-
+                                          refElement.getLanguage().isCaseSensitive());
   }
 }

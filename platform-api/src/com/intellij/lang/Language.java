@@ -131,6 +131,10 @@ public abstract class Language {
     return this == another;
   }
 
+  public boolean isCaseSensitive() {
+    return false;
+  }
+
   public final boolean isKindOf(Language another) {
     Language l = this;
     while (l != null) {
