@@ -45,6 +45,7 @@ public class CurrentContentRevision implements ContentRevision {
       public Document compute() {
         return FileDocumentManager.getInstance().getDocument(vFile);
     }});
+    if (doc == null) return null;
     return doc.getText();
   }
 
