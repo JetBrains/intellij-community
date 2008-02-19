@@ -379,9 +379,6 @@ public class TypedHandler implements TypedActionHandler {
   }
 
   private static void indentClosingBrace(final Project project, final Editor editor){
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    if (!settings.AUTOINDENT_CLOSING_BRACE) return;
-
     indentBrace(project, editor, '}');
   }
 

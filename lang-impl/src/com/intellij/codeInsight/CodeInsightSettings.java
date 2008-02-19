@@ -78,11 +78,9 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
   public static final int NONE = 2;
   public static final int FIRST_LETTER = 3;
 
-  public boolean LIST_PACKAGES_IN_CODE = false;
   public boolean AUTOCOMPLETE_ON_CODE_COMPLETION = true;
   public boolean AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = true;
   public boolean AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION = false;
-  public boolean AUTOCOMPLETE_ON_WORD_COMPLETION = false;
   public boolean AUTOCOMPLETE_COMMON_PREFIX = true;
   public boolean INSERT_SINGLE_PARENTH = false;
   public boolean INSERT_DOUBLE_PARENTH_WHEN_NO_ARGS = false;
@@ -118,8 +116,6 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
 
   public boolean HIGHLIGHT_BRACES = true;
   public boolean HIGHLIGHT_SCOPE = false;
-
-  public boolean AUTOINDENT_CLOSING_BRACE = true;
 
   public boolean USE_INSTANCEOF_ON_EQUALS_PARAMETER = false;
 
