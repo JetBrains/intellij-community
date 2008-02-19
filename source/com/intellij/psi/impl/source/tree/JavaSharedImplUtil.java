@@ -29,14 +29,14 @@ public class JavaSharedImplUtil {
     ASTNode name = SourceTreeToPsiMap.psiElementToTree(anchor);
     for (ASTNode child = name.getTreeNext(); child != null; child = child.getTreeNext()) {
       IElementType i = child.getElementType();
-      if (i == ElementType.LBRACKET) {
+      if (i == JavaTokenType.LBRACKET) {
         arrayCount++;
       }
-      else if (i != ElementType.RBRACKET && i != TokenType.WHITE_SPACE &&
-               i != ElementType.C_STYLE_COMMENT &&
+      else if (i != JavaTokenType.RBRACKET && i != TokenType.WHITE_SPACE &&
+               i != JavaTokenType.C_STYLE_COMMENT &&
                i != JavaDocElementType.DOC_COMMENT &&
                i != JavaTokenType.DOC_COMMENT &&
-               i != ElementType.END_OF_LINE_COMMENT) {
+               i != JavaTokenType.END_OF_LINE_COMMENT) {
         break;
       }
     }
@@ -66,13 +66,13 @@ public class JavaSharedImplUtil {
     ASTNode element = name;
     while (true) {
       element = TreeUtil.skipElements(element.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
-      if (element == null || element.getElementType() != ElementType.LBRACKET) break;
+      if (element == null || element.getElementType() != JavaTokenType.LBRACKET) break;
       if (firstBracket == null) firstBracket = element;
       lastBracket = element;
       arrayCount++;
 
       element = TreeUtil.skipElements(element.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
-      if (element == null || element.getElementType() != ElementType.RBRACKET) break;
+      if (element == null || element.getElementType() != JavaTokenType.RBRACKET) break;
       lastBracket = element;
     }
 
@@ -88,11 +88,11 @@ public class JavaSharedImplUtil {
       CompositeElement newType = (CompositeElement)type.clone();
       final CharTable treeCharTable = SharedImplUtil.findCharTableByTree(type);
       for (int i = 0; i < arrayCount; i++) {
-        CompositeElement newType1 = ASTFactory.composite(ElementType.TYPE);
+        CompositeElement newType1 = ASTFactory.composite(JavaElementType.TYPE);
         TreeUtil.addChildren(newType1, newType);
 
-        TreeUtil.addChildren(newType1, ASTFactory.leaf(ElementType.LBRACKET, "[", 0, 1, treeCharTable));
-        TreeUtil.addChildren(newType1, ASTFactory.leaf(ElementType.RBRACKET, "]", 0, 1, treeCharTable));
+        TreeUtil.addChildren(newType1, ASTFactory.leaf(JavaTokenType.LBRACKET, "[", 0, 1, treeCharTable));
+        TreeUtil.addChildren(newType1, ASTFactory.leaf(JavaTokenType.RBRACKET, "]", 0, 1, treeCharTable));
         newType = newType1;
         newType.acceptTree(new GeneratedMarkerVisitor());
       }
