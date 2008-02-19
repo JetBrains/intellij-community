@@ -41,7 +41,7 @@ import java.util.Collection;
  * @author Eugene Zhuravlev
  *         Date: Apr 24, 2004
  */
-public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
+public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizable{
   public String OUTPUT_DIRECTORY;
   public String OPTION_SCOPE = PsiKeyword.PROTECTED;
   public boolean OPTION_HIERARCHY = true;
