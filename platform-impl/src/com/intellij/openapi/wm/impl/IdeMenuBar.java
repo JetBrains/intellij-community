@@ -5,7 +5,7 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.TimerListener;
+import com.intellij.openapi.actionSystem.TimerListener;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.WeakTimerListener;

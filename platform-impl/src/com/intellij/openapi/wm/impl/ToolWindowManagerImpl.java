@@ -20,10 +20,7 @@ import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.ex.*;
 import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
@@ -1413,5 +1410,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         }
       }
     });
+  }
+
+  public JComponent getFocusTargetFor(final JComponent comp) {
+    return IdeFocusTraversalPolicy.getPreferredFocusedComponent(comp);
   }
 }

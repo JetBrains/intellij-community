@@ -3,8 +3,6 @@ package com.intellij.ui.tabs;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.TimerListener;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ShadowAction;
@@ -13,7 +11,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.InplaceButton;
@@ -45,7 +42,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
   private static DataKey<JBTabs> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
 
-  private ActionManagerEx myActionManager;
+  private ActionManager myActionManager;
   private List<TabInfo> myVisibleInfos = new ArrayList<TabInfo>();
   private Set<TabInfo> myHiddenInfos = new HashSet<TabInfo>();
 
@@ -106,11 +103,13 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   private List<TabInfo> myAllTabs;
   private boolean myPaintBlocked;
   private BufferedImage myImage;
+  private ToolWindowManager myFocusManager;
 
 
-  public JBTabs(@Nullable Project project, ActionManager actionManager, Disposable parent) {
+  public JBTabs(@Nullable Project project, ActionManager actionManager, ToolWindowManager focusManager, Disposable parent) {
     myProject = project;
-    myActionManager = (ActionManagerEx)actionManager;
+    myActionManager = actionManager;
+    myFocusManager = focusManager;
 
     myNavigationActions = new DefaultActionGroup();
 
@@ -282,7 +281,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
     if (toFocus == null) {
       toFocus = info.getPreferredFocusableComponent();
-      final JComponent policyToFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(toFocus);
+      final JComponent policyToFocus = myFocusManager.getFocusTargetFor(toFocus);
       if (policyToFocus != null) {
         toFocus = policyToFocus;
       }
@@ -2020,7 +2019,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout());
     final int[] count = new int[1];
-    final JBTabs tabs = new JBTabs(null, null, new Disposable() {
+    final JBTabs tabs = new JBTabs(null, null, null, new Disposable() {
       public void dispose() {
       }
     }) {

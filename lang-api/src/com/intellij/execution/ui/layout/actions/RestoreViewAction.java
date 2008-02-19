@@ -1,6 +1,6 @@
-package com.intellij.debugger.ui.content.newUI.actions;
+package com.intellij.execution.ui.layout.actions;
 
-import com.intellij.debugger.ui.content.newUI.CellTransform;
+import com.intellij.execution.ui.layout.CellTransform;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -19,8 +19,8 @@ public class RestoreViewAction extends AnAction {
 
   public void update(final AnActionEvent e) {
     Presentation p = e.getPresentation();
-    p.setText(ActionsBundle.message("action.Debugger.RestoreView.text", myContent.getDisplayName()));
-    p.setDescription(ActionsBundle.message("action.Debugger.RestoreView.description"));
+    p.setText(ActionsBundle.message("action.Runner.RestoreView.text", myContent.getDisplayName()));
+    p.setDescription(ActionsBundle.message("action.Runner.RestoreView.description"));
     p.setIcon(myContent.getIcon());
   }
 

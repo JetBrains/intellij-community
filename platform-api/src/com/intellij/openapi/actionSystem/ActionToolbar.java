@@ -103,4 +103,6 @@ public interface ActionToolbar {
    * @param component will be used for datacontext computations
    */
   void setTargetComponent(final JComponent component);
+
+  void setReservePlaceAutoPopupIcon(final boolean reserve);
 }

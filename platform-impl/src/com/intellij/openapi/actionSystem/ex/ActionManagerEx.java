@@ -2,21 +2,14 @@ package com.intellij.openapi.actionSystem.ex;
 
 
 
-import com.intellij.openapi.actionSystem.ActionManager;
-
-import com.intellij.openapi.actionSystem.AnAction;
-
-import com.intellij.openapi.actionSystem.DataContext;
-
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.Disposable;
-
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.Nullable;
 
-
-
 import javax.swing.*;
-
 import java.util.Comparator;
 
 
@@ -32,15 +25,6 @@ public abstract class ActionManagerEx extends ActionManager{
     return (ActionManagerEx)getInstance();
 
   }
-
-  
-
-  public abstract void addTimerListener(int delay, TimerListener listener);
-
-  public abstract void removeTimerListener(TimerListener listener);
-
-
-
 
 
   public abstract void addAnActionListener(AnActionListener listener);

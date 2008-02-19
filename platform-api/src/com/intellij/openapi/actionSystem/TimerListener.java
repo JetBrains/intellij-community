@@ -1,4 +1,4 @@
-package com.intellij.openapi.actionSystem.ex;
+package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.application.ModalityState;
 

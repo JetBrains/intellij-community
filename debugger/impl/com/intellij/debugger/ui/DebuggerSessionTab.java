@@ -10,8 +10,7 @@ import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.content.DebuggerContentUIFacade;
-import com.intellij.debugger.ui.content.newUI.NewDebuggerContentUI;
+import com.intellij.execution.ui.layout.NewDebuggerContentUI;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.impl.VariablesPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
@@ -39,8 +38,12 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.*;
@@ -68,9 +71,6 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   private final Project myProject;
   private final ContentManager myViewsContentManager;
 
-  private JPanel myToolBarPanel;
-  private ActionToolbar myFirstToolbar;
-
   private final JPanel myContentPanel;
   private final VariablesPanel myVariablesPanel;
   private final MainWatchPanel myWatchPanel;
@@ -96,7 +96,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   private Content myFramesContent;
   private Content myVarsContent;
   private Content myWatchesContent;
-  private DebuggerContentUIFacade myContentUI;
+  private NewDebuggerContentUI myContentUI;
   private FramesPanel myFramesPanel;
 
   public DebuggerSessionTab(Project project, String sessionName) {
@@ -119,7 +119,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
         public void changeEvent(DebuggerContextImpl newContext, int event) {
           switch (event) {
             case DebuggerSession.EVENT_DETACHED:
-              myFirstToolbar.updateActionsImmediately();
+              myContentUI.updateActionsImmediately();
 
               if (debuggerSettings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION) {
                 try {
@@ -136,8 +136,23 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
       });
     }
 
-    myContentUI = new NewDebuggerContentUI(getProject(), ActionManager.getInstance(), getLayoutSettings(),
-                                           DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName);
+    DefaultActionGroup stepping = new DefaultActionGroup();
+    ActionManager actionManager = ActionManager.getInstance();
+    stepping.add(actionManager.getAction(DebuggerActions.SHOW_EXECUTION_POINT));
+    stepping.addSeparator();
+    stepping.add(actionManager.getAction(DebuggerActions.STEP_OVER));
+    stepping.add(actionManager.getAction(DebuggerActions.STEP_INTO));
+    stepping.add(actionManager.getAction(DebuggerActions.FORCE_STEP_INTO));
+    stepping.add(actionManager.getAction(DebuggerActions.STEP_OUT));
+    stepping.addSeparator();
+    stepping.add(actionManager.getAction(DebuggerActions.RUN_TO_CURSOR));
+
+
+
+    myContentUI = new NewDebuggerContentUI(getProject(), ActionManager.getInstance(), ToolWindowManager.getInstance(getProject()), getLayoutSettings(),
+                                           DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName, stepping, ActionPlaces.DEBUGGER_TOOLBAR);
+
+
 
     myViewsContentManager = getContentFactory().
       createContentManager(myContentUI.getContentUI(), false, getProject());
@@ -272,15 +287,34 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
       myManager.initLogConsoles((RunConfigurationBase)myConfiguration, myRunContentDescriptor.getProcessHandler());
     }
 
-    if (myToolBarPanel != null) {
-      myContentPanel.remove(myToolBarPanel);
-    }
+    DefaultActionGroup group = new DefaultActionGroup();
+    RestartAction restarAction = new RestartAction(myRunner, myConfiguration, myRunContentDescriptor.getProcessHandler(), DEBUG_AGAIN_ICON,
+                                                   myRunContentDescriptor, myRunnerSettings, myConfigurationSettings);
+    group.add(restarAction);
+    restarAction.registerShortcut(myContentPanel);
 
-    myFirstToolbar = createFirstToolbar(myRunContentDescriptor, myContentPanel);
+    addActionToGroup(group, DebuggerActions.RESUME);
+    addActionToGroup(group, DebuggerActions.PAUSE);
+    addActionToGroup(group, IdeActions.ACTION_STOP_PROGRAM);
 
-    myToolBarPanel = new JPanel(new GridLayout(1, 1));
-    myToolBarPanel.add(myFirstToolbar.getComponent());
-    myContentPanel.add(myToolBarPanel, BorderLayout.WEST);
+    group.addSeparator();
+
+    addActionToGroup(group, XDebuggerActions.VIEW_BREAKPOINTS);
+    addActionToGroup(group, DebuggerActions.MUTE_BREAKPOINTS);
+
+    group.addSeparator();
+    addAction(group, DebuggerActions.EXPORT_THREADS);
+    group.addSeparator();
+
+    group.add(myContentUI.getLayoutActions());
+
+    group.addSeparator();
+
+    group.add(new CloseAction(myRunner.getInfo(), myRunContentDescriptor, getProject()));
+    group.add(new ContextHelpAction(myRunner.getInfo().getHelpId()));
+
+    myContentUI.setLeftToolbar(group, ActionPlaces.DEBUGGER_TOOLBAR);
+
 
     return myRunContentDescriptor;
   }
@@ -349,35 +383,6 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     if (action != null) group.add(action);
   }
 
-  private ActionToolbar createFirstToolbar(RunContentDescriptor contentDescriptor, JComponent component) {
-    DefaultActionGroup group = new DefaultActionGroup();
-    RestartAction restarAction = new RestartAction(myRunner, myConfiguration, contentDescriptor.getProcessHandler(), DEBUG_AGAIN_ICON,
-                                                   contentDescriptor, myRunnerSettings, myConfigurationSettings);
-    group.add(restarAction);
-    restarAction.registerShortcut(component);
-
-    addActionToGroup(group, DebuggerActions.RESUME);
-    addActionToGroup(group, DebuggerActions.PAUSE);
-    addActionToGroup(group, IdeActions.ACTION_STOP_PROGRAM);
-
-    group.addSeparator();
-
-    addActionToGroup(group, XDebuggerActions.VIEW_BREAKPOINTS);
-    addActionToGroup(group, DebuggerActions.MUTE_BREAKPOINTS);
-
-    group.addSeparator();
-    addAction(group, DebuggerActions.EXPORT_THREADS);
-    group.addSeparator();
-
-    addActionToGroup(group, DebuggerActions.LAYOUT);
-
-    group.addSeparator();
-
-    group.add(new CloseAction(myRunner.getInfo(), contentDescriptor, getProject()));
-    group.add(new ContextHelpAction(myRunner.getInfo().getHelpId()));
-
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
-  }
 
   @Nullable
   private Content findContent(@NotNull String key) {
@@ -533,7 +538,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     myContentUI.restoreLayout();
   }
 
-  public DebuggerContentUIFacade getContentUi() {
+  public NewDebuggerContentUI getContentUi() {
     return myContentUI;
   }
 

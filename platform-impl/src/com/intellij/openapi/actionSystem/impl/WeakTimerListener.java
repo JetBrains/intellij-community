@@ -1,7 +1,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.TimerListener;
+import com.intellij.openapi.actionSystem.TimerListener;
 import com.intellij.openapi.application.ModalityState;
 
 import java.lang.ref.WeakReference;

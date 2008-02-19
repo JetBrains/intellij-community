@@ -1,19 +1,13 @@
-package com.intellij.debugger.ui.content.newUI;
+package com.intellij.execution.ui.layout;
 
-import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.ui.DebuggerContentInfo;
-import com.intellij.debugger.ui.content.DebuggerContentUIFacade;
-import com.intellij.debugger.ui.content.newUI.actions.RestoreViewAction;
-import com.intellij.execution.ui.layout.RunnerLayout;
-import com.intellij.execution.ui.layout.Tab;
-import com.intellij.execution.ui.layout.View;
+import com.intellij.execution.ui.layout.actions.RestoreViewAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
@@ -23,6 +17,7 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AwtVisitor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,15 +29,21 @@ import java.util.*;
 import java.util.List;
 
 public class NewDebuggerContentUI
-  implements ContentUI, DebuggerContentInfo, Disposable, DebuggerContentUIFacade, DebuggerActions, CellTransform.Facade, ViewContext,
+  implements ContentUI, Disposable, CellTransform.Facade, ViewContext,
              PropertyChangeListener {
 
+  @NonNls public static final String LAYOUT = "Runner.Layout";
+  @NonNls public static final String VIEW_POPUP = "Runner.View.Popup";
+  @NonNls public static final String VIEW_TOOLBAR = "Runner.View.Toolbar";
+
   ContentManager myManager;
-  RunnerLayout mySettings;
+  RunnerLayout myLayoutSettings;
 
   ActionManager myActionManager;
   String mySessionName;
   MyComponent myComponent = new MyComponent();
+
+  private Wrapper myToolbar = new Wrapper();
 
   JBTabs myTabs;
   private Comparator<TabInfo> myTabsComparator = new Comparator<TabInfo>() {
@@ -52,7 +53,7 @@ public class NewDebuggerContentUI
   };
   Project myProject;
 
-  DefaultActionGroup myDebuggerActions = new DefaultActionGroup();
+  ActionGroup myTopActions = new DefaultActionGroup();
 
   DefaultActionGroup myMinimizedViewActions = new DefaultActionGroup();
 
@@ -64,14 +65,19 @@ public class NewDebuggerContentUI
 
   private Set<Object> myRestoreStateRequestors = new HashSet<Object>();
   public static final DataKey<NewDebuggerContentUI> KEY = DataKey.create("DebuggerContentUI");
+  private final String myActionsPlace;
+  private ToolWindowManager myFocusManager;
 
-  public NewDebuggerContentUI(Project project, ActionManager actionManager, RunnerLayout settings, String sessionName) {
+  public NewDebuggerContentUI(Project project, ActionManager actionManager, ToolWindowManager focusManager, RunnerLayout settings, String sessionName, @NotNull ActionGroup topActions, String actionsPlace) {
     myProject = project;
-    mySettings = settings;
+    myLayoutSettings = settings;
     myActionManager = actionManager;
     mySessionName = sessionName;
+    myTopActions = topActions;
+    myActionsPlace = actionsPlace;
+    myFocusManager = focusManager;
 
-    myTabs = new JBTabs(project, actionManager, this) {
+    myTabs = new JBTabs(project, actionManager, focusManager, this) {
       @Nullable
       public Object getData(@NonNls final String dataId) {
         if (ViewContext.CONTENT_KEY.getName().equals(dataId)) {
@@ -85,12 +91,17 @@ public class NewDebuggerContentUI
         return super.getData(dataId);
       }
     };
-    myTabs.setPopupGroup((ActionGroup)myActionManager.getAction(DebuggerActions.DEBUGGER_VIEW_POPUP), TAB_POPUP_PLACE);
+    final ActionGroup popup = (ActionGroup)actionManager.getAction(VIEW_POPUP);
+    myTabs.setPopupGroup(popup, TAB_POPUP_PLACE);
     myTabs.setPaintBorder(false);
     myTabs.setPaintFocus(false);
     myTabs.setRequestFocusOnLastFocusedComponent(true);
 
-    myComponent.setContent(myTabs);
+    final NonOpaquePanel wrappper = new NonOpaquePanel(new BorderLayout(0, 0));
+    wrappper.add(myToolbar, BorderLayout.WEST);
+    wrappper.add(myTabs, BorderLayout.CENTER);
+
+    myComponent.setContent(wrappper);
 
     myTabs.addListener(new TabsListener() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
@@ -101,15 +112,14 @@ public class NewDebuggerContentUI
         }
       }
     });
+  }
 
-    myDebuggerActions.add(myActionManager.getAction(SHOW_EXECUTION_POINT));
-    myDebuggerActions.addSeparator();
-    myDebuggerActions.add(myActionManager.getAction(STEP_OVER));
-    myDebuggerActions.add(myActionManager.getAction(STEP_INTO));
-    myDebuggerActions.add(myActionManager.getAction(FORCE_STEP_INTO));
-    myDebuggerActions.add(myActionManager.getAction(STEP_OUT));
-    myDebuggerActions.addSeparator();
-    myDebuggerActions.add(myActionManager.getAction(RUN_TO_CURSOR));
+  public void setLeftToolbar(ActionGroup group, String place) {
+    final JComponent tb = myActionManager.createActionToolbar(place, group, false).getComponent();
+    myToolbar.setContent(tb);
+
+    myComponent.revalidate();
+    myComponent.repaint();
   }
 
   public void propertyChange(final PropertyChangeEvent evt) {
@@ -215,7 +225,7 @@ public class NewDebuggerContentUI
     sideComponent.add(leftWrapper);
     sideComponent.add(rightWrapper);
 
-    tab.setTabLabelActions((ActionGroup)myActionManager.getAction(DebuggerActions.DEBUGGER_VIEW_TOOLBAR), TAB_TOOLBAR_PLACE);
+    tab.setTabLabelActions((ActionGroup)myActionManager.getAction(VIEW_TOOLBAR), TAB_TOOLBAR_PLACE);
 
     myTabs.addTab(tab);
     myTabs.sortTabs(myTabsComparator);
@@ -253,13 +263,15 @@ public class NewDebuggerContentUI
           groupToBuild.addSeparator();
           contextComponent = content.getActionsContextComponent();
         }
-        groupToBuild.addAll(myDebuggerActions);
+        groupToBuild.addAll(myTopActions);
       } else {
-        groupToBuild = myDebuggerActions;
+        final DefaultActionGroup group = new DefaultActionGroup();
+        group.addAll(myTopActions);
+        groupToBuild = group;
       }
 
       if (!contents.equals(myContextActions.get(each))) {
-        ActionToolbar tb = myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, groupToBuild, true);
+        ActionToolbar tb = myActionManager.createActionToolbar(myActionsPlace, groupToBuild, true);
         tb.setTargetComponent(contextComponent);
         eachPlaceholder.setContent(tb.getComponent());
       }
@@ -272,7 +284,7 @@ public class NewDebuggerContentUI
     for (Grid each : myMinimizedButtonsPlaceholder.keySet()) {
       Wrapper eachPlaceholder = myMinimizedButtonsPlaceholder.get(each);
       ActionToolbar tb = myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myMinimizedViewActions, true);
-      ((ActionToolbarImpl)tb).setReservePlaceAutoPopupIcon(false);
+      ((ActionToolbar)tb).setReservePlaceAutoPopupIcon(false);
       JComponent minimized = tb.getComponent();
       eachPlaceholder.setContent(minimized);
     }
@@ -343,7 +355,7 @@ public class NewDebuggerContentUI
   }
 
   private void restoreLastSelectedTab() {
-    int index = mySettings.getDefaultSelectedTabIndex();
+    int index = myLayoutSettings.getDefaultSelectedTabIndex();
 
     if (myTabs.getTabCount() > 0) {
       myTabs.setSelected(myTabs.getTabAt(0), false);
@@ -400,7 +412,7 @@ public class NewDebuggerContentUI
 
 
   public void setHorizontalToolbar(final boolean state) {
-    mySettings.setToolbarHorizontal(state);
+    myLayoutSettings.setToolbarHorizontal(state);
     for (Grid each : getGrids()) {
       each.setToolbarHorizontal(state);
     }
@@ -443,7 +455,7 @@ public class NewDebuggerContentUI
       setStateIsBeingRestored(false, this);
     }
 
-    mySettings.resetToDefault();
+    myLayoutSettings.resetToDefault();
     for (Content each : all) {
       myManager.addContent(each);
     }
@@ -461,6 +473,16 @@ public class NewDebuggerContentUI
       myRestoreStateRequestors.add(requestor);
     } else {
       myRestoreStateRequestors.remove(requestor);
+    }
+  }
+
+  public ActionGroup getLayoutActions() {
+    return (ActionGroup)myActionManager.getAction(NewDebuggerContentUI.LAYOUT);
+  }
+
+  public void updateActionsImmediately() {
+    if (myToolbar.getTargetComponent() instanceof ActionToolbar) {
+      ((ActionToolbar)myToolbar.getTargetComponent()).updateActionsImmediately();
     }
   }
 
@@ -620,7 +642,7 @@ public class NewDebuggerContentUI
     setStateIsBeingRestored(true, this);
     try {
       myManager.removeContent(content, false);
-      getStateFor(content).assignTab(mySettings.createNewTab());
+      getStateFor(content).assignTab(myLayoutSettings.createNewTab());
       getStateFor(content).setPlaceInGrid(View.PlaceInGrid.center);
       myManager.addContent(content);
     }
@@ -638,8 +660,8 @@ public class NewDebuggerContentUI
 
     try {
       myManager.removeContent(content, false);
-      getStateFor(content).assignTab(mySettings.getDefaultTab());
-      getStateFor(content).setPlaceInGrid(mySettings.getDefaultGridPlace(content));
+      getStateFor(content).assignTab(myLayoutSettings.getDefaultTab());
+      getStateFor(content).setPlaceInGrid(myLayoutSettings.getDefaultGridPlace(content));
       myManager.addContent(content);
     }
     finally {
@@ -672,16 +694,16 @@ public class NewDebuggerContentUI
     return myActionManager;
   }
 
-  public RunnerLayout getSettings() {
-    return mySettings;
+  public RunnerLayout getLayoutSettings() {
+    return myLayoutSettings;
   }
 
   public View getStateFor(final Content content) {
-    return mySettings.getStateFor(content);
+    return myLayoutSettings.getStateFor(content);
   }
 
   public boolean isHorizontalToolbar() {
-    return mySettings.isToolbarHorizontal();
+    return myLayoutSettings.isToolbarHorizontal();
   }
 
   public ActionCallback select(final Content content, final boolean requestFocus) {
@@ -768,5 +790,9 @@ public class NewDebuggerContentUI
         myRight.setBounds((int)myLeft.getBounds().getMaxX(), 0, parent.getWidth() - myLeft.getWidth(), parent.getHeight());
       }
     }
+  }
+
+  public ToolWindowManager getFocusManager() {
+    return myFocusManager;
   }
 }

@@ -1,9 +1,7 @@
-package com.intellij.debugger.ui.content.newUI;
+package com.intellij.execution.ui.layout;
 
-import com.intellij.execution.ui.layout.RunnerLayout;
-import com.intellij.execution.ui.layout.Tab;
-import com.intellij.execution.ui.layout.View;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
@@ -13,8 +11,8 @@ import com.intellij.ui.content.ContentManager;
 
 public interface ViewContext extends Disposable {
 
-  DataKey<Content[]> CONTENT_KEY = DataKey.create("debuggerContents");
-  DataKey<ViewContext> CONTEXT_KEY = DataKey.create("debuggerUiContext");
+  DataKey<Content[]> CONTENT_KEY = DataKey.create("runnerContents");
+  DataKey<ViewContext> CONTEXT_KEY = DataKey.create("runnerUiContext");
 
   String CELL_TOOLBAR_PLACE = "debuggerCellToolbar";
   String TAB_TOOLBAR_PLACE = "debuggerTabToolbar";
@@ -34,9 +32,11 @@ public interface ViewContext extends Disposable {
 
   ContentManager getContentManager();
 
-  RunnerLayout getSettings();
+  RunnerLayout getLayoutSettings();
 
   ActionManager getActionManager();
+
+  ToolWindowManager getFocusManager();
 
   GridCell findCellFor(final Content content);
 

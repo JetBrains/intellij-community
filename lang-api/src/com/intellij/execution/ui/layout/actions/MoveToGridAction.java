@@ -1,12 +1,12 @@
-package com.intellij.debugger.ui.content.newUI.actions;
+package com.intellij.execution.ui.layout.actions;
 
-import com.intellij.debugger.ui.content.newUI.ViewContext;
-import com.intellij.debugger.ui.content.newUI.Grid;
+import com.intellij.execution.ui.layout.Grid;
 import com.intellij.execution.ui.layout.Tab;
+import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.content.Content;
 
-public class MoveToGridAction extends BaseDebuggerViewAction {
+public class MoveToGridAction extends BaseRunnerViewAction {
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
     if (content.length != 1) {
       setEnabled(e, false);

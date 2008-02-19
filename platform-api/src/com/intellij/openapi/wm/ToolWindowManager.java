@@ -94,4 +94,6 @@ public abstract class ToolWindowManager {
   public abstract ActionCallback requestFocus(Component c, boolean forced);
 
   public abstract ActionCallback requestFocus(ActionCallback.Runnable command, boolean forced);
+
+  public abstract JComponent getFocusTargetFor(final JComponent comp);
 }

@@ -1,13 +1,13 @@
-package com.intellij.debugger.ui.content.newUI.actions;
+package com.intellij.execution.ui.layout.actions;
 
-import com.intellij.debugger.ui.content.newUI.Grid;
-import com.intellij.debugger.ui.content.newUI.GridCell;
-import com.intellij.debugger.ui.content.newUI.ViewContext;
+import com.intellij.execution.ui.layout.Grid;
+import com.intellij.execution.ui.layout.GridCell;
+import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.content.Content;
 
-public class AttachCellAction extends BaseDebuggerViewAction {
+public class AttachCellAction extends BaseRunnerViewAction {
 
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
     if (content.length == 0 || !isDetached(context, content[0])) {
@@ -23,7 +23,7 @@ public class AttachCellAction extends BaseDebuggerViewAction {
     } else {
       setEnabled(e, true);
       if (cell.getContentCount() > 1) {
-        e.getPresentation().setText(ActionsBundle.message("action.Debugger.AttachCells.text", cell.getContentCount()));
+        e.getPresentation().setText(ActionsBundle.message("action.Runner.AttachCells.text", cell.getContentCount()));
       }
     }
   }

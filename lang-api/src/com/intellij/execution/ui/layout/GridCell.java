@@ -1,7 +1,6 @@
-package com.intellij.debugger.ui.content.newUI;
+package com.intellij.execution.ui.layout;
 
-import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.ui.content.newUI.actions.CloseViewAction;
+import com.intellij.execution.ui.layout.actions.CloseViewAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -20,7 +19,6 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.execution.ui.layout.View;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +60,7 @@ public class GridCell implements Disposable {
         return new JBTabs.UiDecoration(null, new Insets(0, -1, 0, -1));
       }
     });
-    myTabs.setSideComponentVertical(!context.getSettings().isToolbarHorizontal());
+    myTabs.setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal());
     myTabs.setStealthTabMode(true);
     myTabs.addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
@@ -76,7 +74,7 @@ public class GridCell implements Disposable {
         }
       }
     });
-    myTabs.setPopupGroup((ActionGroup)myContext.getActionManager().getAction(DebuggerActions.DEBUGGER_VIEW_POPUP),
+    myTabs.setPopupGroup((ActionGroup)myContext.getActionManager().getAction(NewDebuggerContentUI.VIEW_POPUP),
                          ViewContext.CELL_POPUP_PLACE);
     myTabs.addListener(new TabsListener() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
@@ -162,7 +160,7 @@ public class GridCell implements Disposable {
     myContents.remove(content);
     myContents.put(content, tabInfo);
 
-    ActionGroup group = (ActionGroup)myContext.getActionManager().getAction(DebuggerActions.DEBUGGER_VIEW_TOOLBAR);
+    ActionGroup group = (ActionGroup)myContext.getActionManager().getAction(NewDebuggerContentUI.VIEW_TOOLBAR);
     tabInfo.setTabLabelActions(group, ViewContext.CELL_TOOLBAR_PLACE);
 
     return tabInfo;
@@ -452,7 +450,7 @@ public class GridCell implements Disposable {
 
   private class MyTabs extends JBTabs implements DataProvider {
     public MyTabs(final Project project, final Grid container) {
-      super(project, myContext.getActionManager(), container);
+      super(project, myContext.getActionManager(), myContext.getFocusManager(), container);
     }
 
     @Nullable

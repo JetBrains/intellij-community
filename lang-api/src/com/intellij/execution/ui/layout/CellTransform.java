@@ -1,4 +1,4 @@
-package com.intellij.debugger.ui.content.newUI;
+package com.intellij.execution.ui.layout;
 
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.content.Content;

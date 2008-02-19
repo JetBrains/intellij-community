@@ -1,4 +1,4 @@
-package com.intellij.debugger.ui.content.newUI;
+package com.intellij.execution.ui.layout;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;

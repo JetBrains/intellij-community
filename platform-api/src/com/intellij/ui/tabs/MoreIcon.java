@@ -2,7 +2,6 @@ package com.intellij.ui.tabs;
 
 import com.intellij.openapi.ui.popup.ActiveIcon;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.impl.TitlePanel;
 
 import javax.swing.*;
 import java.awt.*;

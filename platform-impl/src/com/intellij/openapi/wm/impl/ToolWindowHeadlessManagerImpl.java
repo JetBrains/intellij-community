@@ -52,6 +52,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       return false;
     }
 
+    
+
     public void show(@Nullable Runnable runnable) {
     }
 
@@ -208,6 +210,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
   public ActionCallback requestFocus(final ActionCallback.Runnable command, final boolean forced) {
     return new ActionCallback.Done();
+  }
+
+  public JComponent getFocusTargetFor(final JComponent comp) {
+    return null;
   }
 
   public String[] getToolWindowIds() {

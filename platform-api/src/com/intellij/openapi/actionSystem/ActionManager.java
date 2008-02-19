@@ -147,4 +147,8 @@ public abstract class ActionManager implements ApplicationComponent {
   public abstract JComponent createButtonToolbar(final String actionPlace, final ActionGroup messageActionGroup);
 
   public abstract AnAction getActionOrStub(@NonNls String id);
+
+  public abstract void addTimerListener(int delay, TimerListener listener);
+
+  public abstract void removeTimerListener(TimerListener listener);
 }
