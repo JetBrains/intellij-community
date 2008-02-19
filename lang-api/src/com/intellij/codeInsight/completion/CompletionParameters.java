@@ -16,5 +16,8 @@ public interface CompletionParameters {
   PsiElement getPosition();
 
   @NotNull
+  PsiElement getOriginalPosition();
+
+  @NotNull
   PsiFile getOriginalFile();
 }

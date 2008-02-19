@@ -42,4 +42,15 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
     }
     return weight;
   }
+
+  public String toString() {
+    final StringBuilder builder = new StringBuilder("[");
+    for (int i = 0; i < myComputedWeighs.length; i++) {
+      if (i != 0) builder.append(", ");
+      builder.append(myWeighers[i]);
+      builder.append("=");
+      builder.append(getWeight(i));
+    }
+    return builder.append("]").toString();
+  }
 }

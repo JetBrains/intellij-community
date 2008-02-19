@@ -32,8 +32,8 @@ public class PsiProximityComparator implements Comparator<Object> {
     if (element1 == null) return element2 == null ? 0 : 1;
     if (element2 == null) return -1;
 
-    final WeighingComparable<PsiElement,ProximityWeighingLocation> proximity1 = getProximity(element1);
-    final WeighingComparable<PsiElement,ProximityWeighingLocation> proximity2 = getProximity(element2);
+    final WeighingComparable<PsiElement,ProximityWeighingLocation> proximity1 = getProximity(element1, getContext());
+    final WeighingComparable<PsiElement,ProximityWeighingLocation> proximity2 = getProximity(element2, getContext());
     if (proximity1 == null || proximity2 == null) {
       return 0;
     }
@@ -46,15 +46,19 @@ public class PsiProximityComparator implements Comparator<Object> {
     return count2 - count1;
   }
 
+  public PsiElement getContext() {
+    return myContext;
+  }
+
   @Nullable
-  public final WeighingComparable<PsiElement,ProximityWeighingLocation> getProximity(final PsiElement element) {
+  public static WeighingComparable<PsiElement, ProximityWeighingLocation> getProximity(final PsiElement element, final PsiElement context) {
     if (element == null) return null;
     if (element instanceof MetadataPsiElementBase) return null;
-    if (myContext == null) return null;
-    Module contextModule = ModuleUtil.findModuleForPsiElement(myContext);
+    if (context == null) return null;
+    Module contextModule = ModuleUtil.findModuleForPsiElement(context);
     if (contextModule == null) return null;
 
-    return ProximityWeigherExtension.KEY.weigh(element, new ProximityWeighingLocation(myContext, contextModule));
+    return ProximityWeigherExtension.KEY.weigh(element, new ProximityWeighingLocation(context, contextModule));
   }
 
 }

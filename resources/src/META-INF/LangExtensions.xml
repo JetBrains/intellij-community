@@ -157,6 +157,7 @@
 
   <applicationService serviceInterface="com.intellij.psi.WeighingService" serviceImplementation="com.intellij.psi.WeighingService"/>
   <weighingContributor implementation="com.intellij.psi.util.proximity.ProximityWeighingContributor"/>
+  <weighingContributor implementation="com.intellij.codeInsight.completion.DefaultCompletionWeigherContributor"/>
 
   <selectInTarget implementation="com.intellij.ide.navigationToolbar.SelectInNavBarTarget"/>
   <selectInTarget implementation="com.intellij.ide.impl.StructureViewSelectInTarget"/>

@@ -23,7 +23,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.proximity.PsiProximity;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
@@ -209,10 +208,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
       assert psiFile != null;
       final PsiElement element = psiFile.findElementAt(myEditor.getCaretModel().getOffset());
-      final PsiProximityComparator proximityComparator = new PsiProximityComparator(element);
 
       for (final LookupItem item : myItems) {
-        final Comparable[] weight = getWeight(itemPreferencePolicy, proximityComparator, item);
+        final Comparable[] weight = getWeight(itemPreferencePolicy, element, item);
         final LookupItemWeightComparable key = new LookupItemWeightComparable(item.getPriority(), weight);
         List<LookupItem> list = map.get(key);
         if (list == null) map.put(key, list = new ArrayList<LookupItem>());
@@ -222,14 +220,14 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return map;
   }
 
-  private static Comparable[] getWeight(final LookupItemPreferencePolicy itemPreferencePolicy, final PsiProximityComparator proximityComparator,
+  private static Comparable[] getWeight(final LookupItemPreferencePolicy itemPreferencePolicy, final PsiElement context,
                                  final LookupItem item) {
     if (itemPreferencePolicy instanceof CompletionPreferencePolicy) {
       return ((CompletionPreferencePolicy)itemPreferencePolicy).getWeight(item);
     }
     Comparable i = 0;
     if (item.getObject() instanceof PsiElement) {
-      final Comparable proximity = proximityComparator.getProximity((PsiElement)item.getObject());
+      final Comparable proximity = PsiProximityComparator.getProximity((PsiElement)item.getObject(), context);
       i = proximity == null ? -1 : proximity;
     }
     return new Comparable[]{i};

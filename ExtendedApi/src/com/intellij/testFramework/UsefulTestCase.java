@@ -72,7 +72,7 @@ public abstract class UsefulTestCase extends TestCase {
   public static <T> void assertOrderedEquals(Collection<T> actual, T... expected) {
     assertNotNull(actual);
     assertNotNull(expected);
-    assertOrderedEquals(Arrays.asList(expected), actual);
+    assertOrderedEquals(actual, Arrays.asList(expected));
   }
 
   public static <T> void assertOrderedEquals(final Collection<? extends T> actual, final Collection<? extends T> expected) {
