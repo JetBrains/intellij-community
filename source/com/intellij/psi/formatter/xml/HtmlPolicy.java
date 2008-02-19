@@ -194,7 +194,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   }
 
   public boolean getShouldAddSpaceAroundTagName() {
-    return mySettings.HTML_SPACE_AROUND_TAG_NAME;
+    return mySettings.HTML_SPACE_AFTER_TAG_NAME;
   }
 
   public int getKeepBlankLines() {

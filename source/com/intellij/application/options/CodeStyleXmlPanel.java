@@ -54,7 +54,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JPanel myPreviewPanel;
 
   private JCheckBox mySpacesAroundEquality;
-  private JCheckBox mySpacesAroundTagName;
+  private JCheckBox mySpacesAfterTagName;
   private JCheckBox myKeepLineBreaks;
   private JCheckBox myInEmptyTag;
   private JCheckBox myWrapText;
@@ -85,8 +85,8 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     settings.XML_TEXT_WRAP = myWrapText.isSelected() ? CodeStyleSettings.WRAP_AS_NEEDED : CodeStyleSettings.DO_NOT_WRAP;
     settings.XML_ALIGN_ATTRIBUTES = myAlignAttributes.isSelected();
     settings.XML_KEEP_WHITESPACES = myKeepWhiteSpaces.isSelected();
-    settings.XML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE = mySpacesAroundEquality.isSelected();
-    settings.XML_SPACE_AROUND_TAG_NAME = mySpacesAroundTagName.isSelected();
+    settings.XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE = mySpacesAroundEquality.isSelected();
+    settings.XML_SPACE_AFTER_TAG_NAME = mySpacesAfterTagName.isSelected();
     settings.XML_SPACE_INSIDE_EMPTY_TAG = myInEmptyTag.isSelected();
 
   }
@@ -105,8 +105,8 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     myWrapAttributes.setSelectedIndex(getIndexForWrapping(settings.XML_ATTRIBUTE_WRAP));
     myAlignAttributes.setSelected(settings.XML_ALIGN_ATTRIBUTES);
     myKeepWhiteSpaces.setSelected(settings.XML_KEEP_WHITESPACES);
-    mySpacesAroundTagName.setSelected(settings.XML_SPACE_AROUND_TAG_NAME);
-    mySpacesAroundEquality.setSelected(settings.XML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE);
+    mySpacesAfterTagName.setSelected(settings.XML_SPACE_AFTER_TAG_NAME);
+    mySpacesAroundEquality.setSelected(settings.XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE);
     myKeepLineBreaks.setSelected(settings.XML_KEEP_LINE_BREAKS);
     myKeepLineBreaksInText.setSelected(settings.XML_KEEP_LINE_BREAKS_IN_TEXT);
     myInEmptyTag.setSelected(settings.XML_SPACE_INSIDE_EMPTY_TAG);
@@ -130,11 +130,11 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
       return true;
     }
 
-    if (settings.XML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE != mySpacesAroundEquality.isSelected()){
+    if (settings.XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE != mySpacesAroundEquality.isSelected()){
       return true;
     }
 
-    if (settings.XML_SPACE_AROUND_TAG_NAME != mySpacesAroundTagName.isSelected()){
+    if (settings.XML_SPACE_AFTER_TAG_NAME != mySpacesAfterTagName.isSelected()){
       return true;
     }
 

@@ -68,11 +68,11 @@ public class XmlPolicy extends XmlFormattingPolicy{
   }
 
   public boolean getShouldAddSpaceAroundEqualityInAttribute() {
-    return mySettings.XML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE;
+    return mySettings.XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE;
   }
 
   public boolean getShouldAddSpaceAroundTagName() {
-    return mySettings.XML_SPACE_AROUND_TAG_NAME;
+    return mySettings.XML_SPACE_AFTER_TAG_NAME;
   }
 
   public int getKeepBlankLines() {

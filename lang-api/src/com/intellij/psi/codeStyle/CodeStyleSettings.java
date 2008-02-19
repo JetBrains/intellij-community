@@ -978,8 +978,8 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean XML_ALIGN_ATTRIBUTES = true;
   public boolean XML_ALIGN_TEXT = false;
 
-  public boolean XML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE = false;
-  public boolean XML_SPACE_AROUND_TAG_NAME = false;
+  public boolean XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE = false;
+  public boolean XML_SPACE_AFTER_TAG_NAME = false;
   public boolean XML_SPACE_INSIDE_EMPTY_TAG = false;
 
   // ---------------------------------------------------------------------------------------
@@ -997,7 +997,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean HTML_ALIGN_TEXT = false;
 
   public boolean HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE = false;
-  public boolean HTML_SPACE_AROUND_TAG_NAME = false;
+  public boolean HTML_SPACE_AFTER_TAG_NAME = false;
   public boolean HTML_SPACE_INSIDE_EMPTY_TAG = false;
 
   @NonNls public String HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = "body,div,p,form,h1,h2,h3";

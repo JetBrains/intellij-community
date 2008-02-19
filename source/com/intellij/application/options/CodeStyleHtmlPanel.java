@@ -146,7 +146,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     settings.HTML_ALIGN_TEXT = myAlignText.isSelected();
     settings.HTML_KEEP_WHITESPACES = myKeepWhiteSpaces.isSelected();
     settings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE = mySpacesAroundEquality.isSelected();
-    settings.HTML_SPACE_AROUND_TAG_NAME = mySpacesAroundTagName.isSelected();
+    settings.HTML_SPACE_AFTER_TAG_NAME = mySpacesAroundTagName.isSelected();
 
     settings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = myInsertNewLineTagNames.getText();
     settings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = myRemoveNewLineTagNames.getText();
@@ -176,7 +176,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myAlignAttributes.setSelected(settings.HTML_ALIGN_ATTRIBUTES);
     myAlignText.setSelected(settings.HTML_ALIGN_TEXT);
     myKeepWhiteSpaces.setSelected(settings.HTML_KEEP_WHITESPACES);
-    mySpacesAroundTagName.setSelected(settings.HTML_SPACE_AROUND_TAG_NAME);
+    mySpacesAroundTagName.setSelected(settings.HTML_SPACE_AFTER_TAG_NAME);
     mySpacesAroundEquality.setSelected(settings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE);
     myShouldKeepBlankLines.setSelected(settings.HTML_KEEP_LINE_BREAKS);
     myShouldKeepLineBreaksInText.setSelected(settings.HTML_KEEP_LINE_BREAKS_IN_TEXT);
@@ -222,7 +222,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    if (settings.HTML_SPACE_AROUND_TAG_NAME != mySpacesAroundTagName.isSelected()) {
+    if (settings.HTML_SPACE_AFTER_TAG_NAME != mySpacesAroundTagName.isSelected()) {
       return true;
     }
 

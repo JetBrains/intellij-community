@@ -69,8 +69,6 @@ public abstract class AbstractSyntheticBlock implements Block{
   }
 
   protected static boolean isXmlTagName(final IElementType type1, final IElementType type2) {
-    if (type1 == XmlElementType.XML_START_TAG_START && type2 == XmlElementType.XML_NAME) return true;
-    if (type1 == XmlElementType.XML_END_TAG_START && type2 == XmlElementType.XML_NAME) return true;
     if (type1 == XmlElementType.XML_NAME && type2 == XmlElementType.XML_TAG_END) return true;
     if (type1 == XmlElementType.XML_NAME && type2 == XmlElementType.XML_EMPTY_ELEMENT_END) return true;
     if (type1 == XmlElementType.XML_ATTRIBUTE && type2 == XmlElementType.XML_EMPTY_ELEMENT_END) return true;
