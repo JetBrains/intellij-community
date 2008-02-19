@@ -49,7 +49,7 @@ public class MavenKeymapExtension implements KeymapExtension {
           final String pomPath = ((MavenGoalAction)anAction).myPomPath;
           KeymapGroup subGroup = pomPathToActionId.get(pomPath);
           if (subGroup == null) {
-            String name = getMavenProjectName(project.getComponent(MavenProjectsState.class),
+            String name = getMavenProjectName(MavenProjectsState.getInstance(project),
                                               LocalFileSystem.getInstance().findFileByPath(pomPath));
             subGroup = KeymapGroupFactory.getInstance().createGroup(name);
             pomPathToActionId.put(pomPath, subGroup);
@@ -68,7 +68,7 @@ public class MavenKeymapExtension implements KeymapExtension {
   }
 
   public static void createActions(@NotNull Project project) {
-    final MavenProjectsState projectsState = project.getComponent(MavenProjectsState.class);
+    final MavenProjectsState projectsState = MavenProjectsState.getInstance(project);
     final MavenRepository repository = project.getComponent(MavenRepository.class);
     final MavenEventsHandler eventsHandler = project.getComponent(MavenEventsHandler.class);
 
@@ -159,7 +159,7 @@ public class MavenKeymapExtension implements KeymapExtension {
         final MavenRunner runner = project.getComponent(MavenRunner.class);
         if (!runner.isRunning()) {
           final MavenRunnerParameters runnerParameters =
-            new MavenTask(myPomPath, myGoal).createBuildParameters(project.getComponent(MavenProjectsState.class));
+            new MavenTask(myPomPath, myGoal).createBuildParameters(MavenProjectsState.getInstance(project));
           if (runnerParameters != null) {
             runner.run(runnerParameters);
           }

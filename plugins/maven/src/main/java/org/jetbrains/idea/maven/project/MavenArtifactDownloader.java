@@ -44,7 +44,7 @@ public class MavenArtifactDownloader {
   }
 
   public static void download(final Project project) throws CanceledException {
-    final MavenProjectsState projectsState = project.getComponent(MavenProjectsState.class);
+    final MavenProjectsState projectsState = MavenProjectsState.getInstance(project);
     final MavenImporter importer = project.getComponent(MavenImporter.class);
 
     final Map<MavenProject, Collection<String>> mavenProjects = new HashMap<MavenProject, Collection<String>>();
@@ -80,7 +80,7 @@ public class MavenArtifactDownloader {
             for (MavenProject mavenProject : projectsToModules.keySet()) {
               moduleIds.add(new MavenId(mavenProject.getArtifact()));
             }
-            new MavenArtifactDownloader(importer.getArtifactPreferences(), mavenEmbedder, p)
+            new MavenArtifactDownloader(importer.getArtifactSettings(), mavenEmbedder, p)
               .download(project, mavenProjects, moduleIds, true);
           }
         });
@@ -99,7 +99,7 @@ public class MavenArtifactDownloader {
                 Map<MavenProject, Collection<String>> mavenProjects,
                 Collection<MavenId> mappedToModules,
                 boolean demand) throws CanceledException {
-    final MavenProjectsState projectsState = project.getComponent(MavenProjectsState.class);
+    final MavenProjectsState projectsState = MavenProjectsState.getInstance(project);
     final Map<MavenId, Set<ArtifactRepository>> libraryArtifacts = collectLibraryArtifacts(projectsState, mavenProjects.keySet(), mappedToModules);
 
     myProgress.checkCanceled();

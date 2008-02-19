@@ -88,7 +88,8 @@ public class SelectMavenGoalDialog extends DialogWrapper {
     private PomTreeViewSettings myTreeViewSettings;
 
     public PopupPomTreeStructure(final Project project) {
-      super(project, project.getComponent(MavenProjectsState.class), project.getComponent(MavenRepository.class),
+      super(project, MavenProjectsState.getInstance(project),
+            project.getComponent(MavenRepository.class),
             project.getComponent(MavenEventsHandler.class));
       myTreeViewSettings = project.getComponent(MavenProjectNavigator.class).getTreeViewSettings();
     }

@@ -83,7 +83,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
         importerState.memorizeProfile(profile);
       }
 
-      final MavenProjectsState projectsState = project.getComponent(MavenProjectsState.class);
+      final MavenProjectsState projectsState = MavenProjectsState.getInstance(project);
       myImportProcessor.getMavenProjectModel().visit(new MavenProjectModel.MavenProjectVisitorPlain() {
         public void visit(MavenProjectModel.Node node) {
           final Set<String> projectProfiles = ProjectUtil.collectProfileIds(node.getMavenProject(), new HashSet<String>());

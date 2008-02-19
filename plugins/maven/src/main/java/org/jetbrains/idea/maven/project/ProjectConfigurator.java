@@ -16,7 +16,7 @@ import java.util.Collection;
 import java.util.Stack;
 
 
-public class MavenToIdeaConfigurator {
+public class ProjectConfigurator {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.project.MavenToIdeaConfigurator");
 
   private Project myProject;
@@ -24,27 +24,27 @@ public class MavenToIdeaConfigurator {
   private MavenProjectModel myProjectModel;
   private MavenToIdeaMapping myMapping;
   private Collection<String> myProfiles;
-  private MavenImporterSettings myPrefs;
+  private MavenImporterSettings mySettings;
 
   public static void config(Project p,
                             MavenProjectModel projectModel,
                             Collection<String> profiles,
                             MavenToIdeaMapping mapping,
-                            MavenImporterSettings prefs) {
-    MavenToIdeaConfigurator c = new MavenToIdeaConfigurator(p, projectModel, mapping, profiles, prefs);
+                            MavenImporterSettings settings) {
+    ProjectConfigurator c = new ProjectConfigurator(p, projectModel, mapping, profiles, settings);
     c.config();
   }
 
-  private MavenToIdeaConfigurator(Project p,
-                                  MavenProjectModel projectModel,
-                                  MavenToIdeaMapping mapping,
-                                  Collection<String> profiles,
-                                  MavenImporterSettings settings) {
+  private ProjectConfigurator(Project p,
+                              MavenProjectModel projectModel,
+                              MavenToIdeaMapping mapping,
+                              Collection<String> profiles,
+                              MavenImporterSettings settings) {
     myProject = p;
     myProjectModel = projectModel;
     myMapping = mapping;
     myProfiles = profiles;
-    myPrefs = settings;
+    mySettings = settings;
   }
 
   private void config() {
@@ -95,11 +95,11 @@ public class MavenToIdeaConfigurator {
       module = myModuleModel.newModule(myMapping.getModuleFilePath(node), StdModuleTypes.JAVA);
     }
 
-    new MavenToIdeaModuleConfigurator(myModuleModel, myMapping, myProfiles, myPrefs, module, mavenProject).config();
+    new ModuleConfigurator(myModuleModel, myMapping, myProfiles, mySettings, module, mavenProject).config();
   }
 
   private void configModuleGroups() {
-    final boolean createModuleGroups = myPrefs.isCreateModuleGroups();
+    final boolean createModuleGroups = mySettings.isCreateModuleGroups();
     final Stack<String> groups = new Stack<String>();
 
     myProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {

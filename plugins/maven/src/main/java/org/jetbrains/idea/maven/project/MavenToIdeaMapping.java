@@ -14,7 +14,7 @@ import java.util.*;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
+public class MavenToIdeaMapping {
 
   final private Map<MavenId, String> projectIdToModuleName = new HashMap<MavenId, String>();
 
@@ -34,7 +34,7 @@ public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
 
   @NonNls private static final String IML_EXT = ".iml";
 
-  public MavenToIdeaMappingImpl(MavenProjectModel mavenProjectModel, String moduleDir, Project project) {
+  public MavenToIdeaMapping(MavenProjectModel mavenProjectModel, String moduleDir, Project project) {
     resolveModuleNames(mavenProjectModel);
 
     resolveModulePaths(mavenProjectModel, moduleDir);
@@ -153,7 +153,7 @@ public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
     return nameToModule.values();
   }
 
-  public Module getModule(final MavenProjectModel.Node node) {
+  public Module getModule(MavenProjectModel.Node node) {
     return projectToModule.get(node);
   }
 

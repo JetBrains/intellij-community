@@ -14,7 +14,7 @@ public class IgnoreProjectAction extends AnAction {
 
   public void update(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final MavenProjectsState projectsState = project != null ? project.getComponent(MavenProjectsState.class) : null;
+    final MavenProjectsState projectsState = project != null ? MavenProjectsState.getInstance(project) : null;
     final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
 
     final boolean enabled = projectsState != null && files != null && isEnabled(projectsState, files);
@@ -28,7 +28,7 @@ public class IgnoreProjectAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final MavenProjectsState projectsState = project != null ? project.getComponent(MavenProjectsState.class) : null;
+    final MavenProjectsState projectsState = project != null ? MavenProjectsState.getInstance(project) : null;
     final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
 
     if (projectsState != null && files != null && isEnabled(projectsState, files)) {

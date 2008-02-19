@@ -19,34 +19,34 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
-public class MavenToIdeaModuleConfigurator {
+public class ModuleConfigurator {
   private ModifiableModuleModel myModuleModel;
   private MavenToIdeaMapping myMapping;
   private Collection<String> myProfiles;
-  private MavenImporterSettings myPrefs;
+  private MavenImporterSettings mySettings;
   private Pattern myIgnorePatternCache;
   private Module myModule;
   private MavenProject myMavenProject;
   private RootModelAdapter myModel;
 
-  public MavenToIdeaModuleConfigurator(ModifiableModuleModel moduleModel,
-                                       MavenToIdeaMapping mapping,
-                                       Collection<String> profiles,
-                                       MavenImporterSettings prefs,
-                                       Module module,
-                                       MavenProject mavenProject) {
+  public ModuleConfigurator(ModifiableModuleModel moduleModel,
+                            MavenToIdeaMapping mapping,
+                            Collection<String> profiles,
+                            MavenImporterSettings settings,
+                            Module module,
+                            MavenProject mavenProject) {
     myModuleModel = moduleModel;
     myMapping = mapping;
     myProfiles = profiles;
-    myPrefs = prefs;
-    myIgnorePatternCache = Pattern.compile(Strings.translateMasks(prefs.getIgnoredDependencies()));
+    mySettings = settings;
+    myIgnorePatternCache = Pattern.compile(Strings.translateMasks(settings.getIgnoredDependencies()));
     myModule = module;
     myMavenProject = mavenProject;
   }
 
   public void config() {
     myModel = new RootModelAdapter(myModule);
-    myModel.init(myMavenProject.getFile().getParent());
+    myModel.init(myMavenProject);
 
     configModule();
     configFacets();
@@ -69,7 +69,7 @@ public class MavenToIdeaModuleConfigurator {
   }
 
   private void configFolders() {
-    new FoldersConfigurator(myMavenProject, myPrefs, myModel).config();
+    new FoldersConfigurator(myMavenProject, mySettings, myModel).config();
   }
 
   private void configDependencies() {

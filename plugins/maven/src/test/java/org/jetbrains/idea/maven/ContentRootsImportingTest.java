@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven;
 
+import java.io.File;
 import java.io.IOException;
 
 public class ContentRootsImportingTest extends ImportingTestCase {
@@ -431,6 +432,20 @@ public class ContentRootsImportingTest extends ImportingTestCase {
                   "<version>1</version>");
 
     assertExcludes("project", "target/foo", "target/bar");
+  }
+
+  public void testDoNotUseVirtualFileSystemWhenExcludingDirectoriesUnderTargetDir() throws Exception {
+    projectRoot.getChildren(); // make sure fs is cached
+
+    new File(projectRoot.getPath(), "target/foo").mkdirs();
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertExcludes("project", "target/foo");
+    
+    assertNull(projectRoot.findChild("target")); // ensure the import didn't call refresh() 
   }
 
   public void testDoesNotExcludeGeneratedSourcesUnderTargetDir() throws Exception {

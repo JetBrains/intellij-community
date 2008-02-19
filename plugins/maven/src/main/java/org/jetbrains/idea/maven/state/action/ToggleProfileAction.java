@@ -34,7 +34,7 @@ public class ToggleProfileAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final MavenProjectsState projectsState = project != null ? project.getComponent(MavenProjectsState.class) : null;
+    final MavenProjectsState projectsState = project != null ? MavenProjectsState.getInstance(project) : null;
     final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     final List<String> profiles = e.getData(MavenDataKeys.MAVEN_PROFILES_KEY);
 

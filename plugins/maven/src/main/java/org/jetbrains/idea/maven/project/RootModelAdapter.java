@@ -6,9 +6,10 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.containers.HashSet;
+import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.Path;
 import org.jetbrains.idea.maven.core.util.Url;
@@ -17,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class RootModelAdapter {
   private final ModifiableRootModel myRootModel;
@@ -26,40 +28,31 @@ public class RootModelAdapter {
     myRootModel = ModuleRootManager.getInstance(module).getModifiableModel();
   }
 
-  public void init(String root) {
-    for (ContentEntry contentEntry : myRootModel.getContentEntries()) {
-      myRootModel.removeContentEntry(contentEntry);
+  public void init(MavenProject p) {
+    initContentRoots(p);
+    initOrderEntries();
+    configure();
+  }
+
+  public void initContentRoots(MavenProject p) {
+    for (ContentEntry e : myRootModel.getContentEntries()) {
+      myRootModel.removeContentEntry(e);
     }
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
-    if (virtualFile != null) {
-      myRootModel.addContentEntry(virtualFile);
-    }
 
-    myRootModel.inheritSdk();
-    myRootModel.getModule().setSavePathsRelative(true);
+    findOrCreateContentRoot(toUrl(p.getFile().getParent()));
+  }
 
-    getCompilerExtension().setExcludeOutput(true);
-
-    for (OrderEntry entry : myRootModel.getOrderEntries()) {
-      if (!(entry instanceof ModuleSourceOrderEntry) && !(entry instanceof JdkOrderEntry)) {
-        myRootModel.removeOrderEntry(entry);
-      }
+  private void initOrderEntries() {
+    for (OrderEntry e : myRootModel.getOrderEntries()) {
+      if (e instanceof ModuleSourceOrderEntry || e instanceof JdkOrderEntry) continue;
+      myRootModel.removeOrderEntry(e);
     }
   }
 
-  public void resetRoots() {
-    for (ContentEntry contentEntry : myRootModel.getContentEntries()) {
-      for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
-        if (!sourceFolder.isSynthetic()) {
-          contentEntry.removeSourceFolder(sourceFolder);
-        }
-      }
-      for (ExcludeFolder excludeFolder : contentEntry.getExcludeFolders()) {
-        if (!excludeFolder.isSynthetic()) {
-          contentEntry.removeExcludeFolder(excludeFolder);
-        }
-      }
-    }
+  private void configure() {
+    myRootModel.inheritSdk();
+    myRootModel.getModule().setSavePathsRelative(true);
+    getCompilerExtension().setExcludeOutput(true);
   }
 
   public void commit() {
@@ -84,6 +77,16 @@ public class RootModelAdapter {
   public void addSourceDir(String path, boolean testSource) {
     Url url = toUrl(path);
     findOrCreateContentRoot(url).addSourceFolder(url.getUrl(), testSource);
+  }
+
+  public Set<Path> getExistingSourceFolders() {
+    Set<Path> result = new HashSet<Path>();
+    for (ContentEntry entry : myRootModel.getContentEntries()) {
+      for (SourceFolder f : entry.getSourceFolders()) {
+        result.add(new Path(VirtualFileManager.extractPath(f.getUrl())));
+      }
+    }
+    return result;
   }
 
   public void excludeRoot(String path) {

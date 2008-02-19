@@ -102,7 +102,7 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
     LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     final VirtualFile virtualFile = localFileSystem.findFileByPath(runnerParameters.getPomPath());
     if (virtualFile != null) {
-      MavenProject mavenProject = project.getComponent(MavenProjectsState.class).getMavenProject(virtualFile);
+      MavenProject mavenProject = MavenProjectsState.getInstance(project).getMavenProject(virtualFile);
       if (mavenProject != null) {
         if (!StringUtil.isEmptyOrSpaces(mavenProject.getArtifactId())) {
           return mavenProject.getArtifactId();
@@ -133,7 +133,7 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
 
     VirtualFile f = ((PsiFile)l.getPsiElement()).getVirtualFile();
     List<String> goals = ((MavenGoalLocation)l).getGoals();
-    Collection<String> profiles = l.getProject().getComponent(MavenProjectsState.class).getProfiles(f);
+    Collection<String> profiles = MavenProjectsState.getInstance(l.getProject()).getProfiles(f);
 
     return new MavenRunnerParameters(f.getPath(), goals, profiles);
   }

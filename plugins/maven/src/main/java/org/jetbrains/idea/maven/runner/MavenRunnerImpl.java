@@ -23,6 +23,8 @@ import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenExternalExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
+import org.jetbrains.idea.maven.project.FoldersConfigurator;
+import org.jetbrains.idea.maven.project.MavenException;
 
 import java.util.List;
 
@@ -142,9 +144,13 @@ public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunne
   }
 
   private void onRunComplete() {
-    executor = null;
-    if (mySettings.isSyncAfterBuild()) {
+    try {
+      executor = null;
+      FoldersConfigurator.updateProjectExcludedFolders(project);
       VirtualFileManager.getInstance().refresh(false);
+    }
+    catch (MavenException e) {
+      throw new RuntimeException(e);
     }
   }
 
