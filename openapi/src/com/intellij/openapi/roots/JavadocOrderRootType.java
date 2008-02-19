@@ -5,7 +5,7 @@ package com.intellij.openapi.roots;
  */
 public class JavadocOrderRootType extends OrderRootType {
   private JavadocOrderRootType() {
-    super("JAVADOC", "javadocPath", "javadoc-paths", true);
+    super("JAVADOC", "javadocPath", "javadoc-paths", "javadocPathEntry", true);
   }
 
   /**

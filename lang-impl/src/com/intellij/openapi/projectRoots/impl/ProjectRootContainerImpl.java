@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.ProjectRootListener;
 import com.intellij.openapi.projectRoots.ex.ProjectRoot;
 import com.intellij.openapi.projectRoots.ex.ProjectRootContainer;
-import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -219,14 +218,11 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
       SimpleProjectRoot projectRoot = new SimpleProjectRoot(url);
       String type = root.getChild("property").getAttributeValue("value");
 
-      if (type.equals("sourcePathEntry")) {
-        addRoot(projectRoot, OrderRootType.SOURCES);
-      }
-      else if (type.equals("javadocPathEntry")) {
-        addRoot(projectRoot, JavadocOrderRootType.getInstance());
-      }
-      else if (type.equals("classPathEntry")) {
-        addRoot(projectRoot, OrderRootType.CLASSES);
+      for(OrderRootType rootType: OrderRootType.getAllTypes()) {
+        if (type.equals(rootType.getOldSdkRootName())) {
+          addRoot(projectRoot, rootType);
+          break;
+        }
       }
     }
 

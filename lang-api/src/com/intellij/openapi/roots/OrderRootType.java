@@ -34,15 +34,18 @@ public class OrderRootType {
   private String myName;
   private String mySdkRootName;
   private String myModulePathsName;
+  private String myOldSdkRootName;
   private static OrderRootType[] ourPersistentOrderRootTypes = new OrderRootType[0];
   private static boolean ourExtensionsLoaded = false;
 
   public static final ExtensionPointName<OrderRootType> EP_NAME = ExtensionPointName.create("com.intellij.orderRootType");
 
-  protected OrderRootType(@NonNls String name, @NonNls String sdkRootName, @NonNls String modulePathsName, boolean persistent) {
+  protected OrderRootType(@NonNls String name, @NonNls String sdkRootName, @NonNls String modulePathsName, @NonNls final String oldSdkRootName,
+                          boolean persistent) {
     myName = name;
     mySdkRootName = sdkRootName;
     myModulePathsName = modulePathsName;
+    myOldSdkRootName = oldSdkRootName;
     if (persistent) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourPersistentOrderRootTypes = ArrayUtil.append(ourPersistentOrderRootTypes, this);
@@ -52,22 +55,22 @@ public class OrderRootType {
   /**
    * Classpath.
    */
-  public static final OrderRootType CLASSES_AND_OUTPUT = new OrderRootType("CLASSES_AND_OUTPUT", null, null, false);
+  public static final OrderRootType CLASSES_AND_OUTPUT = new OrderRootType("CLASSES_AND_OUTPUT", null, null, null, false);
 
   /**
    * Classpath for compilation
    */
-  public static final OrderRootType COMPILATION_CLASSES = new OrderRootType("COMPILATION_CLASSES", null, null, false);
+  public static final OrderRootType COMPILATION_CLASSES = new OrderRootType("COMPILATION_CLASSES", null, null, null, false);
 
   /**
    * Classpath without output directories for this module.
    */
-  public static final OrderRootType CLASSES = new OrderRootType("CLASSES", "classPath", null, true);
+  public static final OrderRootType CLASSES = new OrderRootType("CLASSES", "classPath", null, "classPathEntry", true);
 
   /**
    * Sources.
    */
-  public static final OrderRootType SOURCES = new OrderRootType("SOURCES", "sourcePath", null, true);
+  public static final OrderRootType SOURCES = new OrderRootType("SOURCES", "sourcePath", null, "sourcePathEntry", true);
 
   public String name() {
     return myName;
@@ -78,6 +81,10 @@ public class OrderRootType {
    */
   public String getSdkRootName() {
     return mySdkRootName;
+  }
+
+  public String getOldSdkRootName() {
+    return myOldSdkRootName;
   }
 
   /**

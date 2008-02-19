@@ -18,7 +18,7 @@ public class AnnotationOrderRootType extends OrderRootType {
   }
 
   private AnnotationOrderRootType() {
-    super("ANNOTATIONS", "annotationsPath", "annotation-paths", true);
+    super("ANNOTATIONS", "annotationsPath", "annotation-paths", null, true);
   }
 
   public boolean skipWriteIfEmpty() {
