@@ -22,9 +22,14 @@ public class XmlFilterLexer extends BaseFilterLexer {
 
     if (tokenType == XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN) {
       scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES, true, false);
-    } else if (tokenType == XmlElementType.XML_NAME || tokenType == XmlElementType.XML_DATA_CHARACTERS) {
+    }
+    else if (tokenType == XmlElementType.XML_NAME || tokenType == XmlElementType.XML_DATA_CHARACTERS) {
       scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES, false, false);
-    } else {
+    }
+    else if (tokenType == XmlElementType.XML_ENTITY_REF_TOKEN || tokenType == XmlElementType.XML_CHAR_ENTITY_REF) {
+      scanWordsInToken(UsageSearchContext.IN_CODE, false, false);
+    }
+    else {
       scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT, false, false);
     }
 

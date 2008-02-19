@@ -9,6 +9,8 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.XmlAttributeLiteralEscaper;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElementType;
@@ -21,7 +23,7 @@ import java.util.List;
 /**
  * @author Mike
  */
-public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttributeValue, PsiLanguageInjectionHost {
+public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttributeValue, PsiLanguageInjectionHost, PsiMetaOwner, PsiMetaData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttributeValueImpl");
   private volatile PsiReference[] myCachedReferences;
   private volatile long myModCount;
@@ -112,5 +114,28 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   }
   public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {
     InjectedLanguageUtil.enumerate(this, visitor);
+  }
+
+  public PsiMetaData getMetaData() {
+    return this;
+  }
+
+  public PsiElement getDeclaration() {
+    return this;
+  }
+
+  public String getName(final PsiElement context) {
+    return getValue();
+  }
+
+  public String getName() {
+    return getValue();
+  }
+
+  public void init(final PsiElement element) {
+  }
+
+  public Object[] getDependences() {
+    return new Object[0];
   }
 }

@@ -13,8 +13,6 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 
@@ -30,11 +28,7 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
     String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
         String text = null;
-
-        if (refElement instanceof XmlAttributeValue) {
-          text = ((XmlAttributeValue)refElement).getValue();
-        }
-        else if (refElement instanceof PsiFile) {
+        if (refElement instanceof PsiFile) {
           final VirtualFile vFile = ((PsiFile)refElement).getVirtualFile();
           if (vFile != null) {
             text = vFile.getNameWithoutExtension();
@@ -79,15 +73,7 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
       }
     };
 
-    short searchContext;
-    if (refElement instanceof XmlEntityDecl) {
-      searchContext = UsageSearchContext.IN_PLAIN_TEXT;
-    }
-    else {
-      searchContext = UsageSearchContext.IN_CODE |
-                      UsageSearchContext.IN_FOREIGN_LANGUAGES |
-                      UsageSearchContext.IN_COMMENTS;
-    }
+    short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_COMMENTS;
 
     final PsiSearchHelper helper = PsiManager.getInstance(refElement.getProject()).getSearchHelper();
     return helper.processElementsWithWord(processor, searchScope, text, searchContext, 
