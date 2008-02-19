@@ -313,7 +313,7 @@ public class JavaFoldingBuilder implements FoldingBuilder {
 
   private boolean addToFold(List<FoldingDescriptor> list, PsiElement elementToFold, Document document, boolean allowOneLiners) {
     LOG.assertTrue(elementToFold.isValid());
-    TextRange range = JavaFoldingBuilder.getRangeToFold(elementToFold);
+    TextRange range = getRangeToFold(elementToFold);
     if (range == null) return false;
     final TextRange fileRange = elementToFold.getContainingFile().getTextRange();
     if (range.equals(fileRange)) return false;

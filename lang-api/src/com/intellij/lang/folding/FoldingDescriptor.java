@@ -27,8 +27,8 @@ import com.intellij.openapi.util.TextRange;
 public class FoldingDescriptor {
   public static final FoldingDescriptor[] EMPTY = new FoldingDescriptor[0];
 
-  private ASTNode myElement;
-  private TextRange myRange;
+  private final ASTNode myElement;
+  private final TextRange myRange;
 
   /**
    * Creates a folding region related to the specified AST node and covering the specified
