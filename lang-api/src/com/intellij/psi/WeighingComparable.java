@@ -53,7 +53,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
       if (weight == null) weight = NULL;
       myComputedWeighs[index] = weight;
     }
-    return weight;
+    return weight == NULL ? null : weight;
   }
 
   public String toString() {
