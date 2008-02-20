@@ -1,10 +1,12 @@
 package org.jetbrains.idea.maven.runner.executor;
 
+import org.jetbrains.idea.maven.core.util.Path;
+
 import java.io.File;
 import java.util.*;
 
 public class MavenRunnerParameters implements Cloneable {
-  private String myPomPath;
+  private Path myPomPath;
   private List<String> myGoals;
   private SortedSet<String> myProfiles;
 
@@ -19,19 +21,19 @@ public class MavenRunnerParameters implements Cloneable {
   }
 
   public MavenRunnerParameters(MavenRunnerParameters that) {
-    this(that.myPomPath, that.myGoals, that.myProfiles);
+    this(that.getPomPath(), that.myGoals, that.myProfiles);
   }
 
   public String getPomPath() {
-    return myPomPath;
+    return myPomPath.getPath();
   }
 
   public void setPomPath(String pomPath) {
-    myPomPath = pomPath;
+    myPomPath = new Path(pomPath);
   }
 
   public File getPomFile() {
-    return new File(myPomPath);
+    return new File(myPomPath.getPath());
   }
 
   public File getWorkingDir() {
