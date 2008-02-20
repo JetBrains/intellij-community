@@ -984,6 +984,10 @@ public class RootModelImpl implements ModifiableRootModel {
   public VirtualFile[] getRootPaths(final OrderRootType rootType) {
     final VirtualFilePointerContainer container = myOrderRootPointerContainers.get(rootType);
     if (container != null) return container.getFiles();
+    for (ModuleExtension extension : myExtensions) {
+      final VirtualFile[] files = extension.getRootPaths(rootType);
+      if (files != null) return files;
+    }
     return VirtualFile.EMPTY_ARRAY;
   }
 
@@ -991,6 +995,10 @@ public class RootModelImpl implements ModifiableRootModel {
   public String[] getRootUrls(final OrderRootType rootType) {
     final VirtualFilePointerContainer container = myOrderRootPointerContainers.get(rootType);
     if (container != null) return container.getUrls();
+    for (ModuleExtension extension : myExtensions) {
+      final String[] urls = extension.getRootUrls(rootType);
+      if (urls != null) return urls;
+    }
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 

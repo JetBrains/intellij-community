@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   @NonNls private static final String OUTPUT_TAG = "output";
@@ -323,5 +325,36 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
       myVirtualFilePointers.clear();
       myModule = null;
     }
+  }
+
+  @Nullable
+  @Override
+  public VirtualFile[] getRootPaths(final OrderRootType type) {
+    if (OrderRootType.CLASSES_AND_OUTPUT.equals(type) || OrderRootType.COMPILATION_CLASSES.equals(type)) {
+      final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+      VirtualFile outputRoot = getCompilerOutputPath();
+      if (outputRoot != null) result.add(outputRoot);
+      final VirtualFile outputPathForTests = getCompilerOutputPathForTests();
+      if (outputPathForTests != null && !outputPathForTests.equals(outputRoot)) {
+        result.add(outputPathForTests);
+      }
+      return result.toArray(new VirtualFile[result.size()]);
+    }
+    return null;
+  }
+
+  @Override
+  public String[] getRootUrls(final OrderRootType type) {
+    if (OrderRootType.CLASSES_AND_OUTPUT.equals(type) || OrderRootType.COMPILATION_CLASSES.equals(type)) {
+      final List<String> result = new ArrayList<String>();
+      String outputRoot = getCompilerOutputUrl();
+      if (outputRoot != null) result.add(outputRoot);
+      final String outputPathForTests = getCompilerOutputUrlForTests();
+      if (outputPathForTests != null && !outputPathForTests.equals(outputRoot)) {
+        result.add(outputPathForTests);
+      }
+      return result.toArray(new String[result.size()]);
+    }
+    return null;
   }
 }
