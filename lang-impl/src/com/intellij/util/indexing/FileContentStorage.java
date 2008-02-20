@@ -7,10 +7,7 @@ import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -72,6 +69,10 @@ public class FileContentStorage {
       if (bytes != null && bytes.length > 0) {
         myCache.put(FileBasedIndex.getFileId(file), bytes);
       }
+    }
+    catch (FileNotFoundException ignored) {
+      // may happen, if content was never queried before
+      // In this case the index for this file must not have been built and it is ok to ignore the file
     }
     catch (IOException e) {
       LOG.error(e);
