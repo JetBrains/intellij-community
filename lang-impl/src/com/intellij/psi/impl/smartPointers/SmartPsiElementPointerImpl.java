@@ -99,10 +99,6 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   private static boolean areElementKindEqual(PsiElement element1, PsiElement element2) {
-    if (element1 instanceof PsiType) {
-      return element2 instanceof PsiType;
-    }
-
     return element1.getClass().equals(element2.getClass()); //?
   }
 
