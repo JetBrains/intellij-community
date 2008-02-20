@@ -30,8 +30,8 @@ public class ClassNameReferenceEditor extends ReferenceEditorWithBrowseButton {
     super(null, manager.getProject(), new Function<String,Document>() {
       public Document fun(final String s) {
         PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
-        final PsiCodeFragment fragment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createReferenceCodeFragment(s, defaultPackage, true, true);
-        fragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+        final JavaCodeFragment fragment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createReferenceCodeFragment(s, defaultPackage, true, true);
+        fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
         if (resolveScope != null) {
           fragment.forceResolveScope(resolveScope);
         }

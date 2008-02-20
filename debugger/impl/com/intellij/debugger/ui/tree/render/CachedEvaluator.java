@@ -54,7 +54,7 @@ public abstract class CachedEvaluator {
       }
       final PsiType contextType = DebuggerUtils.getType(getClassName(), project);
       cache.myPsiChildrenExpression = null;
-      PsiCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(myReferenceExpression, contextClass, project);
+      JavaCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(myReferenceExpression, contextClass, project);
       codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));
       codeFragment.setThisType(contextType);
       DebuggerUtils.checkSyntax(codeFragment);

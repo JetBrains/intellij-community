@@ -29,8 +29,8 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
 
   private static Document createDocument(final String text, PsiManager manager, boolean isClassesAccepted) {
     PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
-    final PsiCodeFragment fragment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
-    fragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+    final JavaCodeFragment fragment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
+    fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
     return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
   }
 

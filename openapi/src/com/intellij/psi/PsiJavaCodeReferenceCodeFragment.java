@@ -22,7 +22,7 @@ package com.intellij.psi;
  * @author ven
  * @see PsiElementFactory#createReferenceCodeFragment(String, PsiElement, boolean, boolean)
  */
-public interface PsiJavaCodeReferenceCodeFragment extends PsiCodeFragment {
+public interface PsiJavaCodeReferenceCodeFragment extends JavaCodeFragment {
   /**
    * Returns the reference contained in the fragment.
    *

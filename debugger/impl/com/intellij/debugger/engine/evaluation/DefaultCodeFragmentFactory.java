@@ -5,12 +5,12 @@
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 
@@ -27,15 +27,15 @@ public class DefaultCodeFragmentFactory implements CodeFragmentFactory {
     return SingletonHolder.ourInstance;
   }
 
-  public PsiCodeFragment createPresentationCodeFragment(final TextWithImports item, final PsiElement context, final Project project) {
+  public JavaCodeFragment createPresentationCodeFragment(final TextWithImports item, final PsiElement context, final Project project) {
     return createCodeFragment(item, context, project);
   }
 
-  public PsiCodeFragment createCodeFragment(TextWithImports item, PsiElement context, Project project) {
+  public JavaCodeFragment createCodeFragment(TextWithImports item, PsiElement context, Project project) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     final String text = item.getText();
 
-    final PsiCodeFragment fragment;
+    final JavaCodeFragment fragment;
     if (CodeFragmentKind.EXPRESSION == item.getKind()) {
       final String expressionText = StringUtil.endsWithChar(text, ';')? text.substring(0, text.length() - 1) : text;
       fragment = elementFactory.createExpressionCodeFragment(expressionText, context, null, true);
@@ -47,7 +47,7 @@ public class DefaultCodeFragmentFactory implements CodeFragmentFactory {
     if(item.getImports().length() > 0) {
       fragment.addImportsFromString(item.getImports());
     }
-    fragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+    fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
     //noinspection HardCodedStringLiteral
     fragment.putUserData(DebuggerExpressionComboBox.KEY, "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR");
 

@@ -522,7 +522,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     processCodeBlock(keepInOneLine(block), block.getTextRange());
   }
 
-  @Override public void visitCodeFragment(PsiCodeFragment codeFragment) {
+  @Override public void visitCodeFragment(JavaCodeFragment codeFragment) {
     final TokenSet statementBitSet = ElementType.STATEMENT_BIT_SET;
     if (statementBitSet.contains(myChild1.getElementType()) && statementBitSet.contains(myChild2.getElementType())) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);

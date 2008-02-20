@@ -71,7 +71,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     if (document != null) {
       PsiDocumentManager.getInstance(project).commitDocument(document);
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      return createText(psiFile.getText(), ((PsiCodeFragment)psiFile).importsToString());
+      return createText(psiFile.getText(), ((JavaCodeFragment)psiFile).importsToString());
     }
 
     return createText("");
@@ -110,7 +110,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     if(item == null) {
       item = createText("");
     }
-    PsiCodeFragment codeFragment = myFactory.createPresentationCodeFragment(item, myContext, getProject());
+    JavaCodeFragment codeFragment = myFactory.createPresentationCodeFragment(item, myContext, getProject());
     codeFragment.forceResolveScope(GlobalSearchScope.allScope(myProject));
     if (myContext != null) {
       final PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(myContext, PsiClass.class);

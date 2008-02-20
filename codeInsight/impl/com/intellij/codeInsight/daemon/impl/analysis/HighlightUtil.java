@@ -1271,7 +1271,7 @@ public class HighlightUtil {
         // do not highlight incomplete declarations
         return null;
       }
-      else if (typeOwner instanceof PsiCodeFragment) {
+      else if (typeOwner instanceof JavaCodeFragment) {
         if (typeOwner.getUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT) != null) return null;
       }
     }

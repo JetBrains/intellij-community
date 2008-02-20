@@ -38,8 +38,8 @@ public class PsiThisExpressionImpl extends ExpressionPsiElement implements PsiTh
       else if (scope instanceof PsiExpressionList && scope.getParent() instanceof PsiAnonymousClass){
         scope = scope.getParent();
       }
-      else if (scope instanceof PsiCodeFragment){
-        PsiType fragmentThisType = ((PsiCodeFragment)scope).getThisType();
+      else if (scope instanceof JavaCodeFragment){
+        PsiType fragmentThisType = ((JavaCodeFragment)scope).getThisType();
         if (fragmentThisType != null) return fragmentThisType;
       }
     }

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author dsl
  * @see PsiElementFactory#createTypeCodeFragment(String, PsiElement, boolean)
  */
-public interface PsiTypeCodeFragment extends PsiCodeFragment {
+public interface PsiTypeCodeFragment extends JavaCodeFragment {
   /**
    * Returns the type referenced by the code fragment.
    *

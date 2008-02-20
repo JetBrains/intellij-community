@@ -18,7 +18,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.IdentifierCharFilter;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.inCallers.CallerChooser;
 import com.intellij.refactoring.ui.*;
@@ -553,7 +552,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     }
 
     final List<PsiTypeCodeFragment> codeFraments = myParametersTableModel.getCodeFraments();
-    final List<PsiCodeFragment> defaultValueFraments = myParametersTableModel.getDefaultValueFraments();
+    final List<JavaCodeFragment> defaultValueFraments = myParametersTableModel.getDefaultValueFraments();
     ParameterInfo[] parameterInfos = myParametersTableModel.getParameters();
     final int newParametersNumber = parameterInfos.length;
     LOG.assertTrue(codeFraments.size() == newParametersNumber);

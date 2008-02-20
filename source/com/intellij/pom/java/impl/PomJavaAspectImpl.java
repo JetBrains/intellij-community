@@ -33,10 +33,8 @@ package com.intellij.pom.java.impl;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.PomElement;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
@@ -47,15 +45,13 @@ import com.intellij.pom.java.events.JavaTreeChanged;
 import com.intellij.pom.java.events.PomJavaAspectChangeSet;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.events.TreeChangeEvent;
-import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
 public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.pom.java.impl.PomJavaAspectImpl");
   private final Project myProject;
   private final PsiManager myPsiManager;
 
@@ -63,10 +59,6 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
     myProject = project;
     myPsiManager = psiManager;
     PomManager.getModel(project).registerAspect(PomJavaAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));
-  }
-
-  public PsiManager getPsiManager() {
-    return myPsiManager;
   }
 
   public LanguageLevel getLanguageLevel() {
@@ -79,6 +71,7 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
   public void projectClosed() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "PomJavaModel";
   }
@@ -97,18 +90,5 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
     final PomJavaAspectChangeSet set = new PomJavaAspectChangeSet(model, containingFile);
     set.addChange(new JavaTreeChanged(containingFile));
     event.registerChangeSet(PomJavaAspectImpl.this, set);
-  }
-
-  public PomModelEvent getEvent() {
-    return null;
-  }
-
-  public PomElement getMorph(PomElement element) {
-    //TODO
-    return null;
-  }
-
-  private boolean isJavaFile(final PsiFile file) {
-    return file instanceof PsiJavaFile || file instanceof PsiCodeFragment;
   }
 }

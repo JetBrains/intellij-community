@@ -15,13 +15,11 @@
  */
 package com.intellij.psi;
 
-import com.intellij.psi.search.GlobalSearchScope;
-
 /**
  * Represents a fragment of Java code which exists outside of a project structure (for example,
  * in a foreign language code or in a user interface element other than the main source code editor).
  */
-public interface PsiCodeFragment extends PsiImportHolder, IntentionFilterOwner {
+public interface JavaCodeFragment extends PsiImportHolder, IntentionFilterOwner, PsiCodeFragment {
 
 
   /**
@@ -99,14 +97,6 @@ public interface PsiCodeFragment extends PsiImportHolder, IntentionFilterOwner {
    * @return the exception handler instance.
    */
   ExceptionHandler getExceptionHandler();
-
-  /**
-   * Force search scope for this fragment
-   * @param scope Scope to use when resolving references in this context
-   */
-  void forceResolveScope(GlobalSearchScope scope);
-
-  GlobalSearchScope getForcedResolveScope();
 
   /**
    * Interface used to determine the visibility of declarations from the code fragment.

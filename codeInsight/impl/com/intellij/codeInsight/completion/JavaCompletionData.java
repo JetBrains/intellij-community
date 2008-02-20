@@ -47,7 +47,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     initVariantsInFieldScope();
 
     defineScopeEquivalence(PsiMethod.class, PsiClassInitializer.class);
-    defineScopeEquivalence(PsiMethod.class, PsiCodeFragment.class);
+    defineScopeEquivalence(PsiMethod.class, JavaCodeFragment.class);
   }
 
   private void declareCompletionSpaces() {
@@ -637,7 +637,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 
   private static final AndFilter START_OF_CODE_FRAGMENT = new AndFilter(
     new ScopeFilter(new AndFilter(
-      new ClassFilter(PsiCodeFragment.class),
+      new ClassFilter(JavaCodeFragment.class),
       new ClassFilter(PsiExpressionCodeFragment.class, false),
       new ClassFilter(PsiJavaCodeReferenceCodeFragment.class, false),
       new ClassFilter(PsiTypeCodeFragment.class, false)

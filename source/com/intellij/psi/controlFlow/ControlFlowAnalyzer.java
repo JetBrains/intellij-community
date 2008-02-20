@@ -323,7 +323,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     return true;
   }
 
-  @Override public void visitCodeFragment(PsiCodeFragment codeFragment) {
+  @Override public void visitCodeFragment(JavaCodeFragment codeFragment) {
     startElement(codeFragment);
     int prevOffset = myCurrentFlow.getSize();
     PsiElement[] children = codeFragment.getChildren();

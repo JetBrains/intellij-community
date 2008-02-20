@@ -18,15 +18,15 @@ package com.intellij.debugger.engine.evaluation;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiElement;
 
 public interface CodeFragmentFactory {
   ExtensionPointName<CodeFragmentFactory> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.debugger.codeFragmentFactory");
 
-  PsiCodeFragment createCodeFragment(TextWithImports item, PsiElement context, Project project);
+  JavaCodeFragment createCodeFragment(TextWithImports item, PsiElement context, Project project);
 
-  PsiCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project);
+  JavaCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project);
 
   boolean isContextAccepted(PsiElement contextElement);
 

@@ -64,7 +64,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     private Evaluator myResult = null;
     private PsiClass myContextPsiClass;
     private CodeFragmentEvaluator myCurrentFragmentEvaluator;
-    private Set<PsiCodeFragment> myVisitedFragments = new HashSet<PsiCodeFragment>();
+    private Set<JavaCodeFragment> myVisitedFragments = new HashSet<JavaCodeFragment>();
     @Nullable
     private final SourcePosition myPosition;
 
@@ -72,7 +72,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       myPosition = position;
     }
 
-    @Override public void visitCodeFragment(PsiCodeFragment codeFragment) {
+    @Override public void visitCodeFragment(JavaCodeFragment codeFragment) {
       myVisitedFragments.add(codeFragment);
       ArrayList<Evaluator> evaluators = new ArrayList<Evaluator>();
 

@@ -371,7 +371,7 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitAnonymousClass(enumConstantInitializer);
   }
 
-  public void visitCodeFragment(PsiCodeFragment codeFragment) {
+  public void visitCodeFragment(JavaCodeFragment codeFragment) {
     visitFile(codeFragment);
   }
 }

@@ -27,8 +27,8 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     myClassName = className;
     myPlace = place;
     final PsiFile file = myPlace.getContainingFile();
-    if (file instanceof PsiCodeFragment) {
-      if (((PsiCodeFragment)file).getVisibilityChecker() != null) myPlace = null;
+    if (file instanceof JavaCodeFragment) {
+      if (((JavaCodeFragment)file).getVisibilityChecker() != null) myPlace = null;
     }
     if (place instanceof PsiReferenceExpression) {
       final PsiReferenceExpression expression = (PsiReferenceExpression)place;

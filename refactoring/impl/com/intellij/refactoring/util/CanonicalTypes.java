@@ -22,7 +22,7 @@ public class CanonicalTypes {
     @NonNls
     public abstract String getTypeText();
 
-    public abstract void addImportsTo(final PsiCodeFragment codeFragment);
+    public abstract void addImportsTo(final JavaCodeFragment codeFragment);
   }
 
   private static class Primitive extends Type {
@@ -39,7 +39,7 @@ public class CanonicalTypes {
       return myType.getPresentableText();
     }
 
-    public void addImportsTo(final PsiCodeFragment codeFragment) {}
+    public void addImportsTo(final JavaCodeFragment codeFragment) {}
   }
 
   private static class Array extends Type {
@@ -57,7 +57,7 @@ public class CanonicalTypes {
       return myComponentType.getTypeText() + "[]";
     }
 
-    public void addImportsTo(final PsiCodeFragment codeFragment) {
+    public void addImportsTo(final JavaCodeFragment codeFragment) {
       myComponentType.addImportsTo(codeFragment);
     }
   }
@@ -77,7 +77,7 @@ public class CanonicalTypes {
       return myComponentType.getTypeText() + "...";
     }
 
-    public void addImportsTo(final PsiCodeFragment codeFragment) {
+    public void addImportsTo(final JavaCodeFragment codeFragment) {
       myComponentType.addImportsTo(codeFragment);
     }
   }
@@ -106,7 +106,7 @@ public class CanonicalTypes {
       return "? " + (myIsExtending ? "extends " : "super ") + myBound.getTypeText();
     }
 
-    public void addImportsTo(final PsiCodeFragment codeFragment) {
+    public void addImportsTo(final JavaCodeFragment codeFragment) {
       if (myBound != null) myBound.addImportsTo(codeFragment);
     }
   }
@@ -126,7 +126,7 @@ public class CanonicalTypes {
       return myText;
     }
 
-    public void addImportsTo(final PsiCodeFragment codeFragment) {}
+    public void addImportsTo(final JavaCodeFragment codeFragment) {}
   }
 
 
@@ -168,7 +168,7 @@ public class CanonicalTypes {
       return myOriginalText;
     }
 
-    public void addImportsTo(final PsiCodeFragment codeFragment) {
+    public void addImportsTo(final JavaCodeFragment codeFragment) {
       codeFragment.addImportsFromString(myClassQName);
       final Collection<Type> types = mySubstitutor.values();
       for (Type type : types) {

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashMap;
 import java.util.StringTokenizer;
 
-public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment {
+public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment {
   private PsiElement myContext;
   private boolean myPhysical;
   private PsiType myThisType;

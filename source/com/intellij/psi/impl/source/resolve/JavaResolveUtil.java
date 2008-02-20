@@ -39,13 +39,13 @@ public class JavaResolveUtil {
     if (modifierList == null) return true;
     final PsiFile placeContainingFile = place.getContainingFile();
     final PsiManager manager = placeContainingFile.getManager();
-    if (placeContainingFile instanceof PsiCodeFragment) {
-      PsiCodeFragment fragment = (PsiCodeFragment)placeContainingFile;
-      PsiCodeFragment.VisibilityChecker visibilityChecker = fragment.getVisibilityChecker();
+    if (placeContainingFile instanceof JavaCodeFragment) {
+      JavaCodeFragment fragment = (JavaCodeFragment)placeContainingFile;
+      JavaCodeFragment.VisibilityChecker visibilityChecker = fragment.getVisibilityChecker();
       if (visibilityChecker != null) {
-        PsiCodeFragment.VisibilityChecker.Visibility visibility = visibilityChecker.isDeclarationVisible(member, place);
-        if (visibility == PsiCodeFragment.VisibilityChecker.Visibility.VISIBLE) return true;
-        if (visibility == PsiCodeFragment.VisibilityChecker.Visibility.NOT_VISIBLE) return false;
+        JavaCodeFragment.VisibilityChecker.Visibility visibility = visibilityChecker.isDeclarationVisible(member, place);
+        if (visibility == JavaCodeFragment.VisibilityChecker.Visibility.VISIBLE) return true;
+        if (visibility == JavaCodeFragment.VisibilityChecker.Visibility.NOT_VISIBLE) return false;
       }
     }
     else if (placeContainingFile instanceof XmlFile && !PsiUtil.isInJspFile(placeContainingFile)) return true;

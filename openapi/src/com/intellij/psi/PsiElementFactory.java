@@ -372,7 +372,8 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
    *                   (see {@link PsiElement#isPhysical()}).
    * @return the created code fragment.
    */
-  @NotNull PsiCodeFragment createCodeBlockCodeFragment(@NotNull String text, PsiElement context, boolean isPhysical);
+  @NotNull
+  JavaCodeFragment createCodeBlockCodeFragment(@NotNull String text, PsiElement context, boolean isPhysical);
 
   /**
    * Creates a Java type code fragment from the text of the name of a Java type (the name

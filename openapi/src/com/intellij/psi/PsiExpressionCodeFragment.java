@@ -20,7 +20,7 @@ package com.intellij.psi;
  *
  * @see PsiElementFactory#createExpressionCodeFragment(String, PsiElement, PsiType, boolean)
  */
-public interface PsiExpressionCodeFragment extends PsiCodeFragment {
+public interface PsiExpressionCodeFragment extends JavaCodeFragment {
   /**
    * Returns the expression contained in the fragment.
    *

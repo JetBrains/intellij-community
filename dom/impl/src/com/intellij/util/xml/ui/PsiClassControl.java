@@ -46,7 +46,7 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
     }
     ReferenceEditorWithBrowseButton editor = new ReferenceEditorWithBrowseButton(null, "", PsiManager.getInstance(project), true);
     Document document = editor.getChildComponent().getDocument();
-    PsiCodeFragment fragment = (PsiCodeFragment)PsiDocumentManager.getInstance(project).getPsiFile(document);
+    JavaCodeFragment fragment = (JavaCodeFragment)PsiDocumentManager.getInstance(project).getPsiFile(document);
     assert fragment != null;
     fragment.setIntentionActionsFilter(IntentionFilterOwner.IntentionActionsFilter.EVERYTHING_AVAILABLE);
     fragment.putUserData(ModuleUtil.KEY_MODULE, getDomWrapper().getExistingDomElement().getModule());

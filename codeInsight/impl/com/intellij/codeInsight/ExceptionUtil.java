@@ -432,9 +432,9 @@ public class ExceptionUtil {
         return true;
       }
     }
-    else if (parent instanceof PsiCodeFragment) {
-      PsiCodeFragment codeFragment = (PsiCodeFragment)parent;
-      PsiCodeFragment.ExceptionHandler exceptionHandler = codeFragment.getExceptionHandler();
+    else if (parent instanceof JavaCodeFragment) {
+      JavaCodeFragment codeFragment = (JavaCodeFragment)parent;
+      JavaCodeFragment.ExceptionHandler exceptionHandler = codeFragment.getExceptionHandler();
       return exceptionHandler != null && exceptionHandler.isHandledException(exceptionType);
     }
     else if (PsiUtil.isInJspFile(parent) && parent instanceof PsiFile) {

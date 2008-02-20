@@ -35,8 +35,8 @@ public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiS
       if (scope instanceof PsiExpressionList && scope.getParent() instanceof PsiAnonymousClass){
         scope = scope.getParent();
       }
-      else if (scope instanceof PsiCodeFragment) {
-        PsiType fragmentSuperType = ((PsiCodeFragment)scope).getSuperType();
+      else if (scope instanceof JavaCodeFragment) {
+        PsiType fragmentSuperType = ((JavaCodeFragment)scope).getSuperType();
         if (fragmentSuperType != null) return fragmentSuperType;
       }
     }

@@ -747,7 +747,7 @@ public class ExpectedTypesProvider {
       }
     }
 
-    @Override public void visitCodeFragment(PsiCodeFragment codeFragment) {
+    @Override public void visitCodeFragment(JavaCodeFragment codeFragment) {
       if (codeFragment instanceof PsiExpressionCodeFragment) {
         final PsiType type = ((PsiExpressionCodeFragment)codeFragment).getExpectedType();
         if (type != null) {

@@ -17,7 +17,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ParameterTableModel");
   private List<ParameterInfo> myParameterInfos;
   private List<PsiTypeCodeFragment> myTypeCodeFraments;
-  private List<PsiCodeFragment> myDefaultValuesCodeFragments;
+  private List<JavaCodeFragment> myDefaultValuesCodeFragments;
   private final PsiParameterList myParameterList;
   private final PsiReferenceExpression myReferenceExpression; //if change signature was invoked on mehod reference, this is it. Default value is edited in the context of this ref
   private final ChangeSignatureDialog myDialog;
@@ -38,7 +38,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
     return Collections.unmodifiableList(myTypeCodeFraments);
   }
 
-  public List<PsiCodeFragment> getDefaultValueFraments() {
+  public List<JavaCodeFragment> getDefaultValueFraments() {
     return Collections.unmodifiableList(myDefaultValuesCodeFragments);
   }
 
@@ -170,10 +170,10 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
     }
   }
 
-  private PsiCodeFragment createDefaultValueCodeFragment(final String expressionText, final PsiType expectedType) {
+  private JavaCodeFragment createDefaultValueCodeFragment(final String expressionText, final PsiType expectedType) {
     PsiExpressionCodeFragment codeFragment = JavaPsiFacade.getInstance(myParameterList.getProject()).getElementFactory().createExpressionCodeFragment(expressionText,
                                                                                                                            myReferenceExpression, expectedType, true);
-    codeFragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+    codeFragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
     return codeFragment;
   }
 
@@ -196,7 +196,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
   public void setParameterInfos(List<ParameterInfo> parameterInfos, PsiElement context) {
     myParameterInfos = parameterInfos;
     myTypeCodeFraments = new ArrayList<PsiTypeCodeFragment>(parameterInfos.size());
-    myDefaultValuesCodeFragments = new ArrayList<PsiCodeFragment>(parameterInfos.size());
+    myDefaultValuesCodeFragments = new ArrayList<JavaCodeFragment>(parameterInfos.size());
     for (ParameterInfo parameterInfo : parameterInfos) {
       final PsiTypeCodeFragment typeCodeFragment = createParameterTypeCodeFragment(parameterInfo.getTypeText(), context);
       parameterInfo.getTypeWrapper().addImportsTo(typeCodeFragment);

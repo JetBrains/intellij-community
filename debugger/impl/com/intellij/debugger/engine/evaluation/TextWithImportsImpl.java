@@ -1,10 +1,11 @@
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.ui.DebuggerEditorImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionCodeFragment;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public class TextWithImportsImpl implements TextWithImports{
@@ -20,7 +21,7 @@ public class TextWithImportsImpl implements TextWithImports{
     PsiFile containingFile = expression.getContainingFile();
     if(containingFile instanceof PsiExpressionCodeFragment) {
       myText = text;
-      myImports = ((PsiCodeFragment)containingFile).importsToString();
+      myImports = ((JavaCodeFragment)containingFile).importsToString();
     }
     else {
       final int separatorIndex = text.indexOf(DebuggerEditorImpl.SEPARATOR);
