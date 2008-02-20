@@ -8,34 +8,29 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author spleaner
  */
 public class RenameTagBeginOrEndIntentionAction implements LocalQuickFix {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.RenameTagBeginOrEndIntentionAction");
 
   private boolean myStart;
-  private CompositeElement myParent;
-  private XmlToken myTarget;
   private String myTargetName;
   private String mySourceName;
 
-  RenameTagBeginOrEndIntentionAction(@NotNull final CompositeElement parent,
-                                     @NotNull final XmlToken target,
-                                     @NotNull final String targetName,
-                                     @NotNull final String sourceName,
-                                     final boolean start) {
-    myParent = parent;
-    myTarget = target;
+  RenameTagBeginOrEndIntentionAction(@NotNull final String targetName, @NotNull final String sourceName, final boolean start) {
     myTargetName = targetName;
     mySourceName = sourceName;
     myStart = start;
@@ -54,17 +49,47 @@ public class RenameTagBeginOrEndIntentionAction implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    if (myTarget.isValid()) {
-      if (!CodeInsightUtilBase.prepareFileForWrite(myTarget.getContainingFile())) {
-        return;
+    final PsiElement psiElement = descriptor.getPsiElement();
+    if (!psiElement.isValid()) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(psiElement.getContainingFile())) return;
+
+    if (psiElement instanceof XmlToken) {
+      PsiElement target = null;
+      final String text = psiElement.getText();
+      if (!myTargetName.equals(text)) {
+        target = psiElement;
+      }
+      else {
+        // we're in the other
+        PsiElement parent = psiElement.getParent();
+        if (parent instanceof PsiErrorElement) {
+          parent = parent.getParent();
+        }
+
+        if (parent instanceof XmlTag) {
+          if (myStart) {
+            target = XmlTagUtil.getStartTagNameElement((XmlTag)parent);
+          }
+          else {
+            target = XmlTagUtil.getEndTagNameElement((XmlTag) parent);
+            if (target == null) {
+              final PsiErrorElement errorElement = PsiTreeUtil.getChildOfType(parent, PsiErrorElement.class);
+              target = XmlWrongClosingTagNameInspection.findEndTagName(errorElement);
+            }
+          }
+        }
       }
 
-      new WriteCommandAction(project) {
-        protected void run(final Result result) throws Throwable {
+      if (target != null) {
+        try {
           final XmlTag newTag = JavaPsiFacade.getInstance(project).getElementFactory().createTagFromText("<" + myTargetName + "/>");
-          CodeEditUtil.replaceChild(myParent, myTarget.getNode(), newTag.getChildren()[1].getNode());
+          target.replace(newTag.getChildren()[1]);
         }
-      }.execute();
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+
     }
   }
 }

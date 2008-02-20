@@ -248,6 +248,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   }
 
   public void setName(final String name) throws IncorrectOperationException {
-    myName = name;
+    // IDEADEV-11439
+    myName = null;
   }
 }
