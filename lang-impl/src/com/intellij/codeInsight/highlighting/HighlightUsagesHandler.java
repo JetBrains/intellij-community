@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.FindManager;
@@ -102,12 +101,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
   @Nullable
   private static PsiElement getTargetElement(Editor editor, PsiFile file) {
-    PsiElement target = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase
-      .ELEMENT_NAME_ACCEPTED | TargetElementUtilBase
-      .REFERENCED_ELEMENT_ACCEPTED |
-                                                            TargetElementUtil
-                                                              .NEW_AS_CONSTRUCTOR | TargetElementUtilBase
-      .LOOKUP_ITEM_ACCEPTED);
+    PsiElement target = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.getInstance().getReferenceSearchFlags());
 
     if (target == null) {
       int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());

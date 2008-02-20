@@ -39,6 +39,20 @@ public class TargetElementUtilBase {
     return REFERENCED_ELEMENT_ACCEPTED | ELEMENT_NAME_ACCEPTED | LOOKUP_ITEM_ACCEPTED;
   }
 
+  /**
+   * Accepts THIS or SUPER but not NEW_AS_CONSTRUCTOR.
+   */
+  public int getDefinitionSearchFlags() {
+    return getAllAccepted();
+  }
+
+  /**
+   * Accepts NEW_AS_CONSTRUCTOR but not THIS or SUPER.
+   */
+  public int getReferenceSearchFlags() {
+    return getAllAccepted();
+  }
+
   @Nullable
   public static PsiReference findReference(Editor editor) {
     return findReference(editor, editor.getCaretModel().getOffset());

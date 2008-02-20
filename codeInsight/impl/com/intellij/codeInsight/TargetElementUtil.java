@@ -27,6 +27,14 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return super.getAllAccepted() | NEW_AS_CONSTRUCTOR | THIS_ACCEPTED | SUPER_ACCEPTED;
   }
 
+  public int getDefinitionSearchFlags() {
+    return super.getDefinitionSearchFlags() | THIS_ACCEPTED | SUPER_ACCEPTED;
+  }
+
+  public int getReferenceSearchFlags() {
+    return super.getReferenceSearchFlags() | NEW_AS_CONSTRUCTOR;
+  }
+
   @Nullable
   @Override
   public PsiElement findTargetElement(final Editor editor, final int flags, final int offset) {

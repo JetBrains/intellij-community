@@ -1,6 +1,5 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -67,15 +66,12 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     return PsiUtilBase.getLanguageAtOffset(psiFile, mostProbablyCorrectLanguageOffset);
   }
 
-  private PsiElement getPsiElementIn(final Editor editor, VirtualFile file) {
+  @Nullable
+  private static PsiElement getPsiElementIn(final Editor editor, VirtualFile file) {
     final PsiFile psiFile = getPsiFile(editor, file);
     if (psiFile == null) return null;
 
-    return TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase
-      .REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase
-      .ELEMENT_NAME_ACCEPTED | TargetElementUtil
-      .NEW_AS_CONSTRUCTOR | TargetElementUtilBase
-      .LOOKUP_ITEM_ACCEPTED);
+    return TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.getInstance().getReferenceSearchFlags());
   }
 
   private static PsiFile getPsiFile(Editor e, VirtualFile file) {

@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -13,14 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ImplementationSearcher {
-  public static final int FLAGS = TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED
-                                  | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED
-                                  | TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED
-                                  | TargetElementUtil.THIS_ACCEPTED
-                                  | TargetElementUtil.SUPER_ACCEPTED;
-
   public PsiElement[] searchImplementations(final Editor editor, final PsiElement element, final int offset) {
-    boolean onRef = TargetElementUtilBase.getInstance().findTargetElement(editor, FLAGS & ~TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED, offset) == null;
+    boolean onRef = TargetElementUtilBase.getInstance().findTargetElement(editor, getFlags() & ~TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED, offset) == null;
     final boolean isAbstract =
       element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.ABSTRACT);
     return searchImplementations(editor, element, offset, onRef && !isAbstract, onRef);
@@ -62,5 +55,9 @@ public class ImplementationSearcher {
 
   protected PsiElement[] filterElements(@Nullable Editor editor, PsiElement element, PsiElement[] targetElements, final int offset) {
     return targetElements;
+  }
+
+  public static int getFlags() {
+    return TargetElementUtilBase.getInstance().getDefinitionSearchFlags();
   }
 }

@@ -22,7 +22,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     final int offset = editor.getCaretModel().getOffset();
-    final PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.FLAGS, offset);
+    final PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
 
     PsiElement[] result = new ImplementationSearcher().searchImplementations(editor, element, offset);
     if (result.length > 0) {

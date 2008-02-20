@@ -323,7 +323,7 @@ public class CtrlMouseHandler implements ProjectComponent {
       }
       targetElement = GotoDeclarationAction.findTargetElement(myProject, editor, offset);
     } else if ( browseMode == BrowseMode.Implementation ) {
-      final PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.FLAGS, offset);
+      final PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
       PsiElement[] targetElements = new ImplementationSearcher() {
         @NotNull
         protected PsiElement[] searchDefinitions(final PsiElement element) {
