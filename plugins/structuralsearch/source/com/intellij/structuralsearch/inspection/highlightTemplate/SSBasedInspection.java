@@ -15,7 +15,6 @@
  */
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -66,7 +65,7 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.GENERAL_GROUP_NAME;
+    return GENERAL_GROUP_NAME;
   }
 
   @NotNull
