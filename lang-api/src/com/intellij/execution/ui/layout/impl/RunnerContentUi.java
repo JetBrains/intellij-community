@@ -1,4 +1,4 @@
-package com.intellij.execution.ui.layout;
+package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.actions.RestoreViewAction;
 import com.intellij.openapi.Disposable;
@@ -28,7 +28,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-public class NewDebuggerContentUI
+public class RunnerContentUi
   implements ContentUI, Disposable, CellTransform.Facade, ViewContext,
              PropertyChangeListener {
 
@@ -64,11 +64,11 @@ public class NewDebuggerContentUI
   boolean myUiLastStateWasRestored;
 
   private Set<Object> myRestoreStateRequestors = new HashSet<Object>();
-  public static final DataKey<NewDebuggerContentUI> KEY = DataKey.create("DebuggerContentUI");
+  public static final DataKey<RunnerContentUi> KEY = DataKey.create("DebuggerContentUI");
   private final String myActionsPlace;
   private ToolWindowManager myFocusManager;
 
-  public NewDebuggerContentUI(Project project, ActionManager actionManager, ToolWindowManager focusManager, RunnerLayout settings, String sessionName, @NotNull ActionGroup topActions, String actionsPlace) {
+  public RunnerContentUi(Project project, ActionManager actionManager, ToolWindowManager focusManager, RunnerLayout settings, String sessionName, @NotNull ActionGroup topActions, String actionsPlace) {
     myProject = project;
     myLayoutSettings = settings;
     myActionManager = actionManager;
@@ -86,7 +86,7 @@ public class NewDebuggerContentUI
             return getGridFor(info).getData(dataId);
           }
         } else if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
-          return NewDebuggerContentUI.this;
+          return RunnerContentUi.this;
         }
         return super.getData(dataId);
       }
@@ -150,11 +150,11 @@ public class NewDebuggerContentUI
         getGridFor(event.getContent(), true).add(event.getContent(), false);
         updateTabsUI(false);
 
-        event.getContent().addPropertyChangeListener(NewDebuggerContentUI.this);
+        event.getContent().addPropertyChangeListener(RunnerContentUi.this);
       }
 
       public void contentRemoved(final ContentManagerEvent event) {
-        event.getContent().removePropertyChangeListener(NewDebuggerContentUI.this);
+        event.getContent().removePropertyChangeListener(RunnerContentUi.this);
 
         Grid grid = findGridFor(event.getContent());
         if (grid != null) {
@@ -338,7 +338,7 @@ public class NewDebuggerContentUI
     try {
       setStateIsBeingRestored(true, this);
 
-      if (!NewDebuggerContentUI.ensureValid(myTabs)) return;
+      if (!RunnerContentUi.ensureValid(myTabs)) return;
 
 
       List<TabInfo> tabs = new ArrayList<TabInfo>();
@@ -477,7 +477,7 @@ public class NewDebuggerContentUI
   }
 
   public ActionGroup getLayoutActions() {
-    return (ActionGroup)myActionManager.getAction(NewDebuggerContentUI.LAYOUT);
+    return (ActionGroup)myActionManager.getAction(RunnerContentUi.LAYOUT);
   }
 
   public void updateActionsImmediately() {
@@ -496,7 +496,7 @@ public class NewDebuggerContentUI
     @Nullable
     public Object getData(@NonNls final String dataId) {
       if (KEY.getName().equals(dataId)) {
-        return NewDebuggerContentUI.this;
+        return RunnerContentUi.this;
       }
       else {
         return null;
@@ -520,7 +520,7 @@ public class NewDebuggerContentUI
     public void removeNotify() {
       super.removeNotify();
 
-      if (Disposer.isDisposed(NewDebuggerContentUI.this)) return;
+      if (Disposer.isDisposed(RunnerContentUi.this)) return;
 
       saveUiState();
     }

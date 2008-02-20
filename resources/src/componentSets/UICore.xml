@@ -47,7 +47,7 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.execution.ui.layout.RunnerLayoutSettings</implementation-class>
+      <implementation-class>com.intellij.execution.ui.layout.impl.RunnerLayoutSettings</implementation-class>
     </component>
   </application-components>
 </components>

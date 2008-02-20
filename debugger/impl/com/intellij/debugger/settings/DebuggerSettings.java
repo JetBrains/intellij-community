@@ -8,7 +8,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.execution.ui.layout.RunnerLayoutSettings;
+import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 

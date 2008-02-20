@@ -1,6 +1,6 @@
 package com.intellij.execution.ui.layout.actions;
 
-import com.intellij.execution.ui.layout.ViewContext;
+import com.intellij.execution.ui.layout.impl.ViewContext;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.content.Content;
 

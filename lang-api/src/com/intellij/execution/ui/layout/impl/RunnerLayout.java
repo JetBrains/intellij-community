@@ -1,4 +1,4 @@
-package com.intellij.execution.ui.layout;
+package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;

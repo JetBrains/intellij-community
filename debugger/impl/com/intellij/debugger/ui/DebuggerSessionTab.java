@@ -10,7 +10,7 @@ import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.execution.ui.layout.NewDebuggerContentUI;
+import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.impl.VariablesPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
@@ -29,8 +29,8 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.*;
-import com.intellij.execution.ui.layout.RunnerLayout;
-import com.intellij.execution.ui.layout.View;
+import com.intellij.execution.ui.layout.impl.RunnerLayout;
+import com.intellij.execution.ui.layout.impl.View;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
@@ -96,7 +96,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   private Content myFramesContent;
   private Content myVarsContent;
   private Content myWatchesContent;
-  private NewDebuggerContentUI myContentUI;
+  private RunnerContentUi myContentUI;
   private FramesPanel myFramesPanel;
 
   public DebuggerSessionTab(Project project, String sessionName) {
@@ -149,7 +149,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
 
 
-    myContentUI = new NewDebuggerContentUI(getProject(), ActionManager.getInstance(), ToolWindowManager.getInstance(getProject()), getLayoutSettings(),
+    myContentUI = new RunnerContentUi(getProject(), ActionManager.getInstance(), ToolWindowManager.getInstance(getProject()), getLayoutSettings(),
                                            DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName, stepping, ActionPlaces.DEBUGGER_TOOLBAR);
 
 
@@ -538,7 +538,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     myContentUI.restoreLayout();
   }
 
-  public NewDebuggerContentUI getContentUi() {
+  public RunnerContentUi getContentUi() {
     return myContentUI;
   }
 

@@ -1,9 +1,9 @@
 package com.intellij.execution.ui.layout.actions;
 
-import com.intellij.execution.ui.layout.Grid;
-import com.intellij.execution.ui.layout.GridCell;
-import com.intellij.execution.ui.layout.Tab;
-import com.intellij.execution.ui.layout.ViewContext;
+import com.intellij.execution.ui.layout.impl.Grid;
+import com.intellij.execution.ui.layout.impl.GridCell;
+import com.intellij.execution.ui.layout.impl.Tab;
+import com.intellij.execution.ui.layout.impl.ViewContext;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.content.Content;
