@@ -60,8 +60,9 @@ public class ChangeTrackingValueContainer<Value> extends ValueContainer<Value>{
   public IntIterator getInputIdsIterator(final Value value) {
     return getMergedData().getInputIdsIterator(value);
   }
-
-  private ValueContainer<Value> getMergedData() {
+  // need 'synchronized' to ensure atomic initialization of merged data
+  // because several threads that acquired read lock may simultaneously execute the method
+  private synchronized ValueContainer<Value> getMergedData() {
     if (myMerged != null) {
       return myMerged;
     }
