@@ -4,6 +4,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
+import com.intellij.xdebugger.impl.evaluate.QuickEvaluateHandler;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -60,4 +61,7 @@ public abstract class DebuggerSupport {
 
   @NotNull
   public abstract DebuggerActionHandler getEvaluateHandler();
+
+  @NotNull
+  public abstract QuickEvaluateHandler getQuickEvaluateHandler();  
 }

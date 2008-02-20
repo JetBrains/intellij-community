@@ -7,6 +7,8 @@ import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import com.intellij.xdebugger.impl.actions.handlers.*;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointPanelProvider;
+import com.intellij.xdebugger.impl.evaluate.QuickEvaluateHandler;
+import com.intellij.xdebugger.impl.evaluate.XQuickEvaluateHandler;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,6 +28,7 @@ public class XDebuggerSupport extends DebuggerSupport {
   private XDebuggerPauseActionHandler myPauseHandler;
   private XDebuggerSuspendedActionHandler myShowExecutionPointHandler;
   private XDebuggerEvaluateActionHandler myEvaluateHandler;
+  private XQuickEvaluateHandler myQuickEvaluateHandler;
 
   public XDebuggerSupport() {
     myBreakpointPanelProvider = new XBreakpointPanelProvider();
@@ -73,6 +76,7 @@ public class XDebuggerSupport extends DebuggerSupport {
       }
     };
     myEvaluateHandler = new XDebuggerEvaluateActionHandler();
+    myQuickEvaluateHandler = new XQuickEvaluateHandler();
   }
 
   @NotNull
@@ -138,6 +142,11 @@ public class XDebuggerSupport extends DebuggerSupport {
   @NotNull
   public DebuggerActionHandler getEvaluateHandler() {
     return myEvaluateHandler;
+  }
+
+  @NotNull
+  public QuickEvaluateHandler getQuickEvaluateHandler() {
+    return myQuickEvaluateHandler;
   }
 
 }

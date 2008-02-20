@@ -303,7 +303,7 @@
       <action id="Resume" class="com.intellij.xdebugger.impl.actions.ResumeAction" icon="/actions/resume.png"/>
       <separator/>
       <action id="EvaluateExpression" class="com.intellij.xdebugger.impl.actions.EvaluateAction" icon="/debugger/evaluateExpression.png"/>
-      <action id="QuickEvaluateExpression" class="com.intellij.debugger.actions.QuickEvaluateAction"/>
+      <action id="QuickEvaluateExpression" class="com.intellij.xdebugger.impl.actions.QuickEvaluateAction"/>
       <action id="ShowExecutionPoint" class="com.intellij.xdebugger.impl.actions.ShowExecutionPointAction"
               icon="/debugger/showCurrentFrame.png"/>
       <separator/>

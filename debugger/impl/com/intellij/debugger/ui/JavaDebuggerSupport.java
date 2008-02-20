@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.evaluate.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
@@ -36,6 +37,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   private ToggleLineBreakpointActionHandler myToggleLineBreakpointActionHandler;
   private ShowExecutionPointActionHandler myShowExecutionPointActionHandler;
   private EvaluateActionHandler myEvaluateActionHandler;
+  private QuickEvaluateActionHandler myQuickEvaluateHandler;
 
   public JavaDebuggerSupport() {
     myBreakpointPanelProvider = new JavaBreakpointPanelProvider();
@@ -51,39 +53,12 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     myToggleLineBreakpointActionHandler = new ToggleLineBreakpointActionHandler();
     myShowExecutionPointActionHandler = new ShowExecutionPointActionHandler();
     myEvaluateActionHandler = new EvaluateActionHandler();
+    myQuickEvaluateHandler = new QuickEvaluateActionHandler();
   }
 
   @NotNull
   public BreakpointPanelProvider<?> getBreakpointPanelProvider() {
     return myBreakpointPanelProvider;
-  }
-
-  private static class JavaBreakpointPanelProvider extends BreakpointPanelProvider<Breakpoint> {
-    @NotNull
-    public Collection<AbstractBreakpointPanel<Breakpoint>> getBreakpointPanels(@NotNull final Project project, @NotNull final DialogWrapper parentDialog) {
-      List<AbstractBreakpointPanel<Breakpoint>> panels = new ArrayList<AbstractBreakpointPanel<Breakpoint>>();
-      final BreakpointFactory[] allFactories = ApplicationManager.getApplication().getExtensions(BreakpointFactory.EXTENSION_POINT_NAME);
-      for (BreakpointFactory factory : allFactories) {
-        BreakpointPanel panel = factory.createBreakpointPanel(project, parentDialog);
-        if (panel != null) {
-          panel.setupPanelUI();
-          panels.add(panel);
-        }
-      }
-      return panels;
-    }
-
-    public int getPriority() {
-      return 1;
-    }
-
-    public Breakpoint findBreakpoint(@NotNull final Project project, @NotNull final Document document, final int offset) {
-      return DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().findBreakpoint(document, offset, null);
-    }
-
-    public void onDialogClosed(final Project project) {
-      DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().updateAllRequests();
-    }
   }
 
   @NotNull
@@ -144,5 +119,38 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   @NotNull
   public DebuggerActionHandler getEvaluateHandler() {
     return myEvaluateActionHandler;
+  }
+
+  @NotNull
+  public QuickEvaluateHandler getQuickEvaluateHandler() {
+    return myQuickEvaluateHandler;
+  }
+
+  private static class JavaBreakpointPanelProvider extends BreakpointPanelProvider<Breakpoint> {
+    @NotNull
+    public Collection<AbstractBreakpointPanel<Breakpoint>> getBreakpointPanels(@NotNull final Project project, @NotNull final DialogWrapper parentDialog) {
+      List<AbstractBreakpointPanel<Breakpoint>> panels = new ArrayList<AbstractBreakpointPanel<Breakpoint>>();
+      final BreakpointFactory[] allFactories = ApplicationManager.getApplication().getExtensions(BreakpointFactory.EXTENSION_POINT_NAME);
+      for (BreakpointFactory factory : allFactories) {
+        BreakpointPanel panel = factory.createBreakpointPanel(project, parentDialog);
+        if (panel != null) {
+          panel.setupPanelUI();
+          panels.add(panel);
+        }
+      }
+      return panels;
+    }
+
+    public int getPriority() {
+      return 1;
+    }
+
+    public Breakpoint findBreakpoint(@NotNull final Project project, @NotNull final Document document, final int offset) {
+      return DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().findBreakpoint(document, offset, null);
+    }
+
+    public void onDialogClosed(final Project project) {
+      DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().updateAllRequests();
+    }
   }
 }
