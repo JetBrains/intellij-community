@@ -25,7 +25,11 @@ public class MovePackagesHandler extends MoveClassesOrPackagesHandlerBase {
     for(PsiElement element: elements) {
       if (!isPackageOrDirectory(element)) return false;
     }
-    return targetContainer == null || isPackageOrDirectory(targetContainer);
+    return super.canMove(elements, targetContainer);
+  }
+
+  public boolean isValidTarget(final PsiElement psiElement) {
+    return isPackageOrDirectory(psiElement);
   }
 
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {

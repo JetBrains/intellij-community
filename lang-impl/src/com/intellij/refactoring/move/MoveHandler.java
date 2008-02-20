@@ -116,4 +116,14 @@ public class MoveHandler implements RefactoringActionHandler {
 
     return false;
   }
+
+  public static boolean isValidTarget(final PsiElement psiElement) {
+    if (psiElement != null) {
+      for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
+        if (delegate.isValidTarget(psiElement)) return true;
+      }
+    }
+
+    return false;
+  }
 }

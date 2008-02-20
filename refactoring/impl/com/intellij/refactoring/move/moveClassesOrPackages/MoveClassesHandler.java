@@ -14,8 +14,12 @@ public class MoveClassesHandler extends MoveClassesOrPackagesHandlerBase {
       if (!(element instanceof PsiClass)) return false;
       if (!(element.getParent() instanceof PsiFile)) return false;
     }
-    return targetContainer == null || targetContainer instanceof PsiClass ||
-           MovePackagesHandler.isPackageOrDirectory(targetContainer);
+    return super.canMove(elements, targetContainer);
+  }
+
+  public boolean isValidTarget(final PsiElement psiElement) {
+    return psiElement instanceof PsiClass ||
+           MovePackagesHandler.isPackageOrDirectory(psiElement);
   }
 
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference) {

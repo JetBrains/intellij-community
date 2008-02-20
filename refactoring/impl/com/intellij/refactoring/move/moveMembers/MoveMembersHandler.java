@@ -13,8 +13,11 @@ public class MoveMembersHandler extends MoveHandlerDelegate {
     for(PsiElement element: elements) {
       if (!isFieldOrStaticMethod(element)) return false;
     }
-    return targetContainer == null ||
-           (targetContainer instanceof PsiClass && !(targetContainer instanceof PsiAnonymousClass));
+    return super.canMove(elements, targetContainer);
+  }
+
+  public boolean isValidTarget(final PsiElement psiElement) {
+    return psiElement instanceof PsiClass && !(psiElement instanceof PsiAnonymousClass);
   }
 
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {

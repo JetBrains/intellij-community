@@ -17,7 +17,11 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
 
   public boolean canMove(final PsiElement[] elements, final PsiElement targetContainer) {
     if (!canMoveFiles(elements) && !canMoveDirectories(elements)) return false;
-    return targetContainer == null || targetContainer instanceof PsiDirectory || targetContainer instanceof PsiDirectoryContainer;
+    return super.canMove(elements, targetContainer);
+  }
+
+  public boolean isValidTarget(final PsiElement psiElement) {
+    return psiElement instanceof PsiDirectory || psiElement instanceof PsiDirectoryContainer;
   }
 
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {

@@ -14,6 +14,10 @@ public abstract class MoveHandlerDelegate {
   public static final ExtensionPointName<MoveHandlerDelegate> EP_NAME = ExtensionPointName.create("com.intellij.refactoring.moveHandler");
 
   public boolean canMove(PsiElement[] elements, @Nullable final PsiElement targetContainer) {
+    return targetContainer == null || isValidTarget(targetContainer);
+  }
+
+  public boolean isValidTarget(final PsiElement psiElement) {
     return false;
   }
 

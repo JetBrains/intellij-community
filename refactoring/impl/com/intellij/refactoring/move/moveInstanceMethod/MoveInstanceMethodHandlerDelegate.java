@@ -16,8 +16,11 @@ public class MoveInstanceMethodHandlerDelegate extends MoveHandlerDelegate {
     if (element instanceof JspHolderMethod) return false;
     PsiMethod method = (PsiMethod) element;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    return targetContainer == null ||
-           (targetContainer instanceof PsiClass && !(targetContainer instanceof PsiAnonymousClass));
+    return super.canMove(elements, targetContainer);
+  }
+
+  public boolean isValidTarget(final PsiElement psiElement) {
+    return psiElement instanceof PsiClass && !(psiElement instanceof PsiAnonymousClass);
   }
 
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference) {
