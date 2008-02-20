@@ -41,7 +41,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -100,12 +99,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     if (myFile == null) return TextEditorHighlightingPass.EMPTY_ARRAY;
 
     if (myCompiled) {
-      if (myFile instanceof PsiJavaFile) {
-        passesToIgnore = EXCEPT_OVERRIDDEN;
-      }
-      else {
-        return TextEditorHighlightingPass.EMPTY_ARRAY;
-      }
+      passesToIgnore = EXCEPT_OVERRIDDEN;
     }
     else if (myProject.isDisposed() || !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(myFile)) {
       return TextEditorHighlightingPass.EMPTY_ARRAY;
