@@ -57,7 +57,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     return set.toArray(new String[set.size()]);
   }
 
-  public NavigationItem[] getItemsByName(String name, Project project, boolean includeNonProjectItems) {
+  public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
     GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
     PsiShortNamesCache cache = JavaPsiFacade.getInstance(project).getShortNamesCache();
 

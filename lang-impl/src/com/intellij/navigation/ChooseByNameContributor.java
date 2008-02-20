@@ -45,10 +45,10 @@ public interface ChooseByNameContributor {
    * Returns the list of navigation items matching the specified name.
    *
    * @param name                   the name selected from the list.
+   * @param pattern                the original pattern entered in the dialog
    * @param project                the project in which the navigation is performed.
    * @param includeNonProjectItems if true, the navigation items for non-project items (for example,
-   *                               library classes) should be included in the returned array.
-   * @return the array of navigation items.
+   *                               library classes) should be included in the returned array. @return the array of navigation items.
    */
-  NavigationItem[] getItemsByName(String name, Project project, boolean includeNonProjectItems);
+  NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems);
 }

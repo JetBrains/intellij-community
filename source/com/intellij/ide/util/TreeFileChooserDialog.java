@@ -309,7 +309,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
 
   private final class MyGotoFileModel implements ChooseByNameModel {
     private int myMaxSize = WindowManagerEx.getInstanceEx().getFrame(myProject).getSize().width;
-    public Object[] getElementsByName(final String name, final boolean checkBoxState) {
+    public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern) {
       final PsiFile[] psiFiles = JavaPsiFacade.getInstance(myProject).getShortNamesCache().getFilesByName(name);
       return filterFiles(psiFiles);
     }

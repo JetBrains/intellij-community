@@ -155,7 +155,7 @@ public class GotoActionModel implements ChooseByNameModel {
     }
   }
 
-  public Object[] getElementsByName(final String id, final boolean checkBoxState) {
+  public Object[] getElementsByName(final String id, final boolean checkBoxState, final String pattern) {
     final HashMap<AnAction, String> map = new HashMap<AnAction, String>();
     final ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     collectActions(id, map, mainMenu, mainMenu.getTemplatePresentation().getText());

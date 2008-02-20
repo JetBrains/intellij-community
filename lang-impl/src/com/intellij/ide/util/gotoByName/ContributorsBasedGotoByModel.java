@@ -69,11 +69,11 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
     return names.toArray(new String[names.size()]);
   }
 
-  public Object[] getElementsByName(String name, boolean checkBoxState) {
+  public Object[] getElementsByName(String name, boolean checkBoxState, final String pattern) {
     List<NavigationItem> items = new ArrayList<NavigationItem>();
     for (ChooseByNameContributor contributor : myContributors) {
       try {
-        items.addAll(Arrays.asList(contributor.getItemsByName(name, myProject, checkBoxState)));
+        items.addAll(Arrays.asList(contributor.getItemsByName(name, pattern, myProject, checkBoxState)));
       }
       catch(Exception ex) {
         LOG.error(ex);

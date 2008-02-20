@@ -18,7 +18,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
@@ -739,7 +738,7 @@ public abstract class ChooseByNameBase{
 
     for (final String name : names) {
       if (text.equalsIgnoreCase(name)) {
-        final Object[] elements = myModel.getElementsByName(name, checkBoxState);
+        final Object[] elements = myModel.getElementsByName(name, checkBoxState, text);
         if (elements.length > 1) return Collections.emptyList();
         if (elements.length == 0) continue;
         if (uniqueElement != null) return Collections.emptyList();
@@ -970,8 +969,7 @@ public abstract class ChooseByNameBase{
       String namePattern = getNamePattern(pattern);
       String qualifierPattern = getQualifierPattern(pattern);
 
-      boolean isAnnotation = namePattern.startsWith("@");
-      boolean empty = namePattern.length() == 0 || isAnnotation && namePattern.length() == 1;
+      boolean empty = namePattern.length() == 0 || namePattern.equals("@");    // TODO[yole]: remove implicit dependency
       if (empty && !isShowListForEmptyPattern()) return;
 
       List<String> namesList = new ArrayList<String>();
@@ -988,14 +986,9 @@ public abstract class ChooseByNameBase{
         if (myCancelled) {
           throw new ProcessCanceledException();
         }
-        final Object[] elements = myModel.getElementsByName(name, myCheckboxState);
+        final Object[] elements = myModel.getElementsByName(name, myCheckboxState, namePattern);
         sameNameElements.clear();
         for (final Object element : elements) {
-          if (isAnnotation) {
-            if (!(element instanceof PsiClass)) continue;
-            if (!((PsiClass)element).isAnnotationType()) continue;
-          }
-
           if (matchesQualifier(element, qualifierPattern)) {
             sameNameElements.add(element);
           }

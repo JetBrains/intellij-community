@@ -43,7 +43,7 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
     return FilenameIndex.getAllFilenames();
   }
 
-  public NavigationItem[] getItemsByName(String name, Project project, boolean includeNonProjectItems) {
+  public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
     return FilenameIndex.getFilesByName(project, name,
                                         includeNonProjectItems ? ProjectScope.getAllScope(project) : ProjectScope.getProjectScope(project));
   }

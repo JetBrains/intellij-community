@@ -49,15 +49,17 @@ public class DefaultClassNavigationContributor implements GotoClassContributor {
     return JavaPsiFacade.getInstance(project).getShortNamesCache().getAllClassNames(includeNonProjectItems);
   }
 
-  public NavigationItem[] getItemsByName(String name, Project project, boolean includeNonProjectItems) {
+  public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
     final GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-    return filterUnshowable(JavaPsiFacade.getInstance(project).getShortNamesCache().getClassesByName(name, scope));
+    return filterUnshowable(JavaPsiFacade.getInstance(project).getShortNamesCache().getClassesByName(name, scope), pattern);
   }
 
-  private static NavigationItem[] filterUnshowable(PsiClass[] items) {
+  private static NavigationItem[] filterUnshowable(PsiClass[] items, final String pattern) {
+    boolean isAnnotation = pattern.startsWith("@");
     ArrayList<NavigationItem> list = new ArrayList<NavigationItem>(items.length);
     for (PsiClass item : items) {
       if (item.getContainingFile().getVirtualFile() == null) continue;
+      if (isAnnotation && !item.isAnnotationType()) continue;
       list.add(item);
     }
     return list.toArray(new NavigationItem[list.size()]);
