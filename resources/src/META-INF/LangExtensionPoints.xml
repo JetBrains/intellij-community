@@ -71,6 +71,8 @@
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.commenter"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.literalEscaper"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.braceMatcher"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.foldingBuilder"
