@@ -380,14 +380,26 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                   @NotNull final LookupItem item,
                                   final boolean signatureSelected,
                                   final char completionChar) {
-    final InsertHandler handler = item.getInsertHandler() != null ? item.getInsertHandler() : new BasicInsertHandler() {
-      public void handleInsert(final CompletionContext context, final int startOffset, final LookupData data, final LookupItem item,
-                               final boolean signatureSelected,
-                               final char completionChar) {
-        super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
-        item.getTailType().processTail(context.editor, context.editor.getCaretModel().getOffset());
-      }
-    };
+    final InsertHandler handler;
+    if (item.getInsertHandler() == null) {
+      handler = new InsertHandler() {
+        public void handleInsert(final CompletionContext context,
+                                 final int startOffset,
+                                 final LookupData data,
+                                 final LookupItem item,
+                                 final boolean signatureSelected,
+                                 final char completionChar) {
+          final int idEndOffset = context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
+          if (idEndOffset != context.getSelectionEndOffset() && CompletionUtil.isOverwrite(item, completionChar)) {
+            context.editor.getDocument().deleteString(context.getSelectionEndOffset(), idEndOffset);
+          }
+          item.getTailType().processTail(context.editor, context.editor.getCaretModel().getOffset());
+        }
+      };
+    }
+    else {
+      handler = item.getInsertHandler();
+    }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         PsiDocumentManager.getInstance(context.project).commitAllDocuments();
