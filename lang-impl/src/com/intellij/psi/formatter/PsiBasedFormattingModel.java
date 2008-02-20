@@ -123,7 +123,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
     return whiteSpace;
   }
 
-  private ASTNode findElementAt(final int offset) {
+  protected ASTNode findElementAt(final int offset) {
     PsiFile containingFile = myASTNode.getPsi().getContainingFile();
 
     PsiElement psiElement = InjectedLanguageUtil.findInjectedElementAt(containingFile, offset);
