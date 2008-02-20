@@ -306,7 +306,7 @@ public final class PsiUtil extends PsiUtilBase {
     return blockSoFar;
   }
 
-  public static boolean isInJspFile(final PsiElement element) {
+  public static boolean isInJspFile(@Nullable final PsiElement element) {
     if(element == null) return false;
     final PsiFile psiFile = element.getContainingFile();
     if(psiFile == null) return false;

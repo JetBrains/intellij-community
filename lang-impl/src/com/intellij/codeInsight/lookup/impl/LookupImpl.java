@@ -575,6 +575,24 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return true;
   }
 
+  public PsiFile getPsiFile() {
+    return PsiDocumentManager.getInstance(myEditor.getProject()).getPsiFile(myEditor.getDocument());
+  }
+
+  public PsiElement getPsiElement() {
+    PsiFile file = getPsiFile();
+    if (file == null) return null;
+
+    int offset = getEditor().getCaretModel().getOffset();
+    if (offset > 0) return file.findElementAt(offset - 1);
+
+    return file.findElementAt(offset + 1);
+  }
+
+  public Editor getEditor() {
+    return myEditor;
+  }
+
   public boolean isPositionedAboveCaret(){
     return myPositionedAbove.booleanValue();
   }

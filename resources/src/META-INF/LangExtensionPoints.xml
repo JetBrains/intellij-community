@@ -199,6 +199,7 @@
   <extensionPoint name="psi.referenceContributor" interface="com.intellij.psi.PsiReferenceContributor"/>
 
   <extensionPoint name="completion.contributor" interface="com.intellij.codeInsight.completion.CompletionContributor"/>
+  <extensionPoint name="lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter"/>
 
   <extensionPoint name="highlightRangeExtension" interface="com.intellij.codeInsight.daemon.impl.HighlightRangeExtension"/>
 

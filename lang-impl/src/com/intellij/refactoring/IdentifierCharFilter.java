@@ -5,18 +5,20 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.lookup.CharFilter;
+import com.intellij.codeInsight.lookup.Lookup;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
 */
-public class IdentifierCharFilter implements CharFilter {
+public class IdentifierCharFilter extends CharFilter {
   public static final IdentifierCharFilter INSTANCE = new IdentifierCharFilter();
 
   private IdentifierCharFilter() {
   }
 
-  public int accept(char c, final String prefix) {
-    if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
-    return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
+  public Result acceptChar(char c, @NotNull final String prefix, final Lookup lookup) {
+    if (Character.isJavaIdentifierPart(c)) return Result.ADD_TO_PREFIX;
+    return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
   }
 }

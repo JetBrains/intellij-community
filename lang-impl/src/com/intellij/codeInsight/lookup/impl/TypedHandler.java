@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.CharFilter;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -29,19 +30,19 @@ class TypedHandler implements TypedActionHandler {
     CharFilter charFilter = lookup.getCharFilter();
     final String prefix = lookup.getPrefix();
     final LookupItem<?> currentItem = lookup.getCurrentItem();
-    final int result = getLookupAction(charTyped, charFilter, prefix, currentItem);
+    final CharFilter.Result result = getLookupAction(charTyped, charFilter, prefix, currentItem, lookup);
 
     CommandProcessor.getInstance().executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), new Runnable() {
       public void run() {
         EditorModificationUtil.deleteSelectedText(editor);
-        if (result == CharFilter.ADD_TO_PREFIX) {
+        if (result == CharFilter.Result.ADD_TO_PREFIX) {
           lookup.setPrefix(lookup.getPrefix() + charTyped);
           EditorModificationUtil.insertStringAtCaret(editor, String.valueOf(charTyped));
         }
       }
     }, "", null);
 
-    if (result == CharFilter.ADD_TO_PREFIX){
+    if (result == CharFilter.Result.ADD_TO_PREFIX){
       lookup.updateList();
       Point point=lookup.calculatePosition();
       Dimension preferredSize = lookup.getComponent().getPreferredSize();
@@ -50,7 +51,7 @@ class TypedHandler implements TypedActionHandler {
       lookup.getList().repaint();
     }
     else{
-      if (result == CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP){
+      if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP){
         LookupItem item = lookup.getCurrentItem();
         if (item != null){
           FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.finishByDotEtc");
@@ -64,12 +65,12 @@ class TypedHandler implements TypedActionHandler {
     }
   }
 
-  private static int getLookupAction(final char charTyped, final CharFilter charFilter, final String prefix, final LookupItem<?> currentItem) {
+  private static CharFilter.Result getLookupAction(final char charTyped, final CharFilter charFilter, final String prefix, final LookupItem<?> currentItem, final Lookup lookup) {
     if (currentItem != null) {
       for (String lookupString : currentItem.getAllLookupStrings()) {
-        if (lookupString.startsWith(prefix + charTyped)) return CharFilter.ADD_TO_PREFIX;
+        if (lookupString.startsWith(prefix + charTyped)) return CharFilter.Result.ADD_TO_PREFIX;
       }
     }
-    return charFilter.accept(charTyped, prefix);
+    return charFilter.acceptChar(charTyped, prefix, lookup);
   }
 }

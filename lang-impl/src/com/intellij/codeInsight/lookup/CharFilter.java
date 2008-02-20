@@ -8,16 +8,24 @@
  */
 package com.intellij.codeInsight.lookup;
 
-public interface CharFilter {
-  int ADD_TO_PREFIX = 0;
-  int SELECT_ITEM_AND_FINISH_LOOKUP = 1;
-  int HIDE_LOOKUP = 2;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.extensions.ExtensionPointName;
+
+public abstract class CharFilter {
+  public static final ExtensionPointName<CharFilter> EP_NAME = ExtensionPointName.create("com.intellij.lookup.charFilter");
+
+  public static enum Result {
+    ADD_TO_PREFIX, SELECT_ITEM_AND_FINISH_LOOKUP, HIDE_LOOKUP
+  }
 
   /**
    * Informs about further action on typing character c when completion lookup has specified prefix
    * @param c character being inserted
    * @param prefix current completion prefix
-   * @return one of above constants
+   * @param lookup
+   * @return further action
    */
-  int accept(char c, final String prefix);
+  @Nullable
+  public abstract Result acceptChar(char c, @NotNull final String prefix, final Lookup lookup);
 }

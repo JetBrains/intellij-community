@@ -1,10 +1,12 @@
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-
-import org.jetbrains.annotations.Nullable;
 
 public interface Lookup extends UserDataHolder{
   char NORMAL_SELECT_CHAR = '\n';
@@ -30,4 +32,11 @@ public interface Lookup extends UserDataHolder{
   boolean isPositionedAboveCaret();
 
   boolean fillInCommonPrefix(boolean toCompleteUniqueName);
+
+  @Nullable
+  PsiElement getPsiElement();
+
+  Editor getEditor();
+
+  PsiFile getPsiFile();
 }
