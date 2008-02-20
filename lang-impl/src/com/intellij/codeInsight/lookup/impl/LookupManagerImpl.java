@@ -33,7 +33,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
 
   protected Lookup myActiveLookup = null;
   protected Editor myActiveLookupEditor = null;
-  private PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
+  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
   private boolean myIsDisposed;
   private EditorFactoryAdapter myEditorFactoryListener;
@@ -94,19 +94,11 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     myIsDisposed = true;
   }
 
-  public Lookup showLookup(final Editor editor, final LookupItem[] items, final String prefix, final LookupItemPreferencePolicy itemPreferencePolicy,
-                           final CharFilter filter) {
-    return showLookup(editor, items, prefix, itemPreferencePolicy, filter, null);
+  public Lookup showLookup(final Editor editor, final LookupItem[] items, final String prefix, final LookupItemPreferencePolicy itemPreferencePolicy) {
+    return showLookup(editor, items, prefix, itemPreferencePolicy, null);
   }
 
-  public Lookup showLookup(
-    final Editor editor,
-    LookupItem[] items,
-    String prefix,
-    LookupItemPreferencePolicy itemPreferencePolicy,
-    CharFilter filter,
-    @Nullable final String bottomText
-  ) {
+  public Lookup showLookup(final Editor editor, LookupItem[] items, String prefix, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable final String bottomText) {
     hideActiveLookup();
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
@@ -122,7 +114,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
       }
     }
 
-    sortItems(context, items, itemPreferencePolicy);
+    sortItems(context, items);
 
     final Alarm alarm = new Alarm();
     final Runnable request = new Runnable(){
@@ -138,7 +130,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     if (daemonCodeAnalyzer != null) {
       daemonCodeAnalyzer.setUpdateByTimerEnabled(false);
     }
-    myActiveLookup = new LookupImpl(myProject, editor, items, prefix, itemPreferencePolicy, filter, bottomText);
+    myActiveLookup = new LookupImpl(myProject, editor, items, prefix, itemPreferencePolicy, bottomText);
     myActiveLookupEditor = editor;
     ((LookupImpl)myActiveLookup).show();
     myActiveLookup.addLookupListener(
@@ -186,7 +178,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     }
   }
 
-  protected void sortItems(PsiElement context, LookupItem[] items, final LookupItemPreferencePolicy itemPreferencePolicy) {
+  protected void sortItems(PsiElement context, LookupItem[] items) {
     if (context == null || shouldSortItems(context.getContainingFile(), items)) {
       final PsiProximityComparator proximityComparator = new PsiProximityComparator(context);
 

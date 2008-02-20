@@ -39,4 +39,6 @@ public interface Lookup extends UserDataHolder{
   Editor getEditor();
 
   PsiFile getPsiFile();
+
+  boolean isCompletion();
 }

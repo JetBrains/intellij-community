@@ -59,7 +59,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private String myPrefix;
   private int myPreferredItemsCount;
   private final LookupItemPreferencePolicy myItemPreferencePolicy;
-  private final CharFilter myCharFilter;
 
   private RangeMarker myLookupStartMarker;
   private final String myInitialPrefix;
@@ -80,15 +79,13 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
                     Editor editor,
                     LookupItem[] items,
                     String prefix,
-                    LookupItemPreferencePolicy itemPreferencePolicy,
-                    CharFilter filter, final String bottomText){
+                    LookupItemPreferencePolicy itemPreferencePolicy, final String bottomText){
     super(new JPanel(new BorderLayout()));
     myProject = project;
     myEditor = editor;
     myItems = items;
     myPrefix = prefix;
     myItemPreferencePolicy = itemPreferencePolicy;
-    myCharFilter = filter;
 
     myEditor.putUserData(LOOKUP_IN_EDITOR_KEY, this);
 
@@ -579,6 +576,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return PsiDocumentManager.getInstance(myEditor.getProject()).getPsiFile(myEditor.getDocument());
   }
 
+  public boolean isCompletion() {
+    return myItemPreferencePolicy instanceof CompletionPreferencePolicy;
+  }
+
   public PsiElement getPsiElement() {
     PsiFile file = getPsiFile();
     if (file == null) return null;
@@ -615,10 +616,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     if (myCanceled){
       fireLookupCanceled();
     }
-  }
-
-  public CharFilter getCharFilter() {
-    return myCharFilter;
   }
 
   public void dispose() {

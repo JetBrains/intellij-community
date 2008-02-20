@@ -131,7 +131,7 @@ public class RenameDialog extends RefactoringDialog {
       LookupItem[] lookupItems = items.toArray(new LookupItem[items.size()]);
       editor.getCaretModel().moveToOffset(prefix.length());
       editor.getSelectionModel().removeSelection();
-      LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, null, IdentifierCharFilter.INSTANCE);
+      LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, null);
     }
   }
 

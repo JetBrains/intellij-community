@@ -54,7 +54,7 @@ public class NameSuggestionsManager {
     editor.getCaretModel().moveToOffset(prefix.length());
     editor.getSelectionModel().removeSelection();
     LookupItemPreferencePolicy first = pair.first;
-    LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, first, IdentifierCharFilter.INSTANCE);
+    LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, first);
   }
 
   public void nameSelected() {

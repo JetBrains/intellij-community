@@ -27,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public class XmlCharFilter extends CharFilter {
 
   public static boolean isInXmlContext(Lookup lookup) {
+    if (!lookup.isCompletion()) return false;
+
     PsiElement psiElement = lookup.getPsiElement();
     final PsiFile file = lookup.getPsiFile();
 

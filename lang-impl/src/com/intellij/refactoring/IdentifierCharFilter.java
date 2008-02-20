@@ -12,12 +12,10 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
 */
 public class IdentifierCharFilter extends CharFilter {
-  public static final IdentifierCharFilter INSTANCE = new IdentifierCharFilter();
-
-  private IdentifierCharFilter() {
-  }
 
   public Result acceptChar(char c, @NotNull final String prefix, final Lookup lookup) {
+    if (lookup.isCompletion()) return null;
+
     if (Character.isJavaIdentifierPart(c)) return Result.ADD_TO_PREFIX;
     return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
   }

@@ -10,8 +10,10 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
+import com.intellij.openapi.extensions.Extensions;
 
 import java.awt.*;
+import java.util.Arrays;
 
 class TypedHandler implements TypedActionHandler {
   private final TypedActionHandler myOriginalHandler;
@@ -27,10 +29,9 @@ class TypedHandler implements TypedActionHandler {
       return;
     }
 
-    CharFilter charFilter = lookup.getCharFilter();
     final String prefix = lookup.getPrefix();
     final LookupItem<?> currentItem = lookup.getCurrentItem();
-    final CharFilter.Result result = getLookupAction(charTyped, charFilter, prefix, currentItem, lookup);
+    final CharFilter.Result result = getLookupAction(charTyped, prefix, currentItem, lookup);
 
     CommandProcessor.getInstance().executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), new Runnable() {
       public void run() {
@@ -65,12 +66,19 @@ class TypedHandler implements TypedActionHandler {
     }
   }
 
-  private static CharFilter.Result getLookupAction(final char charTyped, final CharFilter charFilter, final String prefix, final LookupItem<?> currentItem, final Lookup lookup) {
+  private static CharFilter.Result getLookupAction(final char charTyped, final String prefix, final LookupItem<?> currentItem, final Lookup lookup) {
     if (currentItem != null) {
       for (String lookupString : currentItem.getAllLookupStrings()) {
         if (lookupString.startsWith(prefix + charTyped)) return CharFilter.Result.ADD_TO_PREFIX;
       }
     }
-    return charFilter.acceptChar(charTyped, prefix, lookup);
+    final CharFilter[] filters = Extensions.getExtensions(CharFilter.EP_NAME);
+    for (final CharFilter extension : filters) {
+      final CharFilter.Result result = extension.acceptChar(charTyped, prefix, lookup);
+      if (result != null) {
+        return result;
+      }
+    }
+    throw new AssertionError("c=" + charTyped + "; prefix=" + currentItem + "; filters=" + Arrays.toString(filters));
   }
 }

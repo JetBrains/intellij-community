@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
@@ -28,13 +27,7 @@ public class TestLookupManager extends LookupManagerImpl{
     myProject = project;
   }
 
-  public Lookup showLookup(
-      final Editor editor,
-      LookupItem[] items,
-      String prefix,
-      LookupItemPreferencePolicy itemPreferencePolicy,
-      CharFilter filter,
-      @Nullable String bottomText) {
+  public Lookup showLookup(final Editor editor, LookupItem[] items, String prefix, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable String bottomText) {
     hideActiveLookup();
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
@@ -49,9 +42,9 @@ public class TestLookupManager extends LookupManagerImpl{
         context = element;
       }
     }
-    sortItems(context, items, itemPreferencePolicy);
+    sortItems(context, items);
 
-    myActiveLookup = new LookupImpl(myProject, editor, items, prefix, itemPreferencePolicy, filter, bottomText);
+    myActiveLookup = new LookupImpl(myProject, editor, items, prefix, itemPreferencePolicy, bottomText);
     myActiveLookupEditor = editor;
     ((LookupImpl)myActiveLookup).show();
     return myActiveLookup;

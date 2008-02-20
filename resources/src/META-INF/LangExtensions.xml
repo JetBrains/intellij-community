@@ -155,6 +155,8 @@
   <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension"/>
 
   <completion.contributor implementation="com.intellij.codeInsight.completion.LegacyCompletionContributor"/>
+  <lookup.charFilter implementation="com.intellij.codeInsight.completion.CompletionCharFilter" order="last"/>
+  <lookup.charFilter implementation="com.intellij.refactoring.IdentifierCharFilter" id="identifier"/>
 
   <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor"/>
 
