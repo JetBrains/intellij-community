@@ -5,8 +5,6 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.search.searches.DefinitionsSearch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,9 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public class ImplementationSearcher {
   public PsiElement[] searchImplementations(final Editor editor, final PsiElement element, final int offset) {
     boolean onRef = TargetElementUtilBase.getInstance().findTargetElement(editor, getFlags() & ~TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED, offset) == null;
-    final boolean isAbstract =
-      element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.ABSTRACT);
-    return searchImplementations(editor, element, offset, onRef && !isAbstract, onRef);
+    return searchImplementations(editor, element, offset, onRef, onRef);
   }
 
   @NotNull
