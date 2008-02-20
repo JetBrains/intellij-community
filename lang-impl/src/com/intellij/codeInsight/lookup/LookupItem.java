@@ -2,7 +2,7 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.DefaultInsertHandler;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.LookupData;
 import com.intellij.codeInsight.completion.simple.CompletionCharHandler;
@@ -83,8 +83,19 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
         document.deleteString(offset, i);
         PsiDocumentManager.getInstance(editor.getProject()).commitDocument(editor.getDocument());
       }
-      return DefaultInsertHandler.getTailType(completionChar, (LookupItem)lookupElement);
+      final LookupItem<?> item = (LookupItem)lookupElement;
+      switch(completionChar){
+        case '.': return TailType.DOT;
+        case ',': return TailType.COMMA;
+        case ';': return TailType.SEMICOLON;
+        case '=': return TailType.EQ;
+        case ' ': return TailType.SPACE;
+        case ':': return TailType.CASE_COLON; //?
+      }
+      final TailType attr = item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
+      return attr != null ? attr : TailType.NONE;
     }
+
   };
   @NotNull private CompletionCharHandler<T> myCompletionCharHandler = DEFAULT_COMPLETION_CHAR_HANDLER;
   private final Set<String> myAllLookupStrings = new THashSet<String>();

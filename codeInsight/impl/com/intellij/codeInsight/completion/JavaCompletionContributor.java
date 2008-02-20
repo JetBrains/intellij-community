@@ -5,7 +5,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -13,17 +12,17 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiJavaPatterns;
 import static com.intellij.patterns.StandardPatterns.or;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
@@ -40,7 +39,6 @@ public class JavaCompletionContributor extends CompletionContributor{
   @NonNls public static final String VARIABLE_NAME = "VARIABLE_NAME";
   @NonNls public static final String METHOD_NAME = "METHOD_NAME";
   @NonNls public static final String JAVA_LEGACY = "JAVA_LEGACY";
-  private static final JavaSmartCompletionData SMART_DATA = new JavaSmartCompletionData();
   private static final CompletionData CLASS_NAME_DATA = new ClassNameCompletionData();
   private static final ElementPattern INSIDE_TYPE_PARAMS_PATTERN = psiElement().afterLeaf(psiElement().withText("?").afterLeaf(psiElement().withText("<")));
   @NonNls private static final String ANALYZE_ITEM = "Analyze item";
@@ -121,41 +119,6 @@ public class JavaCompletionContributor extends CompletionContributor{
             return true;
           }
         });
-      }
-    });
-
-    registrar.extend(CompletionType.SMART, psiElement()).withId(JAVA_LEGACY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
-      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
-        final Set<LookupItem> set = new LinkedHashSet<LookupItem>();
-        final PsiElement identifierCopy = parameters.getPosition();
-        final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-        final CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-
-        PsiFile file = parameters.getOriginalFile();
-        final PsiReference ref = identifierCopy.getContainingFile().findReferenceAt(identifierCopy.getTextRange().getStartOffset());
-        if (ref != null) {
-          SMART_DATA.completeReference(ref, set, identifierCopy, result.getPrefixMatcher(), file, context.getStartOffset());
-        }
-        SMART_DATA.addKeywordVariants(keywordVariants, identifierCopy, file);
-        SMART_DATA.completeKeywordsBySet(set, keywordVariants, identifierCopy, result.getPrefixMatcher(), file);
-        JavaCompletionUtil.highlightMembersOfContainer(set);
-
-        final PsiExpression expr = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
-        if(expr != null){
-          final ExpectedTypeInfo[] expectedInfos = ExpectedTypesProvider.getInstance(context.project).getExpectedTypes(expr, true);
-          if (expectedInfos != null && expectedInfos.length > 0) {
-            final THashSet<PsiClass> classes = getFirstClasses(expectedInfos);
-            for (final LookupItem item : set) {
-              final Object o = item.getObject();
-              if (classes.contains(o) && !shouldPrefer((PsiClass)o)) {
-                item.setAttribute(LookupItem.DONT_PREFER, "");
-              }
-            }
-          }
-
-        }
-
-        result.addAllElements(set);
       }
     });
 
@@ -388,43 +351,6 @@ public class JavaCompletionContributor extends CompletionContributor{
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(file.getViewProvider());
 
     JavaCompletionUtil.initOffsets(file, project, context.getOffsetMap());
-  }
-
-  public static THashSet<PsiClass> getFirstClasses(final ExpectedTypeInfo[] expectedInfos) {
-    final THashSet<PsiClass> set = new THashSet<PsiClass>();
-    for (final ExpectedTypeInfo info : expectedInfos) {
-      addFirstPsiType(set, info.getType());
-      addFirstPsiType(set, info.getDefaultType());
-    }
-    return set;
-  }
-
-  private static void addFirstPsiType(final THashSet<PsiClass> set, final PsiType type) {
-    if (type instanceof PsiClassType) {
-      final PsiClass psiClass = ((PsiClassType)type).resolve();
-      if (psiClass != null) {
-        set.add(psiClass);
-      }
-    }
-  }
-
-  private static boolean shouldPrefer(final PsiClass psiClass) {
-    int toImplement = OverrideImplementUtil.getMethodSignaturesToImplement(psiClass).size();
-    if (toImplement > 2) return false;
-
-    for (final PsiMethod method : psiClass.getMethods()) {
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        toImplement++;
-        if (toImplement > 2) return false;
-      }
-    }
-
-    if (toImplement > 0) return true;
-
-    if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
-    if (CommonClassNames.JAVA_LANG_STRING.equals(psiClass.getQualifiedName())) return false;
-    if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) return false;
-    return true;
   }
 
 }

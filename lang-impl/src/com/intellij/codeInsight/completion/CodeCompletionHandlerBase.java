@@ -380,7 +380,14 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                   @NotNull final LookupItem item,
                                   final boolean signatureSelected,
                                   final char completionChar) {
-    final InsertHandler handler = item.getInsertHandler() != null ? item.getInsertHandler() : new DefaultInsertHandler();
+    final InsertHandler handler = item.getInsertHandler() != null ? item.getInsertHandler() : new BasicInsertHandler() {
+      public void handleInsert(final CompletionContext context, final int startOffset, final LookupData data, final LookupItem item,
+                               final boolean signatureSelected,
+                               final char completionChar) {
+        super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+        item.getTailType().processTail(context.editor, context.editor.getCaretModel().getOffset());
+      }
+    };
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         PsiDocumentManager.getInstance(context.project).commitAllDocuments();
