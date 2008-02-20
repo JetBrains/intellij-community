@@ -100,8 +100,10 @@ public class ModuleConfigurator {
   }
 
   private String findModuleFor(Artifact artifact) {
+    // HACK!!!
     // we should find module by version range version, since it might be X-SNAPSHOT or SNAPSHOT
     // which is resolved in X-timestamp-build. But mapping contains base artefact versions.
+    // todo: user MavenArtifactResolver instread.
 
     VersionRange range = artifact.getVersionRange();
     String version = range == null ? artifact.getVersion() : range.toString();
