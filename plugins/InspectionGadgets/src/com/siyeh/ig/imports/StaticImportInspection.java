@@ -239,7 +239,7 @@ public class StaticImportInspection extends BaseInspection {
                 }
                 final PsiElement parent = PsiTreeUtil.getParentOfType(reference,
                         PsiImportStatementBase.class, PsiPackageStatement.class,
-                        PsiCodeFragment.class);
+                        JavaCodeFragment.class);
                 if (parent != null) {
                     return false;
                 }

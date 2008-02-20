@@ -41,7 +41,7 @@ class FullyQualifiedNamePredicate implements PsiElementPredicate{
 		    return false;
 	    }
         if (PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class,
-                PsiPackageStatement.class, PsiCodeFragment.class) != null) {
+                PsiPackageStatement.class, JavaCodeFragment.class) != null) {
             return false;
         }
         final PsiElement qualifier = referenceElement.getQualifier();

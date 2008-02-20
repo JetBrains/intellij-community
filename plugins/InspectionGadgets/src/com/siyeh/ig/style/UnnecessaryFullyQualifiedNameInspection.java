@@ -227,7 +227,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
             }
             final PsiElement element = PsiTreeUtil.getParentOfType(reference,
                     PsiImportStatementBase.class, PsiPackageStatement.class,
-                    PsiCodeFragment.class);
+                    JavaCodeFragment.class);
             if (element != null) {
                 return;
             }
