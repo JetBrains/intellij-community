@@ -195,8 +195,9 @@ public class AllClassesGetter implements ContextGetter{
       lookingForAnnotations = true;
     }
 
+    final CamelHumpMatcher matcher = new CamelHumpMatcher(completionContext.getPrefix());
     for (final String name : names) {
-      if (!new CamelHumpMatcher(completionContext.getPrefix()).prefixMatches(name)) continue;
+      if (!matcher.prefixMatches(name)) continue;
 
       for (PsiClass psiClass : cache.getClassesByName(name, scope)) {
         if (lookingForAnnotations && !psiClass.isAnnotationType()) continue;
