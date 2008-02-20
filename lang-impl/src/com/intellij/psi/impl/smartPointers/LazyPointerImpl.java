@@ -31,8 +31,8 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.NonSlaveRepositoryPsiElement;
 import com.intellij.util.ReflectionCache;
 
 public class LazyPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
@@ -46,7 +46,7 @@ public class LazyPointerImpl<E extends PsiElement> implements SmartPointerEx<E> 
     if (element instanceof PsiCompiledElement) {
       myElement = element;
     }
-    else if (element instanceof PsiMember) {
+    else if (element instanceof NonSlaveRepositoryPsiElement) {
       myPointer = setupPointer(element);
     }
     else {

@@ -3,6 +3,7 @@ package com.intellij.psi;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.impl.source.NonSlaveRepositoryPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,7 @@ public class PsiAnchor {
   public PsiAnchor(PsiElement element) {
     LOG.assertTrue(element.isValid());
 
-    if (element instanceof PsiCompiledElement || element instanceof PsiMember) {
+    if (element instanceof PsiCompiledElement || element instanceof NonSlaveRepositoryPsiElement) {
       myElement = element;
     }
     else {
