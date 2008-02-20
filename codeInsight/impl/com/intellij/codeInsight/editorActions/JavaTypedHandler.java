@@ -1,26 +1,27 @@
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.JavadocAutoLookupHandler;
+import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.completion.JavadocAutoLookupHandler;
-import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.*;
+import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.filters.position.SuperParentFilter;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,10 +30,17 @@ import org.jetbrains.annotations.Nullable;
 public class JavaTypedHandler extends TypedHandlerDelegate {
   private boolean myJavaLTTyped;
 
-  public void checkAutoPopup(final char charTyped, final Project project, final Editor editor, final PsiFile file) {
+  public boolean checkAutoPopup(final char charTyped, final Project project, final Editor editor, final PsiFile file) {
     if (charTyped == '@' && file instanceof PsiJavaFile) {
       autoPopupJavadocLookup(project, editor);
+      return true;
     }
+    if (charTyped == '#' || charTyped == '.') {
+      AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, new MemberAutoLookupCondition());
+      return true;
+    }
+
+    return false;
   }
 
   public boolean beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile file, final FileType fileType) {
@@ -233,6 +241,42 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         }
       };
       AutoPopupController.getInstance(project).invokeAutoPopupRunnable(request, settings.JAVADOC_LOOKUP_DELAY);
+    }
+  }
+
+  private static class MemberAutoLookupCondition implements Condition<Editor> {
+    public boolean value(final Editor editor) {
+      final Project project = editor.getProject();
+      if (project == null) return false;
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      if (file == null) return false;
+      int offset = editor.getCaretModel().getOffset();
+
+      PsiElement lastElement = file.findElementAt(offset - 1);
+      if (lastElement == null) {
+        return false;
+      }
+
+      //do not show lookup when typing varargs ellipsis
+      final PsiElement prevSibling = lastElement.getPrevSibling();
+      if (prevSibling == null || ".".equals(prevSibling.getText())) return false;
+      PsiElement parent = prevSibling;
+      do {
+        parent = parent.getParent();
+      } while(parent instanceof PsiJavaCodeReferenceElement || parent instanceof PsiTypeElement);
+      if (parent instanceof PsiParameterList) return false;
+
+      if (!".".equals(lastElement.getText()) && !"#".equals(lastElement.getText())) {
+        return false;
+      }
+      else{
+        final PsiElement element = file.findElementAt(offset);
+        if(element != null && "#".equals(lastElement.getText())
+          && !new SuperParentFilter(new ClassFilter(PsiDocComment.class)).isAcceptable(element, element.getParent())){
+          return false;
+        }
+        return true;
+      }
     }
   }
 }

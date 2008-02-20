@@ -21,7 +21,8 @@ public abstract class TypedHandlerDelegate {
    * @param editor
    * @param file
    */
-  public void checkAutoPopup(char charTyped, final Project project, final Editor editor, final PsiFile file) {
+  public boolean checkAutoPopup(char charTyped, final Project project, final Editor editor, final PsiFile file) {
+    return false;
   }
 
   /**

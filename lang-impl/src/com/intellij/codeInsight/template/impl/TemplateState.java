@@ -469,12 +469,12 @@ public class TemplateState implements Disposable {
 
       if (completionChar == '.') {
         EditorModificationUtil.insertStringAtCaret(myEditor, ".");
-        AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
+        AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor, null);
         return;
       }
 
       if (item.getAttribute(Expression.AUTO_POPUP_NEXT_LOOKUP) != null) {
-        AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
+        AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor, null);
         return;
       }
 

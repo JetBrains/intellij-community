@@ -14,11 +14,13 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -58,7 +60,7 @@ public class AutoPopupController implements Disposable {
     }, this);
   }
 
-  public void autoPopupMemberLookup(final Editor editor){
+  public void autoPopupMemberLookup(final Editor editor, @Nullable final Condition<Editor> condition){
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
@@ -71,6 +73,7 @@ public class AutoPopupController implements Disposable {
           new WriteCommandAction(myProject) {
             protected void run(Result result) throws Throwable {
               if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
+              if (condition != null && !condition.value(editor)) return;
               new DotAutoLookupHandler().invoke(myProject, editor, file);
             }
           }.execute();

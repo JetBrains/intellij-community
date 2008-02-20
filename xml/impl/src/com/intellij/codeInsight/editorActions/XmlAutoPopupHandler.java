@@ -13,7 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 
 public class XmlAutoPopupHandler extends TypedHandlerDelegate {
-  public void checkAutoPopup(final char charTyped, final Project project, final Editor editor, final PsiFile file) {
+  public boolean checkAutoPopup(final char charTyped, final Project project, final Editor editor, final PsiFile file) {
     final boolean isXmlLikeFile = file.getViewProvider().getBaseLanguage() instanceof XMLLanguage;
     boolean spaceInTag = isXmlLikeFile && charTyped == ' ';
 
@@ -31,7 +31,9 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
 
     if ((charTyped == '<' || charTyped == '{' || charTyped == '/' || spaceInTag) && isXmlLikeFile) {
       autoPopupXmlLookup(project, editor);
+      return true;
     }
+    return false;
   }
 
   public static void autoPopupXmlLookup(final Project project, final Editor editor){

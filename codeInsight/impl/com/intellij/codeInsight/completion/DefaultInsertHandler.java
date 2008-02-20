@@ -185,7 +185,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     }
 
     if (tailType == TailType.DOT){
-      AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
+      AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor, null);
     }
 
     if (generateAnonymousBody){

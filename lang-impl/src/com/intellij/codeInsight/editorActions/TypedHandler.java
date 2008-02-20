@@ -113,9 +113,6 @@ public class TypedHandler implements TypedActionHandler {
       }
     }
 
-    final Editor originalEditor = editor;
-    final PsiFile originalFile = file;
-
     if (charTypedWeWantToShowSmartnessInInjectedLanguageWithoutPerformanceLoss(charTyped)) {
       Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, file);
 
@@ -128,20 +125,20 @@ public class TypedHandler implements TypedActionHandler {
     final TypedHandlerDelegate[] delegates = Extensions.getExtensions(TypedHandlerDelegate.EP_NAME);
     AutoPopupController autoPopupController = AutoPopupController.getInstance(project);
 
+    boolean handled = false;
     for(TypedHandlerDelegate delegate: delegates) {
-      delegate.checkAutoPopup(charTyped, project, editor, file);
+      handled = delegate.checkAutoPopup(charTyped, project, editor, file);
+      if (handled) break;
     }
 
-    if (charTyped == '.') {
-      autoPopupController.autoPopupMemberLookup(InjectedLanguageUtil.getEditorForInjectedLanguage(originalEditor, originalFile));
-    }
+    if (!handled) {
+      if (charTyped == '.') {
+        autoPopupController.autoPopupMemberLookup(editor, null);
+      }
 
-    if (charTyped == '#') {
-      autoPopupController.autoPopupMemberLookup(editor);
-    }
-
-    if (charTyped == '('){
-      autoPopupController.autoPopupParameterInfo(editor, null);
+      if (charTyped == '('){
+        autoPopupController.autoPopupParameterInfo(editor, null);
+      }
     }
 
     if (!editor.isInsertMode()){
@@ -204,7 +201,7 @@ public class TypedHandler implements TypedActionHandler {
 
   static boolean charTypedWeWantToShowSmartnessInInjectedLanguageWithoutPerformanceLoss(final char charTyped) {
     return charTyped == '"' || charTyped == '\'' || charTyped == '[' || charTyped == '(' || charTyped == ']' || charTyped == ')' ||
-      charTyped == '{' || charTyped == '}';
+      charTyped == '{' || charTyped == '}' || charTyped == '.';
   }
 
   private static void handleAfterLParen(Editor editor, FileType fileType, char lparenChar){
