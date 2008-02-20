@@ -138,44 +138,6 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       for (Key key : allKeys) {
         // remove outdated values
         final Lock writeLock = getWriteLock();
-        /*
-        final boolean oldExists = oldData.containsKey(key);
-        final boolean newExists = data.containsKey(key);
-
-        if (oldExists && newExists) {
-          final Value oldValue = oldData.get(key);
-          final Value newValue = data.get(key);
-          writeLock.lock();
-          try {
-            if (!Comparing.equal(oldValue, newValue)) {
-              myStorage.removeValue(key, inputId, oldValue);
-              myStorage.addValue(key, inputId, newValue);
-            }
-          }
-          finally {
-            writeLock.unlock();
-          }
-        }
-        else if (oldExists) {
-          final Value oldValue = oldData.get(key);
-          writeLock.lock();
-          try {
-            myStorage.removeValue(key, inputId, oldValue);
-          }
-          finally {
-            writeLock.unlock();
-          }
-        }
-        else if (newExists) {
-          writeLock.lock();
-          try {
-            myStorage.addValue(key, inputId, data.get(key));
-          }
-          finally {
-            writeLock.unlock();
-          }
-        }
-        */
         if (oldData.containsKey(key)) {
           final Value oldValue = oldData.get(key);
           writeLock.lock();
