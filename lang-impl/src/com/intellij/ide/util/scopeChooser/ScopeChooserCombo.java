@@ -4,7 +4,6 @@
  */
 package com.intellij.ide.util.scopeChooser;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -20,11 +19,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
@@ -164,14 +165,24 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(selectedTextEditor.getDocument());
       if (psiFile != null) {
         if (selectedTextEditor.getSelectionModel().hasSelection()) {
-          PsiElement[] elements = CodeInsightUtil.findStatementsInRange(
-            psiFile,
-            selectedTextEditor.getSelectionModel().getSelectionStart(),
-            selectedTextEditor.getSelectionModel().getSelectionEnd()
-          );
-
-          if (elements.length != 0) {
-            model.addElement(new ScopeDescriptor(new LocalSearchScope(elements, IdeBundle.message("scope.selection"))));
+          final PsiElement startElement = psiFile.findElementAt(selectedTextEditor.getSelectionModel().getSelectionStart());
+          if (startElement != null) {
+            final PsiElement endElement = psiFile.findElementAt(selectedTextEditor.getSelectionModel().getSelectionEnd());
+            if (endElement != null) {
+              final PsiElement parent = PsiTreeUtil.findCommonParent(startElement, endElement);
+              if (parent != null) {
+                final List<PsiElement> elements = new ArrayList<PsiElement>();
+                final PsiElement[] children = parent.getChildren();
+                for (PsiElement child : children) {
+                  if (!(child instanceof PsiWhiteSpace)) {
+                    elements.add(child);
+                  }
+                }
+                if (!elements.isEmpty()) {
+                  model.addElement(new ScopeDescriptor(new LocalSearchScope(elements.toArray(new PsiElement[elements.size()]), IdeBundle.message("scope.selection"))));
+                }
+              }
+            }
           }
         }
       }
