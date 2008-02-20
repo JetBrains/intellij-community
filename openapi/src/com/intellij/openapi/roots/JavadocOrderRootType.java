@@ -14,4 +14,8 @@ public class JavadocOrderRootType extends OrderRootType {
   public static OrderRootType getInstance() {
     return getOrderRootType(JavadocOrderRootType.class);
   }
+
+  public boolean collectFromDependentModules() {
+    return true;
+  }
 }

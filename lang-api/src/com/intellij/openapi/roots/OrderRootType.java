@@ -104,6 +104,13 @@ public class OrderRootType {
     return false;
   }
 
+  /**
+   * Whether ModuleOrderEntry.getPaths() collects the list of roots from dependent modules.
+   */
+  public boolean collectFromDependentModules() {
+    return false;
+  }
+
   public static synchronized OrderRootType[] getAllTypes() {
     if (!ourExtensionsLoaded) {
       ourExtensionsLoaded = true;
