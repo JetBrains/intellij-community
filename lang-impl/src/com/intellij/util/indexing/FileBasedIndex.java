@@ -133,7 +133,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
     myIndexIdToVersionMap.put(name, version);
     final File versionFile = getVersionFile(name);
-    if (readVersion(versionFile) != version) {
+    if (versionDiffers(versionFile, version)) {
       FileUtil.delete(getIndexRootDir(name));
       rewriteVersion(versionFile, version);
     }
@@ -150,6 +150,23 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
         FileUtil.delete(getIndexRootDir(name));
         rewriteVersion(versionFile, version);
       }
+    }
+  }
+
+  private boolean versionDiffers(final File versionFile, final int currentIndexVersion) {
+    try {
+      final DataInputStream in = new DataInputStream(new FileInputStream(versionFile));
+      try {
+        final int savedIndexVersion = in.readInt();
+        final int commonVersion = in.readInt();
+        return (savedIndexVersion != currentIndexVersion) || (commonVersion != VERSION); 
+      }
+      finally {
+        in.close();
+      }
+    }
+    catch (IOException e) {
+      return true;
     }
   }
 
@@ -450,21 +467,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     return file;
   }
 
-  private static int readVersion(final File file) {
-    try {
-      final DataInputStream in = new DataInputStream(new FileInputStream(file));
-      try {
-        return in.readInt();
-      }
-      finally {
-        in.close();
-      }
-    }
-    catch (IOException e) {
-      return -1;
-    }
-  }
-
   private void rewriteVersion(final File file, final int version) throws IOException {
     FileUtil.delete(file);
     try {
@@ -478,6 +480,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     final DataOutputStream os = new DataOutputStream(new FileOutputStream(file));
     try {
       os.writeInt(version);
+      os.writeInt(VERSION);
     }
     finally {
       myIndexIdToCreationStamp.clear();
