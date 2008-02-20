@@ -1171,7 +1171,7 @@ public class CompileDriver {
             progressIndicator.pushState();
             progressIndicator.setText(CompilerBundle.message("progress.searching.for.files.to.delete"));
 
-            findFilesToDelete(snapshot, urlsWithSourceRemoved, cache, toCompile, context, toDelete, compilerConfiguration);
+            findFilesToDelete(compiler, snapshot, urlsWithSourceRemoved, cache, toCompile, context, toDelete, compilerConfiguration);
 
             progressIndicator.popState();
           }
@@ -1243,7 +1243,7 @@ public class CompileDriver {
     return set;
   }
 
-  private void findFilesToDelete(VfsSnapshot snapshot,
+  private void findFilesToDelete(final TranslatingCompiler compiler, VfsSnapshot snapshot,
                                  final Set<String> urlsWithSourceRemoved,
                                  final TranslatingCompilerStateCache cache,
                                  final Set<VirtualFile> toCompile,
@@ -1280,7 +1280,13 @@ public class CompileDriver {
               final String className = cache.getClassName(outputPath);
               //noinspection HardCodedStringLiteral
               if (className == null || isUnderOutputDir(currentOutputDir, outputPath, className)) {
-                shouldDelete = false;
+                if (!compiler.isCompilableFile(sourceFile, context)) {
+                  // the file was compilable but at the moment it is not, so the result of previous compilation should be deleted
+                  shouldDelete = true;  
+                }
+                else {
+                  shouldDelete = false;
+                }
               }
               else {
                 // output for this source has been changed or the output dir was changed, need to recompile to the new output dir
