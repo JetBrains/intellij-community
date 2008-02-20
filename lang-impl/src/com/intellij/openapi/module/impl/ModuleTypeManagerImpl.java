@@ -75,7 +75,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
       }
     }
 
-    return new UnknownModuleType(moduleTypeID);
+    return new UnknownModuleType(moduleTypeID, getDefaultModuleType());
   }
 
   public boolean isClasspathProvider(final ModuleType moduleType) {
