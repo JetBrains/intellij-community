@@ -9,7 +9,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Dec 20, 2007
  */
-class ValueContainerImpl<Value> implements ValueContainer<Value>, Cloneable{
+class ValueContainerImpl<Value> extends ValueContainer<Value> implements Cloneable{
   private HashMap<Value, Object> myInputIdMapping;
 
   public ValueContainerImpl() {
@@ -20,7 +20,7 @@ class ValueContainerImpl<Value> implements ValueContainer<Value>, Cloneable{
     final Object input = myInputIdMapping.get(value);
     if (input == null) {
       //idSet = new TIntHashSet(3, 0.98f);
-      myInputIdMapping.put(value, new Integer(inputId));
+      myInputIdMapping.put(value, inputId);
     }
     else {
       final TIntHashSet idSet;
@@ -46,6 +46,11 @@ class ValueContainerImpl<Value> implements ValueContainer<Value>, Cloneable{
       final TIntHashSet idSet = (TIntHashSet)input;
       idSet.remove(inputId);
       if (!idSet.isEmpty()) {
+        return;
+      }
+    }
+    else if (input instanceof Integer) {
+      if (((Integer)input).intValue() != inputId) {
         return;
       }
     }
@@ -107,7 +112,7 @@ class ValueContainerImpl<Value> implements ValueContainer<Value>, Cloneable{
   public ValueContainerImpl<Value> clone() {
     try {
       final ValueContainerImpl clone = (ValueContainerImpl)super.clone();
-      clone.myInputIdMapping = (HashMap<Value, Object>)myInputIdMapping.clone();
+      clone.myInputIdMapping = mapCopy(myInputIdMapping);
       return clone;
     }
     catch (CloneNotSupportedException e) {
@@ -128,7 +133,7 @@ class ValueContainerImpl<Value> implements ValueContainer<Value>, Cloneable{
       return 0;
     }
   };
-  
+
   private static class SingleValueIterator implements IntIterator {
     private int myValue;
     private boolean myValueRead = false;
@@ -176,4 +181,19 @@ class ValueContainerImpl<Value> implements ValueContainer<Value>, Cloneable{
       return mySize;
     }
   }
+  
+  private HashMap<Value, Object> mapCopy(final HashMap<Value, Object> map) {
+    if (map == null) {
+      return null;
+    }
+    final HashMap<Value, Object> cloned = (HashMap<Value, Object>)map.clone();
+    for (Value key : cloned.keySet()) {
+      final Object val = cloned.get(key);
+      if (val instanceof TIntHashSet) {
+        cloned.put(key, ((TIntHashSet)val).clone());
+      }
+    }
+    return cloned;
+  }
+
 }

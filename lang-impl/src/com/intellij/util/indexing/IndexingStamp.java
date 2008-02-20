@@ -1,7 +1,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -22,7 +21,6 @@ public class IndexingStamp {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerDirectoryTimestamp");
   
   private static final Map<ID<?, ?>, FileAttribute> ourAttributes = new HashMap<ID<?, ?>, FileAttribute>();
-  private static final Map<ID<?, ?>, Key<Long>> ourUserDataKeys = new HashMap<ID<?,?>, Key<Long>>();
 
   private IndexingStamp() {
   }
@@ -33,26 +31,16 @@ public class IndexingStamp {
       if (!file.isValid()) {
         return false;
       }
-      final Key<Long> userDataKey = getUserDataKey(indexName);
-      Long cachedStamp = file.getUserData(userDataKey);
-
-      if (cachedStamp == null) {
-        final DataInputStream stream = getAttribute(indexName).readAttribute(file);
-        if (stream != null) {
-          try {
-            cachedStamp = stream.readLong();
-          }
-          finally {
-            stream.close();
-          }
-        }
-        else {
-          cachedStamp = -1L;
-        }
-        file.putUserData(userDataKey, cachedStamp);
+      final DataInputStream stream = getAttribute(indexName).readAttribute(file);
+      if (stream == null) {
+        return false;
       }
-      
-      return cachedStamp.longValue() == indexCreationStamp;
+      try {
+        return stream.readLong() == indexCreationStamp;
+      }
+      finally {
+        stream.close();
+      }
     }
     catch (IOException e) {
       LOG.info(e);
@@ -63,7 +51,6 @@ public class IndexingStamp {
   public static void update(final VirtualFile file, final ID<?, ?> indexName, final long indexCreationStamp) {
     try {
       if (file instanceof NewVirtualFile && file.isValid()) {
-        file.putUserData(getUserDataKey(indexName), indexCreationStamp);
         final DataOutputStream stream = getAttribute(indexName).writeAttribute(file);
         try {
           stream.writeLong(indexCreationStamp);
@@ -88,16 +75,6 @@ public class IndexingStamp {
       ourAttributes.put(indexName, attrib);
     }
     return attrib;
-  }
-
-  @NotNull
-  private static Key<Long> getUserDataKey(ID<?, ?> indexName) {
-    Key<Long> key = ourUserDataKeys.get(indexName);
-    if (key == null) {
-      key = Key.create("_indexing_stamp_" + indexName);
-      ourUserDataKeys.put(indexName, key);
-    }
-    return key;
   }
   
 }

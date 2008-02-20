@@ -7,8 +7,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Dec 14, 2007
  */
-public interface ValueContainer<Value> {
-  
+public abstract class ValueContainer<Value> {
   interface IntIterator {
     boolean hasNext();
     
@@ -17,15 +16,29 @@ public interface ValueContainer<Value> {
     int size();
   }
   
-  IntIterator getInputIdsIterator(Value value);
+  public abstract IntIterator getInputIdsIterator(Value value);
 
-  boolean isAssociated(Value value, int inputId);
+  public abstract boolean isAssociated(Value value, int inputId);
   
-  Iterator<Value> getValueIterator();
+  public abstract Iterator<Value> getValueIterator();
 
-  int[] getInputIds(Value value);
+  public abstract int[] getInputIds(Value value);
 
-  List<Value> toValueList();
+  public abstract List<Value> toValueList();
 
-  int size();
+  public abstract int size();
+
+
+  public static interface ContainerAction<T> {
+    void perform(int id, T value);
+  }
+
+  public final void forEach(final ContainerAction<Value> action) {
+    for (final Iterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+      final Value value = valueIterator.next();
+      for (final IntIterator intIterator = getInputIdsIterator(value); intIterator.hasNext();) {
+        action.perform(intIterator.next(), value);
+      }
+    }
+  }
 }

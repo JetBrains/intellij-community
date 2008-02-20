@@ -61,7 +61,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
       }
       else {
         final ValueContainer<Value> backendContainer = myBackendStorage.read(key);
-        valueContainer = backendContainer != null? copyOf(backendContainer) : new ValueContainerImpl<Value>();
+        valueContainer = copyOf(backendContainer);
       }
       myMap.put(key, valueContainer);
     }
@@ -70,12 +70,11 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
 
   private ValueContainerImpl<Value> copyOf(final ValueContainer<Value> from) {
     final ValueContainerImpl<Value> container = new ValueContainerImpl<Value>();
-    for (final Iterator<Value> valueIterator = from.getValueIterator(); valueIterator.hasNext();) {
-      final Value value = valueIterator.next();
-      for (final ValueContainer.IntIterator intIterator = from.getInputIdsIterator(value); intIterator.hasNext();) {
-        container.addValue(intIterator.next(), value);
+    from.forEach(new ValueContainer.ContainerAction<Value>() {
+      public void perform(final int id, final Value value) {
+        container.addValue(id, value);
       }
-    }
+    });
     return container;
   }
 

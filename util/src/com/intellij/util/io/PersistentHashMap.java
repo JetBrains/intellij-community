@@ -3,7 +3,6 @@ package com.intellij.util.io;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
-import com.intellij.util.io.storage.Storage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,8 +14,10 @@ import java.util.Collection;
  *         Date: Dec 18, 2007
  */
 public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
-  private final Storage myValueStorage;
+  private final PersistentHashMapValueStorage myValueStorage;
   private final DataExternalizer<Value> myValueExternalizer;
+  private static final long NULL_ADDR = 0;
+  private static final int NULL_SIZE = 0;
 
   @NonNls
   public static final String DATA_FILE_EXTENSION = ".values";
@@ -32,6 +33,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
     public void reset() {
       ((ByteArrayOutputStream)out).reset();
+    }
+
+    public byte[] toByteArray() {
+      return ((ByteArrayOutputStream)out).toByteArray();
     }
   }
 
@@ -54,18 +59,14 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     protected void onDropFromCache(final Key key, final AppendStream value) {
       try {
         final int id = enumerate(key);
-        int valueId = readValueId(id);
-        if (valueId == NULL_ID) {
-          valueId = myValueStorage.createNewRecord();
-          updateValueId(id, valueId);
-        }
-        final Storage.AppenderStream record = myValueStorage.appendStream(valueId);
-        try {
-          value.writeTo(record);
-        }
-        finally {
-          record.close();
-        }
+        HeaderRecord headerRecord = readValueId(id);
+
+        final byte[] bytes = value.toByteArray();
+
+        headerRecord.size += bytes.length;
+        headerRecord.address = myValueStorage.appendBytes(bytes, headerRecord.address);
+
+        updateValueId(id, headerRecord);
 
         myStreamPool.recycle(value);
       }
@@ -82,7 +83,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   public PersistentHashMap(final File file, PersistentEnumerator.DataDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
     super(checkDataFile(file), new DescriptorWrapper<Key>(keyDescriptor), initialSize);
     myValueExternalizer = valueExternalizer;
-    myValueStorage = Storage.create(getDataFile(file).getPath());
+    myValueStorage = PersistentHashMapValueStorage.create(getDataFile(file).getPath());
   }
 
   private static File checkDataFile(final File file) throws IOException{
@@ -106,19 +107,18 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
 
   public synchronized void put(Key key, Value value) throws IOException {
+    myAppendCache.remove(key);
+    
     final int id = enumerate(key);
-    int valueId = readValueId(id);
-    if (valueId == NULL_ID) {
-      valueId = myValueStorage.createNewRecord();
-      updateValueId(id, valueId);
-    }
-    final Storage.StorageDataOutput record = myValueStorage.writeStream(valueId);
-    try {
-      myValueExternalizer.save(record, value);
-    }
-    finally {
-      record.close();
-    }
+    AppendStream record = new AppendStream();
+    myValueExternalizer.save(record, value);
+    byte[] bytes = record.toByteArray();
+
+    HeaderRecord header = new HeaderRecord();
+    header.size = bytes.length;
+    header.address = myValueStorage.appendBytes(bytes, 0);
+
+    updateValueId(id, header);
   }
 
   public static interface ValueDataAppender {
@@ -134,7 +134,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     return getAllDataObjects(new DataFilter() {
       public boolean accept(final int id) {
         try {
-          return readValueId(id) != NULL_ID;
+          return readValueId(id).address != NULL_ADDR;
         }
         catch (IOException ignored) {
         }
@@ -149,11 +149,13 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     if (id == NULL_ID) {
       return null;
     }
-    final int valueId = readValueId(id);
-    if (valueId == NULL_ID) {
+    final HeaderRecord header = readValueId(id);
+    if (header.address == NULL_ID) {
       return null;
     }
-    final DataInputStream input = myValueStorage.readStream(valueId);
+
+    byte[] data = myValueStorage.readBytes(header.address, header.size);
+    final DataInputStream input = new DataInputStream(new ByteArrayInputStream(data));
     try {
       return myValueExternalizer.read(input);
     }
@@ -168,12 +170,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     if (id == NULL_ID) {
       return;
     }
-    final int valueId = readValueId(id);
-    if (valueId == NULL_ID) {
-      return;
-    }
-    updateValueId(id, NULL_ID);
-    myValueStorage.deleteRecord(valueId);
+    updateValueId(id, new HeaderRecord());
   }
 
   public synchronized void force() {
@@ -188,12 +185,16 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     myValueStorage.dispose();
   }
 
-  private int readValueId(final int keyId) throws IOException {
-    return myStorage.getInt(keyId + DATA_OFFSET);
+  private HeaderRecord readValueId(final int keyId) throws IOException {
+    HeaderRecord result = new HeaderRecord();
+    result.address = myStorage.getLong(keyId + DATA_OFFSET);
+    result.size = myStorage.getInt(keyId + DATA_OFFSET + 8);
+    return result;
   }
 
-  private void updateValueId(final int keyId, int value) throws IOException {
-    myStorage.putInt(keyId + DATA_OFFSET, value);
+  private void updateValueId(final int keyId, HeaderRecord value) throws IOException {
+    myStorage.putLong(keyId + DATA_OFFSET, value.address);
+    myStorage.putInt(keyId + DATA_OFFSET + 8, value.size);
   }
 
   private static final class DescriptorWrapper<T> implements PersistentEnumerator.DataDescriptor<T>{
@@ -212,15 +213,21 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     }
 
     public void save(final DataOutput out, final T value) throws IOException {
-      out.writeInt(NULL_ID);
+      out.writeLong(NULL_ADDR);
+      out.writeInt(NULL_SIZE);
+
       myKeyDescriptor.save(out, value);
     }
 
     public T read(final DataInput in) throws IOException {
-      in.skipBytes(4);
+      in.skipBytes(8 + 4);
       return myKeyDescriptor.read(in);
     }
   }
-  
-  
+
+
+  private static class HeaderRecord {
+    long address;
+    int size;
+  }
 }

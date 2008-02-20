@@ -1,8 +1,9 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.ObjectCache;
+import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentEnumerator;
@@ -17,11 +18,10 @@ import java.util.Iterator;
  * @author Eugene Zhuravlev
 *         Date: Dec 20, 2007
 */
-final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
+public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapIndexStorage");
-  private PersistentHashMap<Key, ValueContainerImpl<Value>> myMap;
-  private final DataExternalizer<Value> myValueExternalizer;
-  private final ObjectCache<Key, ValueContainerImpl<Value>> myCache;
+  private PersistentHashMap<Key, ValueContainer<Value>> myMap;
+  private final SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
   private Key myKeyBeingRemoved = null;
   private final File myStorageFile;
   private final PersistentEnumerator.DataDescriptor<Key> myKeyDescriptor;
@@ -31,35 +31,64 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     File storageFile, 
     final PersistentEnumerator.DataDescriptor<Key> keyDescriptor, 
     final DataExternalizer<Value> valueExternalizer) throws IOException {
-    myValueExternalizer = valueExternalizer;
 
     myStorageFile = storageFile;
     myKeyDescriptor = keyDescriptor;
     myValueContainerExternalizer = new ValueContainerExternalizer<Value>(valueExternalizer);
-    myMap = new PersistentHashMap<Key,ValueContainerImpl<Value>>(myStorageFile, myKeyDescriptor, myValueContainerExternalizer);
-    myCache = new ObjectCache<Key, ValueContainerImpl<Value>>(1024);
-    myCache.addDeletedPairsListener(new ObjectCache.DeletedPairsListener() {
-      public void objectRemoved(final Object key, final Object value) {
-        final Key _key = (Key)key;
-        if (_key.equals(myKeyBeingRemoved)) {
+    myMap = new PersistentHashMap<Key,ValueContainer<Value>>(myStorageFile, myKeyDescriptor, myValueContainerExternalizer);
+    myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(16 * 1024, 4 * 1024) {
+      @NotNull
+      public ChangeTrackingValueContainer<Value> createValue(final Key key) {
+        return new ChangeTrackingValueContainer<Value>(new Computable<ValueContainer<Value>>() {
+          public ValueContainer<Value> compute() {
+            ValueContainer<Value> value = null;
+            try {
+              value = myMap.get(key);
+              if (value == null) {
+                value = new ValueContainerImpl<Value>();
+              }
+            }
+            catch (IOException e) {
+              LOG.error(e);
+            }
+            return value;
+          }
+        });
+      }
+
+      protected void onDropFromCache(final Key key, final ChangeTrackingValueContainer<Value> valueContainer) {
+        if (key.equals(myKeyBeingRemoved) || myMap == null || !valueContainer.isDirty()) {
           return;
         }
         try {
-          //noinspection unchecked
-          if (myMap != null) {
-            myMap.put(_key, (ValueContainerImpl<Value>)value);
+          if (valueContainer.canUseDataAppend()) {
+            final ValueContainer<Value> toAppend = valueContainer.getDataToAppend();
+            if (toAppend.size() > 0) {
+              final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+              //noinspection IOResourceOpenedButNotSafelyClosed
+              myValueContainerExternalizer.save(new DataOutputStream(bytes), toAppend);
+                  
+              myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
+                public void append(final DataOutput out) throws IOException {
+                  out.write(bytes.toByteArray());
+                }
+              });
+            }
+          }
+          else {
+            myMap.put(key, valueContainer);
           }
         }
         catch (IOException e) {
           LOG.error(e);
         }
       }
-    });
+    };
   }
   
   public void flush() {
     //System.out.println("Cache hit rate = " + myCache.hitRate());
-    myCache.removeAll();
+    myCache.clear();
     myMap.force();
   }
 
@@ -81,10 +110,10 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
       LOG.error(e);
     }
     myMap = null;
-    myCache.removeAll();
+    myCache.clear();
     FileUtil.delete(myStorageFile);
     try {
-      myMap = new PersistentHashMap<Key,ValueContainerImpl<Value>>(myStorageFile, myKeyDescriptor, myValueContainerExternalizer);
+      myMap = new PersistentHashMap<Key,ValueContainer<Value>>(myStorageFile, myKeyDescriptor, myValueContainerExternalizer);
     }
     catch (IOException e) {
       throw new StorageException(e);
@@ -102,64 +131,15 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
 
   @NotNull
   public ValueContainer<Value> read(final Key key) throws StorageException {
-    final ValueContainer<Value> container = myCache.get(key);
-    if (container != null) {
-      return container;
-    }
-    return readAndCache(key);
+    return myCache.get(key);
   }
 
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
-    try {
-      final ValueContainerImpl<Value> container = myCache.get(key);
-      if (container != null) {
-        container.addValue(inputId, value);
-      }
-      else {
-        myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
-          public void append(final DataOutput out) throws IOException {
-            myValueExternalizer.save(out, value);
-            DataInputOutputUtil.writeSINT(out, -inputId);
-          }
-        });
-      }
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
+    myCache.get(key).addValue(inputId, value);
   }
 
   public void removeValue(final Key key, final int inputId, final Value value) throws StorageException {
-    try {
-      ValueContainerImpl<Value> container = myCache.get(key);
-      if (container == null) {
-        container = myMap.get(key);
-        if (container != null) {
-          myCache.cacheObject(key, container);
-        }
-      }
-      if (container != null) {
-        container.removeValue(inputId, value);
-      }
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
-  }
-
-  @NotNull
-  private ValueContainerImpl<Value> readAndCache(final Key key) throws StorageException {
-    try {
-      ValueContainerImpl<Value> value = myMap.get(key);
-      if (value == null) {
-        value = new ValueContainerImpl<Value>();
-      }
-      myCache.cacheObject(key, value);
-      return value;
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
+    myCache.get(key).removeValue(inputId, value);
   }
 
   public void remove(final Key key) throws StorageException {
@@ -176,14 +156,14 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     }
   }
   
-  private static final class ValueContainerExternalizer<T> implements DataExternalizer<ValueContainerImpl<T>> {
+  private static final class ValueContainerExternalizer<T> implements DataExternalizer<ValueContainer<T>> {
     private final DataExternalizer<T> myExternalizer;
 
     private ValueContainerExternalizer(DataExternalizer<T> externalizer) {
       myExternalizer = externalizer;
     }
 
-    public void save(final DataOutput out, final ValueContainerImpl<T> container) throws IOException {
+    public void save(final DataOutput out, final ValueContainer<T> container) throws IOException {
       for (final Iterator<T> valueIterator = container.getValueIterator(); valueIterator.hasNext();) {
         final T value = valueIterator.next(); 
         myExternalizer.save(out, value);
@@ -222,7 +202,6 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
           }
         }
       }
-      
       return valueContainer;
     }
   }

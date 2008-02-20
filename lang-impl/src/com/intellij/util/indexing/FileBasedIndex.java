@@ -82,7 +82,9 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   private ExecutorService myInvalidationService = ConcurrencyUtil.newSingleThreadExecutor("FileBasedIndex.InvalidationQueue");
   private final VirtualFileManagerEx myVfManager;
-
+  
+  private final FileContentStorage myOldContentStorage;
+  
   public static interface InputFilter {
     boolean acceptInput(VirtualFile file);
   }
@@ -112,6 +114,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     myChangedFilesUpdater = new ChangedFilesUpdater();
     vfManager.addVirtualFileListener(myChangedFilesUpdater);
     vfManager.registerRefreshUpdater(myChangedFilesUpdater);
+    myOldContentStorage = new FileContentStorage(new File(getPersistenceRoot(), "updates.tmp"));
   }
 
   public static FileBasedIndex getInstance() {
@@ -485,13 +488,17 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   public void indexFileContent(com.intellij.ide.startup.FileContent content) {
     final VirtualFile file = content.getVirtualFile();
     FileContent fc = null;
+    FileContent oldContent = null;
+    final byte[] bytes = myOldContentStorage.remove(file);
+ 
     for (ID<?, ?> indexId : myIndices.keySet()) {
-      if (getInputFilter(indexId).acceptInput(file) && !IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId))) {
+      if (getInputFilter(indexId).acceptInput(file)) {
         if (fc == null) {
           fc = new FileContent(file, CacheUtil.getContentText(content));
+          oldContent = bytes != null? new FileContent(file, LoadTextUtil.getTextByBinaryPresentation(bytes, file, false)) : null;
         }
         try {
-          updateSingleIndex(indexId, file, fc, null);
+          updateSingleIndex(indexId, file, fc, oldContent);
         }
         catch (StorageException e) {
           requestRebuild(indexId);
@@ -551,11 +558,11 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     public void beforeFileDeletion(final VirtualFileEvent event) {
-      scheduleInvalidation(event.getFile());
+      scheduleInvalidation(event.getFile(), false);
     }
 
     public void beforeContentsChange(final VirtualFileEvent event) {
-      scheduleInvalidation(event.getFile());
+      scheduleInvalidation(event.getFile(), true); 
     }
 
     public void contentsChanged(final VirtualFileEvent event) {
@@ -567,7 +574,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
         // indexes may depend on file name
         final VirtualFile file = event.getFile();
         if (!file.isDirectory()) {
-          scheduleInvalidation(file);
+          scheduleInvalidation(file, false);
         }
       }
     }
@@ -605,11 +612,11 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       });
     }
 
-    private void scheduleInvalidation(final VirtualFile file) {
+    private void scheduleInvalidation(final VirtualFile file, final boolean saveContent) {
       if (file.isDirectory()) {
         if (!(file instanceof NewVirtualFile) || ManagingFS.getInstance().areChildrenLoaded(file)) {
           for (VirtualFile child : file.getChildren()) {
-            scheduleInvalidation(child);
+            scheduleInvalidation(child, false);
           }
         }
       }
@@ -640,21 +647,26 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
               return true;
             }
           });
-          final FileContent fc = new FileContent(file, loadContent(file));
-          final FutureTask<?> future = (FutureTask<?>)myInvalidationService.submit(new Runnable() {
-            public void run() {
-              for (ID<?, ?> indexId : affectedIndices) {
-                try {
-                  updateSingleIndex(indexId, file, null, fc);
-                }
-                catch (StorageException e) {
-                  LOG.error(e);
-                  requestRebuild(indexId);
+          if (saveContent) {
+            myOldContentStorage.offer(file);
+          }
+          else {
+            final FileContent fc = new FileContent(file, loadContent(file));
+            final FutureTask<?> future = (FutureTask<?>)myInvalidationService.submit(new Runnable() {
+              public void run() {
+                for (ID<?, ?> indexId : affectedIndices) {
+                  try {
+                    updateSingleIndex(indexId, file, null, fc);
+                  }
+                  catch (StorageException e) {
+                    LOG.error(e);
+                    requestRebuild(indexId);
+                  }
                 }
               }
-            }
-          });
-          myFutureInvalidations.offer(future);
+            });
+            myFutureInvalidations.offer(future);
+          }
         }
       }
     }
