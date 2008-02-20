@@ -5,7 +5,6 @@
 package com.intellij.lang.pratt;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,18 +12,6 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class TokenParser {
-  public static final TokenParser EMPTY = new TokenParser() {
-    public boolean parseToken(final PrattBuilder builder) {
-      builder.error(JavaErrorMessages.message("unexpected.token"));
-      return false;
-    }
-  };
-  public static final TokenParser FRESH_START_PARSER = new TokenParser() {
-    public boolean parseToken(final PrattBuilder builder) {
-      builder.createChildBuilder(builder.getPriority()).parse();
-      return true;
-    }
-  };
 
   public abstract boolean parseToken(PrattBuilder builder);
 

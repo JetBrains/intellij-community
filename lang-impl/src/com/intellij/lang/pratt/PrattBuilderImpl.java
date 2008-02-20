@@ -4,7 +4,7 @@
  */
 package com.intellij.lang.pratt;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
@@ -72,13 +72,13 @@ public class PrattBuilderImpl extends PrattBuilder implements PrattBuilderFacade
 
   protected void doParse() {
     if (isEof()) {
-      error(myExpectedMessage != null ? myExpectedMessage : JavaErrorMessages.message("unexpected.eof"));
+      error(myExpectedMessage != null ? myExpectedMessage : LangBundle.message("unexpected.eof"));
       return;
     }
 
     TokenParser parser = findParser();
     if (parser == null) {
-      error(myExpectedMessage != null ? myExpectedMessage : JavaErrorMessages.message("unexpected.token"));
+      error(myExpectedMessage != null ? myExpectedMessage : LangBundle.message("unexpected.token"));
       return;
     }
 
