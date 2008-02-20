@@ -166,4 +166,6 @@
   <selectInTarget implementation="com.intellij.ide.impl.StructureViewSelectInTarget"/>
 
   <elementLookupRenderer implementation="com.intellij.codeInsight.template.impl.TemplateLookupRenderer"/>
+
+  <customPasteProvider implementation="com.intellij.ide.actions.PasteReferenceProvider"/>
 </extensions>

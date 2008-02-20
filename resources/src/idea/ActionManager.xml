@@ -123,10 +123,6 @@
     </group>
 
     <!-- Edit -->
-    <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction">
-      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
-    </action>
-
     <group id="EditSmartGroupEx">
       <reference ref="EditorCompleteStatement"/>
 

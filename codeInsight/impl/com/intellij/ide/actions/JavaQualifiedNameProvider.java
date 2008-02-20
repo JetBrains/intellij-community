@@ -1,87 +1,72 @@
 package com.intellij.ide.actions;
 
-import com.intellij.ide.PasteProvider;
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.IOException;
+/**
+ * @author yole
+ */
+public class JavaQualifiedNameProvider implements QualifiedNameProvider {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.JavaQualifiedNameProvider");
 
-public class PasteReferenceProvider implements PasteProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.PasteReferenceProvider");
-
-  public void performPaste(DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    if (project == null || editor == null) return;
-
-    final String fqn = getCopiedFqn();
-    PsiMember element = fqnToElement(project, fqn);
-    insert(fqn, element, editor);
+  @Nullable
+  public PsiElement adjustElementToCopy(final PsiElement element) {
+    if (element != null && !(element instanceof PsiMember) && element.getParent() instanceof PsiMember) {
+      return element.getParent();
+    }
+    return null;
   }
 
-  public boolean isPastePossible(DataContext dataContext) {
-    return isPasteEnabled(dataContext);
+  @Nullable
+  public String getQualifiedName(PsiElement element) {
+    element = getMember(element);
+    if (element instanceof PsiClass) {
+      return ((PsiClass)element).getQualifiedName();
+    }
+    else if (element instanceof PsiMember) {
+      final PsiMember member = (PsiMember)element;
+      return member.getContainingClass().getQualifiedName() + "#" + member.getName();
+    }
+    return null;
   }
 
-  public boolean isPasteEnabled(DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    return project != null && editor != null && getCopiedFqn() != null;
+  public PsiElement qualifiedNameToElement(final String fqn, final Project project) {
+    PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));
+    if (aClass != null) {
+      return aClass;
+    }
+    final int endIndex = fqn.indexOf('#');
+    if (endIndex == -1) return null;
+    String className = fqn.substring(0, endIndex);
+    if (className == null) return null;
+    aClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
+    if (aClass == null) return null;
+    String memberName = fqn.substring(endIndex + 1);
+    PsiField field = aClass.findFieldByName(memberName, false);
+    if (field != null) {
+      return field;
+    }
+    PsiMethod[] methods = aClass.findMethodsByName(memberName, false);
+    if (methods.length == 0) return null;
+    return methods[0];
   }
 
-  private static void insert(final String fqn, final PsiMember element, final Editor editor) {
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(editor.getProject());
-    documentManager.commitDocument(editor.getDocument());
-    final PsiFile file = documentManager.getPsiFile(editor.getDocument());
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-
-    final Project project = editor.getProject();
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            try {
-              Document document = editor.getDocument();
-              documentManager.doPostponedOperationsAndUnblockDocument(document);
-              documentManager.commitDocument(document);
-              EditorModificationUtil.deleteSelectedText(editor);
-              doInsert(fqn, element, editor, project);
-            }
-            catch (IncorrectOperationException e1) {
-              LOG.error(e1);
-            }
-          }
-        });
-      }
-    }, IdeBundle.message("command.pasting.reference"), null);
-  }
-
-  private static void doInsert(String fqn,
-                               PsiMember targetElement,
-                               final Editor editor,
-                               final Project project) throws IncorrectOperationException {
+  public void insertQualifiedName(String fqn, final PsiElement element, final Editor editor, final Project project) {
+    if (!(element instanceof PsiMember)) return;
+    PsiMember targetElement = (PsiMember) element;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     Document document = editor.getDocument();
 
@@ -135,7 +120,14 @@ public class PasteReferenceProvider implements PasteProvider {
         }
       }
       final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-      final PsiExpression expression = factory.createExpressionFromText(toInsert + suffix, elementAtCaret);
+      final PsiExpression expression;
+      try {
+        expression = factory.createExpressionFromText(toInsert + suffix, elementAtCaret);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return;
+      }
       final PsiReferenceExpression referenceExpression = expression instanceof PsiMethodCallExpression
                                                          ? ((PsiMethodCallExpression)expression).getMethodExpression()
                                                          : expression instanceof PsiReferenceExpression
@@ -165,10 +157,20 @@ public class PasteReferenceProvider implements PasteProvider {
     elementAtCaret = file.findElementAt(offset);
 
     if (elementAtCaret != null && elementAtCaret.isValid()) {
-      shortenReference(elementAtCaret, targetElement);
+      try {
+        shortenReference(elementAtCaret, targetElement);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
     }
     CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(file);
-    CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
+    try {
+      CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
 
     int caretOffset = rangeMarker.getEndOffset();
     if (elementToInsert instanceof PsiMethod && ((PsiMethod)elementToInsert).getParameterList().getParametersCount() != 0 && StringUtil.endsWithChar(suffix,')')) {
@@ -178,17 +180,29 @@ public class PasteReferenceProvider implements PasteProvider {
   }
 
   @Nullable
-  private static String getCopiedFqn() {
-    final Transferable contents = CopyPasteManager.getInstance().getContents();
-    if (contents == null) return null;
-    try {
-      return (String)contents.getTransferData(CopyReferenceAction.OUR_DATA_FLAVOR);
+  private static PsiElement getMember(final PsiElement element) {
+    if (element instanceof PsiMember) return element;
+    if (element instanceof PsiReference) {
+      PsiElement resolved = ((PsiReference)element).resolve();
+      if (resolved instanceof PsiMember) return resolved;
     }
-    catch (UnsupportedFlavorException e) {
+    if (!(element instanceof PsiIdentifier)) return null;
+    final PsiElement parent = element.getParent();
+    PsiMember member = null;
+    if (parent instanceof PsiJavaCodeReferenceElement) {
+      PsiElement resolved = ((PsiJavaCodeReferenceElement)parent).resolve();
+      if (resolved instanceof PsiMember) {
+        member = (PsiMember)resolved;
+      }
     }
-    catch (IOException e) {
+    else if (parent instanceof PsiMember) {
+      member = (PsiMember)parent;
     }
-    return null;
+    else {
+      //todo show error
+      //return;
+    }
+    return member;
   }
 
   private static boolean isAfterNew(PsiFile file, PsiElement elementAtCaret) {
@@ -214,27 +228,5 @@ public class PasteReferenceProvider implements PasteProvider {
     }
     final JavaCodeStyleManager codeStyleManagerEx = JavaCodeStyleManager.getInstance(element.getProject());
     codeStyleManagerEx.shortenClassReferences(element, JavaCodeStyleManager.UNCOMPLETE_CODE);
-  }
-
-  @Nullable
-  private static PsiMember fqnToElement(final Project project, final String fqn) {
-    PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));
-    if (aClass != null) {
-      return aClass;
-    }
-    final int endIndex = fqn.indexOf('#');
-    if (endIndex == -1) return null;
-    String className = fqn.substring(0, endIndex);
-    if (className == null) return null;
-    aClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
-    if (aClass == null) return null;
-    String memberName = fqn.substring(endIndex + 1);
-    PsiField field = aClass.findFieldByName(memberName, false);
-    if (field != null) {
-      return field;
-    }
-    PsiMethod[] methods = aClass.findMethodsByName(memberName, false);
-    if (methods.length == 0) return null;
-    return methods[0];
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
@@ -41,8 +42,7 @@ public class CopyReferenceAction extends AnAction {
   private static boolean isEnabled(final DataContext dataContext) {
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     PsiElement element = getElementToCopy(editor, dataContext);
-    PsiElement member = getMember(element);
-    return member != null;
+    return elementToFqn(element) != null;
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -51,10 +51,7 @@ public class CopyReferenceAction extends AnAction {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     PsiElement element = getElementToCopy(editor, dataContext);
 
-    PsiElement member = getMember(element);
-    if (member == null) return;
-
-    doCopy(member, project);
+    if (!doCopy(element, project)) return;
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
@@ -78,45 +75,23 @@ public class CopyReferenceAction extends AnAction {
     if (element == null) {
       element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     }
-    if (element != null && !(element instanceof PsiMember) && element.getParent() instanceof PsiMember) {
-      element = element.getParent();
+
+    for(QualifiedNameProvider provider: Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {
+      PsiElement adjustedElement = provider.adjustElementToCopy(element);
+      if (adjustedElement != null) return adjustedElement;
     }
     return element;
   }
 
-  @Nullable
-  private static PsiElement getMember(final PsiElement element) {
-    if (element instanceof PsiMember || element instanceof PsiFile) return element;
-    if (element instanceof PsiReference) {
-      PsiElement resolved = ((PsiReference)element).resolve();
-      if (resolved instanceof PsiMember) return resolved;
-    }
-    if (!(element instanceof PsiIdentifier)) return null;
-    final PsiElement parent = element.getParent();
-    PsiMember member = null;
-    if (parent instanceof PsiJavaCodeReferenceElement) {
-      PsiElement resolved = ((PsiJavaCodeReferenceElement)parent).resolve();
-      if (resolved instanceof PsiMember) {
-        member = (PsiMember)resolved;
-      }
-    }
-    else if (parent instanceof PsiMember) {
-      member = (PsiMember)parent;
-    }
-    else {
-      //todo show error
-      //return;
-    }
-    return member;
-  }
-
-  public static void doCopy(final PsiElement element, final Project project) {
+  public static boolean doCopy(final PsiElement element, final Project project) {
     String fqn = elementToFqn(element);
+    if (fqn == null) return false;
 
     CopyPasteManager.getInstance().setContents(new MyTransferable(fqn));
 
     final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(project);
     statusBar.setInfo(IdeBundle.message("message.reference.to.fqn.has.been.copied", fqn));
+    return true;
   }
 
   static final DataFlavor OUR_DATA_FLAVOR;
@@ -154,20 +129,15 @@ public class CopyReferenceAction extends AnAction {
 
   @Nullable
   private static String elementToFqn(final PsiElement element) {
-    final String fqn;
-    if (element instanceof PsiClass) {
-      fqn = ((PsiClass)element).getQualifiedName();
+    for(QualifiedNameProvider provider: Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {
+      String result = provider.getQualifiedName(element);
+      if (result != null) return result;
     }
-    else if (element instanceof PsiMember) {
-      final PsiMember member = (PsiMember)element;
-      fqn = member.getContainingClass().getQualifiedName() + "#" + member.getName();
-    }
-    else if (element instanceof PsiFile) {
+
+    String fqn = null;
+    if (element instanceof PsiFile) {
       final PsiFile file = (PsiFile)element;
       fqn = FileUtil.toSystemIndependentName(getFileFqn(file));
-    }
-    else {
-      fqn = element.getClass().getName();
     }
     return fqn;
   }
