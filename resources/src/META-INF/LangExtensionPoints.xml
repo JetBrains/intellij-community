@@ -136,6 +136,7 @@
   <extensionPoint name="liveTemplateContext" interface="com.intellij.codeInsight.template.TemplateContextType"/>
   <extensionPoint name="liveTemplateMacro" interface="com.intellij.codeInsight.template.Macro"/>
   <extensionPoint name="liveTemplateOptionalProcessor" interface="com.intellij.codeInsight.template.impl.TemplateOptionalProcessor"/>
+  <extensionPoint name="liveTemplatePreprocessor" interface="com.intellij.codeInsight.template.impl.TemplatePreprocessor"/>
 
   <extensionPoint name="fileTemplateGroup"
                   interface="com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory"/>

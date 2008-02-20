@@ -1,12 +1,11 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.completion.CompletionParametersImpl;
 import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.completion.CompletionParametersImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandAdapter;
@@ -28,13 +27,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.IntArrayList;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -262,17 +257,8 @@ public class TemplateState implements Disposable {
   }
 
   private void preprocessTemplate(final PsiFile file, int caretOffset, final String textToInsert) {
-    if (file.getLanguage().equals(StdLanguages.JSPX) && file instanceof JspFile) {
-      if (XmlUtil.toCode(textToInsert)) {
-        try {
-          caretOffset += JspSpiUtil.escapeCharsInJspContext((JspFile)file, caretOffset, myTemplate.getTemplateText());
-          PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
-          myEditor.getCaretModel().moveToOffset(caretOffset);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
+    for(TemplatePreprocessor preprocessor: Extensions.getExtensions(TemplatePreprocessor.EP_NAME)) {
+      preprocessor.preprocessTemplate(myEditor, file, caretOffset, textToInsert, myTemplate.getTemplateText());
     }
   }
 
