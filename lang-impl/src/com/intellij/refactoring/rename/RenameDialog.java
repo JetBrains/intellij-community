@@ -1,6 +1,5 @@
 package com.intellij.refactoring.rename;
 
-import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.IdentifierCharFilter;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
@@ -131,12 +131,7 @@ public class RenameDialog extends RefactoringDialog {
       LookupItem[] lookupItems = items.toArray(new LookupItem[items.size()]);
       editor.getCaretModel().moveToOffset(prefix.length());
       editor.getSelectionModel().removeSelection();
-      LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, null, new CharFilter() {
-        public int accept(char c, final String prefix) {
-          if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
-          return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
-        }
-      });
+      LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, null, IdentifierCharFilter.INSTANCE);
     }
   }
 
@@ -266,4 +261,5 @@ public class RenameDialog extends RefactoringDialog {
     final String newName = getNewName();
     return RenameUtil.isValidName(myProject, myPsiElement, newName);
   }
+
 }

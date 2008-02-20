@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.IdentifierCharFilter;
 
 import java.util.ArrayList;
 
@@ -46,12 +47,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
       return;
     }
 
-    Lookup lookup = LookupManager.getInstance(project).showLookup(editor, items, prefix, null, new CharFilter() {
-      public int accept(char c, final String prefix) {
-        if (isInPrefix(c)) return CharFilter.ADD_TO_PREFIX;
-        return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
-      }
-    });
+    Lookup lookup = LookupManager.getInstance(project).showLookup(editor, items, prefix, null, IdentifierCharFilter.INSTANCE);
     lookup.addLookupListener(
       new LookupAdapter() {
         public void itemSelected(LookupEvent event) {

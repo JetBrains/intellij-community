@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.util.containers.HashMap;
+import com.intellij.refactoring.IdentifierCharFilter;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -53,12 +54,7 @@ public class NameSuggestionsManager {
     editor.getCaretModel().moveToOffset(prefix.length());
     editor.getSelectionModel().removeSelection();
     LookupItemPreferencePolicy first = pair.first;
-    LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, first, new CharFilter() {
-      public int accept(char c, final String prefix) {
-        if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
-        return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
-      }
-    });
+    LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, first, IdentifierCharFilter.INSTANCE);
   }
 
   public void nameSelected() {

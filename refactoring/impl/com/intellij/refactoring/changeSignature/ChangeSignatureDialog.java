@@ -1,7 +1,6 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.application.ModalityState;
@@ -19,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.IdentifierCharFilter;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.inCallers.CallerChooser;
 import com.intellij.refactoring.ui.*;
@@ -364,12 +364,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     LookupItem[] lookupItems = set.toArray(new LookupItem[set.size()]);
     editor.getCaretModel().moveToOffset(prefix.length());
     editor.getSelectionModel().removeSelection();
-    LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, null, new CharFilter() {
-      public int accept(char c, final String prefix) {
-        if (Character.isJavaIdentifierPart(c)) return ADD_TO_PREFIX;
-        return SELECT_ITEM_AND_FINISH_LOOKUP;
-      }
-    });
+    LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, null, IdentifierCharFilter.INSTANCE);
   }
 
   private JComponent createSignaturePanel() {
