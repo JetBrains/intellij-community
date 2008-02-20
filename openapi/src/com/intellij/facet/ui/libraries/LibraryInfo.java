@@ -16,8 +16,10 @@
 
 package com.intellij.facet.ui.libraries;
 
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 /**
  * @author nik
@@ -60,5 +62,26 @@ public class LibraryInfo {
   @Nullable
   public LibraryDownloadInfo getDownloadingInfo() {
     return myDownloadInfo;
+  }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final LibraryInfo that = (LibraryInfo)o;
+
+    if (myDownloadInfo != null ? !myDownloadInfo.equals(that.myDownloadInfo) : that.myDownloadInfo != null) return false;
+    if (!myPresentableName.equals(that.myPresentableName)) return false;
+    if (!Arrays.equals(myRequiredClasses, that.myRequiredClasses)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = (myDownloadInfo != null ? myDownloadInfo.hashCode() : 0);
+    result = 31 * result + myPresentableName.hashCode();
+    result = 31 * result + Arrays.hashCode(myRequiredClasses);
+    return result;
   }
 }

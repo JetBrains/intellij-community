@@ -4,11 +4,8 @@
 
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.facet.impl.ui.FacetEditorContextBase;
 import com.intellij.facet.impl.ui.FacetTypeFrameworkSupportProvider;
-import com.intellij.facet.impl.ui.libraries.LibraryDownloader;
-import com.intellij.facet.impl.ui.libraries.RequiredLibrariesInfo;
-import com.intellij.facet.impl.ui.libraries.LibraryDownloadingMirrorsMap;
+import com.intellij.facet.impl.ui.libraries.*;
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.facet.ui.libraries.RemoteRepositoryInfo;
@@ -16,11 +13,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -49,11 +46,14 @@ public class AddSupportForFrameworksPanel {
   private JButton myChangeButton;
   private JPanel myDownloadingOptionsPanel;
   private List<FrameworkSupportSettings> myRoots;
+  private final LibrariesContainer myLibrariesContainer;
   private final Computable<String> myBaseDirForLibrariesGetter;
-  private List<FrameworkSupportProvider> myProviders;
-  private LibraryDownloadingMirrorsMap myMirrorsMap;
+  private final List<FrameworkSupportProvider> myProviders;
+  private final LibraryDownloadingMirrorsMap myMirrorsMap;
 
-  public AddSupportForFrameworksPanel(final List<FrameworkSupportProvider> providers, Computable<String> baseDirForLibrariesGetter) {
+  public AddSupportForFrameworksPanel(final List<FrameworkSupportProvider> providers, final @NotNull LibrariesContainer librariesContainer,
+                                      Computable<String> baseDirForLibrariesGetter) {
+    myLibrariesContainer = librariesContainer;
     myBaseDirForLibrariesGetter = baseDirForLibrariesGetter;
     myProviders = providers;
     createNodes();
@@ -65,7 +65,8 @@ public class AddSupportForFrameworksPanel {
     myChangeButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         HashSet<RemoteRepositoryInfo> repositories = new HashSet<RemoteRepositoryInfo>(getRemoteRepositories(true));
-        new LibraryDownloadingSettingsDialog(myMainPanel, getFrameworkWithLibraries(), myMirrorsMap, repositories).show();
+        final List<LibraryCompositionSettings> compositionSettingsList = getLibrariesCompositionSettingsList();
+        new LibraryCompositionSettingsDialog(myMainPanel, myLibrariesContainer, compositionSettingsList, myMirrorsMap, repositories).show();
         updateDownloadingOptionsPanel();
       }
     });
@@ -96,47 +97,26 @@ public class AddSupportForFrameworksPanel {
   }
 
   private void updateDownloadingOptionsPanel() {
-    @NonNls String card = getFrameworkWithLibraries().isEmpty() ? "empty" : "options";
+    @NonNls String card = getLibrariesCompositionSettingsList().isEmpty() ? "empty" : "options";
     ((CardLayout)myDownloadingOptionsPanel.getLayout()).show(myDownloadingOptionsPanel, card);
   }
 
-  private List<FrameworkSupportSettings> getFrameworkWithLibraries() {
-    List<FrameworkSupportSettings> frameworkLibrariesInfos = new ArrayList<FrameworkSupportSettings>();
+  private List<LibraryCompositionSettings> getLibrariesCompositionSettingsList() {
+    List<LibraryCompositionSettings> list = new ArrayList<LibraryCompositionSettings>();
     List<FrameworkSupportSettings> selected = getFrameworksSettingsList(true);
     for (FrameworkSupportSettings settings : selected) {
       LibraryInfo[] libraries = settings.getConfigurable().getLibraries();
       if (libraries.length > 0) {
-        frameworkLibrariesInfos.add(settings);
+        list.add(settings.getLibraryCompositionSettings());
       }
     }
-    return frameworkLibrariesInfos;
+    return list;
   }
 
   public boolean downloadLibraries() {
-    List<FrameworkSupportSettings> list = getFrameworkWithLibraries();
-    for (FrameworkSupportSettings settings : list) {
-      if (settings.isDownloadLibraries()) {
-        RequiredLibrariesInfo requiredLibraries = new RequiredLibrariesInfo(settings.getConfigurable().getLibraries());
-        RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = requiredLibraries.checkLibraries(settings.getAddedJars().toArray(new VirtualFile[settings.getAddedJars().size()]));
-        if (info != null) {
-          LibraryDownloadInfo[] downloadingInfos = LibraryDownloader.getDownloadingInfos(info.getLibraryInfos());
-          if (downloadingInfos.length > 0) {
-            String libraryName = settings.getConfigurable().getLibraryName();
-            if (FrameworkSupportConfigurable.DEFAULT_LIBRARY_NAME.equals(libraryName)) {
-              libraryName = null;
-            }
-
-            LibraryDownloader downloader = new LibraryDownloader(downloadingInfos, null, myMainPanel,
-                                                                 settings.getDirectoryForDownloadedLibrariesPath(),
-                                                                 libraryName, myMirrorsMap);
-            VirtualFile[] files = downloader.download();
-            if (files.length != downloadingInfos.length) {
-              return false;
-            }
-            settings.myAddedJars.addAll(Arrays.asList(files));
-          }
-        }
-      }
+    List<LibraryCompositionSettings> list = getLibrariesCompositionSettingsList();
+    for (LibraryCompositionSettings compositionSettings : list) {
+      if (!compositionSettings.downloadFiles(myMirrorsMap, myMainPanel)) return false;
     }
     return true;
   }
@@ -276,15 +256,22 @@ public class AddSupportForFrameworksPanel {
     List<Library> addedLibraries = new ArrayList<Library>();
     List<FrameworkSupportSettings> selectedFrameworks = getFrameworksSettingsList(true);
     for (FrameworkSupportSettings settings : selectedFrameworks) {
-      Library library = null;
       FrameworkSupportConfigurable configurable = settings.getConfigurable();
-      if (!settings.myAddedJars.isEmpty()) {
-        VirtualFile[] roots = settings.myAddedJars.toArray(new VirtualFile[settings.myAddedJars.size()]);
-        LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
-        library = FacetEditorContextBase.createLibraryInTable(configurable.getLibraryName(), roots, VirtualFile.EMPTY_ARRAY, table);
+
+      LibraryCompositionSettings compositionSettings = settings.getLibraryCompositionSettings();
+      Library library = compositionSettings.createLibrary(rootModel);
+
+      if (library != null) {
         addedLibraries.add(library);
-        rootModel.addLibraryEntry(library);
+        if (compositionSettings.getLibraryLevel() != LibrariesContainer.LibraryLevel.MODULE) {
+          rootModel.addLibraryEntry(library);
+        }
       }
+      for (Library addedLibrary : compositionSettings.getAddedLibraries()) {
+        addedLibraries.add(addedLibrary);
+        rootModel.addLibraryEntry(addedLibrary);
+      }
+
       configurable.addSupport(module, rootModel, library);
     }
     for (FrameworkSupportSettings settings : selectedFrameworks) {
@@ -299,11 +286,9 @@ public class AddSupportForFrameworksPanel {
     private final FrameworkSupportProvider myProvider;
     private final FrameworkSupportSettings myParentNode;
     private final FrameworkSupportConfigurable myConfigurable;
-    private JCheckBox myCheckBox;
-    private List<FrameworkSupportSettings> myChildren = new ArrayList<FrameworkSupportSettings>();
-    private @NonNls String myDirectoryForDownloadedLibrariesPath;
-    private Set<VirtualFile> myAddedJars = new LinkedHashSet<VirtualFile>();
-    private boolean myDownloadLibraries = true;
+    private final JCheckBox myCheckBox;
+    private final List<FrameworkSupportSettings> myChildren = new ArrayList<FrameworkSupportSettings>();
+    private LibraryCompositionSettings myLibraryCompositionSettings;
 
     private FrameworkSupportSettings(final FrameworkSupportProvider provider, final FrameworkSupportSettings parentNode) {
       myProvider = provider;
@@ -352,35 +337,22 @@ public class AddSupportForFrameworksPanel {
       return myConfigurable;
     }
 
-    public Set<VirtualFile> getAddedJars() {
-      return myAddedJars;
-    }
-
-    public void setAddedJars(final List<VirtualFile> addedJars) {
-      myAddedJars = new LinkedHashSet<VirtualFile>(addedJars);
-    }
-
-    public String getDirectoryForDownloadedLibrariesPath() {
-      if (myDirectoryForDownloadedLibrariesPath == null) {
-        myDirectoryForDownloadedLibrariesPath = getModuleDirectoryPath() + "/lib";
-      }
-      return myDirectoryForDownloadedLibrariesPath;
-    }
-
     public String getModuleDirectoryPath() {
       return getBaseModuleDirectoryPath();
     }
 
-    public void setDirectoryForDownloadedLibrariesPath(final String directoryForDownloadedLibrariesPath) {
-      myDirectoryForDownloadedLibrariesPath = directoryForDownloadedLibrariesPath;
+    private boolean isObsolete(@NotNull LibraryCompositionSettings settings) {
+      return !settings.getBaseDirectoryForDownloadedFiles().equals(getBaseModuleDirectoryPath())
+             || !Comparing.equal(settings.getLibraryInfos(), myConfigurable.getLibraries());
     }
 
-    public void setDownloadLibraries(final boolean downloadLibraries) {
-      myDownloadLibraries = downloadLibraries;
-    }
-
-    public boolean isDownloadLibraries() {
-      return myDownloadLibraries;
+    public LibraryCompositionSettings getLibraryCompositionSettings() {
+      if (myLibraryCompositionSettings == null || isObsolete(myLibraryCompositionSettings)) {
+        final String title = StringUtil.replace(myProvider.getTitle(), String.valueOf(UIUtil.MNEMONIC), "");
+        myLibraryCompositionSettings = new LibraryCompositionSettings(myConfigurable.getLibraries(), myConfigurable.getLibraryName(), getBaseModuleDirectoryPath(),
+                                                                      title);
+      }
+      return myLibraryCompositionSettings;
     }
   }
 

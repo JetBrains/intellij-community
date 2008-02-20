@@ -16,6 +16,7 @@
 
 package com.intellij.facet.ui.libraries;
 
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,5 +95,30 @@ public class LibraryDownloadInfo {
   @NotNull
   public String getPresentableUrl(String mirror) {
     return myPresentableUrl != null ? myPresentableUrl : mirror;
+  }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final LibraryDownloadInfo that = (LibraryDownloadInfo)o;
+
+    if (!myFileNamePrefix.equals(that.myFileNamePrefix)) return false;
+    if (!myFileNameSuffix.equals(that.myFileNameSuffix)) return false;
+    if (!myPresentableUrl.equals(that.myPresentableUrl)) return false;
+    if (!myRelativeDownloadUrl.equals(that.myRelativeDownloadUrl)) return false;
+    if (!Comparing.equal(myRemoteRepository, that.myRemoteRepository)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = myRemoteRepository.hashCode();
+    result = 31 * result + myRelativeDownloadUrl.hashCode();
+    result = 31 * result + myFileNamePrefix.hashCode();
+    result = 31 * result + myFileNameSuffix.hashCode();
+    result = 31 * result + myPresentableUrl.hashCode();
+    return result;
   }
 }

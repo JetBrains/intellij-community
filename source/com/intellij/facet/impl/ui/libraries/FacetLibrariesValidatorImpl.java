@@ -5,7 +5,6 @@
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.facet.Facet;
-import com.intellij.facet.impl.ui.FacetEditorContextBase;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
@@ -21,6 +20,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -154,7 +154,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     if (!myAddedRoots.isEmpty()) {
       VirtualFile[] roots = myAddedRoots.toArray(new VirtualFile[myAddedRoots.size()]);
       LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
-      Library library = FacetEditorContextBase.createLibraryInTable(myDescription.getDefaultLibraryName(), roots, VirtualFile.EMPTY_ARRAY, libraryTable);
+      Library library = LibrariesContainerFactory.createLibraryInTable(myDescription.getDefaultLibraryName(), roots, VirtualFile.EMPTY_ARRAY, libraryTable);
       model.addLibraryEntry(library);
       addedLibraries.add(library);
     }

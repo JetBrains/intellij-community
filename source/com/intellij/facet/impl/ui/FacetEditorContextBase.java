@@ -7,12 +7,12 @@ package com.intellij.facet.impl.ui;
 import com.intellij.facet.FacetInfo;
 import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.facet.ui.FacetEditorContext;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -20,11 +20,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author nik
@@ -110,30 +108,6 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   @Nullable
   public ModuleRootModel getRootModel() {
     return getModifiableRootModel();
-  }
-
-  public static Library createLibraryInTable(final @NonNls String name, final VirtualFile[] roots, final VirtualFile[] sources, final LibraryTable table) {
-    LibraryTable.ModifiableModel modifiableModel = table.getModifiableModel();
-    Library library = modifiableModel.createLibrary(getUniqueLibraryName(name, modifiableModel));
-    modifiableModel.commit();
-    final Library.ModifiableModel model = library.getModifiableModel();
-    for (VirtualFile root : roots) {
-      model.addRoot(root, OrderRootType.CLASSES);
-    }
-    for (VirtualFile root : sources) {
-      model.addRoot(root, OrderRootType.SOURCES);
-    }
-    model.commit();
-    return library;
-  }
-
-  protected static String getUniqueLibraryName(final String baseName, final LibraryTable.ModifiableModel model) {
-    String name = baseName;
-    int count = 2;
-    while (model.getLibraryByName(name) != null) {
-      name = baseName + " (" + count++ + ")";
-    }
-    return name;
   }
 
   public void addFacetContextChangeListener(FacetContextChangeListener facetContextChangeListener) {

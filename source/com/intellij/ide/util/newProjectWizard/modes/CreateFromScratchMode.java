@@ -17,6 +17,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,7 @@ public class CreateFromScratchMode extends WizardMode {
           sequence.addCommonStep(step);
         }
         if (FrameworkSupportUtil.hasProviders(type)) {
-          sequence.addCommonStep(new SupportForFrameworksStep(builder));
+          sequence.addCommonStep(new SupportForFrameworksStep(builder, LibrariesContainerFactory.createContainer(context.getProject())));
         }
       }
     myBuildersMap.put(ModuleType.EMPTY.getId(), new EmptyModuleBuilder());

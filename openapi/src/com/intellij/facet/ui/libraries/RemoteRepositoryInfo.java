@@ -36,4 +36,17 @@ public class RemoteRepositoryInfo {
   public String getDefaultMirror() {
     return myMirrors[0];
   }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final RemoteRepositoryInfo that = (RemoteRepositoryInfo)o;
+    return myId.equals(that.myId);
+
+  }
+
+  public int hashCode() {
+    return myId.hashCode();
+  }
 }

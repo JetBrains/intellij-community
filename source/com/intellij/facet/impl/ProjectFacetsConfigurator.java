@@ -16,13 +16,11 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
-import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolder;
@@ -313,33 +311,20 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   }
 
   private class MyProjectConfigurableContext extends ProjectConfigurableContext {
+    private LibrariesContainer myContainer;
+
     public MyProjectConfigurableContext(FacetInfo facetInfo, final Facet facet, final FacetEditorContext parentContext, final ModuleConfigurationState state) {
       super(facetInfo, facet, ProjectFacetsConfigurator.this.isNewFacet(facet), parentContext, state,
             ProjectFacetsConfigurator.this.getSharedModuleData(facet.getModule()), getProjectData());
+      myContainer = LibrariesContainerFactory.createContainer(facet.getModule().getProject(), myContext);
     }
 
     public Library createProjectLibrary(final String baseName, final VirtualFile[] roots, final VirtualFile[] sources) {
-      LibraryTableModifiableModelProvider provider = myContext.getProjectLibrariesProvider(false);
-      LibraryTable.ModifiableModel model = provider.getModifiableModel();
-      Library library = model.createLibrary(getUniqueLibraryName(baseName, model));
-      LibraryEditor libraryEditor = ((LibrariesModifiableModel)model).getLibraryEditor(library);
-      for (VirtualFile root : roots) {
-        libraryEditor.addRoot(root, OrderRootType.CLASSES);
-      }
-      for (VirtualFile source : sources) {
-        libraryEditor.addRoot(source, OrderRootType.SOURCES);
-      }
-      return library;
+      return myContainer.createLibrary(baseName, LibrariesContainer.LibraryLevel.PROJECT, roots, sources);
     }
 
     public VirtualFile[] getLibraryFiles(Library library, OrderRootType rootType) {
-      LibraryTable.ModifiableModel model = myContext.getProjectLibrariesProvider(false).getModifiableModel();
-      LibrariesModifiableModel librariesModifiableModel = (LibrariesModifiableModel)model;
-      if (librariesModifiableModel.hasLibraryEditor(library)) {
-        LibraryEditor libraryEditor = librariesModifiableModel.getLibraryEditor(library);
-        return libraryEditor.getFiles(rootType);
-      }
-      return super.getLibraryFiles(library, rootType);
+      return myContainer.getLibraryFiles(library, rootType);
     }
   }
 }

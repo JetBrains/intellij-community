@@ -258,14 +258,23 @@ public class ElementsChooser<T> extends JPanel {
       myTable.clearSelection();
       return;
     }
+    final int[] rows = getElementsRows(elements);
+    TableUtil.selectRows(myTable, rows);
+    TableUtil.scrollSelectionToVisible(myTable);
+    myTable.requestFocus();
+  }
+
+  private int[] getElementsRows(final Collection<T> elements) {
     final int[] rows = new int[elements.size()];
     int index = 0;
     for (final T element : elements) {
       rows[index++] = myTableModel.getElementRow(element);
     }
-    TableUtil.selectRows(myTable, rows);
-    TableUtil.scrollSelectionToVisible(myTable);
-    myTable.requestFocus();
+    return rows;
+  }
+
+  public void markElements(Collection<T> elements) {
+    myTableModel.setMarked(getElementsRows(elements), true);
   }
 
   public List<T> getMarkedElements() {

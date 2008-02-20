@@ -13,12 +13,12 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
-import com.intellij.facet.impl.ui.FacetEditorContextBase;
 
 /**
  * @author nik
@@ -60,7 +60,7 @@ public class LibrariesValidatorContextImpl implements LibrariesValidatorContext 
   }
 
   public Library createProjectLibrary(String name, VirtualFile[] roots) {
-    return FacetEditorContextBase.createLibraryInTable(name, roots, VirtualFile.EMPTY_ARRAY, getProjectLibraryTable());
+    return LibrariesContainerFactory.createLibraryInTable(name, roots, VirtualFile.EMPTY_ARRAY, getProjectLibraryTable());
   }
 
   public VirtualFile[] getFiles(final Library library, final OrderRootType rootType) {

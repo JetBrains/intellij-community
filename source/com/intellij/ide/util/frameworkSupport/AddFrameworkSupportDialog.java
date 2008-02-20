@@ -12,6 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +33,7 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
     super(module.getProject(), true);
     setTitle(ProjectBundle.message("dialog.title.add.frameworks.support"));
     myModule = module;
-    myAddSupportPanel = new AddSupportForFrameworksPanel(providers, new Computable<String>() {
+    myAddSupportPanel = new AddSupportForFrameworksPanel(providers, LibrariesContainerFactory.createContainer(module.getProject()), new Computable<String>() {
       public String compute() {
         return contentRootPath;
       }
