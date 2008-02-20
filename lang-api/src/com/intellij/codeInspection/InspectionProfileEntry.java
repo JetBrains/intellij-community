@@ -36,6 +36,7 @@ import java.net.URL;
  * Date: 28-Nov-2005
  */
 public abstract class InspectionProfileEntry {
+  public static final String GENERAL_GROUP_NAME = InspectionsBundle.message("inspection.general.tools.group.name");
 
   @Nls @NotNull
   public abstract String getGroupDisplayName();

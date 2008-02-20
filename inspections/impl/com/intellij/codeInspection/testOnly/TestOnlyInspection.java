@@ -2,7 +2,6 @@ package com.intellij.codeInspection.testOnly;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestUtil;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -26,7 +25,7 @@ public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.GENERAL_GROUP_NAME;
+    return GENERAL_GROUP_NAME;
   }
 
   @NotNull

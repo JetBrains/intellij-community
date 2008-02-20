@@ -1,6 +1,5 @@
 package com.intellij.codeInspection.defaultFileTemplateUsage;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
@@ -26,7 +25,7 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
 
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.GENERAL_GROUP_NAME;
+    return GENERAL_GROUP_NAME;
   }
 
   @NotNull
