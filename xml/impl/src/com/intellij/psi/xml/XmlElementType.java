@@ -43,8 +43,7 @@ public interface XmlElementType extends XmlTokenType {
   IElementType HTML_TAG = new IXmlElementType("HTML_TAG");
   IFileElementType HTML_FILE = new IFileElementType(StdLanguages.HTML);
 
-  IElementType XML_TEXT = new IXmlElementType("XML_TEXT");
-
+  IElementType XML_TEXT = new XmlTextElementType();
 
   IFileElementType XML_FILE = new IFileElementType(StdLanguages.XML);
   IElementType XHTML_FILE = new IFileElementType(StdLanguages.XHTML);

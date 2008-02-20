@@ -7,8 +7,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IStrongWhitespaceHolderElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -427,7 +427,7 @@ public class TreeUtil {
   }
 
   public static boolean isStrongWhitespaceHolder(IElementType type) {
-    return type == XmlElementType.XML_TEXT;
+    return type instanceof IStrongWhitespaceHolderElementType;
   }
 
   public static String getTokenText(Lexer lexer) {
