@@ -1,6 +1,5 @@
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -14,16 +13,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDeclaration;
 import com.intellij.psi.impl.source.jsp.jspJava.JspScriptlet;
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlChildRole;

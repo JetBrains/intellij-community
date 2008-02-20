@@ -3,8 +3,8 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.lookup.LookupItem;
-import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.patterns.PlatformPatterns;
+import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AssignableFromContextFilter;
@@ -19,8 +19,8 @@ import com.intellij.psi.filters.position.*;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.filters.types.TypeCodeFragmentIsVoidEnabledFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.jsp.JspElementType;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import org.jetbrains.annotations.NonNls;
 
 public class JavaCompletionData extends JavaAwareCompletionData{

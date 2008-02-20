@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.impl.source.codeStyle.Helper;
+import com.intellij.psi.impl.source.codeStyle.HelperFactory;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -413,7 +414,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
   }
 
   private static void adjustIndentationInRange(final PsiFile file, final Document document, final TextRange[] indents, final int indentAdjustment) {
-    final Helper formatHelper = new Helper(file.getFileType(), file.getProject());
+    final Helper formatHelper = HelperFactory.createHelper(file.getFileType(), file.getProject());
     final CharSequence charsSequence = document.getCharsSequence();
     for (final TextRange indent : indents) {
       final String oldIndentStr = charsSequence.subSequence(indent.getStartOffset() + 1, indent.getEndOffset()).toString();
@@ -424,7 +425,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
   }
 
   private static int getNewIndent(final PsiFile psiFile, final int firstWhitespace) {
-    final Helper formatHelper = new Helper(psiFile.getFileType(), psiFile.getProject());
+    final Helper formatHelper = HelperFactory.createHelper(psiFile.getFileType(), psiFile.getProject());
     final Document document = psiFile.getViewProvider().getDocument();
     final int startOffset = document.getLineStartOffset(document.getLineNumber(firstWhitespace));
     int endOffset = startOffset;
@@ -443,7 +444,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myPsiManager.getProject());
     final Document document = viewProvider.getDocument();
     final FileType fileType = viewProvider.getVirtualFile().getFileType();
-    final Helper helper = new Helper(fileType, myPsiManager.getProject());
+    final Helper helper = HelperFactory.createHelper(fileType, myPsiManager.getProject());
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(styleSettings, helper);
 
     documentManager.commitDocument(document);

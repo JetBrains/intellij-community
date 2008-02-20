@@ -1,23 +1,23 @@
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
-import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
-import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
-import com.intellij.psi.xml.*;
-import com.intellij.openapi.project.Project;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
+import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlUtil;
 
 public class XmlSlashTypedHandler extends TypedHandlerDelegate {

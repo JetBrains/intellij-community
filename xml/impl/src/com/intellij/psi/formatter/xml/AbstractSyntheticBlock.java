@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;

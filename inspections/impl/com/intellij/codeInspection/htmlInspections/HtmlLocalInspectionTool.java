@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.XmlElementVisitor;
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;

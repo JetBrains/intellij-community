@@ -5,10 +5,13 @@
 package com.intellij.openapi.paths;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulator;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 

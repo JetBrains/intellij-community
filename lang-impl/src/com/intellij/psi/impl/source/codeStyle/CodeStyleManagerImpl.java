@@ -70,7 +70,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (file != null) {
       fileType = file.getFileType();
     }
-    Helper helper = new Helper(fileType, myProject);
+    Helper helper = HelperFactory.createHelper(fileType, myProject);
     final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(
       new CodeFormatterFacade(getSettings(), helper).process(treeElement, -1));
     if (!canChangeWhiteSpacesOnly) {
@@ -122,7 +122,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       ChameleonTransforming.transformChildren(treeElement, true); // optimization : parse all first
     }
     FileType fileType = file.getFileType();
-    Helper helper = new Helper(fileType, myProject);
+    Helper helper = HelperFactory.createHelper(fileType, myProject);
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), helper);
     final PsiElement start = findElementInTreeWithFormatterEnabled(file.getContainingFile(), startOffset);
     final PsiElement end = findElementInTreeWithFormatterEnabled(file.getContainingFile(), endOffset);
@@ -166,7 +166,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (file != null) {
       fileType = file.getFileType();
     }
-    Helper helper = new Helper(fileType, myProject);
+    Helper helper = HelperFactory.createHelper(fileType, myProject);
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), helper);
     final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(codeFormatter.processRange(treeElement, startOffset, endOffset));
 
@@ -404,7 +404,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (!SourceTreeToPsiMap.hasTreeElement(file)) {
       return false;
     }
-    Helper helper = new Helper(file.getFileType(), myProject);
+    Helper helper = HelperFactory.createHelper(file.getFileType(), myProject);
     CharSequence chars = file.getViewProvider().getContents();
     int start = CharArrayUtil.shiftBackward(chars, offset - 1, " \t");
     if (start > 0 && chars.charAt(start) != '\n' && chars.charAt(start) != '\r') {
@@ -479,7 +479,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   public Indent getIndent(String text, FileType fileType) {
-    int indent = new Helper(fileType, myProject).getIndent(text, true);
+    int indent = HelperFactory.createHelper(fileType, myProject).getIndent(text, true);
     int indenLevel = indent / Helper.INDENT_FACTOR;
     int spaceCount = indent - indenLevel * Helper.INDENT_FACTOR;
     return new IndentImpl(getSettings(), indenLevel, spaceCount, fileType);
@@ -506,7 +506,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
         }
       }
     }
-    return new Helper(fileType, myProject).fillIndent(indentLevel * Helper.INDENT_FACTOR + spaceCount);
+    return HelperFactory.createHelper(fileType, myProject).fillIndent(indentLevel * Helper.INDENT_FACTOR + spaceCount);
   }
 
   public Indent zeroIndent() {

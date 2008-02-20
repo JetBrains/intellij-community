@@ -17,7 +17,7 @@
 /*
  * @author max
  */
-package com.intellij.psi.impl.source.jsp.jspJava;
+package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;

@@ -15,10 +15,10 @@
  */
 package com.intellij.psi;
 
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspImplicitVariable;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 
 @SuppressWarnings({"JavaDoc"})
 public abstract class JavaElementVisitor extends PsiElementVisitor {

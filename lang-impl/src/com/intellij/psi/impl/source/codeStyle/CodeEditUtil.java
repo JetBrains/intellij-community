@@ -16,8 +16,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -115,7 +115,7 @@ public class CodeEditUtil {
   public static void saveWhitespacesInfo(final ASTNode first) {
     if(first == null || isNodeGenerated(first) || getOldIndentation(first) >= 0) return;
     final PsiFile containingFile = first.getPsi().getContainingFile();
-    final Helper helper = new Helper(containingFile.getFileType(), containingFile.getProject());
+    final Helper helper = HelperFactory.createHelper(containingFile.getFileType(), containingFile.getProject());
     setOldIndentation((TreeElement)first, helper.getIndent(first));
   }
 

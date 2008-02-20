@@ -1,10 +1,9 @@
 package com.intellij.psi.formatter.common;
 
-import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.impl.source.codeStyle.Helper;
+import com.intellij.psi.formatter.FormatterUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,6 +83,6 @@ public abstract class AbstractBlock implements Block {
   }
 
   public boolean isLeaf() {
-    return Helper.mayShiftIndentInside(myNode);
+    return JavaBlockUtil.mayShiftIndentInside(myNode);
   }
 }

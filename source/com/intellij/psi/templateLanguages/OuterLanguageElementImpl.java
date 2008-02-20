@@ -6,7 +6,6 @@ package com.intellij.psi.templateLanguages;
 
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;

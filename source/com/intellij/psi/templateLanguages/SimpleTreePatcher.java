@@ -4,7 +4,6 @@
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.ASTFactory;
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;

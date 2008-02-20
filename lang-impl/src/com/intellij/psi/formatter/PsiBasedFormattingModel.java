@@ -5,15 +5,12 @@ import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
@@ -24,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 public class PsiBasedFormattingModel implements FormattingModel {
 
   private final ASTNode myASTNode;
-  private final Project myProject;
   private final FormattingDocumentModelImpl myDocumentModel;
   private final Block myRootBlock;
 
@@ -35,7 +31,6 @@ public class PsiBasedFormattingModel implements FormattingModel {
                                  final Block rootBlock,
                                  final FormattingDocumentModelImpl documentModel) {
     myASTNode = SourceTreeToPsiMap.psiElementToTree(file);
-    myProject = file.getProject();
     myDocumentModel = documentModel;
     myRootBlock = rootBlock;
 
@@ -53,28 +48,12 @@ public class PsiBasedFormattingModel implements FormattingModel {
   }
 
   public TextRange shiftIndentInsideRange(TextRange textRange, int shift) {
-    return shiftIndentInsideWithPsi(textRange, shift);
+    return textRange; // TODO: Remove this method from here...
   }
 
   public void commitChanges() {
   }
 
-
-  private TextRange shiftIndentInsideWithPsi(final TextRange textRange, final int shift) {
-    final int offset = textRange.getStartOffset();
-
-    ASTNode leafElement = findElementAt(offset);
-    while (leafElement != null && !leafElement.getTextRange().equals(textRange)) {
-      leafElement = leafElement.getTreeParent();
-    }
-
-    if (leafElement != null && leafElement.getTextRange().equals(textRange) && Helper.mayShiftIndentInside(leafElement)) {
-      return new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, shift).getTextRange();
-    } else {
-      return textRange;
-    }
-
-  }
 
   private String replaceWithPSI(final TextRange textRange, String whiteSpace) {
     final int offset = textRange.getEndOffset();

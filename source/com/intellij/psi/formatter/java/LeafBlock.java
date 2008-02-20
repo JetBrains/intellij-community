@@ -3,7 +3,7 @@ package com.intellij.psi.formatter.java;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.impl.source.codeStyle.Helper;
+import com.intellij.psi.formatter.common.JavaBlockUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -72,7 +72,7 @@ public class LeafBlock implements Block{
   }
 
   public boolean isLeaf() {
-    return Helper.mayShiftIndentInside(myNode);
+    return JavaBlockUtil.mayShiftIndentInside(myNode);
   }
 
   public void setStartOffset(final int startOffset) {
