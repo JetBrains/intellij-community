@@ -43,6 +43,19 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     myDocumentModel = new FormattingDocumentModelImpl(document,file);
   }
 
+  public DocumentBasedFormattingModel(final Block rootBlock,
+                                      final Project project,
+                                      final CodeStyleSettings settings,
+                                      final FileType fileType,
+                                      final PsiFile file) {
+    myRootBlock = rootBlock;
+    myProject = project;
+    mySettings = settings;
+    myFileType = fileType;
+    myDocumentModel = FormattingDocumentModelImpl.createOn(file);
+    myDocument = ((FormattingDocumentModelImpl)myDocumentModel).getDocument();
+  }
+
   @NotNull
   public Block getRootBlock() {
     return myRootBlock;
