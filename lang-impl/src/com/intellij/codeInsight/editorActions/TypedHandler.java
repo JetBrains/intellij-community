@@ -4,10 +4,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
-import com.intellij.lang.BracePair;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageBraceMatching;
-import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,13 +15,13 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -397,28 +394,12 @@ public class TypedHandler implements TypedActionHandler {
       if (file == null || !file.isWritable()) return;
       PsiElement element = file.findElementAt(offset);
       if (element == null) return;
-      IElementType braceTokenType = braceChar == '{' ? JavaTokenType.LBRACE:JavaTokenType.RBRACE;
 
-      final Language language = element.getLanguage();
-      final PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(language);
-      
-      if (matcher != null) {
-        final BracePair[] pairs = matcher.getPairs();
+      BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(file.getFileType());
+      EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+      HighlighterIterator iterator = highlighter.createIterator(offset);
 
-        if (pairs != null) {
-          for(BracePair pair:pairs) {
-            if (pair.isStructural()) {
-              if (pair.getLeftBraceChar() == braceChar) {
-                braceTokenType = pair.getLeftBraceType(); break;
-              } else if (pair.getRightBraceChar() == braceChar) {
-                braceTokenType = pair.getRightBraceType(); break;
-              }
-            }
-          }
-        }
-      }
-
-      if (element.getNode() != null && element.getNode().getElementType() == braceTokenType){
+      if (element.getNode() != null && braceMatcher.isStructuralBrace(iterator, chars, file.getFileType())) {
         final Runnable action = new Runnable() {
           public void run(){
             try{
