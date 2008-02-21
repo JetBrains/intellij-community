@@ -6,14 +6,11 @@ import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlTag;
 
 public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements HintManager.ActionToIgnore {
   public ShowJavaDocInfoAction() {
@@ -71,15 +68,9 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
         }
 
         if (element == null && file != null) {
-          if (file.getLanguage() instanceof XMLLanguage) {
-            // we allow request quick doc over content of the tag
-            final PsiElement contextElement = file.findElementAt(editor.getCaretModel().getOffset());
-            element = PsiTreeUtil.getParentOfType(contextElement, XmlTag.class);
-          } else {
-            final PsiReference ref = file.findReferenceAt(editor.getCaretModel().getOffset());
-            if (ref instanceof PsiPolyVariantReference) {
-              element = ref.getElement();
-            }
+          final PsiReference ref = file.findReferenceAt(editor.getCaretModel().getOffset());
+          if (ref instanceof PsiPolyVariantReference) {
+            element = ref.getElement();
           }
         }
       }
