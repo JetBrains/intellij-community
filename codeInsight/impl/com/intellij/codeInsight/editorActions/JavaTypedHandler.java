@@ -3,7 +3,6 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavadocAutoLookupHandler;
-import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -54,7 +53,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
                     !(file instanceof JspFile) &&
                     CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
                     ((PsiJavaFile)file).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0 &&
-                    BraceMatchingUtil.isAfterClassLikeIdentifierOrDot(offsetBefore, editor);
+                    isAfterClassLikeIdentifierOrDot(offsetBefore, editor);
 
     if ('>' == c) {
       if (file instanceof PsiJavaFile && !(file instanceof JspFile) &&
@@ -242,6 +241,26 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       };
       AutoPopupController.getInstance(project).invokeAutoPopupRunnable(request, settings.JAVADOC_LOOKUP_DELAY);
     }
+  }
+
+  public static boolean isAfterClassLikeIdentifierOrDot(final int offset, final Editor editor) {
+    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
+    if (iterator.atEnd()) return false;
+    if (iterator.getStart() > 0) iterator.retreat();
+    final IElementType tokenType = iterator.getTokenType();
+    if (tokenType == JavaTokenType.DOT) return true;
+    if (tokenType == JavaTokenType.IDENTIFIER && iterator.getEnd() == offset) {
+      final CharSequence chars = editor.getDocument().getCharsSequence();
+      final char startChar = chars.charAt(iterator.getStart());
+      if (!Character.isUpperCase(startChar)) return false;
+      final CharSequence word = chars.subSequence(iterator.getStart(), iterator.getEnd());
+      if (word.length() == 1) return true;
+      for (int i = 1; i < word.length(); i++) {
+        if (Character.isLowerCase(word.charAt(i))) return true;
+      }
+    }
+
+    return false;
   }
 
   private static class MemberAutoLookupCondition implements Condition<Editor> {

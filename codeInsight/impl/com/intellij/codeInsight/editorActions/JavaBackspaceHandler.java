@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -18,7 +17,7 @@ public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
     myToDeleteGt = c =='<' &&
                         file instanceof PsiJavaFile &&
                         ((PsiJavaFile)file).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0
-                        && BraceMatchingUtil.isAfterClassLikeIdentifierOrDot(offset, editor);
+                        && JavaTypedHandler.isAfterClassLikeIdentifierOrDot(offset, editor);
   }
 
   public boolean charDeleted(final char c, final PsiFile file, final Editor editor) {

@@ -3,13 +3,10 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageBraceMatching;
 import com.intellij.lang.PairedBraceMatcher;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 
 import java.util.HashMap;
@@ -20,26 +17,6 @@ public class BraceMatchingUtil {
   private static BraceMatcher ourDefaultBraceMatcher = null;
 
   private BraceMatchingUtil() {}
-
-  public static boolean isAfterClassLikeIdentifierOrDot(final int offset, final Editor editor) {
-    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
-    if (iterator.atEnd()) return false;
-    if (iterator.getStart() > 0) iterator.retreat();
-    final IElementType tokenType = iterator.getTokenType();
-    if (tokenType == JavaTokenType.DOT) return true;
-    if (tokenType == JavaTokenType.IDENTIFIER && iterator.getEnd() == offset) {
-      final CharSequence chars = editor.getDocument().getCharsSequence();
-      final char startChar = chars.charAt(iterator.getStart());
-      if (!Character.isUpperCase(startChar)) return false;
-      final CharSequence word = chars.subSequence(iterator.getStart(), iterator.getEnd());
-      if (word.length() == 1) return true;
-      for (int i = 1; i < word.length(); i++) {
-        if (Character.isLowerCase(word.charAt(i))) return true;
-      }
-    }
-
-    return false;
-  }
 
   public static boolean isPairedBracesAllowedBeforeTypeInFileType(final IElementType lbraceType, final IElementType tokenType, final FileType fileType) {
     try {

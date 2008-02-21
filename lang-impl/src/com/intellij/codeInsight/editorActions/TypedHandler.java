@@ -266,8 +266,6 @@ public class TypedHandler implements TypedActionHandler {
     int lparenthOffset = BraceMatchingUtil.findLeftmostLParen(iterator, braceMatcher.getTokenType(leftParen, iterator),  editor.getDocument().getCharsSequence(),fileType);
     if (lparenthOffset < 0) return false;
 
-    if (leftParen == '<' && !BraceMatchingUtil.isAfterClassLikeIdentifierOrDot(lparenthOffset, editor)) return false;
-
     iterator = ((EditorEx) editor).getHighlighter().createIterator(lparenthOffset);
     boolean matched = BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), fileType, iterator, true);
 
