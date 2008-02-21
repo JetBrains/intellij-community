@@ -812,21 +812,6 @@ public class XmlUtil {
     return null;
   }
 
-  public static boolean isInAntBuildFile(XmlFile file) {
-    if (file == null) return false;
-    if (file.getCopyableUserData(XmlFile.ANT_BUILD_FILE) != null) {
-      return true;
-    }
-    XmlDocument document = file.getDocument();
-    if (document != null) {
-      XmlTag rootTag = document.getRootTag();
-      if (rootTag != null) {
-        return ANT_URI.equals(rootTag.getNamespace());
-      }
-    }
-    return false;
-  }
-
   @NonNls
   public static String[][] getDefaultNamespaces(final XmlDocument document) {
     final XmlFile file = getContainingFile(document);

@@ -8,6 +8,7 @@ import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.TargetAction;
 import com.intellij.lang.ant.psi.AntFile;
+import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -455,7 +456,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     }
     final AntFile antFile = (AntFile)psiFile;
     final AntBuildFileImpl buildFile = new AntBuildFileImpl(antFile, this);
-    antFile.getSourceElement().putCopyableUserData(XmlFile.ANT_BUILD_FILE, buildFile);
+    antFile.getSourceElement().putCopyableUserData(AntFileImpl.ANT_BUILD_FILE, buildFile);
     synchronized (myBuildFiles) {
       myBuildFiles.add(buildFile);
     }
@@ -515,7 +516,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   private void removeBuildFileImpl(AntBuildFile buildFile) {
     final XmlFile xmlFile = ((AntFile)buildFile.getAntFile()).getSourceElement();
-    xmlFile.putCopyableUserData(XmlFile.ANT_BUILD_FILE, null);
+    xmlFile.putCopyableUserData(AntFileImpl.ANT_BUILD_FILE, null);
     AntSupport.markFileAsAntFile(xmlFile.getVirtualFile(), xmlFile.getViewProvider(), false);
     synchronized (myBuildFiles) {
       myBuildFiles.remove(buildFile);

@@ -20,7 +20,7 @@ public class AntDefaultNSProvider implements XmlFileNSInfoProvider, ApplicationC
 
   // nsPrefix, namespaceId
   public String[][] getDefaultNamespaces(@NotNull XmlFile xmlFile) {
-    if (xmlFile.getCopyableUserData(XmlFile.ANT_BUILD_FILE) != null) return myNamespaces;
+    if (xmlFile.getCopyableUserData(AntFileImpl.ANT_BUILD_FILE) != null) return myNamespaces;
     final XmlDocument document = xmlFile.getDocument();
     if (document != null) {
       final XmlTag tag = document.getRootTag();

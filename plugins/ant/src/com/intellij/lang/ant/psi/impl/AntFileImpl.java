@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
@@ -108,6 +109,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
    */
   private volatile HashMap<AntTypeId, String> myProjectElements;
   private volatile long myModificationCount = 0;
+  public static final Key ANT_BUILD_FILE = Key.create("ANT_BUILD_FILE");
 
   public AntFileImpl(final FileViewProvider viewProvider) {
     super(viewProvider, AntSupport.getLanguage());
@@ -277,7 +279,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   @NotNull
   public ClassLoader getClassLoader() {
     if (myClassLoader == null) {
-      final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(XmlFile.ANT_BUILD_FILE);
+      final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(ANT_BUILD_FILE);
       if (buildFile != null) {
         myClassLoader = buildFile.getClassLoader();
       }
@@ -299,7 +301,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   @NotNull
   public AntInstallation getAntInstallation() {
-    final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(XmlFile.ANT_BUILD_FILE);
+    final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(ANT_BUILD_FILE);
     if (buildFile != null) {
       final AntInstallation assignedInstallation = AntBuildFileImpl.ANT_INSTALLATION.get(buildFile.getAllOptions());
       if (assignedInstallation != null) {
@@ -320,7 +322,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   @Nullable
   public Sdk getTargetJdk() {
-    final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(XmlFile.ANT_BUILD_FILE);
+    final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(ANT_BUILD_FILE);
     if (buildFile == null) {
       return ProjectRootManager.getInstance(getProject()).getProjectJdk();
     }
