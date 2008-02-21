@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,12 +70,10 @@ public class AbstractMethodWithMissingImplementationsInspection
             }
             final InheritorFinder inheritorFinder =
                     new InheritorFinder(containingClass);
-          for (final PsiClass inheritor : inheritorFinder.getInheritors()) {
+            for (final PsiClass inheritor : inheritorFinder.getInheritors()) {
                 if (!inheritor.isInterface() &&
                         !inheritor.hasModifierProperty(PsiModifier.ABSTRACT)) {
                     if (!hasMatchingImplementation(inheritor, method)) {
-
-                        // todo make this more efficient
                         registerMethodError(method);
                         return;
                     }
@@ -97,12 +95,14 @@ public class AbstractMethodWithMissingImplementationsInspection
             }
             final PsiClass superClass = method.getContainingClass();
             final PsiManager manager = overridingMethod.getManager();
-          return JavaPsiFacade.getInstance(manager.getProject()).arePackagesTheSame(superClass, aClass);
+            final JavaPsiFacade facade =
+                    JavaPsiFacade.getInstance(manager.getProject());
+            return facade.arePackagesTheSame(superClass, aClass);
         }
 
         /**
          * @param method  the method of which to find an override.
-         * @param aClass  subclass to find the methed in.
+         * @param aClass  subclass to find the method in.
          * @return the overriding method.
          */
         @Nullable
@@ -121,6 +121,12 @@ public class AbstractMethodWithMissingImplementationsInspection
                             signature.getName(), true);
             for (Pair<PsiMethod, PsiSubstitutor> pair : pairs) {
                 final PsiMethod overridingMethod = pair.first;
+                final PsiClass containingClass =
+                        overridingMethod.getContainingClass();
+                if (containingClass.isInterface() ||
+                        containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                    continue;
+                }
                 final PsiSubstitutor overridingSubstitutor = pair.second;
                 final MethodSignature foundMethodSignature =
                         overridingMethod.getSignature(overridingSubstitutor);
@@ -146,7 +152,8 @@ public class AbstractMethodWithMissingImplementationsInspection
             final PsiManager manager = aClass.getManager();
             final PsiSearchHelper searchHelper = manager.getSearchHelper();
             final SearchScope searchScope = aClass.getUseScope();
-          inheritors = ClassInheritorsSearch.search(aClass, searchScope, true).findAll();
+          inheritors = ClassInheritorsSearch.search(aClass, searchScope, true)
+                  .findAll();
         }
 
         public Collection<PsiClass> getInheritors() {
