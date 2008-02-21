@@ -8,8 +8,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.idea.maven.project.MavenImportProcessor;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.artifact.Artifact;
 
 import java.io.File;
+import java.util.List;
+import java.util.LinkedHashMap;
 
 public class WorkingWithOpenProjectTest extends ImportingTestCase {
   @Override
@@ -61,7 +65,7 @@ public class WorkingWithOpenProjectTest extends ImportingTestCase {
                              "  </dependency>" +
                              "</dependencies>"));
     
-    new MavenImportProcessor(myProject).synchronize();
+    new MavenImportProcessor(myProject).synchronize(new LinkedHashMap<MavenProject, List<Artifact>>());
 
     assertModuleLibDep("project", "junit:junit:4.0");
   }

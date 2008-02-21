@@ -13,6 +13,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
@@ -29,6 +31,7 @@ import java.util.*;
 public abstract class ImportingTestCase extends MavenTestCase {
   protected MavenImporterSettings myPrefs;
   protected MavenProjectModel projectModel;
+  protected LinkedHashMap<MavenProject, List<Artifact>> unresolvedArtifacts;
 
   @Override
   protected void setUpInWriteAction() throws Exception {
@@ -78,7 +81,7 @@ public abstract class ImportingTestCase extends MavenTestCase {
       actualNames.add(m.getName());
     }
 
-    assertUnorderedElementsAreEqual(expectedNames, actualNames);
+    assertUnorderedElementsAreEqual(actualNames);
   }
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {
@@ -91,7 +94,7 @@ public abstract class ImportingTestCase extends MavenTestCase {
       expectedRoots[i] = VfsUtil.pathToUrl(expectedRoots[i]);
     }
 
-    assertUnorderedElementsAreEqual(expectedRoots, actual);
+    assertUnorderedElementsAreEqual(actual);
   }
 
   protected void assertSources(String moduleName, String... expectedSources) {
@@ -130,7 +133,7 @@ public abstract class ImportingTestCase extends MavenTestCase {
       actual.add(folderUrl);
     }
 
-    assertUnorderedElementsAreEqual(expected, actual);
+    assertUnorderedElementsAreEqual(actual);
   }
 
   protected void assertModuleOutput(String moduleName, String output, String testOutput) {
@@ -207,7 +210,7 @@ public abstract class ImportingTestCase extends MavenTestCase {
       }
     }, null);
 
-    assertOrderedElementsAreEqual(expectedDeps, actual);
+    assertOrderedElementsAreEqual(actual, expectedDeps);
   }
 
   protected void assertModuleModuleDeps(String moduleName, String... expectedDeps) {
@@ -223,10 +226,10 @@ public abstract class ImportingTestCase extends MavenTestCase {
       }
     }
 
-    assertOrderedElementsAreEqual(expectedDeps, actual);
+    assertOrderedElementsAreEqual(actual, expectedDeps);
   }
 
-  protected <T, U> void assertUnorderedElementsAreEqual(T[] expected, Collection<U> actual) {
+  protected <T, U> void assertUnorderedElementsAreEqual(Collection<U> actual, T... expected) {
     String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + actual;
     assertEquals(s, expected.length, actual.size());
 
@@ -242,7 +245,7 @@ public abstract class ImportingTestCase extends MavenTestCase {
     }
   }
 
-  protected <T, U> void assertOrderedElementsAreEqual(T[] expected, Collection<U> actual) {
+  protected <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, T... expected) {
     String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + actual;
     assertEquals(s, expected.length, actual.size());
 
@@ -319,7 +322,10 @@ public abstract class ImportingTestCase extends MavenTestCase {
       MavenImportProcessor p = new MavenImportProcessor(myProject);
       p.createMavenProjectModel(files, new HashMap<VirtualFile, Module>(), profilesList, new Progress());
       p.createMavenToIdeaMapping();
-      p.resolve(myProject, profilesList);
+
+      unresolvedArtifacts = new LinkedHashMap<MavenProject, List<Artifact>>();
+      p.resolve(myProject, profilesList, unresolvedArtifacts);
+      
       p.commit(myProject, profilesList);
       projectModel = p.getMavenProjectModel();
     }

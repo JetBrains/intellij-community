@@ -20,8 +20,8 @@ import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.core.util.ErrorHandler;
 import org.jetbrains.idea.maven.project.FoldersConfigurator;
+import org.jetbrains.idea.maven.project.MavenImportToolWindow;
 import org.jetbrains.idea.maven.project.MavenException;
-import org.jetbrains.idea.maven.project.MavenImporter;
 import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenExternalExecutor;
@@ -151,7 +151,7 @@ public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunne
       VirtualFileManager.getInstance().refresh(false);
     }
     catch (MavenException e) {
-      MavenImporter.getInstance(project).displayImportErrors(e);
+      new MavenImportToolWindow(project, RunnerBundle.message("maven.running")).displayErrors(e);
     }
   }
 

@@ -8,7 +8,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.embedder.MavenEmbedder;
+import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
@@ -59,7 +61,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   @Override
   public boolean validate(Project current, Project dest) {
     try {
-      myImportProcessor.resolve(dest, myProfiles);
+      myImportProcessor.resolve(dest, myProfiles, new LinkedHashMap<MavenProject, List<Artifact>>());
     }
     catch (MavenException e) {
       Messages.showErrorDialog(dest, e.getMessage(), getTitle());
