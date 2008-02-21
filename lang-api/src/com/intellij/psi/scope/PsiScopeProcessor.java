@@ -17,6 +17,7 @@ package com.intellij.psi.scope;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
+import org.jetbrains.annotations.Nullable;
 
 public interface PsiScopeProcessor {
   enum Event {
@@ -32,6 +33,8 @@ public interface PsiScopeProcessor {
    * @return false to stop processing.
    */
   boolean execute(PsiElement element, ResolveState state);
+
+  @Nullable
   <T> T getHint(Class<T> hintClass);
   void handleEvent(Event event, Object associated);
 }
