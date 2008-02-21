@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.xml;
 
-import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
@@ -33,7 +33,7 @@ public interface XmlTokenType {
   IElementType XML_EQ = new IXmlLeafElementType("XML_EQ");
   IElementType XML_DATA_CHARACTERS = new IXmlLeafElementType("XML_DATA_CHARACTERS");
   IElementType XML_TAG_CHARACTERS = new IXmlLeafElementType("XML_TAG_CHARACTERS");
-  IElementType XML_WHITE_SPACE = JavaTokenType.WHITE_SPACE;
+  IElementType XML_WHITE_SPACE = TokenType.WHITE_SPACE;
   IElementType XML_REAL_WHITE_SPACE = new IXmlLeafElementType("XML_WHITE_SPACE");
   IElementType XML_COMMENT_START = new IXmlLeafElementType("XML_COMMENT_START");
   IElementType XML_COMMENT_END = new IXmlLeafElementType("XML_COMMENT_END");
