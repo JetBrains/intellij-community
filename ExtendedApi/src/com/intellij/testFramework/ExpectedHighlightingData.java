@@ -5,6 +5,7 @@ package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -177,7 +178,13 @@ public class ExpectedHighlightingData {
           type = (HighlightInfoType)field.get(null);
         }
         catch (Exception e) {
-          LOG.error(e);
+          try {
+            Field javaField = JavaHighlightInfoTypes.class.getField(typeString);
+            type = (HighlightInfoType)javaField.get(null);
+          }
+          catch(Exception e2) {
+            LOG.error(e);
+          }
         }
 
         if (type == null) LOG.assertTrue(false,"Wrong highlight type: " + typeString);
