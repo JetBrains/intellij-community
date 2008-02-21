@@ -5,8 +5,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 
 public class SimpleDataContext implements DataContext {
-  private String myDataId;
-  private Object myData;
+  private final String myDataId;
+  private final Object myData;
   private final DataContext myParent;
 
   private SimpleDataContext(String dataId, Object data, DataContext parent) {
@@ -29,6 +29,4 @@ public class SimpleDataContext implements DataContext {
   public static DataContext getProjectContext(Project project) {
     return getSimpleContext(DataConstants.PROJECT, project);
   }
-
-  
 }

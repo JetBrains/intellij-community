@@ -56,8 +56,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   private final boolean myInStaticImport;
   private final JavaClassReferenceSet myJavaClassReferenceSet;
   private static final SimpleInsertHandler FQN_INSERT_HANDLER = new SimpleInsertHandler() {
-    public int handleInsert(final Editor editor, final int startOffset, final LookupElement item, final LookupElement[] allItems, final TailType tailType)
-      throws IncorrectOperationException {
+    public int handleInsert(final Editor editor, final int startOffset, final LookupElement item, final LookupElement[] allItems, final TailType tailType) {
       final String qname = ((PsiClass)item.getObject()).getQualifiedName();
       editor.getDocument().replaceString(startOffset, item.getLookupString().length() + startOffset, qname);
       final int tailOffset = startOffset + qname.length();
@@ -420,7 +419,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return list;
   }
 
-  protected CreateClassOrPackageFix doRegisterQuickFix(final HighlightInfo info, final List<PsiDirectory> writableDirectoryList,
+  private CreateClassOrPackageFix doRegisterQuickFix(final HighlightInfo info, final List<PsiDirectory> writableDirectoryList,
                                                                  final boolean createJavaClass,
                                                                  final String extendClass) {
     final CreateClassOrPackageFix action =
@@ -503,7 +502,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return true;
   }
 
-  protected List<PsiDirectory> getWritableDirectoryList(final PsiElement context) {
+  private List<PsiDirectory> getWritableDirectoryList(final PsiElement context) {
     return CreateClassOrPackageFix.getWritableDirectoryListDefault(context, getElement().getManager());
   }
 

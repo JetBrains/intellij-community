@@ -12,8 +12,6 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-
 /**
  * Created by IntelliJ IDEA.
  * User: cdr
@@ -40,7 +38,7 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
     return QuickFixBundle.message("reuse.variable.declaration.text", variable.getName());
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
 
     PsiVariable previousVariable = findPreviousVariable();
     return
@@ -54,10 +52,10 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
         && variable.getManager().isInProject(variable);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiVariable refVariable = findPreviousVariable();
     if (refVariable == null) return;
-    if (!CodeInsightUtil.preparePsiElementsForWrite(Arrays.asList(variable, refVariable))) return;
+    if (!CodeInsightUtil.preparePsiElementsForWrite(variable, refVariable)) return;
     refVariable.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
     if (variable.getInitializer() == null)  {
       variable.delete();

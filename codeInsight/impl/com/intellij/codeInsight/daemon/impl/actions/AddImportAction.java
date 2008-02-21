@@ -26,13 +26,13 @@ import java.util.Arrays;
 public class AddImportAction implements QuestionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddImportAction");
 
-  private Project myProject;
-  private PsiJavaReference myReference;
-  private PsiClass[] myTargetClasses;
-  private Editor myEditor;
+  private final Project myProject;
+  private final PsiReference myReference;
+  private final PsiClass[] myTargetClasses;
+  private final Editor myEditor;
 
   public AddImportAction(@NotNull Project project,
-                         @NotNull PsiJavaReference ref,
+                         @NotNull PsiReference ref,
                          @NotNull Editor editor,
                          @NotNull PsiClass... targetClasses) {
     myProject = project;
@@ -83,7 +83,7 @@ public class AddImportAction implements QuestionAction {
       showInBestPositionFor(myEditor);
   }
 
-  private void addImport(final PsiJavaReference ref, final PsiClass targetClass) {
+  private void addImport(final PsiReference ref, final PsiClass targetClass) {
     JavaStatisticsManager.getJavaInstance().incMemberUseCount(null, targetClass);
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
@@ -96,7 +96,7 @@ public class AddImportAction implements QuestionAction {
     }, QuickFixBundle.message("add.import"), null);
   }
 
-  private void _addImport(PsiJavaReference ref, PsiClass targetClass) {
+  private void _addImport(PsiReference ref, PsiClass targetClass) {
     if (!ref.getElement().isValid() || !targetClass.isValid() || ref.resolve() == targetClass) {
       return;
     }

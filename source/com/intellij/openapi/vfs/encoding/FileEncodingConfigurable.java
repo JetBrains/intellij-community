@@ -1,8 +1,10 @@
 package com.intellij.openapi.vfs.encoding;
 
+import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -11,7 +13,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ide.DataManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-public class ConfigureFileEncodingConfigurable implements Configurable {
+public class FileEncodingConfigurable implements Configurable {
   private final Project myProject;
   private FileTreeTable myTreeView;
   private JScrollPane myTreePanel;
@@ -32,17 +33,17 @@ public class ConfigureFileEncodingConfigurable implements Configurable {
   private Charset mySelectedCharsetForPropertiesFiles;
   private ChooseFileEncodingAction myAction;
 
-  public static ConfigureFileEncodingConfigurable getInstance(final Project project) {
-    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, ConfigureFileEncodingConfigurable.class);
+  public static FileEncodingConfigurable getInstance(final Project project) {
+    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, FileEncodingConfigurable.class);
   }
 
-  public ConfigureFileEncodingConfigurable(Project project) {
+  public FileEncodingConfigurable(Project project) {
     myProject = project;
   }
 
   @Nls
   public String getDisplayName() {
-    return "File Encodings";
+    return IdeBundle.message("file.encodings.configurable");
   }
 
   @Nullable
@@ -60,7 +61,9 @@ public class ConfigureFileEncodingConfigurable implements Configurable {
     myAction = new ChooseFileEncodingAction(null, myProject) {
       public void update(final AnActionEvent e) {
         super.update(e);
-        getTemplatePresentation().setText(mySelectedCharsetForPropertiesFiles == null ? "<System Default>" : mySelectedCharsetForPropertiesFiles.displayName());
+        getTemplatePresentation().setText(mySelectedCharsetForPropertiesFiles == null ?
+                                          IdeBundle.message("encoding.name.system.default") :
+                                          mySelectedCharsetForPropertiesFiles.displayName());
       }
 
       protected void chosen(final VirtualFile virtualFile, final Charset charset) {

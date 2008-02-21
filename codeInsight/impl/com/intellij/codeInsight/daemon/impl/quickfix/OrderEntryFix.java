@@ -66,7 +66,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   }
 
   @Nullable
-  public static List<LocalQuickFix> registerFixes(@Nullable HighlightInfo info, final PsiJavaReference reference) {
+  public static List<LocalQuickFix> registerFixes(@Nullable HighlightInfo info, final PsiReference reference) {
     final PsiElement psiElement = reference.getElement();
     @NonNls final String referenceName = reference.getRangeInElement().substring(psiElement.getText());
 
@@ -253,7 +253,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
 
   public static void addBundledJarToRoots(final Project project,
                                           @Nullable final Editor editor, final Module currentModule,
-                                          final PsiJavaReference reference,
+                                          final PsiReference reference,
                                            @NonNls final String className,
                                            @NonNls final String libPath) {
     String url = VfsUtil.getUrlForLibraryRoot(new File(libPath));

@@ -269,19 +269,16 @@ public class MoveClassesOrPackagesImpl {
     if (psiElement instanceof PsiPackage) {
       return null; //??
     }
-    else if (psiElement instanceof PsiDirectory) {
+    if (psiElement instanceof PsiDirectory) {
       return (PsiDirectory)psiElement;
     }
-    else if (psiElement != null) {
+    if (psiElement != null) {
       return psiElement.getContainingFile().getContainingDirectory();
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   public static void doRearrangePackage(final Project project, final PsiDirectory[] directories) {
-
     if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(directories), true)) {
       return;
     }

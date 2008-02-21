@@ -12,7 +12,7 @@ public class ConfigureFileDefaultEncodingAction extends AnAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
 
-    final ConfigureFileEncodingConfigurable configurable = ConfigureFileEncodingConfigurable.getInstance(project);
+    final FileEncodingConfigurable configurable = FileEncodingConfigurable.getInstance(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable(){
       public void run() {
         if (virtualFile != null) {

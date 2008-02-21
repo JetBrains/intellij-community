@@ -124,7 +124,7 @@ public class AnnotationUtil {
         result.add(psiAnnotation);
       }
     }
-    return result.size() == 0 ? PsiAnnotation.EMPTY_ARRAY : result.toArray(PsiAnnotation.EMPTY_ARRAY);
+    return result.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : result.toArray(new PsiAnnotation[result.size()]);
   }
 
   @Nullable

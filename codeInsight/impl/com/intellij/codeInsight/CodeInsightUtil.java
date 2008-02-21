@@ -178,6 +178,9 @@ public class CodeInsightUtil {
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
+  public static boolean preparePsiElementsForWrite(@NotNull PsiElement... elements) {
+    return preparePsiElementsForWrite(Arrays.asList(elements));
+  }
   public static boolean preparePsiElementsForWrite(Collection<? extends PsiElement> elements) {
     if (elements.isEmpty()) return true;
     Set<VirtualFile> files = new THashSet<VirtualFile>();

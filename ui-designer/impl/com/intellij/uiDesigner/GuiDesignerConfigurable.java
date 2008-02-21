@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 
 /**
  * @author Anton Katilin
@@ -149,7 +148,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable {
       final PsiShortNamesCache cache = JavaPsiFacade.getInstance(myProject).getShortNamesCache();
       final PsiMethod[] methods = cache.getMethodsByName(AsmCodeGenerator.SETUP_METHOD_NAME, GlobalSearchScope.projectScope(myProject));
 
-      CodeInsightUtil.preparePsiElementsForWrite(Arrays.asList(methods));
+      CodeInsightUtil.preparePsiElementsForWrite(methods);
 
       for (int i = 0; i < methods.length; i++) {
         final PsiMethod method = methods[i];
