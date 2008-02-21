@@ -7,8 +7,8 @@ import com.intellij.openapi.project.Project;
 /**
  * @author yole
  */
-public class JavaClassGroupRuleProvider implements FileStructureGroupRuleProvider {
+public class NonJavaFileGroupRuleProvider implements FileStructureGroupRuleProvider {
   public UsageGroupingRule getUsageGroupingRule(final Project project) {
-    return new ClassGroupingRule();
+    return new NonJavaFileGroupingRule(project);
   }
 }
