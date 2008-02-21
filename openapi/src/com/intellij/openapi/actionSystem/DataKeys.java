@@ -22,7 +22,6 @@
  */
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.ide.ExporterToTextFile;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 
@@ -30,8 +29,6 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 public final class DataKeys extends LangDataKeys {
   private DataKeys() {
   }
-
-  public static final DataKey<ExporterToTextFile> EXPORTER_TO_TEXT_FILE = DataKey.create(DataConstants.EXPORTER_TO_TEXT_FILE);
 
   @Deprecated
   public static final DataKey<ChangeList[]> CHANGE_LISTS = DataKey.create(DataConstants.CHANGE_LISTS);

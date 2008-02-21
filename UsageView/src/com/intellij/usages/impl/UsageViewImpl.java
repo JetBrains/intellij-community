@@ -1085,8 +1085,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, getNavigatablesForNodes(getSelectedNodes()));
       }
 
-      else if (key == DataKeys.EXPORTER_TO_TEXT_FILE) {
-        sink.put(DataKeys.EXPORTER_TO_TEXT_FILE, myTextFileExporter);
+      else if (key == PlatformDataKeys.EXPORTER_TO_TEXT_FILE) {
+        sink.put(PlatformDataKeys.EXPORTER_TO_TEXT_FILE, myTextFileExporter);
       }
 
       else if (key == USAGES_KEY) {
