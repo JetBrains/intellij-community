@@ -124,9 +124,13 @@
   <lang.syntaxHighlighterFactory language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainSyntaxHighlighterFactory"/>
 
   <getDataRule key="psi.File" implementationClass="com.intellij.ide.impl.dataRules.PsiFileRule"/>
+  <getDataRule key="psi.Element" implementationClass="com.intellij.ide.impl.dataRules.PsiElementFromSelectionRule"/>
+  <getDataRule key="psi.pasteTargetElement" implementationClass="com.intellij.ide.impl.dataRules.PasteTargetRule"/>
   <getDataRule key="virtualFile" implementationClass="com.intellij.ide.impl.dataRules.VirtualFileRule"/>
+  <getDataRule key="virtualFileArray" implementationClass="com.intellij.ide.impl.dataRules.VirtualFileArrayRule"/>
   <getDataRule key="Navigatable" implementationClass="com.intellij.ide.impl.dataRules.NavigatableRule"/>
   <getDataRule key="usageTarget" implementationClass="com.intellij.ide.impl.dataRules.UsageTargetsRule"/>
+  <getDataRule key="UsageInfo.List" implementationClass="com.intellij.ide.impl.dataRules.UsageInfo2ListRule"/>
 
   <dataValidator key="psi.File" implementationClass="com.intellij.ide.impl.PsiElementDataValidator"/>
   <dataValidator key="psi.Element" implementationClass="com.intellij.ide.impl.PsiElementDataValidator"/>

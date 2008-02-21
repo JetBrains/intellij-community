@@ -7,10 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
@@ -131,8 +128,8 @@ public class VirtualFileArrayRule implements GetDataRule {
           files.add(virtualFile);
         }
       }
-      else if (elem instanceof PsiPackage) {
-        PsiDirectory[] dirs = ((PsiPackage)elem).getDirectories();
+      else if (elem instanceof PsiDirectoryContainer) {
+        PsiDirectory[] dirs = ((PsiDirectoryContainer)elem).getDirectories();
         for (PsiDirectory dir : dirs) {
           files.add(dir.getVirtualFile());
         }
