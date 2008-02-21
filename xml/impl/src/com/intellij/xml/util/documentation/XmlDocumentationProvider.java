@@ -91,7 +91,7 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
         }
       }
 
-      return generateDoc(processor.result, name, typeName);
+      return generateDoc(processor.result, name, typeName, processor.version);
     } else if (element instanceof XmlAttributeDecl) {
       // Check for comment before attlist, it should not be right after previous declaration
       final PsiElement parent = element.getParent();
@@ -150,7 +150,7 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
     String text = curElement.getText();
     text = text.substring("<!--".length(),text.length()-"-->".length()).trim();
     text = escapeDocumentationTextText(text);
-    return generateDoc(text, name,null);
+    return generateDoc(text, name,null, null);
   }
 
   private XmlTag getComplexOrSimpleTypeDefinition(PsiElement element, PsiElement originalElement) {
@@ -196,7 +196,7 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
     return null;
   }
 
-  private static String generateDoc(String str, String name, String typeName) {
+  private static String generateDoc(String str, String name, String typeName, String version) {
     if (str == null) return null;
     StringBuilder buf = new StringBuilder(str.length() + 20);
 
@@ -206,8 +206,14 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
       JavaDocUtil.formatEntityName(XmlBundle.message("xml.javadoc.complex.type.message"),name,buf);
     }
 
-    return buf.append(XmlBundle.message("xml.javadoc.description.message")).append("  ").
-      append(HtmlDocumentationProvider.NBSP).append(str).toString();
+    final String indent = "  ";
+    final StringBuilder builder = buf.append(XmlBundle.message("xml.javadoc.description.message")).append(indent).
+        append(HtmlDocumentationProvider.NBSP).append(str);
+    if (version != null) {
+      builder.append(HtmlDocumentationProvider.BR).append(XmlBundle.message("xml.javadoc.version.message")).append(indent)
+          .append(HtmlDocumentationProvider.NBSP).append(version);
+    }
+    return builder.toString();
   }
 
   public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, Object object, PsiElement element) {
@@ -333,6 +339,7 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
 
   private static class MyPsiElementProcessor implements PsiElementProcessor {
     String result;
+    String version;
     String url;
     @NonNls public static final String DOCUMENTATION_ELEMENT_LOCAL_NAME = "documentation";
     private @NonNls static final String CDATA_PREFIX = "<![CDATA[";
@@ -359,7 +366,16 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
         if (withCData) {
           result = escapeDocumentationTextText(result);
         }
-        url = tag.getAttributeValue("source");
+
+        final @NonNls String s = tag.getAttributeValue("source");
+        if (s != null) {
+          if (s.startsWith("http:")) url = s;
+          else if ("version".equals(s)) {
+            version = result;
+            result = null;
+            return true;
+          }
+        }
         return false;
       }
       return true;
