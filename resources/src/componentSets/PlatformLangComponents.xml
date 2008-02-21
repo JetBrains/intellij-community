@@ -24,6 +24,10 @@
       <interface-class>com.intellij.openapi.projectRoots.ProjectJdkTable</interface-class>
       <implementation-class>com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl</implementation-class>
     </component>
+    <component>
+      <interface-class>com.intellij.psi.statistics.StatisticsManager</interface-class>
+      <implementation-class>com.intellij.psi.statistics.EmptyStatisticsManager</implementation-class>
+    </component>
   </application-components>
   <project-components>
     <component>

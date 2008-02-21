@@ -2,6 +2,9 @@
 package com.intellij.psi.statistics.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -10,7 +13,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.codeStyle.StatisticsManagerEx;
-import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
@@ -22,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.util.*;
 
-public class StatisticsManagerImpl extends StatisticsManager implements StatisticsManagerEx, ApplicationComponent {
+public class StatisticsManagerImpl extends JavaStatisticsManager implements StatisticsManagerEx, ApplicationComponent {
   private static final int MAX_NAME_SUGGESTIONS_COUNT = 5;
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.statistics.impl.StatisticsManagerImpl");
 
@@ -45,6 +48,13 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
   private HashSet<StatisticsUnit> myModifiedUnits = new HashSet<StatisticsUnit>();
 
   private StatisticsManagerImpl() {
+  }
+
+  public int getMemberUseCount(final PsiElement member) {
+    if (!(member instanceof PsiMember)) {
+      return 0;
+    }
+    return getMemberUseCount(null, (PsiMember) member);
   }
 
   public int getMemberUseCount(PsiType qualifierType, PsiMember member) {
@@ -71,7 +81,17 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     myModifiedUnits.add(unit);
   }
 
-  public void incNameUseCount(PsiType type, StatisticsManager.NameContext context, String name) {
+  public void incMemberUseCount(final LookupElement item) {
+    final Object o = item.getObject();
+    if (o instanceof PsiMember && item instanceof LookupItem) {
+      final PsiType qualifierType = JavaCompletionUtil.getQualifierType((LookupItem) item);
+      if (qualifierType != null){
+        incMemberUseCount(qualifierType, (PsiMember)o);
+      }
+    }
+  }
+
+  public void incNameUseCount(PsiType type, JavaStatisticsManager.NameContext context, String name) {
     final String key1 = getMemberUseKey1(type);
     if(key1 == null) return;
     final StatisticsUnit unit = getUnit(getUnitNumber(key1));
@@ -81,7 +101,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     myModifiedUnits.add(unit);
   }
 
-  public String[] getNameSuggestions(PsiType type, NameContext context, String prefix) {
+  public String[] getNameSuggestions(PsiType type, JavaStatisticsManager.NameContext context, String prefix) {
     final List<String> suggestions = new ArrayList<String>();
     final String key1 = getMemberUseKey1(type);
     if(key1 == null) return ArrayUtil.EMPTY_STRING_ARRAY;
@@ -241,7 +261,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     }
   }
 
-  private static String getNameUseKey(final NameContext context, final String name) {
+  private static String getNameUseKey(final JavaStatisticsManager.NameContext context, final String name) {
     @NonNls final StringBuilder buffer = new StringBuilder();
     buffer.append("variableName#");
     buffer.append(context.name());
@@ -271,14 +291,14 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     return buffer.toString();
   }
 
-  private static NameContext getNameUsageContext(String key2){
+  private static JavaStatisticsManager.NameContext getNameUsageContext(String key2){
     final int startIndex = key2.indexOf("#");
     LOG.assertTrue(startIndex >= 0);
     @NonNls String s = key2.substring(0, startIndex);
     if(!"variableName".equals(s)) return null;
     final int index = key2.indexOf("#", startIndex + 1);
     s = key2.substring(startIndex + 1, index);
-    return NameContext.valueOf(s);
+    return JavaStatisticsManager.NameContext.valueOf(s);
   }
 
   private static String getName(String key2){

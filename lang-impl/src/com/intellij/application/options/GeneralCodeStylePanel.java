@@ -99,21 +99,16 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   private void update() {
     boolean enabled = !myCbUseSameIndents.isSelected();
-    if (!enabled && myIndentOptionsTabs.getSelectedIndex() != 0) {
-      myIndentOptionsTabs.setSelectedIndex(0);
+    if (!enabled && myIndentOptionsTabs.getSelectedIndex() != myIndentOptionsTabs.getTabCount()-1) {
+      myIndentOptionsTabs.setSelectedIndex(myIndentOptionsTabs.getTabCount()-1);
     }
 
     int index = 0;
     for(IndentOptionsEditor options:myAdditionalIndentOptions.values()) {
-      if (index > 0) {
-        options.setEnabled(enabled);
-        myIndentOptionsTabs.setEnabledAt(index, enabled);
-      }
+      options.setEnabled(enabled);
+      myIndentOptionsTabs.setEnabledAt(index, enabled);
       index++;
     }
-
-    myOtherIndentOptions.setEnabled(enabled);
-    myIndentOptionsTabs.setEnabledAt(index, enabled);
   }
 
   private JPanel createTabOptionsPanel() {

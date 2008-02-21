@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -82,9 +82,9 @@ public class RefCountHolder {
 
   private static void addStatistics(final PsiNamedElement dcl) {
     final PsiType typeByPsiElement = PsiUtil.getTypeByPsiElement(dcl);
-    final StatisticsManager.NameContext context = StatisticsManager.getContext(dcl);
+    final JavaStatisticsManager.NameContext context = JavaStatisticsManager.getContext(dcl);
     if(typeByPsiElement != null && context != null) {
-      StatisticsManager.getInstance().incNameUseCount(typeByPsiElement, context, dcl.getName());
+      JavaStatisticsManager.getJavaInstance().incNameUseCount(typeByPsiElement, context, dcl.getName());
     }
   }
 

@@ -10,7 +10,6 @@ import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMember;
 import com.intellij.psi.WeighingComparable;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.ProximityWeigherExtension;
@@ -37,12 +36,12 @@ public class PsiProximityComparator implements Comparator<Object> {
     if (proximity1 == null || proximity2 == null) {
       return 0;
     }
-    if (!proximity1.equals(proximity2) || !(element1 instanceof PsiMember) || !(element2 instanceof PsiMember)) {
+    if (!proximity1.equals(proximity2)) {
       return proximity1.compareTo(proximity2);
     }
     StatisticsManager statisticsManager = StatisticsManager.getInstance();
-    int count1 = statisticsManager.getMemberUseCount(null, (PsiMember)element1);
-    int count2 = statisticsManager.getMemberUseCount(null, (PsiMember)element2);
+    int count1 = statisticsManager.getMemberUseCount(element1);
+    int count2 = statisticsManager.getMemberUseCount(element2);
     return count2 - count1;
   }
 

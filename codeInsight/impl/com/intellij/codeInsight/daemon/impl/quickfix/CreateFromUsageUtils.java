@@ -35,7 +35,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -659,7 +659,7 @@ public class CreateFromUsageUtils {
                                     PsiExpression expression,
                                     List<ExpectedTypeInfo[]> types,
                                     PsiElementFactory factory) {
-    final StatisticsManager statisticsManager = StatisticsManager.getInstance();
+    final JavaStatisticsManager statisticsManager = JavaStatisticsManager.getJavaInstance();
     Arrays.sort(members, new Comparator<PsiMember>() {
       public int compare(final PsiMember m1, final PsiMember m2) {
         int result = statisticsManager.getMemberUseCount(null, m2) - statisticsManager.getMemberUseCount(null, m1);

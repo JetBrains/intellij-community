@@ -2,8 +2,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.statistics.StatisticsManager;
 
 public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
@@ -26,13 +24,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   }
 
   public void itemSelected(LookupItem item) {
-    final Object o = item.getObject();
-    if (o instanceof PsiMember){
-      final PsiType qualifierType = JavaCompletionUtil.getQualifierType(item);
-      if (qualifierType != null){
-        StatisticsManager.getInstance().incMemberUseCount(qualifierType, (PsiMember)o);
-      }
-    }
+    StatisticsManager.getInstance().incMemberUseCount(item);
   }
 
   public Comparable[] getWeight(final LookupItem<?> item) {

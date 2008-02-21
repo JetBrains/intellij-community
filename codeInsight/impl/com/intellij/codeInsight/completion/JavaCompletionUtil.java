@@ -16,26 +16,26 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.statistics.JavaStatisticsManager;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import com.intellij.patterns.PlatformPatterns;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,7 +100,7 @@ public class JavaCompletionUtil {
     if(parent == null) parent = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
     tunePreferencePolicy(LookupItemUtil.addLookupItems(set, getUnresolvedReferences(parent, false), matcher), suggestedNameInfo);
     final String[] nameSuggestions =
-      StatisticsManager.getInstance().getNameSuggestions(var.getType(), StatisticsManager.getContext(var), matcher.getPrefix());
+      JavaStatisticsManager.getJavaInstance().getNameSuggestions(var.getType(), JavaStatisticsManager.getContext(var), matcher.getPrefix());
     tunePreferencePolicy(LookupItemUtil.addLookupItems(set, nameSuggestions, matcher), suggestedNameInfo);
   }
 
@@ -140,7 +140,7 @@ public class JavaCompletionUtil {
       tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, matcher), suggestedNameInfo);
     }
 
-    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, StatisticsManager.getInstance().getNameSuggestions(var.getType(), StatisticsManager.getContext(var), matcher.getPrefix()), matcher), suggestedNameInfo);
+    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, JavaStatisticsManager.getJavaInstance().getNameSuggestions(var.getType(), JavaStatisticsManager.getContext(var), matcher.getPrefix()), matcher), suggestedNameInfo);
     tunePreferencePolicy(LookupItemUtil.addLookupItems(set, getUnresolvedReferences(var.getParent(), false),
                                                                       matcher), suggestedNameInfo);
   }

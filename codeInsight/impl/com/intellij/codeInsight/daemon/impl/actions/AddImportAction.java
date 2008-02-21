@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +84,7 @@ public class AddImportAction implements QuestionAction {
   }
 
   private void addImport(final PsiJavaReference ref, final PsiClass targetClass) {
-    StatisticsManager.getInstance().incMemberUseCount(null, targetClass);
+    JavaStatisticsManager.getJavaInstance().incMemberUseCount(null, targetClass);
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {

@@ -20,7 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -222,7 +222,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
             final PsiClass typeClass = ((PsiClassType)type).resolve();
 
             if (InheritanceUtil.isInheritorOrSelf(psiClass, typeClass, true)) {
-              StatisticsManager.getInstance().incMemberUseCount(type, psiClass);
+              JavaStatisticsManager.getJavaInstance().incMemberUseCount(type, psiClass);
             }
           }
           if (flag) {

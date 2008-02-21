@@ -15,37 +15,16 @@
  */
 package com.intellij.psi.statistics;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.SettingsSavingComponent;
-import com.intellij.psi.*;
-
-import java.util.Map;
+import com.intellij.psi.PsiElement;
 
 public abstract class StatisticsManager implements SettingsSavingComponent {
-  public static NameContext getContext(final PsiElement element) {
-    if(element instanceof PsiField){
-      if(((PsiField)element).hasModifierProperty(PsiModifier.STATIC) && ((PsiField)element).hasModifierProperty(PsiModifier.FINAL))
-        return NameContext.CONSTANT_NAME;
-      return NameContext.FIELD_NAME;
-    }
-    if(element instanceof PsiLocalVariable) {
-      return NameContext.LOCAL_VARIABLE_NAME;
-    }
-    return null;
-  }
-
-  public enum NameContext{
-    LOCAL_VARIABLE_NAME,
-    FIELD_NAME,
-    CONSTANT_NAME
-  }
   public static StatisticsManager getInstance() {
     return ApplicationManager.getApplication().getComponent(StatisticsManager.class);
   }
 
-  public abstract int getMemberUseCount(PsiType qualifierType, PsiMember member);
-  public abstract void incMemberUseCount(PsiType qualifierType, PsiMember member);
-
-  public abstract String[] getNameSuggestions(PsiType type, NameContext context, String prefix);
-  public abstract void incNameUseCount(PsiType type, NameContext context, String name);
+  public abstract int getMemberUseCount(PsiElement member);
+  public abstract void incMemberUseCount(final LookupElement item);
 }
