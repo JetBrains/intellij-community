@@ -111,11 +111,13 @@ public final class DebuggerContextImpl implements DebuggerContext {
         final SuspendContextImpl currentCommandContext = ((SuspendContextCommandImpl)currentCommand).getSuspendContext();
         final ThreadReferenceProxyImpl commandThread = currentCommandContext.getThread();
         if (commandThread != frameProxy.threadProxy()) {
-          LOG.assertTrue(false);
-          LOG.info("Current Command: " + currentCommand.getClass().getName());
-          LOG.info("Current Command Thread : " + (commandThread != null? commandThread.name() : "null"));
+          LOG.assertTrue(
+              false,
+              "Current Command: " + currentCommand.getClass().getName() + 
+              "\nCurrent Command Thread : " + (commandThread != null? commandThread.name() : "null") + 
+              "\nThread : " + frameProxy.threadProxy().name()
+          );
         }
-        LOG.info("Thread : " + frameProxy.threadProxy().name(), e);
       }
       objectReference = null;
     }
