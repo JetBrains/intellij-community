@@ -1,10 +1,5 @@
 package com.intellij.execution.testframework;
 
-import com.intellij.execution.Location;
-import com.intellij.execution.PsiLocation;
-import com.intellij.execution.junit2.info.MethodLocation;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiMethod;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 
 import java.util.ArrayList;
@@ -17,7 +12,7 @@ public abstract class Filter {
    *
    * @see com.intellij.execution.junit2.TestProxy#selectChildren
    */
-  private Filter() {
+  protected Filter() {
   }
 
   public abstract boolean shouldAccept(AbstractTestProxy test);
@@ -60,17 +55,6 @@ public abstract class Filter {
       return test.isDefect();
     }
   };
-
-  public static Filter METHOD(final Project project) {
-    return new Filter() {
-      public boolean shouldAccept(final AbstractTestProxy test) {
-        final Location location = test.getLocation(project);
-        if (location instanceof MethodLocation) return true;
-        if (location instanceof PsiLocation && location.getPsiElement() instanceof PsiMethod) return true;
-        return false;
-      }
-    };
-  }
 
   public static final Filter NOT_PASSED = new Filter() {
     public boolean shouldAccept(final AbstractTestProxy test) {

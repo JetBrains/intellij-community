@@ -2,17 +2,17 @@
  * User: anna
  * Date: 15-Aug-2007
  */
-package com.intellij.execution.stacktrace;
+package com.intellij.execution.testframework.stacktrace;
 
-import com.intellij.execution.junit2.Printable;
-import com.intellij.execution.junit2.Printer;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diff.*;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 

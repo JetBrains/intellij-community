@@ -4,8 +4,6 @@
  */
 package com.intellij.execution.testframework;
 
-import com.intellij.execution.junit2.ui.PoolOfTestIcons;
-import com.intellij.execution.junit2.ui.TestsUIUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;

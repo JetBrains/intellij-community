@@ -1,4 +1,4 @@
-package com.intellij.execution.junit2;
+package com.intellij.execution.testframework;
 
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.ui.ConsoleViewContentType;

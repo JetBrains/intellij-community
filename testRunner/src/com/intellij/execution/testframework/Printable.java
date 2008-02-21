@@ -1,5 +1,4 @@
-package com.intellij.execution.junit2;
-
+package com.intellij.execution.testframework;
 
 public interface Printable {
   void printOn(Printer printer);

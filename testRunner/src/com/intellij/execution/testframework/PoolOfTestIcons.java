@@ -1,4 +1,4 @@
-package com.intellij.execution.junit2.ui;
+package com.intellij.execution.testframework;
 
 import javax.swing.*;
 

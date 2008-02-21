@@ -1,9 +1,6 @@
-package com.intellij.execution.junit2.ui;
+package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.Application;
@@ -23,7 +20,7 @@ import java.awt.image.BufferedImage;
 
 public class TestsUIUtil {
   public static final Color PASSED_COLOR = new Color(0, 128, 0);
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.TestsUIUtil");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.testframework.TestsUIUtil");
 
   @NonNls private static final String ICONS_ROOT = "/runConfigurations/";
 

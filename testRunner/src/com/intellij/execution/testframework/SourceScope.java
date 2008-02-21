@@ -1,17 +1,15 @@
 package com.intellij.execution.testframework;
 
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.HashMap;
+import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author dyoma
@@ -20,6 +18,32 @@ public abstract class SourceScope {
   public abstract GlobalSearchScope getGlobalSearchScope();
   public abstract Project getProject();
   public abstract GlobalSearchScope getLibrariesScope();
+
+  public static Map<Module, Collection<Module>> buildAllDependencies(final Project project) {
+    Graph<Module> graph = ModuleManager.getInstance(project).moduleGraph();
+    Map<Module, Collection<Module>> result = new HashMap<Module, Collection<Module>>();
+    for (final Module module : graph.getNodes()) {
+      buildDependenciesForModule(module, graph, result);
+    }
+    return result;
+  }
+
+  private static void buildDependenciesForModule(final Module module, final Graph<Module> graph, Map<Module, Collection<Module>> map) {
+    final Set<Module> deps = new com.intellij.util.containers.HashSet<Module>();
+    map.put(module, deps);
+
+    new Object() {
+      void traverse(Module m) {
+        for (Iterator<Module> iterator = graph.getIn(m); iterator.hasNext();) {
+          final Module dep = iterator.next();
+          if (!deps.contains(dep)) {
+            deps.add(dep);
+            traverse(dep);
+          }
+        }
+      }
+    }.traverse(module);
+  }
 
   private abstract static class ModuleSourceScope extends SourceScope {
     private final Project myProject;
@@ -125,7 +149,7 @@ public abstract class SourceScope {
 
     public ModuleWithDependenciesAndLibsDependencies(final Module module) {
       myMainScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
-      final Map<Module, Collection<Module>> map = JUnitUtil.buildAllDependencies(module.getProject());
+      final Map<Module, Collection<Module>> map = buildAllDependencies(module.getProject());
       if (map == null) return;
       final Collection<Module> modules = map.get(module);
       for (final Module dependency : modules) {

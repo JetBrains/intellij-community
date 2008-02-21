@@ -4,19 +4,16 @@
  */
 package com.intellij.execution.testframework;
 
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
+import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.util.StoringPropertyContainer;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.BooleanProperty;
 import com.intellij.util.config.Storage;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 
 public abstract class TestConsoleProperties extends StoringPropertyContainer {
@@ -58,16 +55,9 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer {
     myListeners.get(property).remove(listener);
   }
 
-  @Nullable
-  public DebuggerSession getDebugSession() {
-    final DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(getProject());
-    if (debuggerManager == null) return null;
-    final Collection<DebuggerSession> sessions = debuggerManager.getSessions();
-    for (final DebuggerSession debuggerSession : sessions) {
-      if (myConsole == debuggerSession.getProcess().getExecutionResult().getExecutionConsole()) return debuggerSession;
-    }
-    return null;
-  }
+  public abstract boolean isDebug();
+
+  public abstract boolean isPaused();
 
   protected <T> void onPropertyChanged(final AbstractProperty<T> property, final T value) {
     final ArrayList<TestFrameworkPropertyListener> listeners = myListeners.get(property);
@@ -88,5 +78,9 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer {
     myListeners.clear();
   }
 
-  public abstract CoverageEnabledConfiguration getConfiguration();
+  public abstract RuntimeConfiguration getConfiguration();
+
+  protected ExecutionConsole getConsole() {
+    return myConsole;
+  }
 }

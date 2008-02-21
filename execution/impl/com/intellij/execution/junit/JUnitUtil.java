@@ -4,7 +4,6 @@ import com.intellij.execution.*;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -12,9 +11,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
-import com.intellij.util.graph.Graph;
 import gnu.trove.THashSet;
 import junit.runner.BaseTestRunner;
 import org.jetbrains.annotations.NonNls;
@@ -237,32 +233,6 @@ public class JUnitUtil {
       maximums.add(candidate);
     }
     return maximums;
-  }
-
-  public static Map<Module, Collection<Module>> buildAllDependencies(final Project project) {
-    Graph<Module> graph = ModuleManager.getInstance(project).moduleGraph();
-    Map<Module, Collection<Module>> result = new HashMap<Module, Collection<Module>>();
-    for (final Module module : graph.getNodes()) {
-      buildDependenciesForModule(module, graph, result);
-    }
-    return result;
-  }
-
-  private static void buildDependenciesForModule(final Module module, final Graph<Module> graph, Map<Module, Collection<Module>> map) {
-    final Set<Module> deps = new HashSet<Module>();
-    map.put(module, deps);
-
-    new Object() {
-      void traverse(Module m) {
-        for (Iterator<Module> iterator = graph.getIn(m); iterator.hasNext();) {
-          final Module dep = iterator.next();
-          if (!deps.contains(dep)) {
-            deps.add(dep);
-            traverse(dep);
-          }
-        }
-      }
-    }.traverse(module);
   }
 
   /*public static Map<Module, Collection<Module>> buildAllDependencies(final Project project) {

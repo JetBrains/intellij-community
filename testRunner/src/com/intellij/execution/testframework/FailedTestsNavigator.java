@@ -1,7 +1,6 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.junit2.ui.TestsUIUtil;
 import com.intellij.ide.OccurenceNavigator;
 
 import java.util.ArrayList;
