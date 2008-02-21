@@ -12,7 +12,6 @@ import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.execution.*;
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -143,7 +142,7 @@ public class TestNGRunnableState extends JavaCommandLineState
   protected JavaParameters createJavaParameters() throws ExecutionException {
     Project project = config.getProject();
     JavaParameters javaParameters = new JavaParameters();
-    EnvironmentVariablesComponent.setupEnvs(javaParameters, config.getPersistantData().getEnvs(), config.getPersistantData().PASS_PARENT_ENVS);
+    javaParameters.setupEnvs(config.getPersistantData().getEnvs(), config.getPersistantData().PASS_PARENT_ENVS);
     javaParameters.getVMParametersList().add("-ea");
     javaParameters.setMainClass("org.testng.remote.RemoteTestNG");
     javaParameters.setWorkingDirectory(config.getProperty(RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY));

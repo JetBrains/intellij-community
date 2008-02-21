@@ -21,7 +21,6 @@ import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.execution.*;
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit2.ui.JUnitTreeConsoleView;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
@@ -171,7 +170,7 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
   protected void initialize() throws ExecutionException {
-    EnvironmentVariablesComponent.setupEnvs(myJavaParameters, myConfiguration.getPersistentData().getEnvs(), myConfiguration.getPersistentData().PASS_PARENT_ENVS);
+    myJavaParameters.setupEnvs(myConfiguration.getPersistentData().getEnvs(), myConfiguration.getPersistentData().PASS_PARENT_ENVS);
     JavaParametersUtil.configureConfiguration(myJavaParameters, myConfiguration);
     myJavaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
     final Module module = myConfiguration.getConfigurationModule().getModule();
