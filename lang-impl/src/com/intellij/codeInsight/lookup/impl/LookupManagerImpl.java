@@ -16,7 +16,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBus;
@@ -205,18 +204,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   }
 
   protected boolean shouldSortItems(final PsiFile containingFile, final LookupItem[] items) {
-    if (!(containingFile instanceof XmlFile)) return true;
-
-    for (LookupItem item : items) {
-      final Object object = item.getObject();
-
-      if (object instanceof PsiElement ||
-          object instanceof LookupValueWithPriority || item.getPriority() != 0) {
-        return true;
-      }
-    }
-
-    return CodeInsightSettings.getInstance().SORT_XML_LOOKUP_ITEMS;
+    return true;
   }
 
   public Lookup getActiveLookup() {

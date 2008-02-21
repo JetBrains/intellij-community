@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,17 +48,6 @@ public class TestLookupManager extends LookupManagerImpl{
     ((LookupImpl)myActiveLookup).show();
     return myActiveLookup;
   }
-
-  protected boolean shouldSortItems(PsiFile containingFile, LookupItem[] items) {
-    if (!(containingFile instanceof XmlFile)) return true;
-
-    for (LookupItem item : items) {
-      if (item.getObject() instanceof PsiElement) return true;
-    }
-
-    return CodeInsightSettings.getInstance().SORT_XML_LOOKUP_ITEMS;
-  }
-
 
   public void forceSelection(char completion, int index){
     final LookupImpl lookup = ((LookupImpl)myActiveLookup);
