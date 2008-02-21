@@ -21,6 +21,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
@@ -71,7 +72,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   private void setCommandName(final PsiMember[] members) {
     StringBuilder commandName = new StringBuilder();
-    commandName.append(RefactoringBundle.message("move.tltle"));
+    commandName.append(MoveHandler.REFACTORING_NAME);
     commandName.append(" ");
     boolean first = true;
     for (PsiMember member : members) {

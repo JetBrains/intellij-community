@@ -259,7 +259,6 @@ public class RenameUtil {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isValidName(final Project project, final PsiElement psiElement, final String newName) {
     if (newName == null || newName.length() == 0) {
       return false;

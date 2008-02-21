@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.IdentifierCharFilter;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
@@ -46,7 +45,7 @@ public class RenameDialog extends RefactoringDialog {
   private final Editor myEditor;
   private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
   private NameSuggestionsField.DataChanged myNameChangedListener;
-  private Map<AutomaticRenamerFactory, JCheckBox> myAutomaticRenamers = new HashMap<AutomaticRenamerFactory, JCheckBox>();
+  private final Map<AutomaticRenamerFactory, JCheckBox> myAutomaticRenamers = new HashMap<AutomaticRenamerFactory, JCheckBox>();
 
   public RenameDialog(@NotNull Project project, @NotNull PsiElement psiElement, @Nullable PsiElement nameSuggestionContext,
                       Editor editor) {
@@ -212,7 +211,7 @@ public class RenameDialog extends RefactoringDialog {
     for(AutomaticRenamerFactory factory: Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
       if (factory.isApplicable(myPsiElement) && factory.getOptionName() != null) {
         gbConstraints.insets = new Insets(4, 8, 4, 8);
-        gbConstraints.gridwidth = (myAutomaticRenamers.size() % 2 == 0) ? 1 : GridBagConstraints.REMAINDER;
+        gbConstraints.gridwidth = myAutomaticRenamers.size() % 2 == 0 ? 1 : GridBagConstraints.REMAINDER;
         gbConstraints.gridx = myAutomaticRenamers.size() % 2;
         gbConstraints.weightx = 1;
         gbConstraints.fill = GridBagConstraints.BOTH;
@@ -261,5 +260,4 @@ public class RenameDialog extends RefactoringDialog {
     final String newName = getNewName();
     return RenameUtil.isValidName(myProject, myPsiElement, newName);
   }
-
 }

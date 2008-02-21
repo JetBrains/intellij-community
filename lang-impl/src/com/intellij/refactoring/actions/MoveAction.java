@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NonNls;
 public class MoveAction extends BaseRefactoringAction {
   @NonNls public static final String MOVE_PROVIDER = "MoveProvider";
 
-  private MoveProvider myDefaultMoveProvider = new MoveProvider() {
+  private final MoveProvider myDefaultMoveProvider = new MoveProvider() {
     public boolean isEnabledOnDataContext(DataContext dataContext) {
       return false;
     }

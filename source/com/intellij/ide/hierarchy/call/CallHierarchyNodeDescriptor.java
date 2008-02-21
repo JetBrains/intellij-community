@@ -29,12 +29,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor implements Navigatable {
   private int myUsageCount = 1;
-  private ArrayList<PsiReference> myReferences = new ArrayList<PsiReference>();
-  private boolean myNavigateToReference;
+  private final List<PsiReference> myReferences = new ArrayList<PsiReference>();
+  private final boolean myNavigateToReference;
 
   public CallHierarchyNodeDescriptor(
     final Project project,

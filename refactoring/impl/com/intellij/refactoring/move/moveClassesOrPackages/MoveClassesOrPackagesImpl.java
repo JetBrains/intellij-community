@@ -76,11 +76,11 @@ public class MoveClassesOrPackagesImpl {
     for (int idx = 0; idx < elements.length; idx++) {
       PsiElement element = elements[idx];
       if (element instanceof PsiDirectory) {
-        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
+        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
         LOG.assertTrue(aPackage != null);
         if (aPackage.getQualifiedName().length() == 0) { //is default package
           String message = RefactoringBundle.message("move.package.refactoring.cannot.be.applied.to.default.package");
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"), message, HelpID.getMoveHelpID(element), project);
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
           return null;
         }
         if (!checkNesting(project, aPackage, targetElement)) return null;
@@ -96,12 +96,12 @@ public class MoveClassesOrPackagesImpl {
         PsiClass aClass = (PsiClass)element;
         if (aClass instanceof PsiAnonymousClass) {
           String message = RefactoringBundle.message("move.class.refactoring.cannot.be.applied.to.anonymous.classes");
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"), message, HelpID.getMoveHelpID(element), project);
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
           return null;
         }
         if (!(aClass.getParent() instanceof PsiFile)) {
           String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("moving.local.classes.is.not.supported"));
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"), message, HelpID.getMoveHelpID(element), project);
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
           return null;
         }
 
@@ -112,7 +112,7 @@ public class MoveClassesOrPackagesImpl {
         if (names.contains(name)) {
           String message = RefactoringBundle
             .getCannotRefactorMessage(RefactoringBundle.message("there.are.going.to.be.multiple.destination.files.with.the.same.name"));
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"), message, HelpID.getMoveHelpID(element), project);
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
           return null;
         }
 
@@ -152,10 +152,10 @@ public class MoveClassesOrPackagesImpl {
     final PsiPackage targetPackage = targetElement instanceof PsiPackage
                                      ? (PsiPackage)targetElement
                                      : targetElement instanceof PsiDirectory ? JavaDirectoryService.getInstance()
-                                       .getPackage(((PsiDirectory)targetElement)) : null;
+                                       .getPackage((PsiDirectory)targetElement) : null;
     for (PsiPackage curPackage = targetPackage; curPackage != null; curPackage = curPackage.getParentPackage()) {
       if (curPackage.equals(srcPackage)) {
-        CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
+        CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"),
                                                RefactoringBundle.message("cannot.move.package.into.itself"),
                                                HelpID.getMoveHelpID(srcPackage), project);
         return false;
@@ -216,12 +216,12 @@ public class MoveClassesOrPackagesImpl {
       return ((PsiPackage)psiElement).getQualifiedName();
     }
     else if (psiElement instanceof PsiDirectory) {
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)psiElement));
-      return (aPackage != null) ? aPackage.getQualifiedName() : "";
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)psiElement);
+      return aPackage != null ? aPackage.getQualifiedName() : "";
     }
     else if (psiElement != null) {
       PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiElement.getContainingFile().getContainingDirectory());
-      return (aPackage != null) ? aPackage.getQualifiedName() : "";
+      return aPackage != null ? aPackage.getQualifiedName() : "";
     }
     else {
       return null;
@@ -230,17 +230,17 @@ public class MoveClassesOrPackagesImpl {
 
   private static String getTargetPackageNameForMovedElement(final PsiElement psiElement) {
     if (psiElement instanceof PsiPackage) {
-      final PsiPackage psiPackage = ((PsiPackage)psiElement);
+      final PsiPackage psiPackage = (PsiPackage)psiElement;
       final PsiPackage parentPackage = psiPackage.getParentPackage();
       return parentPackage != null ? parentPackage.getQualifiedName() : "";
     }
     else if (psiElement instanceof PsiDirectory) {
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)psiElement));
-      return (aPackage != null) ? getTargetPackageNameForMovedElement(aPackage) : "";
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)psiElement);
+      return aPackage != null ? getTargetPackageNameForMovedElement(aPackage) : "";
     }
     else if (psiElement != null) {
       PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiElement.getContainingFile().getContainingDirectory());
-      return (aPackage != null) ? aPackage.getQualifiedName() : "";
+      return aPackage != null ? aPackage.getQualifiedName() : "";
     }
     else {
       return null;

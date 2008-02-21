@@ -39,7 +39,7 @@ public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.move.moveInner");
       final PsiClass containingClass = aClass.getContainingClass();
       if (containingClass instanceof JspClass) {
-        CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
+        CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"),
                                                RefactoringBundle.message("move.nonstatic.class.from.jsp.not.supported"), null, project);
         return true;
       }

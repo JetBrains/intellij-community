@@ -14,10 +14,7 @@ import java.util.Arrays;
 public abstract class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
   protected static boolean isPackageOrDirectory(final PsiElement element) {
     if (element instanceof PsiPackage) return true;
-    if (element instanceof PsiDirectory) {
-      return JavaDirectoryService.getInstance().getPackage((PsiDirectory) element) != null;
-    }
-    return false;
+    return element instanceof PsiDirectory && JavaDirectoryService.getInstance().getPackage((PsiDirectory)element) != null;
   }
 
   public PsiElement[] adjustForMove(final Project project, final PsiElement[] sourceElements, final PsiElement targetElement) {
@@ -43,5 +40,4 @@ public abstract class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelega
     }
     return false;
   }
-
 }

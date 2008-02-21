@@ -137,7 +137,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   }
 
   protected String getCommandName() {
-    return RefactoringBundle.message("move.tltle"); //TODO!!
+    return RefactoringBundle.message("move.title"); //TODO!!
   }
 
   static class MyUsageInfo extends UsageInfo {

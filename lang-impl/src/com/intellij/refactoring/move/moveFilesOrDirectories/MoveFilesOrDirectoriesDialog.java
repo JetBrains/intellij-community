@@ -39,7 +39,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
     super(project, true);
     myProject = project;
     myCallback = callback;
-    setTitle(RefactoringBundle.message("move.tltle"));
+    setTitle(RefactoringBundle.message("move.title"));
     init();
   }
 

@@ -21,8 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveHandler implements RefactoringActionHandler {
-
-  public static final String REFACTORING_NAME = RefactoringBundle.message("move.tltle");
+  public static final String REFACTORING_NAME = RefactoringBundle.message("move.title");
 
   /**
    * called by an Action in AtomicAction when refactoring is invoked from Editor
@@ -41,15 +40,14 @@ public class MoveHandler implements RefactoringActionHandler {
 
       if (tryToMoveElement(element, project, dataContext, null)) {
         return;
-      } else {
-        final TextRange range = element.getTextRange();
-        if (range != null) {
-          int relative = offset - range.getStartOffset();
-          final PsiReference reference = element.findReferenceAt(relative);
-          if (reference != null) {
-            final PsiElement refElement = reference.resolve();
-            if (refElement != null && tryToMoveElement(refElement, project, dataContext, reference)) return;
-          }
+      }
+      final TextRange range = element.getTextRange();
+      if (range != null) {
+        int relative = offset - range.getStartOffset();
+        final PsiReference reference = element.findReferenceAt(relative);
+        if (reference != null) {
+          final PsiElement refElement = reference.resolve();
+          if (refElement != null && tryToMoveElement(refElement, project, dataContext, reference)) return;
         }
       }
 
@@ -72,9 +70,7 @@ public class MoveHandler implements RefactoringActionHandler {
    * called by an Action in AtomicAction
    */
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    doMove(project, elements, dataContext != null
-                              ? (PsiElement)dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT)
-                              : null, null);
+    doMove(project, elements, dataContext == null ? null : (PsiElement)dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT), null);
   }
 
   /**

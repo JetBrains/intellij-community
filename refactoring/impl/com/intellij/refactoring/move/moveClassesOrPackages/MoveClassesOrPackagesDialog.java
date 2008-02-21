@@ -395,14 +395,14 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     final String packageName = getTargetPackage().trim();
     if (packageName.length() > 0 && !JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isQualifiedName(packageName)) {
       Messages.showErrorDialog(myProject, RefactoringBundle.message("please.enter.a.valid.target.package.name"),
-                               RefactoringBundle.message("move.tltle"));
+                               RefactoringBundle.message("move.title"));
       return null;
     }
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, packageName);
     PackageWrapper targetPackage = new PackageWrapper(myManager, packageName);
     if (!targetPackage.exists()) {
       final int ret = Messages.showYesNoDialog(myProject, RefactoringBundle.message("package.does.not.exist", packageName),
-                                               RefactoringBundle.message("move.tltle"), Messages.getQuestionIcon());
+                                               RefactoringBundle.message("move.title"), Messages.getQuestionIcon());
       if (ret != 0) return null;
     }
 

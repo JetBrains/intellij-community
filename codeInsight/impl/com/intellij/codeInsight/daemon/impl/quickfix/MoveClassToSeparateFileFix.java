@@ -13,6 +13,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class MoveClassToSeparateFileFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MoveClassToSeparateFileFix");
@@ -23,24 +24,28 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
     myClass = aClass;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("move.class.to.separate.file.text",
                                   myClass.getName());
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("move.class.to.separate.file.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if  (!myClass.isValid() || !myClass.getManager().isInProject(myClass)) return false;
     PsiDirectory dir = file.getContainingDirectory();
     if (dir == null) return false;
     try {
+      String name = myClass.getName();
       if (myClass.isInterface()) {
-        JavaDirectoryService.getInstance().checkCreateInterface(dir, myClass.getName());
-      } else {
-        JavaDirectoryService.getInstance().checkCreateClass(dir, myClass.getName());
+        JavaDirectoryService.getInstance().checkCreateInterface(dir, name);
+      }
+      else {
+        JavaDirectoryService.getInstance().checkCreateClass(dir, name);
       }
     }
     catch (IncorrectOperationException e) {
@@ -50,13 +55,14 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
     return true;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
 
     PsiDirectory dir = file.getContainingDirectory();
     try{
-      PsiClass placeHolder = myClass.isInterface() ? JavaDirectoryService.getInstance().createInterface(dir, myClass.getName()) : JavaDirectoryService.getInstance()
-        .createClass(dir, myClass.getName());
+      String name = myClass.getName();
+      PsiClass placeHolder = myClass.isInterface() ? JavaDirectoryService.getInstance().createInterface(dir, name) :
+                             JavaDirectoryService.getInstance().createClass(dir, name);
       PsiClass newClass = (PsiClass)placeHolder.replace(myClass);
       myClass.delete();
 
