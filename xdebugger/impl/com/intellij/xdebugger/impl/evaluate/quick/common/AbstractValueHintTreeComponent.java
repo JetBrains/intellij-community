@@ -1,4 +1,4 @@
-package com.intellij.xdebugger.impl.evaluate;
+package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -26,8 +26,8 @@ public abstract class AbstractValueHintTreeComponent<H> extends JPanel {
   private AbstractValueHint myValueHint;
   private Tree myTree;
 
-  protected AbstractValueHintTreeComponent(LayoutManager layout, final AbstractValueHint valueHint, final Tree tree, final H initialItem) {
-    super(layout);
+  protected AbstractValueHintTreeComponent(final AbstractValueHint valueHint, final Tree tree, final H initialItem) {
+    super(new BorderLayout());
     myValueHint = valueHint;
     myTree = tree;
     myHistory.add(initialItem);
@@ -72,7 +72,7 @@ public abstract class AbstractValueHintTreeComponent<H> extends JPanel {
     };
   }
 
-  protected abstract void updateTree(H item);
+  protected abstract void updateTree(H selectedItem);
 
   protected void addToHistory(final H item) {
     if (myCurrentIndex < HISTORY_SIZE) {

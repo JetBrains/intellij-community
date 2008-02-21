@@ -10,8 +10,8 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.ValueHint;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.evaluate.QuickEvaluateHandler;
-import com.intellij.xdebugger.impl.evaluate.AbstractValueHint;
+import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
+import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;

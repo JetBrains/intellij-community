@@ -11,9 +11,7 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.xdebugger.impl.evaluate.AbstractValueHintTreeComponent;
-
-import java.awt.*;
+import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHintTreeComponent;
 
 /**
  * @author nik
@@ -24,7 +22,7 @@ class ValueHintTreeComponent extends AbstractValueHintTreeComponent<Pair<NodeDes
   private InspectDebuggerTree myTree;
 
   public ValueHintTreeComponent(final ValueHint valueHint, InspectDebuggerTree tree, final String title) {
-    super(new BorderLayout(), valueHint, tree, Pair.create(tree.getInspectDescriptor(), title));
+    super(valueHint, tree, Pair.create(tree.getInspectDescriptor(), title));
     myValueHint = valueHint;
     myTree = tree;
   }

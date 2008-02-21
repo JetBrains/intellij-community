@@ -2,7 +2,7 @@
  * Class ValueLookupManager
  * @author Jeka
  */
-package com.intellij.xdebugger.impl.evaluate;
+package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
@@ -46,8 +46,14 @@ public class ValueLookupManager implements EditorMouseMotionListener, ProjectCom
     if (e.isConsumed()) {
       return;
     }
+
     Editor editor = e.getEditor();
     Point point = e.getMouseEvent().getPoint();
+    if (myRequest != null) {
+      if(myRequest.isKeepHint(editor, point)) return;
+      hideHint();
+    }
+
     DebuggerSupport[] supports = DebuggerSupport.getDebuggerSupports();
     for (DebuggerSupport support : supports) {
       QuickEvaluateHandler handler = support.getQuickEvaluateHandler();
@@ -59,13 +65,6 @@ public class ValueLookupManager implements EditorMouseMotionListener, ProjectCom
   }
 
   private void requestHint(final QuickEvaluateHandler handler, final Editor editor, final Point point, final int type) {
-    if (myRequest != null) {
-      if(myRequest.isKeepHint(editor, point)) return;
-      hideHint();
-    }
-
-    if(!handler.isEnabled(myProject)) return;
-
     myAlarm.cancelAllRequests();
     if(type == AbstractValueHint.MOUSE_OVER_HINT) {
       myAlarm.addRequest(new Runnable() {
@@ -92,7 +91,9 @@ public class ValueLookupManager implements EditorMouseMotionListener, ProjectCom
     if (editor.isDisposed() || !handler.canShowHint(myProject)) return;
 
     myRequest = handler.createValueHint(myProject, editor, point, type);
-    myRequest.invokeHint();
+    if (myRequest != null) {
+      myRequest.invokeHint();
+    }
   }
 
   public static ValueLookupManager getInstance(Project project) {

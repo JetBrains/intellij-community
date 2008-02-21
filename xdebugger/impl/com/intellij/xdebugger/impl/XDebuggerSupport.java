@@ -7,8 +7,8 @@ import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import com.intellij.xdebugger.impl.actions.handlers.*;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointPanelProvider;
-import com.intellij.xdebugger.impl.evaluate.QuickEvaluateHandler;
-import com.intellij.xdebugger.impl.evaluate.XQuickEvaluateHandler;
+import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
+import com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler;
 import org.jetbrains.annotations.NotNull;
 
 /**

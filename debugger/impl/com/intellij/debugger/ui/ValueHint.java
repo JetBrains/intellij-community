@@ -26,8 +26,8 @@ import com.intellij.psi.*;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xdebugger.impl.evaluate.AbstractValueHintTreeComponent;
-import com.intellij.xdebugger.impl.evaluate.AbstractValueHint;
+import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHintTreeComponent;
+import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ public class ValueHint extends AbstractValueHint {
   private PsiExpression myCurrentExpression = null;
 
   private ValueHint(Project project, Editor editor, Point point, int type, final PsiExpression selectedExpression, final TextRange textRange) {
-    super(point, project, editor, type, textRange);
+    super(project, editor, point, type, textRange);
     myCurrentExpression = selectedExpression;
   }
 
@@ -225,7 +225,7 @@ public class ValueHint extends AbstractValueHint {
     PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Runnable() {
       public void run() {
         // Point -> offset
-        final int offset = calcOffset(editor, point);
+        final int offset = calculateOffset(editor, point);
 
 
         PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());

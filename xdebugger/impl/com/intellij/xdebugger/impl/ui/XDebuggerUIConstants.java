@@ -7,6 +7,8 @@ import com.intellij.ui.SimpleTextAttributes;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author nik
  */
@@ -22,6 +24,7 @@ public class XDebuggerUIConstants {
   public static final SimpleTextAttributes EXCEPTION_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.red);
   public static final SimpleTextAttributes VALUE_NAME_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, new Color(128, 0, 0));
   public static final SimpleTextAttributes ERROR_MESSAGE_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.red);
+  @NonNls public static final String EQ_TEXT = " = ";
 
   private XDebuggerUIConstants() {
   }

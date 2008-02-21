@@ -1,4 +1,4 @@
-package com.intellij.xdebugger.impl.evaluate;
+package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -18,6 +18,7 @@ import com.intellij.util.ui.Tree;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelListener;
@@ -30,7 +31,7 @@ import java.awt.event.*;
  * @author nik
  */
 public abstract class AbstractValueHint {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.evaluate.AbstractValueHint");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint");
   @NonNls private final static String DIMENSION_SERVICE_KEY = "DebuggerActiveHint";
   private static final Icon COLLAPSED_TREE_ICON = IconLoader.getIcon("/general/add.png");
   public final static int MOUSE_OVER_HINT       = 0;
@@ -62,7 +63,7 @@ public abstract class AbstractValueHint {
   private boolean myHintHidden;
   private TextRange myCurrentRange;
 
-  public AbstractValueHint(Point point, Project project, Editor editor, int type, final TextRange textRange) {
+  public AbstractValueHint(Project project, Editor editor, Point point, int type, final TextRange textRange) {
     myPoint = point;
     myProject = project;
     myEditor = editor;
@@ -82,6 +83,8 @@ public abstract class AbstractValueHint {
     final Point location = popupWindow.getLocation();
     final Rectangle windowBounds = popupWindow.getBounds();
     final Rectangle bounds = tree.getPathBounds(path);
+    if (bounds == null) return;
+
     final Rectangle targetBounds = new Rectangle(location.x,
                                                  location.y,
                                                  Math.max(Math.max(size.width, bounds.width) + 20, windowBounds.width),
@@ -117,7 +120,7 @@ public abstract class AbstractValueHint {
       }
     }
     else {
-      int offset = calcOffset(editor, point);
+      int offset = calculateOffset(editor, point);
 
       if (myCurrentRange != null && myCurrentRange.getStartOffset() <= offset && offset <= myCurrentRange.getEndOffset()) {
         return true;
@@ -126,7 +129,7 @@ public abstract class AbstractValueHint {
     return false;
   }
 
-  protected static int calcOffset(Editor editor, Point point) {
+  public static int calculateOffset(@NotNull Editor editor, @NotNull Point point) {
     LogicalPosition pos = editor.xyToLogicalPosition(point);
     return editor.logicalPositionToOffset(pos);
   }
@@ -159,9 +162,10 @@ public abstract class AbstractValueHint {
       return;
     }
 
-    if(myType == MOUSE_ALT_OVER_HINT){
-      myHighlighter = myEditor.getMarkupModel().addRangeHighlighter(myCurrentRange.getStartOffset(), myCurrentRange.getEndOffset(), HighlighterLayer
-          .SELECTION + 1, ourReferenceAttributes, HighlighterTargetArea.EXACT_RANGE);
+    if (myType == MOUSE_ALT_OVER_HINT) {
+      myHighlighter = myEditor.getMarkupModel().addRangeHighlighter(myCurrentRange.getStartOffset(), myCurrentRange.getEndOffset(),
+                                                                    HighlighterLayer.SELECTION + 1, ourReferenceAttributes,
+                                                                    HighlighterTargetArea.EXACT_RANGE);
       Component internalComponent = myEditor.getContentComponent();
       myStoredCursor = internalComponent.getCursor();
       internalComponent.addKeyListener(myEditorKeyListener);
@@ -169,7 +173,8 @@ public abstract class AbstractValueHint {
       if (LOG.isDebugEnabled()) {
         LOG.debug("internalComponent.setCursor(hintCursor())");
       }
-    } else {
+    }
+    else {
       evaluateAndShowHint();
     }
   }
@@ -199,7 +204,7 @@ public abstract class AbstractValueHint {
     return myType;
   }
 
-  protected void showTreePopup(final AbstractValueHintTreeComponent<?> component, final Tree tree, final String title) {
+  public void showTreePopup(final AbstractValueHintTreeComponent<?> component, final Tree tree, final String title) {
     if (myPopup != null) {
       myPopup.cancel();
     }
