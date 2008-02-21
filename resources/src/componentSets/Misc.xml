@@ -13,10 +13,6 @@
       <interface-class>com.intellij.usages.rules.UsageGroupingRuleProvider</interface-class>
       <implementation-class>com.intellij.usages.impl.UsageGroupingRuleProviderImpl</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.usages.rules.UsageFilteringRuleProvider</interface-class>
-      <implementation-class>com.intellij.usages.impl.UsageFilteringRuleProviderImpl</implementation-class>
-    </component>
   </application-components>
 
   <project-components>

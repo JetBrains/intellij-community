@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -232,7 +233,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private static UsageFilteringRule[] getActiveFilteringRules(final Project project) {
-    final UsageFilteringRuleProvider[] providers = ApplicationManager.getApplication().getComponents(UsageFilteringRuleProvider.class);
+    final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME);
     List<UsageFilteringRule> list = new ArrayList<UsageFilteringRule>();
     for (UsageFilteringRuleProvider provider : providers) {
       list.addAll(Arrays.asList(provider.getActiveRules(project)));
@@ -431,7 +432,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private AnAction[] createFilteringActions() {
-    final UsageFilteringRuleProvider[] providers = ApplicationManager.getApplication().getComponents(UsageFilteringRuleProvider.class);
+    final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME); 
     List<AnAction> list = new ArrayList<AnAction>();
     for (UsageFilteringRuleProvider provider : providers) {
       list.addAll(Arrays.asList(provider.createFilteringActions(this)));

@@ -21,36 +21,30 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageView;
-import com.intellij.usages.impl.rules.ImportFilteringRule;
 import com.intellij.usages.impl.rules.ReadAccessFilteringRule;
 import com.intellij.usages.impl.rules.WriteAccessFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author max
  */
-public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvider, JDOMExternalizable {
-  public boolean SHOW_IMPORTS = true;
+public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvider {
   private ReadWriteState myReadWriteState = new ReadWriteState();
 
   @NotNull
   public UsageFilteringRule[] getActiveRules(Project project) {
     final List<UsageFilteringRule> rules = new ArrayList<UsageFilteringRule>();
-    if (!SHOW_IMPORTS) {
-      rules.add(new ImportFilteringRule());
-    }
     if (!myReadWriteState.isShowReadAccess()) {
       rules.add(new ReadAccessFilteringRule());
     }
@@ -67,9 +61,6 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     if(view.getPresentation().isCodeUsages()) {
       final JComponent component = view.getComponent();
 
-      final ShowImportsAction showImportsAction = new ShowImportsAction(impl);
-      showImportsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK)), component);
-
       final ShowReadAccessUsagesAction showReadAccessUsagesAction = new ShowReadAccessUsagesAction(impl);
       showReadAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R,
                                                                                                         InputEvent.CTRL_DOWN_MASK)), component);
@@ -80,29 +71,14 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
 
       impl.scheduleDisposeOnClose(new Disposable() {
         public void dispose() {
-          showImportsAction.unregisterCustomShortcutSet(component);
           showReadAccessUsagesAction.unregisterCustomShortcutSet(component);
           showWriteAccessUsagesAction.unregisterCustomShortcutSet(component);
         }
       });
-      return new AnAction[] {showImportsAction, showReadAccessUsagesAction, showWriteAccessUsagesAction};
+      return new AnAction[] {showReadAccessUsagesAction, showWriteAccessUsagesAction};
     }
     else {
       return AnAction.EMPTY_ARRAY;
-    }
-  }
-
-  private class ShowImportsAction extends RuleAction {
-    public ShowImportsAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.show.import.statements"), IconLoader.getIcon("/actions/showImportStatements.png"));
-    }
-
-    protected boolean getOptionValue() {
-      return SHOW_IMPORTS;
-    }
-
-    protected void setOptionValue(boolean value) {
-      SHOW_IMPORTS = value;
     }
   }
 
@@ -168,20 +144,4 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
       myView.rulesChanged();
     }
   }
-
-  @NotNull
-  public String getComponentName() {
-    return "UsageFilteringRuleProvider";
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-  }
-
-  public void initComponent() {}
-  public void disposeComponent() {}
 }

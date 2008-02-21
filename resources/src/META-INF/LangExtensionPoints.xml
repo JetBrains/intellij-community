@@ -247,6 +247,8 @@
   <extensionPoint name="completionData"
                   beanClass="com.intellij.codeInsight.completion.CompletionDataEP"/>
 
+  <extensionPoint name="usageFilteringRuleProvider"
+                  interface="com.intellij.usages.rules.UsageFilteringRuleProvider"/>
   <extensionPoint name="usageTypeProvider"
                   interface="com.intellij.usages.impl.rules.UsageTypeProvider"/>
   <extensionPoint name="fileStructureGroupRuleProvider"

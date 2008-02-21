@@ -24,7 +24,7 @@ import javax.swing.*;
  * @author Eugene Zhuravlev
  *         Date: Jan 19, 2005
  */
-abstract class RuleAction extends ToggleAction {
+public abstract class RuleAction extends ToggleAction {
   private UsageViewImpl myView;
   private boolean myState;
 

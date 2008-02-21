@@ -16,12 +16,14 @@
 package com.intellij.usages.rules;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
-public interface UsageFilteringRuleProvider extends ApplicationComponent{
+public interface UsageFilteringRuleProvider {
+  ExtensionPointName<UsageFilteringRuleProvider> EP_NAME = ExtensionPointName.create("com.intellij.usageFilteringRuleProvider");
+
   @NotNull
   UsageFilteringRule[] getActiveRules(Project project);
 
