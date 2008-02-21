@@ -15,13 +15,14 @@
  */
 package com.intellij.psi.xml;
 
+import com.intellij.psi.FileResolveScopeProvider;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mike
  */
-public interface XmlFile extends PsiFile, XmlElement {
+public interface XmlFile extends PsiFile, XmlElement, FileResolveScopeProvider {
   @Nullable
   XmlDocument getDocument();
 }

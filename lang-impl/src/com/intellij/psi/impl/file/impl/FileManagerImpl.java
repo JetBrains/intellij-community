@@ -29,7 +29,6 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakValueHashMap;
@@ -291,8 +290,11 @@ public class FileManagerImpl implements FileManager {
       }
 
       final PsiFile contextFile = containingFile != null ? FileContextUtil.getContextFile(containingFile) : null;
-      if (contextFile == null || contextFile instanceof XmlFile) {
+      if (contextFile == null) {
         return GlobalSearchScope.allScope(project);
+      }
+      else if (contextFile instanceof FileResolveScopeProvider) {
+        return ((FileResolveScopeProvider) contextFile).getFileResolveScope();
       }
       vFile = contextFile.getVirtualFile();
       if (vFile == null) {

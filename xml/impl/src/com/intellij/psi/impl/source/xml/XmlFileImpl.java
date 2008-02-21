@@ -12,6 +12,8 @@ import com.intellij.psi.impl.source.html.ScriptSupportUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlChildRole;
@@ -103,5 +105,9 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile, XmlElementType 
       return ScriptSupportUtil.processDeclarations(this, processor, state, lastParent, place);
 
     return true;
+  }
+
+  public GlobalSearchScope getFileResolveScope() {
+    return ProjectScope.getAllScope(getProject());
   }
 }
