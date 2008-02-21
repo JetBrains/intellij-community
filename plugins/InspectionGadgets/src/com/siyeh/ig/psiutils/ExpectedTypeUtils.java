@@ -23,6 +23,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -532,7 +533,79 @@ public class ExpectedTypeUtils{
                         (PsiArrayType)parameterType;
                 return substitutor.substitute(arrayType.getComponentType());
             }
-            return substitutor.substitute(parameterType);
+            final PsiType type = substitutor.substitute(parameterType);
+            final TypeStringCreator typeStringCreator = new TypeStringCreator();
+            type.accept(typeStringCreator);
+            if (typeStringCreator.isModified()) {
+                final PsiManager manager = method.getManager();
+                final Project project = manager.getProject();
+                final PsiElementFactory factory =
+                        JavaPsiFacade.getInstance(project).getElementFactory();
+                try {
+                    final String typeString = typeStringCreator.getTypeString();
+                    return factory.createTypeFromText(typeString, method);
+                } catch (IncorrectOperationException e) {
+                    throw new AssertionError(e);
+                }
+            }
+            return type;
+        }
+
+        /**
+         * Creates a new type string without any wildcards with final
+         * extends bounds from the visited type.
+         */
+        private static class TypeStringCreator extends PsiTypeVisitor<Object> {
+
+            private final StringBuilder typeString = new StringBuilder();
+            private boolean modified = false;
+
+            public Object visitType(PsiType type) {
+                typeString.append(type.getCanonicalText());
+                return super.visitType(type);
+            }
+
+            public Object visitWildcardType(PsiWildcardType wildcardType) {
+                if (wildcardType.isExtends()) {
+                    final PsiType extendsBound = wildcardType.getExtendsBound();
+                    if (extendsBound instanceof PsiClassType) {
+                        PsiClassType classType = (PsiClassType) extendsBound;
+                        final PsiClass aClass = classType.resolve();
+                        if (aClass != null &&
+                                aClass.hasModifierProperty(PsiModifier.FINAL)) {
+                            modified = true;
+                            return super.visitClassType(classType);
+                        }
+
+                    }
+                }
+                return super.visitWildcardType(wildcardType);
+            }
+
+            public Object visitClassType(PsiClassType classType) {
+                final PsiClassType rawType = classType.rawType();
+                typeString.append(rawType.getCanonicalText());
+                final PsiType[] parameterTypes = classType.getParameters();
+                if (parameterTypes.length > 0) {
+                    typeString.append('<');
+                    parameterTypes[0].accept(this);
+                    for (int i = 1; i < parameterTypes.length; i++) {
+                        typeString.append(',');
+                        PsiType parameterType = parameterTypes[i];
+                        parameterType.accept(this);
+                    }
+                    typeString.append('>');
+                }
+                return null;
+            }
+
+            public String getTypeString() {
+                return typeString.toString();
+            }
+
+            public boolean isModified() {
+                return modified;
+            }
         }
     }
 }
