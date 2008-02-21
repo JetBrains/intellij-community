@@ -19,6 +19,7 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
   @NonNls public static final String METHOD = "method";
   @NonNls public static final String FIELD = "field";
   @NonNls public static final String PARAMETER = "parameter";
+  //used in OfflineProjectDescriptor
   @NonNls public static final String PACKAGE = "package";
   public static final Key<RefJavaManager> MANAGER = Key.create("RefJavaManager");
 

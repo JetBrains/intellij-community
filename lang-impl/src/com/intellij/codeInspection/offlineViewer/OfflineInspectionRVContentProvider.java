@@ -17,7 +17,6 @@ import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefJavaManager;
 import com.intellij.codeInspection.reference.SmartRefElementPointer;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.project.Project;
@@ -200,7 +199,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
     public boolean supportStructure() {
       return !Comparing.strEqual(myDescriptor.getType(), SmartRefElementPointer.MODULE) &&
-             !Comparing.strEqual(myDescriptor.getType(), RefJavaManager.PACKAGE);
+             !Comparing.strEqual(myDescriptor.getType(), "package");
     }
   }
 }
