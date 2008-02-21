@@ -23,6 +23,8 @@ import com.intellij.openapi.editor.colors.ColorKey;
  * @see ColorSettingsPage#getColorDescriptors()
  */
 public final class ColorDescriptor {
+  public static final ColorDescriptor[] EMPTY_ARRAY = new ColorDescriptor[0];
+
   public static final class Kind {
     public final static Kind BACKGROUND = new Kind();
     public final static Kind FOREGROUND = new Kind();
