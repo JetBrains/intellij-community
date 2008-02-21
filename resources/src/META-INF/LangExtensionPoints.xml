@@ -247,4 +247,7 @@
   <extensionPoint name="completionData"
                   beanClass="com.intellij.codeInsight.completion.CompletionDataEP"/>
 
+  <extensionPoint name="fileStructureGroupRuleProvider"
+                  interface="com.intellij.usages.impl.FileStructureGroupRuleProvider"/>
+
 </extensionPoints>
