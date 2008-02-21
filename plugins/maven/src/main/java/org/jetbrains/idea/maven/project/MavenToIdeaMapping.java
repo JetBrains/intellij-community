@@ -5,6 +5,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.versioning.VersionRange;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.util.MavenId;
 
@@ -139,7 +141,20 @@ public class MavenToIdeaMapping {
     return id.toString();
   }
 
-  public String getModuleName(MavenId id) {
+  public String getModuleName(Artifact a) {
+    // HACK!!!
+    // we should find module by version range version, since it might be X-SNAPSHOT or SNAPSHOT
+    // which is resolved in X-timestamp-build. But mapping contains base artefact versions.
+    // todo: user MavenArtifactResolver instread.
+
+    VersionRange range = a.getVersionRange();
+    String version = range == null ? a.getVersion() : range.toString();
+    MavenId versionId = new MavenId(a.getGroupId(), a.getArtifactId(), version);
+
+    return getModuleName(versionId);
+  }
+
+  private String getModuleName(MavenId id) {
     String name = projectIdToModuleName.get(id);
     if (nameToModule.containsKey(name) || projectNames.contains(name)) return name;
     return null;

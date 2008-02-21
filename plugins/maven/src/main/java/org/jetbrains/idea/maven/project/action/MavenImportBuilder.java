@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,6 +43,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   private MavenImportProcessor myImportProcessor;
 
   private boolean openModulesConfigurator;
+  private LinkedHashMap<MavenProject, List<Artifact>> myResolutionErrors;
 
   public String getName() {
     return ProjectBundle.message("maven.name");
@@ -61,7 +63,8 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   @Override
   public boolean validate(Project current, Project dest) {
     try {
-      myImportProcessor.resolve(dest, myProfiles, new LinkedHashMap<MavenProject, List<Artifact>>());
+      myResolutionErrors = new LinkedHashMap<MavenProject, List<Artifact>>();
+      myImportProcessor.resolve(dest, myProfiles, myResolutionErrors);
     }
     catch (MavenException e) {
       Messages.showErrorDialog(dest, e.getMessage(), getTitle());
@@ -78,6 +81,13 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
 
     MavenImporter importerComponent = MavenImporter.getInstance(project);
     importerComponent.setDoesNotRequireSynchronization();
+
+    StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+      public void run() {
+        MavenImportToolWindow toolWindow = new MavenImportToolWindow(project, ProjectBundle.message("maven.import"));
+        toolWindow.displayResolutionProblems(myResolutionErrors);
+      }
+    });
 
     MavenImporterState importerState = importerComponent.getState();
     if (!myProfiles.isEmpty()) {

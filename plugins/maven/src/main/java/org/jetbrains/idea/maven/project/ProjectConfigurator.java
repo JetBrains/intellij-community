@@ -109,7 +109,7 @@ public class ProjectConfigurator {
 
     myProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
       public void visit(MavenProjectModel.Node node) {
-        String name = myMapping.getModuleName(node.getId());
+        String name = myMapping.getModuleName(node.getArtifact());
         LOG.assertTrue(name != null);
 
         if (createModuleGroups && !node.mavenModules.isEmpty()) {

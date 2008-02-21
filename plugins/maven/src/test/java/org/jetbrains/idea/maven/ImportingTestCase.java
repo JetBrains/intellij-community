@@ -81,7 +81,7 @@ public abstract class ImportingTestCase extends MavenTestCase {
       actualNames.add(m.getName());
     }
 
-    assertUnorderedElementsAreEqual(actualNames);
+    assertUnorderedElementsAreEqual(actualNames, expectedNames);
   }
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {
@@ -94,7 +94,7 @@ public abstract class ImportingTestCase extends MavenTestCase {
       expectedRoots[i] = VfsUtil.pathToUrl(expectedRoots[i]);
     }
 
-    assertUnorderedElementsAreEqual(actual);
+    assertUnorderedElementsAreEqual(actual, expectedRoots);
   }
 
   protected void assertSources(String moduleName, String... expectedSources) {
@@ -133,7 +133,7 @@ public abstract class ImportingTestCase extends MavenTestCase {
       actual.add(folderUrl);
     }
 
-    assertUnorderedElementsAreEqual(actual);
+    assertUnorderedElementsAreEqual(actual, expected);
   }
 
   protected void assertModuleOutput(String moduleName, String output, String testOutput) {

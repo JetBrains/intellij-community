@@ -149,7 +149,39 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
 
     assertArtifactsAre(unresolvedArtifacts.get(p1), "xxx:xxx:1", "yyy:yyy:2");
     assertArtifactsAre(unresolvedArtifacts.get(p2), "zzz:zzz:3");
+  }
+  
+  public void testDoesNotReportInterModuleDependenciesAsUnresolved() throws IOException {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
 
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>");
+
+    importProject();
+
+    List<MavenProject> projects = new ArrayList<MavenProject>(unresolvedArtifacts.keySet());
+    assertEquals(0, projects.size());
   }
 
   private void assertArtifactsAre(List<Artifact> actual, String... expectedNames) {
