@@ -85,25 +85,33 @@
   <projectService serviceInterface="com.intellij.util.LogicalRootsManager"
                   serviceImplementation="com.intellij.util.LogicalRootsManagerImpl"/>
 
+  <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage"/>
+
+  <!-- Editor -->
+  <applicationConfigurable implementation="com.intellij.application.options.editor.EditorOptions"/>
+
+  <!-- Colors & Fonts-->
+  <applicationConfigurable implementation="com.intellij.application.options.colors.ColorAndFontOptions"/>
+
+  <!-- Global Code Style -->
+  <applicationConfigurable implementation="com.intellij.application.options.CodeStyleSchemesConfigurable"/>
+
+  <!-- File Types -->
+  <applicationConfigurable implementation="com.intellij.openapi.fileTypes.impl.FileTypeConfigurable"/>
+
   <applicationConfigurable implementation="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable"/>
 
   <!-- Live Templates -->
   <applicationConfigurable implementation="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable"/>
 
-  <!-- Colors & Fonts-->
-  <applicationConfigurable implementation="com.intellij.application.options.colors.ColorAndFontOptions"/>
+  <!-- File Templates-->
+  <applicationConfigurable implementation="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable"/>
 
   <!-- T.O.D.O -->
   <applicationConfigurable implementation="com.intellij.ide.todo.configurable.TodoConfigurable"/>
 
-  <!-- File Templates-->
-  <applicationConfigurable implementation="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable"/>
-
   <!-- External Tools -->
   <applicationConfigurable implementation="com.intellij.tools.ToolConfigurable"/>
-
-  <!-- Global Code Style -->
-  <applicationConfigurable implementation="com.intellij.application.options.CodeStyleSchemesConfigurable"/>
 
   <!-- Errors -->
   <projectConfigurable implementation="com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable"/>
@@ -170,4 +178,5 @@
   <elementLookupRenderer implementation="com.intellij.codeInsight.template.impl.TemplateLookupRenderer"/>
 
   <customPasteProvider implementation="com.intellij.ide.actions.PasteReferenceProvider"/>
+
 </extensions>
