@@ -35,14 +35,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
-import com.intellij.util.containers.HashMap;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
 public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements ApplicationComponent {
   private static final Map<String, LibraryTable> myLibraryTables = new HashMap<String, LibraryTable>();

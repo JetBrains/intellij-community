@@ -422,5 +422,10 @@
     <action id="ChangeInspectionProfile" class="com.intellij.ide.actions.QuickChangeInspectionProfileAction">
       <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeLaf"/>
     </action>
+
+    <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirectory"
+      icon="/nodes/ModuleClosed.png">
+      <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoProject"/>
+    </action>
   </actions>
 </component>

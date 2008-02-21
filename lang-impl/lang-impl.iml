@@ -17,6 +17,7 @@
     <orderEntry type="library" name="JUnit3" level="project" />
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="psi-extapi" exported="" />
+    <orderEntry type="module" module-name="vcs-impl" />
     <orderEntryProperties />
   </component>
 </module>

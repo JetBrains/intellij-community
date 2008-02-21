@@ -4,7 +4,7 @@
  * Date: Aug 22, 2006
  * Time: 4:42:08 PM
  */
-package com.intellij.diagnostic;
+package com.intellij.internal;
 
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;

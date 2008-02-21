@@ -338,7 +338,7 @@
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <separator/>
       <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
-      <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.diagnostic.DumpInspectionDescriptionsAction"/>
+      <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
       <separator/>
       <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction"
               text="Add Test Process"/>
@@ -436,7 +436,7 @@
       <separator/>
       <reference ref="FoldingGroup"/>
       <separator/>
-                                             
+
       <add-to-group group-id="EditorPopupMenu" relative-to-action="MoveToChangeList" anchor="before"/>
     </group>
 
@@ -979,10 +979,7 @@
       </action>
     </group>
 
-    <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirectory"
-      icon="/nodes/ModuleClosed.png">
-      <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoProject"/>
-    </action>
+
 
     <group id="DiffPanel.Toolbar.IDEA">
       <reference ref="Find"/>
