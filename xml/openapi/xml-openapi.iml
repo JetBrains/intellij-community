@@ -6,8 +6,8 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="module" module-name="openapi" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="lang-api" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
