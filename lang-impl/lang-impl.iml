@@ -8,9 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="boot" />
-    <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="UsageView" />
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="library" name="OroMatcher" level="project" />
