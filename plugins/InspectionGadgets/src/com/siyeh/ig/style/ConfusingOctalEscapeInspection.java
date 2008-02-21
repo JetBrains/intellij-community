@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,16 +48,17 @@ public class ConfusingOctalEscapeInspection extends BaseInspection {
     private static class ConfusingOctalEscapeVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitLiteralExpression(@NotNull PsiLiteralExpression exp) {
-            super.visitLiteralExpression(exp);
-            if (!TypeUtils.expressionHasType("java.lang.String", exp)) {
+        @Override public void visitLiteralExpression(
+                @NotNull PsiLiteralExpression expression) {
+            super.visitLiteralExpression(expression);
+            if (!TypeUtils.expressionHasType("java.lang.String", expression)) {
                 return;
             }
-            final String text = exp.getText();
+            final String text = expression.getText();
             if (!containsConfusingOctalEscape(text)) {
                 return;
             }
-            registerError(exp);
+            registerError(expression);
         }
 
         private static boolean containsConfusingOctalEscape(String text) {
@@ -68,16 +69,21 @@ public class ConfusingOctalEscapeInspection extends BaseInspection {
                     return false;
                 }
                 if (escapeStart > 0 && text.charAt(escapeStart - 1) == '\\') {
-                    if (escapeStart > 1) {
-                        if (text.charAt(escapeStart - 2) != '\\') {
-                            continue;
-                        }
-                    } else {
-                        continue;
-                    }
+                    continue;
                 }
+                boolean isEscape = true;
+                final int textLength = text.length();
+                int nextChar = escapeStart + 1;
+                while (nextChar < textLength && text.charAt(nextChar) == '\\') {
+                    isEscape = !isEscape;
+                    nextChar++;
+                }
+                if (!isEscape) {
+                    continue;
+                }
+                escapeStart = nextChar - 1;
                 int digitPosition = escapeStart + 1;
-                while (digitPosition < text.length() &&
+                while (digitPosition < textLength &&
                         Character.isDigit(text.charAt(digitPosition))) {
                     digitPosition++;
                 }
