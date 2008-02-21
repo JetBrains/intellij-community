@@ -186,15 +186,19 @@ public class PsiViewerDialog extends DialogWrapper {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     PsiElement rootElement = null;
     try {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
-      if (myRbMethod.isSelected()) {
-        rootElement = factory.createMethodFromText(text, null);
-      }
-      else if (myRbCodeBlock.isSelected()) {
-        rootElement = factory.createCodeBlockFromText(text, null);
-      }
-      else if (myRbExpression.isSelected()) {
-        rootElement = factory.createExpressionFromText(text, null);
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
+      if (psiFacade != null) {
+        PsiElementFactory factory = psiFacade.getElementFactory();
+
+        if (myRbMethod.isSelected()) {
+          rootElement = factory.createMethodFromText(text, null);
+        }
+        else if (myRbCodeBlock.isSelected()) {
+          rootElement = factory.createCodeBlockFromText(text, null);
+        }
+        else if (myRbExpression.isSelected()) {
+          rootElement = factory.createExpressionFromText(text, null);
+        }
       }
       else {
         for (int i = 0; i < myFileTypeButtons.length; i++) {
