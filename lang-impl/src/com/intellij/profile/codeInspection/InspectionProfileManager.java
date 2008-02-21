@@ -15,6 +15,7 @@
  */
 package com.intellij.profile.codeInspection;
 
+import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -208,5 +209,9 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
 
   public void writeExternal(final Element element) throws WriteExternalException {
     mySeverityRegistrar.writeExternal(element);
+  }
+
+  public InspectionProfileConvertor getConverter() {
+    return new InspectionProfileConvertor(this);
   }
 }

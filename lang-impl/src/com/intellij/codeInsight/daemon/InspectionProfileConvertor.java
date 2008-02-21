@@ -5,8 +5,6 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -31,7 +29,6 @@ public class InspectionProfileConvertor {
   public static final @NonNls String OLD_HIGHTLIGHTING_SETTINGS_PROFILE = "EditorHighlightingSettings";
   public static final @NonNls String OLD_DEFAUL_PROFILE = "OldDefaultProfile";
 
-  private String myAdditionalJavadocTags;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsConvertor");
 
   @NonNls private static final String INSPECTIONS_TAG = "inspections";
@@ -42,8 +39,7 @@ public class InspectionProfileConvertor {
   @NonNls private static final String PROFILE_NAME_ATT = "profile_name";
   @NonNls private static final String OPTION_TAG = "option";
   @NonNls private static final String DISPLAY_LEVEL_MAP_OPTION = "DISPLAY_LEVEL_MAP";
-  @NonNls private static final String VALUE_ATT = "value";
-  @NonNls private static final String ADDITONAL_JAVADOC_TAGS_OPTION = "ADDITIONAL_JAVADOC_TAGS";
+  @NonNls protected static final String VALUE_ATT = "value";
   @NonNls private static final String DEFAULT_XML = "Default.xml";
   @NonNls private static final String XML_EXTENSION = ".xml";
   @NonNls public static final String LEVEL_ATT = "level";
@@ -60,27 +56,29 @@ public class InspectionProfileConvertor {
       Element option = (Element)obj;
       final String name = option.getAttributeValue(NAME_ATT);
       if (name != null) {
-        if (name.equals(DISPLAY_LEVEL_MAP_OPTION)) {
-          final Element levelMap = option.getChild(VALUE_ATT);
-          for (final Object o : levelMap.getChildren()) {
-            Element e = (Element)o;
-            String key = e.getName();
-            String levelName = e.getAttributeValue(LEVEL_ATT);
-            HighlightDisplayLevel level = HighlightDisplayLevel.find(myManager.getSeverityRegistrar().getSeverity(levelName));
-            if (level == null) continue;
-            myDisplayLevelMap.put(key, level);
-          }
-          hasOldSettings = true;
-        }
-        else {
-          if (name.equals(ADDITONAL_JAVADOC_TAGS_OPTION)) {
-            myAdditionalJavadocTags = option.getAttributeValue(VALUE_ATT);
-            hasOldSettings = true;
-          }
-        }
+        hasOldSettings |= processElement(option, name);
       }
     }
     return hasOldSettings;
+  }
+
+  protected boolean processElement(final Element option, final String name) {
+    if (name.equals(DISPLAY_LEVEL_MAP_OPTION)) {
+      final Element levelMap = option.getChild(VALUE_ATT);
+      for (final Object o : levelMap.getChildren()) {
+        Element e = (Element)o;
+        String key = e.getName();
+        String levelName = e.getAttributeValue(LEVEL_ATT);
+        HighlightDisplayLevel level = HighlightDisplayLevel.find(myManager.getSeverityRegistrar().getSeverity(levelName));
+        if (level == null) continue;
+        myDisplayLevelMap.put(key, level);
+      }
+      return true;
+    }
+    else {
+
+    }
+    return false;
   }
 
   public void storeEditorHighlightingProfile(Element element) {
@@ -145,7 +143,7 @@ public class InspectionProfileConvertor {
     }
   }
 
-  private void fillErrorLevels(final ModifiableModel profile) {
+  protected void fillErrorLevels(final ModifiableModel profile) {
     InspectionProfileEntry[] tools = profile.getInspectionTools();
     LOG.assertTrue(tools != null, "Profile was not correctly init");
     //fill error levels
@@ -167,10 +165,6 @@ public class InspectionProfileConvertor {
       }
       profile.setErrorLevel(key, level);
     }
-    //javadoc attributes
-    final InspectionProfileEntry inspectionTool = profile.getInspectionTool(JavaDocLocalInspection.SHORT_NAME);
-    JavaDocLocalInspection inspection = (JavaDocLocalInspection)((LocalInspectionToolWrapper)inspectionTool).getTool();
-    inspection.myAdditionalJavadocTags = myAdditionalJavadocTags;
   }
 
 
