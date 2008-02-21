@@ -244,4 +244,7 @@
 
   <extensionPoint name="qualifiedNameProvider" interface="com.intellij.ide.actions.QualifiedNameProvider"/>
 
+  <extensionPoint name="completionData"
+                  beanClass="com.intellij.codeInsight.completion.CompletionDataEP"/>
+
 </extensionPoints>
