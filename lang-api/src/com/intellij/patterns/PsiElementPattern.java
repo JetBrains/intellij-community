@@ -5,6 +5,7 @@
 package com.intellij.patterns;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.collection;
 import static com.intellij.patterns.StandardPatterns.not;
@@ -59,8 +60,16 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
     return andOr(psiElement().whitespace(), psiElement(PsiComment.class), psiElement(PsiErrorElement.class));
   }
 
-  public Self withFirstNonWhitespaceChild(@NotNull final ElementPattern pattern) {
+  public Self withFirstNonWhitespaceChild(@NotNull final ElementPattern<? extends PsiElement> pattern) {
     return withChildren(collection(PsiElement.class).filter(not(psiElement().whitespace()), collection(PsiElement.class).first(pattern)));
+  }
+
+  public Self inFile(@NotNull final ElementPattern<? extends PsiFile> filePattern) {
+    return with(new PatternCondition<T>("inFile") {
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+        return filePattern.accepts(t.getContainingFile(), context);
+      }
+    });
   }
 
   public Self equalTo(@NotNull final T o) {
@@ -132,6 +141,14 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   public Self withoutText(@NotNull final ElementPattern text) {
     return without(_withText(text));
+  }
+
+  public Self withLanguage(@NotNull final Language language) {
+    return with(new PatternCondition<T>("withLanguage") {
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+        return t.getLanguage().equals(language);
+      }
+    });
   }
 
   public static class Capture<T extends PsiElement> extends PsiElementPattern<T,Capture<T>> {

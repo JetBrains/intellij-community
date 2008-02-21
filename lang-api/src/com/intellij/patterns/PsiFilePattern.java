@@ -1,7 +1,7 @@
 package com.intellij.patterns;
 
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,4 +26,19 @@ public class PsiFilePattern<T extends PsiFile, Self extends PsiFilePattern<T, Se
       }
     });
   }
+
+  public static class Capture<T extends PsiFile> extends PsiFilePattern<T,Capture<T>> {
+
+    protected Capture(final Class<T> aClass) {
+      super(aClass);
+    }
+
+    protected Capture(@NotNull final InitialPatternCondition<T> condition) {
+      super(condition);
+    }
+
+
+  }
+
+
 }

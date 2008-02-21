@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -368,7 +369,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     LOG.assertTrue(lookupData.items.length == 0);
     if (lookupData.prefix != null) {
-      HintManager.getInstance().showErrorHint(editor, appendSuggestion(CompletionBundle.message("completion.no.suggestions"), lookupData));
+      HintManager.getInstance().showErrorHint(editor, appendSuggestion(LangBundle.message("completion.no.suggestions"), lookupData));
     }
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     if (codeAnalyzer != null) {

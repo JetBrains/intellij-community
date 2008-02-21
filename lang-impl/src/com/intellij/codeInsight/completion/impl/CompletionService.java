@@ -105,6 +105,7 @@ public class CompletionService implements CompletionRegistrar{
     protected CompletionPlaceImpl(final ElementPattern place, PartiallyOrderedSet<String, CompletionPlaceImpl<Result,Params>> providers) {
       myPlace = place;
       myProviders = providers;
+      myId = super.toString();
     }
 
     public CompletionPlace<Result, Params> withId(@NonNls @NotNull final String id) {
@@ -116,7 +117,7 @@ public class CompletionService implements CompletionRegistrar{
     public CompletionPlace<Result, Params> dependingOn(@NonNls final String... dependentIds) {
       myProviders.addValue(myId, this);
       for (final String dependentId : dependentIds) {
-        myProviders.addRelation(this, dependentId);
+        myProviders.addRelation(myId, dependentId);
       }
       return this;
     }

@@ -5,6 +5,7 @@
 package com.intellij.patterns;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 
 /**
@@ -14,6 +15,10 @@ public class PlatformPatterns extends StandardPatterns {
 
   public static PsiElementPattern.Capture<PsiElement> psiElement() {
     return new PsiElementPattern.Capture<PsiElement>(PsiElement.class);
+  }
+
+  public static PsiFilePattern.Capture<PsiFile> psiFile() {
+    return new PsiFilePattern.Capture<PsiFile>(PsiFile.class);
   }
 
   public static PsiElementPattern.Capture<PsiElement> psiElement(IElementType type) {

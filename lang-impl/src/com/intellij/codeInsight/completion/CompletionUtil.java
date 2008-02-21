@@ -6,12 +6,10 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageWordCompletion;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PlainTextTokenTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -19,10 +17,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
@@ -93,6 +88,14 @@ public class CompletionUtil {
   }
 
   public static CompletionData getCompletionDataByElement(PsiElement element, final PsiFile file, final int startOffset) {
+
+    final CompletionData mainData = getCompletionDataByFileType(file.getFileType());
+    return getCompletionData(element, file, startOffset, mainData != null ? mainData : ourGenericCompletionData);
+  }
+
+  public static CompletionData getCompletionData(final PsiElement element, final PsiFile file,
+                                                  final int startOffset,
+                                                  final CompletionData mainCompletionData) {
     CompletionData wordCompletionData = null;
     if (!hasNonSoftReference(file, startOffset)) {
       ASTNode textContainer = element != null ? element.getNode() : null;
@@ -104,24 +107,9 @@ public class CompletionUtil {
         textContainer = textContainer.getTreeParent();
       }
     }
-    final CompletionData completionDataByElementInner = getCompletionDataByElementInner(element, file);
-    if (wordCompletionData != null) return new CompositeCompletionData(completionDataByElementInner, wordCompletionData);
-    return completionDataByElementInner;
-  }
 
-  private static CompletionData getCompletionDataByElementInner(PsiElement element, final PsiFile file) {
-    final CompletionData completionDataByFileType = getCompletionDataByFileType(file.getFileType());
-    if (completionDataByFileType != null) return completionDataByFileType;
-
-    if ((file.getViewProvider().getPsi(StdLanguages.JAVA) != null)) {
-      if (element != null && PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null) {
-        return JavaCompletionUtil.ourJavaDocCompletionData.getValue();
-      }
-      return element != null && PsiUtil.getLanguageLevel(element).equals(LanguageLevel.JDK_1_5)
-             ? JavaCompletionUtil.ourJava15CompletionData.getValue()
-             : JavaCompletionUtil.ourJavaCompletionData.getValue();
-    }
-    return ourGenericCompletionData;
+    if (wordCompletionData != null) return new CompositeCompletionData(mainCompletionData, wordCompletionData);
+    return mainCompletionData;
   }
 
   public static void registerCompletionData(FileType fileType, NotNullLazyValue<CompletionData> completionData) {

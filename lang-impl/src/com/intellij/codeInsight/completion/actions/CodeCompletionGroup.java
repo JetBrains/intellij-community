@@ -1,4 +1,3 @@
-
 package com.intellij.codeInsight.completion.actions;
 
 import com.intellij.openapi.actionSystem.*;

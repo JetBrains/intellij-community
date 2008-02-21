@@ -181,6 +181,12 @@
       <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="GoToPreviousError"/>
     </group>
 
+    <group id="JavaCompletion">
+      <action id="SmartTypeCompletion" class="com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction"/>
+      <action id="ClassNameCompletion" class="com.intellij.codeInsight.completion.actions.ClassNameCompletionAction"/>
+      <add-to-group group-id="CodeCompletionGroup" anchor="after" relative-to-action="CodeCompletion"/>
+    </group>
+
     <group id="CodeMenu1">
       <reference ref="OverrideMethods"/>
       <reference ref="ImplementMethods"/>
@@ -189,16 +195,6 @@
       <action id="SurroundWith" class="com.intellij.codeInsight.generation.actions.SurroundWithAction"/>
       <action id="Generate" class="com.intellij.codeInsight.generation.actions.GenerateAction"/>
       <action id="Unwrap" class="com.intellij.codeInsight.unwrap.UnwrapAction"/>
-      <separator/>
-      <group id="CodeCompletionGroup" class="com.intellij.codeInsight.completion.actions.CodeCompletionGroup" popup="true">
-        <action id="CodeCompletion" class="com.intellij.codeInsight.completion.actions.CodeCompletionAction"/>
-        <action id="SmartTypeCompletion" class="com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction"/>
-        <action id="ClassNameCompletion" class="com.intellij.codeInsight.completion.actions.ClassNameCompletionAction"/>
-        <separator/>
-        <action id="HippieCompletion" class="com.intellij.codeInsight.completion.actions.HippieCompletionAction"/>
-        <action id="HippieBackwardCompletion" class="com.intellij.codeInsight.completion.actions.HippieBackwardCompletionAction"/>
-      </group>
-      <separator/>
 
       <add-to-group group-id="CodeMenu" anchor="first"/>
     </group>
