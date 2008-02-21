@@ -109,19 +109,6 @@
       <add-to-group group-id="FileSaveGroup" anchor="last"/>
     </group>
 
-    <action id="ReloadFromDisk" class="com.intellij.ide.actions.ReloadFromDiskAction">
-      <add-to-group group-id="SynchronizeGroup" anchor="last"/>
-    </action>
-
-    <group id="PrintExportGroup">
-      <separator/>
-      <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction"/>
-      <action id="Print" class="com.intellij.codeEditor.printing.PrintAction"/>
-
-      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="SynchronizeGroup"/>
-
-    </group>
-
     <!-- Edit -->
     <group id="EditSmartGroupEx">
       <reference ref="EditorCompleteStatement"/>

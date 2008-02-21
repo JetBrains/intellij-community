@@ -48,10 +48,6 @@
       <implementation-class>com.intellij.ide.OpenFileXmlRpcHandler</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.codeEditor.printing.PrintSettings</interface-class>
-      <implementation-class>com.intellij.codeEditor.printing.PrintSettings</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.ide.FileIconPatcherImpl</implementation-class>
     </component>
     <component>

@@ -23,6 +23,22 @@
       <add-to-group group-id="EditorActions" anchor="last"/>
     </group>
 
+    <!-- File -->
+
+    <action id="ReloadFromDisk" class="com.intellij.ide.actions.ReloadFromDiskAction">
+      <add-to-group group-id="SynchronizeGroup" anchor="last"/>
+    </action>
+
+
+    <group id="PrintExportGroup">
+      <separator/>
+      <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction"/>
+      <action id="Print" class="com.intellij.codeEditor.printing.PrintAction"/>
+
+      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="SynchronizeGroup"/>
+
+    </group>
+
     <!-- Edit -->
     <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction">
       <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>

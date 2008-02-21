@@ -85,6 +85,9 @@
   <projectService serviceInterface="com.intellij.util.LogicalRootsManager"
                   serviceImplementation="com.intellij.util.LogicalRootsManagerImpl"/>
 
+  <projectService serviceInterface="com.intellij.codeEditor.printing.ExportToHTMLSettings"
+                  serviceImplementation="com.intellij.codeEditor.printing.ExportToHTMLSettings"/>
+
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage"/>
 

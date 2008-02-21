@@ -65,6 +65,11 @@
       <interface-class>com.intellij.tools.ToolManager</interface-class>
       <implementation-class>com.intellij.tools.ToolManager</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.codeEditor.printing.PrintSettings</interface-class>
+      <implementation-class>com.intellij.codeEditor.printing.PrintSettings</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
