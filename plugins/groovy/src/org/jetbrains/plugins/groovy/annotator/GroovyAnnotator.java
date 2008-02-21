@@ -751,11 +751,14 @@ public class GroovyAnnotator implements Annotator {
     final String qualifiedName = targetClass.getQualifiedName();
     if (qualifiedName == null) return null;
 
-    final DynamicVirtualMethod methodVirtualElement = getDynamicMethodElement(referenceExpression, targetClass, module, qualifiedName);
-    if (methodVirtualElement != null) return methodVirtualElement;
+    if (referenceExpression.getParent() instanceof GrMethodCallExpression) {
+      final DynamicVirtualMethod methodVirtualElement = getDynamicMethodElement(referenceExpression, targetClass, module, qualifiedName);
+      if (methodVirtualElement != null) return methodVirtualElement;
 
-    final DynamicVirtualProperty propertyVirtualElement = getDynamicPropertyElement(referenceExpression, targetClass, module, qualifiedName);
-    if (propertyVirtualElement != null) return propertyVirtualElement;
+    } else {
+      final DynamicVirtualProperty propertyVirtualElement = getDynamicPropertyElement(referenceExpression, targetClass, module, qualifiedName);
+      if (propertyVirtualElement != null) return propertyVirtualElement;
+    }
 
     return null;
   }

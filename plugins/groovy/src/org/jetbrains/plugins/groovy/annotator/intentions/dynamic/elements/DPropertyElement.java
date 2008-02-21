@@ -10,4 +10,8 @@ public class DPropertyElement extends DItemElement {
   public DPropertyElement(DynamicVirtualElement virtualElement) {
     super(virtualElement);
   }
+
+  public DPropertyElement(DynamicVirtualElement virtualElement, boolean isSetTypeAndName) {
+    super(virtualElement, isSetTypeAndName);
+  }
 }

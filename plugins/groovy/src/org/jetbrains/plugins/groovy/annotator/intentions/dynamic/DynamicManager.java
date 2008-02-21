@@ -160,7 +160,7 @@ public abstract class DynamicManager implements ProjectComponent {
   @NotNull
   public abstract Set<MethodSignature> findMethodsSignaturesOfClass(final String moduleName, final String conatainingClassName);
 
-  @NotNull
+  @Nullable
   public abstract String getMethodReturnType(String moduleName, String className, String methodName, PsiType[] paramTypes);
 
 //  @NotNull

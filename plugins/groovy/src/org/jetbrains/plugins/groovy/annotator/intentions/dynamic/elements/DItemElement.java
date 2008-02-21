@@ -21,13 +21,20 @@ public class DItemElement extends DElement {
   private String myHightlightedText;
 
   public DItemElement(DynamicVirtualElement virtualElement) {
+    this(virtualElement, true);
+  }
+
+  public DItemElement(DynamicVirtualElement virtualElement, boolean isSetTypeAndName) {
     super(virtualElement instanceof DynamicVirtualMethod ? METHOD_TAG :
         (virtualElement instanceof DynamicVirtualProperty) ? PROPERTY_TAG : ERROR_TAG);
 
     myDynamicVirtualElement = virtualElement;
 
-    setAttribute(TYPE_ATTRIBUTE, virtualElement.getType());
-    setAttribute(NAME_ATTRIBUTE, virtualElement.getName());
+    if (isSetTypeAndName) {
+
+      setAttribute(TYPE_ATTRIBUTE, virtualElement.getType());
+      setAttribute(NAME_ATTRIBUTE, virtualElement.getName());
+    }
   }
 
   @NotNull

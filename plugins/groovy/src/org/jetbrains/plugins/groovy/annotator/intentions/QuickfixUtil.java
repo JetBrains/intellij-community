@@ -1,20 +1,27 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -57,5 +64,21 @@ public class QuickfixUtil {
     assert vFile != null;
     OpenFileDescriptor descriptor = new OpenFileDescriptor(project, vFile, textOffset);
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+  }
+
+  public static PsiType[] getMethodParametersTypes(GrCallExpression methodCall) {
+    final GrArgumentList argumentList = methodCall.getArgumentList();
+    List<PsiType> types = new ArrayList<PsiType>();
+    if (argumentList != null) {
+      for (GrNamedArgument namedArgument : argumentList.getNamedArguments()) {
+        types.add(namedArgument.getLabel().getExpectedArgumentType());
+      }
+    }
+
+    return types.toArray(PsiType.EMPTY_ARRAY);
+  }
+
+  public static boolean isMethosCall(GrReferenceExpression referenceExpression) {
+    return referenceExpression.getParent() instanceof GrMethodCallExpression;
   }
 }

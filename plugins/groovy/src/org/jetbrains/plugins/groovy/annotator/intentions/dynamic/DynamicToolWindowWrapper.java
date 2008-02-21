@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
@@ -38,7 +39,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DPClassNod
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DPropertyNode;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualMethod;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualProperty;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitVariable;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitElement;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -121,7 +122,7 @@ public class DynamicToolWindowWrapper {
     final DynamicFilterComponent filter = new DynamicFilterComponent(project, GroovyBundle.message("dynamic.toolwindow.property.fiter"), 10);
     filter.setBackground(UIUtil.getLabelBackground());
 
-    myBigPanel.add(new Label(GroovyBundle.message("dynamic.toolwindow.search.property")), BorderLayout.NORTH);
+    myBigPanel.add(new Label(GroovyBundle.message("dynamic.toolwindow.search.elements")), BorderLayout.NORTH);
     myBigPanel.add(filter, BorderLayout.NORTH);
 
     myTreeTablePanel = new JPanel(new BorderLayout());
@@ -176,7 +177,7 @@ public class DynamicToolWindowWrapper {
 
       if (properties.length == 0) continue;
 
-      DefaultMutableTreeNode propertyTreeNode = null;
+      DefaultMutableTreeNode propertyTreeNode;
       for (String propertyName : properties) {
         final String propertyType = DynamicManager.getInstance(project).getPropertyType(module.getName(), containingClassName, propertyName);
         //TODO: simplify Hierarchy
@@ -318,7 +319,7 @@ public class DynamicToolWindowWrapper {
     RefactoringListenerManager.getInstance(project).addListenerProvider(new RefactoringElementListenerProvider() {
       @Nullable
       public RefactoringElementListener getListener(final PsiElement element) {
-        if (element instanceof GrDynamicImplicitVariable) {
+        if (element instanceof GrDynamicImplicitElement) {
           return new RefactoringElementListener() {
             public void elementMoved(PsiElement newElement) {
               renameElement(newElement, project, element);
@@ -330,7 +331,7 @@ public class DynamicToolWindowWrapper {
 
             private void renameElement(PsiElement newElement, Project project, PsiElement element) {
               final Module module = getModule(project);
-              final PsiClass psiClass = ((GrDynamicImplicitVariable) element).getContextElement();
+              final PsiClass psiClass = ((GrDynamicImplicitElement) element).getContextElement();
 
 //              final PsiType type = psiClass.getType();
 //              if (type == null) return;
@@ -339,7 +340,7 @@ public class DynamicToolWindowWrapper {
 //              if (typeText == null) typeText = type.getPresentableText();
 
               DynamicManager.getInstance(project).replaceDynamicProperty(module.getName(),
-                  typeText, ((GrDynamicImplicitVariable) element).getName(), newElement.getText());
+                  typeText, ((GrDynamicImplicitElement) element).getName(), newElement.getText());
             }
           };
         }
@@ -735,7 +736,15 @@ public class DynamicToolWindowWrapper {
           }
 
         } else if (value instanceof DMethodNode) {
-          append(((DMethodNode) value).getElement().getDynamicVirtualElement().getName(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+          final DynamicVirtualElement method = ((DMethodNode) value).getElement().getDynamicVirtualElement();
+          append(method.getName(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+          append("(", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+
+          final PsiType[] types = ((DynamicVirtualMethod) method).getArguments();
+          for (PsiType type : types) {
+            append(type.getPresentableText(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+          }
+          append(")", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
         }
       }
     }
