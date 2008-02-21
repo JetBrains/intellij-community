@@ -34,8 +34,7 @@ public final class HighlightData {
   public void addHighlToView(Editor view, EditorColorsScheme scheme, Map<TextAttributesKey,String> displayText) {
 
     // XXX: Hack
-    if (HighlighterColors.JAVA_DOC_COMMENT.equals(myHighlightType)
-        || HighlighterColors.BAD_CHARACTER.equals(myHighlightType)) {
+    if (HighlighterColors.BAD_CHARACTER.equals(myHighlightType)) {
       return;
     }
 

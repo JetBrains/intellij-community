@@ -32,7 +32,7 @@
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.ide.highlighter.HtmlFileHighlighter;
-import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -48,12 +48,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class HTMLColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
-    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.comment"), HighlighterColors.HTML_COMMENT),
-    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.tag"), HighlighterColors.HTML_TAG),
-    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.tag.name"), HighlighterColors.HTML_TAG_NAME),
-    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.attribute.name"), HighlighterColors.HTML_ATTRIBUTE_NAME),
-    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.attribute.value"), HighlighterColors.HTML_ATTRIBUTE_VALUE),
-    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.entity.reference"), HighlighterColors.HTML_ENTITY_REFERENCE),
+    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.comment"), XmlHighlighterColors.HTML_COMMENT),
+    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.tag"), XmlHighlighterColors.HTML_TAG),
+    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.tag.name"), XmlHighlighterColors.HTML_TAG_NAME),
+    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.attribute.name"), XmlHighlighterColors.HTML_ATTRIBUTE_NAME),
+    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.attribute.value"), XmlHighlighterColors.HTML_ATTRIBUTE_VALUE),
+    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.entity.reference"), XmlHighlighterColors.HTML_ENTITY_REFERENCE),
   };
 
   private static final ColorDescriptor[] COLORS = new ColorDescriptor[0];

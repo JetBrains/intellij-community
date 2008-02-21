@@ -32,7 +32,7 @@
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.ide.highlighter.XmlFileHighlighter;
-import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -49,14 +49,14 @@ import org.jetbrains.annotations.NotNull;
 public class XMLColorsPage implements ColorSettingsPage {
   private static final ColorDescriptor[] COLORS = new ColorDescriptor[0];
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
-    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.prologue"), HighlighterColors.XML_PROLOGUE),
-    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.comment"), HighlighterColors.XML_COMMENT),
-    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.tag"), HighlighterColors.XML_TAG),
-    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.tag.name"), HighlighterColors.XML_TAG_NAME),
-    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.attribute.name"), HighlighterColors.XML_ATTRIBUTE_NAME),
-    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.attribute.value"), HighlighterColors.XML_ATTRIBUTE_VALUE),
-    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.tag.data"), HighlighterColors.XML_TAG_DATA),
-    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.descriptor.entity,reference"), HighlighterColors.XML_ENTITY_REFERENCE),
+    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.prologue"), XmlHighlighterColors.XML_PROLOGUE),
+    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.comment"), XmlHighlighterColors.XML_COMMENT),
+    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.tag"), XmlHighlighterColors.XML_TAG),
+    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.tag.name"), XmlHighlighterColors.XML_TAG_NAME),
+    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.attribute.name"), XmlHighlighterColors.XML_ATTRIBUTE_NAME),
+    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.attribute.value"), XmlHighlighterColors.XML_ATTRIBUTE_VALUE),
+    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.tag.data"), XmlHighlighterColors.XML_TAG_DATA),
+    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.descriptor.entity,reference"), XmlHighlighterColors.XML_ENTITY_REFERENCE),
   };
 
   @NotNull

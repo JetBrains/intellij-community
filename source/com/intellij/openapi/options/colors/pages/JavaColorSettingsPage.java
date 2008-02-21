@@ -33,6 +33,7 @@ package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.JavaHighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -50,26 +51,26 @@ import java.util.*;
 
 public class JavaColorSettingsPage implements ColorSettingsPage {
   private final static AttributesDescriptor[] ourDescriptors = new AttributesDescriptor[] {
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.keyword"), HighlighterColors.JAVA_KEYWORD),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.number"), HighlighterColors.JAVA_NUMBER),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.keyword"), JavaHighlighterColors.JAVA_KEYWORD),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.number"), JavaHighlighterColors.JAVA_NUMBER),
 
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.string"), HighlighterColors.JAVA_STRING),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.valid.escape.in.string"), HighlighterColors.JAVA_VALID_STRING_ESCAPE),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.invalid.escape.in.string"), HighlighterColors.JAVA_INVALID_STRING_ESCAPE),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.string"), JavaHighlighterColors.JAVA_STRING),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.valid.escape.in.string"), JavaHighlighterColors.JAVA_VALID_STRING_ESCAPE),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.invalid.escape.in.string"), JavaHighlighterColors.JAVA_INVALID_STRING_ESCAPE),
 
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.operator.sign"), HighlighterColors.JAVA_OPERATION_SIGN),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.parentheses"), HighlighterColors.JAVA_PARENTHS),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.braces"), HighlighterColors.JAVA_BRACES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.brackets"), HighlighterColors.JAVA_BRACKETS),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.comma"), HighlighterColors.JAVA_COMMA),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.semicolon"), HighlighterColors.JAVA_SEMICOLON),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.dot"), HighlighterColors.JAVA_DOT),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.operator.sign"), JavaHighlighterColors.JAVA_OPERATION_SIGN),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.parentheses"), JavaHighlighterColors.JAVA_PARENTHS),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.braces"), JavaHighlighterColors.JAVA_BRACES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.brackets"), JavaHighlighterColors.JAVA_BRACKETS),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.comma"), JavaHighlighterColors.JAVA_COMMA),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.semicolon"), JavaHighlighterColors.JAVA_SEMICOLON),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.dot"), JavaHighlighterColors.JAVA_DOT),
 
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.line.comment"), HighlighterColors.JAVA_LINE_COMMENT),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.block.comment"), HighlighterColors.JAVA_BLOCK_COMMENT),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.comment"), HighlighterColors.JAVA_DOC_COMMENT),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.tag"), HighlighterColors.JAVA_DOC_TAG),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.markup"), HighlighterColors.JAVA_DOC_MARKUP),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.line.comment"), JavaHighlighterColors.JAVA_LINE_COMMENT),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.block.comment"), JavaHighlighterColors.JAVA_BLOCK_COMMENT),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.comment"), JavaHighlighterColors.JAVA_DOC_COMMENT),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.tag"), JavaHighlighterColors.JAVA_DOC_TAG),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.javadoc.markup"), JavaHighlighterColors.JAVA_DOC_MARKUP),
 
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.class"), CodeInsightColors.CLASS_NAME_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.type.parameter"), CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES),

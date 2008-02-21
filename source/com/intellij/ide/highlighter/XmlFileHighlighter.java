@@ -36,6 +36,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.XHtmlHighlightingLexer;
 import com.intellij.lexer.XmlHighlightingLexer;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
@@ -54,79 +55,79 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
     keys1 = new HashMap<IElementType, TextAttributesKey>();
     keys2 = new HashMap<IElementType, TextAttributesKey>();
 
-    keys1.put(XmlTokenType.XML_DATA_CHARACTERS, HighlighterColors.XML_TAG_DATA);
+    keys1.put(XmlTokenType.XML_DATA_CHARACTERS, XmlHighlighterColors.XML_TAG_DATA);
 
-    keys1.put(XmlTokenType.XML_COMMENT_START, HighlighterColors.XML_COMMENT);
-    keys1.put(XmlTokenType.XML_COMMENT_END, HighlighterColors.XML_COMMENT);
-    keys1.put(XmlTokenType.XML_COMMENT_CHARACTERS, HighlighterColors.XML_COMMENT);
+    keys1.put(XmlTokenType.XML_COMMENT_START, XmlHighlighterColors.XML_COMMENT);
+    keys1.put(XmlTokenType.XML_COMMENT_END, XmlHighlighterColors.XML_COMMENT);
+    keys1.put(XmlTokenType.XML_COMMENT_CHARACTERS, XmlHighlighterColors.XML_COMMENT);
 
-    keys1.put(XmlTokenType.XML_START_TAG_START, HighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_END_TAG_START, HighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_TAG_END, HighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_EMPTY_ELEMENT_END, HighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_TAG_NAME, HighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.TAG_WHITE_SPACE, HighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_NAME, HighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_CONDITIONAL_IGNORE, HighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_CONDITIONAL_INCLUDE, HighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, HighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER, HighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER, HighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_EQ, HighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_TAG_CHARACTERS, HighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.XML_START_TAG_START, XmlHighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.XML_END_TAG_START, XmlHighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.XML_TAG_END, XmlHighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.XML_EMPTY_ELEMENT_END, XmlHighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.XML_TAG_NAME, XmlHighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.TAG_WHITE_SPACE, XmlHighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.XML_NAME, XmlHighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.XML_CONDITIONAL_IGNORE, XmlHighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.XML_CONDITIONAL_INCLUDE, XmlHighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, XmlHighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER, XmlHighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER, XmlHighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.XML_EQ, XmlHighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.XML_TAG_CHARACTERS, XmlHighlighterColors.XML_TAG);
 
-    keys2.put(XmlTokenType.XML_TAG_NAME, HighlighterColors.XML_TAG_NAME);
-    keys2.put(XmlTokenType.XML_CONDITIONAL_INCLUDE, HighlighterColors.XML_TAG_NAME);
-    keys2.put(XmlTokenType.XML_CONDITIONAL_INCLUDE, HighlighterColors.XML_TAG_NAME);
-    keys2.put(XmlTokenType.XML_NAME, HighlighterColors.XML_ATTRIBUTE_NAME);
-    keys2.put(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, HighlighterColors.XML_ATTRIBUTE_VALUE);
-    keys2.put(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER, HighlighterColors.XML_ATTRIBUTE_VALUE);
-    keys2.put(XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER, HighlighterColors.XML_ATTRIBUTE_VALUE);
-    keys2.put(XmlTokenType.XML_EQ, HighlighterColors.XML_ATTRIBUTE_NAME);
-    keys2.put(XmlTokenType.XML_TAG_CHARACTERS, HighlighterColors.XML_ATTRIBUTE_VALUE);
+    keys2.put(XmlTokenType.XML_TAG_NAME, XmlHighlighterColors.XML_TAG_NAME);
+    keys2.put(XmlTokenType.XML_CONDITIONAL_INCLUDE, XmlHighlighterColors.XML_TAG_NAME);
+    keys2.put(XmlTokenType.XML_CONDITIONAL_INCLUDE, XmlHighlighterColors.XML_TAG_NAME);
+    keys2.put(XmlTokenType.XML_NAME, XmlHighlighterColors.XML_ATTRIBUTE_NAME);
+    keys2.put(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, XmlHighlighterColors.XML_ATTRIBUTE_VALUE);
+    keys2.put(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER, XmlHighlighterColors.XML_ATTRIBUTE_VALUE);
+    keys2.put(XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER, XmlHighlighterColors.XML_ATTRIBUTE_VALUE);
+    keys2.put(XmlTokenType.XML_EQ, XmlHighlighterColors.XML_ATTRIBUTE_NAME);
+    keys2.put(XmlTokenType.XML_TAG_CHARACTERS, XmlHighlighterColors.XML_ATTRIBUTE_VALUE);
 
     keys1.put(XmlTokenType.XML_BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
 
-    keys1.put(XmlTokenType.XML_DECL_START, HighlighterColors.XML_TAG);
-    keys2.put(XmlTokenType.XML_DECL_START, HighlighterColors.XML_TAG_NAME);
+    keys1.put(XmlTokenType.XML_DECL_START, XmlHighlighterColors.XML_TAG);
+    keys2.put(XmlTokenType.XML_DECL_START, XmlHighlighterColors.XML_TAG_NAME);
 
-    keys1.put(XmlTokenType.XML_CONDITIONAL_SECTION_START, HighlighterColors.XML_PROLOGUE);
-    keys2.put(XmlTokenType.XML_CONDITIONAL_SECTION_START, HighlighterColors.XML_TAG_NAME);
+    keys1.put(XmlTokenType.XML_CONDITIONAL_SECTION_START, XmlHighlighterColors.XML_PROLOGUE);
+    keys2.put(XmlTokenType.XML_CONDITIONAL_SECTION_START, XmlHighlighterColors.XML_TAG_NAME);
 
-    keys1.put(XmlTokenType.XML_CONDITIONAL_SECTION_END, HighlighterColors.XML_PROLOGUE);
-    keys2.put(XmlTokenType.XML_CONDITIONAL_SECTION_END, HighlighterColors.XML_TAG_NAME);
+    keys1.put(XmlTokenType.XML_CONDITIONAL_SECTION_END, XmlHighlighterColors.XML_PROLOGUE);
+    keys2.put(XmlTokenType.XML_CONDITIONAL_SECTION_END, XmlHighlighterColors.XML_TAG_NAME);
 
-    keys1.put(XmlTokenType.XML_DECL_END, HighlighterColors.XML_PROLOGUE);
-    keys2.put(XmlTokenType.XML_DECL_END, HighlighterColors.XML_TAG_NAME);
+    keys1.put(XmlTokenType.XML_DECL_END, XmlHighlighterColors.XML_PROLOGUE);
+    keys2.put(XmlTokenType.XML_DECL_END, XmlHighlighterColors.XML_TAG_NAME);
 
-    keys1.put(XmlTokenType.XML_PI_START, HighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_PI_END, HighlighterColors.XML_TAG);
-    keys1.put(XmlTokenType.XML_DOCTYPE_END, HighlighterColors.XML_PROLOGUE);
-    keys2.put(XmlTokenType.XML_DOCTYPE_END, HighlighterColors.XML_TAG_NAME);
+    keys1.put(XmlTokenType.XML_PI_START, XmlHighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.XML_PI_END, XmlHighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.XML_DOCTYPE_END, XmlHighlighterColors.XML_PROLOGUE);
+    keys2.put(XmlTokenType.XML_DOCTYPE_END, XmlHighlighterColors.XML_TAG_NAME);
 
-    keys1.put(XmlTokenType.XML_DOCTYPE_START, HighlighterColors.XML_TAG);
-    keys2.put(XmlTokenType.XML_DOCTYPE_START, HighlighterColors.XML_TAG_NAME);
+    keys1.put(XmlTokenType.XML_DOCTYPE_START, XmlHighlighterColors.XML_TAG);
+    keys2.put(XmlTokenType.XML_DOCTYPE_START, XmlHighlighterColors.XML_TAG_NAME);
 
-    keys1.put(XmlTokenType.XML_DOCTYPE_SYSTEM, HighlighterColors.XML_TAG);
-    keys2.put(XmlTokenType.XML_DOCTYPE_SYSTEM, HighlighterColors.XML_TAG_NAME);
+    keys1.put(XmlTokenType.XML_DOCTYPE_SYSTEM, XmlHighlighterColors.XML_TAG);
+    keys2.put(XmlTokenType.XML_DOCTYPE_SYSTEM, XmlHighlighterColors.XML_TAG_NAME);
 
-    keys1.put(XmlTokenType.XML_DOCTYPE_PUBLIC, HighlighterColors.XML_TAG);
-    keys2.put(XmlTokenType.XML_DOCTYPE_PUBLIC, HighlighterColors.XML_TAG_NAME);
+    keys1.put(XmlTokenType.XML_DOCTYPE_PUBLIC, XmlHighlighterColors.XML_TAG);
+    keys2.put(XmlTokenType.XML_DOCTYPE_PUBLIC, XmlHighlighterColors.XML_TAG_NAME);
 
-    keys1.put(XmlTokenType.XML_DOCTYPE_PUBLIC, HighlighterColors.XML_TAG);
-    keys2.put(XmlTokenType.XML_DOCTYPE_PUBLIC, HighlighterColors.XML_TAG_NAME);
+    keys1.put(XmlTokenType.XML_DOCTYPE_PUBLIC, XmlHighlighterColors.XML_TAG);
+    keys2.put(XmlTokenType.XML_DOCTYPE_PUBLIC, XmlHighlighterColors.XML_TAG_NAME);
 
-    keys1.put(XmlTokenType.XML_ATTLIST_DECL_START, HighlighterColors.XML_TAG);
-    keys2.put(XmlTokenType.XML_ATTLIST_DECL_START, HighlighterColors.XML_TAG_NAME);
+    keys1.put(XmlTokenType.XML_ATTLIST_DECL_START, XmlHighlighterColors.XML_TAG);
+    keys2.put(XmlTokenType.XML_ATTLIST_DECL_START, XmlHighlighterColors.XML_TAG_NAME);
 
-    keys1.put(XmlTokenType.XML_ELEMENT_DECL_START, HighlighterColors.XML_TAG);
-    keys2.put(XmlTokenType.XML_ELEMENT_DECL_START, HighlighterColors.XML_TAG_NAME);
+    keys1.put(XmlTokenType.XML_ELEMENT_DECL_START, XmlHighlighterColors.XML_TAG);
+    keys2.put(XmlTokenType.XML_ELEMENT_DECL_START, XmlHighlighterColors.XML_TAG_NAME);
 
-    keys1.put(XmlTokenType.XML_ENTITY_DECL_START, HighlighterColors.XML_TAG);
-    keys2.put(XmlTokenType.XML_ENTITY_DECL_START, HighlighterColors.XML_TAG_NAME);
+    keys1.put(XmlTokenType.XML_ENTITY_DECL_START, XmlHighlighterColors.XML_TAG);
+    keys2.put(XmlTokenType.XML_ENTITY_DECL_START, XmlHighlighterColors.XML_TAG_NAME);
 
-    keys2.put(XmlTokenType.XML_CHAR_ENTITY_REF, HighlighterColors.XML_ENTITY_REFERENCE);
-    keys2.put(XmlTokenType.XML_ENTITY_REF_TOKEN, HighlighterColors.XML_ENTITY_REFERENCE);
+    keys2.put(XmlTokenType.XML_CHAR_ENTITY_REF, XmlHighlighterColors.XML_ENTITY_REFERENCE);
+    keys2.put(XmlTokenType.XML_ENTITY_REF_TOKEN, XmlHighlighterColors.XML_ENTITY_REFERENCE);
   }
 
   private boolean myIsDtd;
