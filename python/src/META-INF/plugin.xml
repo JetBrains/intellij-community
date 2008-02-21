@@ -29,5 +29,6 @@
     <gotoClassContributor implementation="ru.yole.pythonid.PyGotoClassContributor"/>
     <codeInsight.parameterInfo language="Python" implementationClass="ru.yole.pythonid.PyParameterInfoHandler"/>
     <projectConfigurable implementation="ru.yole.pythonid.configuration.PythonSdkConfigurable"/>
+    <colorSettingsPage implementation="ru.yole.pythonid.PythonColorsPage"/>
   </extensions>
 </idea-plugin>
