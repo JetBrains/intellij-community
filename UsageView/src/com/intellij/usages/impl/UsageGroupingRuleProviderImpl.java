@@ -51,7 +51,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
       rules.add(new ModuleGroupingRule());
     }
     if (UsageViewSettings.getInstance().GROUP_BY_PACKAGE) {
-      rules.add(new PackageGroupingRule(project));
+      rules.add(DirectoryGroupingRule.getInstance(project));
     }
     if (UsageViewSettings.getInstance().GROUP_BY_FILE_STRUCTURE) {
       FileStructureGroupRuleProvider[] providers = Extensions.getExtensions(FileStructureGroupRuleProvider.EP_NAME);
@@ -117,7 +117,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     }
   }
 
-  private class GroupByUsageTypeAction extends RuleAction {
+  private static class GroupByUsageTypeAction extends RuleAction {
     public GroupByUsageTypeAction(UsageViewImpl view) {
       super(view, UsageViewBundle.message("action.group.by.usage.type"), IconLoader.getIcon("/ant/filter.png")); //TODO: special icon
     }
@@ -129,7 +129,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     }
   }
 
-  private class GroupByModuleTypeAction extends RuleAction {
+  private static class GroupByModuleTypeAction extends RuleAction {
     public GroupByModuleTypeAction(UsageViewImpl view) {
       super(view, UsageViewBundle.message("action.group.by.module"), IconLoader.getIcon("/objectBrowser/showModules.png"));
     }
@@ -143,7 +143,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     }
   }
 
-  private class GroupByPackageAction extends RuleAction {
+  private static class GroupByPackageAction extends RuleAction {
     public GroupByPackageAction(UsageViewImpl view) {
       super(view, UsageViewBundle.message("action.group.by.package"), Icons.GROUP_BY_PACKAGES);
     }
@@ -155,7 +155,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     }
   }
 
-  private class GroupByFileStructureAction extends RuleAction {
+  private static class GroupByFileStructureAction extends RuleAction {
     public GroupByFileStructureAction(UsageViewImpl view) {
       super(view, UsageViewBundle.message("action.group.by.file.structure"), IconLoader.getIcon("/actions/groupByMethod.png"));
     }

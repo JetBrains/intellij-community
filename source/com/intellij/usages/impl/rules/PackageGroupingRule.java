@@ -15,7 +15,10 @@
  */
 package com.intellij.usages.impl.rules;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
@@ -25,44 +28,27 @@ import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
-import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
-import com.intellij.usages.rules.UsageGroupingRule;
-import com.intellij.usages.rules.UsageInFile;
-import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * @author max
  */
-public class PackageGroupingRule implements UsageGroupingRule {
-  private Project myProject;
-
+public class PackageGroupingRule extends DirectoryGroupingRule {
   public PackageGroupingRule(Project project) {
-    myProject = project;
+    super(project);
   }
 
-  @Nullable
-  public UsageGroup groupUsage(Usage usage) {
-    if (usage instanceof UsageInFile) {
-      UsageInFile usageInFile = (UsageInFile)usage;
-      VirtualFile file = usageInFile.getFile();
-      if (file != null) {
-        VirtualFile dir = file.getParent();
-        if (dir == null) return null;
-        PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(dir);
-        if (psiDirectory != null) {
-          PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
-          if (aPackage != null) return new PackageGroup(aPackage);
-        }
-        return new DirectoryGroup(dir);
-      }
+  protected UsageGroup getGroupForFile(final VirtualFile dir) {
+    PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(dir);
+    if (psiDirectory != null) {
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
+      if (aPackage != null) return new PackageGroup(aPackage);
     }
-    return null;
+    return super.getGroupForFile(dir);
   }
 
   private class PackageGroup implements UsageGroup, TypeSafeDataProvider {
@@ -132,77 +118,6 @@ public class PackageGroupingRule implements UsageGroupingRule {
       if (!isValid()) return;
       if (LangDataKeys.PSI_ELEMENT == key) {
         sink.put(LangDataKeys.PSI_ELEMENT, myPackage);
-      }
-    }
-  }
-
-  private class DirectoryGroup implements UsageGroup, TypeSafeDataProvider {
-    private VirtualFile myDir;
-
-    public void update() {
-    }
-
-    public DirectoryGroup(VirtualFile dir) {
-      myDir = dir;
-    }
-
-    public Icon getIcon(boolean isOpen) {
-      return isOpen ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON;
-    }
-
-    @NotNull
-    public String getText(UsageView view) {
-      return myDir.getPresentableUrl();
-    }
-
-    public FileStatus getFileStatus() {
-      return isValid() ? FileStatusManager.getInstance(myProject).getStatus(myDir) : null;
-    }
-
-    public boolean isValid() {
-      return myDir.isValid();
-    }
-
-    public void navigate(boolean focus) throws UnsupportedOperationException {
-      final PsiDirectory directory = getDirectory();
-      if (directory != null && directory.canNavigate()) {
-        directory.navigate(focus);
-      }
-    }
-
-    private PsiDirectory getDirectory() {
-      return PsiManager.getInstance(myProject).findDirectory(myDir);
-    }
-    public boolean canNavigate() {
-      final PsiDirectory directory = getDirectory();
-      return directory != null && directory.canNavigate();
-    }
-
-    public boolean canNavigateToSource() {
-      return false;
-    }
-
-    public int compareTo(UsageGroup usageGroup) {
-      return getText(null).compareTo(usageGroup.getText(null));
-    }
-
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof DirectoryGroup)) return false;
-      return myDir.equals(((DirectoryGroup)o).myDir);
-    }
-
-    public int hashCode() {
-      return myDir.hashCode();
-    }
-
-    public void calcData(final DataKey key, final DataSink sink) {
-      if (!isValid()) return;
-      if (PlatformDataKeys.VIRTUAL_FILE == key) {
-        sink.put(PlatformDataKeys.VIRTUAL_FILE, myDir);
-      }
-      if (LangDataKeys.PSI_ELEMENT == key) {
-        sink.put(LangDataKeys.PSI_ELEMENT, getDirectory());
       }
     }
   }
