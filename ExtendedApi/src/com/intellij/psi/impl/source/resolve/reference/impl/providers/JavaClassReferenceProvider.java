@@ -69,13 +69,17 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   }
 
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element) {
-    final String text = element.getText();
     final ElementManipulator<PsiElement> manipulator = CachingReference.getManipulator(element);
     if (manipulator != null) {
       final TextRange textRange = manipulator.getRangeInElement(element);
+      if (textRange.isEmpty()) return PsiReference.EMPTY_ARRAY;
+
+      final String text = element.getText();
       final String valueString = text.substring(textRange.getStartOffset(), textRange.getEndOffset());
       return getReferencesByString(valueString, element, textRange.getStartOffset());
     }
+
+    final String text = element.getText();
     return getReferencesByString(text, element, 0);
   }
 
