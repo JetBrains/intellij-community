@@ -22,16 +22,18 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.roots.ProjectClasspathTraversing;
+import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.Map;
 
 public class JavaParameters {
@@ -179,5 +181,22 @@ public class JavaParameters {
 
   public void setPassParentEnvs(final boolean passDefaultEnvs) {
     myPassParentEnvs = passDefaultEnvs;
+  }
+
+  public void setupEnvs(Map<String, String> envs, boolean passDefault) {
+    if (!envs.isEmpty()) {
+      final Map<String, String> parentParams = new HashMap<String, String>(System.getenv());
+      for (String envKey : envs.keySet()) {
+        final String val = envs.get(envKey);
+        if (val != null) {
+          final String parentVal = parentParams.get(envKey);
+          if (parentVal != null && ArrayUtil.find(val.split(File.pathSeparator), "$" + envKey + "$") != -1) {
+            envs.put(envKey, val.replace("$" + envKey + "$", parentVal));
+          }
+        }
+      }
+      setEnv(envs);
+      setPassParentEnvs(passDefault);
+    }
   }
 }

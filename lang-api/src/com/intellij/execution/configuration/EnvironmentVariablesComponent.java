@@ -5,14 +5,12 @@
 package com.intellij.execution.configuration;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.util.EnvVariablesTable;
 import com.intellij.execution.util.EnvironmentVariable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -22,9 +20,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWithBrowseButton> {
   private boolean myPassParentEnvs;
@@ -72,23 +71,6 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
 
   public void setPassParentEnvs(final boolean passDefaultVariables) {
     myPassParentEnvs = passDefaultVariables;
-  }
-
-  public static void setupEnvs(JavaParameters javaParameters, Map<String, String> envs, boolean passDefault) {
-    if (!envs.isEmpty()) {
-      final Map<String, String> parentParams = new HashMap<String, String>(System.getenv());
-      for (String envKey : envs.keySet()) {
-        final String val = envs.get(envKey);
-        if (val != null) {
-          final String parentVal = parentParams.get(envKey);
-          if (parentVal != null && ArrayUtil.find(val.split(File.pathSeparator), "$" + envKey + "$") != -1) {
-            envs.put(envKey, val.replace("$" + envKey + "$", parentVal));
-          }
-        }
-      }
-      javaParameters.setEnv(envs);
-      javaParameters.setPassParentEnvs(passDefault);
-    }
   }
 
   public static void readExternal(Element element, Map<String, String> envs) {

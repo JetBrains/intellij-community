@@ -210,7 +210,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
 
     protected JavaParameters createJavaParameters() throws ExecutionException {
       final JavaParameters params = new JavaParameters();
-      EnvironmentVariablesComponent.setupEnvs(params, getEnvs(), PASS_PARENT_ENVS);
+      params.setupEnvs(getEnvs(), PASS_PARENT_ENVS);
       final int classPathType = JavaParametersUtil.getClasspathType(getConfigurationModule(), MAIN_CLASS_NAME, false);
       JavaParametersUtil.configureModule(getConfigurationModule(), params, classPathType, ALTERNATIVE_JRE_PATH_ENABLED ? ALTERNATIVE_JRE_PATH : null);
       JavaParametersUtil.configureConfiguration(params, ApplicationConfiguration.this);
