@@ -17,9 +17,9 @@
 package com.intellij.execution.junit2.states;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.junit2.Printable;
 import com.intellij.execution.junit2.SuiteState;
 import com.intellij.execution.junit2.TestProxy;
+import com.intellij.execution.testframework.Printable;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;

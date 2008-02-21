@@ -20,6 +20,7 @@ import com.intellij.execution.junit2.states.Statistics;
 import com.intellij.execution.junit2.states.TestState;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.Printer;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 
 import java.util.ArrayList;

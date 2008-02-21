@@ -18,10 +18,10 @@ package com.intellij.execution.junit2.states;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
-import com.intellij.execution.stacktrace.StackTraceLine;
-import com.intellij.execution.junit2.Printer;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.segments.ObjectReader;
+import com.intellij.execution.stacktrace.StackTraceLine;
+import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.pom.Navigatable;

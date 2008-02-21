@@ -33,6 +33,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="JUnit3" level="project" />
+    <orderEntry type="module" module-name="testRunner" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

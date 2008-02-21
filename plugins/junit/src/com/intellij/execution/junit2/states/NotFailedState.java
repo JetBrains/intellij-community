@@ -16,7 +16,7 @@
 
 package com.intellij.execution.junit2.states;
 
-import com.intellij.execution.junit2.Printer;
+import com.intellij.execution.testframework.Printer;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 
 public final class NotFailedState extends TestState {

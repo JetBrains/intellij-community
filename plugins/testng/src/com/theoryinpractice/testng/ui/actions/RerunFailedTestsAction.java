@@ -12,6 +12,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.JavaAwareFilter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -72,7 +73,7 @@ public class RerunFailedTestsAction extends AnAction {
   @NotNull
   private List<AbstractTestProxy> getFailedTests() {
     List<TestProxy> myAllTests = myModel.getRoot().getAllTests();
-    return Filter.DEFECTIVE_LEAF.and(Filter.METHOD(myConsoleProperties.getProject())).select(myAllTests);
+    return Filter.DEFECTIVE_LEAF.and(JavaAwareFilter.METHOD(myConsoleProperties.getProject())).select(myAllTests);
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -80,7 +81,7 @@ public class RerunFailedTestsAction extends AnAction {
 
     final DataContext dataContext = e.getDataContext();
     final TestNGConfiguration configuration = myConsoleProperties.getConfiguration();
-    boolean isDebug = myConsoleProperties.getDebugSession() != null;
+    boolean isDebug = myConsoleProperties.isDebug();
     try {
       final RunProfile profile = new ModuleRunProfile() {
         public RunProfileState getState(DataContext context,

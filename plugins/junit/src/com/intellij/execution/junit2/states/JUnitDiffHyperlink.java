@@ -17,7 +17,7 @@
 package com.intellij.execution.junit2.states;
 
 import com.intellij.execution.junit2.segments.ObjectReader;
-import com.intellij.execution.stacktrace.DiffHyperlink;
+import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 
 public class JUnitDiffHyperlink extends DiffHyperlink {
 

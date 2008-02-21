@@ -16,10 +16,11 @@
 
 package com.intellij.execution.junit2.ui;
 
-import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.info.TestInfo;
 import com.intellij.execution.junit2.ui.model.SpecialNode;
+import com.intellij.execution.testframework.PoolOfTestIcons;
+import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -32,12 +33,10 @@ import java.util.Map;
 class TestRenderer {
   private static final Map<Integer,Icon> ourIcons = new HashMap<Integer, Icon>();
 
-  public static Icon getIconFor(final TestProxy testProxy, final DebuggerSession session) {
+  public static Icon getIconFor(final TestProxy testProxy, final boolean isPaused) {
     final int magnitude = testProxy.getState().getMagnitude();
     if (magnitude == PoolOfTestStates.RUNNING_INDEX)
-      return session == null || !session.isPaused()
-             ? Animator.getCurrentFrame()
-             : Animator.PAUSED_ICON;
+      return isPaused ? Animator.PAUSED_ICON : Animator.getCurrentFrame();
     else
       return ourIcons.get(new Integer(magnitude));
   }

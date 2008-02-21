@@ -43,7 +43,7 @@ class TreeTestRenderer extends ColoredTreeCellRenderer {
     final TestProxy testProxy = TestProxyClient.from(value);
     if (testProxy != null) {
       TestRenderer.renderTest(testProxy, this);
-      setIcon(TestRenderer.getIconFor(testProxy, myProperties.getDebugSession()));
+      setIcon(TestRenderer.getIconFor(testProxy, myProperties.isPaused()));
     } else {
       append(ExecutionBundle.message("junit.runing.info.loading.tree.node.text"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }

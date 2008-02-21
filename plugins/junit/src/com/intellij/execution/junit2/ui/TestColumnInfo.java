@@ -17,10 +17,11 @@
 package com.intellij.execution.junit2.ui;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.states.Statistics;
 import com.intellij.execution.junit2.states.TestState;
+import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleColoredRenderer;

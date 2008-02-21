@@ -23,6 +23,7 @@ import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.model.StateEvent;
 import com.intellij.execution.junit2.ui.model.TestTreeBuilder;
+import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import com.intellij.util.Alarm;
 

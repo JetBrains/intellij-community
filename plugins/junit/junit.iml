@@ -24,6 +24,7 @@
     <orderEntry type="module" module-name="ui-impl" />
     <orderEntry type="module" module-name="debugger-impl" />
     <orderEntry type="module" module-name="xdebugger-openapi" />
+    <orderEntry type="module" module-name="testRunner" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

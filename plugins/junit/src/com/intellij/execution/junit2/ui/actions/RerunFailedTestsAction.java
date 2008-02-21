@@ -18,8 +18,8 @@ package com.intellij.execution.junit2.ui.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -32,20 +32,21 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.JavaAwareFilter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.options.SettingsEditor;
-import org.jetbrains.annotations.NotNull;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -89,7 +90,7 @@ public class RerunFailedTestsAction extends AnAction {
 
   @NotNull private List<AbstractTestProxy> getFailedTests() {
     List<TestProxy> myAllTests = myModel.getRoot().getAllTests();
-    return Filter.DEFECTIVE_LEAF.and(Filter.METHOD(myModel.getProject())).select(myAllTests);
+    return Filter.DEFECTIVE_LEAF.and(JavaAwareFilter.METHOD(myModel.getProject())).select(myAllTests);
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -99,7 +100,7 @@ public class RerunFailedTestsAction extends AnAction {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     JUnitConfiguration configuration = myModel.getProperties().getConfiguration();
     final TestMethods testMethods = new TestMethods(project, configuration, myRunnerSettings, myConfigurationPerRunnerSettings, failed);
-    boolean isDebug = myConsoleProperties.getDebugSession() != null;
+    boolean isDebug = myConsoleProperties.isDebug();
     try {
       final RunProfile profile = new MyRunProfile(testMethods, configuration);
       

@@ -17,13 +17,13 @@
 package com.intellij.execution.junit2.ui.properties;
 
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.util.config.Storage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class JUnitConsoleProperties extends TestConsoleProperties {
+public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties {
   @NonNls private static final String GROUP_NAME = "JUnitSupport.";
 
   private final JUnitConfiguration myConfiguration;

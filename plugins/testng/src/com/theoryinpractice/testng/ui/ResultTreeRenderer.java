@@ -1,7 +1,6 @@
 package com.theoryinpractice.testng.ui;
 
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.execution.junit2.ui.PoolOfTestIcons;
+import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
@@ -49,8 +48,7 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
                     append(root.isInProgress() ? "Running tests..." : "Test Results", SimpleTextAttributes.REGULAR_ATTRIBUTES);
                 }
 
-                DebuggerSession debug = consoleProperties.getDebugSession();
-                if (debug != null && debug.isPaused()) {
+                if (consoleProperties.isPaused()) {
                     setIcon(Animator.PAUSED_ICON);
                 }
             } else {

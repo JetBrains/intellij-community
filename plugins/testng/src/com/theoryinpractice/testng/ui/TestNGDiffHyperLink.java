@@ -1,8 +1,8 @@
 package com.theoryinpractice.testng.ui;
 
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.execution.junit2.*;
-import com.intellij.execution.stacktrace.DiffHyperlink;
+import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
@@ -26,7 +26,7 @@ public class TestNGDiffHyperLink extends DiffHyperlink implements Printable {
         printer.printHyperlink(text, info);
       }
 
-      public void onNewAvaliable(final com.intellij.execution.junit2.Printable printable) {}
+      public void onNewAvaliable(final com.intellij.execution.testframework.Printable printable) {}
       public void mark() {}
     });
   }
