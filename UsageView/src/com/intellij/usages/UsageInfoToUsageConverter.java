@@ -15,11 +15,12 @@
  */
 package com.intellij.usages;
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,6 +35,9 @@ import java.util.List;
  *         Date: Jan 17, 2005
  */
 public class UsageInfoToUsageConverter {
+  private UsageInfoToUsageConverter() {
+  }
+
   public static class TargetElementsDescriptor {
     private final List<SmartPsiElementPointer> myPrimarySearchedElements;
     private final List<SmartPsiElementPointer> myAdditionalSearchedElements;
@@ -116,15 +120,13 @@ public class UsageInfoToUsageConverter {
   private static Usage _convert(final TargetElementsDescriptor descriptor, final UsageInfo usageInfo) {
     final PsiElement[] primaryElements = descriptor.getPrimaryElements();
 
-    if (isReadWriteAccessibleElements(primaryElements)) {
-      final PsiElement usageElement = usageInfo.getElement();
-
-      if (usageElement instanceof PsiReferenceExpression) {
-        final Access access = isAccessedForReading((PsiReferenceExpression)usageElement);
-        return new ReadWriteAccessUsageInfo2UsageAdapter(usageInfo, access.read, access.write);
-      } else if (usageElement instanceof XmlAttributeValue) {
-        final Access access = new Access(false, true);
-        return new ReadWriteAccessUsageInfo2UsageAdapter(usageInfo, access.read, access.write);
+    for(ReadWriteAccessDetector detector: Extensions.getExtensions(ReadWriteAccessDetector.EP_NAME)) {
+      if (isReadWriteAccessibleElements(primaryElements, detector)) {
+        final PsiElement usageElement = usageInfo.getElement();
+        final ReadWriteAccessDetector.Access rwAccess = detector.getExpressionAccess(usageElement);
+        return new ReadWriteAccessUsageInfo2UsageAdapter(usageInfo,
+                                                         rwAccess != ReadWriteAccessDetector.Access.Write,
+                                                         rwAccess != ReadWriteAccessDetector.Access.Read);
       }
     }
     return new UsageInfo2UsageAdapter(usageInfo);
@@ -138,41 +140,13 @@ public class UsageInfoToUsageConverter {
     return usages;
   }
 
-  private static boolean isReadWriteAccessibleElements(final PsiElement[] elements) {
+  private static boolean isReadWriteAccessibleElements(final PsiElement[] elements, final ReadWriteAccessDetector detector) {
     if (elements.length == 0) {
       return false;
     }
     for (PsiElement element : elements) {
-      if (!(element instanceof PsiVariable) &&
-          !(element instanceof XmlAttributeValue)
-        ) {
-        return false;
-      }
+      if (!detector.isReadWriteAccessible(element)) return false;
     }
     return true;
   }
-
-  private static final class Access {
-    public final boolean read;
-    public final boolean write;
-
-    public Access(final boolean read, final boolean write) {
-      this.read = read;
-      this.write = write;
-    }
-  }
-  private static Access isAccessedForReading(final PsiReferenceExpression referent) {
-    boolean accessedForReading = PsiUtil.isAccessedForReading(referent);
-    boolean accessedForWriting = PsiUtil.isAccessedForWriting(referent);
-    if (!accessedForWriting) {
-      //when searching usages of fields, should show all found setters as a "only write usage"
-      PsiElement actualReferee = referent.resolve();
-      if (actualReferee instanceof PsiMethod && PropertyUtil.isSimplePropertySetter((PsiMethod)actualReferee)) {
-        accessedForWriting = true;
-        accessedForReading = false;
-      }
-    }
-    return new Access(accessedForReading, accessedForWriting);
-  }
-
 }

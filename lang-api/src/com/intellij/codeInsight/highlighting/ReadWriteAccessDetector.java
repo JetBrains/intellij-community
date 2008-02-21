@@ -10,7 +10,10 @@ import com.intellij.psi.PsiReference;
 public interface ReadWriteAccessDetector {
   ExtensionPointName<ReadWriteAccessDetector> EP_NAME = ExtensionPointName.create("com.intellij.readWriteAccessDetector");
 
+  enum Access { Read, Write, ReadWrite }
+
   boolean isReadWriteAccessible(PsiElement element);
-  boolean isWriteAccess(PsiElement element);
-  boolean isWriteAccess(final PsiElement referencedElement, PsiReference reference);
+  boolean isDeclarationWriteAccess(PsiElement element);
+  Access getReferenceAccess(final PsiElement referencedElement, PsiReference reference);
+  Access getExpressionAccess(PsiElement expression);
 }

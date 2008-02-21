@@ -222,11 +222,11 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       List<PsiReference> writeRefs = new ArrayList<PsiReference>();
 
       for (PsiReference ref : refs) {
-        if (detector.isWriteAccess(element, ref)) {
-          writeRefs.add(ref);
+        if (detector.getReferenceAccess(element, ref) == ReadWriteAccessDetector.Access.Read) {
+          readRefs.add(ref);
         }
         else {
-          readRefs.add(ref);
+          writeRefs.add(ref);
         }
       }
       doHighlightRefs(highlightManager, editor, readRefs, attributes, clearHighlights);
@@ -239,7 +239,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     PsiElement identifier = getNameIdentifier(element);
     if (identifier != null && PsiUtilBase.isUnderPsiRoot(file, identifier)) {
       TextAttributes nameAttributes = attributes;
-      if (detector != null && detector.isWriteAccess(element)) {
+      if (detector != null && detector.isDeclarationWriteAccess(element)) {
         nameAttributes = writeAttributes;
       }
       doHighlightElements(editor, new PsiElement[]{identifier}, nameAttributes, clearHighlights);
