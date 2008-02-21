@@ -1,4 +1,4 @@
-package com.intellij.openapi.vcs.ui.exclude;
+package com.intellij.ui;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.SortedListModel;

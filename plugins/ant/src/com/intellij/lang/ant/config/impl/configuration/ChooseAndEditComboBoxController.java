@@ -1,6 +1,6 @@
 package com.intellij.lang.ant.config.impl.configuration;
 
-import com.intellij.openapi.vcs.ui.exclude.SortedComboBoxModel;
+import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
