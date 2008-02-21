@@ -86,6 +86,7 @@
                   serviceImplementation="com.intellij.util.LogicalRootsManagerImpl"/>
 
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage"/>
+  <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage"/>
 
   <!-- Editor -->
   <applicationConfigurable implementation="com.intellij.application.options.editor.EditorOptions"/>
