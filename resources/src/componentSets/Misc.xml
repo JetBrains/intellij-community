@@ -9,10 +9,6 @@
       <interface-class>com.intellij.openapi.projectRoots.JavaSdk</interface-class>
       <implementation-class>com.intellij.openapi.projectRoots.impl.JavaSdkImpl</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.usages.rules.UsageGroupingRuleProvider</interface-class>
-      <implementation-class>com.intellij.usages.impl.UsageGroupingRuleProviderImpl</implementation-class>
-    </component>
   </application-components>
 
   <project-components>

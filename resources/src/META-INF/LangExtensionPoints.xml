@@ -249,6 +249,8 @@
 
   <extensionPoint name="usageFilteringRuleProvider"
                   interface="com.intellij.usages.rules.UsageFilteringRuleProvider"/>
+  <extensionPoint name="usageGroupingRuleProvider"
+                  interface="com.intellij.usages.rules.UsageGroupingRuleProvider"/>
   <extensionPoint name="usageTypeProvider"
                   interface="com.intellij.usages.impl.rules.UsageTypeProvider"/>
   <extensionPoint name="fileStructureGroupRuleProvider"

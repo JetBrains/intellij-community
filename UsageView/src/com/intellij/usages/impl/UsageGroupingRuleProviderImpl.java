@@ -20,14 +20,14 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.rules.*;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
 import com.intellij.util.Icons;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -39,26 +39,21 @@ import java.util.List;
 /**
  * @author max
  */
-public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider, JDOMExternalizable {
-  public boolean GROUP_BY_USAGE_TYPE = true;
-  public boolean GROUP_BY_MODULE = true;
-  public boolean GROUP_BY_PACKAGE = true;
-  public boolean GROUP_BY_FILE_STRUCTURE = true;
-
+public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider {
   @NotNull
   public UsageGroupingRule[] getActiveRules(Project project) {
     List<UsageGroupingRule> rules = new ArrayList<UsageGroupingRule>();
     rules.add(new NonCodeUsageGroupingRule());
-    if (GROUP_BY_USAGE_TYPE) {
+    if (UsageViewSettings.getInstance().GROUP_BY_USAGE_TYPE) {
       rules.add(new UsageTypeGroupingRule());
     }
-    if (GROUP_BY_MODULE) {
+    if (UsageViewSettings.getInstance().GROUP_BY_MODULE) {
       rules.add(new ModuleGroupingRule());
     }
-    if (GROUP_BY_PACKAGE) {
+    if (UsageViewSettings.getInstance().GROUP_BY_PACKAGE) {
       rules.add(new PackageGroupingRule(project));
     }
-    if (GROUP_BY_FILE_STRUCTURE) {
+    if (UsageViewSettings.getInstance().GROUP_BY_FILE_STRUCTURE) {
       FileStructureGroupRuleProvider[] providers = Extensions.getExtensions(FileStructureGroupRuleProvider.EP_NAME);
       for (FileStructureGroupRuleProvider ruleProvider : providers) {
         final UsageGroupingRule rule = ruleProvider.getUsageGroupingRule(project);
@@ -127,10 +122,10 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
       super(view, UsageViewBundle.message("action.group.by.usage.type"), IconLoader.getIcon("/ant/filter.png")); //TODO: special icon
     }
     protected boolean getOptionValue() {
-      return GROUP_BY_USAGE_TYPE;
+      return UsageViewSettings.getInstance().GROUP_BY_USAGE_TYPE;
     }
     protected void setOptionValue(boolean value) {
-      GROUP_BY_USAGE_TYPE = value;
+      UsageViewSettings.getInstance().GROUP_BY_USAGE_TYPE = value;
     }
   }
 
@@ -140,11 +135,11 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
     }
 
     protected boolean getOptionValue() {
-      return GROUP_BY_MODULE;
+      return UsageViewSettings.getInstance().GROUP_BY_MODULE;
     }
 
     protected void setOptionValue(boolean value) {
-      GROUP_BY_MODULE = value;
+      UsageViewSettings.getInstance().GROUP_BY_MODULE = value;
     }
   }
 
@@ -153,10 +148,10 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
       super(view, UsageViewBundle.message("action.group.by.package"), Icons.GROUP_BY_PACKAGES);
     }
     protected boolean getOptionValue() {
-      return GROUP_BY_PACKAGE;
+      return UsageViewSettings.getInstance().GROUP_BY_PACKAGE;
     }
     protected void setOptionValue(boolean value) {
-      GROUP_BY_PACKAGE = value;
+      UsageViewSettings.getInstance().GROUP_BY_PACKAGE = value;
     }
   }
 
@@ -165,26 +160,10 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
       super(view, UsageViewBundle.message("action.group.by.file.structure"), IconLoader.getIcon("/actions/groupByMethod.png"));
     }
     protected boolean getOptionValue() {
-      return GROUP_BY_FILE_STRUCTURE;
+      return UsageViewSettings.getInstance().GROUP_BY_FILE_STRUCTURE;
     }
     protected void setOptionValue(boolean value) {
-      GROUP_BY_FILE_STRUCTURE = value;
+      UsageViewSettings.getInstance().GROUP_BY_FILE_STRUCTURE = value;
     }
   }
-
-  @NotNull
-  public String getComponentName() {
-    return "UsageGroupingRuleProvider";
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-  }
-
-  public void initComponent() {}
-  public void disposeComponent() {}
 }

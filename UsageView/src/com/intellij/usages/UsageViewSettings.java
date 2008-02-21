@@ -44,6 +44,11 @@ public class UsageViewSettings implements PersistentStateComponent<UsageViewSett
   public boolean IS_PREVIEW_USAGES = false;
   public float PREVIEW_USAGES_SPLITTER_PROPORTIONS = 0.5f;
 
+  public boolean GROUP_BY_USAGE_TYPE = true;
+  public boolean GROUP_BY_MODULE = true;
+  public boolean GROUP_BY_PACKAGE = true;
+  public boolean GROUP_BY_FILE_STRUCTURE = true;
+
   public static UsageViewSettings getInstance() {
     return ServiceManager.getService(UsageViewSettings.class);
   }

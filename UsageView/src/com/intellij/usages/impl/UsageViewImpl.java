@@ -242,7 +242,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private static UsageGroupingRule[] getActiveGroupingRules(final Project project) {
-    final UsageGroupingRuleProvider[] providers = ApplicationManager.getApplication().getComponents(UsageGroupingRuleProvider.class);
+    final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
     List<UsageGroupingRule> list = new ArrayList<UsageGroupingRule>();
     for (UsageGroupingRuleProvider provider : providers) {
       list.addAll(Arrays.asList(provider.getActiveRules(project)));
@@ -423,7 +423,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private AnAction[] createGroupingActions() {
-    final UsageGroupingRuleProvider[] providers = ApplicationManager.getApplication().getComponents(UsageGroupingRuleProvider.class);
+    final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
     List<AnAction> list = new ArrayList<AnAction>();
     for (UsageGroupingRuleProvider provider : providers) {
       list.addAll(Arrays.asList(provider.createGroupingActions(this)));

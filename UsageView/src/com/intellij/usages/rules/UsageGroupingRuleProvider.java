@@ -16,7 +16,7 @@
 package com.intellij.usages.rules;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author max
  */
-public interface UsageGroupingRuleProvider extends ApplicationComponent{
+public interface UsageGroupingRuleProvider {
+  ExtensionPointName<UsageGroupingRuleProvider> EP_NAME = ExtensionPointName.create("com.intellij.usageGroupingRuleProvider");
+
   @NotNull UsageGroupingRule[] getActiveRules(Project project);
 
   @NotNull
