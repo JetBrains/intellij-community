@@ -58,6 +58,8 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
 
   private Object[] dependencies;
 
+  private static ThreadLocal<Set<PsiFile>> myRedefinedDescriptorsInProcessing = new ThreadLocal<Set<PsiFile>>();
+
   private static void collectDependencies(@Nullable XmlTag myTag, @NotNull XmlFile myFile, @NotNull Set<PsiFile> visited) {
     if (visited.contains(myFile)) return;
     visited.add( myFile );
@@ -75,8 +77,13 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
           addDependency(xmlFile, visited);
         }
       } else if (equalsToSchemaName(tag, REDEFINE_TAG_NAME)) {
-        final XmlFile file = getRedefinedElementDescriptorFile(tag);
-        addDependency(file, visited);
+        myRedefinedDescriptorsInProcessing.set(visited);
+        try {
+          final XmlFile file = getRedefinedElementDescriptorFile(tag);
+          addDependency(file, visited);
+        } finally {
+          myRedefinedDescriptorsInProcessing.set(null);
+        }
       }
     }
 
@@ -856,6 +863,10 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     }
 
     final THashSet<PsiFile> dependenciesSet = new THashSet<PsiFile>();
+    final Set<PsiFile> redefineProcessingSet = myRedefinedDescriptorsInProcessing.get();
+    if (redefineProcessingSet != null) {
+      dependenciesSet.addAll(redefineProcessingSet);
+    }
     collectDependencies(myTag, myFile, dependenciesSet);
     dependencies = dependenciesSet.toArray(ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
