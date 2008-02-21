@@ -83,7 +83,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   private ExecutorService myInvalidationService = ConcurrencyUtil.newSingleThreadExecutor("FileBasedIndex.InvalidationQueue");
   private final VirtualFileManagerEx myVfManager;
   
-  private final FileContentStorage myOldContentStorage;
+  private final FileContentStorage myFileContentAttic;
   
   public static interface InputFilter {
     boolean acceptInput(VirtualFile file);
@@ -114,7 +114,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     myChangedFilesUpdater = new ChangedFilesUpdater();
     vfManager.addVirtualFileListener(myChangedFilesUpdater);
     vfManager.registerRefreshUpdater(myChangedFilesUpdater);
-    myOldContentStorage = new FileContentStorage(new File(getPersistenceRoot(), "updates.tmp"));
+    myFileContentAttic = new FileContentStorage(new File(getPersistenceRoot(), "updates.tmp"));
   }
 
   public static FileBasedIndex getInstance() {
@@ -492,7 +492,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     final VirtualFile file = content.getVirtualFile();
     FileContent fc = null;
     FileContent oldContent = null;
-    final byte[] bytes = myOldContentStorage.remove(file);
+    final byte[] bytes = myFileContentAttic.remove(file);
  
     for (ID<?, ?> indexId : myIndices.keySet()) {
       if (getInputFilter(indexId).acceptInput(file)) {
@@ -651,7 +651,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
             }
           });
           if (saveContent) {
-            myOldContentStorage.offer(file);
+            myFileContentAttic.offer(file);
           }
           else {
             final FileContent fc = new FileContent(file, loadContent(file));

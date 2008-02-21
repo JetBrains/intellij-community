@@ -19,7 +19,7 @@ public class FileContentStorage {
   private final File myStorageRoot;
   private static final byte[] EMPTY_BYTE_ARRAY = new byte[]{};
   
-  private SLRUCache<Integer, byte[]> myCache = new SLRUCache<Integer, byte[]>(128, 32) {
+  private SLRUCache<Integer, byte[]> myCache = new SLRUCache<Integer, byte[]>(200, 56) {
     @NotNull
     public byte[] createValue(final Integer key) {
       final File dataFile = getDataFile(key);
@@ -35,7 +35,7 @@ public class FileContentStorage {
       if (key.intValue() == myKeyBeingRemoved) {
         FileUtil.delete(getDataFile(key));
       }
-      else {
+      else if (bytes.length > 0){
         final File dataFile = getDataFile(key);
         try {
           final BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(dataFile));
