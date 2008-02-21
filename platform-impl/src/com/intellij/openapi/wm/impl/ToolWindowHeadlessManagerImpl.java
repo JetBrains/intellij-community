@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.Content;
@@ -229,6 +230,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   public void invokeLater(Runnable runnable) {
+  }
+
+  public IdeFocusManager getFocusManager() {
+    return IdeFocusManagerHeadless.INSTANCE;
   }
 
   public void addToolWindowManagerListener(ToolWindowManagerListener l) {

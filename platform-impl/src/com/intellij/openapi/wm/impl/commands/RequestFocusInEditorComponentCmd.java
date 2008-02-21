@@ -56,7 +56,7 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
       }
 
       if(myComponent != null){
-        myManager.requestFocus(myComponent, myForced).notifyWhenDone(myDoneCallback);
+        myManager.getFocusManager().requestFocus(myComponent, myForced).notifyWhenDone(myDoneCallback);
       }
 
     }finally{

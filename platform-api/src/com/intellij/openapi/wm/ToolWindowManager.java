@@ -17,11 +17,9 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 public abstract class ToolWindowManager {
 
@@ -91,9 +89,10 @@ public abstract class ToolWindowManager {
    */
   public abstract void invokeLater(Runnable runnable);
 
-  public abstract ActionCallback requestFocus(Component c, boolean forced);
+  /**
+   * Utility method for quick access to the focus manager
+   * @return
+   */
+  public abstract IdeFocusManager getFocusManager();
 
-  public abstract ActionCallback requestFocus(ActionCallback.Runnable command, boolean forced);
-
-  public abstract JComponent getFocusTargetFor(final JComponent comp);
 }

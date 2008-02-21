@@ -15,5 +15,11 @@
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
+    <component>
+      <interface-class>com.intellij.openapi.wm.IdeFocusManager</interface-class>
+      <implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerImpl</implementation-class>
+      <headless-implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerHeadless</headless-implementation-class>
+      <skipForDummyProject/>
+    </component>
   </project-components>
 </components>

@@ -1,11 +1,11 @@
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 
@@ -36,7 +36,7 @@ public interface ViewContext extends Disposable {
 
   ActionManager getActionManager();
 
-  ToolWindowManager getFocusManager();
+  IdeFocusManager getFocusManager();
 
   GridCell findCellFor(final Content content);
 

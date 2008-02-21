@@ -16,10 +16,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.FocusWatcher;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowType;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.*;
 import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.util.Alarm;
@@ -741,6 +738,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
     commandList.add(new InvokeLaterCmd(runnable, myWindowManager.getCommandProcessor()));
     execute(commandList);
+  }
+
+  public IdeFocusManager getFocusManager() {
+    return IdeFocusManager.getInstance(myProject);
   }
 
   public boolean isEditorComponentActive() {

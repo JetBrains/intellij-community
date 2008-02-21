@@ -7,8 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,8 +132,8 @@ public class FocusTrackback {
     final DataContext context = myParentWindow == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(myParentWindow);
     final Project project = (Project)context.getData(DataConstants.PROJECT);
     if (project != null && !project.isDisposed()) {
-      final ToolWindowManagerImpl manager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
-      manager.requestFocus(new ActionCallback.Runnable() {
+      final IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
+      focusManager.requestFocus(new ActionCallback.Runnable() {
         public ActionCallback run() {
           _restoreFocus();
           return new ActionCallback.Done();

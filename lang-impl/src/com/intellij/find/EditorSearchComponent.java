@@ -25,7 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
@@ -250,7 +250,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   }
 
   private void requestFocus(Component c) {
-    ToolWindowManager.getInstance(myProject).requestFocus(c, true);
+    IdeFocusManager.getInstance(myProject).requestFocus(c, true);
   }
 
   private void searchBackward() {

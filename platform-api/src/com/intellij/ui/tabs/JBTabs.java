@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.InplaceButton;
@@ -103,10 +103,10 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   private List<TabInfo> myAllTabs;
   private boolean myPaintBlocked;
   private BufferedImage myImage;
-  private ToolWindowManager myFocusManager;
+  private IdeFocusManager myFocusManager;
 
 
-  public JBTabs(@Nullable Project project, ActionManager actionManager, ToolWindowManager focusManager, Disposable parent) {
+  public JBTabs(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
     myProject = project;
     myActionManager = actionManager;
     myFocusManager = focusManager;
@@ -426,7 +426,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       final JComponent toFocus = getToFocus();
       if (myProject != null && toFocus != null) {
         final ActionCallback result = new ActionCallback();
-        ToolWindowManager.getInstance(myProject).requestFocus(new ActionCallback.Runnable() {
+        myFocusManager.requestFocus(new ActionCallback.Runnable() {
           public ActionCallback run() {
             toFocus.requestFocus();
             return new ActionCallback.Done();

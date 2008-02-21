@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
@@ -66,9 +66,9 @@ public class RunnerContentUi
   private Set<Object> myRestoreStateRequestors = new HashSet<Object>();
   public static final DataKey<RunnerContentUi> KEY = DataKey.create("DebuggerContentUI");
   private final String myActionsPlace;
-  private ToolWindowManager myFocusManager;
+  private IdeFocusManager myFocusManager;
 
-  public RunnerContentUi(Project project, ActionManager actionManager, ToolWindowManager focusManager, RunnerLayout settings, String sessionName, @NotNull ActionGroup topActions, String actionsPlace) {
+  public RunnerContentUi(Project project, ActionManager actionManager, IdeFocusManager focusManager, RunnerLayout settings, String sessionName, @NotNull ActionGroup topActions, String actionsPlace) {
     myProject = project;
     myLayoutSettings = settings;
     myActionManager = actionManager;
@@ -792,7 +792,7 @@ public class RunnerContentUi
     }
   }
 
-  public ToolWindowManager getFocusManager() {
+  public IdeFocusManager getFocusManager() {
     return myFocusManager;
   }
 }

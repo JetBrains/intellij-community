@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.Alarm;
@@ -418,7 +419,7 @@ public final class EditorsSplitters extends JPanel {
         }
 
         if (shouldAssureFocus && !alreadyFocused) {
-          ToolWindowManager.getInstance(myManager.getProject()).requestFocus(comp, requestFocus);
+          IdeFocusManager.getInstance(myManager.getProject()).requestFocus(comp, requestFocus);
         }
       }
     }
