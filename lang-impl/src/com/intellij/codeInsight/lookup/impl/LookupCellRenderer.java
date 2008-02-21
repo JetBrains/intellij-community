@@ -19,7 +19,6 @@ import com.intellij.ui.StrikeoutLabel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -289,9 +288,6 @@ class LookupCellRenderer implements ListCellRenderer {
       if (element.isValid()) {
         name = PsiUtilBase.getName(element);
       }
-    }
-    else if (o instanceof XmlElementDescriptor) {
-      name = ((XmlElementDescriptor)o).getDefaultName();
     }
     else if (o instanceof PsiMetaData) {
       name = ((PsiMetaData)o).getName();
