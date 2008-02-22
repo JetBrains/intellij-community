@@ -23,7 +23,7 @@ public class XmlAutoLookupHandler extends CodeCompletionHandler {
   protected void handleEmptyLookup(CompletionContext context, LookupData lookupData) {
   }
 
-  protected LookupData getLookupData(CompletionContext context) {
+  protected LookupData getLookupData(CompletionContext context, final String dummyIdentifier) {
     PsiFile file = context.file;
     int offset = context.getStartOffset();
 
@@ -38,18 +38,18 @@ public class XmlAutoLookupHandler extends CodeCompletionHandler {
       text = text.substring(0, len);
     }
     if (text.equals("<") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt)) {
-      return super.getLookupData(context);
+      return super.getLookupData(context, dummyIdentifier);
     } else if (text.equals(" ") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt)) {
-      return super.getLookupData(context);
+      return super.getLookupData(context, dummyIdentifier);
     }
     else if (text.endsWith("${") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue()) {
-      return super.getLookupData(context);
+      return super.getLookupData(context, dummyIdentifier);
     }
     else if (text.endsWith("@{") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue()) {
-      return super.getLookupData(context);
+      return super.getLookupData(context, dummyIdentifier);
     }
     else if (text.endsWith("</") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt)) {
-      return super.getLookupData(context);
+      return super.getLookupData(context, dummyIdentifier);
     }
     //if (lastElement instanceof PsiWhiteSpace && lastElement.getPrevSibling() instanceof XmlTag) {
     //  return super.getLookupData(context);

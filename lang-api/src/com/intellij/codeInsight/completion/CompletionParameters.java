@@ -20,4 +20,7 @@ public interface CompletionParameters {
 
   @NotNull
   PsiFile getOriginalFile();
+
+  @NotNull
+  CompletionType getCompletionType();
 }

@@ -87,7 +87,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final int offset2 = initializationContext.getSelectionEndOffset();
     final CompletionContext context = new CompletionContext(project, editor, file, initializationContext.getOffsetMap());
 
-    final LookupData data = getLookupData(context);
+    final LookupData data = getLookupData(context, initializationContext.getDummyIdentifier());
     final LookupItem[] items = data.items;
     String prefix = data.prefix;
     context.setPrefix(data.prefix);
@@ -262,33 +262,36 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return commonPrefix;
   }
 
-  protected LookupData getLookupData(final CompletionContext _context) {
+  protected LookupData getLookupData(final CompletionContext _context, final String dummyIdentifier) {
     final PsiFile file = _context.file;
-    final PsiManager manager = file.getManager();
 
     final Pair<CompletionContext, PsiElement> insertedInfo =
       ApplicationManager.getApplication().runWriteAction(new Computable<Pair<CompletionContext, PsiElement>>() {
         public Pair<CompletionContext, PsiElement> compute() {
-          return insertDummyIdentifier(_context);
+          return insertDummyIdentifier(_context, dummyIdentifier);
         }
       });
 
     PsiElement insertedElement = insertedInfo.getSecond();
     final CompletionContext context = insertedInfo.getFirst();
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, context);
-    final CompletionParametersImpl parameters = new CompletionParametersImpl(insertedElement, context.file);
+    final CompletionParametersImpl parameters = new CompletionParametersImpl(insertedElement, context.file, myCompletionType);
     final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>((Collection)CompletionService.getCompletionService().
       getQueryFactory(myCompletionType, parameters).
       createQuery(parameters).findAll());
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, null);
 
     final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
-    final LookupData data = new LookupData(items, context.getPrefix());
-    data.itemPreferencePolicy = new CompletionPreferencePolicy(context.getPrefix(), parameters, myCompletionType);
+    final LookupData data = createLookupData(context, items, insertedElement);
+    data.itemPreferencePolicy = new CompletionPreferencePolicy(context.getPrefix(), parameters);
     return data;
   }
 
-  protected Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context) {
+  protected LookupData createLookupData(final CompletionContext context, final LookupItem[] items, final PsiElement insertedElement) {
+    return new LookupData(items, context.getPrefix());
+  }
+
+  protected Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context, final String dummyIdentifier) {
     PsiFile oldFileCopy = createFileCopy(context.file);
     PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(oldFileCopy);
     Project project = hostFile.getProject();
@@ -298,7 +301,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       context.getStartOffset(), 0)).getStartOffset();
     Document document = oldFileCopy.getViewProvider().getDocument();
 
-    document.insertString(context.getStartOffset(), CompletionUtil.DUMMY_IDENTIFIER);
+    document.insertString(context.getStartOffset(), dummyIdentifier);
     PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiFile fileCopy = InjectedLanguageUtil.findInjectedPsiAt(hostFile, hostStartOffset);
     if (fileCopy == null) {

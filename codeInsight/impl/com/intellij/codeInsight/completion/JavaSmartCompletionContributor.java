@@ -50,6 +50,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
         final PsiElement identifierCopy = parameters.getPosition();
         final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
         final CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
+        context.setPrefix(identifierCopy, context.getStartOffset(), SMART_DATA);
 
         PsiFile file = parameters.getOriginalFile();
         final PsiReference ref = identifierCopy.getContainingFile().findReferenceAt(identifierCopy.getTextRange().getStartOffset());
@@ -366,6 +367,20 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
     }
   }
 
+  public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
+    if (context.getCompletionType() == CompletionType.SMART) {
+      PsiElement lastElement = context.getFile().findElementAt(context.getStartOffset() - 1);
+      if (lastElement != null && lastElement.getText().equals("(")) {
+        final PsiElement parent = lastElement.getParent();
+        if (parent instanceof PsiTypeCastExpression) {
+          context.setDummyIdentifier("");
+        }
+        else if (parent instanceof PsiParenthesizedExpression) {
+          context.setDummyIdentifier("xxx)yyy "); // to handle type cast
+        }
+      }
+    }
+  }
 
   private static class AnalyzingInsertHandler implements InsertHandler {
     private final Object myO;

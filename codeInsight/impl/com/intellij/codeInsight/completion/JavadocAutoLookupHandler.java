@@ -19,7 +19,7 @@ public class JavadocAutoLookupHandler extends CodeCompletionHandler{
   protected void handleEmptyLookup(CompletionContext context, LookupData lookupData){
   }
 
-  protected LookupData getLookupData(CompletionContext context){
+  protected LookupData getLookupData(CompletionContext context, final String dummyIdentifier){
     PsiFile file = context.file;
     int offset = context.getStartOffset();
 
@@ -28,7 +28,7 @@ public class JavadocAutoLookupHandler extends CodeCompletionHandler{
       return LookupData.EMPTY;
     }
     else{
-      return super.getLookupData(context);
+      return super.getLookupData(context, dummyIdentifier);
     }
   }
 }

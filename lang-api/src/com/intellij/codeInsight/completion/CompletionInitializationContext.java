@@ -49,11 +49,11 @@ public class CompletionInitializationContext {
     }
   }
 
-  public void setDummyIdentifier(@NotNull final String dummyIdentifier) {
+  public void setDummyIdentifier(@NotNull @NonNls final String dummyIdentifier) {
     myDummyIdentifier = dummyIdentifier;
   }
 
-  @NotNull
+  @NonNls @NotNull
   public String getDummyIdentifier() {
     return myDummyIdentifier;
   }

@@ -7,16 +7,14 @@ import com.intellij.psi.statistics.StatisticsManager;
 public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   private String myPrefix;
   private final CompletionParameters myParameters;
-  private final CompletionType myCompletionType;
 
-  public CompletionPreferencePolicy(String prefix, final CompletionParameters parameters, final CompletionType completionType) {
+  public CompletionPreferencePolicy(String prefix, final CompletionParameters parameters) {
     myParameters = parameters;
-    myCompletionType = completionType;
     setPrefix(prefix);
   }
 
   public CompletionType getCompletionType() {
-    return myCompletionType;
+    return myParameters.getCompletionType();
   }
 
   public void setPrefix(String prefix) {
@@ -30,7 +28,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   public Comparable[] getWeight(final LookupItem<?> item) {
     if (item.getAttribute(LookupItem.WEIGHT) != null) return item.getAttribute(LookupItem.WEIGHT);
 
-    final Comparable[] result = new Comparable[]{CompletionRegistrar.WEIGHING_KEY.weigh(item, new CompletionWeighingLocation(myCompletionType, myPrefix, myParameters))};
+    final Comparable[] result = new Comparable[]{CompletionRegistrar.WEIGHING_KEY.weigh(item, new CompletionWeighingLocation(myParameters.getCompletionType(), myPrefix, myParameters))};
 
     item.setAttribute(LookupItem.WEIGHT, result);
 
@@ -41,7 +39,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   public int compare(final LookupItem item1, final LookupItem item2) {
     if (item1 == item2) return 0;
 
-    if (myCompletionType == CompletionType.SMART) {
+    if (myParameters.getCompletionType() == CompletionType.SMART) {
       if (item2.getAttribute(LookupItem.DONT_PREFER) != null) return -1;
       return 0;
     }
