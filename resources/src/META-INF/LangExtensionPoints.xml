@@ -205,6 +205,8 @@
   <extensionPoint name="lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter"/>
 
   <extensionPoint name="highlightRangeExtension" interface="com.intellij.codeInsight.daemon.impl.HighlightRangeExtension"/>
+  
+  <extensionPoint name="elementsToHighlightFilter" interface="com.intellij.openapi.util.Condition"/>
 
   <extensionPoint name="sdkType" interface="com.intellij.openapi.projectRoots.SdkType"/>
 

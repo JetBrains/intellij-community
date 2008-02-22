@@ -2,6 +2,9 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -15,6 +18,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class CollectHighlightsUtil {
+  private static ExtensionPointName<Condition<PsiElement>> EP_NAME = ExtensionPointName.create("com.intellij.elementsToHighlightFilter");
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil");
 
   private CollectHighlightsUtil() {
@@ -32,7 +37,7 @@ public class CollectHighlightsUtil {
                                                     boolean includeAllParents) {
     PsiElement commonParent = findCommonParent(root, startOffset, endOffset);
     if (commonParent == null) return Collections.emptyList();
-    final List<PsiElement> list = new ArrayList<PsiElement>(getElementsToHighlight(root, commonParent, startOffset, endOffset));
+    final List<PsiElement> list = new ArrayList<PsiElement>(getElementsToHighlight(commonParent, startOffset, endOffset));
 
     PsiElement parent = commonParent;
     while (parent != null && parent != root) {
@@ -45,12 +50,11 @@ public class CollectHighlightsUtil {
     return Collections.unmodifiableList(list);
   }
 
-  private static List<PsiElement> getElementsToHighlight(final PsiElement root,
-                                                         final PsiElement commonParent,
-                                                         final int startOffset,
-                                                         final int endOffset) {
+  private static List<PsiElement> getElementsToHighlight(final PsiElement commonParent, final int startOffset, final int endOffset) {
     final List<PsiElement> result = new ArrayList<PsiElement>();
     final int currentOffset = commonParent.getTextRange().getStartOffset();
+    final Condition<PsiElement>[] filters = Extensions.getExtensions(EP_NAME);
+
     final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       int offset = currentOffset;
 
@@ -61,8 +65,17 @@ public class CollectHighlightsUtil {
           while (child != null) {
             if (offset > endOffset) break;
             int start = offset;
-            child.accept(this);
-            if (startOffset <= start && offset <= endOffset) result.add(child);
+
+            boolean skip = false;
+            for (Condition<PsiElement> filter : filters) {
+              if (!filter.value(child)) skip = true;
+            }
+
+            if (!skip) {
+              child.accept(this);
+              if (startOffset <= start && offset <= endOffset) result.add(child);
+            }
+
             child = child.getNextSibling();
           }
         }
