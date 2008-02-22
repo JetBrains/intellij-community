@@ -2,9 +2,10 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,14 +32,7 @@ public class CollectHighlightsUtil {
                                                     boolean includeAllParents) {
     PsiElement commonParent = findCommonParent(root, startOffset, endOffset);
     if (commonParent == null) return Collections.emptyList();
-    final List<PsiElement> list = new ArrayList<PsiElement>();
-
-    for(HighlightRangeExtension extension: Extensions.getExtensions(HighlightRangeExtension.EP_NAME)) {
-      List<PsiElement> extendList = extension.getElementsToHighlight(root, commonParent, startOffset, endOffset);
-      if (extendList != null) {
-        list.addAll(extendList);
-      }
-    }
+    final List<PsiElement> list = new ArrayList<PsiElement>(getElementsToHighlight(root, commonParent, startOffset, endOffset));
 
     PsiElement parent = commonParent;
     while (parent != null && parent != root) {
@@ -49,6 +43,37 @@ public class CollectHighlightsUtil {
     list.add(root);
 
     return Collections.unmodifiableList(list);
+  }
+
+  private static List<PsiElement> getElementsToHighlight(final PsiElement root,
+                                                         final PsiElement commonParent,
+                                                         final int startOffset,
+                                                         final int endOffset) {
+    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final int currentOffset = commonParent.getTextRange().getStartOffset();
+    final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
+      int offset = currentOffset;
+
+      @Override public void visitElement(PsiElement element) {
+        PsiElement child = element.getFirstChild();
+        if (child != null) {
+          // composite element
+          while (child != null) {
+            if (offset > endOffset) break;
+            int start = offset;
+            child.accept(this);
+            if (startOffset <= start && offset <= endOffset) result.add(child);
+            child = child.getNextSibling();
+          }
+        }
+        else {
+          // leaf element
+          offset += element.getTextLength();
+        }
+      }
+    };
+    commonParent.accept(visitor);
+    return result;
   }
 
   @Nullable
