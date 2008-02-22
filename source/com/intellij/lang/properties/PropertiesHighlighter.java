@@ -4,6 +4,7 @@ import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.JavaHighlighterColors;
+import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.options.OptionsBundle;
@@ -29,22 +30,22 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
 
   public static final TextAttributesKey PROPERTY_KEY = TextAttributesKey.createTextAttributesKey(
                                                 "PROPERTIES.KEY",
-                                                JavaHighlighterColors.JAVA_KEYWORD.getDefaultAttributes()
+                                                SyntaxHighlighterColors.KEYWORD.getDefaultAttributes()
                                               );
 
   public static final TextAttributesKey PROPERTY_VALUE = TextAttributesKey.createTextAttributesKey(
                                                "PROPERTIES.VALUE",
-                                               JavaHighlighterColors.JAVA_STRING.getDefaultAttributes()
+                                               SyntaxHighlighterColors.STRING.getDefaultAttributes()
                                              );
 
   public static final TextAttributesKey PROPERTY_COMMENT = TextAttributesKey.createTextAttributesKey(
                                                      "PROPERTIES.LINE_COMMENT",
-                                                     JavaHighlighterColors.JAVA_LINE_COMMENT.getDefaultAttributes()
+                                                     SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes()
                                                    );
 
   public static final TextAttributesKey PROPERTY_KEY_VALUE_SEPARATOR = TextAttributesKey.createTextAttributesKey(
                                                        "PROPERTIES.KEY_VALUE_SEPARATOR",
-                                                       JavaHighlighterColors.JAVA_OPERATION_SIGN.getDefaultAttributes()
+                                                       SyntaxHighlighterColors.OPERATION_SIGN.getDefaultAttributes()
                                                      );
   public static final TextAttributesKey PROPERTIES_VALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey(
                                                        "PROPERTIES.VALID_STRING_ESCAPE",

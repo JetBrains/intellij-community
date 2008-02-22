@@ -9,7 +9,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.JavaHighlighterColors;
+import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -329,7 +329,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     myHighlightAttributes = new HashMap<HighlightSeverity, Map<SimpleTextAttributes, SimpleTextAttributes>>();
 
     final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    final TextAttributes attributes = globalScheme.getAttributes(JavaHighlighterColors.JAVA_STRING);
+    final TextAttributes attributes = globalScheme.getAttributes(SyntaxHighlighterColors.STRING);
 
     myBindingAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getTreeForeground());
     myClassAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getTreeForeground());
