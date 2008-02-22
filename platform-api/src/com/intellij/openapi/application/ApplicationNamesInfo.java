@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NonNls;
  */
 public class ApplicationNamesInfo {
   @NonNls
-  public static final String COMPONENT_NAME = "ApplicationInfo";
+  private static final String COMPONENT_NAME = "ApplicationInfo";
   private static ApplicationNamesInfo ourInstance;
   private String myProductName;
   private String myFullProductName;
@@ -45,7 +45,7 @@ public class ApplicationNamesInfo {
   private ApplicationNamesInfo() {
     try {
       //noinspection HardCodedStringLiteral
-      Document doc = JDOMUtil.loadDocument(ApplicationNamesInfo.class.getResourceAsStream("/idea/" + COMPONENT_NAME + ".xml"));
+      Document doc = JDOMUtil.loadDocument(ApplicationNamesInfo.class.getResourceAsStream("/idea/" + getComponentName() + ".xml"));
       readInfo(doc.getRootElement());
     }
     catch (Exception e) {
@@ -79,5 +79,13 @@ public class ApplicationNamesInfo {
    */
   public String getLowercaseProductName() {
     return myLowercaseProductName;
+  }
+
+  public static String getComponentName() {
+    final String prefix = System.getProperty("idea.platform.prefix");
+    if (prefix != null) {
+      return prefix + COMPONENT_NAME;
+    }
+    return COMPONENT_NAME;
   }
 }

@@ -2,7 +2,6 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -153,7 +152,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   public static ApplicationInfoEx getShadowInstance() {
     ApplicationInfoImpl instance = new ApplicationInfoImpl();
     try {
-      Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class.getResourceAsStream(IDEA_PATH + ApplicationNamesInfo.COMPONENT_NAME + XML_EXTENSION));
+      Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class.getResourceAsStream(IDEA_PATH +
+                                                                                         ApplicationNamesInfo.getComponentName() + XML_EXTENSION));
       instance.readExternal(doc.getRootElement());
     }
     catch (Exception e) {
@@ -231,7 +231,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
 
   public String getComponentName() {
-    return ApplicationNamesInfo.COMPONENT_NAME;
+    return ApplicationNamesInfo.getComponentName();
   }
 
   private static class UpdateUrlsImpl implements UpdateUrls {
