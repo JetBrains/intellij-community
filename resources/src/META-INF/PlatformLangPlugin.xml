@@ -3,7 +3,7 @@
   <name>IDEA CORE</name>
 
   <extensionPoints>
-    <xi:include href="PlatformExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
+    <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
     <xi:include href="VcsExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
     <xi:include href="LangExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
   </extensionPoints>

@@ -438,6 +438,9 @@ public class PluginManager {
           }
           if (pluginDescriptor == null) {
             pluginDescriptor = loadDescriptor(file, PLUGIN_XML);
+            if (platformPrefix != null && pluginDescriptor != null && pluginDescriptor.getName().equals("IDEA CORE")) {
+              continue;
+            }
           }
           if (pluginDescriptor != null && !result.contains(pluginDescriptor)) {
             result.add(pluginDescriptor);

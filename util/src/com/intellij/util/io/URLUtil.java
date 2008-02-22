@@ -43,7 +43,19 @@ public class URLUtil {
       return openJarStream(url);
     }
 
-    return url.openStream();
+    try {
+      return url.openStream();
+    }
+    catch(FileNotFoundException ex) {
+      if (protocol.equals("file")) {
+        String file = url.getFile();
+        if (file.startsWith("/")) {
+          InputStream resourceStream = URLUtil.class.getResourceAsStream(file);
+          if (resourceStream != null) return resourceStream;
+        }
+      }
+      throw ex;
+    }
   }
 
   @NotNull
