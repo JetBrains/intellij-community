@@ -67,9 +67,9 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   TempDirTestFixture getTempDirFixture();
 
-  String copyFileToProject(@NonNls String sourceFilePath, @NonNls String targetPath) throws IOException;
+  VirtualFile copyFileToProject(@NonNls String sourceFilePath, @NonNls String targetPath) throws IOException;
 
-  String copyFileToProject(@NonNls String sourceFilePath) throws IOException;
+  VirtualFile copyFileToProject(@NonNls String sourceFilePath) throws IOException;
 
   /**
    * Enables inspections for highlighting tests.
@@ -133,27 +133,27 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   /**
    * Finds the reference in position marked by {@link #CARET_MARKER}.
    *
-   * @param filePath file to be processed.
+   * @param filePaths
    * @return null if no reference found.
    * @throws Throwable any exception.
    *
-   * @see #getReferenceAtCaretPositionWithAssertion(String)
+   * @see #getReferenceAtCaretPositionWithAssertion(String...)
    */
   @Nullable
-  PsiReference getReferenceAtCaretPosition(@NonNls String filePath) throws Throwable;
+  PsiReference getReferenceAtCaretPosition(@NonNls String... filePaths) throws Throwable;
 
   /**
    * Finds the reference in position marked by {@link #CARET_MARKER}.
    * Asserts that the reference exists.
    *
-   * @param filePath file to be processed
+   * @param filePaths
    * @return founded reference
    * @throws Throwable any exception
    *
-   * @see #getReferenceAtCaretPosition(String)
+   * @see #getReferenceAtCaretPosition(String...)
    */
   @NotNull
-  PsiReference getReferenceAtCaretPositionWithAssertion(@NonNls String filePath) throws Throwable;
+  PsiReference getReferenceAtCaretPositionWithAssertion(@NonNls String... filePaths) throws Throwable;
 
   /**
    * Collects available intentions in the whole file or at caret position if {@link #CARET_MARKER} presents.
@@ -204,9 +204,10 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * Implies that there is only one completion variant and it was inserted automatically, and checks the result file text with fileAfter
    * @param fileBefore
    * @param fileAfter
+   * @param additionalFiles
    * @throws Throwable
    */
-  void testCompletion(@NonNls String fileBefore, @NonNls String fileAfter) throws Throwable;
+  void testCompletion(@NonNls String fileBefore, @NonNls String fileAfter, final String... additionalFiles) throws Throwable;
 
   /**
    * Runs basic completion in caret position in fileBefore.
@@ -223,13 +224,14 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @param fileBefore original file path. Use {@link #CARET_MARKER} to mark the element to rename.
    * @param fileAfter result file to be checked against.
    * @param newName new name for the element.
+   * @param additionalFiles
    * @throws Throwable any exception.
    */
-  void testRename(@NonNls String fileBefore, @NonNls String fileAfter, @NonNls String newName) throws Throwable;
+  void testRename(@NonNls String fileBefore, @NonNls String fileAfter, @NonNls String newName, final String... additionalFiles) throws Throwable;
 
   PsiReference[] testFindUsages(@NonNls String... fileNames) throws Throwable;
 
-  void moveFile(@NonNls String filePath, @NonNls String to) throws Throwable;
+  void moveFile(@NonNls String filePath, @NonNls String to, final String... additionalFiles) throws Throwable;
 
   /**
    * Returns gutter renderer at the caret position.

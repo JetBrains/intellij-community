@@ -82,6 +82,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -136,15 +137,23 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myTempDirFixture;
   }
 
-  public String copyFileToProject(@NonNls final String sourceFilePath, @NonNls final String targetPath) throws IOException {
+  public VirtualFile copyFileToProject(@NonNls final String sourceFilePath, @NonNls final String targetPath) throws IOException {
     final File destFile = new File(getTempDirPath() + "/" + targetPath);
-    FileUtil.copy(new File(sourceFilePath), destFile);
-    Assert.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destFile));
-    return targetPath;
+    if (!destFile.exists()) {
+      final File fromFile = new File(getTestDataPath() + "/" + sourceFilePath);
+      if (fromFile.isDirectory()) {
+        destFile.mkdirs();
+      } else {
+        FileUtil.copy(fromFile, destFile);
+      }
+    }
+    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destFile);
+    Assert.assertNotNull(file);
+    return file;
   }
 
-  public String copyFileToProject(@NonNls final String sourceFilePath) throws IOException {
-    return copyFileToProject(sourceFilePath, StringUtil.getShortName(StringUtil.getShortName(sourceFilePath, '\\'), '/'));
+  public VirtualFile copyFileToProject(@NonNls final String sourceFilePath) throws IOException {
+    return copyFileToProject(sourceFilePath, sourceFilePath);
   }
 
   public void enableInspections(LocalInspectionTool... inspections) {
@@ -253,10 +262,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Nullable
-  public PsiReference getReferenceAtCaretPosition(final String filePath) throws Throwable {
+  public PsiReference getReferenceAtCaretPosition(final String... filePaths) throws Throwable {
     final RunResult<PsiReference> runResult = new WriteCommandAction<PsiReference>(myProjectFixture.getProject()) {
       protected void run(final Result<PsiReference> result) throws Throwable {
-        configureByFilesInner(filePath);
+        configureByFilesInner(filePaths);
         final int offset = myEditor.getCaretModel().getOffset();
         final PsiReference psiReference = getFile().findReferenceAt(offset);
         result.setResult(psiReference);
@@ -267,8 +276,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @NotNull
-  public PsiReference getReferenceAtCaretPositionWithAssertion(final String filePath) throws Throwable {
-    final PsiReference reference = getReferenceAtCaretPosition(filePath);
+  public PsiReference getReferenceAtCaretPositionWithAssertion(final String... filePaths) throws Throwable {
+    final PsiReference reference = getReferenceAtCaretPosition(filePaths);
     assert reference != null: "no reference found at " + myEditor.getCaretModel().getLogicalPosition();
     return reference;
   }
@@ -305,8 +314,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }.execute().throwException();
   }
 
-  public void testCompletion(String fileBefore, String fileAfter) throws Throwable {
-    testCompletion(new String[] { fileBefore }, fileAfter);
+  public void testCompletion(String fileBefore, String fileAfter, final String... additionalFiles) throws Throwable {
+    testCompletion(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, fileBefore)), fileAfter);
   }
 
   public void testCompletionVariants(final String fileBefore, final String... expectedItems) throws Throwable {
@@ -325,12 +334,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }.execute().throwException();
   }
 
-  public void testRename(final String fileBefore, final String fileAfter, final String newName) throws Throwable {
-    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
-      protected void run() throws Throwable {
-        configureByFilesInner(fileBefore);
-      }
-    }.execute().throwException();
+  public void testRename(final String fileBefore, final String fileAfter, final String newName, final String... additionalFiles) throws Throwable {
+    configureByFiles(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, fileBefore)));
     testRename(fileAfter, newName);
   }
 
@@ -338,7 +343,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
       protected void run() throws Throwable {
         PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
-        assert element != null: "element not found at caret position, offset " + myEditor.getCaretModel().getOffset();
+        assert element != null: "element not found in file " + myFile.getName() + " at caret position, offset " + myEditor.getCaretModel().getOffset();
         new RenameProcessor(myProjectFixture.getProject(), element, newName, false, false).run();
         checkResultByFile(fileAfter, myFile, false);
       }
@@ -366,11 +371,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return ReferencesSearch.search(referenceTo, GlobalSearchScope.projectScope(project), false).toArray(new PsiReference[0]);
   }
 
-  public void moveFile(@NonNls final String filePath, @NonNls final String to) throws Throwable {
+  public void moveFile(@NonNls final String filePath, @NonNls final String to, final String... additionalFiles) throws Throwable {
     final Project project = myProjectFixture.getProject();
     new WriteCommandAction.Simple(project) {
       protected void run() throws Throwable {
-        configureByFile(filePath);
+        configureByFiles(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, filePath)));
         final VirtualFile file = findFile(to);
         assert file.isDirectory() : to + " is not a directory";
         final PsiDirectory directory = myPsiManager.findDirectory(file);
@@ -515,11 +520,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     checkResult("TEXT", false, SelectionAndCaretMarkupLoader.fromText(text, getProject()), myFile.getText());
   }
 
-  public void checkResultByFile(final String filePath) throws Throwable {
+  public void checkResultByFile(final String expectedFile) throws Throwable {
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
       protected void run() throws Throwable {
-        checkResultByFile(filePath, myFile, false);
+        checkResultByFile(expectedFile, myFile, false);
       }
     }.execute().throwException();
   }
@@ -542,10 +547,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void setUp() throws Exception {
     super.setUp();
 
-    final String testDataPath = getTestDataPath();
-    if (testDataPath != null) {
-      FileUtil.copyDir(new File(testDataPath), new File(getTempDirPath()), false);
-    }
     myProjectFixture.setUp();
     myTempDirFixture.setUp();
     myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
@@ -620,21 +621,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private int configureByFilesInner(@NonNls String... filePaths) throws IOException {
     myFile = null;
     myEditor = null;
-    int offset = -1;
-    for (int i = filePaths.length - 1; i >= 0; i--) {
-      String filePath = filePaths[i];
-      int fileOffset = configureByFileInner(filePath);
-      if (fileOffset > 0) {
-        offset = fileOffset;
-      }
+    for (int i = filePaths.length - 1; i > 0; i--) {
+      configureByFileInner(filePaths[i]);
     }
-    return offset;
+    return configureByFileInner(filePaths[0]);
   }
 
   public void configureByFile(final String file) throws IOException {
     new WriteCommandAction.Simple(getProject()) {
       protected void run() throws Throwable {
-        configureByFileInner(file);
+        configureByFilesInner(file);
       }
     }.execute();
   }
@@ -656,6 +652,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
     VfsUtil.saveText(vFile, text);
+    assert vFile != null;
     configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile, getProject()));
     return myFile;
   }
@@ -676,6 +673,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
    * @throws IOException
    */
   private int configureByFileInner(@NonNls String filePath) throws IOException {
+    copyFileToProject(filePath);
     return configureByFileInner(findFile(filePath));
   }
 
@@ -683,7 +681,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return configureInner(copy, SelectionAndCaretMarkupLoader.fromFile(copy, getProject()));
   }
 
-  private int configureInner(final VirtualFile copy, final SelectionAndCaretMarkupLoader loader) {
+  private int configureInner(@NotNull final VirtualFile copy, final SelectionAndCaretMarkupLoader loader) {
     try {
       final OutputStream outputStream = copy.getOutputStream(null, 0, 0);
       outputStream.write(loader.newFileText.getBytes());

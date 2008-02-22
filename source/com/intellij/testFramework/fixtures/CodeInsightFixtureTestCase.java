@@ -5,17 +5,20 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
 import java.util.Arrays;
 
 /**
@@ -35,8 +38,28 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase{
     tuneFixture(moduleFixtureBuilder);    
 
     myFixture.setUp();
-
+    myFixture.setTestDataPath(getTestDataPath());
     myModule = moduleFixtureBuilder.getFixture().getModule();
+  }
+
+  /**
+   * Return relative path to the test data.
+   *
+   * @return relative path to the test data.
+   */
+  @NonNls
+  protected String getBasePath() {
+    return "";
+  }
+
+  /**
+   * Return absolute path to the test data. Not intended to be overrided.
+   *
+   * @return absolute path to the test data.
+   */
+  @NonNls
+  protected final String getTestDataPath() {
+    return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
   }
 
   protected void tuneFixture(final JavaModuleFixtureBuilder moduleBuilder) {}
@@ -55,7 +78,7 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase{
     }.execute();
   }
 
-  public Project getProject() {
+  protected Project getProject() {
     return myFixture.getProject();
   }
 
