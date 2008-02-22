@@ -284,11 +284,12 @@ public class JavaCompletionContributor extends CompletionContributor{
 
   }
 
-  protected static boolean shouldSuggestSmartCompletion(final PsiElement element, String prefix) {
+  private static boolean shouldSuggestSmartCompletion(final PsiElement element, String prefix) {
     if (shouldSuggestClassNameCompletion(element, prefix)) return false;
 
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiReferenceExpression && ((PsiReferenceExpression)parent).getQualifier() != null) return false;
+    if (parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiReferenceExpression) return false;
 
     return new ExpectedTypesGetter().get(element, null).length > 0;
   }
