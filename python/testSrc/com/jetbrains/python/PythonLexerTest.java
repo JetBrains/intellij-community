@@ -18,7 +18,7 @@ package com.jetbrains.python;
 
 import com.intellij.lexer.Lexer;
 import junit.framework.TestCase;
-import ru.yole.pythonid.PythonIndentingLexer;
+import com.jetbrains.python.PythonIndentingLexer;
 
 /**
  * @author yole

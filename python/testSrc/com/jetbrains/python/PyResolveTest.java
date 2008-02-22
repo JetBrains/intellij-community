@@ -8,9 +8,9 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.ResolveTestCase;
-import ru.yole.pythonid.psi.PyClass;
-import ru.yole.pythonid.psi.PyFunction;
-import ru.yole.pythonid.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyReferenceExpression;
 
 public class PyResolveTest extends ResolveTestCase {
   private PsiElement resolve() throws Exception {

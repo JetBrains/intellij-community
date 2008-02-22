@@ -9,25 +9,25 @@
   <change-notes>Updated for IntelliJ IDEA 7.0</change-notes>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileTypeFactory implementation="ru.yole.pythonid.PythonFileTypeFactory"/>
-    <lang.syntaxHighlighterFactory key="Python" implementationClass="ru.yole.pythonid.PySyntaxHighlighterFactory"/>
-    <lang.braceMatcher language="Python" implementationClass="ru.yole.pythonid.PyBraceMatcher"/>
-    <lang.parserDefinition language="Python" implementationClass="ru.yole.pythonid.PythonParserDefinition"/>
-    <lang.commenter language="Python" implementationClass="ru.yole.pythonid.PythonCommenter"/>
-    <lang.foldingBuilder language="Python" implementationClass="ru.yole.pythonid.PythonFoldingBuilder"/>
-    <lang.findUsagesProvider language="Python" implementationClass="ru.yole.pythonid.PythonFindUsagesProvider"/>
-    <lang.formatter language="Python" implementationClass="ru.yole.pythonid.PythonFormattingModelBuilder"/>
-    <lang.psiStructureViewFactory language="Python" implementationClass="ru.yole.pythonid.structureView.PyStructureViewFactory"/>
-    <lang.documentationProvider language="Python" implementationClass="ru.yole.pythonid.PythonDocumentationProvider"/>
-    <annotator language="Python" implementationClass="ru.yole.pythonid.validation.PyAnnotatingVisitor"/>
-    <configurationType implementation="ru.yole.pythonid.run.PythonConfigurationType"/>
-    <programRunner implementation="ru.yole.pythonid.run.PythonRunner"/>
-    <backspaceHandlerDelegate implementation="ru.yole.pythonid.editor.PythonBackspaceHandler"/>
-    <quoteHandler fileType="Python" className="ru.yole.pythonid.editor.PythonQuoteHandler"/>
-    <sdkType implementation="ru.yole.pythonid.sdk.PythonSdkType"/>
-    <fileBasedIndex implementation="ru.yole.pythonid.index.PyClassIndex"/>
-    <gotoClassContributor implementation="ru.yole.pythonid.PyGotoClassContributor"/>
-    <codeInsight.parameterInfo language="Python" implementationClass="ru.yole.pythonid.PyParameterInfoHandler"/>
-    <colorSettingsPage implementation="ru.yole.pythonid.PythonColorsPage"/>
+    <fileTypeFactory implementation="com.jetbrains.python.PythonFileTypeFactory"/>
+    <lang.syntaxHighlighterFactory key="Python" implementationClass="com.jetbrains.python.PySyntaxHighlighterFactory"/>
+    <lang.braceMatcher language="Python" implementationClass="com.jetbrains.python.PyBraceMatcher"/>
+    <lang.parserDefinition language="Python" implementationClass="com.jetbrains.python.PythonParserDefinition"/>
+    <lang.commenter language="Python" implementationClass="com.jetbrains.python.PythonCommenter"/>
+    <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
+    <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.PythonFindUsagesProvider"/>
+    <lang.formatter language="Python" implementationClass="com.jetbrains.python.PythonFormattingModelBuilder"/>
+    <lang.psiStructureViewFactory language="Python" implementationClass="com.jetbrains.python.structureView.PyStructureViewFactory"/>
+    <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.PythonDocumentationProvider"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
+    <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
+    <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
+    <backspaceHandlerDelegate implementation="com.jetbrains.python.editor.PythonBackspaceHandler"/>
+    <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
+    <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>
+    <fileBasedIndex implementation="com.jetbrains.python.index.PyClassIndex"/>
+    <gotoClassContributor implementation="com.jetbrains.python.PyGotoClassContributor"/>
+    <codeInsight.parameterInfo language="Python" implementationClass="com.jetbrains.python.PyParameterInfoHandler"/>
+    <colorSettingsPage implementation="com.jetbrains.python.PythonColorsPage"/>
   </extensions>
 </idea-plugin>
