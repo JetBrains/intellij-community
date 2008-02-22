@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -56,6 +57,10 @@ public abstract class FacetTypeFrameworkSupportProvider<F extends Facet> extends
 
   public boolean isSupportAlreadyAdded(@NotNull final Module module) {
     return !FacetManager.getInstance(module).getFacetsByType(myFacetType.getId()).isEmpty();
+  }
+
+  public Icon getIcon() {
+    return myFacetType.getIcon();
   }
 
   protected void addSupport(final Module module, final ModifiableRootModel rootModel, final String version, final @Nullable Library library) {

@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author nik
  */
@@ -41,6 +43,11 @@ public abstract class FrameworkSupportProvider {
 
   public String getTitle() {
     return myTitle;
+  }
+
+  @Nullable
+  public Icon getIcon() {
+    return null;
   }
 
   public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {

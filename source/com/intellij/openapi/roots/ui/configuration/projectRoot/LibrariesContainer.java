@@ -13,6 +13,9 @@ public interface LibrariesContainer {
   enum LibraryLevel {GLOBAL, PROJECT, MODULE}
 
   @NotNull
+  Library[] getLibraies(@NotNull LibraryLevel libraryLevel);
+
+  @NotNull
   Library[] getAllLibraries();
 
   @NotNull

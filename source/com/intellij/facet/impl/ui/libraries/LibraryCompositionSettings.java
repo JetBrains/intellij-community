@@ -25,17 +25,20 @@ public class LibraryCompositionSettings {
   private String myDirectoryForDownloadedLibrariesPath;
   private Set<VirtualFile> myAddedJars = new LinkedHashSet<VirtualFile>();
   private boolean myDownloadLibraries = true;
-  private Set<Library> myAddedLibraries = new LinkedHashSet<Library>();
+  private Set<Library> myUsedLibraries = new LinkedHashSet<Library>();
   private LibrariesContainer.LibraryLevel myLibraryLevel = LibrariesContainer.LibraryLevel.PROJECT;
   private String myLibraryName;
+  private Icon myIcon;
 
   public LibraryCompositionSettings(final @NotNull LibraryInfo[] libraryInfos,
                                     final @NotNull String defaultLibraryName,
-                                    final @NotNull String baseDirectoryForDownloadedFiles, final String title) {
+                                    final @NotNull String baseDirectoryForDownloadedFiles,
+                                    final String title, @Nullable Icon icon) {
     myLibraryInfos = libraryInfos;
     myBaseDirectoryForDownloadedFiles = baseDirectoryForDownloadedFiles;
     myTitle = title;
     myLibraryName = defaultLibraryName;
+    myIcon = icon;
   }
 
   @NotNull
@@ -69,9 +72,9 @@ public class LibraryCompositionSettings {
     myDownloadLibraries = downloadLibraries;
   }
 
-  public void setAddedLibraries(List<Library> addedLibraries) {
-    myAddedLibraries.clear();
-    myAddedLibraries.addAll(addedLibraries);
+  public void setUsedLibraries(List<Library> addedLibraries) {
+    myUsedLibraries.clear();
+    myUsedLibraries.addAll(addedLibraries);
   }
 
   public void setLibraryLevel(final LibrariesContainer.LibraryLevel libraryLevel) {
@@ -132,7 +135,11 @@ public class LibraryCompositionSettings {
     return myLibraryName;
   }
 
-  public Collection<Library> getAddedLibraries() {
-    return myAddedLibraries;
+  public Collection<Library> getUsedLibraries() {
+    return myUsedLibraries;
+  }
+
+  public Icon getIcon() {
+    return myIcon;
   }
 }

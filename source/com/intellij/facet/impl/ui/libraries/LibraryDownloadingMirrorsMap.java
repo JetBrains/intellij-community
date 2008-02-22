@@ -79,4 +79,10 @@ public class LibraryDownloadingMirrorsMap {
     }
     myMirrors.put(remoteRepository, mirror);
   }
+
+  public LibraryDownloadingMirrorsMap createCopy() {
+    LibraryDownloadingMirrorsMap mirrorsMap = new LibraryDownloadingMirrorsMap();
+    mirrorsMap.myMirrors.putAll(myMirrors);
+    return mirrorsMap;
+  }
 }

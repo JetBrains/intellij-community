@@ -64,9 +64,8 @@ public class AddSupportForFrameworksPanel {
     myFrameworksTreePanel.add(treePanel, BorderLayout.WEST);
     myChangeButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        HashSet<RemoteRepositoryInfo> repositories = new HashSet<RemoteRepositoryInfo>(getRemoteRepositories(true));
         final List<LibraryCompositionSettings> compositionSettingsList = getLibrariesCompositionSettingsList();
-        new LibraryCompositionSettingsDialog(myMainPanel, myLibrariesContainer, compositionSettingsList, myMirrorsMap, repositories).show();
+        new LibrariesCompositionDialog(myMainPanel, myLibrariesContainer, compositionSettingsList, myMirrorsMap).show();
         updateDownloadingOptionsPanel();
       }
     });
@@ -74,13 +73,13 @@ public class AddSupportForFrameworksPanel {
   }
 
   private LibraryDownloadingMirrorsMap creatMirrorsMap() {
-    List<RemoteRepositoryInfo> repositoryInfos = getRemoteRepositories(false);
+    List<RemoteRepositoryInfo> repositoryInfos = getRemoteRepositories();
     return new LibraryDownloadingMirrorsMap(repositoryInfos.toArray(new RemoteRepositoryInfo[repositoryInfos.size()]));
   }
 
-  private List<RemoteRepositoryInfo> getRemoteRepositories(final boolean fromSelectedOnly) {
+  private List<RemoteRepositoryInfo> getRemoteRepositories() {
     List<RemoteRepositoryInfo> repositoryInfos = new ArrayList<RemoteRepositoryInfo>();
-    List<FrameworkSupportSettings> frameworksSettingsList = getFrameworksSettingsList(fromSelectedOnly);
+    List<FrameworkSupportSettings> frameworksSettingsList = getFrameworksSettingsList(false);
     for (FrameworkSupportSettings settings : frameworksSettingsList) {
       LibraryInfo[] libraries = settings.getConfigurable().getLibraries();
       for (LibraryInfo library : libraries) {
@@ -267,9 +266,9 @@ public class AddSupportForFrameworksPanel {
           rootModel.addLibraryEntry(library);
         }
       }
-      for (Library addedLibrary : compositionSettings.getAddedLibraries()) {
-        addedLibraries.add(addedLibrary);
-        rootModel.addLibraryEntry(addedLibrary);
+      for (Library usedLibrary : compositionSettings.getUsedLibraries()) {
+        addedLibraries.add(usedLibrary);
+        rootModel.addLibraryEntry(usedLibrary);
       }
 
       configurable.addSupport(module, rootModel, library);
@@ -350,7 +349,7 @@ public class AddSupportForFrameworksPanel {
       if (myLibraryCompositionSettings == null || isObsolete(myLibraryCompositionSettings)) {
         final String title = StringUtil.replace(myProvider.getTitle(), String.valueOf(UIUtil.MNEMONIC), "");
         myLibraryCompositionSettings = new LibraryCompositionSettings(myConfigurable.getLibraries(), myConfigurable.getLibraryName(), getBaseModuleDirectoryPath(),
-                                                                      title);
+                                                                      title, myProvider.getIcon());
       }
       return myLibraryCompositionSettings;
     }

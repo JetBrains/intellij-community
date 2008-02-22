@@ -20,28 +20,30 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class LibrariesContainerFactory {
+  private static final Library[] EMPTY_LIBRARIES_ARRAY = new Library[0];
+
   private LibrariesContainerFactory() {
   }
 
   @NotNull
   public static LibrariesContainer createContainer(@Nullable Project project) {
-    return new LibraryContainerImpl(project, null, null);
+    return new LibrariesContainerImpl(project, null, null);
   }
 
   @NotNull
   public static LibrariesContainer createContainer(@NotNull Module module) {
-    return new LibraryContainerImpl(module.getProject(), module, null);
+    return new LibrariesContainerImpl(module.getProject(), module, null);
   }
 
   @NotNull
   public static LibrariesContainer createContainer(@NotNull ModifiableRootModel rootModel) {
     Module module = rootModel.getModule();
-    return new LibraryContainerImpl(module.getProject(), module, rootModel);
+    return new LibrariesContainerImpl(module.getProject(), module, rootModel);
   }
 
   @NotNull
   public static LibrariesContainer createContainer() {
-    return new LibraryContainerImpl(null, null, null);
+    return new LibrariesContainerImpl(null, null, null);
   }
 
   public static LibrariesContainer createContainer(@NotNull Project project, StructureConfigurableContext context) {
@@ -73,29 +75,50 @@ public class LibrariesContainerFactory {
     return name;
   }
 
-  private static class LibraryContainerImpl implements LibrariesContainer {
+  private abstract static class LibrariesContainerBase implements LibrariesContainer {
+    @NotNull
+    public Library[] getAllLibraries() {
+      Library[] libraries = getLibraies(LibraryLevel.GLOBAL);
+      Library[] projectLibraries = getLibraies(LibraryLevel.PROJECT);
+      if (projectLibraries.length > 0) {
+        libraries = ArrayUtil.mergeArrays(libraries, projectLibraries, Library.class);
+      }
+      Library[] moduleLibraries = getLibraies(LibraryLevel.MODULE);
+      if (moduleLibraries.length > 0) {
+        libraries = ArrayUtil.mergeArrays(libraries, moduleLibraries, Library.class);
+      }
+      return libraries;
+    }
+  }
+
+
+  private static class LibrariesContainerImpl extends LibrariesContainerBase {
     private @Nullable Project myProject;
     @Nullable private final Module myModule;
     @Nullable private final ModifiableRootModel myRootModel;
 
-    private LibraryContainerImpl(final @Nullable Project project, final @Nullable Module module, final @Nullable ModifiableRootModel rootModel) {
+    private LibrariesContainerImpl(final @Nullable Project project, final @Nullable Module module, final @Nullable ModifiableRootModel rootModel) {
       myProject = project;
       myModule = module;
       myRootModel = rootModel;
     }
 
     @NotNull
-    public Library[] getAllLibraries() {
+    public Library[] getLibraies(@NotNull final LibraryLevel libraryLevel) {
+      if (libraryLevel == LibraryLevel.MODULE && myModule != null) {
+        return getModuleLibraries();
+      }
+
       LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();
-      Library[] globalLibraries = registrar.getLibraryTable().getLibraries();
-      if (myProject == null) {
-        return globalLibraries;
+      if (libraryLevel == LibraryLevel.GLOBAL) {
+        return registrar.getLibraryTable().getLibraries();
       }
-      Library[] libraries = ArrayUtil.mergeArrays(globalLibraries, registrar.getLibraryTable(myProject).getLibraries(), Library.class);
-      if (myModule == null) {
-        return libraries;
+
+      if (libraryLevel == LibraryLevel.PROJECT && myProject != null) {
+        return registrar.getLibraryTable(myProject).getLibraries();
       }
-      return ArrayUtil.mergeArrays(libraries, getModuleLibraries(), Library.class);
+
+      return EMPTY_LIBRARIES_ARRAY;
     }
 
     private Library[] getModuleLibraries() {
@@ -142,7 +165,7 @@ public class LibrariesContainerFactory {
     }
   }
 
-  private static class StructureConfigurableLibrariesContainer implements LibrariesContainer {
+  private static class StructureConfigurableLibrariesContainer extends LibrariesContainerBase {
     private final Project myProject;
     private final StructureConfigurableContext myContext;
 
@@ -167,10 +190,15 @@ public class LibrariesContainerFactory {
     }
 
     @NotNull
-    public Library[] getAllLibraries() {
+    public Library[] getLibraies(@NotNull final LibraryLevel libraryLevel) {
       LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();
-      return ArrayUtil.mergeArrays(registrar.getLibraryTable().getLibraries(), registrar.getLibraryTable(myProject).getLibraries(),
-                                   Library.class);
+      if (libraryLevel == LibraryLevel.PROJECT) {
+        return registrar.getLibraryTable(myProject).getLibraries();
+      }
+      if (libraryLevel == LibraryLevel.GLOBAL) {
+        return registrar.getLibraryTable().getLibraries();
+      }
+      return EMPTY_LIBRARIES_ARRAY;
     }
 
     public boolean canCreateLibrary(@NotNull final LibraryLevel level) {
