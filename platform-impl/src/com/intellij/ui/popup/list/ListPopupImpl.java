@@ -268,10 +268,6 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
     myList.addListSelectionListener(listSelectionListener);
   }
 
-  public int getSelectionIndex() {
-    return myList.getSelectedIndex();
-  }
-
   private class MyMouseMotionListener extends MouseMotionAdapter {
     public void mouseMoved(MouseEvent e) {
       Point point = e.getPoint();
