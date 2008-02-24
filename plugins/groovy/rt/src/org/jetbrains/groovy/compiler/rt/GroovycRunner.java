@@ -37,8 +37,6 @@ public class GroovycRunner {
   public static final String CLASSPATH = "classpath";
   public static final String OUTPUTPATH = "outputpath";
   public static final String TEST_OUTPUTPATH = "test_outputpath";
-  public static final String MODULE_NAME = "moduleName";
-  public static final String SRC_FOLDERS = "srcFolders";
   public static final String TEST_FILE = "test_file";
   public static final String SRC_FILE = "src_file";
 
@@ -57,8 +55,6 @@ public class GroovycRunner {
     String moduleClasspath = null;
     String moduleOutputPath = null;
     String moduleTestOutputPath = null;
-    String moduleName = null;
-    String moduleSourceFoldersPath = null;
 
     if (args.length != 1) {
       System.err.println("There is no arguments for groovy compiler");
@@ -102,14 +98,6 @@ public class GroovycRunner {
           moduleTestOutputPath = reader.readLine();
         }
 
-        if (line.startsWith(MODULE_NAME)) {
-          moduleName = reader.readLine();
-        }
-
-        if (line.startsWith(SRC_FOLDERS)) {
-          moduleSourceFoldersPath = reader.readLine();
-        }
-
         line = reader.readLine();
       }
 
@@ -131,7 +119,7 @@ public class GroovycRunner {
     MyGroovyCompiler groovyCompiler = new MyGroovyCompiler();
     if (srcFiles.isEmpty() && testFiles.isEmpty()) return;
 
-    MyCompilationUnits myCompilationUnits = createCompilationUnits(srcFiles, testFiles, moduleName, moduleClasspath, moduleTestOutputPath, moduleOutputPath, moduleSourceFoldersPath);
+    MyCompilationUnits myCompilationUnits = createCompilationUnits(srcFiles, testFiles, moduleClasspath, moduleTestOutputPath, moduleOutputPath);
 
     MessageCollector messageCollector = new MessageCollector();
     MyGroovyCompiler.MyExitStatus exitStatus = groovyCompiler.compile(messageCollector, myCompilationUnits);
@@ -142,7 +130,7 @@ public class GroovycRunner {
     allCompiling.addAll(srcFiles);
     allCompiling.addAll(testFiles);
 
-    File[] toRecompilesFiles = (File[]) (successfullyCompiled.length > 0 ? new File[0] : allCompiling.toArray(new File[0]));
+    File[] toRecompilesFiles = successfullyCompiled.length > 0 ? new File[0] : (File[])allCompiling.toArray(new File[allCompiling.size()]);
 
     CompilerMessage[] compilerMessages = messageCollector.getAllMessage();
 
@@ -200,9 +188,9 @@ public class GroovycRunner {
     }
   }
 
-  private static MyCompilationUnits createCompilationUnits(List srcFilesToCompile, List testFilesToCompile, String moduleName, String classpath, String testOutputPath, String ordinaryOutputPath, String sourceFoldersPath) {
-    final CompilationUnit sourceUnit = createCompilationUnit(classpath, ordinaryOutputPath, sourceFoldersPath);
-    final CompilationUnit testUnit = createCompilationUnit(classpath, testOutputPath, sourceFoldersPath);
+  private static MyCompilationUnits createCompilationUnits(List srcFilesToCompile, List testFilesToCompile, String classpath, String testOutputPath, String ordinaryOutputPath) {
+    final CompilationUnit sourceUnit = createCompilationUnit(classpath, ordinaryOutputPath);
+    final CompilationUnit testUnit = createCompilationUnit(classpath, testOutputPath);
     MyCompilationUnits myCompilationUnits = myFactory.create(sourceUnit, testUnit);
 
     for (int i = 0; i < srcFilesToCompile.size(); i++) {
@@ -219,7 +207,7 @@ public class GroovycRunner {
     return myCompilationUnits;
   }
 
-  private static CompilationUnit createCompilationUnit(String classpath, String outputPath, String sourceFoldersPath) {
+  private static CompilationUnit createCompilationUnit(String classpath, String outputPath) {
     CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
     compilerConfiguration.setOutput(new PrintWriter(System.err));
     compilerConfiguration.setWarningLevel(WarningMessage.PARANOIA);

@@ -39,10 +39,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -221,9 +218,15 @@ public class GroovyCompiler implements TranslatingCompiler {
 
   private void fillFileWithGroovycParameters(Module module, Set<VirtualFile> virtualFiles, File f) {
 
-    PrintStream printer = null;
+    FileOutputStream stream;
     try {
-      printer = new PrintStream(new FileOutputStream(f));
+      stream = new FileOutputStream(f);
+    } catch (FileNotFoundException e) {
+      LOG.error(e);
+      return;
+    }
+
+    PrintStream printer = new PrintStream(stream);
 
 /*    filename1
 *    filname2
@@ -232,44 +235,29 @@ public class GroovyCompiler implements TranslatingCompiler {
 *    filenameN
 */
 
-      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      //files
-      for (VirtualFile item : virtualFiles) {
-        if (!moduleRootManager.getFileIndex().isInTestSourceContent(item)) {
-          printer.println(GroovycRunner.SRC_FILE);
-        } else {
-          printer.println(GroovycRunner.TEST_FILE);
-        }
-        printer.println(item.getPath());
+    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+    //files
+    for (VirtualFile item : virtualFiles) {
+      if (!moduleRootManager.getFileIndex().isInTestSourceContent(item)) {
+        printer.println(GroovycRunner.SRC_FILE);
+      } else {
+        printer.println(GroovycRunner.TEST_FILE);
       }
+      printer.println(item.getPath());
+    }
 
-      //classpath
-      printer.println(GroovycRunner.CLASSPATH);
-      printer.println(getCompilationClasspath(module).getPathsString());
+    //classpath
+    printer.println(GroovycRunner.CLASSPATH);
+    printer.println(getCompilationClasspath(module).getPathsString());
 
 //production output
-      printer.println(GroovycRunner.OUTPUTPATH);
-      printer.println(CompilerPaths.getModuleOutputPath(module, false));
+    printer.println(GroovycRunner.OUTPUTPATH);
+    printer.println(CompilerPaths.getModuleOutputPath(module, false));
 
 //test output
-      printer.println(GroovycRunner.TEST_OUTPUTPATH);
-      printer.println(CompilerPaths.getModuleOutputPath(module, true));
-
-//module name
-      printer.println(GroovycRunner.MODULE_NAME);
-      printer.println(module.getName());
-
-//source
-      printer.println(GroovycRunner.SRC_FOLDERS);
-      printer.println(getNonExcludedModuleSourceFolders(module).getPathsString());
-
-    } catch (IOException e) {
-      LOG.error(e);
-    } finally {
-
-      assert printer != null;
-      printer.close();
-    }
+    printer.println(GroovycRunner.TEST_OUTPUTPATH);
+    printer.println(CompilerPaths.getModuleOutputPath(module, true));
+    printer.close();
   }
 
   public boolean isCompilableFile(VirtualFile virtualFile, CompileContext compileContext) {
