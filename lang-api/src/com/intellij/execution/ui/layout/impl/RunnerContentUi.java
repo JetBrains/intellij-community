@@ -65,19 +65,37 @@ public class RunnerContentUi
 
   private Set<Object> myRestoreStateRequestors = new HashSet<Object>();
   public static final DataKey<RunnerContentUi> KEY = DataKey.create("DebuggerContentUI");
-  private final String myActionsPlace;
+  private String myActionsPlace = ActionPlaces.UNKNOWN;
   private IdeFocusManager myFocusManager;
 
-  public RunnerContentUi(Project project, ActionManager actionManager, IdeFocusManager focusManager, RunnerLayout settings, String sessionName, @NotNull ActionGroup topActions, String actionsPlace) {
+  public RunnerContentUi(Project project, ActionManager actionManager, IdeFocusManager focusManager, RunnerLayout settings, String sessionName) {
     myProject = project;
     myLayoutSettings = settings;
     myActionManager = actionManager;
     mySessionName = sessionName;
-    myTopActions = topActions;
-    myActionsPlace = actionsPlace;
     myFocusManager = focusManager;
+  }
 
-    myTabs = new JBTabs(project, actionManager, focusManager, this) {
+
+  public void setTopActions(@NotNull final ActionGroup topActions, @NotNull String place) {
+    myTopActions = topActions;
+    myActionsPlace = place;
+
+    rebuildCommonActions();
+  }
+
+  public void setLeftToolbar(ActionGroup group, String place) {
+    final JComponent tb = myActionManager.createActionToolbar(place, group, false).getComponent();
+    myToolbar.setContent(tb);
+
+    myComponent.revalidate();
+    myComponent.repaint();
+  }
+
+  public void initUi() {
+    if (myTabs != null) return;
+
+    myTabs = new JBTabs(myProject, myActionManager, myFocusManager, this) {
       @Nullable
       public Object getData(@NonNls final String dataId) {
         if (ViewContext.CONTENT_KEY.getName().equals(dataId)) {
@@ -91,7 +109,7 @@ public class RunnerContentUi
         return super.getData(dataId);
       }
     };
-    final ActionGroup popup = (ActionGroup)actionManager.getAction(VIEW_POPUP);
+    final ActionGroup popup = (ActionGroup)myActionManager.getAction(VIEW_POPUP);
     myTabs.setPopupGroup(popup, TAB_POPUP_PLACE);
     myTabs.setPaintBorder(false);
     myTabs.setPaintFocus(false);
@@ -114,14 +132,6 @@ public class RunnerContentUi
     });
   }
 
-  public void setLeftToolbar(ActionGroup group, String place) {
-    final JComponent tb = myActionManager.createActionToolbar(place, group, false).getComponent();
-    myToolbar.setContent(tb);
-
-    myComponent.revalidate();
-    myComponent.repaint();
-  }
-
   public void propertyChange(final PropertyChangeEvent evt) {
     Content content = (Content)evt.getSource();
     if (Content.PROP_ALERT.equals(evt.getPropertyName())) {
@@ -138,6 +148,7 @@ public class RunnerContentUi
   }
 
   public JComponent getComponent() {
+    initUi();
     return myComponent;
   }
 

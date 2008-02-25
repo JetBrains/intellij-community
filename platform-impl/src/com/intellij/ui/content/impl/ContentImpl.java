@@ -145,7 +145,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   public boolean isSelected() {
-    return myManager != null && myManager.getSelectedContent() == this;
+    return myManager != null && myManager.isSelected(this);
   }
 
   public final void release() {
