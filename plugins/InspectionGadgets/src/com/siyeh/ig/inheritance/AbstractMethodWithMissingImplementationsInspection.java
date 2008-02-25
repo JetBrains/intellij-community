@@ -121,10 +121,12 @@ public class AbstractMethodWithMissingImplementationsInspection
                             signature.getName(), true);
             for (Pair<PsiMethod, PsiSubstitutor> pair : pairs) {
                 final PsiMethod overridingMethod = pair.first;
+	            if (overridingMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+		            continue;
+	            }
                 final PsiClass containingClass =
                         overridingMethod.getContainingClass();
-                if (containingClass.isInterface() ||
-                        containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                if (containingClass.isInterface()) {
                     continue;
                 }
                 final PsiSubstitutor overridingSubstitutor = pair.second;
