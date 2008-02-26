@@ -14,11 +14,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.peer.PeerFactory;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.*;
 import com.intellij.util.ui.ErrorTreeView;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +68,7 @@ public class CvsTabbedWindow {
     myIsInitialized = true;
     myIsDisposed = false;
 
-    myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(true, myProject);
+    myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(true, myProject);
     myContentManager.addContentManagerListener(new ContentManagerAdapter() {
       public void contentRemoved(ContentManagerEvent event) {
         JComponent component = event.getContent().getComponent();
@@ -129,7 +125,7 @@ public class CvsTabbedWindow {
 
     CvsTabbedWindowComponent newComponent = new CvsTabbedWindowComponent(component,
                                                                          addDefaultToolbar, toolbarActions, getContentManager(), helpId);
-    Content content = PeerFactory.getInstance().getContentFactory().createContent(newComponent.getShownComponent(), s, lockable);
+    Content content = ContentFactory.SERVICE.getInstance().createContent(newComponent.getShownComponent(), s, lockable);
     newComponent.setContent(content);
     getContentManager().addContent(content);
 
