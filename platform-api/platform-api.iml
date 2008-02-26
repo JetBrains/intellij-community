@@ -11,10 +11,10 @@
     <orderEntry type="module" module-name="util" exported="" />
     <orderEntry type="module" module-name="extensions" exported="" />
     <orderEntry type="library" exported="" name="picocontainer" level="project" />
-    <orderEntry type="library" exported="" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="bootstrap" />
     <orderEntry type="library" exported="" name="jgoodies-forms" level="project" />
     <orderEntry type="module" module-name="forms_rt" exported="" />
+    <orderEntry type="library" exported="" name="commons-codec" level="project" />
     <orderEntryProperties />
   </component>
 </module>

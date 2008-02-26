@@ -62,10 +62,10 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="boot" />
     <orderEntry type="module" module-name="bootstrap" />
     <orderEntry type="module" module-name="lvcs-openapi" />
+    <orderEntry type="library" exported="" name="commons-codec" level="project" />
     <orderEntryProperties />
   </component>
 </module>
