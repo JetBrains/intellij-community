@@ -607,8 +607,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     Disposer.dispose(this);
 
 
-    myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
-    myEditor.removeEditorMouseListener(myEditorMouseListener);
+    if (myEditorCaretListener != null) {
+      myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
+    }
+    if (myEditorMouseListener != null) {
+      myEditor.removeEditorMouseListener(myEditorMouseListener);
+    }
     myEditor.putUserData(LOOKUP_IN_EDITOR_KEY, null);
 
     super.hide();
