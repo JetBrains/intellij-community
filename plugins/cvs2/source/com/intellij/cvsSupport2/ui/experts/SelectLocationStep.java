@@ -5,11 +5,11 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileSystemTree;
+import com.intellij.openapi.fileChooser.FileSystemTreeFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ public abstract class SelectLocationStep extends WizardStep {
         return true;
       }
     };
-    myFileSystemTree = PeerFactory.getInstance().getFileSystemTreeFactory().createFileSystemTree(project, descriptor);
+    myFileSystemTree = FileSystemTreeFactory.SERVICE.getInstance().createFileSystemTree(project, descriptor);
     myFileSystemTree.updateTree();
 
     JTree tree = myFileSystemTree.getTree();
@@ -94,7 +94,7 @@ public abstract class SelectLocationStep extends WizardStep {
   }
 
   private DefaultActionGroup createFileSystemActionGroup() {
-    DefaultActionGroup group = PeerFactory.getInstance().getFileSystemTreeFactory().createDefaultFileSystemActions(myFileSystemTree);
+    DefaultActionGroup group = FileSystemTreeFactory.SERVICE.getInstance().createDefaultFileSystemActions(myFileSystemTree);
     
     AnAction[] actions = getActions();
 

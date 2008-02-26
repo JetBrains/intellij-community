@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileChooser.FileSystemTreeFactory;
-import com.intellij.openapi.fileChooser.ex.FileSystemTreeFactoryImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
@@ -65,7 +64,6 @@ import java.net.InetAddress;
 
 public class PeerFactoryImpl extends PeerFactory {
   private final UIHelper myUIHelper = new MyUIHelper();
-  private final FileSystemTreeFactoryImpl myFileSystemTreeFactory = new FileSystemTreeFactoryImpl();
 
   public FileStatusFactory getFileStatusFactory() {
     return ServiceManager.getService(FileStatusFactory.class);
@@ -96,7 +94,7 @@ public class PeerFactoryImpl extends PeerFactory {
   }
 
   public FileSystemTreeFactory getFileSystemTreeFactory() {
-    return myFileSystemTreeFactory;
+    return FileSystemTreeFactory.SERVICE.getInstance();
   }
 
   public DiffRequestFactory getDiffRequestFactory() {

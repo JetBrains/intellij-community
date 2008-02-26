@@ -68,6 +68,7 @@ public abstract class PeerFactory {
   @Deprecated
   public abstract ContentFactory getContentFactory();
 
+  @Deprecated
   public abstract FileSystemTreeFactory getFileSystemTreeFactory();
 
   @Deprecated

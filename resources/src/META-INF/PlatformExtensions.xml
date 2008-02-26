@@ -65,6 +65,8 @@
                       serviceImplementation="com.intellij.openapi.vfs.encoding.EncodingManagerImpl"/>
   <applicationService serviceInterface="com.intellij.ui.errorView.ErrorViewFactory"
                       serviceImplementation="com.intellij.ui.errorView.impl.ErrorViewFactoryImpl"/>
+  <applicationService serviceInterface="com.intellij.openapi.fileChooser.FileSystemTreeFactory"
+                      serviceImplementation="com.intellij.openapi.fileChooser.ex.FileSystemTreeFactoryImpl"/>
 
   <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
