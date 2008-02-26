@@ -100,7 +100,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   public boolean isAvailableOnDataContext(DataContext dataContext) {
     final PsiElement element = getElement(dataContext);
 
-    if (element instanceof SyntheticElement) return false;
+    if (element == null || element instanceof SyntheticElement) return false;
     for(Condition<PsiElement> condition: Extensions.getExtensions(VETO_RENAME_CONDITION_EP)) {
       if (condition.value(element)) return false;
     }
