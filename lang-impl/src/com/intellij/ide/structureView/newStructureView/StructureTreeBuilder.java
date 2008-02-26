@@ -6,9 +6,6 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
@@ -31,8 +28,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
   private final ModelListener myModelListener;
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
-  private final Alarm myUpdateEditorAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
-
+  
   public StructureTreeBuilder(Project project,
                               JTree tree,
                               DefaultTreeModel treeModel,
@@ -59,26 +55,6 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
     initRootNode();
     myStructureModel.addModelListener(myModelListener);
-    final DocumentAdapter documentsListener = new DocumentAdapter() {
-      public void documentChanged(DocumentEvent e) {
-        if (myProject.isDisposed()) return;
-        if (PsiDocumentManager.getInstance(myProject).isUncommited(e.getDocument())) {
-          final boolean hasActiveRequests = myUpdateAlarm.getActiveRequestCount() > 0;
-          myUpdateAlarm.cancelAllRequests();
-          myUpdateEditorAlarm.cancelAllRequests();
-          myUpdateEditorAlarm.addRequest(new Runnable() {
-            public void run() {
-              if (myProject.isDisposed()) return;
-              PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-              if (hasActiveRequests) {
-                setupUpdateAlarm();
-              }
-            }
-          }, 500, ModalityState.stateForComponent(myTree));
-        }
-      }
-    };
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(documentsListener, this);
   }
 
   public void dispose() {
