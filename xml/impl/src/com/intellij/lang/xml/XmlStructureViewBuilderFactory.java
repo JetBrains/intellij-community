@@ -6,7 +6,7 @@ package com.intellij.lang.xml;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.ide.structureView.impl.xml.XmlStructureViewBuilderProvider;
+import com.intellij.ide.structureView.xml.XmlStructureViewBuilderProvider;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;

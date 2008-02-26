@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
  */
-package com.intellij.ide.structureView.impl.xml;
+package com.intellij.ide.structureView.xml;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.psi.xml.XmlTag;

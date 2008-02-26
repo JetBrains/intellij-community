@@ -1,4 +1,4 @@
-package com.intellij.ide.structureView.impl.xml;
+package com.intellij.ide.structureView.xml;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.psi.xml.XmlFile;

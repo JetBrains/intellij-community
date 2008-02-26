@@ -1,6 +1,7 @@
 package com.intellij.ide.structureView.impl.xml;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.structureView.xml.XmlStructureViewElementProvider;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.xml.XmlElement;
