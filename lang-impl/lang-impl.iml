@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="psi-extapi" exported="" />
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="lvcs-openapi" />
     <orderEntryProperties />
   </component>
 </module>
