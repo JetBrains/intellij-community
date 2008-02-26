@@ -6,7 +6,7 @@ import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
 public class ProjectPackageIndexImpl extends PackageIndex {
-  private DirectoryIndex myDirectoryIndex;
+  private final DirectoryIndex myDirectoryIndex;
 
   public ProjectPackageIndexImpl(DirectoryIndex directoryIndex) {
     myDirectoryIndex = directoryIndex;

@@ -1,18 +1,20 @@
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.roots.PackageIndex;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModulePackageIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.Query;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FilteredQuery;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
-public class ModulePackageIndexImpl extends PackageIndex {
-  private ModuleFileIndexImpl myModuleFileIndex;
-  private DirectoryIndex myDirectoryIndex;
+public class ModulePackageIndexImpl extends ModulePackageIndex {
+  private final ModuleFileIndex myModuleFileIndex;
+  private final DirectoryIndex myDirectoryIndex;
 
-  public ModulePackageIndexImpl(ModuleFileIndexImpl moduleFileIndex, DirectoryIndex directoryIndex) {
-    myModuleFileIndex = moduleFileIndex;
+  public ModulePackageIndexImpl(ModuleRootManager moduleRootManager, DirectoryIndex directoryIndex) {
+    myModuleFileIndex = moduleRootManager.getFileIndex();
     myDirectoryIndex = directoryIndex;
   }
 

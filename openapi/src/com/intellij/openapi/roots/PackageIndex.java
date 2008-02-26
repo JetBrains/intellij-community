@@ -1,8 +1,6 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Query;
@@ -11,10 +9,6 @@ import org.jetbrains.annotations.NotNull;
 public abstract class PackageIndex {
   public static PackageIndex getInstance(Project project) {
     return ServiceManager.getService(project, PackageIndex.class);
-  }
-
-  public static PackageIndex getInstance(Module module) {
-    return ModuleServiceManager.getService(module, PackageIndex.class);
   }
 
   /**

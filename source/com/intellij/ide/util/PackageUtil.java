@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 public class PackageUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.util.PackageUtil");
@@ -229,7 +230,7 @@ public class PackageUtil {
     final PsiManager manager = PsiManager.getInstance(module.getProject());
     final String packageName = rootPackage.getQualifiedName();
     final List<PsiDirectory> moduleDirectoryList = new ArrayList<PsiDirectory>();
-    PackageIndex.getInstance(module).getDirsByPackageName(packageName, false).forEach(new Processor<VirtualFile>() {
+    ModulePackageIndex.getInstance(module).getDirsByPackageName(packageName, false).forEach(new Processor<VirtualFile>() {
       public boolean process(final VirtualFile directory) {
         moduleDirectoryList.add(manager.findDirectory(directory));
         return true;
@@ -245,7 +246,7 @@ public class PackageUtil {
     while (true) {
       PsiPackage aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(nameToMatch);
       if (aPackage != null && isWritablePackage(aPackage)) return aPackage;
-      int lastDotIndex = nameToMatch.lastIndexOf(".");
+      int lastDotIndex = nameToMatch.lastIndexOf('.');
       if (lastDotIndex >= 0) {
         nameToMatch = nameToMatch.substring(0, lastDotIndex);
       }
@@ -280,14 +281,15 @@ public class PackageUtil {
 
     String nameToMatch = packageName;
     while (true) {
-      Query<VirtualFile> vFiles = PackageIndex.getInstance(module).getDirsByPackageName(nameToMatch, false);
+      Query<VirtualFile> vFiles = ModulePackageIndex.getInstance(module).getDirsByPackageName(nameToMatch, false);
       PsiDirectory directory = getWritableDirectory(vFiles, manager);
       if (directory != null) return JavaDirectoryService.getInstance().getPackage(directory);
 
-      int lastDotIndex = nameToMatch.lastIndexOf(".");
+      int lastDotIndex = nameToMatch.lastIndexOf('.');
       if (lastDotIndex >= 0) {
         nameToMatch = nameToMatch.substring(0, lastDotIndex);
-      } else {
+      }
+      else {
         return null;
       }
     }
@@ -320,5 +322,22 @@ public class PackageUtil {
       }
     }
     return true;
+  }
+
+  public static PsiDirectory createSubdirectories(final String subDirName, PsiDirectory baseDirectory) throws IncorrectOperationException {
+    StringTokenizer tokenizer = new StringTokenizer(subDirName, ".");
+    PsiDirectory dir = baseDirectory;
+    while (tokenizer.hasMoreTokens()) {
+      String packName = tokenizer.nextToken();
+      if (tokenizer.hasMoreTokens()) {
+        PsiDirectory existingDir = dir.findSubdirectory(packName);
+        if (existingDir != null) {
+          dir = existingDir;
+          continue;
+        }
+      }
+      dir = dir.createSubdirectory(packName);
+    }
+    return dir;
   }
 }
