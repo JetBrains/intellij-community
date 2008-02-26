@@ -26,9 +26,9 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.errorView.ContentManagerProvider;
+import com.intellij.ui.errorView.ErrorViewFactory;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
@@ -244,7 +244,7 @@ public class CvsOperationExecutor {
       tabbedWindow.hideErrors();
     }
     else {
-      ErrorTreeView errorTreeView = tabbedWindow.addErrorsTreeView(PeerFactory.getInstance().getErrorViewFactory()
+      ErrorTreeView errorTreeView = tabbedWindow.addErrorsTreeView(ErrorViewFactory.SERVICE.getInstance()
                                                                    .createErrorTreeView(myProject,
                                                                                         null,
                                                                                         true,

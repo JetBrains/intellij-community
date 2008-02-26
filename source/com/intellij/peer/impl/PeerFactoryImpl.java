@@ -43,7 +43,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.TextComponent;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.errorView.ErrorViewFactory;
-import com.intellij.ui.errorView.impl.ErrorViewFactoryImpl;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.Function;
@@ -66,7 +65,6 @@ import java.net.InetAddress;
 
 public class PeerFactoryImpl extends PeerFactory {
   private final UIHelper myUIHelper = new MyUIHelper();
-  private final ErrorViewFactory myErrorViewFactory = new ErrorViewFactoryImpl();
   private final FileSystemTreeFactoryImpl myFileSystemTreeFactory = new FileSystemTreeFactoryImpl();
 
   public FileStatusFactory getFileStatusFactory() {
@@ -90,7 +88,7 @@ public class PeerFactoryImpl extends PeerFactory {
   }
 
   public ErrorViewFactory getErrorViewFactory() {
-    return myErrorViewFactory;
+    return ErrorViewFactory.SERVICE.getInstance();
   }
 
   public ContentFactory getContentFactory() {

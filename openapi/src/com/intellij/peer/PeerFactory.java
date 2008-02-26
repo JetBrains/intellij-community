@@ -62,6 +62,7 @@ public abstract class PeerFactory {
 
   public abstract UIHelper getUIHelper();
 
+  @Deprecated
   public abstract ErrorViewFactory getErrorViewFactory();
 
   @Deprecated

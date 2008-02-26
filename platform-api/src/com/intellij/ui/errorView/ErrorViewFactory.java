@@ -16,10 +16,21 @@
 package com.intellij.ui.errorView;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.ErrorTreeView;
 
 public interface ErrorViewFactory {
   ErrorTreeView createErrorTreeView(Project project, String string, boolean createExitAction, AnAction[] extraPopupMenuActions,
                                     AnAction[] extraRightToolbarGroupActions, ContentManagerProvider contentManagerProvider);
+
+
+  class SERVICE {
+    private SERVICE() {
+    }
+
+    public static ErrorViewFactory getInstance() {
+      return ServiceManager.getService(ErrorViewFactory.class);
+    }
+  }
 }
