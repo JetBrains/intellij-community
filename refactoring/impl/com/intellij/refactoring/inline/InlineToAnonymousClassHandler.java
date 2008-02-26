@@ -34,11 +34,15 @@ public class InlineToAnonymousClassHandler {
     dlg.show();
   }
 
+  @Nullable
   public static PsiCall findCallToInline(final Editor editor) {
     PsiCall callToInline = null;
     PsiReference reference = editor != null ? TargetElementUtilBase.findReference(editor) : null;
     if (reference != null) {
-      callToInline = RefactoringUtil.getEnclosingConstructorCall((PsiJavaCodeReferenceElement)reference.getElement());
+      final PsiElement element = reference.getElement();
+      if (element instanceof PsiJavaCodeReferenceElement) {
+        callToInline = RefactoringUtil.getEnclosingConstructorCall((PsiJavaCodeReferenceElement)element);
+      }
     }
     return callToInline;
   }
