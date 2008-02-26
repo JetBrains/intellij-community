@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2;
 
 import com.intellij.CvsBundle;
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsInfo;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
@@ -16,7 +17,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.text.SyncDateFormat;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -222,7 +222,7 @@ public class CvsUtil {
   }
 
   private static String getLineSeparator() {
-    return CodeStyleSettingsManager.getInstance().getCurrentSettings().getLineSeparator();
+    return CodeStyleFacade.getInstance().getLineSeparator();
   }
 
   public static boolean fileIsLocallyRemoved(File file) {
