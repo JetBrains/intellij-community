@@ -13,6 +13,10 @@ public class TreeUIHelperImpl extends TreeUIHelper {
     TreeToolTipHandler.install(tree);
   }
 
+  public void installToolTipHandler(final JTable table) {
+    TableToolTipHandler.install(table);
+  }
+
   public void installEditSourceOnDoubleClick(final JTree tree) {
     EditSourceOnDoubleClickHandler.install(tree);
   }

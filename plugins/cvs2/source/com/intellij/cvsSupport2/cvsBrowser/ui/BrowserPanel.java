@@ -25,10 +25,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.UIHelper;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +56,7 @@ public class BrowserPanel extends JPanel implements DataProvider {
     myTree.init();
     myCheckoutHelper = new CheckoutHelper(configuration, this);
 
-    UIHelper uiHelper = PeerFactory.getInstance().getUIHelper();
+    TreeUIHelper uiHelper = TreeUIHelper.getInstance();
 
     uiHelper.installToolTipHandler(myTree.getTree());
     uiHelper.installEditSourceOnDoubleClick(myTree.getTree());

@@ -2,10 +2,10 @@ package com.intellij.cvsSupport2.cvsBrowser;
 
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.openapi.project.Project;
-import com.intellij.peer.PeerFactory;
-import com.intellij.ui.UIHelper;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -18,8 +18,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
-
-import org.jetbrains.annotations.NonNls;
 
 public class CvsTree extends JPanel {
   private CvsElement[] myCurrentSelection = new CvsElement[0];
@@ -122,7 +120,7 @@ public class CvsTree extends JPanel {
     myTree.setCellRenderer(new Cvs2Renderer());
     addSelectionListener();
 
-    UIHelper uiHelper = PeerFactory.getInstance().getUIHelper();
+    TreeUIHelper uiHelper = TreeUIHelper.getInstance();
     uiHelper.installToolTipHandler(myTree);
     uiHelper.installTreeSpeedSearch(myTree);
     TreeUtil.installActions(myTree);

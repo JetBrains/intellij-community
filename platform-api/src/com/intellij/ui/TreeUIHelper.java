@@ -13,6 +13,7 @@ public abstract class TreeUIHelper {
   }
 
   public abstract void installToolTipHandler(JTree tree);
+  public abstract void installToolTipHandler(JTable table);
 
   public abstract void installEditSourceOnDoubleClick(JTree tree);
 

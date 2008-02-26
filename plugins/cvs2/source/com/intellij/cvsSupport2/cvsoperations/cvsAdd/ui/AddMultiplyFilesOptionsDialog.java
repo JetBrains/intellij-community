@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsAdd.ui;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsActionPlaces;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
 import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
@@ -10,8 +11,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ComboBoxTableCellEditor;
@@ -20,7 +21,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.ui.treetable.TreeTable;
 import com.intellij.util.ui.treetable.TreeTableModel;
-import com.intellij.CvsBundle;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -202,7 +202,7 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
     myTreeTable.setRootVisible(false);
 
     myTreeTable.getTree().setCellRenderer(new AddedFileCellRenderer());
-    PeerFactory.getInstance().getUIHelper().installToolTipHandler(myTreeTable);
+    TreeUIHelper.getInstance().installToolTipHandler(myTreeTable);
     TreeUtil.installActions(myTreeTable.getTree());
   }
 
