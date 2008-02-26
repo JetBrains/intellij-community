@@ -5,19 +5,19 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryConfiguration;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.wm.ToolWindowId;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
@@ -109,6 +109,8 @@ public abstract class GenericProgramRunner<Settings extends JDOMExternalizable, 
     Runnable startRunnable = new Runnable() {
       public void run() {
         try {
+          if (project.isDisposed()) return;
+          
           final RunContentDescriptor descriptor =
             doExecute(state, profile, project, reuseContent, settings, configurationSettings);
 
