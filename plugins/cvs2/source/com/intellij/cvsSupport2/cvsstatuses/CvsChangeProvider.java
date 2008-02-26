@@ -12,8 +12,8 @@ import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.history.LocalHistory;
 import com.intellij.history.FileRevisionTimestampComparator;
+import com.intellij.history.LocalHistory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -24,10 +24,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.util.containers.HashMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
@@ -89,7 +89,7 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private void processEntriesIn(@NotNull VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively) {
-    final FilePath path = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir);
+    final FilePath path = VcsContextFactory.SERVICE.getInstance().createFilePathOn(dir);
     if (!scope.belongsTo(path)) return;
     final DirectoryContent dirContent = getDirectoryContent(dir);
 
@@ -160,7 +160,7 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private void processFile(final VirtualFile dir, @Nullable VirtualFile file, Entry entry, final ChangelistBuilder builder) {
-    final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir, entry.getFileName());
+    final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(dir, entry.getFileName());
     final FileStatus status = CvsStatusProvider.getStatus(file, entry);
     final VcsRevisionNumber number = new CvsRevisionNumber(entry.getRevision());
     processStatus(filePath, file, status, number, entry.isBinary(), builder);
@@ -207,7 +207,7 @@ public class CvsChangeProvider implements ChangeProvider {
         }
       }
     }
-    else if (!scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(parentDir))) {
+    else if (!scope.belongsTo(VcsContextFactory.SERVICE.getInstance().createFilePathOn(parentDir))) {
       // check if we're doing a partial refresh below a switched dir (IDEADEV-16611)
       final String parentBranch = ChangeListManager.getInstance(myVcs.getProject()).getSwitchedBranch(parentDir);
       if (parentBranch != null) {
