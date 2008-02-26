@@ -148,7 +148,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     //add starter configuration parameters
     String groovyHome = config.getGroovyInstallPath();
     if (groovyHome != null) {
-      params.getVMParametersList().addParametersString("-Dgroovy.home=" + groovyHome);
+      params.getVMParametersList().addParametersString("-Dgroovy.home=" + "\"" + groovyHome + "\"");
     }
 
     // add user parameters
@@ -179,7 +179,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
       }
     }
 
-    params.getProgramParametersList().add(workDir + File.pathSeparator + buffer.toString());
+    params.getProgramParametersList().add("\"" + workDir + File.pathSeparator + buffer.toString() + "\"");
     params.getProgramParametersList().add("--debug");
   }
 
