@@ -26,7 +26,7 @@ import java.util.Set;
 /**
  * @author Mike
  */
-public class OldXmlParsing implements ElementType, XmlElementType {
+public class OldXmlParsing implements XmlElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.xml.XmlParser");
 
   public static final TokenSet XML_WHITE_SPACE_OR_COMMENT_BIT_SET =

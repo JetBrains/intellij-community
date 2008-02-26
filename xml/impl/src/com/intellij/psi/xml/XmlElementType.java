@@ -4,14 +4,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.OldXmlLexer;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.impl.source.parsing.xml.DTDMarkupParser;
-import com.intellij.psi.impl.source.parsing.xml.DTDParser;
+import com.intellij.psi.impl.source.parsing.xml.XmlParsingContext;
 import com.intellij.psi.impl.source.tree.CharTableBasedLeafElementImpl;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.xml.IXmlElementType;
+import com.intellij.util.CharTable;
 
 
 public interface XmlElementType extends XmlTokenType {
@@ -52,8 +52,9 @@ public interface XmlElementType extends XmlTokenType {
   IElementType DTD_FILE = new IChameleonElementType("DTD_FILE", StdLanguages.DTD){
     public ASTNode parseContents(ASTNode chameleon) {
       final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
-      final DTDParser parser = new DTDParser();
-      return parser.parse(chars, 0, chars.length(), SharedImplUtil.findCharTableByTree(chameleon), SharedImplUtil.getManagerByTree(chameleon));
+      final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
+      final XmlParsingContext parsingContext = new XmlParsingContext(table);
+      return parsingContext.getXmlParsing().parse(new OldXmlLexer(), chars, 0, chars.length(), SharedImplUtil.getManagerByTree(chameleon));
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return true;}
   };
@@ -61,8 +62,9 @@ public interface XmlElementType extends XmlTokenType {
   IElementType XML_MARKUP = new IChameleonElementType("XML_MARKUP_DECL", StdLanguages.XML){
     public ASTNode parseContents(ASTNode chameleon) {
       final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
-      final DTDMarkupParser parser = new DTDMarkupParser();
-      return parser.parse(chars, 0, chars.length(), SharedImplUtil.findCharTableByTree(chameleon), SharedImplUtil.getManagerByTree(chameleon));
+      final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
+      final XmlParsingContext parsingContext = new XmlParsingContext(table);
+      return parsingContext.getXmlParsing().parseMarkupDecl(new OldXmlLexer(), chars, 0, chars.length(), SharedImplUtil.getManagerByTree(chameleon));
     }
 
     public boolean isParsable(CharSequence buffer, final Project project) {
