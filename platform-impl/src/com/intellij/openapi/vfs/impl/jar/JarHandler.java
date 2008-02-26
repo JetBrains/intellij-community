@@ -54,8 +54,10 @@ public class JarHandler implements FileSystemInterface {
   public JarHandler(final JarFileSystemImpl fileSystem, String path) {
     myFileSystem = fileSystem;
     myBasePath = path;
+  }
 
-    NewVirtualFile localJarFile = (NewVirtualFile)LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+  public void refreshLocalFileForJar() {
+    NewVirtualFile localJarFile = (NewVirtualFile)LocalFileSystem.getInstance().refreshAndFindFileByPath(myBasePath);
     if (localJarFile != null) {
       localJarFile.markDirty();
     }
