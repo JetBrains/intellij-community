@@ -1,8 +1,6 @@
 package com.intellij.peer.impl;
 
 import com.intellij.execution.runners.ProcessProxyFactory;
-import com.intellij.ide.CopyPasteDelegator;
-import com.intellij.ide.CopyPasteSupport;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.util.DeleteHandler;
@@ -53,7 +51,6 @@ import org.apache.xmlrpc.IdeaAwareWebServer;
 import org.apache.xmlrpc.IdeaAwareXmlRpcServer;
 import org.apache.xmlrpc.WebServer;
 import org.apache.xmlrpc.XmlRpcServer;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -181,20 +178,6 @@ public class PeerFactoryImpl extends PeerFactory {
         JavaPsiFacade.getInstance(project).getElementFactory().createExpressionCodeFragment(text, context, type, true);
       final Document document = PsiDocumentManager.getInstance(project).getDocument(fragment);
       return new EditorTextField(document, project, StdFileTypes.JAVA);
-    }
-
-    public CopyPasteSupport createPsiBasedCopyPasteSupport(Project project, JComponent keyReceiver, final PsiElementSelector dataSelector) {
-      return new CopyPasteDelegator(project, keyReceiver) {
-        @NotNull
-        protected PsiElement[] getSelectedElements() {
-          PsiElement[] elements = dataSelector.getSelectedElements();
-          return elements == null ? PsiElement.EMPTY_ARRAY : elements;
-        }
-      };
-    }
-
-    public DeleteProvider createPsiBasedDeleteProvider() {
-      return new DeleteHandler.DefaultDeleteProvider();
     }
 
     public PackageChooser createPackageChooser(String title, Project project) {

@@ -15,8 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.ide.DeleteProvider;
-import com.intellij.ide.CopyPasteSupport;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.ui.SplitterProportionsData;
@@ -78,14 +76,6 @@ public interface UIHelper {
    * @param project
    */
   TextComponent createTypedTextField(final String text, PsiType type, PsiElement context, final Project project);
-
-  interface PsiElementSelector {
-    PsiElement[] getSelectedElements();
-  }
-
-  CopyPasteSupport createPsiBasedCopyPasteSupport(Project project, JComponent keyReceiver, PsiElementSelector dataSelector);
-
-  DeleteProvider createPsiBasedDeleteProvider();
 
   PackageChooser createPackageChooser(String title, Project project);
 }
