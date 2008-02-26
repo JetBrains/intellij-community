@@ -513,7 +513,7 @@ public class RecordUtil {
     throws PersistentStringEnumerator.CorruptedException {
     File ioFile = new File(cacheFolder, name);
     if (toDelete) {
-      LOG.assertTrue(FileUtil.delete(ioFile));
+      LOG.assertTrue(FileUtil.delete(ioFile), "Cannot delete " + ioFile);
     }
 
     PersistentStringEnumerator names = null;
