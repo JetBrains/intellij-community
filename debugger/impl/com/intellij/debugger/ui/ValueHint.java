@@ -181,7 +181,7 @@ public class ValueHint extends AbstractValueHint {
   }
 
   @Nullable
-  private static PsiExpression findExpression(PsiElement element) {
+  private static Pair<PsiExpression, TextRange> findExpression(PsiElement element) {
     if (!(element instanceof PsiIdentifier || element instanceof PsiKeyword)) {
       return null;
     }
@@ -210,7 +210,9 @@ public class ValueHint extends AbstractValueHint {
             context = context.getParent();
           }
         }
-        return JavaPsiFacade.getInstance(expression.getProject()).getElementFactory().createExpressionFromText(expression.getText(), context);
+        TextRange textRange = expression.getTextRange();
+        PsiExpression psiExpression = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory().createExpressionFromText(expression.getText(), context);
+        return Pair.create(psiExpression, textRange);
       }
     } catch (IncorrectOperationException e) {
       LOG.debug(e);
@@ -250,11 +252,10 @@ public class ValueHint extends AbstractValueHint {
         if(currentRange.get() == null) {
           PsiElement elementAtCursor = psiFile.findElementAt(offset);
           if (elementAtCursor == null) return;
-          PsiExpression expression;
-          expression = findExpression(elementAtCursor);
-          if (expression == null) return;
-          selectedExpression.set(expression);
-          currentRange.set(expression.getTextRange());
+          Pair<PsiExpression, TextRange> pair = findExpression(elementAtCursor);
+          if (pair == null) return;
+          selectedExpression.set(pair.getFirst());
+          currentRange.set(pair.getSecond());
         }
       }
     });
