@@ -4,16 +4,18 @@ import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.bean.ExceptionBean;
 import com.intellij.errorreport.bean.NotifierBean;
-import com.intellij.errorreport.error.*;
+import com.intellij.errorreport.error.InternalEAPException;
+import com.intellij.errorreport.error.NewBuildException;
+import com.intellij.errorreport.error.NoSuchEAPUserException;
+import com.intellij.errorreport.error.ThreadClosedException;
 import com.intellij.errorreport.itn.ITNProxy;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.idea.IdeaLogger;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.net.HttpConfigurable;
-import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
@@ -112,7 +114,7 @@ public class ErrorReportSender {
   private SendTask sendTask;
 
   public void prepareError(Project project, Throwable exception)
-    throws IOException, XmlRpcException, NewBuildException, ThreadClosedException {
+    throws IOException, NewBuildException, ThreadClosedException {
 
     sendTask = new SendTask (project, exception);
 
@@ -129,7 +131,7 @@ public class ErrorReportSender {
   }
 
   public int sendError (NotifierBean notifierBean, ErrorBean error)
-    throws XmlRpcException, IOException, NoSuchEAPUserException, InternalEAPException {
+    throws IOException, NoSuchEAPUserException, InternalEAPException {
 
     sendTask.setErrorBean (error);
     sendTask.setNotifierBean (notifierBean);
@@ -138,8 +140,6 @@ public class ErrorReportSender {
       sendTask.sendReport();
       return sendTask.getThreadId();
     } catch (IOException e) {
-      throw e;
-    } catch (XmlRpcException e) {
       throw e;
     } catch (NoSuchEAPUserException e) {
       throw e;
