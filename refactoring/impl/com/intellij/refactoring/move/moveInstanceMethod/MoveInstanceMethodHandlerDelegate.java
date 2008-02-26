@@ -26,7 +26,7 @@ public class MoveInstanceMethodHandlerDelegate extends MoveHandlerDelegate {
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference) {
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
-      if (method.hasModifierProperty(PsiModifier.STATIC))  {
+      if (!method.hasModifierProperty(PsiModifier.STATIC))  {
         new MoveInstanceMethodHandler().invoke(project, new PsiElement[]{method}, dataContext);
         return true;
       }
