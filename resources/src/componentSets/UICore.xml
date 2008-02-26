@@ -50,4 +50,11 @@
       <implementation-class>com.intellij.execution.ui.layout.impl.RunnerLayoutSettings</implementation-class>
     </component>
   </application-components>
+  <project-components>
+    <component>
+      <interface-class>com.intellij.execution.ui.layout.RunnerLayoutUi$Factory</interface-class>
+      <implementation-class>com.intellij.execution.ui.layout.impl.RunnerLayoutUiFactoryImpl</implementation-class>
+      <skipForDummyProject/>
+    </component>
+  </project-components>
 </components>

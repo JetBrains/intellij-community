@@ -29,7 +29,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
-import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
@@ -94,7 +93,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     myManager = new LogFilesManager(project, this);
 
 
-    myUi = new RunnerLayoutUiImpl(project, this, "JavaDebugger", DebuggerBundle.message("title.generic.debug.dialog"), sessionName);
+    myUi = RunnerLayoutUi.Factory.getInstance(project).create("JavaDebugger", DebuggerBundle.message("title.generic.debug.dialog"), sessionName, this);
 
     myUi.initTabDefaults(0, "Debugger", null);
 
@@ -170,7 +169,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     vars.setActions(varsGroup, ActionPlaces.DEBUGGER_TOOLBAR, myVariablesPanel.getTree());
     myUi.addContent(vars, 0, RunnerLayoutUi.PlaceInGrid.center, false);
 
-    myUi.getContentManager().addContentManagerListener(new ContentManagerAdapter() {
+    myUi.addListener(new ContentManagerAdapter() {
       public void selectionChanged(ContentManagerEvent event) {
         final Content content = event.getContent();
         if (content.getComponent() instanceof DebuggerView) {
@@ -186,7 +185,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
           }
         }
       }
-    });
+    }, this);
 
 
     myUi.setSelected(framesContent);
@@ -228,19 +227,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     console.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR, myConsole.getPreferredFocusableComponent());
 
-    final ContentManager contentManager = myUi.getContentManager();
-    Content[] contents = contentManager.getContents();
-    final Content[] selected = contentManager.getSelectedContents();
-    contentManager.removeAllContents(false);
-
     myUi.addContent(console, 1, RunnerLayoutUi.PlaceInGrid.bottom, false);
-    for (Content each : contents) {
-      contentManager.addContent(each);
-    }
-    for (Content each : selected) {
-      contentManager.addSelectedContent(each);
-    }
-
 
     if (myConfiguration instanceof RunConfigurationBase && ((RunConfigurationBase)myConfiguration).needAdditionalConsole()) {
       myManager.initLogConsoles((RunConfigurationBase)myConfiguration, myRunContentDescriptor.getProcessHandler());
@@ -313,12 +300,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
       }
     };
     myContentListeners.put(log, l);
-    myUi.getContentManager().addContentManagerListener(l);
-    Disposer.register(this, new Disposable() {
-      public void dispose() {
-        myUi.getContentManager().removeContentManagerListener(myContentListeners.remove(log));
-      }
-    });
+    myUi.addListener(l, this);
   }
 
   public void removeLogConsole(final String path) {
@@ -333,7 +315,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
       }
     }
     if (componentToRemove != null) {
-      myUi.getContentManager().removeContentManagerListener(myContentListeners.remove(componentToRemove));
+      myUi.removeListener(myContentListeners.remove(componentToRemove));
       removeAdditionalTabComponent(componentToRemove);
     }
   }
@@ -478,7 +460,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   public void removeAdditionalTabComponent(AdditionalTabComponent component) {
     component.dispose();
     final Content content = myAdditionalContent.remove(component);
-    myUi.getContentManager().removeContent(content, true);
+    myUi.removeContent(content, true);
   }
 
   public void showFramePanel() {

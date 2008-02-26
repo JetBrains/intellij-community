@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,8 +55,9 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
   }
 
 
-  public void initTabDefaults(int id, String text, Icon icon) {
+  public RunnerLayoutUi initTabDefaults(int id, String text, Icon icon) {
     getLayout().setDefault(id, text, icon);
+    return this;
   }
 
   @NotNull
@@ -123,9 +125,9 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
     getContentManager().setSelectedContent(content);
   }
 
-  public void removeContent(final Content content, final boolean dispose) {
-    if (content == null) return;
-    getContentManager().removeContent(content, dispose);
+  public boolean removeContent(final Content content, final boolean dispose) {
+    if (content == null) return false;
+    return getContentManager().removeContent(content, dispose);
   }
 
   public void removeContent(String id, final boolean dispose) {
@@ -139,8 +141,9 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
     return myContentUI.getLayoutActions();
   }
 
-  public void setLeftToolbar(@NotNull final DefaultActionGroup leftToolbar, @NotNull final String place) {
+  public RunnerLayoutUi setLeftToolbar(@NotNull final DefaultActionGroup leftToolbar, @NotNull final String place) {
     myContentUI.setLeftToolbar(leftToolbar, place);
+    return this;
   }
 
   @Nullable
@@ -162,5 +165,20 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
     if (content != null) {
       setSelected(content);
     }
+  }
+
+  public RunnerLayoutUi addListener(@NotNull final ContentManagerListener listener, @NotNull final Disposable parent) {
+    final ContentManager mgr = getContentManager();
+    mgr.addContentManagerListener(listener);
+    Disposer.register(parent, new Disposable() {
+      public void dispose() {
+        mgr.removeContentManagerListener(listener);
+      }
+    });
+    return this;
+  }
+
+  public void removeListener(@NotNull final ContentManagerListener listener) {
+    getContentManager().removeContentManagerListener(listener);
   }
 }
