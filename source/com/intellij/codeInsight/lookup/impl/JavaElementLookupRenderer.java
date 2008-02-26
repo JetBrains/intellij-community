@@ -195,7 +195,7 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
       }
       return true;
     }
-    else{
+    else if (item.getObject() instanceof PsiElement) {
       final PsiElement element = (PsiElement)item.getObject();
       if (element.isValid()) {
         return isDeprecated(element);
