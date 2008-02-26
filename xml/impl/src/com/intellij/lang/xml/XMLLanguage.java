@@ -31,7 +31,7 @@ public class XMLLanguage extends CompositeLanguage {
 
   static {
     RenameInputValidatorRegistry.getInstance().registerInputValidator(
-      or(psiElement(XmlTag.class), psiElement(XmlAttribute.class), psiElement(XmlElementDecl.class), psiElement(XmlAttributeDecl.class)),
+      or(psiElement(XmlElementDecl.class), psiElement(XmlAttributeDecl.class)),
       new RenameInputValidator() {
         public boolean isInputValid(final String newName, final PsiElement element, final ProcessingContext context) {
           return newName.trim().matches("([\\d\\w\\_\\.\\-]+:)?[\\d\\w\\_\\.\\-]+");
