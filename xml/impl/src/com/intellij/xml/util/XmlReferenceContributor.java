@@ -4,7 +4,6 @@
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.encoding.HtmlHttpEquivEncodingReferenceProvider;
-import com.intellij.codeInsight.daemon.impl.analysis.encoding.JspEncodingInAttributeReferenceProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.encoding.XmlEncodingReferenceProvider;
 import com.intellij.lang.properties.PropertiesReferenceProvider;
 import com.intellij.patterns.PlatformPatterns;
@@ -108,7 +107,5 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
 
     XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, new String[] {"encoding"}, new ScopeFilter(new ParentElementFilter(new ClassFilter(XmlProcessingInstruction.class))), true,
                                                        new XmlEncodingReferenceProvider());
-    XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, new String[]{"contentType", "pageEncoding",}, new ScopeFilter(new ParentElementFilter(new NamespaceFilter(XmlUtil.JSP_URI), 2)), true,
-                                                       new JspEncodingInAttributeReferenceProvider());
   }
 }
