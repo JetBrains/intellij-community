@@ -1,6 +1,7 @@
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -126,7 +127,7 @@ public class Tab {
     return myIndex == 0;
   }
 
-  public boolean isDetached(View.PlaceInGrid place) {
+  public boolean isDetached(RunnerLayoutUi.PlaceInGrid place) {
     switch (place) {
       case bottom:
         return isBottomDetached();
@@ -141,7 +142,7 @@ public class Tab {
     return false;
   }
 
-  public void setDetached(View.PlaceInGrid place, boolean detached) {
+  public void setDetached(RunnerLayoutUi.PlaceInGrid place, boolean detached) {
     switch (place) {
       case bottom:
         setBottomDetached(detached);

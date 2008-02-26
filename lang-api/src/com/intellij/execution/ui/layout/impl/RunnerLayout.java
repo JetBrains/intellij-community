@@ -3,6 +3,7 @@ package com.intellij.execution.ui.layout.impl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -181,7 +182,7 @@ public class RunnerLayout {
     if (myDefaultViews.containsKey(id)) {
       return myDefaultViews.get(id);
     } else {
-      return setDefault(id, Integer.MAX_VALUE, View.PlaceInGrid.bottom, false);
+      return setDefault(id, Integer.MAX_VALUE, RunnerLayoutUi.PlaceInGrid.bottom, false);
     }
   }
 
@@ -192,13 +193,13 @@ public class RunnerLayout {
     return tab;
   }
 
-  public View.Default setDefault(String id, int tabIndex, View.PlaceInGrid placeInGrid, boolean isMinimized) {
+  public View.Default setDefault(String id, int tabIndex, RunnerLayoutUi.PlaceInGrid placeInGrid, boolean isMinimized) {
     final View.Default view = new View.Default(id, tabIndex, placeInGrid, isMinimized);
     myDefaultViews.put(id, view);
     return view;
   }
 
-  public View.PlaceInGrid getDefaultGridPlace(final Content content) {
+  public RunnerLayoutUi.PlaceInGrid getDefaultGridPlace(final Content content) {
     return getOrCreateDefault(getOrCreateContentId(content)).getPlaceInGrid();
   }
 

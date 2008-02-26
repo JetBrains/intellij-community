@@ -1,6 +1,7 @@
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.actions.RestoreViewAction;
+import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -654,7 +655,7 @@ public class RunnerContentUi
     try {
       myManager.removeContent(content, false);
       getStateFor(content).assignTab(myLayoutSettings.createNewTab());
-      getStateFor(content).setPlaceInGrid(View.PlaceInGrid.center);
+      getStateFor(content).setPlaceInGrid(RunnerLayoutUi.PlaceInGrid.center);
       myManager.addContent(content);
     }
     finally {

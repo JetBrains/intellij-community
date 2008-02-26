@@ -123,6 +123,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   public void addContent(final Content content, final Object constraints) {
+    if (myContents.contains(content)) return;
+
     ((ContentImpl)content).setManager(this);
     myContents.add(content);
     content.addPropertyChangeListener(this);

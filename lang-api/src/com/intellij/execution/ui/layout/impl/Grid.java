@@ -12,6 +12,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.containers.HashMap;
 import com.intellij.execution.ui.layout.impl.Tab;
 import com.intellij.execution.ui.layout.impl.View;
+import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
   private ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter();
   private Splitter mySplitter = new Splitter(true);
 
-  private HashMap<View.PlaceInGrid, GridCell> myPlaceInGrid2Cell = new HashMap<View.PlaceInGrid, GridCell>();
+  private HashMap<RunnerLayoutUi.PlaceInGrid, GridCell> myPlaceInGrid2Cell = new HashMap<RunnerLayoutUi.PlaceInGrid, GridCell>();
 
   private Placeholder myLeft = new Placeholder();
   private Placeholder myCenter = new Placeholder();
@@ -50,10 +51,10 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
 
     Disposer.register(myViewContext, this);
 
-    myPlaceInGrid2Cell.put(View.PlaceInGrid.left, new GridCell(myViewContext, this, myLeft, View.PlaceInGrid.left));
-    myPlaceInGrid2Cell.put(View.PlaceInGrid.center, new GridCell(myViewContext, this, myCenter, View.PlaceInGrid.center));
-    myPlaceInGrid2Cell.put(View.PlaceInGrid.right, new GridCell(myViewContext, this, myRight, View.PlaceInGrid.right));
-    myPlaceInGrid2Cell.put(View.PlaceInGrid.bottom, new GridCell(myViewContext, this, myBottom, View.PlaceInGrid.bottom));
+    myPlaceInGrid2Cell.put(RunnerLayoutUi.PlaceInGrid.left, new GridCell(myViewContext, this, myLeft, RunnerLayoutUi.PlaceInGrid.left));
+    myPlaceInGrid2Cell.put(RunnerLayoutUi.PlaceInGrid.center, new GridCell(myViewContext, this, myCenter, RunnerLayoutUi.PlaceInGrid.center));
+    myPlaceInGrid2Cell.put(RunnerLayoutUi.PlaceInGrid.right, new GridCell(myViewContext, this, myRight, RunnerLayoutUi.PlaceInGrid.right));
+    myPlaceInGrid2Cell.put(RunnerLayoutUi.PlaceInGrid.bottom, new GridCell(myViewContext, this, myBottom, RunnerLayoutUi.PlaceInGrid.bottom));
 
     setContent(mySplitter);
     setOpaque(false);
@@ -199,7 +200,7 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
 
   }
 
-  void saveSplitterProportions(final View.PlaceInGrid placeInGrid) {
+  void saveSplitterProportions(final RunnerLayoutUi.PlaceInGrid placeInGrid) {
     if (!RunnerContentUi.ensureValid(this)) return;
 
     switch (placeInGrid) {
@@ -220,7 +221,7 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
     return myViewContext.getTabFor(this);
   }
 
-  void restoreLastSplitterProportions(View.PlaceInGrid placeInGrid) {
+  void restoreLastSplitterProportions(RunnerLayoutUi.PlaceInGrid placeInGrid) {
     if (!RunnerContentUi.ensureValid(this)) return;
 
     switch (placeInGrid) {

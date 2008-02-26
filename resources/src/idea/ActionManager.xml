@@ -359,8 +359,8 @@
 
     <group id="RunnerLayoutActions">
       <group id="Runner.Layout" icon="/debugger/restoreLayout.png" popup="true">
-        <action id="Runner.RestoreLayout" class="com.intellij.debugger.actions.RestoreLayoutAction"/>
-        <action id="Runner.ToggleToolbarLayout" class="com.intellij.debugger.actions.ToggleToolbarLayout"/>
+        <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"/>
+        <action id="Runner.ToggleToolbarLayout" class="com.intellij.execution.ui.layout.actions.ToggleToolbarLayoutAction"/>
       </group>
 
       <group id="Runner.View.Popup">

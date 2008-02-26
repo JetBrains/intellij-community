@@ -2,6 +2,7 @@ package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.openapi.util.Key;
+import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import org.jdom.Element;
 
 public class View {
@@ -13,11 +14,11 @@ public class View {
   private Tab myTab;
   private int myTabIndex;
 
-  private PlaceInGrid myPlaceInGrid;
+  private RunnerLayoutUi.PlaceInGrid myPlaceInGrid;
 
   private boolean myMinimizedInGrid;
 
-  public View(String id, Tab tab, final PlaceInGrid placeInGrid, boolean minimizedInGrid) {
+  public View(String id, Tab tab, final RunnerLayoutUi.PlaceInGrid placeInGrid, boolean minimizedInGrid) {
     myID = id;
     myTab = tab;
     myPlaceInGrid = placeInGrid;
@@ -37,7 +38,7 @@ public class View {
     return myTab;
   }
 
-  public PlaceInGrid getPlaceInGrid() {
+  public RunnerLayoutUi.PlaceInGrid getPlaceInGrid() {
     return myPlaceInGrid;
   }
 
@@ -59,7 +60,7 @@ public class View {
     myMinimizedInGrid = minimizedInGrid;
   }
 
-  public void setPlaceInGrid(PlaceInGrid placeInGrid) {
+  public void setPlaceInGrid(RunnerLayoutUi.PlaceInGrid placeInGrid) {
     myPlaceInGrid = placeInGrid;
   }
 
@@ -75,18 +76,14 @@ public class View {
     myTabIndex = tabIndex;
   }
 
-  public static enum PlaceInGrid {
-    left, center, right, bottom
-  }
-
   public static class Default {
 
     private String myID;
     private int myTabID;
-    private PlaceInGrid myPlaceInGrid;
+    private RunnerLayoutUi.PlaceInGrid myPlaceInGrid;
     private boolean myMinimizedInGrid;
 
-    public Default(final String ID, final int tabID, final PlaceInGrid placeInGrid, final boolean minimizedInGrid) {
+    public Default(final String ID, final int tabID, final RunnerLayoutUi.PlaceInGrid placeInGrid, final boolean minimizedInGrid) {
       myID = ID;
       myTabID = tabID;
       myPlaceInGrid = placeInGrid;
@@ -98,7 +95,7 @@ public class View {
       return new View(myID, tab, myPlaceInGrid, myMinimizedInGrid);
     }
 
-    public PlaceInGrid getPlaceInGrid() {
+    public RunnerLayoutUi.PlaceInGrid getPlaceInGrid() {
       return myPlaceInGrid;
     }
   }

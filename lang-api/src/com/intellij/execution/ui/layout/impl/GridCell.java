@@ -1,6 +1,7 @@
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.actions.CloseViewAction;
+import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -39,14 +40,14 @@ public class GridCell implements Disposable {
 
   private JBTabs myTabs;
   private Grid.Placeholder myPlaceholder;
-  private View.PlaceInGrid myPlaceInGrid;
+  private RunnerLayoutUi.PlaceInGrid myPlaceInGrid;
 
   private ViewContext myContext;
   private CellTransform.Restore.List myRestoreFromDetach;
   private JBPopup myPopup;
   private boolean myDisposed;
 
-  public GridCell(ViewContext context, Grid container, Grid.Placeholder placeholder, View.PlaceInGrid placeInGrid) {
+  public GridCell(ViewContext context, Grid container, Grid.Placeholder placeholder, RunnerLayoutUi.PlaceInGrid placeInGrid) {
     myContext = context;
     myContainer = container;
 
@@ -89,7 +90,7 @@ public class GridCell implements Disposable {
     });
   }
 
-  public View.PlaceInGrid getPlaceInGrid() {
+  public RunnerLayoutUi.PlaceInGrid getPlaceInGrid() {
     return myPlaceInGrid;
   }
 
