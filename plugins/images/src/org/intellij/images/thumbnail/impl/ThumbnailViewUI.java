@@ -16,8 +16,9 @@
  */
 package org.intellij.images.thumbnail.impl;
 
-import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.CopyPasteSupport;
+import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.PsiActionSupportFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -25,12 +26,10 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.*;
-import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.UIHelper;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
 import org.intellij.images.thumbnail.ThumbnailView;
@@ -86,14 +85,14 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
         this.thumbnailView = thumbnailView;
 
-        final UIHelper uiHelper = PeerFactory.getInstance().getUIHelper();
-        copyPasteSupport = uiHelper.createPsiBasedCopyPasteSupport(thumbnailView.getProject(), this, new UIHelper.PsiElementSelector() {
+        final PsiActionSupportFactory factory = PsiActionSupportFactory.getInstance();
+        copyPasteSupport = factory.createPsiBasedCopyPasteSupport(thumbnailView.getProject(), this, new PsiActionSupportFactory.PsiElementSelector() {
             public PsiElement[] getSelectedElements() {
                 return (PsiElement[]) getData(DataConstants.PSI_ELEMENT_ARRAY);
             }
         });
 
-        deleteProvider = uiHelper.createPsiBasedDeleteProvider();
+        deleteProvider = factory.createPsiBasedDeleteProvider();
 
     }
 

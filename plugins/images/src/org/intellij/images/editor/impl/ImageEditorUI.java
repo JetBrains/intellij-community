@@ -15,16 +15,15 @@
  */
 package org.intellij.images.editor.impl;
 
-import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.CopyPasteSupport;
+import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.PsiActionSupportFactory;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.UIHelper;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageEditor;
@@ -71,14 +70,14 @@ final class ImageEditorUI extends JPanel implements DataProvider {
 
     ImageEditorUI(ImageEditor editor, EditorOptions editorOptions) {
         this.editor = editor;
-        final UIHelper uiHelper = PeerFactory.getInstance().getUIHelper();
-        copyPasteSupport = uiHelper.createPsiBasedCopyPasteSupport(editor.getProject(), this, new UIHelper.PsiElementSelector() {
+        final PsiActionSupportFactory factory = PsiActionSupportFactory.getInstance();
+        copyPasteSupport = factory.createPsiBasedCopyPasteSupport(editor.getProject(), this, new PsiActionSupportFactory.PsiElementSelector() {
             public PsiElement[] getSelectedElements() {
                 return (PsiElement[]) getData(DataConstants.PSI_ELEMENT_ARRAY);
             }
         });
 
-        deleteProvider = uiHelper.createPsiBasedDeleteProvider();
+        deleteProvider = factory.createPsiBasedDeleteProvider();
 
         ImageDocument document = imageComponent.getDocument();
         document.addChangeListener(changeListener);
