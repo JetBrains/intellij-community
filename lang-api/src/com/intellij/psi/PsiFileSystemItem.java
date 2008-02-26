@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.PsiElementProcessor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,7 @@ public interface PsiFileSystemItem extends PsiCheckedRenameElement, NavigationIt
   @Nullable
   VirtualFile getVirtualFile();
 
-  @NotNull
+  @NotNull @NonNls
   String getName();
 
   boolean processChildren(PsiElementProcessor<PsiFileSystemItem> processor);
