@@ -6,6 +6,7 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -19,7 +20,6 @@ import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 
 import java.io.File;
-import java.util.StringTokenizer;
 
 public class CreateDirectoryOrPackageAction extends AnAction {
   public CreateDirectoryOrPackageAction() {
@@ -163,20 +163,7 @@ public class CreateDirectoryOrPackageAction extends AnAction {
                   createdDir = myDirectory.createSubdirectory(subDirName);
                 }
                 else {
-                  StringTokenizer tokenizer = new StringTokenizer(subDirName, ".");
-                  PsiDirectory dir = myDirectory;
-                  while (tokenizer.hasMoreTokens()) {
-                    String packName = tokenizer.nextToken();
-                    if (tokenizer.hasMoreTokens()) {
-                      PsiDirectory existingDir = dir.findSubdirectory(packName);
-                      if (existingDir != null) {
-                        dir = existingDir;
-                        continue;
-                      }
-                    }
-                    dir = dir.createSubdirectory(packName);
-                  }
-                  createdDir = dir;
+                  createdDir = PackageUtil.createSubdirectories(subDirName, MyInputValidator.this.myDirectory);
                 }
 
 

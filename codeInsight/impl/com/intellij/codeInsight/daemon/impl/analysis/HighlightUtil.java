@@ -1816,6 +1816,7 @@ public class HighlightUtil {
         QuickFixAction.registerQuickFixAction(info, new ImportClassFix(ref));
         QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstnace());
         OrderEntryFix.registerFixes(info, ref);
+        MoveClassToModuleFix.registerFixes(info, ref);
         if (ref instanceof PsiReferenceExpression) {
           TextRange fixRange = HighlightMethodUtil.getFixRange(ref);
           PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
