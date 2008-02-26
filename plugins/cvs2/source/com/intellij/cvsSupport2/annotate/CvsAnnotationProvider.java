@@ -44,11 +44,11 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 
 import java.io.File;
 import java.util.List;
@@ -67,7 +67,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
                                CvsOperationExecutorCallback.EMPTY);
     if (executor.getResult().hasNoErrors()) {
       final CvsHistoryProvider historyProvider = (CvsHistoryProvider) CvsVcs2.getInstance(myProject).getVcsHistoryProvider();
-      final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file);
+      final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
       final List<VcsFileRevision> revisions = historyProvider.createRevisions(filePath);
       return new CvsFileAnnotation(operation.getContent(), operation.getLineAnnotations(), revisions, file);
     } else {

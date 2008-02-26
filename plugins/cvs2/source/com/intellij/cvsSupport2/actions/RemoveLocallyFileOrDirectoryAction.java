@@ -11,8 +11,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.peer.PeerFactory;
 import com.intellij.util.ui.OptionsDialog;
 
 import java.io.File;
@@ -82,7 +82,7 @@ public class RemoveLocallyFileOrDirectoryAction extends ActionOnSelectedElement 
   private static List<FilePath> filesToFilePaths(final ArrayList<File> files) {
     List<FilePath> result = new ArrayList<FilePath>();
     for(File f: files) {
-      result.add(PeerFactory.getInstance().getVcsContextFactory().createFilePathOnDeleted(f, false));
+      result.add(VcsContextFactory.SERVICE.getInstance().createFilePathOnDeleted(f, false));
     }
     return result;
   }

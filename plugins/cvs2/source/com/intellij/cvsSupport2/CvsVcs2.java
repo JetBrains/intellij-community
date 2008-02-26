@@ -27,6 +27,7 @@ import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
@@ -40,7 +41,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -308,7 +308,7 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
       final List<VcsFileRevision> revisions;
       if (hasLocalFile) {
         final CvsHistoryProvider historyProvider = (CvsHistoryProvider)getVcsHistoryProvider();
-        final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(cvsVirtualFile);
+        final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(cvsVirtualFile);
         revisions = historyProvider.createRevisions(filePath);
       }
       else {

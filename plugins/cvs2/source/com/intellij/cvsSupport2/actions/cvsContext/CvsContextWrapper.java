@@ -11,11 +11,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -35,11 +35,11 @@ public class CvsContextWrapper implements CvsContext {
   }
 
   public static CvsContext createCachedInstance(AnActionEvent event) {
-    return new CachedCvsContext(new CvsContextWrapper(event, PeerFactory.getInstance().getVcsContextFactory().createCachedContextOn(event)));
+    return new CachedCvsContext(new CvsContextWrapper(event, VcsContextFactory.SERVICE.getInstance().createCachedContextOn(event)));
   }
 
   public static CvsContext createInstance(AnActionEvent event) {
-    return new CvsContextWrapper(event, PeerFactory.getInstance().getVcsContextFactory().createContextOn(event));
+    return new CvsContextWrapper(event, VcsContextFactory.SERVICE.getInstance().createContextOn(event));
   }
 
   public boolean cvsIsActive() {

@@ -4,7 +4,6 @@ import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.update.UpdateByBranchUpdateSettings;
 import com.intellij.cvsSupport2.actions.update.UpdateSettings;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.common.*;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
@@ -14,8 +13,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.GlobalOptions;
@@ -107,7 +106,7 @@ public class UpdateOperation extends CvsOperationOnFiles {
 
   @Override
   public boolean fileIsUnderProject(File file) {
-    final FilePath path = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file);
+    final FilePath path = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
     if (!super.fileIsUnderProject(file)) {
       return false;
     }

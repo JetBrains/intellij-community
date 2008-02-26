@@ -22,10 +22,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +87,7 @@ public class CvsContentRevision implements ContentRevision {
 
   @NotNull
   public FilePath getFile() {
-    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(myLocalFile);
+    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(myLocalFile);
   }
 
   @NotNull

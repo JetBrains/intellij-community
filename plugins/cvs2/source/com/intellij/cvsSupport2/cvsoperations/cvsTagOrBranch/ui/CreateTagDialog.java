@@ -1,13 +1,13 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui;
 
 import com.intellij.CvsBundle;
-import com.intellij.peer.PeerFactory;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper;
 import com.intellij.cvsSupport2.ui.experts.importToCvs.CvsFieldValidator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
@@ -53,7 +53,7 @@ public class CreateTagDialog extends CvsTagDialog {
     for(FilePath filePath: files) {
       final VirtualFile root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(filePath);
       if (root != null) {
-        result.add(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(root));
+        result.add(VcsContextFactory.SERVICE.getInstance().createFilePathOn(root));
       }
     }
     return result;
