@@ -10,6 +10,7 @@ import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
@@ -248,6 +249,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
       long parentId = ((SrcRepositoryPsiElement)getParent()).getRepositoryId();
       DeclarationView view = (DeclarationView)getRepositoryManager().getItemView(parentId);
       String[] annotationStrings = view.getAnnotations(parentId);
+      if (annotationStrings == null) annotationStrings = ArrayUtil.EMPTY_STRING_ARRAY;
       repositoryAnnotations = annotationStrings.length == 0 ? PsiAnnotation.EMPTY_ARRAY : new PsiAnnotation[annotationStrings.length];
       for (int i = 0; i < annotationStrings.length; i++) {
         repositoryAnnotations[i] = new PsiAnnotationImpl(myManager, this, i);
