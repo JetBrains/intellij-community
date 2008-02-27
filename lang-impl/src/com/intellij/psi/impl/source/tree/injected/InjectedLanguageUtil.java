@@ -234,6 +234,7 @@ public class InjectedLanguageUtil {
                                  final List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers,
                                  final List<PsiLanguageInjectionHost.Shred> shreds) {
     final Map<LeafElement, String> newTexts = new THashMap<LeafElement, String>();
+    final StringBuilder catLeafs = new StringBuilder();
     ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementVisitor(){
       int currentHostNum = 0;
       LeafElement prevElement;
@@ -249,6 +250,8 @@ public class InjectedLanguageUtil {
       }
 
       @Override public void visitLeaf(LeafElement leaf) {
+        String leafText = leaf.getText();
+        catLeafs.append(leafText);
         TextRange range = leaf.getTextRange();
         int prefixLength = shredHostRange.getStartOffset();
         if (prefixLength > range.getStartOffset() && prefixLength < range.getEndOffset()) {
@@ -267,7 +270,7 @@ public class InjectedLanguageUtil {
         int end = range.getEndOffset() - prevHostsCombinedLength;
         if (end > shred.range.getEndOffset() - shred.suffix.length() && end <= shred.range.getEndOffset()) return;
         int startOffsetInHost = escapers.get(currentHostNum).getOffsetInHost(start - prefixLength, rangeInsideHost);
-        
+
         if (startOffsetInHost == -1 || startOffsetInHost == rangeInsideHost.getEndOffset()) {
           // no way next leaf might stand more than one shred apart
           incHostNum(range.getStartOffset());
@@ -297,7 +300,6 @@ public class InjectedLanguageUtil {
           newTexts.remove(prevElement);
           storeUnescapedTextFor(prevElement, null);
         }
-        String leafText = leaf.getText();
         if (!Comparing.strEqual(leafText, leafEncodedText)) {
           newTexts.put(leaf, leafEncodedText);
           storeUnescapedTextFor(leaf, leafText);
@@ -321,6 +323,13 @@ public class InjectedLanguageUtil {
       }
     });
 
+    String nodeText = parsedNode.getText();
+    assert nodeText.equals(catLeafs.toString()) : "Malformed PSI structure: leaf texts do not added up to the whole file text." +
+                                                  "\nFile text (from tree)  :'"+nodeText+"'" +
+                                                  "\nFile text (from PSI)   :'"+parsedNode.getPsi().getText()+"'" +
+                                                  "\nLeaf texts concatenated:'"+catLeafs+"';" +
+                                                  "\nFile root:"+parsedNode+
+                                                  "\nlanguage="+parsedNode.getPsi().getLanguage();
     for (LeafElement leaf : newTexts.keySet()) {
       String newText = newTexts.get(leaf);
       leaf.setText(newText);
@@ -628,6 +637,10 @@ public class InjectedLanguageUtil {
           if (shreds.isEmpty()) {
             throw new IllegalStateException("Seems you haven't called addPlace()");
           }
+          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+          assert !documentManager.isUncommited(myHostDocument);
+          assert myHostPsiFile.getText().equals(myHostDocument.getText());
+          
           DocumentWindowImpl documentWindow = new DocumentWindowImpl(myHostDocument, isOneLineEditor, prefixes, suffixes, relevantRangesInHostDocument);
           VirtualFileWindowImpl virtualFile = (VirtualFileWindowImpl)myInjectedManager.createVirtualFile(myLanguage, myHostVirtualFile, documentWindow, outChars);
 
@@ -656,7 +669,7 @@ public class InjectedLanguageUtil {
           virtualFile.setContent(null, documentWindow.getText(), false);
           FileDocumentManagerImpl.registerDocument(documentWindow, virtualFile);
           synchronized (PsiLock.LOCK) {
-            psiFile = registerDocument(documentWindow, psiFile, shreds, myHostPsiFile);
+            psiFile = registerDocument(documentWindow, psiFile, shreds, myHostPsiFile, documentManager);
             MyFileViewProvider myFileViewProvider = (MyFileViewProvider)psiFile.getViewProvider();
             myFileViewProvider.setVirtualFile(virtualFile);
             myFileViewProvider.forceCachedPsi(psiFile);
@@ -735,11 +748,11 @@ public class InjectedLanguageUtil {
   }
 
   private static PsiFile registerDocument(final DocumentWindowImpl documentWindow, final PsiFile injectedPsi,
-                                          List<PsiLanguageInjectionHost.Shred> shreds, final PsiFile hostPsiFile) {
+                                          List<PsiLanguageInjectionHost.Shred> shreds, final PsiFile hostPsiFile,
+                                          PsiDocumentManager documentManager) {
     DocumentEx hostDocument = documentWindow.getDelegate();
     List<DocumentWindow> injected = getCachedInjectedDocuments(hostPsiFile);
 
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(injectedPsi.getProject());
     for (int i = injected.size()-1; i>=0; i--) {
       DocumentWindowImpl oldDocument = (DocumentWindowImpl)injected.get(i);
       PsiFileImpl oldFile = (PsiFileImpl)documentManager.getCachedPsiFile(oldDocument);
