@@ -17,17 +17,15 @@ import javax.swing.*;
 public class GroovyVariableStructureViewElement extends GroovyStructureViewElement {
   final Icon icon;
   private final GrVariable myVariable;
-  private final GrVariableDeclaration myVariableDeclaration;
 
-  public GroovyVariableStructureViewElement(GrVariable variable, GrVariableDeclaration variableDeclaration) {
+  public GroovyVariableStructureViewElement(GrVariable variable) {
     super(variable);
     myVariable = variable;
-    myVariableDeclaration = variableDeclaration;
     icon = myVariable.getIcon(Iconable.ICON_FLAG_OPEN);
   }
 
   public ItemPresentation getPresentation() {
-    return new GroovyVariableItemPresentation(myVariable, myVariableDeclaration);
+    return new GroovyVariableItemPresentation(myVariable);
   }
 
   public TreeElement[] getChildren() {

@@ -3,7 +3,7 @@ package org.jetbrains.plugins.groovy.structure;
 import com.intellij.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -29,12 +29,11 @@ public class GroovyElementPresentation {
     }
   }
 
-  public static String getVariablePresentableText(GrVariableDeclaration varDecls, String variableName) {
-    assert varDecls != null;
+  public static String getVariablePresentableText(GrVariable variable) {
     StringBuffer presentableText = new StringBuffer();
 
-    presentableText.append(variableName);
-    GrTypeElement varTypeElement = varDecls.getTypeElementGroovy();
+    presentableText.append(variable.getName());
+    GrTypeElement varTypeElement = variable.getTypeElementGroovy();
 
     if (varTypeElement != null) {
       PsiType varType = varTypeElement.getType();

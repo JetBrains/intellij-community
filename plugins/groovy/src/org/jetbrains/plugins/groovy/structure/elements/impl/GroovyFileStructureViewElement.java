@@ -1,16 +1,15 @@
 package org.jetbrains.plugins.groovy.structure.elements.impl;
 
-import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.structure.elements.GroovyStructureViewElement;
-import org.jetbrains.plugins.groovy.structure.elements.GroovyStructureElementUtils;
 import org.jetbrains.plugins.groovy.structure.itemsPresentations.impl.GroovyFileItemPresentation;
 
 import java.util.ArrayList;
@@ -40,7 +39,9 @@ public class GroovyFileStructureViewElement extends GroovyStructureViewElement {
         children.add(new GroovyMethodStructureViewElement(((GrMethod) topStatement), false));
 
       } else if (topStatement instanceof GrVariableDeclaration) {
-        GroovyStructureElementUtils.addVariables(children, ((GrVariableDeclaration) topStatement));
+        for (final GrVariable variable : ((GrVariableDeclaration) topStatement).getVariables()) {
+          children.add(new GroovyVariableStructureViewElement(variable));
+        }
       }
     }
 

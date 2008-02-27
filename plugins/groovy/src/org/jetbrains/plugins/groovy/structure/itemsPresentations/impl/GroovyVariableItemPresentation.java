@@ -1,9 +1,9 @@
 package org.jetbrains.plugins.groovy.structure.itemsPresentations.impl;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.structure.GroovyElementPresentation;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.structure.itemsPresentations.GroovyItemPresentation;
+import com.intellij.psi.PsiType;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -11,16 +11,24 @@ import org.jetbrains.plugins.groovy.structure.itemsPresentations.GroovyItemPrese
  */
 public class GroovyVariableItemPresentation extends GroovyItemPresentation {
   private final GrVariable myVariable;
-  private final GrVariableDeclaration myVariableDeclaration;
 
-  public GroovyVariableItemPresentation(GrVariable variable, GrVariableDeclaration myVariableDeclaration) {
+  public GroovyVariableItemPresentation(GrVariable variable) {
     super(variable);
 
     myVariable = variable;
-    this.myVariableDeclaration = myVariableDeclaration;
   }
 
   public String getPresentableText() {
-    return GroovyElementPresentation.getVariablePresentableText(myVariableDeclaration, myVariable.getName());
+    StringBuffer presentableText = new StringBuffer();
+
+    presentableText.append(myVariable.getName());
+    GrTypeElement varTypeElement = myVariable.getTypeElementGroovy();
+
+    if (varTypeElement != null) {
+      PsiType varType = varTypeElement.getType();
+      presentableText.append(":");
+      presentableText.append(varType.getPresentableText());
+    }
+    return presentableText.toString();
   }
 }
