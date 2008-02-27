@@ -1,14 +1,25 @@
 <project name="Python IDE Release Build Bootstrap" default="main">
   <property name="project.home" value="${basedir}/../../.."/>
-  <property name="idea.dir" value="${project.home}/out/python/idea"/>
+  <property name="out.dir" value="${project.home}/out/python"/>
+  <property name="idea.dir" value="${out.dir}/idea"/>
+
+  <target name="clean">
+    <delete dir="${out.dir}/classes" failonerror="false"/>
+    <delete dir="${out.dir}/dist" failonerror="false"/>
+    <delete dir="${out.dir}/artifacts" failonerror="false"/>
+    <delete dir="${out.dir}/jar" failonerror="false"/>
+    <delete dir="${out.dir}/deploy" failonerror="false"/>
+    <delete dir="${idea.dir}/jdk15" failonerror="false"/>
+  </target>
 
   <target name="unzip">
+    <mkdir dir="${idea.dir}"/>
     <unzip dest="${idea.dir}/jdk15">
       <fileset dir="${idea.dir}" includes="idea*-jdk15.zip"/>
     </unzip>
   </target>
 
-  <target name="main" depends="unzip">
+  <target name="main" depends="clean,unzip">
     <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true">
 
       <jvmarg line="-Xms64m -Xmx512m"/>

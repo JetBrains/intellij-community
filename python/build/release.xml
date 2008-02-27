@@ -168,7 +168,8 @@
   </target>
 
   <target name="zip" depends="layout">
-    <zip destfile="${out.dir}/pycharm-${build.number}.zip">
+    <mkdir dir="${out.dir}/artifacts"/>
+    <zip destfile="${out.dir}/artifacts/pycharm-${build.number}.zip">
       <fileset dir="${out.dir}/dist"/>
     </zip>
   </target>
