@@ -192,7 +192,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
       String path = jdk.getBinPath();
       int index = path.indexOf("Home/bin");
       assert index > 0; 
-      path = path.substring(0, index) + File.separator + "Classes";
+      path = path.substring(0, index) + "Classes";
       jdkLibDir = new File(path).getAbsolutePath();
     } else {
       String path = jdk.getRtLibraryPath();
