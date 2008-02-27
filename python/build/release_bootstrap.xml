@@ -1,0 +1,33 @@
+<project name="Python IDE Release Build Bootstrap" default="main">
+  <property name="project.home" value="${basedir}/../../.."/>
+  <property name="idea.dir" value="${project.home}/out/python/idea"/>
+
+  <target name="unzip">
+    <unzip dest="${idea.dir}/jdk15">
+      <fileset dir="${idea.dir}" includes="idea*-jdk15.zip"/>
+    </unzip>
+  </target>
+
+  <target name="main" depends="unzip">
+    <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true">
+
+      <jvmarg line="-Xms64m -Xmx512m"/>
+      <jvmarg line="-Dbuild.number=${build.number}"/>
+
+      <classpath>
+        <fileset dir="${project.home}/build/lib">
+          <include name="antlayout.jar"/>
+          <include name="commons-net-1.4.1.jar"/>
+          <include name="jsch-0.1.28.jar"/>
+        </fileset>
+        <fileset dir="${project.home}/lib/ant/lib">
+          <include name="*.jar"/>
+        </fileset>
+      </classpath>
+
+      <arg value="-f"/>
+      <arg value="release.xml"/>
+      <arg value="-verbose"/>
+    </java>
+  </target>
+</project>

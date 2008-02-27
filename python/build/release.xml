@@ -5,20 +5,17 @@
   <property name="platform.dir" value="${out.dir}/platform/platform15"/>
   <property name="idea.dir" value="${out.dir}/idea"/>
 
-  <target name="release" depends="unzip,compile,jar,zip"/>
+  <target name="release" depends="compile,jar,zip"/>
 
   <target name="init">
     <tstamp/>
   </target>
 
-  <target name="unzip">
-    <unzip dest="${idea.dir}/jdk15">
-      <fileset dir="${idea.dir}" includes="idea*-jdk15.zip"/>
-    </unzip>
-  </target>
-
   <taskdef name="javac2" classname="com.intellij.ant.Javac2">
-    <classpath path="${basedir}/javac2.jar"/>
+    <classpath path="${idea.dir}/jdk15/lib/javac2.jar"/>
+    <classpath path="${idea.dir}/jdk15/lib/asm.jar"/>
+    <classpath path="${idea.dir}/jdk15/lib/asm-commons.jar"/>
+    <classpath path="${idea.dir}/jdk15/lib/jdom.jar"/>
   </taskdef>
 
   <fileset id="idea.libraries" dir="${idea.dir}/jdk15/lib">
@@ -121,7 +118,7 @@
     <replace file="${classes.dir}/idea/PythonApplicationInfo.xml" token="__BUILD_DATE__" value="${DSTAMP}"/>
   </target>
 
-  <target name="jar" depends="compile,unzip">
+  <target name="jar" depends="compile">
     <mkdir dir="${out.dir}/jar"/>
     <mkdir dir="${out.dir}/deploy"/>
     <unzip src="${platform.dir}/platform.jar" dest="${out.dir}/jar"/>
