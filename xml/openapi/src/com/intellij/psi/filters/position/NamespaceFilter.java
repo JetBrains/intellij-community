@@ -22,12 +22,10 @@ public class NamespaceFilter implements ElementFilter {
     if(element instanceof XmlTag){
       final XmlTag psiElement = (XmlTag)element;
       if (!psiElement.isValid()) return false;
-      String ns = psiElement.getNamespace();
+      final String ns = psiElement.getNamespace();
 
-      if(ns.length() > 0){
-        for (String aMyValue : myNamespaces) {
-          if (aMyValue.equals(ns)) return true;
-        }
+      for (String aMyValue : myNamespaces) {
+        if (aMyValue.equals(ns)) return true;
       }
 
       final PsiFile psiFile = psiElement.getContainingFile();
