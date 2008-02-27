@@ -172,11 +172,8 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     ProjectJdk jdk = params.getJdk();
     StringBuffer buffer = new StringBuffer();
     if (jdk != null) {
-      String path = jdk.getRtLibraryPath();
-      if (SystemInfo.isMac) {
-        path = getConvertedHomePath(jdk) + File.separator + ".." + File.separator + "Classes" + File.separator + "classes.jar";
-      }
-      String jdkLibDir = new File(path).getParentFile().getAbsolutePath();
+
+      String jdkLibDir = getJdkLibDir(jdk);
 
       for (String libPath : list) {
         if (!libPath.contains(jdkLibDir)) {
@@ -187,6 +184,19 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
 
     params.getProgramParametersList().add("\"" + workDir + File.pathSeparator + buffer.toString() + "\"");
     params.getProgramParametersList().add("--debug");
+  }
+
+  private String getJdkLibDir(ProjectJdk jdk) {
+    String jdkLibDir;
+    if (SystemInfo.isMac) {
+      String path = jdk.getBinPath();
+      path = path + File.separator + ".." + File.separator + ".." + File.separator + "Classes";
+      jdkLibDir = new File(path).getAbsolutePath();
+    } else {
+      String path = jdk.getRtLibraryPath();
+      jdkLibDir = new File(path).getParentFile().getAbsolutePath();
+    }
+    return jdkLibDir;
   }
 
   private void configureScript(JavaParameters params) {
@@ -200,13 +210,4 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   public Module getModule() {
     return getConfigurationModule().getModule();
   }
-
-  public static String getConvertedHomePath(Sdk sdk) {
-    String path = sdk.getHomePath().replace('/', File.separatorChar);
-    if (!path.endsWith(File.separator)) {
-      path += File.separator;
-    }
-    return path;
-  }
-
 }
