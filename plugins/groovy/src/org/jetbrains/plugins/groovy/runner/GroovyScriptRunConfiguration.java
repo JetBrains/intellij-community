@@ -172,9 +172,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     ProjectJdk jdk = params.getJdk();
     StringBuffer buffer = new StringBuffer();
     if (jdk != null) {
-
       String jdkLibDir = getJdkLibDir(jdk);
-
       for (String libPath : list) {
         if (!libPath.contains(jdkLibDir)) {
           buffer.append(libPath).append(File.pathSeparator);
@@ -186,13 +184,13 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     params.getProgramParametersList().add("--debug");
   }
 
-  private String getJdkLibDir(ProjectJdk jdk) {
+  private static String getJdkLibDir(ProjectJdk jdk) {
     String jdkLibDir;
     if (SystemInfo.isMac) {
       String path = jdk.getBinPath();
-      int index = path.indexOf("Home/bin");
-      assert index > 0; 
-      path = path.substring(0, index) + "Classes";
+      int index = path.indexOf("bin");
+      assert index > 0;
+      path = path.substring(0, index) + ".." + File.separator + "Classes";
       jdkLibDir = new File(path).getAbsolutePath();
     } else {
       String path = jdk.getRtLibraryPath();
