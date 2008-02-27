@@ -48,6 +48,9 @@
   <applicationService serviceInterface="com.intellij.application.options.CodeStyleSettingsUtil"
                       serviceImplementation="com.intellij.application.options.CodeStyleSettingsUtilImpl"/>
 
+  <applicationService serviceInterface="com.intellij.ide.PsiActionSupportFactory"
+                      serviceImplementation="com.intellij.ide.PsiActionSupportFactoryImpl"/>
+
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
   <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"
