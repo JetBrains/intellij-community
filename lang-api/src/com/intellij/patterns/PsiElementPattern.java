@@ -10,6 +10,8 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.collection;
 import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ProcessingContext;
@@ -147,6 +149,14 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
     return with(new PatternCondition<T>("withLanguage") {
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         return t.getLanguage().equals(language);
+      }
+    });
+  }
+
+  public Self withMetaData(final ElementPattern<? extends PsiMetaData> metaDataPattern) {
+    return with(new PatternCondition<T>("withMetaData") {
+      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+        return t instanceof PsiMetaOwner && metaDataPattern.accepts(((PsiMetaOwner)t).getMetaData(), context);
       }
     });
   }

@@ -7,14 +7,19 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import static com.intellij.patterns.PlatformPatterns.or;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import com.intellij.patterns.XmlPatterns;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import com.intellij.psi.impl.source.xml.behavior.CDATAOnAnyEncodedPolicy;
 import com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttributeDecl;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.refactoring.rename.RenameInputValidator;
 import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
 import com.intellij.util.ProcessingContext;
+import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +36,7 @@ public class XMLLanguage extends CompositeLanguage {
 
   static {
     RenameInputValidatorRegistry.getInstance().registerInputValidator(
-      or(psiElement(XmlElementDecl.class), psiElement(XmlAttributeDecl.class)),
+      or(XmlPatterns.xmlTag().withMetaData(PlatformPatterns.instanceOf(XmlElementDescriptor.class)), psiElement(XmlElementDecl.class), psiElement(XmlAttributeDecl.class)),
       new RenameInputValidator() {
         public boolean isInputValid(final String newName, final PsiElement element, final ProcessingContext context) {
           return newName.trim().matches("([\\d\\w\\_\\.\\-]+:)?[\\d\\w\\_\\.\\-]+");
