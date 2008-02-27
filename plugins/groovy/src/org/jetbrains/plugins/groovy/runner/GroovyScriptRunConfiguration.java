@@ -170,7 +170,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     // Clear module libraries from JDK's occurrences
     List<String> list = params.getClassPath().getPathList();
     ProjectJdk jdk = params.getJdk();
-    StringBuilder buffer = new StringBuilder();
+    StringBuffer buffer = new StringBuffer();
     if (jdk != null) {
       String jdkLibDir = getJdkLibDir(jdk);
       for (String libPath : list) {
@@ -188,7 +188,10 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     String jdkLibDir;
     if (SystemInfo.isMac) {
       String path = jdk.getBinPath();
-      jdkLibDir = new File(new File(path).getParentFile().getParentFile(), "Classes").getAbsolutePath();
+      int index = path.indexOf("bin");
+      assert index > 0;
+      path = path.substring(0, index) + ".." + File.separator + "Classes";
+      jdkLibDir = new File(path).getAbsolutePath();
     } else {
       String path = jdk.getRtLibraryPath();
       jdkLibDir = new File(path).getParentFile().getAbsolutePath();
