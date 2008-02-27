@@ -1,0 +1,5 @@
+-Xms32m
+-Xmx128m
+-XX:MaxPermSize=92m
+-ea
+-agentlib:yjpagent=disablej2ee,sessionname=PyCharm

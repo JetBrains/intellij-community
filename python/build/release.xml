@@ -1,0 +1,178 @@
+<project name="Python IDE Release Build" default="release">
+  <property name="idea.home" value="${basedir}/../../.."/>
+  <property name="out.dir" value="${idea.home}/out/python"/>
+  <property name="classes.dir" value="${out.dir}/classes"/>
+  <property name="platform.dir" value="${out.dir}/platform/platform15"/>
+  <property name="idea.dir" value="${out.dir}/idea"/>
+
+  <target name="release" depends="unzip,compile,jar,zip"/>
+
+  <target name="init">
+    <tstamp/>
+  </target>
+
+  <target name="unzip">
+    <unzip dest="${idea.dir}/jdk15">
+      <fileset dir="${idea.dir}" includes="idea*-jdk15.zip"/>
+    </unzip>
+  </target>
+
+  <taskdef name="javac2" classname="com.intellij.ant.Javac2">
+    
+  </taskdef>
+
+  <fileset id="idea.libraries" dir="${idea.dir}/jdk15/lib">
+    <include name="annotations.jar"/>
+    <include name="util.jar"/>
+    <include name="extensions.jar"/>
+    <include name="boot.jar"/>
+    <include name="bootstrap.jar"/>
+    <include name="commons-codec-1.3.jar"/>
+    <include name="commons-collections.jar"/>
+    <include name="xstream.jar"/>
+    <include name="jdom.jar"/>
+    <include name="picocontainer.jar"/>
+    <include name="jgoodies-forms.jar"/>
+    <include name="ui.jar"/>
+    <include name="jh.jar"/>
+    <include name="jna.jar"/>
+    <include name="jna-utils.jar"/>
+    <include name="yjp-controller-api-redist.jar"/>
+    <include name="log4j.jar"/>
+    <include name="trove4j*"/>
+    <include name="nanoxml-2.2.3.jar"/>
+    <include name="microba.jar"/>
+    <include name="alloy.jar"/>
+    <include name="resources.jar"/>
+    <include name="resources_en.jar"/>
+    <include name="icons.jar"/>
+    <include name="forms_rt.jar"/>
+  </fileset>
+
+  <path id="classpath.lib">
+      <fileset dir="${platform.dir}">
+          <include name = "?*.jar"/>
+      </fileset>
+    <fileset  refid="idea.libraries"/>
+  </path>
+
+  <path id="sourcepath">
+      <dirset dir="${basedir}/..">
+          <include name="resources"/>
+          <include name="src"/>
+      </dirset>
+  </path>
+
+  <!-- Compiler options -->
+  <property name="compiler.debug" value="on"/>
+  <property name="compiler.generate.no.warnings" value="off"/>
+  <property name="compiler.args" value=""/>
+  <property name="compiler.max.memory" value="256m"/>
+
+  <patternset id="sources.pt">
+      <exclude name="**/CVS/**"/>
+      <exclude name="**/SCCS/**"/>
+      <exclude name="**/RCS/**"/>
+      <exclude name="**/rcs/**"/>
+      <exclude name="**/.DS_Store/**"/>
+      <exclude name="**/.svn/**"/>
+      <exclude name="*/rb/*"/>
+  </patternset>
+  <patternset id="resources.pt">
+      <include name="**/?*.properties"/>
+      <include name="**/?*.template"/>
+      <include name="**/?*.xml"/>
+      <include name="**/?*.gif"/>
+      <include name="**/?*.png"/>
+      <include name="**/?*.txt"/>
+      <include name="**/?*.jpeg"/>
+      <include name="**/?*.jpg"/>
+      <include name="**/?*.html"/>
+      <include name="**/?*.dtd"/>
+      <include name="**/?*.tld"/>
+  </patternset>
+
+  <target name="compile" depends="init">
+    <mkdir dir="${classes.dir}"/>
+    <javac2 destdir="${classes.dir}"
+            debug="${compiler.debug}"
+            nowarn="${compiler.generate.no.warnings}"
+            memorymaximumsize="${compiler.max.memory}"
+            fork="true">
+      <compilerarg line="${compiler.args}"/>
+      <classpath refid="classpath.lib"/>
+      <src refid="sourcepath"/>
+      <patternset refid="sources.pt"/>
+    </javac2>
+
+    <!-- copy resources -->
+    <copy todir="${classes.dir}">
+        <fileset dir="${basedir}/../resources">
+            <patternset refid="resources.pt"/>
+            <type type="file"/>
+        </fileset>
+        <fileset dir="${basedir}/../src">
+            <patternset refid="resources.pt"/>
+            <type type="file"/>
+        </fileset>
+    </copy>
+
+    <replace file="${classes.dir}/idea/PythonApplicationInfo.xml" token="__BUILD_NUMBER__" value="${build.number}"/>
+    <replace file="${classes.dir}/idea/PythonApplicationInfo.xml" token="__BUILD_DATE__" value="${DSTAMP}"/>
+  </target>
+
+  <target name="jar" depends="compile,unzip">
+    <mkdir dir="${out.dir}/jar"/>
+    <mkdir dir="${out.dir}/deploy"/>
+    <unzip src="${platform.dir}/platform.jar" dest="${out.dir}/jar"/>
+    <jar jarfile="${out.dir}/deploy/pycharm.jar" compress="false">
+      <fileset dir="${out.dir}/classes"/>
+      <fileset dir="${out.dir}/jar"/>
+    </jar>
+  </target>
+
+  <target name="layout" depends="jar">
+    <layout todir="${out.dir}/dist" xmlns="antlib:jetbrains.antlayout">
+      <dir name="bin">
+        <fileset dir="${idea.dir}/jdk15/bin">
+          <include name="FileWatcher*.dll"/>
+          <include name="focuskiller*.dll"/>
+          <include name="yjpagent.dll"/>
+          <include name="append.bat"/>
+          <include name="log.xml"/>
+          <include name="log4j.dtd"/>
+        </fileset>
+        <fileset dir="${basedir}">
+          <include name="pycharm.bat"/>
+          <include name="idea.properties"/>
+          <include name="pycharm.exe.vmoptions"/>
+        </fileset>
+      </dir>
+      <dir name="lib">
+        <fileset dir="${platform.dir}" includes="platform-api.jar"/>
+        <fileset dir="${out.dir}/deploy"/>
+        <fileset refid="idea.libraries"/>
+      </dir>
+      <dir name="plugins">
+        <dir name="cvsIntegration">
+          <fileset dir="${idea.dir}/jdk15/plugins/cvsIntegration"/>
+        </dir>
+        <dir name="images">
+          <fileset dir="${idea.dir}/jdk15/plugins/images"/>
+        </dir>
+        <dir name="PerforceIntegration">
+          <fileset dir="${idea.dir}/jdk15/plugins/PerforceIntegration"/>
+        </dir>
+        <dir name="svn4idea">
+          <fileset dir="${idea.dir}/jdk15/plugins/svn4idea"/>
+        </dir>
+      </dir>
+    </layout>
+  </target>
+
+  <target name="zip" depends="layout">
+    <zip destfile="${out.dir}/pycharm-${build.number}.zip">
+      <fileset dir="${out.dir}/dist"/>
+    </zip>
+  </target>
+</project>
