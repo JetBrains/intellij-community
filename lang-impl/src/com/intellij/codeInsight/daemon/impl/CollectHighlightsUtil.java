@@ -59,22 +59,19 @@ public class CollectHighlightsUtil {
       int offset = currentOffset;
 
       @Override public void visitElement(PsiElement element) {
+        for (Condition<PsiElement> filter : filters) {
+          if (!filter.value(element)) return;
+        }
+
         PsiElement child = element.getFirstChild();
         if (child != null) {
           // composite element
           while (child != null) {
             if (offset > endOffset) break;
+
             int start = offset;
-
-            boolean skip = false;
-            for (Condition<PsiElement> filter : filters) {
-              if (!filter.value(child)) skip = true;
-            }
-
-            if (!skip) {
-              child.accept(this);
-              if (startOffset <= start && offset <= endOffset) result.add(child);
-            }
+            child.accept(this);
+            if (startOffset <= start && offset <= endOffset) result.add(child);
 
             child = child.getNextSibling();
           }
