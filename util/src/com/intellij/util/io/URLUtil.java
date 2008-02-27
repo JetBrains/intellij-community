@@ -48,12 +48,19 @@ public class URLUtil {
       return url.openStream();
     }
     catch(FileNotFoundException ex) {
-      if (protocol.equals("file") || protocol.equals("jar")) {
-        String file = url.getFile();
-        if (file.startsWith("/")) {
-          InputStream resourceStream = URLUtil.class.getResourceAsStream(file);
-          if (resourceStream != null) return resourceStream;
+      String file = null;
+      if (protocol.equals("file")) {
+        file = url.getFile();
+      }
+      else if (protocol.equals("jar")) {
+        int pos = url.getFile().indexOf("!");
+        if (pos >= 0) {
+          file = url.getFile().substring(pos+1);
         }
+      }
+      if (file != null && file.startsWith("/")) {
+        InputStream resourceStream = URLUtil.class.getResourceAsStream(file);
+        if (resourceStream != null) return resourceStream;
       }
       throw ex;
     }
