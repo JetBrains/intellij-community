@@ -190,7 +190,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     String jdkLibDir;
     if (SystemInfo.isMac) {
       String path = jdk.getBinPath();
-      path = path + File.separator + ".." + File.separator + ".." + File.separator + "Classes";
+      path = path.substring(0, path.indexOf("Home/bin")) + File.separator + "Classes";
       jdkLibDir = new File(path).getAbsolutePath();
     } else {
       String path = jdk.getRtLibraryPath();
