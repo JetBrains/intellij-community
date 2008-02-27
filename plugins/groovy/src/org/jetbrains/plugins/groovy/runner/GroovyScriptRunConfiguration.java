@@ -27,10 +27,12 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Element;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
@@ -170,7 +172,11 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     ProjectJdk jdk = params.getJdk();
     StringBuffer buffer = new StringBuffer();
     if (jdk != null) {
-      String jdkLibDir = new File(jdk.getRtLibraryPath()).getParentFile().getAbsolutePath();
+      String path = jdk.getRtLibraryPath();
+      if (SystemInfo.isMac) {
+        path = getConvertedHomePath(jdk) + File.separator + ".." + File.separator + "Classes" + File.separator + "classes.jar";
+      }
+      String jdkLibDir = new File(path).getParentFile().getAbsolutePath();
 
       for (String libPath : list) {
         if (!libPath.contains(jdkLibDir)) {
@@ -194,4 +200,13 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   public Module getModule() {
     return getConfigurationModule().getModule();
   }
+
+  public static String getConvertedHomePath(Sdk sdk) {
+    String path = sdk.getHomePath().replace('/', File.separatorChar);
+    if (!path.endsWith(File.separator)) {
+      path += File.separator;
+    }
+    return path;
+  }
+
 }
