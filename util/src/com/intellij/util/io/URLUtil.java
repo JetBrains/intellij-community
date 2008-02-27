@@ -18,6 +18,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.FileNotFoundException;
 import java.io.FilterInputStream;
@@ -38,16 +39,16 @@ public class URLUtil {
    */
   @NotNull
   public static InputStream openStream(final URL url) throws IOException {
-    final String protocol = url.getProtocol();
-    if (protocol.equals("jar")) {
-      return openJarStream(url);
-    }
-
+    @NonNls final String protocol = url.getProtocol();
     try {
+      if (protocol.equals("jar")) {
+        return openJarStream(url);
+      }
+
       return url.openStream();
     }
     catch(FileNotFoundException ex) {
-      if (protocol.equals("file")) {
+      if (protocol.equals("file") || protocol.equals("jar")) {
         String file = url.getFile();
         if (file.startsWith("/")) {
           InputStream resourceStream = URLUtil.class.getResourceAsStream(file);
