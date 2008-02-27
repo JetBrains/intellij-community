@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -27,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -68,10 +70,14 @@ public class GrDynamicImplicitMethodImpl extends GrDynamicImplicitElement {
         final DefaultMutableTreeNode desiredNode;
         final PsiElement method = myScope.getParent();
 
-        final PsiType[] parametersTypes = QuickfixUtil.getMethodParametersTypes(((GrCallExpression) method));
-        final String returnType = DynamicManager.getInstance(myProject).getMethodReturnType(module.getName(), expression.getQualifiedName(), ((GrReferenceExpression) myScope).getName(), parametersTypes);
+        final PsiType[] argumentTypes = QuickfixUtil.getMethodArgumentsTypes(((GrCallExpression) method));
+        final String[] argumentNames = QuickfixUtil.getMethodArgumentsNames(((GrCallExpression) method));
+        final List<Pair<String,PsiType>> pairs = QuickfixUtil.swapArgumentsAndTypes(argumentNames, argumentTypes);
+
+        final String returnType = DynamicManager.getInstance(myProject).getMethodReturnType(module.getName(), expression.getQualifiedName(), ((GrReferenceExpression) myScope).getName(), argumentTypes);
+
         desiredNode = TreeUtil.findNodeWithObject(classNode, new DMethodNode(new DMethodElement(
-            new DynamicVirtualMethod(refExpression.getName(), expression.getQualifiedName(), module.getName(), returnType, parametersTypes))));
+            new DynamicVirtualMethod(refExpression.getName(), expression.getQualifiedName(), module.getName(), returnType, pairs))));
 
         if (desiredNode == null) return;
         final TreePath path = TreeUtil.getPathFromRoot(desiredNode);

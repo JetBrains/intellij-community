@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -32,7 +33,7 @@ import com.intellij.util.ui.treetable.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DMethodNode;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DPClassNode;
@@ -188,9 +189,16 @@ public class DynamicToolWindowWrapper {
       DefaultMutableTreeNode methodTreeNode = null;
       final Set<MethodSignature> methods = DynamicManager.getInstance(project).findMethodsSignaturesOfClass(module.getName(), containingClassName);
       for (MethodSignature methodSignature : methods) {
-        final String returnType = DynamicManager.getInstance(project).getMethodReturnType(module.getName(), containingClassName, methodSignature.getName(), methodSignature.getParameterTypes());
-        methodTreeNode = new DefaultMutableTreeNode(new DMethodNode(new DMethodElement(new DynamicVirtualMethod(methodSignature.getName(), containingClassName, module.getName(), returnType, methodSignature.getParameterTypes()))));
-        containingClassNode.add(methodTreeNode);
+        final PsiType[] psiTypes = methodSignature.getParameterTypes();
+        final String returnType = DynamicManager.getInstance(project).getMethodReturnType(module.getName(), containingClassName, methodSignature.getName(), psiTypes);
+        List<Pair<String, PsiType>> pairsWithNullNames = new ArrayList<Pair<String, PsiType>>();
+
+//        for (PsiType psiType : psiTypes) {
+//          pairsWithNullNames.add(new Pair<String, PsiType>());
+//        }
+//
+//        methodTreeNode = new DefaultMutableTreeNode(new DMethodNode(new DMethodElement(new DynamicVirtualMethod(methodSignature.getName(), containingClassName, module.getName(), returnType, psiTypes))));
+//        containingClassNode.add(methodTreeNode);
       }
 
       rootNode.add(containingClassNode);
@@ -740,7 +748,7 @@ public class DynamicToolWindowWrapper {
           append(method.getName(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
           append("(", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
 
-          final PsiType[] types = ((DynamicVirtualMethod) method).getArguments();
+          final PsiType[] types = QuickfixUtil.getParameterTypes(((DynamicVirtualMethod) method).getArguments());
           for (PsiType type : types) {
             append(type.getPresentableText(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
           }

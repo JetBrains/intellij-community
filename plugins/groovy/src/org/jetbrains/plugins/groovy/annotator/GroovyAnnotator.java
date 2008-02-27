@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -767,18 +768,20 @@ public class GroovyAnnotator implements Annotator {
     final PsiElement parent = referenceExpression.getParent();
     if (!(parent instanceof GrMethodCallExpression)) return null;
 
-    GrArgumentList argumentList = ((GrMethodCallExpression) parent).getArgumentList();
-    final GrNamedArgument[] namedArguments;
-    if (argumentList == null) return null;
-    namedArguments = argumentList.getNamedArguments();
+    GrExpression[] expressionArgument = ((GrMethodCallExpression) parent).getExpressionArguments();
+//    final GrNamedArgument[] namedArguments;
+//    if (expressionArgument == null) return null;
+//    namedArguments = expressionArgument.getNamedArguments();
 
-    List<PsiType> types = new ArrayList<PsiType>();
+    List<Pair<String, PsiType>> types = new ArrayList<Pair<String, PsiType>>();
 
-    for (GrNamedArgument namedArgument : namedArguments) {
-      final GrArgumentLabel argumentLabel = namedArgument.getLabel();
-      if (argumentLabel != null) {
-        types.add(argumentLabel.getExpectedArgumentType());
-      }
+    for (GrExpression expression : expressionArgument) {
+//      final GrArgumentLabel argumentLabel = expression.getLabel();
+//      if (argumentLabel != null) {
+//        types.add(argumentLabel.getExpectedArgumentType());
+//      }
+
+      types.add(new Pair<String, PsiType>(expression.getText(), expression.getType()));
     }
     final Element methodElement = DynamicManager.getInstance(referenceExpression.getProject()).findConcreteDynamicMethod(module.getName(), qualifiedName, referenceExpression.getName(), types.toArray(PsiType.EMPTY_ARRAY));
 
@@ -792,7 +795,7 @@ public class GroovyAnnotator implements Annotator {
       if (superDynamicMethod != null) return null;
     }
 
-    return new DynamicVirtualMethod(referenceExpression.getName(), targetClass.getQualifiedName(), module.getName(), null, types.toArray(PsiType.EMPTY_ARRAY));
+    return new DynamicVirtualMethod(referenceExpression.getName(), targetClass.getQualifiedName(), module.getName(), null, types);
   }
 
   private DynamicVirtualProperty getDynamicPropertyElement(GrReferenceExpression referenceExpression, PsiClass targetClass, Module module, String qualifiedName) {

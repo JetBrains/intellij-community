@@ -27,7 +27,6 @@ public class DynamicFix implements IntentionAction {
     myReferenceExpression = referenceExpression;
   }
 
-
   @NotNull
   public String getText() {
     if (myDynamicElement instanceof DynamicVirtualProperty) {

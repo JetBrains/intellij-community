@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,8 +13,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
@@ -66,19 +65,62 @@ public class QuickfixUtil {
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
-  public static PsiType[] getMethodParametersTypes(GrCallExpression methodCall) {
-    final GrArgumentList argumentList = methodCall.getArgumentList();
+  public static PsiType[] getMethodArgumentsTypes(GrCallExpression methodCall) {
+    final GrExpression[] argumentList = methodCall.getExpressionArguments();
     List<PsiType> types = new ArrayList<PsiType>();
     if (argumentList != null) {
-      for (GrNamedArgument namedArgument : argumentList.getNamedArguments()) {
-        types.add(namedArgument.getLabel().getExpectedArgumentType());
+      for (GrExpression expression : argumentList) {
+        types.add(expression.getType());
       }
     }
 
     return types.toArray(PsiType.EMPTY_ARRAY);
   }
 
+  public static String[] getMethodArgumentsNames(GrCallExpression methodCall) {
+    final GrExpression[] argumentList = methodCall.getExpressionArguments();
+    List<String> names = new ArrayList<String>();
+    if (argumentList != null) {
+      for (GrExpression expression : argumentList) {
+        names.add(expression.getText());
+      }
+    }
+
+    return names.toArray(new String[]{""});
+  }
+
+  public static List<Pair<String, PsiType>> swapArgumentsAndTypes(String[] names, PsiType[] types){
+    List<Pair<String, PsiType>> result = new ArrayList<Pair<String, PsiType>>();
+
+    if (names.length != types.length) return null;
+
+    for (int i = 0; i < names.length; i++) {
+      String name = names[i];
+      result.add(new Pair<String, PsiType>(name, types[i]));
+    }
+
+    return result;
+  }
+
   public static boolean isMethosCall(GrReferenceExpression referenceExpression) {
     return referenceExpression.getParent() instanceof GrMethodCallExpression;
+  }
+
+  public static PsiType[] getParameterTypes(List<Pair<String, PsiType>> listOfPairs) {
+    final List<PsiType> result = new ArrayList<PsiType>();
+    for (Pair<String, PsiType> listOfPair : listOfPairs) {
+      result.add(listOfPair.getSecond());
+    }
+
+    return result.toArray(PsiType.EMPTY_ARRAY);
+  }
+
+  public static String[] getParameterNames(List<Pair<String, PsiType>> listOfPairs) {
+    final ArrayList<String> result = new ArrayList<String>();
+    for (Pair<String, PsiType> listOfPair : listOfPairs) {
+      result.add(listOfPair.getFirst());
+    }
+
+    return result.toArray(new String[]{""});
   }
 }

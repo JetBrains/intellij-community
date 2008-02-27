@@ -119,7 +119,7 @@ public abstract class DynamicManager implements ProjectComponent {
   * Finds dynamic property type
   */
 
-//  @NotNull
+  //  @NotNull
   public abstract String getPropertyType(String moduleName, String className, String propertyName);
 
   /*
@@ -153,8 +153,7 @@ public abstract class DynamicManager implements ProjectComponent {
 /*
   * Find dynamic property in class with name
   */
-
-    @Nullable
+  @Nullable
   public abstract Element findConcreteDynamicMethod(String moduleName, final String conatainingClassName, final String name, final PsiType[] types);
 
   @NotNull
@@ -162,7 +161,4 @@ public abstract class DynamicManager implements ProjectComponent {
 
   @Nullable
   public abstract String getMethodReturnType(String moduleName, String className, String methodName, PsiType[] paramTypes);
-
-//  @NotNull
-//  public abstract Pair<String, String>[] getMethodsAttributes(final String moduleName, final String conatainingClassName, String methodName);
 }

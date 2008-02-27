@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiSubstitutor;
@@ -22,6 +23,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import static org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DElement.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualMethod;
@@ -143,7 +145,9 @@ public class DynamicManagerImpl extends DynamicManager {
     if (isProperty) {
       element = findConcreteDynamicProperty(rootElement, containingClassName, elementName);
     } else if (isMethod) {
-      element = findConcreteDynamicMethod(rootElement, containingClassName, elementName, ((DynamicVirtualMethod) virtualElement).getArguments());
+      final List<Pair<String,PsiType>> list = ((DynamicVirtualMethod) virtualElement).getArguments();
+      final PsiType[] psiTypes = QuickfixUtil.getParameterTypes(list);
+      element = findConcreteDynamicMethod(rootElement, containingClassName, elementName, psiTypes);
     }
 
     final Element classElement;
@@ -474,11 +478,11 @@ public class DynamicManagerImpl extends DynamicManager {
     return methodSignatures;
   }
 
-  @NotNull
+  @Nullable
   public String getMethodReturnType(String moduleName, String className, String methodName, PsiType[] paramTypes) {
     final Element dynamicProperty = findConcreteDynamicMethod(getRootElement(moduleName), className, methodName, paramTypes);
 
-    if (dynamicProperty == null) return "";
+    if (dynamicProperty == null) return null;
 
     return dynamicProperty.getAttributeValue(TYPE_ATTRIBUTE);
 

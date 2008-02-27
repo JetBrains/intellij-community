@@ -42,6 +42,8 @@ public abstract class DynamicDialog extends DialogWrapper {
   private JLabel myTypeLabel;
   private JPanel myTypeStatusPanel;
   private JLabel myTypeStatusLabel;
+//  private JList myList;
+  private JTable myTable;
   private final DynamicManager myDynamicManager;
   private final Project myProject;
   private final DynamicVirtualElement myDynamicElement;
@@ -50,6 +52,10 @@ public abstract class DynamicDialog extends DialogWrapper {
 
   public DynamicDialog(Project project, DynamicVirtualElement virtualElement, GrReferenceExpression referenceExpression) {
     super(project, true);
+
+    if (!isTableVisible()) {
+      myTable.setVisible(false);
+    }
     myReferenceExpression = referenceExpression;
     setTitle(GroovyInspectionBundle.message("dynamic.element"));
     myProject = project;
@@ -312,5 +318,17 @@ public abstract class DynamicDialog extends DialogWrapper {
 
   public JComponent getPreferredFocusedComponent() {
     return myTypeComboBox;
+  }
+
+  protected JPanel getPanel() {
+    return myPanel;
+  }
+
+  protected boolean isTableVisible(){
+    return false;
+  }
+
+  public JTable getTable() {
+    return myTable;
   }
 }
