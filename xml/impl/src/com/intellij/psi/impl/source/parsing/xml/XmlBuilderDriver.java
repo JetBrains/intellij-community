@@ -19,6 +19,7 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class XmlBuilderDriver {
   private final Stack<String> myNamespacesStack = new Stack<String>();
@@ -35,7 +36,7 @@ public class XmlBuilderDriver {
     return myText;
   }
 
-  public void addImplicitBinding(String prefix, String namespace) {
+  public void addImplicitBinding(@NonNls @NotNull String prefix, @NonNls @NotNull String namespace) {
     myNamespacesStack.push(namespace);
     myPrefixesStack.push(prefix);
   }
