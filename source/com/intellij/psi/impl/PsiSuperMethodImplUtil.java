@@ -191,12 +191,8 @@ public class PsiSuperMethodImplUtil {
                                        HierarchicalMethodSignature superSignatureHierarchical) {
     PsiMethod superMethod = superSignatureHierarchical.getMethod();
     PsiClass superClass = superMethod.getContainingClass();
-    return !superMethod.isConstructor() &&
-           !aClass.equals(superClass) &&
-           //only public methods from java.lang.Object are considered to be overridden in interface
-           !(aClass.isInterface() &&
-             "java.lang.Object".equals(superClass.getQualifiedName()) &&
-             !superMethod.hasModifierProperty(PsiModifier.PUBLIC))
+    return !superMethod.isConstructor()
+           && !aClass.equals(superClass)
            && PsiUtil.isAccessible(superMethod, aClass, aClass)
            && MethodSignatureUtil.isSubsignature(superSignatureHierarchical, hierarchicalMethodSignature);
   }
