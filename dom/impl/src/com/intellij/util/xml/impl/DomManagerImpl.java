@@ -580,15 +580,14 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
   public final <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module, final boolean physical) {
     final XmlFile file = (XmlFile)myFileFactory.createFileFromText("a.xml", StdFileTypes.XML, "", (long)0, physical);
-    final DomFileElementImpl<T> fileElement = getFileElement(file, aClass, "I_sincerely_hope_that_nobody_will_have_such_a_root_tag_name");
-    fileElement.putUserData(MOCK_ELEMENT_MODULE, module);
-    fileElement.putUserData(MOCK, new Object());
-    return fileElement.getRootElement();
+    file.putUserData(MOCK_ELEMENT_MODULE, module);
+    file.putUserData(MOCK, new Object());
+    return getFileElement(file, aClass, "I_sincerely_hope_that_nobody_will_have_such_a_root_tag_name").getRootElement();
   }
 
   public final boolean isMockElement(DomElement element) {
     final DomFileElement<? extends DomElement> root = element.getRoot();
-    return root.getUserData(MOCK) != null;
+    return root.getFile().getUserData(MOCK) != null;
   }
 
   public final <T extends DomElement> T createStableValue(final Factory<T> provider) {

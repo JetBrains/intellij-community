@@ -254,7 +254,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   public final Module getModule() {
     final Module module = ModuleUtil.findModuleForPsiElement(getFile());
-    return module != null ? module : getRoot().getUserData(DomManagerImpl.MOCK_ELEMENT_MODULE);
+    return module != null ? module : getRoot().getFile().getUserData(DomManagerImpl.MOCK_ELEMENT_MODULE);
   }
 
   public XmlTag ensureTagExists() {

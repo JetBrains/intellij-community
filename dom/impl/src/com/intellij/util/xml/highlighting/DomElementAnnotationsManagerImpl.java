@@ -28,6 +28,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -145,19 +146,22 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   private DomElementsProblemsHolderImpl _getOrCreateProblemsHolder(final DomFileElement element) {
     final DomElementsProblemsHolderImpl holder;
     final DomElement rootElement = element.getRootElement();
+    final XmlTag rootTag = rootElement.getXmlTag();
+    if (rootTag == null) return new DomElementsProblemsHolderImpl(element);
+
     if (isHolderOutdated(element)) {
       holder = new DomElementsProblemsHolderImpl(element);
-      rootElement.putUserData(DOM_PROBLEM_HOLDER_KEY, holder);
+      rootTag.putUserData(DOM_PROBLEM_HOLDER_KEY, holder);
       final CachedValue<Boolean> cachedValue = myCachedValuesManager.createCachedValue(new CachedValueProvider<Boolean>() {
         public Result<Boolean> compute() {
           return new Result<Boolean>(Boolean.FALSE, element, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myModificationTracker, myProjectRootManager);
         }
       }, false);
       cachedValue.getValue();
-      rootElement.putUserData(CACHED_VALUE_KEY, cachedValue);
+      element.getFile().putUserData(CACHED_VALUE_KEY, cachedValue);
     }
     else {
-      holder = rootElement.getUserData(DOM_PROBLEM_HOLDER_KEY);
+      holder = rootTag.getUserData(DOM_PROBLEM_HOLDER_KEY);
       LOG.assertTrue(holder != null);
     }
     return holder;
@@ -171,12 +175,12 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
   public static void outdateProblemHolder(final DomElement element) {
     synchronized (LOCK) {
-      element.getRoot().getRootElement().putUserData(CACHED_VALUE_KEY, null);
+      element.getRoot().getFile().putUserData(CACHED_VALUE_KEY, null);
     }
   }
 
   private static boolean isHolderOutdated(final DomFileElement element) {
-    final CachedValue<Boolean> cachedValue = element.getRootElement().getUserData(CACHED_VALUE_KEY);
+    final CachedValue<Boolean> cachedValue = element.getFile().getUserData(CACHED_VALUE_KEY);
     return cachedValue == null || !cachedValue.hasUpToDateValue();
   }
 
@@ -186,8 +190,14 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     final DomFileElement<DomElement> fileElement = element.getRoot();
 
     synchronized (LOCK) {
-      final DomElementsProblemsHolder readyHolder = fileElement.getRootElement().getUserData(DOM_PROBLEM_HOLDER_KEY);
-      return readyHolder == null ? EMPTY_PROBLEMS_HOLDER : readyHolder;
+      final XmlTag tag = fileElement.getRootElement().getXmlTag();
+      if (tag != null) {
+        final DomElementsProblemsHolder readyHolder = tag.getUserData(DOM_PROBLEM_HOLDER_KEY);
+        if (readyHolder != null) {
+          return readyHolder;
+        }
+      }
+      return EMPTY_PROBLEMS_HOLDER;
     }
   }
 
