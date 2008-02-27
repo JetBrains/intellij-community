@@ -156,7 +156,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     // add user parameters
     params.getVMParametersList().addParametersString(vmParams);
 
-    // set starter class
+    // set starter class                       
     params.setMainClass(GROOVY_STARTER);
   }
 
