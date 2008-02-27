@@ -80,7 +80,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
             return null;
           }
         });
-        final InsertHandler insertHandler = (InsertHandler)simpleItem.getAttribute(LookupItem.INSERT_HANDLER_ATTR);
+        final InsertHandler insertHandler = simpleItem.getInsertHandler();
         simpleItem.copyAttributes(item);
         insertHandler.handleInsert(context, startOffset, data, simpleItem, signatureSelected, completionChar);
         return;

@@ -45,7 +45,6 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
 
   public static final Object DO_NOT_AUTOCOMPLETE_ATTR = Key.create("DO_NOT_AUTOCOMPLETE_ATTR");
   public static final Object DO_AUTOCOMPLETE_ATTR = Key.create("DO_AUTOCOMPLETE_ATTR");
-  public static final Object INSERT_HANDLER_ATTR = Key.create("INSERT_HANDLER_ATTR");
 
   public static final Object GENERATE_ANONYMOUS_BODY_ATTR = Key.create("GENERATE_ANONYMOUS_BODY_ATTR");
   public static final Object CONTAINING_CLASS_ATTR = Key.create("CONTAINING_CLASS_ATTR"); // used for dummy-constructors
@@ -68,6 +67,7 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
 
   private Object myObject;
   private String myLookupString;
+  private InsertHandler myInsertHandler;
   private double myPriority;
   private int myGrouping;
   private Map<Object,Object> myAttributes = null;
@@ -205,7 +205,7 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
   }
 
   public InsertHandler getInsertHandler(){
-    return (InsertHandler)getAttribute(INSERT_HANDLER_ATTR);
+    return myInsertHandler;
   }
 
   @NotNull
@@ -230,9 +230,13 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
     return getLookupString().compareTo(((LookupItem)o).getLookupString());
   }
 
-  public LookupItem<T> setInsertHandler(@NotNull final SimpleInsertHandler handler) {
-    setAttribute(INSERT_HANDLER_ATTR, new MyInsertHandler(handler));
+  public LookupItem<T> setInsertHandler(@NotNull final InsertHandler handler) {
+    myInsertHandler = handler;
     return this;
+  }
+
+  public LookupItem<T> setInsertHandler(@NotNull final SimpleInsertHandler handler) {
+    return setInsertHandler(new MyInsertHandler(handler));
   }
 
   public LookupItem<T> setCompletionCharHandler(@NotNull final CompletionCharHandler<T> completionCharHandler) {
@@ -304,6 +308,10 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
   }
 
   public void copyAttributes(final LookupItem item) {
+    if (myAttributes == null) {
+      if (item.myAttributes == null) return;
+      myAttributes = new HashMap<Object, Object>(5);
+    }
     myAttributes.putAll(item.myAttributes);
   }
 

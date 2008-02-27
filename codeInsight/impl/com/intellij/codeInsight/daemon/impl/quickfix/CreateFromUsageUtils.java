@@ -659,15 +659,14 @@ public class CreateFromUsageUtils {
                                     PsiExpression expression,
                                     List<ExpectedTypeInfo[]> types,
                                     PsiElementFactory factory) {
-    final JavaStatisticsManager statisticsManager = JavaStatisticsManager.getJavaInstance();
     Arrays.sort(members, new Comparator<PsiMember>() {
       public int compare(final PsiMember m1, final PsiMember m2) {
-        int result = statisticsManager.getMemberUseCount(null, m2) - statisticsManager.getMemberUseCount(null, m1);
+        int result = JavaStatisticsManager.createInfo(null, m2).getUseCount() - JavaStatisticsManager.createInfo(null, m1).getUseCount();
         if (result != 0) return result;
         final PsiClass aClass = m1.getContainingClass();
         final PsiClass bClass = m2.getContainingClass();
         if (aClass == null || bClass == null) return 0;
-        return statisticsManager.getMemberUseCount(null, bClass) - statisticsManager.getMemberUseCount(null, aClass);
+        return JavaStatisticsManager.createInfo(null, bClass).getUseCount() - JavaStatisticsManager.createInfo(null, aClass).getUseCount();
       }
     });
 

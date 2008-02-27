@@ -10,12 +10,12 @@ import com.intellij.openapi.util.UserDataHolderBase;
 /**
  * @author peter
  */
-public class CompletionWeighingLocation extends UserDataHolderBase{
+public class CompletionLocation extends UserDataHolderBase {
   private final CompletionType myCompletionType;
   private final String myPrefix;
   private final CompletionParameters myCompletionParameters;
 
-  public CompletionWeighingLocation(final CompletionType completionType, final String prefix,
+  public CompletionLocation(final CompletionType completionType, final String prefix,
                                     final CompletionParameters completionParameters) {
     myCompletionType = completionType;
     myPrefix = prefix;

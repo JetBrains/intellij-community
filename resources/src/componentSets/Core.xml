@@ -18,10 +18,6 @@
       <implementation-class>com.intellij.openapi.vfs.ex.http.HttpFileSystem</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.psi.statistics.StatisticsManager</interface-class>
-      <implementation-class>com.intellij.psi.statistics.impl.StatisticsManagerImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.projectRoots.ProjectJdkTable</interface-class>
       <implementation-class>com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl</implementation-class>
     </component>

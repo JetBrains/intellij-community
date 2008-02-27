@@ -12,11 +12,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class ProximityWeighingLocation {
+public class ProximityLocation {
   private final PsiElement myPosition;
   private final Module myPositionModule;
 
-  public ProximityWeighingLocation(@NotNull final PsiElement position, @NotNull final Module positionModule) {
+  public ProximityLocation(@NotNull final PsiElement position, @NotNull final Module positionModule) {
     myPosition = position;
     myPositionModule = positionModule;
   }

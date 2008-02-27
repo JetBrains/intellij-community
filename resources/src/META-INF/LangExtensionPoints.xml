@@ -201,11 +201,12 @@
 
   <extensionPoint name="psi.referenceContributor" interface="com.intellij.psi.PsiReferenceContributor"/>
 
+  <extensionPoint name="statistician" interface="com.intellij.psi.statistics.StatisticsExtensionPoint"/>
   <extensionPoint name="completion.contributor" interface="com.intellij.codeInsight.completion.CompletionContributor"/>
   <extensionPoint name="lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter"/>
 
   <extensionPoint name="highlightRangeExtension" interface="com.intellij.codeInsight.daemon.impl.HighlightRangeExtension"/>
-  
+
   <extensionPoint name="elementsToHighlightFilter" interface="com.intellij.openapi.util.Condition"/>
 
   <extensionPoint name="sdkType" interface="com.intellij.openapi.projectRoots.SdkType"/>

@@ -13,6 +13,7 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -39,11 +40,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NonNls private static final String CREATE_PREFIX = "create";
 
   private final Project myProject;
-  private final StatisticsManagerEx myStatisticsManager;
 
-  public JavaCodeStyleManagerImpl(final Project project, final StatisticsManagerEx statisticsManager) {
+  public JavaCodeStyleManagerImpl(final Project project) {
     myProject = project;
-    myStatisticsManager = statisticsManager;
   }
 
   public PsiElement shortenClassReferences(@NotNull PsiElement element) throws IncorrectOperationException {
@@ -238,18 +237,18 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
           {
             return;
           }
-          myStatisticsManager.incVariableNameUseCount(name, kind, _propertyName, _type);
+          JavaStatisticsManager.incVariableNameUseCount(name, kind, _propertyName, _type);
         }
       }
     };
   }
 
   private void addNamesFromStatistics(Set<String> names, VariableKind variableKind, String propertyName, PsiType type) {
-    String[] allNames = myStatisticsManager.getAllVariableNamesUsed(variableKind, propertyName, type);
+    String[] allNames = JavaStatisticsManager.getAllVariableNamesUsed(variableKind, propertyName, type);
 
     int maxFrequency = 0;
     for (String name : allNames) {
-      int count = myStatisticsManager.getVariableNameUseCount(name, variableKind, propertyName, type);
+      int count = JavaStatisticsManager.getVariableNameUseCount(name, variableKind, propertyName, type);
       maxFrequency = Math.max(maxFrequency, count);
     }
 
@@ -260,7 +259,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       {
         continue;
       }
-      int count = myStatisticsManager.getVariableNameUseCount(name, variableKind, propertyName, type);
+      int count = JavaStatisticsManager.getVariableNameUseCount(name, variableKind, propertyName, type);
       if (LOG.isDebugEnabled()) {
         LOG.debug("new name:" + name + " count:" + count);
         LOG.debug("frequencyLimit:" + frequencyLimit);
@@ -907,15 +906,15 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         LOG.debug("type:" + type);
       }
       for (String name : names) {
-        int count = myStatisticsManager.getVariableNameUseCount(name, variableKind, propertyName, type);
+        int count = JavaStatisticsManager.getVariableNameUseCount(name, variableKind, propertyName, type);
         LOG.debug(name + " : " + count);
       }
     }
 
     Comparator<String> comparator = new Comparator<String>() {
       public int compare(String s1, String s2) {
-        int count1 = myStatisticsManager.getVariableNameUseCount(s1, variableKind, propertyName, type);
-        int count2 = myStatisticsManager.getVariableNameUseCount(s2, variableKind, propertyName, type);
+        int count1 = JavaStatisticsManager.getVariableNameUseCount(s1, variableKind, propertyName, type);
+        int count2 = JavaStatisticsManager.getVariableNameUseCount(s2, variableKind, propertyName, type);
         return count2 - count1;
       }
     };

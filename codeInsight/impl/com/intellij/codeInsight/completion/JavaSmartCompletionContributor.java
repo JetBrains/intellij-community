@@ -21,6 +21,7 @@ import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.statistics.JavaStatisticsManager;
+import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -79,7 +80,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
             oldHandler = defaultHandler;
           }
 
-          item.setAttribute(LookupItem.INSERT_HANDLER_ATTR, new AnalyzingInsertHandler(o, expectedInfos, oldHandler));
+          item.setInsertHandler(new AnalyzingInsertHandler(o, expectedInfos, oldHandler));
 
         }
 
@@ -223,7 +224,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
             final PsiClass typeClass = ((PsiClassType)type).resolve();
 
             if (InheritanceUtil.isInheritorOrSelf(psiClass, typeClass, true)) {
-              JavaStatisticsManager.getJavaInstance().incMemberUseCount(type, psiClass);
+              StatisticsManager.getInstance().incUseCount(JavaStatisticsManager.createInfo(type, psiClass));
             }
           }
           if (flag) {

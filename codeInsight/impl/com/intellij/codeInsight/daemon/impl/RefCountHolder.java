@@ -70,21 +70,11 @@ public class RefCountHolder {
     myDclsUsedMap.put(result,Boolean.TRUE);
   }
 
-  public void registerPossiblyDuplicateElement(@NotNull PsiElement result, Boolean status) {
-    assertIsAnalyzing();
-    myPossiblyDuplicateElements.put(result, status);
-  }
-
-  public Map<PsiElement, Boolean> getPossiblyDuplicateElementsMap() {
-    assertIsRetrieving();
-    return myPossiblyDuplicateElements;
-  }
-
   private static void addStatistics(final PsiNamedElement dcl) {
     final PsiType typeByPsiElement = PsiUtil.getTypeByPsiElement(dcl);
     final JavaStatisticsManager.NameContext context = JavaStatisticsManager.getContext(dcl);
     if(typeByPsiElement != null && context != null) {
-      JavaStatisticsManager.getJavaInstance().incNameUseCount(typeByPsiElement, context, dcl.getName());
+      JavaStatisticsManager.incNameUseCount(typeByPsiElement, context, dcl.getName());
     }
   }
 

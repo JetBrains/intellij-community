@@ -35,12 +35,9 @@ public class LookupItemUtil{
   public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object) {
     return addLookupItem(set, object, new CamelHumpMatcher(""));
   }
-  public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, PrefixMatcher matcher) {
-    return addLookupItem(set, object, matcher, TailType.UNKNOWN);
-  }
 
   @Nullable
-  private static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, PrefixMatcher matcher, TailType tailType) {
+  public static LookupItem addLookupItem(Set<LookupItem> set, @NotNull Object object, PrefixMatcher matcher) {
     if (object instanceof PsiType) {
       PsiType psiType = (PsiType)object;
       for (final LookupItem lookupItem : set) {
@@ -55,12 +52,7 @@ public class LookupItemUtil{
       if(lookupItem.getObject().equals(lookupItem)) return null;
     }
     LookupItem item = objectToLookupItem(object);
-    String text = item.getLookupString();
     if (matcher.prefixMatches(item)) {
-      item.setLookupString(text);
-      if (tailType != TailType.UNKNOWN) {
-        item.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, tailType);
-      }
       return set.add(item) ? item : null;
     }
     return null;

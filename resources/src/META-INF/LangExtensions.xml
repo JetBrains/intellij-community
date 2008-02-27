@@ -170,6 +170,8 @@
   <ideRootPaneNorth implementation="com.intellij.ide.navigationToolbar.NavBarRootPaneExtension"/>
   <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension"/>
 
+  <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.DefaultCompletionStatistician" order="last"/>
+
   <completion.contributor implementation="com.intellij.codeInsight.completion.LegacyCompletionContributor"/>
   <lookup.charFilter implementation="com.intellij.codeInsight.completion.CompletionCharFilter" order="last"/>
   <lookup.charFilter implementation="com.intellij.refactoring.IdentifierCharFilter" id="identifier"/>

@@ -1,4 +1,3 @@
-
 package com.intellij.psi.statistics.impl;
 
 import com.intellij.util.containers.StringInterner;

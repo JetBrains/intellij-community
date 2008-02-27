@@ -100,7 +100,7 @@ public class JavaCompletionUtil {
     if(parent == null) parent = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
     tunePreferencePolicy(LookupItemUtil.addLookupItems(set, getUnresolvedReferences(parent, false), matcher), suggestedNameInfo);
     final String[] nameSuggestions =
-      JavaStatisticsManager.getJavaInstance().getNameSuggestions(var.getType(), JavaStatisticsManager.getContext(var), matcher.getPrefix());
+      JavaStatisticsManager.getNameSuggestions(var.getType(), JavaStatisticsManager.getContext(var), matcher.getPrefix());
     tunePreferencePolicy(LookupItemUtil.addLookupItems(set, nameSuggestions, matcher), suggestedNameInfo);
   }
 
@@ -140,7 +140,7 @@ public class JavaCompletionUtil {
       tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, matcher), suggestedNameInfo);
     }
 
-    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, JavaStatisticsManager.getJavaInstance().getNameSuggestions(var.getType(), JavaStatisticsManager.getContext(var), matcher.getPrefix()), matcher), suggestedNameInfo);
+    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, JavaStatisticsManager.getNameSuggestions(var.getType(), JavaStatisticsManager.getContext(var), matcher.getPrefix()), matcher), suggestedNameInfo);
     tunePreferencePolicy(LookupItemUtil.addLookupItems(set, getUnresolvedReferences(var.getParent(), false),
                                                                       matcher), suggestedNameInfo);
   }
@@ -176,12 +176,7 @@ public class JavaCompletionUtil {
   }
 
   public static void setQualifierType(LookupItem item, PsiType type) {
-    if (type != null) {
-      item.setAttribute(QUALIFIER_TYPE_ATTR, type);
-    }
-    else {
-      item.setAttribute(QUALIFIER_TYPE_ATTR, null);
-    }
+    item.setAttribute(QUALIFIER_TYPE_ATTR, type);
   }
 
   static void highlightMembersOfContainer(Set<LookupItem> set) {

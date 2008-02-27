@@ -15,16 +15,50 @@
  */
 package com.intellij.psi.statistics;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.SettingsSavingComponent;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.KeyedExtensionCollector;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class StatisticsManager implements SettingsSavingComponent {
+  private static final KeyedExtensionCollector<Statistician,Key> COLLECTOR = new KeyedExtensionCollector<Statistician, Key>("com.intellij.statistician") {
+    protected String keyToString(final Key key) {
+      return key.toString();
+    }
+  };
+
+  @Nullable
+  private static <T,Loc> StatisticsInfo serialize(Key<? extends Statistician<T,Loc>> key, T element, Loc location) {
+    for (final Statistician<T,Loc> statistician : COLLECTOR.forKey(key)) {
+      final StatisticsInfo info = statistician.serialize(element, location);
+      if (info != null) return info;
+    }
+    return null;
+  }
+
+
   public static StatisticsManager getInstance() {
     return ApplicationManager.getApplication().getComponent(StatisticsManager.class);
   }
 
-  public abstract int getMemberUseCount(PsiElement member);
-  public abstract void incMemberUseCount(final LookupElement item);
+  public abstract int getUseCount(@NotNull StatisticsInfo info);
+  public abstract void incUseCount(@NotNull StatisticsInfo info);
+
+  public <T,Loc> int getUseCount(final Key<? extends Statistician<T, Loc>> key, final T element, final Loc location) {
+    final StatisticsInfo info = serialize(key, element, location);
+    return info == null ? 0 : getUseCount(info);
+  }
+
+  public <T, Loc> void incUseCount(final Key<? extends Statistician<T, Loc>> key,
+                                                                 final T element,
+                                                                 final Loc location) {
+    final StatisticsInfo info = serialize(key, element, location);
+    if (info != null) {
+      incUseCount(info);
+    }
+  }
+
+  public abstract StatisticsInfo[] getAllValues(String context);
 }

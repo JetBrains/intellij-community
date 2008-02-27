@@ -147,7 +147,7 @@ public class JavaCompletionContributor extends CompletionContributor{
 
             if (item.getInsertHandler() != null) return true;
 
-            item.setAttribute(LookupItem.INSERT_HANDLER_ATTR, new InsertHandler() {
+            item.setInsertHandler(new InsertHandler() {
               public void handleInsert(final CompletionContext context, final int startOffset, final LookupData data, final LookupItem item,
                                        final boolean signatureSelected,
                                        final char completionChar) {

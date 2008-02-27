@@ -55,7 +55,7 @@ public class XmlCompletionContributor extends CompletionContributor{
             if (result.getPrefixMatcher().prefixMatches(name)) {
               final LookupItem item = new LookupItem<String>(name, name);
               final XmlTagInsertHandler insertHandler = new ExtendedTagInsertHandler(name, namespacePrefix);
-              item.setAttribute(LookupItem.INSERT_HANDLER_ATTR, insertHandler);
+              item.setInsertHandler(insertHandler);
               final Set<String> namespaces = extension.getNamespacesByTagName(name, file);
               if (namespaces.size() > 0) {
                 item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " (" + namespaces.iterator().next() + ")");

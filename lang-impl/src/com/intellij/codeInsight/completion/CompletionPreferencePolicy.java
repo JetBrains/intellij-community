@@ -7,10 +7,12 @@ import com.intellij.psi.statistics.StatisticsManager;
 public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   private String myPrefix;
   private final CompletionParameters myParameters;
+  private final CompletionLocation myLocation;
 
   public CompletionPreferencePolicy(String prefix, final CompletionParameters parameters) {
     myParameters = parameters;
     setPrefix(prefix);
+    myLocation = new CompletionLocation(myParameters.getCompletionType(), myPrefix, myParameters);
   }
 
   public CompletionType getCompletionType() {
@@ -22,13 +24,13 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   }
 
   public void itemSelected(LookupItem item) {
-    StatisticsManager.getInstance().incMemberUseCount(item);
+    StatisticsManager.getInstance().incUseCount(CompletionRegistrar.STATISTICS_KEY, item, myLocation);
   }
 
   public Comparable[] getWeight(final LookupItem<?> item) {
     if (item.getAttribute(LookupItem.WEIGHT) != null) return item.getAttribute(LookupItem.WEIGHT);
 
-    final Comparable[] result = new Comparable[]{CompletionRegistrar.WEIGHING_KEY.weigh(item, new CompletionWeighingLocation(myParameters.getCompletionType(), myPrefix, myParameters))};
+    final Comparable[] result = new Comparable[]{CompletionRegistrar.WEIGHING_KEY.weigh(item, myLocation)};
 
     item.setAttribute(LookupItem.WEIGHT, result);
 

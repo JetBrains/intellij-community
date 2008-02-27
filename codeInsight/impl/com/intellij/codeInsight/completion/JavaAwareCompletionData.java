@@ -172,7 +172,7 @@ public class JavaAwareCompletionData extends CompletionData{
 
     final InsertHandler insertHandler = variant.getInsertHandler();
     if(insertHandler != null && ret.getInsertHandler() == null) {
-      ret.setAttribute(LookupItem.INSERT_HANDLER_ATTR, insertHandler);
+      ret.setInsertHandler(insertHandler);
       ret.setTailType(TailType.UNKNOWN);
     }
     else if (tailType != TailType.NONE) {
