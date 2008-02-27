@@ -90,7 +90,9 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     LOG.assertTrue(psiElement.isPhysical());
     Document document = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(psiElement.getContainingFile());
     if (document == null) return -1;
-    return document.getLineNumber(psiElement.getTextOffset()) + 1;
+    final TextRange textRange = getTextRange();
+    if (textRange == null) return -1;
+    return document.getLineNumber(textRange.getStartOffset()) + 1;
   }
 
   public ProblemHighlightType getHighlightType() {
