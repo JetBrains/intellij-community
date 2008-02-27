@@ -127,7 +127,15 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   public void update(int inputId, @Nullable Input content, @Nullable Input oldContent) throws StorageException {
+    //final boolean isIdIndex = myIndexer.getClass().getName().equals("com.intellij.psi.impl.cache.impl.id.IdIndex$4");
+    //if (isIdIndex) {
+    //  System.out.println("=========================UPDATE INDEX: OLD CONTENT " + myIndexer.getClass().getName() + " =============================");
+    //}
     final Map<Key, Value> oldData = oldContent != null? myIndexer.map(oldContent) : Collections.<Key, Value>emptyMap();
+    //if (isIdIndex) {
+    //  System.out.println("=========================UPDATE INDEX: CURRENT CONTENT "+
+    //                     myIndexer.getClass().getName() +" =============================");
+    //}
     final Map<Key, Value> data    = content != null? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
 
     final Set<Key> allKeys = new HashSet<Key>(oldData.size() + data.size());
@@ -135,29 +143,29 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     allKeys.addAll(data.keySet());
 
     if (allKeys.size() > 0) {
+      final Lock writeLock = getWriteLock();
       for (Key key : allKeys) {
         // remove outdated values
-        final Lock writeLock = getWriteLock();
-        if (oldData.containsKey(key)) {
-          final Value oldValue = oldData.get(key);
-          writeLock.lock();
-          try {
+        writeLock.lock();
+        try {
+          if (oldData.containsKey(key)) {
+            final Value oldValue = oldData.get(key);
+            //if (isIdIndex) {
+            //  System.out.println("REMOVE: " + key + " " + inputId + " " + oldValue);
+            //}
             myStorage.removeValue(key, inputId, oldValue);
           }
-          finally {
-            writeLock.unlock();
-          }
-        }
-        // add new values
-        if (data.containsKey(key)) {
-          final Value newValue = data.get(key);
-          writeLock.lock();
-          try {
+          // add new values
+          if (data.containsKey(key)) {
+            final Value newValue = data.get(key);
+            //if (isIdIndex) {
+            //  System.out.println("ADD: " + key + " " + inputId + " " + newValue);
+            //}
             myStorage.addValue(key, inputId, newValue);
           }
-          finally {
-            writeLock.unlock();
-          }
+        }
+        finally {
+          writeLock.unlock();
         }
       }
       scheduleFlush();

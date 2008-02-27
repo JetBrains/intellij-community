@@ -113,6 +113,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     AppendStream record = new AppendStream();
     myValueExternalizer.save(record, value);
     byte[] bytes = record.toByteArray();
+    System.out.println("[INDEX STORAGE] Appending (whole container) " + bytes.length + " bytes to key " + key);
 
     HeaderRecord header = new HeaderRecord();
     header.size = bytes.length;

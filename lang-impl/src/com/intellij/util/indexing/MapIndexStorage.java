@@ -1,7 +1,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.DataExternalizer;
@@ -39,8 +38,8 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(16 * 1024, 4 * 1024) {
       @NotNull
       public ChangeTrackingValueContainer<Value> createValue(final Key key) {
-        return new ChangeTrackingValueContainer<Value>(new Computable<ValueContainer<Value>>() {
-          public ValueContainer<Value> compute() {
+        return new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Computable<Value>() {
+          public ValueContainer<Value> compute() throws StorageException {
             ValueContainer<Value> value = null;
             try {
               value = myMap.get(key);
@@ -49,7 +48,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
               }
             }
             catch (IOException e) {
-              LOG.error(e);
+              throw new StorageException(e);
             }
             return value;
           }
@@ -70,7 +69,9 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
                   
               myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
                 public void append(final DataOutput out) throws IOException {
-                  out.write(bytes.toByteArray());
+                  final byte[] barr = bytes.toByteArray();
+                  System.out.println("[INDEX STORAGE] Appending " + barr.length + " bytes to key " + key);
+                  out.write(barr);
                 }
               });
             }
@@ -122,6 +123,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
 
   public Collection<Key> getKeys() throws StorageException {
     try {
+      myCache.clear(); // this will ensure that all new keys are made into the map
       return myMap.allKeys();
     }
     catch (IOException e) {

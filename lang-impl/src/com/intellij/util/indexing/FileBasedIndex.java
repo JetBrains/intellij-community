@@ -519,6 +519,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
     final int inputId = Math.abs(getFileId(file));
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+    //System.out.println("INDEX UPDATE: " + indexId + " Input: " + file.getPresentableUrl() + "; CurrentFC=" + currentFC + "; oldFC=" + oldFC);
     index.update(inputId, currentFC, oldFC);
     if (file.isValid()) {
       if (currentFC != null) {

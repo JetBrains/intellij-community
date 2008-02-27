@@ -9,7 +9,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Dec 20, 2007
  */
-class ValueContainerImpl<Value> extends ValueContainer<Value> implements Cloneable{
+class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
   private HashMap<Value, Object> myInputIdMapping;
 
   public ValueContainerImpl() {
@@ -40,21 +40,25 @@ class ValueContainerImpl<Value> extends ValueContainer<Value> implements Cloneab
     return myInputIdMapping.size();
   }
 
-  public void removeValue(int inputId, Value value) {
+  public boolean removeValue(int inputId, Value value) {
     final Object input = myInputIdMapping.get(value);
+    if (input == null) {
+      return false;
+    }
     if (input instanceof TIntHashSet) {
       final TIntHashSet idSet = (TIntHashSet)input;
-      idSet.remove(inputId);
+      final boolean reallyRemoved = idSet.remove(inputId);
       if (!idSet.isEmpty()) {
-        return;
+        return reallyRemoved;
       }
     }
     else if (input instanceof Integer) {
       if (((Integer)input).intValue() != inputId) {
-        return;
+        return false;
       }
     }
     myInputIdMapping.remove(value);
+    return true;
   }
 
   public Iterator<Value> getValueIterator() {

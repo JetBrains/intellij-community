@@ -8,9 +8,10 @@ import com.intellij.openapi.util.text.StringUtil;
  */
 public final class IdIndexEntry {
   private final int myWordHashCode;
-
+  private String myWord;
   public IdIndexEntry(String word, boolean caseSensitive) {
     this(caseSensitive? StringUtil.stringHashCode(word) : StringUtil.stringHashCodeInsensitive(word));
+    myWord = word; 
   }
 
   public IdIndexEntry(int wordHash) {
@@ -38,6 +39,6 @@ public final class IdIndexEntry {
 
   @Override
   public String toString() {
-    return "IdIndexEntry[hash: " + myWordHashCode +"]";
+    return "IdIndexEntry[hash: " + myWordHashCode +"]" + (myWord != null? " " + myWord : " N/A");
   }
 }

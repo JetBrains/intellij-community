@@ -1,6 +1,6 @@
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.Iterator;
 import java.util.List;
@@ -9,13 +9,18 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Dec 20, 2007
  */
-public class ChangeTrackingValueContainer<Value> extends ValueContainer<Value>{
+class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.ChangeTrackingValueContainer");
   private final ValueContainerImpl<Value> myAdded;
   private final ValueContainerImpl<Value> myRemoved;
-  private final Computable<ValueContainer<Value>> myInitializer;
+  private final Computable<Value> myInitializer;
   private ValueContainerImpl<Value> myMerged = null;
 
-  public ChangeTrackingValueContainer(Computable<ValueContainer<Value>> initializer) {
+  public static interface Computable<T>{
+    ValueContainer<T> compute() throws StorageException;
+  }
+  
+  public ChangeTrackingValueContainer(Computable<Value> initializer) {
     myInitializer = initializer;
     myAdded = new ValueContainerImpl<Value>();
     myRemoved = new ValueContainerImpl<Value>();
@@ -25,16 +30,19 @@ public class ChangeTrackingValueContainer<Value> extends ValueContainer<Value>{
     if (myMerged != null) {
       myMerged.addValue(inputId, value);
     }
-    myAdded.addValue(inputId, value);
-    myRemoved.removeValue(inputId, value);
+    if (!myRemoved.removeValue(inputId, value)) {
+      myAdded.addValue(inputId, value);
+    }
   }
 
-  public void removeValue(int inputId, Value value) {
+  public boolean removeValue(int inputId, Value value) {
     if (myMerged != null) {
       myMerged.removeValue(inputId, value);
     }
-    myRemoved.addValue(inputId, value);
-    myAdded.removeValue(inputId, value);
+    if (!myAdded.removeValue(inputId, value)) {
+      myRemoved.addValue(inputId, value);
+    }
+    return true;
   }
 
   public int size() {
@@ -68,23 +76,28 @@ public class ChangeTrackingValueContainer<Value> extends ValueContainer<Value>{
     }
     myMerged = new ValueContainerImpl<Value>();
 
-    final ValueContainer<Value> fromDisk = myInitializer.compute();
-    
-    final ValueContainerImpl.ContainerAction<Value> addAction = new ValueContainerImpl.ContainerAction<Value>() {
-      public void perform(final int id, final Value value) {
-        myMerged.addValue(id, value);
-      }
-    };
-    final ValueContainerImpl.ContainerAction<Value> removeAction = new ValueContainerImpl.ContainerAction<Value>() {
-      public void perform(final int id, final Value value) {
-        myMerged.removeValue(id, value);
-      }
-    };
+    try {
+      final ValueContainer<Value> fromDisk = myInitializer.compute();
 
-    fromDisk.forEach(addAction);
-    myRemoved.forEach(removeAction);
-    myAdded.forEach(addAction);
-    
+      final ContainerAction<Value> addAction = new ContainerAction<Value>() {
+        public void perform(final int id, final Value value) {
+          myMerged.addValue(id, value);
+        }
+      };
+      final ContainerAction<Value> removeAction = new ContainerAction<Value>() {
+        public void perform(final int id, final Value value) {
+          myMerged.removeValue(id, value);
+        }
+      };
+
+      fromDisk.forEach(addAction);
+      myRemoved.forEach(removeAction);
+      myAdded.forEach(addAction);
+    }
+    catch (StorageException e) {
+      LOG.error(e);
+    }
+
     return myMerged;
   }
 

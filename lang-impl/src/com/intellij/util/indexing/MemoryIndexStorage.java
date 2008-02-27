@@ -3,7 +3,9 @@ package com.intellij.util.indexing;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -13,8 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *         Date: Dec 10, 2007
  */
 public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
-  private final Map<Key, ValueContainerImpl<Value>> myMap = new HashMap<Key,ValueContainerImpl<Value>>();
-  private final Set<Key> myRemovedKeys = new HashSet<Key>();
+  private final Map<Key, UpdatableValueContainer<Value>> myMap = new HashMap<Key,UpdatableValueContainer<Value>>();
   private final IndexStorage<Key, Value> myBackendStorage;
   private AtomicBoolean myBufferingEnabled = new AtomicBoolean(false);
 
@@ -26,7 +27,6 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     final boolean wasEnabled = myBufferingEnabled.getAndSet(enabled);
     if (wasEnabled && !enabled) {
       myMap.clear();
-      myRemovedKeys.clear();
     }
   }
 
@@ -36,7 +36,6 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
 
   public void clear() throws StorageException {
     myMap.clear();
-    myRemovedKeys.clear();
     myBackendStorage.clear();
   }
 
@@ -45,7 +44,15 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   }
 
   public Collection<Key> getKeys() throws StorageException {
-    return myBackendStorage.getKeys();
+    final Collection<Key> backendKeys = myBackendStorage.getKeys();
+    if (myBufferingEnabled.get()) {
+      for (Key key : myMap.keySet()) {
+        if (myMap.get(key).size() == 0) {
+          backendKeys.remove(key);
+        }
+      }
+    }
+    return backendKeys;
   }
 
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
@@ -53,46 +60,30 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
       myBackendStorage.addValue(key, inputId, value);
       return;
     }
-    ValueContainerImpl<Value> valueContainer = myMap.get(key);
+    UpdatableValueContainer<Value> valueContainer = myMap.get(key);
     if (valueContainer == null) {
-      if (myRemovedKeys.contains(key)) {
-        myRemovedKeys.remove(key);
-        valueContainer = new ValueContainerImpl<Value>();
-      }
-      else {
-        final ValueContainer<Value> backendContainer = myBackendStorage.read(key);
-        valueContainer = copyOf(backendContainer);
-      }
+      valueContainer = new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Computable<Value>() {
+        public ValueContainer<Value> compute() throws StorageException {
+          return myBackendStorage.read(key);
+        }
+      });
       myMap.put(key, valueContainer);
     }
     valueContainer.addValue(inputId, value);
   }
 
-  private ValueContainerImpl<Value> copyOf(final ValueContainer<Value> from) {
-    final ValueContainerImpl<Value> container = new ValueContainerImpl<Value>();
-    from.forEach(new ValueContainer.ContainerAction<Value>() {
-      public void perform(final int id, final Value value) {
-        container.addValue(id, value);
-      }
-    });
-    return container;
-  }
-
   public void removeValue(final Key key, final int inputId, final Value value) throws StorageException {
     if (myBufferingEnabled.get()) {
-      ValueContainerImpl<Value> container = myMap.get(key);
-      if (container == null && !myRemovedKeys.contains(key)) {
-        final ValueContainer<Value> backendContainer = myBackendStorage.read(key);
-        if (backendContainer != null) {
-          container = copyOf(backendContainer);
-        }
+      UpdatableValueContainer<Value> container = myMap.get(key);
+      if (container == null) {
+        container = new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Computable<Value>() {
+          public ValueContainer<Value> compute() throws StorageException {
+            return myBackendStorage.read(key);
+          }
+        });
+        myMap.put(key, container);
       }
-      if (container != null) {
-        container.removeValue(inputId, value);
-        if (container.size() == 0) {
-          remove(key);
-        }
-      }
+      container.removeValue(inputId, value);
     }
     else {
       myBackendStorage.removeValue(key, inputId, value);
@@ -104,17 +95,16 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     if (!myBufferingEnabled.get()) {
       return myBackendStorage.read(key);
     }
-    ValueContainer<Value> valueContainer = myMap.get(key);
-    if (valueContainer == null) {
-      valueContainer = myRemovedKeys.contains(key)? new ValueContainerImpl<Value>() : myBackendStorage.read(key);
+    final ValueContainer<Value> valueContainer = myMap.get(key);
+    if (valueContainer != null) {
+      return valueContainer;
     }
-    return valueContainer;
+    return myBackendStorage.read(key);
   }
 
   public void remove(final Key key) throws StorageException {
     if (myBufferingEnabled.get()) {
-      myMap.remove(key);
-      myRemovedKeys.add(key);
+      myMap.put(key, new ValueContainerImpl<Value>());
     }
     else {
       myBackendStorage.remove(key);
