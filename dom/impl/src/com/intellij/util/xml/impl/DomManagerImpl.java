@@ -41,7 +41,6 @@ import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -104,18 +103,13 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
   private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache();
   private final Map<DomFileDescription<?>,Set<WeakReference<DomFileElementImpl>>> myFileDescriptions = new THashMap<DomFileDescription<?>,Set<WeakReference<DomFileElementImpl>>>();
-  private final FactoryMap<String,Set<DomFileDescription>> myRootTagName2FileDescription = new FactoryMap<String, Set<DomFileDescription>>() {
-    protected Set<DomFileDescription> create(final String key) {
-      return new THashSet<DomFileDescription>();
-    }
-  };
-  private final Set<DomFileDescription> myAcceptingOtherRootTagNamesDescriptions = new THashSet<DomFileDescription>();
+
   private final GenericValueReferenceProvider myGenericValueReferenceProvider = new GenericValueReferenceProvider();
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
 
   private final Project myProject;
+  private final DomApplicationComponent myApplicationComponent;
   private final DomElementAnnotationsManagerImpl myAnnotationsManager;
-  private final ReferenceProvidersRegistry myReferenceProvidersRegistry;
   private final PsiFileFactory myFileFactory;
   private final Map<XmlAttribute,AttributeChildInvocationHandler> myAttributeCache = new ConcurrentHashMap<XmlAttribute, AttributeChildInvocationHandler>();
 
@@ -132,8 +126,10 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
                         final DomElementAnnotationsManager annotationsManager,
                         final VirtualFileManager virtualFileManager,
                         final StartupManager startupManager,
-                        final ProjectRootManager projectRootManager) {
+                        final ProjectRootManager projectRootManager,
+                        final DomApplicationComponent applicationComponent) {
     myProject = project;
+    myApplicationComponent = applicationComponent;
     myAnnotationsManager = (DomElementAnnotationsManagerImpl)annotationsManager;
     pomModel.addModelListener(new PomModelListener() {
       public void modelChanged(PomModelEvent event) {
@@ -157,7 +153,6 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
         return xmlAspect.equals(aspect);
       }
     }, project);
-    myReferenceProvidersRegistry = registry;
     final GenericValueReferenceProvider provider = new GenericValueReferenceProvider();
     registry.registerReferenceProvider(XmlTag.class, provider);
     registry.registerReferenceProvider(XmlAttributeValue.class, provider);
@@ -225,7 +220,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     myFileIndex = projectRootManager.getFileIndex();
 
     for (final DomFileDescription description : Extensions.getExtensions(DomFileDescription.EP_NAME)) {
-      registerFileDescription(description);
+      _registerFileDescription(description);
     }
 
     registerRunnable();
@@ -403,12 +398,12 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     }
   }
 
-  public final synchronized Set<DomFileDescription> getFileDescriptions(String rootTagName) {
-    return myRootTagName2FileDescription.get(rootTagName);
+  public final Set<DomFileDescription> getFileDescriptions(String rootTagName) {
+    return myApplicationComponent.getFileDescriptions(rootTagName);
   }
 
-  public final synchronized DomFileDescription[] getAcceptingOtherRootTagNameDescriptions() {
-    return myAcceptingOtherRootTagNamesDescriptions.toArray(new DomFileDescription[myAcceptingOtherRootTagNamesDescriptions.size()]);
+  public final DomFileDescription[] getAcceptingOtherRootTagNameDescriptions() {
+    return myApplicationComponent.getAcceptingOtherRootTagNameDescriptions();
   }
 
   public final Map<DomFileDescription<?>, Set<WeakReference<DomFileElementImpl>>> getFileDescriptions() {
@@ -609,12 +604,18 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
         myFileDescriptions.remove(description);
-        myRootTagName2FileDescription.get(description.getRootTagName()).remove(description);
+        getFileDescriptions(description.getRootTagName()).remove(description);
       }
     });
   }
 
-  public final synchronized void registerFileDescription(final DomFileDescription description) {
+  public final void registerFileDescription(final DomFileDescription description) {
+    _registerFileDescription(description);
+
+    myApplicationComponent.registerFileDescription(description);
+  }
+
+  private void _registerFileDescription(final DomFileDescription description) {
     //noinspection unchecked
     final Map<Class<? extends DomElement>, Class<? extends DomElement>> implementations = description.getImplementations();
     for (final Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : implementations.entrySet()) {
@@ -629,10 +630,6 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     }
 
     myFileDescriptions.put(description, new HashSet<WeakReference<DomFileElementImpl>>());
-    myRootTagName2FileDescription.get(description.getRootTagName()).add(description);
-    if (description.acceptsOtherRootTagNames()) {
-      myAcceptingOtherRootTagNamesDescriptions.add(description);
-    }
   }
 
   @NotNull

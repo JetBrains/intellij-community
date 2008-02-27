@@ -9,6 +9,7 @@ import java.io.IOException;
 *         Date: Dec 18, 2007
 */
 public class EnumeratorStringDescriptor implements PersistentEnumerator.DataDescriptor<String> {
+  public static final EnumeratorStringDescriptor INSTANCE = new EnumeratorStringDescriptor();
   private final byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
 
   public int getHashCode(final String value) {

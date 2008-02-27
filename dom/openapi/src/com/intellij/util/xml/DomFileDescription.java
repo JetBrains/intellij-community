@@ -44,13 +44,19 @@ public class DomFileDescription<T> {
   private final ConcurrentInstanceMap<ScopeProvider> myScopeProviders = new ConcurrentInstanceMap<ScopeProvider>();
   protected final Class<T> myRootElementClass;
   protected final String myRootTagName;
+  private final String[] myAllPossibleRootTagNamespaces;
   private final Map<Class<? extends DomElement>,Class<? extends DomElement>> myImplementations = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
   private final Map<String, NotNullFunction<XmlTag,List<String>>> myNamespacePolicies = new THashMap<String, NotNullFunction<XmlTag, List<String>>>();
 
-  public DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName) {
+  public DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName, @NonNls final String... allPossibleRootTagNamespaces) {
     myRootElementClass = rootElementClass;
     myRootTagName = rootTagName;
+    myAllPossibleRootTagNamespaces = allPossibleRootTagNamespaces;
+  }
+
+  public String[] getAllPossibleRootTagNamespaces() {
+    return myAllPossibleRootTagNamespaces;
   }
 
   /**
