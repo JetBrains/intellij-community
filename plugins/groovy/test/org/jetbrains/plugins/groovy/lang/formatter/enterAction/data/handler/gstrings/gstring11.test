@@ -1,4 +1,4 @@
 foo(""<caret>)
 -----
 foo(""
-    <caret>)
+<caret>)
