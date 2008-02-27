@@ -62,7 +62,7 @@ import java.util.concurrent.locks.Lock;
 public class FileBasedIndex implements ApplicationComponent, PersistentStateComponent<FileBasedIndexState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndex");
   
-  public static final int VERSION = 1;
+  public static final int VERSION = 2;
 
   private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>> myIndices = new HashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
