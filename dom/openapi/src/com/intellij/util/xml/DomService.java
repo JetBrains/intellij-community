@@ -18,8 +18,16 @@ package com.intellij.util.xml;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+
+import java.util.List;
+import java.util.Collection;
 
 /**
  * @author Gregory.Shrago
@@ -29,6 +37,16 @@ public abstract class DomService {
   public static DomService getInstance() {
     return ServiceManager.getService(DomService.class);
   }
+
+  public List<VirtualFile> getAllFiles(Class<? extends DomFileDescription> description, Project project, final GlobalSearchScope scope) {
+    return ContainerUtil.findAll(getAllFiles(description, project), new Condition<VirtualFile>() {
+      public boolean value(final VirtualFile file) {
+        return scope.contains(file);
+      }
+    });
+  }
+
+  public abstract Collection<VirtualFile> getAllFiles(Class<? extends DomFileDescription> description, Project project);
 
   public abstract ModelMerger createModelMerger();
 

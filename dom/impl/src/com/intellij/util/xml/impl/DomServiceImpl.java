@@ -5,13 +5,15 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomService;
-import com.intellij.util.xml.ModelMerger;
-import com.intellij.util.xml.ModelMergerImpl;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.structure.DomStructureViewBuilder;
+
+import java.util.Collection;
 
 /**
  * @author Gregory.Shrago
@@ -20,6 +22,10 @@ public class DomServiceImpl extends DomService {
 
   public ModelMerger createModelMerger() {
     return new ModelMergerImpl();
+  }
+
+  public Collection<VirtualFile> getAllFiles(Class<? extends DomFileDescription> description, Project project) {
+    return FileBasedIndex.getInstance().getContainingFiles(DomFileIndex.NAME, description.getName(), project);
   }
 
 
