@@ -32,7 +32,9 @@ import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
@@ -118,6 +120,10 @@ public class GroovyBlock implements Block, GroovyElementTypes {
 
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
+    return getAttributesByParent();
+  }
+
+  private ChildAttributes getAttributesByParent() {
     ASTNode astNode = getNode();
     final PsiElement psiParent = astNode.getPsi();
     if (psiParent instanceof GroovyFileBase) {
@@ -130,7 +136,9 @@ public class GroovyBlock implements Block, GroovyElementTypes {
     if (CASE_SECTION.equals(astNode.getElementType())) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
-    if (psiParent instanceof GrBinaryExpression) {
+    if (psiParent instanceof GrBinaryExpression ||
+        psiParent instanceof GrCommandArgumentList ||
+        psiParent instanceof GrArgumentList) {
       return new ChildAttributes(Indent.getContinuationWithoutFirstIndent(), null);
     }
     if (psiParent instanceof GrParameterList) {
@@ -167,8 +175,6 @@ public class GroovyBlock implements Block, GroovyElementTypes {
   public boolean isLeaf() {
     return myNode.getFirstChildNode() == null;
   }
-
-
 
 
 }
