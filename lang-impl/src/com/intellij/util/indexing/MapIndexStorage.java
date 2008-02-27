@@ -70,7 +70,6 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
               myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
                 public void append(final DataOutput out) throws IOException {
                   final byte[] barr = bytes.toByteArray();
-                  System.out.println("[INDEX STORAGE] Appending " + barr.length + " bytes to key " + key);
                   out.write(barr);
                 }
               });
@@ -88,7 +87,6 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   }
   
   public void flush() {
-    //System.out.println("Cache hit rate = " + myCache.hitRate());
     myCache.clear();
     myMap.force();
   }

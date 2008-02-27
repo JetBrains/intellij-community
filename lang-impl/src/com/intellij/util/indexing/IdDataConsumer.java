@@ -29,23 +29,19 @@ public class IdDataConsumer {
   
   public void addOccurrence(CharSequence charSequence, int start, int end, int occurrenceMask) {
     final int hashCode = StringUtil.stringHashCode(charSequence, start, end);
-    //System.out.println("Add Occurrence = " + charSequence.subSequence(start, end) + " [" + hashCode + "]");
     addOccurrence(hashCode,occurrenceMask);
     final int hashCodeNoCase = StringUtil.stringHashCodeInsensitive(charSequence, start, end);
     if (hashCodeNoCase != hashCode) {
-      //System.out.println("Add Occurrence = " + charSequence.subSequence(start, end) + " [" + hashCodeNoCase + "]");
       addOccurrence(hashCodeNoCase,occurrenceMask);
     }
   }
 
   public void addOccurrence(char[] chars, int start, int end, int occurrenceMask) {
     final int hashCode = StringUtil.stringHashCode(chars, start, end);
-    //System.out.println("Add Occurrence = " + new String(chars, start, end - start) + " [" + hashCode + "]");
     addOccurrence(hashCode,occurrenceMask);
     
     final int hashCodeNoCase = StringUtil.stringHashCodeInsensitive(chars, start, end);
     if (hashCodeNoCase != hashCode) {
-      //System.out.println("Add Occurrence = " + new String(chars, start, end - start) + " [" + hashCodeNoCase + "]");
       addOccurrence(hashCodeNoCase,occurrenceMask);
     }
   }

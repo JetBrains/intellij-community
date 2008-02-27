@@ -127,15 +127,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   public void update(int inputId, @Nullable Input content, @Nullable Input oldContent) throws StorageException {
-    //final boolean isIdIndex = myIndexer.getClass().getName().equals("com.intellij.psi.impl.cache.impl.id.IdIndex$4");
-    //if (isIdIndex) {
-    //  System.out.println("=========================UPDATE INDEX: OLD CONTENT " + myIndexer.getClass().getName() + " =============================");
-    //}
     final Map<Key, Value> oldData = oldContent != null? myIndexer.map(oldContent) : Collections.<Key, Value>emptyMap();
-    //if (isIdIndex) {
-    //  System.out.println("=========================UPDATE INDEX: CURRENT CONTENT "+
-    //                     myIndexer.getClass().getName() +" =============================");
-    //}
     final Map<Key, Value> data    = content != null? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
 
     final Set<Key> allKeys = new HashSet<Key>(oldData.size() + data.size());
@@ -150,17 +142,11 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         try {
           if (oldData.containsKey(key)) {
             final Value oldValue = oldData.get(key);
-            //if (isIdIndex) {
-            //  System.out.println("REMOVE: " + key + " " + inputId + " " + oldValue);
-            //}
             myStorage.removeValue(key, inputId, oldValue);
           }
           // add new values
           if (data.containsKey(key)) {
             final Value newValue = data.get(key);
-            //if (isIdIndex) {
-            //  System.out.println("ADD: " + key + " " + inputId + " " + newValue);
-            //}
             myStorage.addValue(key, inputId, newValue);
           }
         }
