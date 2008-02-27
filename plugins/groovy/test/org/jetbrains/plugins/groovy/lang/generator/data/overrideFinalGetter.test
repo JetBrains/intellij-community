@@ -13,10 +13,10 @@ public class Base extends groovy.lang.GroovyObjectSupport {
 }
 ---
 public class Derived extends Base {
-  private int p = 0;
-
   public void setP(int p) {
     return ;
   }
+
+  private int p = 0;
 }
 ---

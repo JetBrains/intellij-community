@@ -402,22 +402,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       }
     }
 
-    for (GrMembersDeclaration decl : membersDeclarations) {
-      if (decl instanceof GrVariableDeclaration) {
-        final GrVariable[] variables = ((GrVariableDeclaration) decl).getVariables();
-
-        for (GrVariable variable : variables) {
-          if (variable instanceof GrField && ((GrField) variable).isProperty()) {
-            PsiMethod getter = ((GrField) variable).getGetter();
-            if (getter != null) writeMethod(text, getter, getter.getParameterList().getParameters());
-
-            PsiMethod setter = ((GrField) variable).getSetter();
-            if (setter != null) writeMethod(text, setter, setter.getParameterList().getParameters());
-          }
-        }
-      }
-    }
-
     if (isScript && !wasRunMethodPresent) {
       writeRunMethod(text);
     }

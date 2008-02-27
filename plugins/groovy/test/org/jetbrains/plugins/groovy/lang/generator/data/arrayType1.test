@@ -15,10 +15,6 @@ public class Foo extends groovy.lang.GroovyObjectSupport {
     return null;
   }
 
-  private int[] integers = null;
-
-  private java.lang.String[] strings = null;
-
   public int[] getIntegers() {
     return null;
   }
@@ -34,5 +30,9 @@ public class Foo extends groovy.lang.GroovyObjectSupport {
   public void setStrings(java.lang.String[] p) {
     return ;
   }
+
+  private int[] integers = null;
+
+  private java.lang.String[] strings = null;
 }
 ---

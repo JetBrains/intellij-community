@@ -8,10 +8,10 @@ public class D extends groovy.lang.GroovyObjectSupport {
     return ;
   }
 
-  private java.lang.Object DDD = null;
-
   public java.lang.Object getDDD() {
     return null;
   }
+
+  private java.lang.Object DDD = null;
 }
 ---
