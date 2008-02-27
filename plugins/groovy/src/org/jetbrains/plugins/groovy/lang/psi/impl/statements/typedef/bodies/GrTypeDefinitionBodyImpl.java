@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -18,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * @author: Dmitry.Krasilschikov, ilyas
@@ -62,8 +64,26 @@ public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements Gr
     return myFields;
   }
 
-  public GrMethod[] getMethods() {
+  public GrMethod[] getGroovyMethods() {
     return findChildrenByClass(GrMethod.class);
+  }
+
+  public PsiMethod[] getMethods() {
+    GrMethod[] groovyMethods = getGroovyMethods();
+    GrField[] fields = getFields();
+    if (fields.length == 0) return groovyMethods;
+    List<PsiMethod> result = new ArrayList<PsiMethod>();
+    result.addAll(Arrays.asList(groovyMethods));
+    for (GrField field : fields) {
+      if (field.isProperty()) {
+        PsiMethod getter = field.getGetter();
+        if (getter != null) result.add(getter);
+        PsiMethod setter = field.getSetter();
+        if (setter != null) result.add(setter);
+      }
+    }
+
+    return result.toArray(new PsiMethod[result.size()]);
   }
 
   public GrMembersDeclaration[] getMemberDeclarations() {

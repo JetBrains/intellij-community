@@ -83,7 +83,8 @@ import java.util.*;
  * @author ilyas
  */
 public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implements GrTypeDefinition {
-  private GrMethod[] myMethods;
+  private PsiMethod[] myMethods;
+  private GrMethod[] myGroovyMethods;
   private GrMethod[] myConstructors;
 
   public GrTypeDefinitionImpl(@NotNull ASTNode node) {
@@ -465,7 +466,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   @NotNull
-  public GrMethod[] getMethods() {
+  public PsiMethod[] getMethods() {
     if (myMethods == null) {
       GrTypeDefinitionBody body = getBody();
       if (body != null) {
@@ -475,6 +476,19 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       }
     }
     return myMethods;
+  }
+
+  @NotNull
+  public GrMethod[] getGroovyMethods() {
+    if (myGroovyMethods == null) {
+      GrTypeDefinitionBody body = getBody();
+      if (body != null) {
+        myGroovyMethods = body.getGroovyMethods();
+      } else {
+        myGroovyMethods = GrMethod.EMPTY_ARRAY;
+      }
+    }
+    return myGroovyMethods;
   }
 
   public void subtreeChanged() {
@@ -487,9 +501,9 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   public PsiMethod[] getConstructors() {
     if (myConstructors == null) {
       List<GrMethod> result = new ArrayList<GrMethod>();
-      for (final GrMethod method : getMethods()) {
+      for (final PsiMethod method : getMethods()) {
         if (method.isConstructor()) {
-          result.add(method);
+          result.add((GrMethod) method);
         }
       }
 
@@ -606,17 +620,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   private PsiMethod[] findMethodsByName(String name, boolean checkBases, boolean includeSyntheticAccessors) {
     if (!checkBases) {
       List<PsiMethod> result = new ArrayList<PsiMethod>();
-      for (GrMethod method : getMethods()) {
+      for (PsiMethod method : includeSyntheticAccessors ? getMethods() : getGroovyMethods()) {
         if (name.equals(method.getName())) result.add(method);
-      }
-
-      if (includeSyntheticAccessors) {
-        for (GrField field : getFields()) {
-          final PsiMethod setter = field.getSetter();
-          if (setter != null && name.equals(setter.getName())) result.add(setter);
-          final PsiMethod getter = field.getGetter();
-          if (getter != null && name.equals(getter.getName())) result.add(getter);
-        }
       }
 
       return result.toArray(new PsiMethod[result.size()]);

@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -31,7 +32,9 @@ import com.intellij.psi.PsiElement;
 public interface GrTypeDefinitionBody extends GroovyPsiElement {
   GrField[] getFields();
 
-  GrMethod[] getMethods();
+  PsiMethod[] getMethods();
+
+  GrMethod[] getGroovyMethods();
 
   GrMembersDeclaration[] getMemberDeclarations();
 

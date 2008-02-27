@@ -39,7 +39,7 @@ public interface GrTypeDefinition extends GrTopStatement, NavigationItem, PsiCla
   public GrTypeDefinitionBody getBody();
 
   @NotNull
-  GrMethod[] getMethods();
+  PsiMethod[] getMethods();
 
   @NotNull
   GrField[] getFields();
@@ -62,4 +62,7 @@ public interface GrTypeDefinition extends GrTopStatement, NavigationItem, PsiCla
   GrImplementsClause getImplementsClause();
 
   String[] getSuperClassNames();
+
+  @NotNull
+  GrMethod[] getGroovyMethods();
 }

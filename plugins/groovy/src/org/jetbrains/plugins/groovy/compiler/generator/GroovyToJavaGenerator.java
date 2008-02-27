@@ -463,8 +463,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       GrTypeDefinitionBody block = enumConstant.getAnonymousBlock();
       if (block != null) {
         text.append("{\n");
-        GrMethod[] methods = block.getMethods();
-        for (GrMethod method : methods) {
+        PsiMethod[] methods = block.getMethods();
+        for (PsiMethod method : methods) {
           writeMethod(text, method, method.getParameterList().getParameters());
         }
         text.append("}");

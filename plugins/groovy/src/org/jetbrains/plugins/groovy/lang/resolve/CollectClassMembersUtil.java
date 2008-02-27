@@ -22,6 +22,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 import java.util.ArrayList;
@@ -85,19 +86,9 @@ public class CollectClassMembersUtil {
       if (!allFields.containsKey(name)) {
         allFields.put(name, new CandidateInfo(field, substitutor));
       }
-
-      if (includeSynthetic) {
-        if (field instanceof GrField && field.getName() != null) {
-          final GrField property = (GrField) field;
-          final PsiMethod getter = property.getGetter();
-          if (getter != null) addMethod(allMethods, getter, substitutor);
-          final PsiMethod setter = property.getSetter();
-          if (setter != null) addMethod(allMethods, setter, substitutor);
-        }
-      }
     }
 
-    for (PsiMethod method : aClass.getMethods()) {
+    for (PsiMethod method : includeSynthetic || !(aClass instanceof GrTypeDefinition) ? aClass.getMethods() : ((GrTypeDefinition) aClass).getGroovyMethods()) {
       addMethod(allMethods, method, substitutor);
     }
 
