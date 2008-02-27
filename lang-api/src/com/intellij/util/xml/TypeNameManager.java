@@ -3,7 +3,6 @@ package com.intellij.util.xml;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
-import net.sf.cglib.proxy.Factory;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -32,11 +31,7 @@ public class TypeNameManager {
     String simpleName = aClass.getSimpleName();
     final int i = simpleName.indexOf('$');
     if (i >= 0) {
-      if (Factory.class.isAssignableFrom(aClass)) {
-        simpleName = simpleName.substring(0, i);
-      } else {
-        simpleName = simpleName.substring(i + 1);
-      }
+      simpleName = simpleName.substring(i + 1);
     }
     return StringUtil.capitalizeWords(StringUtil.join(NameUtil.nameToWords(simpleName),  " "), true);
   }

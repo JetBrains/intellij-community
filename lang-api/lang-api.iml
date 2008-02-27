@@ -8,7 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="platform-api" exported="" />
-    <orderEntry type="library" name="CGLIB" level="project" />
     <orderEntry type="module" module-name="lvcs-openapi" />
     <orderEntryProperties />
   </component>
