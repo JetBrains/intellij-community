@@ -18,7 +18,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class CollectHighlightsUtil {
-  private static ExtensionPointName<Condition<PsiElement>> EP_NAME = ExtensionPointName.create("com.intellij.elementsToHighlightFilter");
+  private static final ExtensionPointName<Condition<PsiElement>> EP_NAME = ExtensionPointName.create("com.intellij.elementsToHighlightFilter");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil");
 
@@ -87,7 +87,7 @@ public class CollectHighlightsUtil {
   }
 
   @Nullable
-  public static PsiElement findCommonParent(final PsiElement root, final int startOffset, final int endOffset) {
+  private static PsiElement findCommonParent(final PsiElement root, final int startOffset, final int endOffset) {
     if (startOffset == endOffset) return null;
     final PsiElement left = findElementAtInRoot(root, startOffset);
     PsiElement right = findElementAtInRoot(root, endOffset - 1);
@@ -104,7 +104,7 @@ public class CollectHighlightsUtil {
   }
 
   @Nullable
-  public static PsiElement findElementAtInRoot(final PsiElement root, final int offset) {
+  private static PsiElement findElementAtInRoot(final PsiElement root, final int offset) {
     if (root instanceof PsiFile) {
       final PsiFile file = (PsiFile)root;
       final LanguageDialect dialect = file.getLanguageDialect();
