@@ -42,6 +42,8 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
   public Boolean INTRODUCE_LOCAL_CREATE_FINALS = null;
   public Boolean EXTRACT_METHOD_SPECIFY_TYPE = null;
   public String EXTRACT_METHOD_VISIBILITY = null;
+  public Boolean IS_DEBUG_ENABLED_IN_SCRIPT = null;
+
 
   @Transient
   private boolean myJsSupportEnabled = false;

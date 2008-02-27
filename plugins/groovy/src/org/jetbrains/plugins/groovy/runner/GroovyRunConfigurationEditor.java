@@ -26,6 +26,7 @@ import com.intellij.ui.FieldPanel;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.refactoring.GroovyApplicationSettings;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,6 +39,8 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   private RawCommandLineEditor myParameters;
   private JPanel scriptPathPanel;
   private JPanel workDirPanel;
+  private JCheckBox myDebugCB;
+  private JLabel myDebugPanel;
   private Project myProject;
   private JTextField scriptPathField;
   private JTextField workDirField;
@@ -47,22 +50,22 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
 
     scriptPathField = new JTextField();
     final BrowseFilesListener scriptBrowseListener = new BrowseFilesListener(scriptPathField,
-            "Script Path",
-            "Specify path to script",
-            new FileChooserDescriptor(true, false, false, false, false, false) {
-              public boolean isFileSelectable(VirtualFile file) {
-                return file.getFileType() == GroovyFileType.GROOVY_FILE_TYPE;
-              }
-            });
+        "Script Path",
+        "Specify path to script",
+        new FileChooserDescriptor(true, false, false, false, false, false) {
+          public boolean isFileSelectable(VirtualFile file) {
+            return file.getFileType() == GroovyFileType.GROOVY_FILE_TYPE;
+          }
+        });
     final FieldPanel scriptFieldPanel = new FieldPanel(scriptPathField, "Script path:", null, scriptBrowseListener, null);
     scriptPathPanel.setLayout(new BorderLayout());
     scriptPathPanel.add(scriptFieldPanel, BorderLayout.CENTER);
 
     workDirField = new JTextField();
     final BrowseFilesListener workDirBrowseFilesListener = new BrowseFilesListener(workDirField,
-            "Working directory",
-            "Specify working directory",
-            BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
+        "Working directory",
+        "Specify working directory",
+        BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
     final FieldPanel workDirFieldPanel = new FieldPanel(workDirField, "Working directory:", null, workDirBrowseFilesListener, null);
     workDirPanel.setLayout(new BorderLayout());
     workDirPanel.add(workDirFieldPanel, BorderLayout.CENTER);
@@ -78,6 +81,15 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     scriptPathField.setText(configuration.scriptPath);
     workDirField.setText(configuration.getAbsoluteWorkDir());
 
+    myDebugCB.setEnabled(true);
+    if (GroovyApplicationSettings.getInstance().IS_DEBUG_ENABLED_IN_SCRIPT != null &&
+        GroovyApplicationSettings.getInstance().IS_DEBUG_ENABLED_IN_SCRIPT) {
+      myDebugCB.setSelected(true);
+    } else {
+      myDebugCB.setSelected(false);
+    }
+    GroovyApplicationSettings.getInstance().IS_DEBUG_ENABLED_IN_SCRIPT = myDebugCB.isSelected();
+
     myModulesModel.removeAllElements();
     for (Module module : configuration.getValidModules()) {
       myModulesModel.addElement(module);
@@ -88,6 +100,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   public void applyEditorTo(GroovyScriptRunConfiguration configuration) throws ConfigurationException {
     configuration.setModule((Module) myModulesBox.getSelectedItem());
     configuration.vmParams = myVMParameters.getText();
+    configuration.isDebugEnabled = myDebugCB.isSelected();
     configuration.scriptParams = myParameters.getText();
     configuration.scriptPath = scriptPathField.getText();
     configuration.setAbsoluteWorkDir(workDirField.getText());
@@ -97,6 +110,12 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   public JComponent createEditor() {
     myModulesModel = new DefaultComboBoxModel();
     myModulesBox.setModel(myModulesModel);
+    myDebugCB.setEnabled(true);
+    if (GroovyApplicationSettings.getInstance().IS_DEBUG_ENABLED_IN_SCRIPT != null &&
+        GroovyApplicationSettings.getInstance().IS_DEBUG_ENABLED_IN_SCRIPT) {
+      myDebugCB.setSelected(true);
+    }
+    GroovyApplicationSettings.getInstance().IS_DEBUG_ENABLED_IN_SCRIPT = myDebugCB.isSelected();
 
     myModulesBox.setRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, final Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -114,5 +133,6 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   }
 
   public void disposeEditor() {
+    GroovyApplicationSettings.getInstance().IS_DEBUG_ENABLED_IN_SCRIPT = myDebugCB.isSelected();
   }
 }
