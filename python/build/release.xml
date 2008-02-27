@@ -18,7 +18,7 @@
   </target>
 
   <taskdef name="javac2" classname="com.intellij.ant.Javac2">
-    
+    <classpath path="${basedir}/javac2.jar"/>
   </taskdef>
 
   <fileset id="idea.libraries" dir="${idea.dir}/jdk15/lib">
