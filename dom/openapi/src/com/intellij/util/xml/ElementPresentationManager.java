@@ -184,7 +184,7 @@ public abstract class ElementPresentationManager {
         result.add(icon);
       }
     }
-    final Icon[] icons = TypeNameManager.getFromClassMap(ourIcons, o.getClass());
+    final Icon[] icons = getIconsForClass(o.getClass());
     if (icons != null) {
       result.addAll(Arrays.asList(icons));
     }
@@ -198,7 +198,7 @@ public abstract class ElementPresentationManager {
 
   @Nullable
   public static Icon[] getIconsForClass(final Class clazz) {
-    return ourIcons.get(clazz);
+    return TypeNameManager.getFromClassMap(ourIcons, clazz);
   }
 
   public static Method findNameValueMethod(final Class<? extends Object> aClass) {
