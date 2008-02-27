@@ -2,7 +2,6 @@ package com.theoryinpractice.testng.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFramework;
-import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -493,7 +492,7 @@ public class TestNGUtil implements TestFramework
   }
 
   public static boolean isTestngXML(final VirtualFile virtualFile) {
-    if (virtualFile.getName().endsWith(XmlFileType.DEFAULT_EXTENSION)) {
+    if (virtualFile.getName().endsWith("xml")) {
       final NanoXmlUtil.RootTagNameBuilder rootTagNameBuilder = new NanoXmlUtil.RootTagNameBuilder();
       try {
         NanoXmlUtil.parse(virtualFile.getInputStream(), rootTagNameBuilder);
