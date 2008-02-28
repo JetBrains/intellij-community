@@ -7,7 +7,7 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    Regex expression
+    RegexFindExpression
       Literal
         PsiElement(Gstring)('"foobarfoo"')
       PsiWhiteSpace(' ')

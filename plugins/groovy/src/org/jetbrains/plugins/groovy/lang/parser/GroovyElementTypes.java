@@ -77,7 +77,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType INCLUSIVE_OR_EXPRESSION = new GroovyElementType("Inclusive OR expression");
   GroovyElementType EXCLUSIVE_OR_EXPRESSION = new GroovyElementType("Exclusive OR expression");
   GroovyElementType AND_EXPRESSION = new GroovyElementType("AND expression");
-  GroovyElementType REGEX_EXPRESSION = new GroovyElementType("Regex expression");
+  GroovyElementType REGEX_FIND_EXPRESSION = new GroovyElementType("Regex Find expression");
+  GroovyElementType REGEX_MATCH_EXPRESSION = new GroovyElementType("Regex Match expression");
   GroovyElementType EQUALITY_EXPRESSION = new GroovyElementType("Equality expression");
   GroovyElementType RELATIONAL_EXPRESSION = new GroovyElementType("Relational expression");
   GroovyElementType SHIFT_EXPRESSION = new GroovyElementType("Shift expression");

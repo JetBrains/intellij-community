@@ -15,19 +15,25 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex;
 
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 
 /**
  * @author ilyas
  */
-public abstract class GrRegexExpressionImpl extends GrBinaryExpressionImpl {
-  public GrRegexExpressionImpl(@NotNull ASTNode node) {
+public class GrRegexFindExpressionImpl extends GrRegexExpressionImpl {
+  private static final String MATCHER_FQ_NAME = "java.util.regex.Matcher";
+
+  public GrRegexFindExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
+  public PsiType getType() {
+    return getManager().getElementFactory().createTypeByFQClassName(MATCHER_FQ_NAME, getResolveScope());
+  }
+
   public String toString() {
-    return "Regex expression";
+    return "RegexFindExpression";
   }
 }

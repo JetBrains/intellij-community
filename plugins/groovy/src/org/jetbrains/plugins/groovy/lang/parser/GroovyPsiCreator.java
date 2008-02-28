@@ -54,7 +54,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.Gr
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectorImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexMatchExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexFindExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrRelationalExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrInstanceofExpressionImpl;
@@ -208,7 +209,8 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (elem.equals(EXCLUSIVE_OR_EXPRESSION)) return new GrExclusiveOrExpressionImpl(node);
     if (elem.equals(INCLUSIVE_OR_EXPRESSION)) return new GrInclusiveOrExpressionImpl(node);
     if (elem.equals(AND_EXPRESSION)) return new GrAndExpressionImpl(node);
-    if (elem.equals(REGEX_EXPRESSION)) return new GrRegexExpressionImpl(node);
+    if (elem.equals(REGEX_MATCH_EXPRESSION)) return new GrRegexMatchExpressionImpl(node);
+    if (elem.equals(REGEX_FIND_EXPRESSION)) return new GrRegexFindExpressionImpl(node);
     if (elem.equals(EQUALITY_EXPRESSION)) return new GrEqualityExpressionImpl(node);
     if (elem.equals(RELATIONAL_EXPRESSION)) return new GrRelationalExpressionImpl(node);
     if (elem.equals(SHIFT_EXPRESSION)) return new GrShiftExpressionImpl(node);

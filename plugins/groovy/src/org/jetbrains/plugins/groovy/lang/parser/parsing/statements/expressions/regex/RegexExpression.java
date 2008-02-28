@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.relational.EqualityExpression;
@@ -28,21 +29,22 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class RegexExpression implements GroovyElementTypes {
 
   private static TokenSet REGEX_DO = TokenSet.create(
-          mREGEX_FIND,
-          mREGEX_MATCH
+      mREGEX_FIND,
+      mREGEX_MATCH
   );
 
   public static boolean parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
     if (EqualityExpression.parse(builder)) {
+      IElementType type = builder.getTokenType();
       if (ParserUtils.getToken(builder, REGEX_DO)) {
         ParserUtils.getToken(builder, mNLS);
         if (!EqualityExpression.parse(builder)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         PsiBuilder.Marker newMarker = marker.precede();
-        marker.done(REGEX_EXPRESSION);
+        marker.done(type == mREGEX_FIND ? REGEX_FIND_EXPRESSION : REGEX_MATCH_EXPRESSION);
         if (REGEX_DO.contains(builder.getTokenType())) {
           subParse(builder, newMarker);
         } else {
@@ -59,13 +61,14 @@ public class RegexExpression implements GroovyElementTypes {
   }
 
   private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker) {
+    IElementType type = builder.getTokenType();
     ParserUtils.getToken(builder, REGEX_DO);
     ParserUtils.getToken(builder, mNLS);
     if (!EqualityExpression.parse(builder)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     PsiBuilder.Marker newMarker = marker.precede();
-    marker.done(REGEX_EXPRESSION);
+    marker.done(type == mREGEX_FIND ? REGEX_FIND_EXPRESSION : REGEX_MATCH_EXPRESSION);
     if (REGEX_DO.contains(builder.getTokenType())) {
       subParse(builder, newMarker);
     } else {
