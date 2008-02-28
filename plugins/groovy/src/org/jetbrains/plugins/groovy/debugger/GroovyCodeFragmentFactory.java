@@ -134,7 +134,9 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
 
     PsiElementFactory elementFactory = toEval.getManager().getElementFactory();
     PsiCodeFragment result = elementFactory.createCodeBlockCodeFragment(javaText.toString(), null, true);
-    result.setThisType(elementFactory.createType(contextClass));
+    if (contextClass != null) {
+      result.setThisType(elementFactory.createType(contextClass));
+    }
     return result;
   }
 
