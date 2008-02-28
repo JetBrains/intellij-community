@@ -197,4 +197,6 @@
 
   <!-- execution -->
   <executor implementation="com.intellij.execution.executors.DefaultRunExecutor"/>
+
+  <cutElementMarker implementation="com.intellij.ide.PsiCutElementMarker"/>
 </extensions>
