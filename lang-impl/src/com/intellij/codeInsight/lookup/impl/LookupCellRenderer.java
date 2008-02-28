@@ -96,7 +96,7 @@ class LookupCellRenderer implements ListCellRenderer {
 
     JLabel label = myLabel0;
     //noinspection HardCodedStringLiteral
-    label.setText("A");
+    label.setText("W"); //the widest letter known to me
     label.setIcon(null);
     label.setFont(NORMAL_FONT);
     FONT_WIDTH = label.getPreferredSize().width;
