@@ -42,15 +42,16 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class VariableDefinitions implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder, boolean isInClass) {
-    return parseDefinitions(builder, isInClass, false, false, false);
+  public static GroovyElementType parse(PsiBuilder builder, boolean isInClass, boolean hasModifiers) {
+    return parseDefinitions(builder, isInClass, false, false, false, hasModifiers);
   }
 
   public static GroovyElementType parseDefinitions(PsiBuilder builder,
                                                    boolean isInClass,
                                                    boolean isEnumConstantMember,
                                                    boolean isAnnotationMember,
-                                                   boolean mustBeMethod) {
+                                                   boolean mustBeMethod,
+                                                   boolean hasModifiers) {
     if (!(builder.getTokenType() == mIDENT || builder.getTokenType() == mSTRING_LITERAL || builder.getTokenType() == mGSTRING_LITERAL)) {
       builder.error(GroovyBundle.message("indentifier.or.string.literal.expected"));
       return WRONGWAY;
@@ -73,13 +74,14 @@ public class VariableDefinitions implements GroovyElementTypes {
       return WRONGWAY;
     }
 
+    if (!hasModifiers && mLPAREN == builder.getTokenType()) {
+      builder.error(GroovyBundle.message("method.definition.without.modifier"));
+      varMarker.drop();
+      return WRONGWAY;
+    }
+
     if (ParserUtils.getToken(builder, mLPAREN)) {
       ParameterList.parse(builder, mRPAREN);
-
-//      if (!ParserUtils.getToken(builder, mRPAREN)) {
-//        builder.error(GroovyBundle.message("rparen.expected"));
-//        varMarker.drop();
-//        return WRONGWAY;
 
       if (isEnumConstantMember && !isStringName) {
         builder.error(GroovyBundle.message("string.name.unexpected"));
@@ -148,12 +150,9 @@ public class VariableDefinitions implements GroovyElementTypes {
             varAssMarker.done(VARIABLE);
           }
 //          varAssMarker.drop();
-          boolean isManyDef = false;
           while (ParserUtils.getToken(builder, mCOMMA)) {// a, b = d, c = d
             ParserUtils.getToken(builder, mNLS);
-
             if (WRONGWAY.equals(parseVariableDeclarator(builder, isInClass))) return VARIABLE_DEFINITION_ERROR;
-            isManyDef = true;
           }
 
           return VARIABLE_DEFINITION;

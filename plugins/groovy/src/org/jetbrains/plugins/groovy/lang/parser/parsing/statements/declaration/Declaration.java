@@ -54,7 +54,7 @@ public class Declaration implements GroovyElementTypes {
       } else {
         checkMarker.drop();
       }
-      GroovyElementType decl = VariableDefinitions.parseDefinitions(builder, isInClass, false, false, true);
+      GroovyElementType decl = VariableDefinitions.parseDefinitions(builder, isInClass, false, false, true, modifiersParsed);
 
       if (WRONGWAY.equals(decl)) {
         declMarker.error(GroovyBundle.message("method.definitions.expected"));
@@ -74,7 +74,7 @@ public class Declaration implements GroovyElementTypes {
           builder.error(GroovyBundle.message("type.expected"));
         }
 
-        GroovyElementType varDecl = VariableDefinitions.parse(builder, isInClass);
+        GroovyElementType varDecl = VariableDefinitions.parse(builder, isInClass, modifiersParsed);
 
         if (WRONGWAY.equals(varDecl)) {
           builder.error(GroovyBundle.message("variable.definitions.expected"));
@@ -86,7 +86,7 @@ public class Declaration implements GroovyElementTypes {
         }
 
       } else {  //type was recognized
-        GroovyElementType varDeclarationTop = VariableDefinitions.parse(builder, isInClass);
+        GroovyElementType varDeclarationTop = VariableDefinitions.parse(builder, isInClass, modifiersParsed);
 
         if (WRONGWAY.equals(varDeclarationTop)) {
           checkMarker.rollbackTo();
@@ -95,7 +95,7 @@ public class Declaration implements GroovyElementTypes {
             builder.error(GroovyBundle.message("type.expected"));
           }
 
-          GroovyElementType varDecl = VariableDefinitions.parse(builder, isInClass);
+          GroovyElementType varDecl = VariableDefinitions.parse(builder, isInClass, modifiersParsed);
 
           if (WRONGWAY.equals(varDecl)) {
             builder.error(GroovyBundle.message("variable.definitions.expected"));
@@ -137,7 +137,7 @@ public class Declaration implements GroovyElementTypes {
         }
       }
 
-      GroovyElementType varDef = VariableDefinitions.parse(builder, isInClass);
+      GroovyElementType varDef = VariableDefinitions.parse(builder, isInClass, modifiersParsed || typeParsed);
       if (varDef != WRONGWAY) {
         declMarker.done(varDef);
         return true;
