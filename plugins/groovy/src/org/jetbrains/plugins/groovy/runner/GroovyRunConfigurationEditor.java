@@ -82,13 +82,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     workDirField.setText(configuration.getAbsoluteWorkDir());
 
     myDebugCB.setEnabled(true);
-    if (GroovyApplicationSettings.getInstance().IS_DEBUG_ENABLED_IN_SCRIPT != null &&
-        GroovyApplicationSettings.getInstance().IS_DEBUG_ENABLED_IN_SCRIPT) {
-      myDebugCB.setSelected(true);
-    } else {
-      myDebugCB.setSelected(false);
-    }
-    GroovyApplicationSettings.getInstance().IS_DEBUG_ENABLED_IN_SCRIPT = myDebugCB.isSelected();
+    myDebugCB.setSelected(configuration.isDebugEnabled);
 
     myModulesModel.removeAllElements();
     for (Module module : configuration.getValidModules()) {
@@ -111,11 +105,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     myModulesModel = new DefaultComboBoxModel();
     myModulesBox.setModel(myModulesModel);
     myDebugCB.setEnabled(true);
-    if (GroovyApplicationSettings.getInstance().IS_DEBUG_ENABLED_IN_SCRIPT != null &&
-        GroovyApplicationSettings.getInstance().IS_DEBUG_ENABLED_IN_SCRIPT) {
-      myDebugCB.setSelected(true);
-    }
-    GroovyApplicationSettings.getInstance().IS_DEBUG_ENABLED_IN_SCRIPT = myDebugCB.isSelected();
+    myDebugCB.setSelected(false);
 
     myModulesBox.setRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, final Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -133,6 +123,5 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   }
 
   public void disposeEditor() {
-    GroovyApplicationSettings.getInstance().IS_DEBUG_ENABLED_IN_SCRIPT = myDebugCB.isSelected();
   }
 }

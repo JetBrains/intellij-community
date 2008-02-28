@@ -81,6 +81,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     vmParams = JDOMExternalizer.readString(element, "vmparams");
     scriptParams = JDOMExternalizer.readString(element, "params");
     workDir = JDOMExternalizer.readString(element, "workDir");
+    isDebugEnabled = Boolean.parseBoolean(JDOMExternalizer.readString(element, "debug"));
     if (!new File(workDir).isAbsolute()) { //was stored as relative path, so try to make it absolute here
       workDir = new File(getProject().getBaseDir().getPath(), workDir).getAbsolutePath();
     }
@@ -93,6 +94,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     JDOMExternalizer.write(element, "vmparams", vmParams);
     JDOMExternalizer.write(element, "params", scriptParams);
     JDOMExternalizer.write(element, "workDir", workDir);
+    JDOMExternalizer.write(element, "debug", isDebugEnabled);
   }
 
   protected ModuleBasedConfiguration createInstance() {
@@ -194,7 +196,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
       String path = jdk.getBinPath();
       int index = path.indexOf("/bin");
       assert index > 0;
-      path = path.substring(0, index)+ File.separator + ".." + File.separator + "Classes";
+      path = path.substring(0, index) + File.separator + ".." + File.separator + "Classes";
       jdkLibDir = new File(path).getAbsolutePath();
     } else {
       String path = jdk.getRtLibraryPath();
