@@ -40,14 +40,20 @@ public class URLUtil {
   @NotNull
   public static InputStream openStream(final URL url) throws IOException {
     @NonNls final String protocol = url.getProtocol();
-    try {
-      if (protocol.equals("jar")) {
-        return openJarStream(url);
-      }
+    if (protocol.equals("jar")) {
+      return openJarStream(url);
+    }
 
-      return url.openStream();
+    return url.openStream();
+  }
+
+  @NotNull
+  public static InputStream openResourceStream(final URL url) throws IOException {
+    try {
+      return openStream(url);
     }
     catch(FileNotFoundException ex) {
+      @NonNls final String protocol = url.getProtocol();
       String file = null;
       if (protocol.equals("file")) {
         file = url.getFile();

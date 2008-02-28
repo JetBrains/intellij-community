@@ -239,7 +239,7 @@ public class JDOMXIncluder {
     else {
       try {
         String encoding = element.getAttributeValue(ENCODING);
-        String s = StreamUtil.readText(URLUtil.openStream(remote), encoding);
+        String s = StreamUtil.readText(URLUtil.openResourceStream(remote), encoding);
         List<Object> resultList = new ArrayList<Object>();
         resultList.add(s);
         return resultList;
@@ -292,7 +292,7 @@ public class JDOMXIncluder {
 
   private static List<Object> parseRemote(final Stack<String> bases, final URL remote) {
     try {
-      Document doc = JDOMUtil.loadDocument(remote);
+      Document doc = JDOMUtil.loadResourceDocument(remote);
       bases.push(remote.toExternalForm());
 
       Element root = doc.getRootElement();

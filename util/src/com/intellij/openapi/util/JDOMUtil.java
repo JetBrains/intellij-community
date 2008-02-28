@@ -316,6 +316,10 @@ public class JDOMUtil {
     return loadDocument(URLUtil.openStream(url));
   }
 
+  public static Document loadResourceDocument(URL url) throws JDOMException, IOException {
+    return loadDocument(URLUtil.openResourceStream(url));
+  }
+
   public static void writeDocument(Document document, String filePath, String lineSeparator) throws IOException {
     OutputStream stream = new BufferedOutputStream(new FileOutputStream(filePath));
     try {
