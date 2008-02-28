@@ -21,6 +21,9 @@
     <component>
       <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.platform.FilesystemToolwindowOpener</implementation-class>
+    </component>
   </project-components>
 
   <xi:include href="Platform.xml" xpointer="xpointer(/components/*)"/>

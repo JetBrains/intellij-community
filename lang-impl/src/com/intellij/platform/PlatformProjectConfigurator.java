@@ -1,13 +1,12 @@
 package com.intellij.platform;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.util.messages.MessageBus;
@@ -37,7 +36,8 @@ public class PlatformProjectConfigurator implements ProjectComponent {
       if (modules.length == 0) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            final Module module = moduleManager.newModule(PathManager.getConfigPath() + "/dummy.iml", ModuleType.EMPTY);
+            String imlName = PlatformProjectOpenProcessor.getIprBaseName() + ".iml";
+            final Module module = moduleManager.newModule(imlName, ModuleType.EMPTY);
             ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
             rootModel.addContentEntry(PlatformProjectOpenProcessor.BASE_DIR);
             rootModel.commit();
