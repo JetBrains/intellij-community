@@ -431,16 +431,18 @@ public class PluginManager {
           //final String canonicalPath = file.getCanonicalPath();
           //if (!canonicalPath.startsWith(homePath) || canonicalPath.endsWith(".jar")) continue;
           //if (!canonicalPath.startsWith(homePath)) continue;
-          IdeaPluginDescriptorImpl pluginDescriptor = null;
+
           final String platformPrefix = System.getProperty("idea.platform.prefix");
           if (platformPrefix != null) {
-            pluginDescriptor = loadDescriptor(file, platformPrefix + "Plugin.xml");
-          }
-          if (pluginDescriptor == null) {
-            pluginDescriptor = loadDescriptor(file, PLUGIN_XML);
-            if (platformPrefix != null && pluginDescriptor != null && pluginDescriptor.getName().equals("IDEA CORE")) {
-              continue;
+            IdeaPluginDescriptorImpl platformPluginDescriptor = loadDescriptor(file, platformPrefix + "Plugin.xml");
+            if (platformPluginDescriptor != null && !result.contains(platformPluginDescriptor)) {
+              result.add(platformPluginDescriptor);
             }
+          }
+
+          IdeaPluginDescriptorImpl pluginDescriptor = loadDescriptor(file, PLUGIN_XML);
+          if (platformPrefix != null && pluginDescriptor != null && pluginDescriptor.getName().equals("IDEA CORE")) {
+            continue;
           }
           if (pluginDescriptor != null && !result.contains(pluginDescriptor)) {
             result.add(pluginDescriptor);
