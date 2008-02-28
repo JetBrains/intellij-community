@@ -61,6 +61,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private String myDownloadCounter;
   private long myDate;
   private boolean myUseIdeaClassLoader;
+  private boolean myUseCoreClassLoader;
   private boolean myEnabled = true;
 
   private String mySinceBuild;
@@ -437,6 +438,14 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   public boolean getUseIdeaClassLoader() {
     return myUseIdeaClassLoader;
+  }
+
+  public boolean isUseCoreClassLoader() {
+    return myUseCoreClassLoader;
+  }
+
+  public void setUseCoreClassLoader(final boolean useCoreClassLoader) {
+    myUseCoreClassLoader = useCoreClassLoader;
   }
 
   public void setVendorLogoPath(final String vendorLogoPath) {

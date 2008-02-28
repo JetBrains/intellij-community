@@ -171,7 +171,7 @@ public class PluginManager {
     Collections.sort(result, getPluginDescriptorComparator(idToDescriptorMap));
 
     for (final IdeaPluginDescriptorImpl pluginDescriptor : result) {
-      if (pluginDescriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID)) {
+      if (pluginDescriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID) || pluginDescriptor.isUseCoreClassLoader()) {
         pluginDescriptor.setLoader(parentLoader);
       }
       else {
@@ -436,6 +436,7 @@ public class PluginManager {
           if (platformPrefix != null) {
             IdeaPluginDescriptorImpl platformPluginDescriptor = loadDescriptor(file, platformPrefix + "Plugin.xml");
             if (platformPluginDescriptor != null && !result.contains(platformPluginDescriptor)) {
+              platformPluginDescriptor.setUseCoreClassLoader(true);
               result.add(platformPluginDescriptor);
             }
           }
