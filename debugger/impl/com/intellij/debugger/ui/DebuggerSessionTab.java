@@ -437,7 +437,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     return myDebuggerSession;
   }
 
-  public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent) {
+  public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent, final String id) {
     addLogComponent(tabComponent);
   }
 

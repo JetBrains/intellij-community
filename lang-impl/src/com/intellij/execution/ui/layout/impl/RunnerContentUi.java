@@ -314,6 +314,10 @@ public class RunnerContentUi
     }
 
     myTabs.updateTabActions(validateNow);
+
+    if (validateNow) {
+      myTabs.sortTabs(myTabsComparator);
+    }
   }
 
   private void updateTabUI(TabInfo tab) {

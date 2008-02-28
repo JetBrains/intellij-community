@@ -3,7 +3,6 @@ package com.intellij.execution.ui.layout;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerListener;
@@ -20,7 +19,7 @@ public interface RunnerLayoutUi  {
   @NotNull
   RunnerLayoutUi setTopToolbar(@NotNull ActionGroup actions, @NotNull String place);
 
-  RunnerLayoutUi setLeftToolbar(@NotNull DefaultActionGroup leftToolbar, @NotNull String place);
+  RunnerLayoutUi setLeftToolbar(@NotNull ActionGroup leftToolbar, @NotNull String place);
 
   RunnerLayoutUi initTabDefaults(int tabId, @Nullable String defaultTabText, @Nullable Icon defaultTabIcon);
 
@@ -47,6 +46,8 @@ public interface RunnerLayoutUi  {
   void updateToolbarNow();
 
   AnAction getLayoutActions();
+
+  boolean isDisposed();
 
   enum PlaceInGrid {
     left, center, right, bottom

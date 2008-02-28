@@ -2,11 +2,10 @@ package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -141,7 +140,7 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
     return myContentUI.getLayoutActions();
   }
 
-  public RunnerLayoutUi setLeftToolbar(@NotNull final DefaultActionGroup leftToolbar, @NotNull final String place) {
+  public RunnerLayoutUi setLeftToolbar(@NotNull final ActionGroup leftToolbar, @NotNull final String place) {
     myContentUI.setLeftToolbar(leftToolbar, place);
     return this;
   }
@@ -180,5 +179,9 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
 
   public void removeListener(@NotNull final ContentManagerListener listener) {
     getContentManager().removeContentManagerListener(listener);
+  }
+
+  public boolean isDisposed() {
+    return getContentManager().isDisposed();
   }
 }

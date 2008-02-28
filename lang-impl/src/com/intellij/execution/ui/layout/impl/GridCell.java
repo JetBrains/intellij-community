@@ -128,7 +128,7 @@ public class GridCell implements Disposable {
       myTabs.removeAllTabs();
     }
     else {
-      if (myPlaceholder.isNull()) {
+      if (myPlaceholder.isNull() && !isDetached()) {
         myPlaceholder.setContent(myTabs);
       }
 

@@ -1,5 +1,6 @@
 package com.intellij.execution.ui.layout.impl;
 
+import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ui.NullableComponent;
@@ -10,9 +11,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.containers.HashMap;
-import com.intellij.execution.ui.layout.impl.Tab;
-import com.intellij.execution.ui.layout.impl.View;
-import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,7 +129,7 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
 
   public void updateGridUI() {
     for (final GridCell cell : myPlaceInGrid2Cell.values()) {
-      cell.setHideTabs(myContents.size() == 1 && !cell.isDetached() && !getTab().isDefault());
+      cell.setHideTabs(myContents.size() == 1 && !cell.isDetached());
     }
   }
 
