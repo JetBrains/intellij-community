@@ -19,7 +19,7 @@ public class Foo extends groovy.lang.GroovyObjectSupport {
     return null;
   }
 
-  public void setIntegers(int[] p) {
+  public void setIntegers(int[] integers) {
     return ;
   }
 
@@ -27,7 +27,7 @@ public class Foo extends groovy.lang.GroovyObjectSupport {
     return null;
   }
 
-  public void setStrings(java.lang.String[] p) {
+  public void setStrings(java.lang.String[] strings) {
     return ;
   }
 
