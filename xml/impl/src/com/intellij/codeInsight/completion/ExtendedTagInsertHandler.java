@@ -19,6 +19,7 @@ import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -29,10 +30,12 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.ExtendedTagInsertHandler");
 
   protected final String myElementName;
-  @Nullable private final String myNamespacePrefix;
+  @Nullable protected final String myNamespace;
+  @Nullable protected final String myNamespacePrefix;
 
-  public ExtendedTagInsertHandler(final String elementName, @Nullable final String namespacePrefix) {
+  public ExtendedTagInsertHandler(final String elementName, @Nullable final String namespace, @Nullable final String namespacePrefix) {
     myElementName = elementName;
+    myNamespace = namespace;
     myNamespacePrefix = namespacePrefix;
   }
 
@@ -60,9 +63,6 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     final int caretOffset = editor.getCaretModel().getOffset();
     final RangeMarker caretMarker = document.createRangeMarker(caretOffset, caretOffset);
 
-    final Set<String> namespaces = getNamespaces(file);
-    @Nullable String nsPrefix = getPrefix(file, namespaces);
-
     final XmlExtension.Runner<String, IncorrectOperationException> runAfter =
       new XmlExtension.Runner<String, IncorrectOperationException>() {
 
@@ -82,11 +82,12 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
       };
 
     try {
-      @Nullable String prefix = getExistingPrefix(file, namespaces);
-      if (prefix == null) {
-        XmlExtension.getExtension(file).insertNamespaceDeclaration(file, editor, namespaces, nsPrefix, runAfter);
+      final String prefixByNamespace = getPrefixByNamespace(file);
+      if (myNamespacePrefix != null || StringUtil.isEmpty(prefixByNamespace)) {
+        final String nsPrefix = myNamespacePrefix == null ? suggestPrefix(file) : myNamespacePrefix;
+        XmlExtension.getExtension(file).insertNamespaceDeclaration(file, editor, Collections.singleton(myNamespace), nsPrefix, runAfter);
       } else {
-        runAfter.run(prefix);    // qualify && complete
+        runAfter.run(prefixByNamespace);    // qualify && complete
       }
     }
     catch (IncorrectOperationException e) {
@@ -108,41 +109,20 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
   }
 
   @Nullable
-  private static String getExistingPrefix(XmlFile file, Set<String> namespaces) {
+  private String getPrefixByNamespace(XmlFile file) {
     final XmlDocument document = file.getDocument();
     assert document != null;
     final XmlTag tag = document.getRootTag();
-    assert tag != null;
-    for (String ns: tag.knownNamespaces()) {
-      if (namespaces.contains(ns)) {
-        final String prefix = tag.getPrefixByNamespace(ns);
-        if (!StringUtil.isEmpty(prefix))
-          return prefix;
-      }
-    }
-    return null;
+    return tag == null ? null : tag.getPrefixByNamespace(myNamespace);
   }
 
   @Nullable
-  private String getPrefix(final XmlFile file, final Set<String> namespaces) {
-    @Nullable String nsPrefix = myNamespacePrefix;
-    if (myNamespacePrefix == null && namespaces.size() > 0) {
-      final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
-      if (provider != null) {
-        for (String namespace : namespaces) {
-          final String prefix = provider.getDefaultPrefix(namespace, file);
-          if (prefix != null) {
-            if (nsPrefix == null) {
-              nsPrefix = prefix;
-            } else if (!prefix.equals(nsPrefix)) {
-              nsPrefix = null;
-              break;
-            }
-          }
-        }
-      }
+  protected String suggestPrefix(XmlFile file) {
+    if (myNamespace == null) {
+      return null;
     }
-    return nsPrefix;
+    final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
+    return provider == null ? null : provider.getDefaultPrefix(myNamespace, file);
   }
 
   protected Set<String> getNamespaces(final XmlFile file) {

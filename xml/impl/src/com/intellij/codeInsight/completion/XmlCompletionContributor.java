@@ -2,19 +2,22 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.util.ProcessingContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -47,18 +50,19 @@ public class XmlCompletionContributor extends CompletionContributor{
 
           final XmlFile file = (XmlFile)parameters.getOriginalFile();
           final XmlExtension extension = XmlExtension.getExtension(file);
-          final Set<String> names = extension.getAvailableTagNames(file, parent);
+          final List<Pair<String,String>> names = extension.getAvailableTagNames(file, parent);
           if (names.isEmpty()) {
             return;
           }
-          for (String name : names) {
+          for (Pair<String, String> pair : names) {
+            final String name = pair.getFirst();
             if (result.getPrefixMatcher().prefixMatches(name)) {
+              final String ns = pair.getSecond();
               final LookupItem item = new LookupItem<String>(name, name);
-              final XmlTagInsertHandler insertHandler = new ExtendedTagInsertHandler(name, namespacePrefix);
+              final XmlTagInsertHandler insertHandler = new ExtendedTagInsertHandler(name, ns, namespacePrefix);
               item.setInsertHandler(insertHandler);
-              final Set<String> namespaces = extension.getNamespacesByTagName(name, file);
-              if (namespaces.size() > 0) {
-                item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " (" + namespaces.iterator().next() + ")");
+              if (!StringUtil.isEmpty(ns)) {
+                item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " (" + ns + ")");
                 item.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
               }
               result.addElement(item);

@@ -3,6 +3,7 @@ package com.intellij.xml;
 import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
@@ -28,20 +29,23 @@ public class DefaultXmlExtension extends XmlExtension {
   }
 
   @NotNull
-  public Set<String> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context) {
+  public List<Pair<String,String>> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context) {
 
+    final Set<String> namespaces = new HashSet<String>(Arrays.asList(context.knownNamespaces()));
     final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
     if (provider != null) {
-      final Set<String> namespaces = provider.getAvailableNamespaces(file);
-      final String[] nameVariants = TagNameReference.getTagNameVariants(context, new ArrayList<XmlElementDescriptor>(), namespaces);
-      final HashSet<String> set = new HashSet<String>(nameVariants.length);
-      for (String nameVariant : nameVariants) {
-        final int pos = nameVariant.indexOf(':');
-        set.add(pos >= 0 ? nameVariant.substring(pos + 1) : nameVariant);
-      }
-      return set;
+      namespaces.addAll(provider.getAvailableNamespaces(file));
     }
-    return Collections.emptySet();
+    final ArrayList<String> nsInfo = new ArrayList<String>();
+    final String[] names = TagNameReference.getTagNameVariants(context, namespaces, nsInfo);
+    final List<Pair<String, String>> set = new ArrayList<Pair<String,String>>(names.length);
+    final Iterator<String> iterator = nsInfo.iterator();
+    for (String name : names) {
+      final int pos = name.indexOf(':');
+      final String s = pos >= 0 ? name.substring(pos + 1) : name;
+      set.add(Pair.create(s, iterator.next()));
+    }
+    return set;
   }
 
   @NotNull

@@ -24,8 +24,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlExtension;
+import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.SchemaNSDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
@@ -33,6 +33,7 @@ import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -155,7 +156,6 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
   }
 
   public Object[] getVariants(){
-    final List<XmlElementDescriptor> variants = new ArrayList<XmlElementDescriptor>();
     final PsiElement element = getElement();
     if (element instanceof JspDirective) return EMPTY_ARRAY;
 
@@ -197,18 +197,19 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
         return jspTreeSuggestionIsNotValid ? EMPTY_ARRAY : new Object[] { fromJspTree.getName() };
       }
     }
-    return getTagNameVariants((XmlTag)element, variants);
+    return getTagNameVariants((XmlTag)element);
   }
 
-  public static String[] getTagNameVariants(final XmlTag element, final List<XmlElementDescriptor> variants) {
+  public static String[] getTagNameVariants(final XmlTag element) {
     final ArrayList<String> namespaces = new ArrayList<String>(Arrays.asList(element.knownNamespaces()));
     namespaces.add(XmlUtil.EMPTY_URI); // empty namespace
-    return getTagNameVariants(element, variants, namespaces);
+    return getTagNameVariants(element, namespaces, null);
   }
 
   public static String[] getTagNameVariants(final XmlTag element,
-                                            final List<XmlElementDescriptor> variants,
-                                            final Collection<String> namespaces) {
+                                            final Collection<String> namespaces,
+                                            @Nullable List<String> nsInfo) {
+
     XmlElementDescriptor elementDescriptor = null;
     String elementNamespace = null;
 
@@ -238,10 +239,18 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
     final Iterator<String> nsIterator = namespaces.iterator();
 
     final Set<XmlNSDescriptor> visited = new HashSet<XmlNSDescriptor>();
+
+    final ArrayList<XmlElementDescriptor> variants = new ArrayList<XmlElementDescriptor>();
     while (nsIterator.hasNext()) {
       final String namespace = nsIterator.next();
+      final int initialSize = variants.size();
       processVariantsInNamespace(namespace, element, variants, elementDescriptor, elementNamespace, descriptorsMap, visited,
                                  context instanceof XmlTag ? (XmlTag)context : element);
+      if (nsInfo != null) {
+        for (int i = initialSize; i < variants.size(); i++) {
+          nsInfo.add(namespace);
+        }
+      }
     }
 
     final Iterator<XmlElementDescriptor> iterator = variants.iterator();

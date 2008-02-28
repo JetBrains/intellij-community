@@ -6,10 +6,12 @@ package com.intellij.psi.impl.source.jsp;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
@@ -17,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -42,10 +45,10 @@ public abstract class JspManager {
    * @return set of tag names
    */
   @NotNull
-  public abstract Set<String> getAvailableTagNames(@NotNull final JspFile context);
+  public abstract MultiMap<String,String> getAvailableTagNames(@NotNull final JspFile context);
 
   @NotNull
-  public abstract Set<String> getAvailableFunctions(@NotNull final JspFile context);
+  public abstract List<Pair<String,String>> getAvailableFunctions(@NotNull final JspFile context);
 
   @Nullable
   public abstract String getPrefixForNamespace(@NotNull String namespaceUri, final @NotNull JspFile context);
