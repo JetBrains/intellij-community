@@ -412,7 +412,7 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
         myLogFilesManager.unregisterFileMatcher();
     }
 
-  public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent) {
+  public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent, final String id) {
     myAdditionalComponents.put(tabComponent, tabbedPane.getTabCount());
     tabbedPane.addTab(tabComponent.getTabTitle(), null, tabComponent.getComponent(), tabComponent.getTooltip());
     Disposer.register(this, new Disposable() {
@@ -438,7 +438,7 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
     if (myRunProcess != null) {
       log.attachStopLogConsoleTrackingListener(myRunProcess);
     }
-    addAdditionalTabComponent(log);
+    addAdditionalTabComponent(log, path);
     tabbedPane.addChangeListener(log);
     Disposer.register(this, new Disposable() {
       public void dispose() {
