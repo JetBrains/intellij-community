@@ -695,7 +695,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
 
   private BidirectionalMap<String, String> initNamespaceMaps(PsiElement parent) {
     BidirectionalMap<String, String> map = myNamespaceMap;
-    if(map == null && hasNamespaceDeclarations()){
+    if (map == null && hasNamespaceDeclarations()){
       final BidirectionalMap<String, String> namespaceMap = new BidirectionalMap<String, String>();
       final XmlAttribute[] attributes = getAttributes();
 

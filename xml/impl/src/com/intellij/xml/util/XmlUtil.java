@@ -847,7 +847,7 @@ public class XmlUtil {
 
     if (file != null) {
       final FileType fileType = file.getViewProvider().getVirtualFile().getFileType();
-      if (fileType == StdFileTypes.JSPX || fileType == StdFileTypes.JSP) {
+      if (fileType == StdFileTypes.JSP) {
         String baseLanguageNameSpace = EMPTY_URI;
         if (PsiUtil.isInJspFile(file)) {
           final Language baseLanguage = PsiUtil.getJspFile(file).getViewProvider().getTemplateDataLanguage();
