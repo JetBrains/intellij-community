@@ -160,7 +160,7 @@ public class GrAccessorMethodImpl extends LightElement implements GrAccessorMeth
   @NotNull
   public PsiModifierList getModifierList() {
     if (myModifierList == null) {
-      Set<String> modifiers = new HashSet<String>();
+      LinkedHashSet<String> modifiers = new LinkedHashSet<String>();
       modifiers.add(PsiModifier.PUBLIC);
       final PsiModifierList original = myProperty.getModifierList();
       assert original != null;

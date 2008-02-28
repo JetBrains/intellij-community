@@ -20,6 +20,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
+import java.util.LinkedHashSet;
+import java.util.Iterator;
 
 /**
  * @author ven
@@ -27,7 +29,7 @@ import java.util.Set;
 public class LightModifierList extends LightElement implements PsiModifierList {
   private Set<String> myModifiers;
 
-  public LightModifierList(PsiManager manager, Set<String> modifiers){
+  public LightModifierList(PsiManager manager, LinkedHashSet<String> modifiers){
     super(manager);
     myModifiers = modifiers;
   }
@@ -58,7 +60,13 @@ public class LightModifierList extends LightElement implements PsiModifierList {
   }
 
   public String getText(){
-    return null;
+    StringBuffer buffer = new StringBuffer();
+    for (Iterator<String> it = myModifiers.iterator(); it.hasNext();) {
+      buffer.append(it.next());
+      if (it.hasNext()) buffer.append(" ");
+    }
+
+    return buffer.toString();
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){

@@ -15,20 +15,18 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.psi.impl.light.LightMethod;
-import com.intellij.psi.*;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
-import com.intellij.lang.Language;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.light.LightMethod;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
-import java.util.Set;
+import java.util.LinkedHashSet;
 
 /**
  * @author ven
@@ -56,7 +54,7 @@ public class DefaultGroovyMethod extends LightMethod {
     super(method.getManager(), method, null);
     myMethod = method;
     final PsiManager manager = method.getManager();
-    Set<String> modifiers = new HashSet<String>();
+    LinkedHashSet<String> modifiers = new LinkedHashSet<String>();
     modifiers.add(PsiModifier.PUBLIC);
     if (isStatic) modifiers.add(PsiModifier.STATIC);
     myModifierList = new LightModifierList(manager, modifiers);
