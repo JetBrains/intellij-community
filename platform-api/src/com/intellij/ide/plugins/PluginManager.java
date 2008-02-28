@@ -266,17 +266,12 @@ public class PluginManager {
       if (pluginId != null) {
         shouldLoad = pluginId.equals(idString);
         if (!shouldLoad) {
-          for (IdeaPluginDescriptor plugin : loaded) {
-            if (plugin.getPluginId().getIdString().equals(pluginId)) {
-              for (PluginId id: plugin.getDependentPluginIds()) {
-                if (id.equals(descriptor.getPluginId())) {
-                  shouldLoad = true;
-                  break;
-                }
-              }
-              break;
-            }
+          Map<PluginId,IdeaPluginDescriptor> map = new HashMap<PluginId, IdeaPluginDescriptor>();
+          for (final IdeaPluginDescriptor pluginDescriptor : loaded) {
+            map.put(pluginDescriptor.getPluginId(), pluginDescriptor);
           }
+          final IdeaPluginDescriptor descriptorFromProperty = map.get(PluginId.getId(pluginId));
+          shouldLoad = descriptorFromProperty != null && isDependent(descriptorFromProperty, descriptor.getPluginId(), map);
         }
       } else {
         shouldLoad = !getDisabledPlugins().contains(idString);
@@ -288,6 +283,19 @@ public class PluginManager {
 
 
     return !shouldLoad;
+  }
+
+  private static boolean isDependent(final IdeaPluginDescriptor descriptor, final PluginId on, Map<PluginId, IdeaPluginDescriptor> map) {
+    for (PluginId id: descriptor.getDependentPluginIds()) {
+      if (id.equals(on)) {
+        return true;
+      }
+      final IdeaPluginDescriptor depDescriptor = map.get(id);
+      if (depDescriptor != null && isDependent(depDescriptor, on, map)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean isIncompatible(final IdeaPluginDescriptor descriptor) {
