@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -71,7 +72,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   private TObjectLongHashMap<ID<?, ?>> myIndexIdToCreationStamp = new TObjectLongHashMap<ID<?, ?>>();
 
-  private Map<Document, Pair<CharSequence, Long>> myIndexingHistory = Collections.synchronizedMap(new HashMap<Document, Pair<CharSequence, Long>>());
+  private final Map<Document, AtomicLong> myLastIndexedDocStamps = new HashMap<Document, AtomicLong>();
+  private final Map<Document, CharSequence> myLastIndexedUnsavedContent = new HashMap<Document, CharSequence>();
   
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
@@ -368,6 +370,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     return ourUnitTestMode ? DummyFileSystem.getInstance().findById(id) : null;
   }
 
+  private Semaphore myUnsavedDataIndexingSemaphore = new Semaphore();
+  
   private void indexUnsavedDocuments() throws StorageException {
     myChangedFilesUpdater.forceUpdate();
     
@@ -376,29 +380,49 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     if (documents.length > 0) {
       // now index unsaved data
       setDataBufferingEnabled(true);
-      for (Document document : documents) {
-        final VirtualFile vFile = fdManager.getFile(document);
-        if (!vFile.isValid()) {
-          continue; // since the corresponding file is invalid, the document should be ignored
-        }
-        final Pair<CharSequence, Long> indexingInfo = myIndexingHistory.get(document);
-        final long documentStamp = document.getModificationStamp();
-        if (indexingInfo == null || documentStamp != indexingInfo.getSecond().longValue()) {
-          final FileContent oldFc = new FileContent(
-            vFile,
-            indexingInfo != null? indexingInfo.getFirst() : loadContent(vFile)
-          );
-          final FileContent newFc = new FileContent(vFile, document.getText());
-          for (ID<?, ?> indexId : myIndices.keySet()) {
-            if (getInputFilter(indexId).acceptInput(vFile)) {
-              final int inputId = Math.abs(getFileId(vFile));
-              getIndex(indexId).update(inputId, newFc, oldFc);
-            }
+      myUnsavedDataIndexingSemaphore.down();
+      try {
+        for (Document document : documents) {
+          final VirtualFile vFile = fdManager.getFile(document);
+          if (!vFile.isValid()) {
+            continue; // since the corresponding file is invalid, the document should be ignored
           }
-          myIndexingHistory.put(document, new Pair<CharSequence, Long>(newFc.content, documentStamp));
+          final long currentDocStamp = document.getModificationStamp();
+          if (currentDocStamp != getLastIndexedStamp(document).getAndSet(currentDocStamp)) {
+            CharSequence lastIndexed = myLastIndexedUnsavedContent.get(document);
+            if (lastIndexed == null) {
+              lastIndexed = loadContent(vFile);
+            }
+            final FileContent oldFc = new FileContent(vFile, lastIndexed);
+            final FileContent newFc = new FileContent(vFile, document.getText());
+            for (ID<?, ?> indexId : myIndices.keySet()) {
+              if (getInputFilter(indexId).acceptInput(vFile)) {
+                final int inputId = Math.abs(getFileId(vFile));
+                getIndex(indexId).update(inputId, newFc, oldFc);
+              }
+            }
+            myLastIndexedUnsavedContent.put(document, newFc.content);
+          }
         }
       }
+      finally {
+        myUnsavedDataIndexingSemaphore.up();
+        myUnsavedDataIndexingSemaphore.waitFor(); // may need to wait until another thread is done with indexing 
+      }
     }
+  }
+
+  @NotNull
+  private AtomicLong getLastIndexedStamp(final Document document) {
+    AtomicLong lastStamp;
+    synchronized (myLastIndexedDocStamps) {
+      lastStamp = myLastIndexedDocStamps.get(document);
+      if (lastStamp == null) {
+        lastStamp = new AtomicLong(0L);
+        myLastIndexedDocStamps.put(document, lastStamp);
+      }
+    }
+    return lastStamp;
   }
 
   private void setDataBufferingEnabled(final boolean enabled) {
@@ -515,7 +539,10 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     throws StorageException {
 
     setDataBufferingEnabled(false);
-    myIndexingHistory.clear();
+    synchronized (myLastIndexedDocStamps) {
+      myLastIndexedDocStamps.clear();
+      myLastIndexedUnsavedContent.clear();
+    }
 
     final int inputId = Math.abs(getFileId(file));
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
@@ -544,7 +571,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
 
   private final class ChangedFilesUpdater extends VirtualFileAdapter implements CacheUpdater{
-    private final Set<VirtualFile> myFileToUpdate = Collections.synchronizedSet(new HashSet<VirtualFile>());
+    private final Set<VirtualFile> myFilesToUpdate = Collections.synchronizedSet(new HashSet<VirtualFile>());
     private BlockingQueue<FutureTask<?>> myFutureInvalidations = new LinkedBlockingQueue<FutureTask<?>>();
     // No need to react on movement events since files stay valid, their ids don't change and all associated attributes remain intact.
 
@@ -553,7 +580,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     public void fileDeleted(final VirtualFileEvent event) {
-      myFileToUpdate.remove(event.getFile()); // no need to update it anymore
+      myFilesToUpdate.remove(event.getFile()); // no need to update it anymore
     }
 
     public void fileCopied(final VirtualFileCopyEvent event) {
@@ -597,7 +624,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
           for (ID<?, ?> indexId : myIndices.keySet()) {
             if (getInputFilter(indexId).acceptInput(file)) {
               if (myNeedContentLoading.contains(indexId)) {
-                myFileToUpdate.add(file);
+                myFilesToUpdate.add(file);
               }
               else {
                 try {
@@ -646,7 +673,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
         if (affectedIndices.size() > 0) {
           iterateIndexableFiles(file, new Processor<VirtualFile>() {
             public boolean process(final VirtualFile file) {
-              myFileToUpdate.add(file);
+              myFilesToUpdate.add(file);
               return true;
             }
           });
@@ -710,8 +737,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     public VirtualFile[] queryNeededFiles() {
-      synchronized (myFileToUpdate) {
-        return myFileToUpdate.toArray(new VirtualFile[myFileToUpdate.size()]);
+      synchronized (myFilesToUpdate) {
+        return myFilesToUpdate.toArray(new VirtualFile[myFilesToUpdate.size()]);
       }
     }
 
@@ -720,10 +747,19 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       processFileImpl(fileContent);
     }
 
+    private Semaphore myForceUpdateSemaphore = new Semaphore();
+    
     public void forceUpdate() {
       ensureAllInvalidateTasksCompleted();
-      for (VirtualFile file: queryNeededFiles()) {
-        processFileImpl(new com.intellij.ide.startup.FileContent(file));
+      myForceUpdateSemaphore.down();
+      try {
+        for (VirtualFile file: queryNeededFiles()) {
+          processFileImpl(new com.intellij.ide.startup.FileContent(file));
+        }
+      }
+      finally {
+        myForceUpdateSemaphore.up();
+        myForceUpdateSemaphore.waitFor(); // possibly wait until another thread completes indexing
       }
     }
 
@@ -735,7 +771,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     
     private void processFileImpl(final com.intellij.ide.startup.FileContent fileContent) {
       final VirtualFile file = fileContent.getVirtualFile();
-      final boolean reallyRemoved = myFileToUpdate.remove(file);
+      final boolean reallyRemoved = myFilesToUpdate.remove(file);
       if (reallyRemoved && file.isValid()) {
         indexFileContent(fileContent);
       }
