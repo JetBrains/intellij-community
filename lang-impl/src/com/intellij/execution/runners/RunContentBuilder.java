@@ -15,9 +15,9 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.CloseAction;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
@@ -110,10 +110,19 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
 
     final ExecutionConsole console = myExecutionResult.getExecutionConsole();
     if (console != null) {
+      DefaultActionGroup consoleActions = new DefaultActionGroup();
+      if (console instanceof ConsoleView) {
+        AnAction[] actions = ((ConsoleView)console).createUpDownStacktraceActions();
+        for (AnAction goaction: actions) {
+          consoleActions.add(goaction);
+        }
+      }
+
       final Content consoleContent = myUi.createContent("Console", console.getComponent(), "Console",
                                                         IconLoader.getIcon("/debugger/console.png"),
                                                         console.getPreferredFocusableComponent());
 
+      consoleContent.setActions(consoleActions, ActionPlaces.UNKNOWN, console.getComponent());
       myUi.addContent(consoleContent, 0, RunnerLayoutUi.PlaceInGrid.bottom, false);
       if (myRunProfile instanceof RunConfigurationBase){
         myManager.initLogConsoles((RunConfigurationBase)myRunProfile, myExecutionResult.getProcessHandler());
@@ -174,13 +183,6 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
       }
     }
 
-    ExecutionConsole console = myExecutionResult.getExecutionConsole();
-    if (console instanceof ConsoleView) {
-      AnAction[] actions = ((ConsoleView)console).createUpDownStacktraceActions();
-      for (AnAction goaction: actions) {
-        actionGroup.add(goaction);
-      }
-    }
     final AnAction stopAction = ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
     actionGroup.add(stopAction);
     actionGroup.addSeparator();
