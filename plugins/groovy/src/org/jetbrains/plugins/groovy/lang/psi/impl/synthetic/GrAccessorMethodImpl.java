@@ -27,10 +27,12 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.util.*;
 
@@ -210,6 +212,11 @@ public class GrAccessorMethodImpl extends LightElement implements GrAccessorMeth
 
   public PsiElement copy() {
     return null;
+  }
+
+  @NotNull
+  public Language getLanguage() {
+    return GroovyFileType.GROOVY_LANGUAGE;
   }
 
   public PsiFile getContainingFile() {
