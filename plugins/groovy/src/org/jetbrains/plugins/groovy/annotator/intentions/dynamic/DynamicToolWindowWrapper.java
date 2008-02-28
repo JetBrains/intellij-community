@@ -36,9 +36,8 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DMethodNode;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DPClassNode;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DPropertyNode;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualMethod;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualProperty;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitElement;
@@ -226,60 +225,6 @@ public class DynamicToolWindowWrapper {
 
     final MyPropertyOrClassCellEditor propertyOrClassCellEditor = new MyPropertyOrClassCellEditor(tableCellRenderer);
     final MyPropertyTypeCellEditor typeCellEditor = new MyPropertyTypeCellEditor();
-
-//    propertyOrClassCellEditor.addCellEditorListener(new CellEditorListener() {
-//      public void editingStopped(ChangeEvent e) {
-//        final Object source = e.getSource();
-//
-//        if (!(source instanceof MyPropertyOrClassCellEditor)) {
-//          return;
-//        }
-//
-//        final TreeTableTree tree = getTree();
-//        final MyPropertyOrClassCellEditor editor = (MyPropertyOrClassCellEditor) source;
-//
-//        if (tree == null) {
-//          myTreeTable.editingStopped(e);
-//          return;
-//        }
-//
-//        final Object fieldText = editor.getCellEditorValue();
-//        if (!(fieldText instanceof String)) return;
-//
-//        final TreePath editingPath = tree.getSelectionPath();
-//        final TreePath parentPath = editingPath.getParentPath();
-//
-//        final Object editingCellObject = myTreeTable.getValueAt(tree.getRowForPath(editingPath), CLASS_OR_ELEMENT_NAME_COLUMN);
-//        final Object parentCellObject = myTreeTable.getValueAt(tree.getRowForPath(parentPath), CLASS_OR_ELEMENT_NAME_COLUMN);
-//
-//        if (editingCellObject == null || parentCellObject == null) return;
-//
-//        boolean isEditClass = editingCellObject instanceof DContainingClassElement;
-//        boolean isEditProperty = editingCellObject instanceof DPropertyElement && parentCellObject instanceof DContainingClassElement;
-//
-//        assert (isEditClass && !isEditProperty) || (!isEditClass && isEditProperty);
-//
-//        //TODO:
-//        if (isEditClass) {
-//
-//        } else {
-////          final String name = ((DPropertyElement) editingCellObject).getPropertyName();
-////          final String type = ((DPropertyElement) editingCellObject).getPropertyType();
-////          final String className = ((DContainingClassElement) parentCellObject).getContainingClassName();
-////
-////          DynamicManager.getInstance(project).replaceDynamicProperty(
-////              new DynamicVirtualProperty(name, className, getModule(project).getName(), type),
-////              new DynamicVirtualProperty(fieldText.toString(), className, getModule(project).getName(), type));
-//          DynamicRenameHandler renameHandler = new DynamicRenameHandler();
-//
-//        }
-//      }
-//
-//      public void editingCanceled(ChangeEvent e) {
-//        System.out.println("editing canceled");
-//        myTreeTable.editingCanceled(e);
-//      }
-//    });
 
     typeCellEditor.addCellEditorListener(new CellEditorListener() {
       public void editingStopped(ChangeEvent e) {
@@ -590,25 +535,23 @@ public class DynamicToolWindowWrapper {
           if (!(child instanceof DefaultMutableTreeNode)) break;
 
           final Object userObject = ((DefaultMutableTreeNode) child).getUserObject();
-          if (!(userObject instanceof DPropertyNode)) break;
+          if (!(userObject instanceof DPropertyNode) && !(userObject instanceof DMethodNode)) break;
 
           filterText = getFilter();
-          if (filterText == null) break;
+          if (filterText == null || "".equals(filterText)) break;
 
-          final String propertyName = ((DPropertyNode) userObject).getElement().getDynamicVirtualElement().getName();
-
-          if (propertyName == null || "".equals(filterText)) break;
+          final String name = (((DItemNode) userObject)).getElement().getDynamicVirtualElement().getName();
 
           newChild = ((DefaultMutableTreeNode) child).getNextSibling();
 
-          if (!propertyName.contains(filterText)) {
+          if (!name.contains(filterText)) {
             final TreeNode parent = child.getParent();
 
             if (!(parent instanceof DefaultMutableTreeNode)) break;
 
             ((DefaultMutableTreeNode) parent).remove(((DefaultMutableTreeNode) child));
           } else {
-            ((DPropertyNode) userObject).getElement().setHightlightedText(filterText);
+            ((DItemNode) userObject).getElement().setHightlightedText(filterText);
           }
 
           child = newChild;
@@ -714,45 +657,64 @@ public class DynamicToolWindowWrapper {
 
       setPaintFocusBorder(false);
 
-      if (value != null) {
+      if (!(value instanceof DPNode)) return;
 
-        if (value instanceof DPClassNode) {
-          final String containingClassName = ((DPClassNode) value).getElement().getContainingClassName();
-          append(QuickfixUtil.shortenType(containingClassName), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      if (value instanceof DPClassNode) {
+        final String containingClassName = ((DPClassNode) value).getElement().getContainingClassName();
+//        append(QuickfixUtil.shortenType(containingClassName), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        append(containingClassName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      }
 
-        } else if (value instanceof DPropertyNode) {
-          final DPropertyNode propertyElement = (DPropertyNode) value;
-          final String substringToHighlight = propertyElement.getElement().getHightlightedText();
-          final String propertyName = propertyElement.getElement().getDynamicVirtualElement().getName();
+      if (value instanceof DItemNode) {
+        final DItemElement itemElement = ((DItemNode) value).getElement();
+        final String substringToHighlight = itemElement.getHightlightedText();
+        final String name = itemElement.getDynamicVirtualElement().getName();
 
-          if (substringToHighlight != null) {
-            final int begin = propertyName.indexOf(substringToHighlight);
-            final String first = propertyName.substring(0, begin);
-            append(first, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-            final TextAttributes textAttributes = TextAttributes.ERASE_MARKER;
-//              textAttributes.setEffectColor(new Color(200, 200, 200));
-            textAttributes.setBackgroundColor(UIUtil.getListSelectionBackground());
-            append(substringToHighlight, SimpleTextAttributes.fromTextAttributes(textAttributes));
-            append(propertyName.substring(first.length() + substringToHighlight.length()), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-          } else {
-            append(propertyName, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-          }
+        if (substringToHighlight != null) {
+          appendHighlightName(substringToHighlight, name);
+        } else {
+          appendName(name);
+        }
 
-        } else if (value instanceof DMethodNode) {
-          final DynamicVirtualElement method = ((DMethodNode) value).getElement().getDynamicVirtualElement();
-          append(method.getName(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-          append("(", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-
-          final PsiType[] types = QuickfixUtil.getArgumentsTypes(((DynamicVirtualMethod) method).getArguments());
-          for (int i = 0; i < types.length; i++) {
-            if (i != 0) append(", ", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-
-            PsiType type = types[i];
-            append(type.getPresentableText(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-          }
-          append(")", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+        if (value instanceof DMethodNode) {
+          appendMethodAttributes(((DMethodNode) value));
         }
       }
+    }
+
+    private void appendHighlightName(String substringToHighlight, String name) {
+      final int begin = name.indexOf(substringToHighlight);
+//          if (name.length() <= begin) return;
+      final String first = name.substring(0, begin);
+      append(first, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+      final TextAttributes textAttributes = TextAttributes.ERASE_MARKER;
+      textAttributes.setBackgroundColor(UIUtil.getListSelectionBackground());
+      append(substringToHighlight, SimpleTextAttributes.fromTextAttributes(textAttributes));
+      append(name.substring(first.length() + substringToHighlight.length()), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+    }
+
+    private void appendName(String name) {
+      append(name, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+    }
+
+    private void appendProperty(DPropertyNode propertyNode) {
+      final String propertyName = propertyNode.getElement().getName();
+      append(propertyName, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+    }
+
+    private void appendMethodAttributes(DMethodNode value) {
+      final DynamicVirtualElement method = value.getElement().getDynamicVirtualElement();
+//      append(method.getName(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+      append("(", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+
+      final PsiType[] types = QuickfixUtil.getArgumentsTypes(((DynamicVirtualMethod) method).getArguments());
+      for (int i = 0; i < types.length; i++) {
+        if (i != 0) append(", ", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+
+        PsiType type = types[i];
+        append(type.getPresentableText(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+      }
+      append(")", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
     }
   }
 

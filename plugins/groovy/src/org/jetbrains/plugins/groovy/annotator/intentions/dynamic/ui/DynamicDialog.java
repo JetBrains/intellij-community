@@ -58,6 +58,7 @@ public abstract class DynamicDialog extends DialogWrapper {
 
     if (!isTableVisible()) {
       myTable.setVisible(false);
+      myTableLabel.setVisible(false);
     }
     myReferenceExpression = referenceExpression;
     setTitle(GroovyInspectionBundle.message("dynamic.element"));
