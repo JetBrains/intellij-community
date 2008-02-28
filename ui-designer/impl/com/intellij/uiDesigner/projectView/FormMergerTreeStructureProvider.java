@@ -10,7 +10,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
@@ -18,11 +17,10 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.actions.MoveAction;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class FormMergerTreeStructureProvider implements TreeStructureProvider, ProjectComponent{
+public class FormMergerTreeStructureProvider implements TreeStructureProvider {
   private final Project myProject;
 
   public FormMergerTreeStructureProvider(Project project) {
@@ -126,23 +124,6 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
       }
     }
     return result;
-  }
-
-  public void projectClosed() {
-  }
-
-  public void projectOpened() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "FormNodesProvider";
-  }
-
-  public void initComponent() {
   }
 
   private static class MyDeleteProvider implements DeleteProvider {

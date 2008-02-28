@@ -93,6 +93,9 @@
     <createFromTemplateHandler implementation="com.intellij.uiDesigner.fileTemplate.CreateFormFromTemplateHandler"/>
 
     <automaticRenamerFactory implementation="com.intellij.uiDesigner.binding.FormsRenamerFactory"/>
+
+    <treeStructureProvider implementation="com.intellij.uiDesigner.projectView.FormMergerTreeStructureProvider"/>
+    <treeStructureProvider implementation="com.intellij.lang.properties.projectView.ResourceBundleGrouper"/>
   </extensions>
 
   <project-components>
@@ -123,12 +126,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.uiDesigner.binding.GeneratedCodeFoldingPassFactory</implementation-class>
-      <skipForDummyProject/>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.uiDesigner.projectView.FormMergerTreeStructureProvider</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <skipForDummyProject/>
     </component>
   </project-components>

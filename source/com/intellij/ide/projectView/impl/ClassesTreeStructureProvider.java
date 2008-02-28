@@ -5,18 +5,16 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class ClassesTreeStructureProvider implements TreeStructureProvider, ProjectComponent {
+public class ClassesTreeStructureProvider implements TreeStructureProvider {
   private final Project myProject;
 
   public ClassesTreeStructureProvider(Project project) {
@@ -91,22 +89,5 @@ public class ClassesTreeStructureProvider implements TreeStructureProvider, Proj
     final PsiElement parent = element.getParent();
                                         // do not select JspClass
     return parent instanceof PsiFile && parent.getLanguage() == baseRootFile.getLanguage();
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "ClassesTreeStructureProvider";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

@@ -9,12 +9,6 @@
    
 
     <component>
-      <implementation-class>com.intellij.ide.projectView.impl.ClassesTreeStructureProvider</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
-      <skipForDummyProject/>
-    </component>
-
-    <component>
       <interface-class>com.intellij.ide.hierarchy.HierarchyBrowserManager</interface-class>
       <implementation-class>com.intellij.ide.hierarchy.HierarchyBrowserManager</implementation-class>
       <option name="workspace" value="true"/>

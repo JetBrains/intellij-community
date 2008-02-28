@@ -259,4 +259,7 @@
   <extensionPoint name="fileStructureGroupRuleProvider"
                   interface="com.intellij.usages.impl.FileStructureGroupRuleProvider"/>
 
+  <extensionPoint name="treeStructureProvider"
+                  interface="com.intellij.ide.projectView.TreeStructureProvider"
+                  area="IDEA_PROJECT"/>
 </extensionPoints>

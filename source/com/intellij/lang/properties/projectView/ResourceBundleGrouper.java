@@ -8,19 +8,17 @@ import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class ResourceBundleGrouper implements TreeStructureProvider, ProjectComponent {
+public class ResourceBundleGrouper implements TreeStructureProvider {
   private final Project myProject;
 
   public ResourceBundleGrouper(Project project) {
@@ -104,26 +102,6 @@ public class ResourceBundleGrouper implements TreeStructureProvider, ProjectComp
 
   public PsiElement getTopLevelElement(final PsiElement element) {
     return null;
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "ResourceBundleGrouper";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-
-  }
-
-  public void projectOpened() {
-
-  }
-
-  public void projectClosed() {
-
   }
 
 }

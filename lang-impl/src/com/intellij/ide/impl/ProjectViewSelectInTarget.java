@@ -3,6 +3,7 @@ package com.intellij.ide.impl;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -54,7 +55,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
   public void select(PsiElement element, final boolean requestFocus) {
     PsiElement toSelect = null;
-    final TreeStructureProvider[] providers = myProject.getComponents(TreeStructureProvider.class);
+    final TreeStructureProvider[] providers = Extensions.getExtensions(TreeStructureProvider.EP_NAME, myProject);
     for (TreeStructureProvider provider : providers) {
       toSelect = provider.getTopLevelElement(element);
       if (toSelect != null) break;

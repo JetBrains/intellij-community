@@ -16,6 +16,7 @@
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,8 @@ import java.util.Collection;
  */
 
 public interface TreeStructureProvider {
+  ExtensionPointName<TreeStructureProvider> EP_NAME = ExtensionPointName.create("com.intellij.treeStructureProvider");
+
   /**
    * Allows a plugin to modify the list of children displayed for the specified node in the
    * project view.
