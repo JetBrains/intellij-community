@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.util.Function;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +26,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   private Map<String, RunnerAndConfigurationSettingsImpl> myConfigurations = new LinkedHashMap<String, RunnerAndConfigurationSettingsImpl>(); // template configurations are not included here
   private Map<String, Boolean> mySharedConfigurations = new TreeMap<String, Boolean>();
   private Map<String, Map<String, Boolean>> myMethod2CompileBeforeRun = new TreeMap<String, Map<String, Boolean>>();
-
-  private Map<String, Function<RunConfiguration, String>> myRegisteredSteps = new LinkedHashMap<String, Function<RunConfiguration, String>>();
-  private Map<String, Function<RunConfiguration, String>> myRegisteredDescriptions = new LinkedHashMap<String, Function<RunConfiguration, String>>();
 
   private Map<String, RunnerAndConfigurationSettingsImpl> myTemplateConfigurationsMap = new HashMap<String, RunnerAndConfigurationSettingsImpl>();
   private RunnerAndConfigurationSettingsImpl mySelectedConfiguration = null;
@@ -59,8 +55,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     myProject = project;
 
     initConfigurationTypes();
-
-    registerStepBeforeRun(RunManagerConfig.MAKE, null, null);
   }
 
   // separate method needed for tests
@@ -464,28 +458,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return createConfiguration(name, type);
   }
 
-  public void registerStepBeforeRun(String actionName, Function<RunConfiguration, String> action, Function<RunConfiguration, String> retrieveDescription) {
-    myRegisteredSteps.put(actionName, action);
-    myRegisteredDescriptions.put(actionName, retrieveDescription);
-  }
-
-  public Set<String> getRegisteredStepsBeforeRun() {
-    return myRegisteredSteps.keySet();
-  }
-
-  public Function<RunConfiguration, String> getStepBeforeRun(String actionName) {
-    return myRegisteredSteps.get(actionName);
-  }
-
-  @Nullable
-  public String getStepBeforeRunDescription(String actionName, RunConfiguration runConfiguration) {
-    final Boolean enabled = getStepsBeforeLaunch(runConfiguration).get(actionName);
-    if (enabled != null && enabled.booleanValue()) {
-      return myRegisteredDescriptions.get(actionName).fun(runConfiguration);
-    }
-    return null;
-  }
-
 
   public boolean isConfigurationShared(final RunnerAndConfigurationSettingsImpl settings){
     Boolean shared = mySharedConfigurations.get(getUniqueName(settings.getConfiguration()));
@@ -504,7 +476,11 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     }
     if (method == null){
       method = new HashMap<String, Boolean>();
-      method.put(RunManagerConfig.MAKE, Boolean.TRUE);
+      for(StepsBeforeRunProvider provider: Extensions.getExtensions(StepsBeforeRunProvider.EXTENSION_POINT_NAME, myProject)) {
+        if (provider.isEnabledByDefault()) {
+          method.put(provider.getStepName(), Boolean.TRUE);
+        }
+      }
     }
     return new HashMap<String, Boolean>(method);
   }

@@ -33,9 +33,17 @@ public interface StepsBeforeRunProvider {
 
   String getStepName();
 
+  String getStepDescription(final RunConfiguration runConfiguration);
+
   boolean hasTask(RunConfiguration configuration);
 
   boolean executeTask(DataContext context, RunConfiguration configuration);
 
   void copyTaskData(RunConfiguration from, RunConfiguration to);
+
+  boolean isEnabledByDefault();
+
+  boolean hasConfigurationButton();
+
+  String configureStep(final RunConfiguration runConfiguration);
 }

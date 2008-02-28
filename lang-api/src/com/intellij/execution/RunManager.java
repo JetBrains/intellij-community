@@ -19,10 +19,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Set;
 
 /**
  * User: anna
@@ -49,13 +46,4 @@ public abstract class RunManager {
   public abstract RunnerAndConfigurationSettings getSelectedConfiguration();
 
   public abstract RunnerAndConfigurationSettings createRunConfiguration(String name, ConfigurationFactory type);
-
-  public abstract void registerStepBeforeRun(String actionName, Function<RunConfiguration, String> action, Function<RunConfiguration, String> retrieveDescription);
-
-  public abstract Set<String> getRegisteredStepsBeforeRun();
-
-  public abstract Function<RunConfiguration, String> getStepBeforeRun(String actionName);
-
-  @Nullable
-  public abstract String getStepBeforeRunDescription(String actionName, RunConfiguration runConfiguration);
 }

@@ -1,11 +1,12 @@
 package com.intellij.execution.impl;
 
+import com.intellij.execution.StepsBeforeRunProvider;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +15,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * User: anna
@@ -28,7 +28,6 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
 
   private JPanel myStepsPanel;
   private Map<String,Boolean> myStepsBeforeLaunch;
-  private final StepBeforeLaunchRow[] myStepsBeforeLaunchRows;
 
   private boolean myStoreProjectConfiguration;
 
@@ -43,14 +42,17 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
 
     myStepsBeforeLaunch = runManager.getStepsBeforeLaunch(runConfiguration);
 
-    final Set<String> list = runManager.getRegisteredStepsBeforeRun();
-    myStepsBeforeLaunchRows = new StepBeforeLaunchRow[list.size()];
-    myStepsPanel.setLayout(new GridLayout(list.size(), 1));
-    int idx = 0;
-    for (final String method : list) {
-      final StepBeforeLaunchRow stepRow = new StepBeforeLaunchRow(runManager, runConfiguration, myStepsBeforeLaunch, method);
-      myStepsPanel.add(stepRow);
-      myStepsBeforeLaunchRows[idx++] = stepRow;
+    final StepsBeforeRunProvider[] providers = Extensions.getExtensions(StepsBeforeRunProvider.EXTENSION_POINT_NAME,
+                                                                        runConfiguration.getProject());
+    if (providers.length == 0) {
+      myStepsPanel.setVisible(false);
+    }
+    else {
+      myStepsPanel.setLayout(new GridLayout(providers.length, 1));
+      for (StepsBeforeRunProvider provider: providers) {
+        final StepBeforeLaunchRow stepRow = new StepBeforeLaunchRow(runConfiguration, myStepsBeforeLaunch, provider);
+        myStepsPanel.add(stepRow);
+      }
     }
 
     myStoreProjectConfiguration = runManager.isConfigurationShared(settings);
@@ -106,28 +108,26 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     private JCheckBox myCheckBox;
     private FixedSizeButton myButton;
 
-    public StepBeforeLaunchRow(final RunManagerImpl runManager,
-                              final RunConfiguration runConfiguration,
-                              final Map<String, Boolean> methodsBeforeRun,
-                              final String methodName) {
+    public StepBeforeLaunchRow(final RunConfiguration runConfiguration,
+                               final Map<String, Boolean> methodsBeforeRun,
+                               final StepsBeforeRunProvider provider) {
       super(new GridBagLayout());
-      final Boolean checked = methodsBeforeRun.get(methodName);
-      myCheckBox = new JCheckBox(methodName, checked != null && checked.booleanValue());
+      final Boolean checked = methodsBeforeRun.get(provider.getStepName());
+      myCheckBox = new JCheckBox(provider.getStepName(), checked != null && checked.booleanValue());
       GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0 , 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0, 0);
       add(myCheckBox, gc);
-      final Function<RunConfiguration, String> actionByName = runManager.getStepBeforeRun(methodName);
       gc.weightx = 1;
-      if (actionByName != null) {
-        final String descriptionByName = runManager.getStepBeforeRunDescription(methodName, runConfiguration);
-        myCheckBox.setText(getCheckboxText(descriptionByName, methodName));
+      if (provider.hasConfigurationButton()) {
+        final String descriptionByName = provider.getStepDescription(runConfiguration);
+        myCheckBox.setText(getCheckboxText(descriptionByName, provider.getStepName()));
 
         myButton = new FixedSizeButton(20);
         add(myButton, gc);
 
         myButton.addActionListener(new ActionListener() {
           public void actionPerformed(ActionEvent e) {
-            final String description = actionByName.fun(runConfiguration);
-            myCheckBox.setText(getCheckboxText(description, methodName));
+            final String description = provider.configureStep(runConfiguration);
+            myCheckBox.setText(getCheckboxText(description, provider.getStepName()));
           }
         });
       } else {
@@ -136,7 +136,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
       enableSettings();
       myCheckBox.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          methodsBeforeRun.put(methodName, myCheckBox.isSelected());
+          methodsBeforeRun.put(provider.getStepName(), myCheckBox.isSelected());
           enableSettings();
         }
       });

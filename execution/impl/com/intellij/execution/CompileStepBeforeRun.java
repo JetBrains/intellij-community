@@ -32,6 +32,10 @@ public class CompileStepBeforeRun implements StepsBeforeRunProvider {
     return ExecutionBundle.message("before.launch.compile.step");
   }
 
+  public String getStepDescription(final RunConfiguration runConfiguration) {
+    return getStepName();
+  }
+
   public boolean hasTask(final RunConfiguration configuration) {
     if (configuration instanceof ModuleRunProfile && !(configuration instanceof RemoteConfiguration)) {
       final ModuleRunProfile moduleRunConfiguration = (ModuleRunProfile)configuration;
@@ -89,5 +93,17 @@ public class CompileStepBeforeRun implements StepsBeforeRunProvider {
 
   public void copyTaskData(final RunConfiguration from, final RunConfiguration to) {
     // TODO: do we need this?
+  }
+
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  public boolean hasConfigurationButton() {
+    return false;
+  }
+
+  public String configureStep(final RunConfiguration runConfiguration) {
+    return getStepName();
   }
 }

@@ -23,6 +23,13 @@ public class AntStepsBeforeRunProvider implements StepsBeforeRunProvider {
     return AntConfiguration.ANT;
   }
 
+  public String getStepDescription(final RunConfiguration runConfiguration) {
+    final AntConfigurationImpl antConfiguration = (AntConfigurationImpl)AntConfiguration.getInstance(myProject);
+    final ExecuteBeforeRunEvent event = antConfiguration.findExecuteBeforeRunEvent(runConfiguration);
+    final AntBuildTarget buildTarget = antConfiguration.getTargetForEvent(event);
+    return buildTarget != null ? getPresentableDescription(buildTarget.getName()) : "";
+  }
+
   public boolean hasTask(RunConfiguration configuration) {
     final AntConfiguration config = AntConfiguration.getInstance(myProject);
     ((AntConfigurationBase)config).ensureInitialized();
@@ -37,8 +44,43 @@ public class AntStepsBeforeRunProvider implements StepsBeforeRunProvider {
     AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
     final AntBuildTarget antBuildTarget = antConfiguration.getTargetForBeforeRunEvent(from.getType(), from.getName());
 
-    if (antBuildTarget != null){
-      antConfiguration.setTargetForBeforeRunEvent(antBuildTarget.getModel().getBuildFile(), antBuildTarget.getName(), to.getType(), to.getName());
+    if (antBuildTarget != null) {
+      antConfiguration
+          .setTargetForBeforeRunEvent(antBuildTarget.getModel().getBuildFile(), antBuildTarget.getName(), to.getType(), to.getName());
     }
+  }
+
+  public boolean isEnabledByDefault() {
+    return false;
+  }
+
+  public boolean hasConfigurationButton() {
+    return true;
+  }
+
+  public String configureStep(final RunConfiguration runConfiguration) {
+    final AntConfigurationImpl antConfiguration = (AntConfigurationImpl)AntConfiguration.getInstance(myProject);
+    ExecuteBeforeRunEvent event = antConfiguration.findExecuteBeforeRunEvent(runConfiguration);
+    AntBuildTarget buildTarget = antConfiguration.getTargetForEvent(event);
+    final TargetChooserDialog dlg = new TargetChooserDialog(myProject, buildTarget, antConfiguration);
+    dlg.show();
+    if (dlg.isOK()) {
+      buildTarget = dlg.getSelectedTarget();
+      if (event == null) {
+        event = new ExecuteBeforeRunEvent(runConfiguration.getType(), runConfiguration.getName());
+      }
+      if (buildTarget != null) {
+        antConfiguration.setTargetForEvent(buildTarget.getModel().getBuildFile(), buildTarget.getName(), event);
+      }
+      else {
+        antConfiguration.clearTargetForEvent(event);
+      }
+    }
+    final String targetName = buildTarget != null ? buildTarget.getName() : null;
+    return getPresentableDescription(targetName);
+  }
+
+  private static String getPresentableDescription(final String targetName) {
+    return targetName != null ? "\'" + targetName + "\'" : "";
   }
 }
