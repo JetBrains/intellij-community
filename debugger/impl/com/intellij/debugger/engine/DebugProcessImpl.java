@@ -951,7 +951,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         public void run() {
           ThreadReferenceProxyImpl thread = context.getThread();
           try {
-            try {
+            //try {
               if (LOG.isDebugEnabled()) {
                 final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
                 virtualMachineProxy.logThreads();
@@ -959,10 +959,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
                 assertThreadSuspended(thread, context);
               }
               result[0] = invokeMethod(invokePolicy, myArgs);
-            }
-            finally {
-              assertThreadSuspended(thread, context);
-            }
+            //}
+            //finally {
+            //  assertThreadSuspended(thread, context);
+            //}
           }
           catch (Exception e) {
             exception[0] = e;
