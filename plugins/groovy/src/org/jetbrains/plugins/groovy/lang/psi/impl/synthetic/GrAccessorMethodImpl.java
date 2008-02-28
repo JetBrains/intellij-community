@@ -14,6 +14,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
@@ -26,15 +27,17 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
-import com.intellij.lang.Language;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * @author ven
@@ -85,7 +88,7 @@ public class GrAccessorMethodImpl extends LightElement implements GrAccessorMeth
             if (type == null) {
               type = TypesUtil.createJavaLangObject(myProperty);
             }
-            return new LightParameter[]{new LightParameter(manager, "p", null, type, GrAccessorMethodImpl.this)};
+            return new LightParameter[]{new LightParameter(manager, myProperty.getName(), null, type, GrAccessorMethodImpl.this)};
           }
 
           return LightParameter.EMPTY_ARRAY;
