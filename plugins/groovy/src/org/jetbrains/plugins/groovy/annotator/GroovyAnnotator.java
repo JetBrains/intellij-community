@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.annotator.DomainClassAnnotator;
 import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.structure.GroovyElementPresentation;
 import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicFix;
@@ -769,33 +770,29 @@ public class GroovyAnnotator implements Annotator {
     if (!(parent instanceof GrMethodCallExpression)) return null;
 
     GrExpression[] expressionArgument = ((GrMethodCallExpression) parent).getExpressionArguments();
-//    final GrNamedArgument[] namedArguments;
-//    if (expressionArgument == null) return null;
-//    namedArguments = expressionArgument.getNamedArguments();
-
-    List<Pair<String, PsiType>> types = new ArrayList<Pair<String, PsiType>>();
+    List<Pair<String, PsiType>> pairs = new ArrayList<Pair<String, PsiType>>();
 
     for (GrExpression expression : expressionArgument) {
-//      final GrArgumentLabel argumentLabel = expression.getLabel();
-//      if (argumentLabel != null) {
-//        types.add(argumentLabel.getExpectedArgumentType());
-//      }
+      final PsiType type = expression.getType();
+      if (type == null) return null;
 
-      types.add(new Pair<String, PsiType>(expression.getText(), expression.getType()));
+      pairs.add(new Pair<String, PsiType>(GroovyElementPresentation.getExpressionPresentableText(expression), type));
     }
-    final Element methodElement = DynamicManager.getInstance(referenceExpression.getProject()).findConcreteDynamicMethod(module.getName(), qualifiedName, referenceExpression.getName(), types.toArray(PsiType.EMPTY_ARRAY));
+
+    final PsiType[] types = QuickfixUtil.getArgumentsTypes(pairs);
+    final Element methodElement = DynamicManager.getInstance(referenceExpression.getProject()).findConcreteDynamicMethod(module.getName(), qualifiedName, referenceExpression.getName(), types);
 
     if (methodElement != null) return null;
 
     final Set<PsiClass> supers = GroovyUtils.findAllSupers(targetClass);
     Element superDynamicMethod;
     for (PsiClass aSuper : supers) {
-      superDynamicMethod = DynamicManager.getInstance(referenceExpression.getProject()).findConcreteDynamicMethod(module.getName(), aSuper.getQualifiedName(), referenceExpression.getName(), types.toArray(PsiType.EMPTY_ARRAY));
+      superDynamicMethod = DynamicManager.getInstance(referenceExpression.getProject()).findConcreteDynamicMethod(module.getName(), aSuper.getQualifiedName(), referenceExpression.getName(), types);
 
       if (superDynamicMethod != null) return null;
     }
 
-    return new DynamicVirtualMethod(referenceExpression.getName(), targetClass.getQualifiedName(), module.getName(), null, types);
+    return new DynamicVirtualMethod(referenceExpression.getName(), targetClass.getQualifiedName(), module.getName(), null, pairs);
   }
 
   private DynamicVirtualProperty getDynamicPropertyElement(GrReferenceExpression referenceExpression, PsiClass targetClass, Module module, String qualifiedName) {

@@ -1,17 +1,17 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicVirtualElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualProperty;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 20.12.2007
  */
 public class DPropertyElement extends DItemElement {
-  public DPropertyElement(DynamicVirtualElement virtualElement) {
+  public DPropertyElement(DynamicVirtualProperty virtualElement) {
     super(virtualElement);
   }
 
-  public DPropertyElement(DynamicVirtualElement virtualElement, boolean isSetTypeAndName) {
+  public DPropertyElement(DynamicVirtualProperty virtualElement, boolean isSetTypeAndName) {
     super(virtualElement, isSetTypeAndName);
   }
 }

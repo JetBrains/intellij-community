@@ -31,7 +31,6 @@ public class DItemElement extends DElement {
     myDynamicVirtualElement = virtualElement;
 
     if (isSetTypeAndName) {
-
       setAttribute(TYPE_ATTRIBUTE, virtualElement.getType());
       setAttribute(NAME_ATTRIBUTE, virtualElement.getName());
     }

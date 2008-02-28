@@ -1,9 +1,14 @@
 package org.jetbrains.plugins.groovy.structure;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -74,5 +79,14 @@ public class GroovyElementPresentation {
 
   public static String getFilePresentableText(GroovyFileBase file) {
     return file.getName();
+  }
+
+  public static String getExpressionPresentableText(GrExpression expression) {
+    if (expression instanceof GrLiteral) {
+      final Object value = ((GrLiteral) expression).getValue();
+      if (value == null || value.toString().length() == 0) return "\"\"";
+    }
+
+    return expression.getText();
   }
 }

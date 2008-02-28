@@ -13,6 +13,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
@@ -25,6 +26,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.EventListenerList;
 import java.awt.event.*;
 import java.util.EventListener;
@@ -42,8 +45,8 @@ public abstract class DynamicDialog extends DialogWrapper {
   private JLabel myTypeLabel;
   private JPanel myTypeStatusPanel;
   private JLabel myTypeStatusLabel;
-//  private JList myList;
   private JTable myTable;
+  private JLabel myTableLabel;
   private final DynamicManager myDynamicManager;
   private final Project myProject;
   private final DynamicVirtualElement myDynamicElement;
@@ -67,12 +70,26 @@ public abstract class DynamicDialog extends DialogWrapper {
     setUpTypeComboBox();
     setUpContainingClassComboBox();
     setUpStatusLabel();
+    setUpTableNameLabel();
+
+    final Border border = BorderFactory.createEmptyBorder();
+    final TitledBorder border1 = BorderFactory.createTitledBorder(GroovyBundle.message("dynamic.properties.table.name"));
+    myTable.setBorder(border);
 
     myTypeLabel.setLabelFor(myTypeComboBox);
     myClassLabel.setLabelFor(myClassComboBox);
   }
 
+  private void setUpTableNameLabel() {
+    myTableLabel.setLabelFor(myTable);
+    myTableLabel.setText(GroovyBundle.message("dynamic.properties.table.name"));
+  }
+
   private void setUpStatusLabel() {
+    if (!isTypeChekerPanelEnable()){
+      myTypeStatusPanel.setVisible(false);
+      return;
+    }
     myTypeStatusLabel.setHorizontalTextPosition(SwingConstants.RIGHT);
 
     final GrTypeElement typeElement = getEnteredTypeName();
@@ -330,5 +347,9 @@ public abstract class DynamicDialog extends DialogWrapper {
 
   public JTable getTable() {
     return myTable;
+  }
+
+  protected boolean isTypeChekerPanelEnable(){
+    return false;
   }
 }

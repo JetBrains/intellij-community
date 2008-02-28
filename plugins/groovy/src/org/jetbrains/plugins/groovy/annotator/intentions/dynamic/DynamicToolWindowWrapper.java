@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DMethodNode;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DPClassNode;
@@ -70,8 +71,8 @@ public class DynamicToolWindowWrapper {
   private static final int TYPE_COLUMN = 1;
 
   private static String[] myColumnNames = {
-      "Class and properties",
-      "Type of property"
+      "Dynamic element",
+      "Type"
   };
 
   private static TreeTable myTreeTable;
@@ -100,9 +101,9 @@ public class DynamicToolWindowWrapper {
 
     DynamicManager.getInstance(project).addDynamicChangeListener(new DynamicChangeListener() {
       public void dynamicPropertyChange() {
-        storeState(project);
+//        storeState(project);
         rebuildTreePanel(project);
-        restoreState(project);
+//        restoreState(project);
       }
     });
 
@@ -176,7 +177,7 @@ public class DynamicToolWindowWrapper {
 
       final String[] properties = DynamicManager.getInstance(project).findDynamicPropertiesOfClass(module.getName(), containingClassName);
 
-      if (properties.length == 0) continue;
+//      if (properties.length == 0) continue;
 
       DefaultMutableTreeNode propertyTreeNode;
       for (String propertyName : properties) {
@@ -193,12 +194,13 @@ public class DynamicToolWindowWrapper {
         final String returnType = DynamicManager.getInstance(project).getMethodReturnType(module.getName(), containingClassName, methodSignature.getName(), psiTypes);
         List<Pair<String, PsiType>> pairsWithNullNames = new ArrayList<Pair<String, PsiType>>();
 
-//        for (PsiType psiType : psiTypes) {
-//          pairsWithNullNames.add(new Pair<String, PsiType>());
-//        }
-//
-//        methodTreeNode = new DefaultMutableTreeNode(new DMethodNode(new DMethodElement(new DynamicVirtualMethod(methodSignature.getName(), containingClassName, module.getName(), returnType, psiTypes))));
-//        containingClassNode.add(methodTreeNode);
+        //TODO: add expression presentage in DynamicManager 
+        for (PsiType psiType : psiTypes) {
+          pairsWithNullNames.add(new Pair<String, PsiType>(null, psiType));
+        }
+
+        methodTreeNode = new DefaultMutableTreeNode(new DMethodNode(new DMethodElement(new DynamicVirtualMethod(methodSignature.getName(), containingClassName, module.getName(), returnType, pairsWithNullNames))));
+        containingClassNode.add(methodTreeNode);
       }
 
       rootNode.add(containingClassNode);
@@ -502,8 +504,6 @@ public class DynamicToolWindowWrapper {
   }
 
   static class PropertyTypeColumnInfo extends ColumnInfo<DefaultMutableTreeNode, String> {
-//    private DPropertyNode myOldUserObject;
-
     public PropertyTypeColumnInfo(String name) {
       super(name);
     }
@@ -518,19 +518,13 @@ public class DynamicToolWindowWrapper {
       Object userObject = treeNode.getUserObject();
 
       if (userObject instanceof DPropertyNode)
-        return ((DPropertyNode) userObject).getElement().getDynamicVirtualElement().getType();
+        return QuickfixUtil.shortenType(((DPropertyNode) userObject).getElement().getDynamicVirtualElement().getType());
 
       if (userObject instanceof DMethodNode)
-        return ((DMethodNode) userObject).getElement().getDynamicVirtualElement().getType();
+        return QuickfixUtil.shortenType(((DMethodNode) userObject).getElement().getDynamicVirtualElement().getType());
 
       return null;
     }
-
-//    public DPropertyNode removeOldUserObject() {
-//      final DPropertyNode propertyNode = myOldUserObject;
-//      myOldUserObject = null;
-//      return propertyNode;
-//    }
   }
 
   static class ClassColumnInfo extends ColumnInfo<DefaultMutableTreeNode, DElement> {
@@ -723,7 +717,8 @@ public class DynamicToolWindowWrapper {
       if (value != null) {
 
         if (value instanceof DPClassNode) {
-          append(((DPClassNode) value).getElement().getContainingClassName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          final String containingClassName = ((DPClassNode) value).getElement().getContainingClassName();
+          append(QuickfixUtil.shortenType(containingClassName), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
 
         } else if (value instanceof DPropertyNode) {
           final DPropertyNode propertyElement = (DPropertyNode) value;
@@ -748,8 +743,11 @@ public class DynamicToolWindowWrapper {
           append(method.getName(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
           append("(", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
 
-          final PsiType[] types = QuickfixUtil.getParameterTypes(((DynamicVirtualMethod) method).getArguments());
-          for (PsiType type : types) {
+          final PsiType[] types = QuickfixUtil.getArgumentsTypes(((DynamicVirtualMethod) method).getArguments());
+          for (int i = 0; i < types.length; i++) {
+            if (i != 0) append(", ", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+
+            PsiType type = types[i];
             append(type.getPresentableText(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
           }
           append(")", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);

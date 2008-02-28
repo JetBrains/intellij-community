@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicDialog">
-  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="7" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="227" height="187"/>
+      <xy x="20" y="20" width="192" height="227"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -62,14 +62,29 @@
           </hspacer>
         </children>
       </grid>
+      <component id="ab9db" class="javax.swing.JLabel" binding="myTableLabel">
+        <constraints>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Label"/>
+        </properties>
+      </component>
       <component id="63583" class="javax.swing.JTable" binding="myTable">
         <constraints>
-          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
+          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
             <preferred-size width="150" height="50"/>
           </grid>
         </constraints>
         <properties>
+          <autoCreateRowSorter value="true"/>
+          <autoResizeMode value="4"/>
+          <background swing-color="ArrowButton.background"/>
+          <enabled value="true"/>
           <fillsViewportHeight value="false"/>
+          <showHorizontalLines value="true"/>
+          <showVerticalLines value="true"/>
+          <updateSelectionOnSort value="false"/>
         </properties>
       </component>
     </children>

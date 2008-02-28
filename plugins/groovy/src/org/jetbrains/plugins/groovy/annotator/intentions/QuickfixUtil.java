@@ -89,7 +89,7 @@ public class QuickfixUtil {
     return names.toArray(new String[]{""});
   }
 
-  public static List<Pair<String, PsiType>> swapArgumentsAndTypes(String[] names, PsiType[] types){
+  public static List<Pair<String, PsiType>> swapArgumentsAndTypes(String[] names, PsiType[] types) {
     List<Pair<String, PsiType>> result = new ArrayList<Pair<String, PsiType>>();
 
     if (names.length != types.length) return null;
@@ -106,7 +106,7 @@ public class QuickfixUtil {
     return referenceExpression.getParent() instanceof GrMethodCallExpression;
   }
 
-  public static PsiType[] getParameterTypes(List<Pair<String, PsiType>> listOfPairs) {
+  public static PsiType[] getArgumentsTypes(List<Pair<String, PsiType>> listOfPairs) {
     final List<PsiType> result = new ArrayList<PsiType>();
     for (Pair<String, PsiType> listOfPair : listOfPairs) {
       result.add(listOfPair.getSecond());
@@ -115,12 +115,20 @@ public class QuickfixUtil {
     return result.toArray(PsiType.EMPTY_ARRAY);
   }
 
-  public static String[] getParameterNames(List<Pair<String, PsiType>> listOfPairs) {
+  public static String[] getArgumentsNames(List<Pair<String, PsiType>> listOfPairs) {
     final ArrayList<String> result = new ArrayList<String>();
     for (Pair<String, PsiType> listOfPair : listOfPairs) {
       result.add(listOfPair.getFirst());
     }
 
     return result.toArray(new String[]{""});
+  }
+
+  public static String shortenType(String typeText) {
+    final int i = typeText.lastIndexOf(".");
+    if (i != -1) {
+      return typeText.substring(i + 1);
+    }
+    return typeText;
   }
 }

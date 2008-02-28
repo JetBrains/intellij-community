@@ -1,6 +1,10 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicVirtualElement;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiType;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualMethod;
+
+import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -9,8 +13,20 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicVirtualE
 public class DMethodElement extends DItemElement {
   DParameterElement[] myParametersElements;
 
-  public DMethodElement(DynamicVirtualElement virtualMethod) {
+  public DMethodElement(DynamicVirtualMethod virtualMethod) {
     super(virtualMethod);
+  }
+
+  public DMethodElement(DynamicVirtualMethod virtualMethod, boolean isSetParameters) {
+    this(virtualMethod);
+
+    if (isSetParameters) {
+      final List<Pair<String, PsiType>> list = virtualMethod.getArguments();
+      for (int i = 0; i < list.size(); i++) {
+        Pair<String, PsiType> pair = list.get(i);
+        addContent(new DParameterElement(pair.getFirst(), pair.getSecond().getCanonicalText(),i));
+      }
+    }
   }
 
   public DParameterElement[] getParametersElements() {

@@ -15,9 +15,9 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -25,11 +25,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import static org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DElement.*;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualMethod;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualProperty;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -145,8 +144,8 @@ public class DynamicManagerImpl extends DynamicManager {
     if (isProperty) {
       element = findConcreteDynamicProperty(rootElement, containingClassName, elementName);
     } else if (isMethod) {
-      final List<Pair<String,PsiType>> list = ((DynamicVirtualMethod) virtualElement).getArguments();
-      final PsiType[] psiTypes = QuickfixUtil.getParameterTypes(list);
+      final List<Pair<String, PsiType>> list = ((DynamicVirtualMethod) virtualElement).getArguments();
+      final PsiType[] psiTypes = QuickfixUtil.getArgumentsTypes(list);
       element = findConcreteDynamicMethod(rootElement, containingClassName, elementName, psiTypes);
     }
 
@@ -157,10 +156,10 @@ public class DynamicManagerImpl extends DynamicManager {
       if (classElement == null) {
         final DContainingClassElement containingClassElement = new DContainingClassElement(virtualElement.getContainingClassName());
 
-        containingClassElement.addDynamicItem(new DItemElement(virtualElement));
+        addDynamicElementToClass(virtualElement, containingClassElement);
         rootElement.addContent(containingClassElement);
       } else {
-        classElement.addContent(new DItemElement(virtualElement));
+        addDynamicElementToClass(virtualElement, classElement);
       }
     }
 
@@ -169,6 +168,14 @@ public class DynamicManagerImpl extends DynamicManager {
     fireChange();
 
     return virtualElement;
+  }
+
+  private void addDynamicElementToClass(DynamicVirtualElement virtualElement, Element classElement) {
+    if (virtualElement instanceof DynamicVirtualMethod) {
+      classElement.addContent(new DMethodElement(((DynamicVirtualMethod) virtualElement), true));
+    } else if (virtualElement instanceof DynamicVirtualProperty) {
+      classElement.addContent(new DPropertyElement(((DynamicVirtualProperty) virtualElement)));
+    }
   }
 
   private boolean isVirtualProperty(DynamicVirtualElement virtualElement) {
@@ -447,7 +454,7 @@ public class DynamicManagerImpl extends DynamicManager {
       final Element method = (Element) o;
       final String methodName = method.getAttributeValue(NAME_ATTRIBUTE);
 
-      final List parameters = method.getContent(DynamicFiltersFactory.createMethodTagFilter());
+      final List parameters = method.getContent(DynamicFiltersFactory.createParameterTagFilter());
 
       List<PsiType> types = new ArrayList<PsiType>();
       for (Object parameterElement : parameters) {
@@ -456,18 +463,7 @@ public class DynamicManagerImpl extends DynamicManager {
         final String name = parameter.getAttributeValue(NAME_ATTRIBUTE);
         final String type = parameter.getAttributeValue(TYPE_ATTRIBUTE);
 
-        GrTypeElement typeElement = null;
-        PsiType psiType = null;
-        try {
-          typeElement = GroovyPsiElementFactory.getInstance(myProject).createTypeElement(type);
-        } catch (IncorrectOperationException e) {
-          return methodSignatures;
-        }
-
-        if (typeElement != null) {
-          psiType = typeElement.getType();
-        }
-
+        PsiType psiType = PsiManager.getInstance(myProject).getElementFactory().createTypeByFQClassName(type, myProject.getAllScope());
         types.add(psiType);
       }
 
@@ -485,32 +481,7 @@ public class DynamicManagerImpl extends DynamicManager {
     if (dynamicProperty == null) return null;
 
     return dynamicProperty.getAttributeValue(TYPE_ATTRIBUTE);
-
-//    final List types = dynamicProperty.getContent(DynamicFiltersFactory.createPropertyTypeTagFilter());
-//
-//    if (types == null || types.isEmpty()) return "";
-//    final Object typeTag = types.get(0);
-//
-//    if (typeTag == null || !(typeTag instanceof Element)) return "";
-//
-//    return ((Element) typeTag).getText();
   }
-
-//  @NotNull
-//  public Pair<String, String>[] getMethodsAttributes(String moduleName, String conatainingClassName, String methodName) {
-//    final Element dynamicProperty = findConcreteDynamicMethod(getRootElement(moduleName), conatainingClassName, methodName, propertyName);
-//
-//    if (dynamicProperty == null) return "";
-//
-//    final List types = dynamicProperty.getContent(DynamicFiltersFactory.createPropertyTypeTagFilter());
-//
-//    if (types == null || types.isEmpty()) return "";
-//    final Object typeTag = types.get(0);
-//
-//    final Pair<String, String>[] attributes;/* = new Pair<String, String>[0];*/
-//
-//    return attributes;
-//  }
 
   /*
   * Changes dynamic property type
