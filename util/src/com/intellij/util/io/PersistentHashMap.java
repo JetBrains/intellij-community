@@ -154,7 +154,13 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
       return null;
     }
 
-    byte[] data = myValueStorage.readBytes(header.address, header.size);
+    byte[] data = new byte[header.size];
+    long newAddress = myValueStorage.readBytes(header.address, data);
+    if (newAddress != header.address) {
+      header.address = newAddress;
+      updateValueId(id, header);
+    }
+
     final DataInputStream input = new DataInputStream(new ByteArrayInputStream(data));
     try {
       return myValueExternalizer.read(input);

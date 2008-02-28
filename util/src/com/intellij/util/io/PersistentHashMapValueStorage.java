@@ -30,13 +30,17 @@ public class PersistentHashMapValueStorage {
     return result;
   }
 
-  public byte[] readBytes(long tailChunkAddress, int size) throws IOException {
-    myAppender.flush();
-    if (size == 0) return new byte[0];
+  /**
+   * Reads bytes pointed by tailChunkAddress into result passed, returns new address if linked list compactification have been performed
+   */
+  public long readBytes(long tailChunkAddress, byte[] result) throws IOException {
+    int size = result.length;
+    if (size == 0) return tailChunkAddress;
 
-    byte[] result = new byte[size];
+    myAppender.flush();
     int bytesRead = 0;
     long chunk = tailChunkAddress;
+    int chunkCount = 0;
     while (chunk != 0) {
       myReader.seek(chunk);
       final long prevChunkAddress = myReader.readLong();
@@ -44,10 +48,16 @@ public class PersistentHashMapValueStorage {
       myReader.read(result, size - bytesRead - chunkSize, chunkSize);
       chunk = prevChunkAddress;
       bytesRead += chunkSize;
+      chunkCount++;
     }
+    
     assert bytesRead == size;
 
-    return result;
+    if (chunkCount > 1) {
+      return appendBytes(result, 0);
+    }
+
+    return tailChunkAddress;
   }
 
   public void force() {
