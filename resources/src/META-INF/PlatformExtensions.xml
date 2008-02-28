@@ -74,6 +74,9 @@
                   serviceImplementation="com.intellij.ide.startup.impl.StartupManagerImpl"/>
   <projectService serviceInterface="com.intellij.ide.SelectInManager" serviceImplementation="com.intellij.ide.SelectInManager"/>
 
+  <!-- General -->
+  <applicationConfigurable implementation="com.intellij.ide.GeneralSettingsConfigurable"/>
+
   <!-- Appearance -->
   <applicationConfigurable implementation="com.intellij.ide.ui.AppearanceConfigurable"/>
 
@@ -85,9 +88,6 @@
 
   <!-- Path Variables -->
   <applicationConfigurable implementation="com.intellij.application.options.pathMacros.PathMacroConfigurable"/>
-
-  <!-- execution -->
-  <executor implementation="com.intellij.execution.executors.DefaultRunExecutor"/>
 
   <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
   <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
