@@ -69,11 +69,6 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
   }
 
   @Override
-  protected String getFileTitle(final VirtualFile file) {
-    return ProjectUtil.calcRelativeToProjectPath(file, getProject());
-  }
-
-  @Override
   protected Editor getOpenedEditor(final Editor editor, final boolean focusEditor) {
     PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(editor.getDocument());
     return focusEditor ? InjectedLanguageUtil.getEditorForInjectedLanguage(editor, psiFile) : editor;

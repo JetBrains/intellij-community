@@ -132,13 +132,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(myToolWindowsPane);
     appendUpdateToolWindowsPaneCmd(commandsList);
 
-    final VirtualFile baseDir = myProject.getBaseDir();
-    if (baseDir != null) {
-      myFrame.setTitle(myProject.getName() + " - [" + baseDir.getPresentableUrl() + "]");
-    }
-    else {
-      myFrame.setTitle(myProject.getName());
-    }
+    myFrame.setTitle(FrameTitleBuilder.getInstance().getProjectTitle(myProject));
 
     final JComponent editorComponent = FileEditorManagerEx.getInstanceEx(myProject).getComponent();
     myEditorComponentFocusWatcher.install(editorComponent);
