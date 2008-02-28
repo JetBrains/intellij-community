@@ -120,6 +120,9 @@
   <!-- External Tools -->
   <applicationConfigurable implementation="com.intellij.tools.ToolConfigurable"/>
 
+  <!-- Local History -->
+  <applicationConfigurable implementation="com.intellij.history.integration.ui.views.LocalHistoryConfigurable"/>
+
   <!-- Errors -->
   <projectConfigurable implementation="com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable"/>
 
