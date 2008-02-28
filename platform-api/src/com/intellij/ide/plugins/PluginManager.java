@@ -441,8 +441,9 @@ public class PluginManager {
           //if (!canonicalPath.startsWith(homePath)) continue;
 
           final String platformPrefix = System.getProperty("idea.platform.prefix");
+          IdeaPluginDescriptorImpl platformPluginDescriptor = null;
           if (platformPrefix != null) {
-            IdeaPluginDescriptorImpl platformPluginDescriptor = loadDescriptor(file, platformPrefix + "Plugin.xml");
+            platformPluginDescriptor = loadDescriptor(file, platformPrefix + "Plugin.xml");
             if (platformPluginDescriptor != null && !result.contains(platformPluginDescriptor)) {
               platformPluginDescriptor.setUseCoreClassLoader(true);
               result.add(platformPluginDescriptor);
@@ -454,6 +455,10 @@ public class PluginManager {
             continue;
           }
           if (pluginDescriptor != null && !result.contains(pluginDescriptor)) {
+            if (platformPluginDescriptor != null) {
+              // if we found a regular plugin.xml in the same .jar/root as a platform-prefixed descriptor, use the core loader for it too
+              pluginDescriptor.setUseCoreClassLoader(true);
+            }
             result.add(pluginDescriptor);
           }
         }
