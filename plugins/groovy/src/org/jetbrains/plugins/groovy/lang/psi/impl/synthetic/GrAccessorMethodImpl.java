@@ -210,6 +210,10 @@ public class GrAccessorMethodImpl extends LightElement implements GrAccessorMeth
   public void accept(@NotNull PsiElementVisitor visitor) {
   }
 
+  public int getTextOffset() {
+    return myProperty.getTextOffset();
+  }
+
   public PsiElement copy() {
     return null;
   }
