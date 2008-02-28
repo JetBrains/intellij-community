@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.events;
 
-import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,19 +15,18 @@ import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.util.Function;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.runner.MavenRunner;
-import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.runner.MavenRunner;
+import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import java.io.File;
@@ -42,6 +40,10 @@ import java.util.List;
  */
 @State(name = "MavenEventsHandler", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
 public class MavenEventsComponent extends DummyProjectComponent implements PersistentStateComponent<MavenEventsState>, MavenEventsHandler {
+
+  public static MavenEventsComponent getInstance(Project project) {
+    return (MavenEventsComponent) project.getComponent(MavenEventsHandler.class);
+  }
 
   @NonNls private static final String ACTION_ID_PREFIX = "Maven_";
 
@@ -208,18 +210,6 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
   }
 
   private void subscribe() {
-    RunManager.getInstance(myProject).registerStepBeforeRun(RUN_MAVEN_STEP, new Function<RunConfiguration, String>() {
-      public String fun(RunConfiguration runConfiguration) {
-        //noinspection ConstantConditions
-        return getDescription(selectMavenTask(myProject, runConfiguration));
-      }
-    }, new Function<RunConfiguration, String>() {
-      public String fun(RunConfiguration runConfiguration) {
-        //noinspection ConstantConditions
-        return getDescription(myState.getTask(runConfiguration.getType(), runConfiguration.getName()));
-      }
-    });
-
     CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     compilerManager.addBeforeTask(new CompileTask() {
       public boolean execute(CompileContext context) {
@@ -233,6 +223,14 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     });
 
     myKeymapListener = new MyKeymapListener();
+  }
+
+  public String configureRunStep(final RunConfiguration runConfiguration) {
+    return getDescription(selectMavenTask(myProject, runConfiguration));
+  }
+
+  public String getRunStepDescription(final RunConfiguration runConfiguration) {
+    return getDescription(myState.getTask(runConfiguration.getType(), runConfiguration.getName()));
   }
 
   @Nullable

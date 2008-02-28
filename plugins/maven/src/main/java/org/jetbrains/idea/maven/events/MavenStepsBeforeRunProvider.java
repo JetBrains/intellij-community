@@ -25,6 +25,10 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
     return MavenEventsComponent.RUN_MAVEN_STEP;
   }
 
+  public String getStepDescription(final RunConfiguration runConfiguration) {
+    return MavenEventsComponent.getInstance(myProject).getRunStepDescription(runConfiguration);
+  }
+
   public boolean hasTask(RunConfiguration configuration) {
     return getState().getTask(configuration.getType(), configuration.getName()) != null;
   }
@@ -50,6 +54,18 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
       getState().assignTask(to.getType(), to.getName(), mavenTask.clone()); 
       // no need to update shortcut description actually, as the presentation of mavenTask should not change
     }
+  }
+
+  public boolean isEnabledByDefault() {
+    return false;
+  }
+
+  public boolean hasConfigurationButton() {
+    return true;
+  }
+
+  public String configureStep(final RunConfiguration runConfiguration) {
+    return MavenEventsComponent.getInstance(myProject).configureRunStep(runConfiguration);
   }
 
   private MavenEventsHandler getEventsHandler() {
