@@ -95,7 +95,6 @@
     <automaticRenamerFactory implementation="com.intellij.uiDesigner.binding.FormsRenamerFactory"/>
 
     <treeStructureProvider implementation="com.intellij.uiDesigner.projectView.FormMergerTreeStructureProvider"/>
-    <treeStructureProvider implementation="com.intellij.lang.properties.projectView.ResourceBundleGrouper"/>
   </extensions>
 
   <project-components>

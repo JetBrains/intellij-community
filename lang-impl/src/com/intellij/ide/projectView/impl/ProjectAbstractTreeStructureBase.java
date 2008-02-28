@@ -5,9 +5,7 @@ import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public abstract class ProjectAbstractTreeStructureBase extends AbstractTreeStructureBase {
@@ -20,8 +18,7 @@ public abstract class ProjectAbstractTreeStructureBase extends AbstractTreeStruc
   public List<TreeStructureProvider> getProviders() {
     if (myProviders == null) {
       final TreeStructureProvider[] providers = Extensions.getExtensions(TreeStructureProvider.EP_NAME, myProject);
-      myProviders = new ArrayList<TreeStructureProvider>();
-      Collections.addAll(myProviders, providers);
+      myProviders = Arrays.asList(providers);
     }
     return myProviders;
   }
