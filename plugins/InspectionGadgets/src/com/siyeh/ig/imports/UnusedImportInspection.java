@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,10 @@ public class UnusedImportInspection extends BaseInspection {
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unused.import.problem.descriptor");
+    }
+
+    public boolean runForWholeFile() {
+        return true;
     }
 
     public InspectionGadgetsFix buildFix(Object... infos) {

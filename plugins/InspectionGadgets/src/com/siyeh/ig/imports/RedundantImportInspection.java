@@ -113,18 +113,23 @@ public class RedundantImportInspection extends BaseInspection {
                                            PsiJavaFile javaFile) {
             final PsiImportStatement[] importStatements =
                     importList.getImportStatements();
-            final Set<String> imports =
-                    new HashSet<String>(importStatements.length);
+            final Set<String> onDemandImports = new HashSet();
+            final Set<String> singleClassImports = new HashSet();
             for(final PsiImportStatement importStatement : importStatements) {
-                final String text = importStatement.getQualifiedName();
-                if(text == null) {
+                final String qualifiedName = importStatement.getQualifiedName();
+                if(qualifiedName == null) {
                     continue;
                 }
-                if(imports.contains(text)) {
-                    registerError(importStatement);
-                    continue;
-                }
-                if(!importStatement.isOnDemand()) {
+                if (importStatement.isOnDemand()) {
+                    if (onDemandImports.contains(qualifiedName)) {
+                        registerError(importStatement);
+                    }
+                    onDemandImports.add(qualifiedName);
+                } else {
+                    if (singleClassImports.contains(qualifiedName)) {
+                        registerError(importStatement);
+                        continue;
+                    }
                     final PsiElement element = importStatement.resolve();
                     if (!(element instanceof PsiClass)) {
                         continue;
@@ -143,13 +148,13 @@ public class RedundantImportInspection extends BaseInspection {
                     } else {
                         continue;
                     }
-                    if (imports.contains(contextName) &&
-                            !ImportUtils.hasOnDemandImportConflict(text,
+                    if (onDemandImports.contains(contextName) &&
+                            !ImportUtils.hasOnDemandImportConflict(qualifiedName,
                                     javaFile)) {
                         registerError(importStatement);
                     }
+                    singleClassImports.add(qualifiedName);
                 }
-                imports.add(text);
             }
         }
     }
