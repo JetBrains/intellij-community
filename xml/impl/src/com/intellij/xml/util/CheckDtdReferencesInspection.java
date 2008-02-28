@@ -28,7 +28,7 @@ import org.jetbrains.annotations.PropertyKey;
 /**
  * @author Maxim Mossienko
  */
-public class CheckDtdReferencesInspection extends BaseJavaLocalInspectionTool {
+public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool {
   public boolean isEnabledByDefault() {
     return true;
   }

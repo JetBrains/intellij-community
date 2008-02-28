@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Maxim Mossienko
  */
-public class CheckValidXmlInScriptBodyInspection extends BaseJavaLocalInspectionTool {
+public class CheckValidXmlInScriptBodyInspection extends XmlSuppressableInspectionTool {
   @NonNls
   private static final String SCRIPT_TAG_NAME = "script";
   private Lexer myXmlLexer;

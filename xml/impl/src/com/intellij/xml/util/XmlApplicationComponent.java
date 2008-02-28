@@ -1,7 +1,7 @@
 package com.intellij.xml.util;
 
 import com.intellij.ide.IconProvider;
-import com.intellij.jsp.impl.RelaxedHtmlFromSchemaNSDescriptor;
+import com.intellij.html.impl.RelaxedHtmlFromSchemaNSDescriptor;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;

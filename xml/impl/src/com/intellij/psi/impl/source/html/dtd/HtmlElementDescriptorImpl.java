@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.source.html.dtd;
 
-import com.intellij.jsp.impl.RelaxedHtmlFromSchemaElementDescriptor;
+import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;

@@ -1,4 +1,4 @@
-package com.intellij.jsp.impl;
+package com.intellij.html.impl;
 
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;

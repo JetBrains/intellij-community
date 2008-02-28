@@ -1,4 +1,4 @@
-package com.intellij.jsp.impl;
+package com.intellij.html.impl;
 
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -9,6 +9,7 @@ import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.jsp.impl.TldDescriptor;
 import org.jetbrains.annotations.NonNls;
 
 /**

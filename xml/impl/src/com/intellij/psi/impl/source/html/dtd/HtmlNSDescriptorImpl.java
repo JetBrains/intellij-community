@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.source.html.dtd;
 
-import com.intellij.jsp.impl.RelaxedHtmlFromSchemaNSDescriptor;
+import com.intellij.html.impl.RelaxedHtmlFromSchemaNSDescriptor;
 import com.intellij.openapi.util.SimpleFieldCache;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlDocument;
