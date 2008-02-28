@@ -81,36 +81,37 @@ public class AddSuppressInspectionFix extends SuppressIntentionAction {
     if (status.hasReadonlyFiles()) return;
     if (use15Suppressions(container)) {
       final PsiModifierList modifierList = container.getModifierList();
-      assert modifierList != null;
-      PsiAnnotation annotation = modifierList.findAnnotation(SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
-      if (annotation != null) {
-        if (annotation.getText().indexOf("{") == -1) {
-          final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-          if (attributes.length == 1) {
-            final String suppressedWarnings = attributes[0].getText();
-            PsiAnnotation newAnnotation =
-              JavaPsiFacade.getInstance(container.getProject()).getElementFactory().createAnnotationFromText("@" + SuppressManagerImpl
-                .SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "({" + suppressedWarnings + ", \"" + myID + "\"})", container);
-            annotation.replace(newAnnotation);
+      if (modifierList != null) {
+        PsiAnnotation annotation = modifierList.findAnnotation(SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+        if (annotation != null) {
+          if (annotation.getText().indexOf("{") == -1) {
+            final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
+            if (attributes.length == 1) {
+              final String suppressedWarnings = attributes[0].getText();
+              PsiAnnotation newAnnotation =
+                JavaPsiFacade.getInstance(container.getProject()).getElementFactory().createAnnotationFromText("@" + SuppressManagerImpl
+                  .SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "({" + suppressedWarnings + ", \"" + myID + "\"})", container);
+              annotation.replace(newAnnotation);
+            }
+          }
+          else {
+            final int curlyBraceIndex = annotation.getText().lastIndexOf("}");
+            if (curlyBraceIndex > 0) {
+              annotation.replace(JavaPsiFacade.getInstance(container.getProject()).getElementFactory().createAnnotationFromText(
+                annotation.getText().substring(0, curlyBraceIndex) + ", \"" + myID + "\"})", container));
+            }
+            else if (!ApplicationManager.getApplication().isUnitTestMode() && editor != null) {
+              Messages.showErrorDialog(editor.getComponent(),
+                                       InspectionsBundle.message("suppress.inspection.annotation.syntax.error", annotation.getText()));
+            }
           }
         }
         else {
-          final int curlyBraceIndex = annotation.getText().lastIndexOf("}");
-          if (curlyBraceIndex > 0) {
-            annotation.replace(JavaPsiFacade.getInstance(container.getProject()).getElementFactory().createAnnotationFromText(
-              annotation.getText().substring(0, curlyBraceIndex) + ", \"" + myID + "\"})", container));
-          }
-          else if (!ApplicationManager.getApplication().isUnitTestMode() && editor != null) {
-            Messages.showErrorDialog(editor.getComponent(),
-                                     InspectionsBundle.message("suppress.inspection.annotation.syntax.error", annotation.getText()));
-          }
+          annotation = JavaPsiFacade.getInstance(container.getProject()).getElementFactory()
+            .createAnnotationFromText("@" + SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "({\"" + myID + "\"})", container);
+          modifierList.addBefore(annotation, modifierList.getFirstChild());
+          JavaCodeStyleManager.getInstance(container.getProject()).shortenClassReferences(modifierList);
         }
-      }
-      else {
-        annotation = JavaPsiFacade.getInstance(container.getProject()).getElementFactory()
-          .createAnnotationFromText("@" + SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "({\"" + myID + "\"})", container);
-        modifierList.addBefore(annotation, modifierList.getFirstChild());
-        JavaCodeStyleManager.getInstance(container.getProject()).shortenClassReferences(modifierList);
       }
     }
     else {
