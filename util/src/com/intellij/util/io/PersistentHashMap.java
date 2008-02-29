@@ -209,27 +209,20 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     updateValueId(id, new HeaderRecord());
   }
 
+  protected void markClean() throws IOException {
+    putMetaData(myGarbageSize);
+    super.markClean();
+  }
+
   public synchronized void force() {
     myAppendCache.clear();
     myValueStorage.force();
-    try {
-      putMetaData(myGarbageSize);
-    }
-    catch (IOException e) {
-      // ignore
-    }
 
     super.force();
   }
 
   public synchronized void close() throws IOException {
     myAppendCache.clear();
-    try {
-      putMetaData(myGarbageSize);
-    }
-    catch (IOException e) {
-      // ignore
-    }
     super.close();
     myValueStorage.dispose();
   }

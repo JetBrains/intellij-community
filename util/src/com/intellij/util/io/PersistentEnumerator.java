@@ -389,8 +389,7 @@ public class PersistentEnumerator<Data> implements Forceable {
   private void markDirty(boolean dirty) throws IOException {
     if (myDirty) {
       if (!dirty) {
-        myStorage.putInt(0, CORRECTLY_CLOSED_MAGIC);
-        myDirty = false;
+        markClean();
       }
     }
     else {
@@ -400,7 +399,12 @@ public class PersistentEnumerator<Data> implements Forceable {
       }
     }
   }
-  
+
+  protected void markClean() throws IOException {
+    myStorage.putInt(0, CORRECTLY_CLOSED_MAGIC);
+    myDirty = false;
+  }
+
   private static final class MappedFileDataInput implements DataInput {
     private final MappedFile myFile;
 
