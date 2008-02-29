@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
@@ -34,10 +35,8 @@ public class GrDocReferenceElementImpl extends GroovyDocPsiElementImpl implement
     return "GrDocReferenceElement";
   }
 
-  @NotNull
+  @Nullable
   public GrCodeReferenceElement getReferenceElement() {
-    GrCodeReferenceElement element = findChildByClass(GrCodeReferenceElement.class);
-    assert element != null;
-    return element;
+    return findChildByClass(GrCodeReferenceElement.class);
   }
 }

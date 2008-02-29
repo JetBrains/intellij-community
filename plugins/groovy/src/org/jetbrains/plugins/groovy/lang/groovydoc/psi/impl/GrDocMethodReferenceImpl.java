@@ -57,6 +57,7 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
     if (holder == null) return new ResolveResult[0];
 
     GrCodeReferenceElement referenceElement = holder.getReferenceElement();
+    if (referenceElement == null) return new ResolveResult[0];
     PsiElement resolved = referenceElement.resolve();
     if (resolved != null) {
       PsiType[] parameterTypes = getParameterList().getParameterTypes();

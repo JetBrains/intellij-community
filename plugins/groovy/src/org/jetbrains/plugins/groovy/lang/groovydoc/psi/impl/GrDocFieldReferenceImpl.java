@@ -63,7 +63,7 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
     PsiElement resolved;
     if (holder != null) {
       GrCodeReferenceElement referenceElement = holder.getReferenceElement();
-      resolved = referenceElement.resolve();
+      resolved = referenceElement != null ? referenceElement.resolve() : null;
     } else {
       resolved = getEnclosingClassOrFile(this);
     }
