@@ -4,16 +4,20 @@
 package com.intellij.util.io;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 
 public class PersistentHashMapValueStorage {
   private final DataOutputStream myAppender;
-  private final RandomAccessFile myReader;
+  private RAReader myReader;
   private long mySize;
+  private final File myFile;
+  private boolean myCompactionMode = false;
 
   public PersistentHashMapValueStorage(String path) throws IOException {
     myAppender = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(path, true)));
-    myReader = new RandomAccessFile(path, "r");
-    mySize = myReader.length();
+    myFile = new File(path);
+    myReader = new FileReader(myFile);
+    mySize = myFile.length();
 
     if (mySize == 0) {
       appendBytes("Header Record For PersistentHashMapValuStorage".getBytes(), 0);
@@ -21,6 +25,7 @@ public class PersistentHashMapValueStorage {
   }
 
   public long appendBytes(byte[] data, long prevChunkAddress) throws IOException {
+    assert !myCompactionMode;
     long result = mySize;
     myAppender.writeLong(prevChunkAddress);
     myAppender.writeInt(data.length);
@@ -37,15 +42,19 @@ public class PersistentHashMapValueStorage {
     int size = result.length;
     if (size == 0) return tailChunkAddress;
 
-    myAppender.flush();
+    force();
+
     int bytesRead = 0;
     long chunk = tailChunkAddress;
     int chunkCount = 0;
+
+    byte[] headerBits = new byte[8 + 4];
     while (chunk != 0) {
-      myReader.seek(chunk);
-      final long prevChunkAddress = myReader.readLong();
-      final int chunkSize = myReader.readInt();
-      myReader.read(result, size - bytesRead - chunkSize, chunkSize);
+      myReader.get(chunk, headerBits, 0, 12);
+      final long prevChunkAddress = Bits.getLong(headerBits, 0);
+      final int chunkSize = Bits.getInt(headerBits, 8);
+
+      myReader.get(chunk + 12, result, size - bytesRead - chunkSize, chunkSize);
       chunk = prevChunkAddress;
       bytesRead += chunkSize;
       chunkCount++;
@@ -53,7 +62,7 @@ public class PersistentHashMapValueStorage {
     
     assert bytesRead == size;
 
-    if (chunkCount > 1) {
+    if (chunkCount > 1 && !myCompactionMode) {
       return appendBytes(result, 0);
     }
 
@@ -72,14 +81,70 @@ public class PersistentHashMapValueStorage {
   public void dispose() {
     try {
       myAppender.close();
-      myReader.close();
+      myReader.dispose();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
+  public void switchToCompactionMode() {
+    myReader.dispose();
+    myReader = new MappedReader(myFile);
+    myCompactionMode = true;
+  }
+
   public static PersistentHashMapValueStorage create(final String path) throws IOException {
     return new PersistentHashMapValueStorage(path);
+  }
+
+  private interface RAReader {
+    void get(long addr, byte[] dst, int off, int len) throws IOException;
+    void dispose();
+  }
+
+  private static class MappedReader implements RAReader {
+    private final MappedBufferWrapper myHolder;
+
+    private MappedReader(File file) {
+      myHolder = new ReadOnlyMappedBufferWrapper(file, 0);
+    }
+
+    public void get(final long addr, final byte[] dst, final int off, final int len) {
+      final ByteBuffer buf = myHolder.buf();
+      buf.position((int)addr);
+      buf.get(dst, off, len);
+    }
+
+    public void dispose() {
+      myHolder.dispose();
+    }
+  }
+
+  private static class FileReader implements RAReader {
+    private final RandomAccessFile myFile;
+
+    private FileReader(File file) {
+      try {
+        myFile = new RandomAccessFile(file, "r");
+      }
+      catch (FileNotFoundException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    public void get(final long addr, final byte[] dst, final int off, final int len) throws IOException {
+      myFile.seek(addr);
+      myFile.read(dst, off, len);
+    }
+
+    public void dispose() {
+      try {
+        myFile.close();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 }

@@ -1,5 +1,6 @@
 package com.intellij.util.io;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
@@ -14,13 +15,17 @@ import java.util.Collection;
  *         Date: Dec 18, 2007
  */
 public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
-  private final PersistentHashMapValueStorage myValueStorage;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentHashMap");
+
+  private PersistentHashMapValueStorage myValueStorage;
   private final DataExternalizer<Value> myValueExternalizer;
   private static final long NULL_ADDR = 0;
   private static final int NULL_SIZE = 0;
 
   @NonNls
   public static final String DATA_FILE_EXTENSION = ".values";
+  private File myFile;
+  private int myGarbageSize;
 
   private static class AppendStream extends DataOutputStream {
     private AppendStream() {
@@ -82,8 +87,19 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   
   public PersistentHashMap(final File file, PersistentEnumerator.DataDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
     super(checkDataFile(file), new DescriptorWrapper<Key>(keyDescriptor), initialSize);
+    myFile = file;
     myValueExternalizer = valueExternalizer;
-    myValueStorage = PersistentHashMapValueStorage.create(getDataFile(file).getPath());
+    myValueStorage = PersistentHashMapValueStorage.create(getDataFile(myFile).getPath());
+    myGarbageSize = getMetaData();
+
+    if (makesSenceToCompact()) {
+      compact();
+    }
+  }
+  
+  private boolean makesSenceToCompact() {
+    final long filesize = myFile.length();
+    return filesize > 5 * 1024 * 1024 && myGarbageSize * 2 > filesize; // file is longer than 5MB and more than 50% of data is garbage
   }
 
   private static File checkDataFile(final File file) throws IOException{
@@ -114,7 +130,14 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     myValueExternalizer.save(record, value);
     byte[] bytes = record.toByteArray();
 
-    HeaderRecord header = new HeaderRecord();
+    HeaderRecord header = readValueId(id);
+    if (header != null) {
+      myGarbageSize += header.size;
+    }
+    else {
+      header = new HeaderRecord();
+    }
+
     header.size = bytes.length;
     header.address = myValueStorage.appendBytes(bytes, 0);
 
@@ -159,6 +182,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     if (newAddress != header.address) {
       header.address = newAddress;
       updateValueId(id, header);
+      myGarbageSize += header.size;
     }
 
     final DataInputStream input = new DataInputStream(new ByteArrayInputStream(data));
@@ -176,12 +200,25 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     if (id == NULL_ID) {
       return;
     }
+
+    final HeaderRecord record = readValueId(id);
+    if (record != null) {
+      myGarbageSize += record.size;
+    }
+
     updateValueId(id, new HeaderRecord());
   }
 
   public synchronized void force() {
     myAppendCache.clear();
     myValueStorage.force();
+    try {
+      putMetaData(myGarbageSize);
+    }
+    catch (IOException e) {
+      // ignore
+    }
+
     super.force();
   }
 
@@ -189,6 +226,33 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     myAppendCache.clear();
     super.close();
     myValueStorage.dispose();
+  }
+
+  public synchronized void compact() throws IOException {
+    long now = System.currentTimeMillis();
+    final String newPath = getDataFile(myFile).getPath() + ".new";
+    final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath);
+    myValueStorage.switchToCompactionMode();
+    
+    traverseAllRecords(new RecordsProcessor() {
+      public void process(final int keyId) throws IOException {
+        final HeaderRecord record = readValueId(keyId);
+        if (record.address != NULL_ADDR) {
+          byte[] bytes = new byte[record.size];
+          myValueStorage.readBytes(record.address, bytes);
+          record.address = newStorage.appendBytes(bytes, 0);
+          updateValueId(keyId, record);
+        }
+      }
+    });
+
+    myValueStorage.dispose();
+    newStorage.dispose();
+
+    new File(newPath).renameTo(getDataFile(myFile));
+
+    myValueStorage = PersistentHashMapValueStorage.create(getDataFile(myFile).getPath());
+    LOG.info("Compacted " + myFile.getPath() + " in " + (System.currentTimeMillis() - now) + "ms.");
   }
 
   private HeaderRecord readValueId(final int keyId) throws IOException {
@@ -230,7 +294,6 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
       return myKeyDescriptor.read(in);
     }
   }
-
 
   private static class HeaderRecord {
     long address;

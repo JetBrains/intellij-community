@@ -35,9 +35,10 @@ import java.util.List;
 public class PersistentEnumerator<Data> implements Forceable {
   protected static final int NULL_ID = 0;
   protected static final int DATA_OFFSET = 8;
-  private static final int FIRST_VECTOR_OFFSET = 4;
+  private static final int META_DATA_OFFSET = 4;
+  private static final int FIRST_VECTOR_OFFSET = 8;
   private static final int DIRTY_MAGIC = 0xbabe0589;
-  private static final int VERSION = 2;
+  private static final int VERSION = 3;
   private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafac + VERSION;
 
   private static final int BITS_PER_LEVEL = 5;
@@ -117,6 +118,7 @@ public class PersistentEnumerator<Data> implements Forceable {
     
     if (myStorage.length() == 0) {
       markDirty(true);
+      putMetaData(0);
       allocVector(FIRST_VECTOR);
     }
     else {
@@ -159,25 +161,45 @@ public class PersistentEnumerator<Data> implements Forceable {
   public interface DataFilter {
     boolean accept(int id);
   }
-  
+
+  public synchronized void putMetaData(int data) throws IOException {
+    myStorage.putInt(META_DATA_OFFSET, data);
+  }
+
+  public synchronized int getMetaData() throws IOException {
+    return myStorage.getInt(META_DATA_OFFSET);
+  }
+
   public synchronized Collection<Data> getAllDataObjects(@Nullable final DataFilter filter) throws IOException {
     final List<Data> values = new ArrayList<Data>();
-    collectDataObjects(FIRST_VECTOR_OFFSET, SLOTS_PER_FIRST_VECTOR, values, filter);
+    traverseAllRecords(new RecordsProcessor() {
+      public void process(final int record) throws IOException {
+        if (filter == null || filter.accept(record)) {
+          values.add(valueOf(record));
+        }
+      }
+    });
     return values;
   }
-  
-  private void collectDataObjects(final int vectorStart, final int slotsCount, Collection<Data> values, final DataFilter filter) throws IOException {
+
+  public interface RecordsProcessor {
+    void process(int record) throws IOException;
+  }
+
+  public void traverseAllRecords(RecordsProcessor p) throws IOException {
+    traverseRecords(FIRST_VECTOR_OFFSET, SLOTS_PER_FIRST_VECTOR, p);
+  }
+
+  private void traverseRecords(int vectorStart, int slotsCount, RecordsProcessor p) throws IOException {
     for (int slotIdx = 0; slotIdx < slotsCount; slotIdx++) {
       final int vector = myStorage.getInt(vectorStart + slotIdx * 4);
       if (vector < 0) {
         for (int record = -vector; record != 0; record = nextCanditate(record)) {
-          if (filter == null || filter.accept(record)) {
-            values.add(valueOf(record));
-          }
+          p.process(record);
         }
       }
       else if (vector > 0) {
-        collectDataObjects(vector, SLOTS_PER_VECTOR, values, filter);
+        traverseRecords(vector, SLOTS_PER_VECTOR, p);
       }
     }
   }

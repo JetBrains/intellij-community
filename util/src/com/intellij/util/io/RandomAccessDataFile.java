@@ -83,38 +83,18 @@ public class RandomAccessDataFile implements Forceable {
   }
 
   public void putInt(long addr, int value) {
-    byte[] buffer = myTypedIOBuffer;
-    buffer[0] = (byte)((value >>> 24) & 0xFF);
-    buffer[1] = (byte)((value >>> 16) & 0xFF);
-    buffer[2] = (byte)((value >>> 8) & 0xFF);
-    buffer[3] = (byte)(value & 0xFF);
-
-    put(addr, buffer, 0, 4);
+    Bits.putInt(myTypedIOBuffer, 0, value);
+    put(addr, myTypedIOBuffer, 0, 4);
   }
 
   public int getInt(long addr) {
-    byte[] buffer = myTypedIOBuffer;
-    get(addr, buffer, 0, 4);
-
-    int ch1 = buffer[0] & 0xff;
-    int ch2 = buffer[1] & 0xff;
-    int ch3 = buffer[2] & 0xff;
-    int ch4 = buffer[3] & 0xff;
-    return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + ch4);
+    get(addr, myTypedIOBuffer, 0, 4);
+    return Bits.getInt(myTypedIOBuffer, 0);
   }
 
   public void putLong(long addr, long value) {
-    byte[] buffer = myTypedIOBuffer;
-    buffer[0] = (byte)((value >>> 56) & 0xFF);
-    buffer[1] = (byte)((value >>> 48) & 0xFF);
-    buffer[2] = (byte)((value >>> 40) & 0xFF);
-    buffer[3] = (byte)((value >>> 32) & 0xFF);
-    buffer[4] = (byte)((value >>> 24) & 0xFF);
-    buffer[5] = (byte)((value >>> 16) & 0xFF);
-    buffer[6] = (byte)((value >>> 8) & 0xFF);
-    buffer[7] = (byte)(value & 0xFF);
-
-    put(addr, buffer, 0, 8);
+    Bits.putLong(myTypedIOBuffer, 0, value);
+    put(addr, myTypedIOBuffer, 0, 8);
   }
 
   public void putByte(final long addr, final byte b) {
@@ -152,19 +132,8 @@ public class RandomAccessDataFile implements Forceable {
   }
 
   public long getLong(long addr) {
-    byte[] buffer = myTypedIOBuffer;
-    get(addr, buffer, 0, 8);
-
-    long ch1 = buffer[0] & 0xff;
-    long ch2 = buffer[1] & 0xff;
-    long ch3 = buffer[2] & 0xff;
-    long ch4 = buffer[3] & 0xff;
-    long ch5 = buffer[4] & 0xff;
-    long ch6 = buffer[5] & 0xff;
-    long ch7 = buffer[6] & 0xff;
-    long ch8 = buffer[7] & 0xff;
-
-    return ((ch1 << 56) + (ch2 << 48) + (ch3 << 40) + (ch4 << 32) + (ch5 << 24) + (ch6 << 16) + (ch7 << 8) + ch8);
+    get(addr, myTypedIOBuffer, 0, 8);
+    return Bits.getLong(myTypedIOBuffer, 0);
   }
 
   public long length() {

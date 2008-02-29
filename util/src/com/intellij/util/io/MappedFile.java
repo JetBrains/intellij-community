@@ -39,7 +39,7 @@ public class MappedFile implements Forceable {
 
   @NonNls private static final String UTF_8_CHARSET_NAME = "UTF-8";
   @NonNls private static final String RW = "rw";
-  private byte[] buffer = new byte[8];
+  private final byte[] buffer = new byte[8];
 
   public MappedFile(File file, int initialSize) throws IOException {
     myFile = file;
@@ -125,9 +125,7 @@ public class MappedFile implements Forceable {
   public short readShort() throws IOException {
     get(buffer, 0, 2);
 
-    int ch1 = buffer[0] & 0xff;
-    int ch2 = buffer[1] & 0xff;
-    return (short)((ch1 << 8) + ch2);
+    return Bits.getShort(buffer, 0);
   }
 
   public void putShort(int index, short value) throws IOException {
@@ -136,8 +134,7 @@ public class MappedFile implements Forceable {
   }
 
   public void writeShort(int value) throws IOException {
-    buffer[0] = (byte)((value >>> 8) & 0xFF);
-    buffer[1] = (byte)(value & 0xFF);
+    Bits.putShort(buffer, 0, (short)value);
     put(buffer, 0, 2);
   }
 
@@ -282,44 +279,21 @@ public class MappedFile implements Forceable {
 
   public int readInt() throws IOException {
     get(buffer, 0, 4);
-    int ch1 = buffer[0] & 0xff;
-    int ch2 = buffer[1] & 0xff;
-    int ch3 = buffer[2] & 0xff;
-    int ch4 = buffer[3] & 0xff;
-    return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + ch4);
+    return Bits.getInt(buffer, 0);
   }
 
   public long readLong() throws IOException {
     get(buffer, 0, 8);
-
-    long ch1 = buffer[0] & 0xff;
-    long ch2 = buffer[1] & 0xff;
-    long ch3 = buffer[2] & 0xff;
-    long ch4 = buffer[3] & 0xff;
-    long ch5 = buffer[4] & 0xff;
-    long ch6 = buffer[5] & 0xff;
-    long ch7 = buffer[6] & 0xff;
-    long ch8 = buffer[7] & 0xff;
-    return (ch1 << 56) + (ch2 << 48) + (ch3 << 40) + (ch4 << 32) + (ch5 << 24) + (ch6 << 16) + (ch7 << 8) + ch8;
+    return Bits.getLong(buffer, 0);
   }
 
   public void writeInt(int value) throws IOException {
-    buffer[0] = (byte)((value >>> 24) & 0xFF);
-    buffer[1] = (byte)((value >>> 16) & 0xFF);
-    buffer[2] = (byte)((value >>> 8) & 0xFF);
-    buffer[3] = (byte)(value & 0xFF);
+    Bits.putInt(buffer, 0, value);
     put(buffer, 0, 4);
   }
 
   public void writeLong(long value) throws IOException {
-    buffer[0] = (byte)((value >>> 56) & 0xFF);
-    buffer[1] = (byte)((value >>> 48) & 0xFF);
-    buffer[2] = (byte)((value >>> 40) & 0xFF);
-    buffer[3] = (byte)((value >>> 32) & 0xFF);
-    buffer[4] = (byte)((value >>> 24) & 0xFF);
-    buffer[5] = (byte)((value >>> 16) & 0xFF);
-    buffer[6] = (byte)((value >>> 8) & 0xFF);
-    buffer[7] = (byte)(value & 0xFF);
+    Bits.putLong(buffer, 0, value);
     put(buffer, 0, 8);
   }
 
