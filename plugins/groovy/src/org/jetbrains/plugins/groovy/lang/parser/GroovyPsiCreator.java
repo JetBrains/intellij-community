@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.grails.lang.gsp.parsing.GspGroovyElementTypes;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.impl.*;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementType;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.IGroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiCreator;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrLabelImpl;
@@ -54,8 +54,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.Gr
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectorImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexMatchExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexFindExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexMatchExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrRelationalExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrInstanceofExpressionImpl;
@@ -92,7 +92,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
   public static PsiElement createElement(ASTNode node) {
     IElementType elem = node.getElementType();
 
-    if (elem instanceof GroovyDocElementType) {
+    if (elem instanceof IGroovyDocElementType) {
       return GroovyDocPsiCreator.createElement(node);
     }
 

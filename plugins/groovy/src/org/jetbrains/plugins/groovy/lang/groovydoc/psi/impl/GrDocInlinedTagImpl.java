@@ -16,7 +16,9 @@
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +37,17 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
 
   public String toString() {
     return "GrDocInlinedTag";
+  }
+
+  public String getName() {
+    return getNameIdentifier().getText();
+  }
+
+  @NotNull
+  public PsiElement getNameIdentifier() {
+    PsiElement element = findChildByType(GroovyDocTokenTypes.mGDOC_TAG_NAME);
+    assert element != null;
+    return element;
   }
 }
 

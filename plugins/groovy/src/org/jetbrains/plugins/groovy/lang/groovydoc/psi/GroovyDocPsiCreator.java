@@ -20,24 +20,38 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocChameleonElementType;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType.TagValueTokenType.*;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN;
 
 /**
  * @author ilyas
  */
-public class GroovyDocPsiCreator implements GroovyDocElementTypes{
-  
+public class GroovyDocPsiCreator implements GroovyDocElementTypes {
+
   public static PsiElement createElement(ASTNode node) {
     IElementType type = node.getElementType();
+
+    if (type instanceof GroovyDocTagValueTokenType) {
+      GroovyDocTagValueTokenType value = (GroovyDocTagValueTokenType) type;
+      GroovyDocTagValueTokenType.TagValueTokenType valueType = value.getValueType(node);
+      if (valueType == REFERENCE_ELEMENT) return new GrDocReferenceElementImpl(node);
+
+      return new GrDocTagValueTokenImpl(node);
+    }
+
 
     if (type == GDOC_TAG) return new GrDocTagImpl(node);
     if (type == GDOC_INLINED_TAG) return new GrDocInlinedTagImpl(node);
 
-    if (type == GDOC_REFERENCE_ELEMENT) return new GrDocReferenceElementImpl(node);
     if (type == GDOC_METHOD_REF) return new GrDocMethodReferenceImpl(node);
     if (type == GDOC_FIELD_REF) return new GrDocFieldReferenceImpl(node);
     if (type == GDOC_PARAM_REF) return new GrDocParameterReferenceImpl(node);
     if (type == GDOC_METHOD_PARAMS) return new GrDocMethodParamsImpl(node);
+    if (type == GDOC_METHOD_PARAMETER) return new GrDocMethodParameterImpl(node);
 
     return new ASTWrapperPsiElement(node);
   }

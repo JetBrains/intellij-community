@@ -17,25 +17,39 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocFieldReference;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParameter;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author ilyas
  */
-public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements GrDocFieldReference {
+public class GrDocMethodParameterImpl extends GroovyDocPsiElementImpl implements GrDocMethodParameter {
 
-  public GrDocFieldReferenceImpl(@NotNull ASTNode node) {
+  public GrDocMethodParameterImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString() {
-    return "GrDocFieldReference";
+    return "GrDocMethodParameter";
   }
 
   public void accept(GroovyElementVisitor visitor) {
-    visitor.visitDocFieldReference(this);
+    visitor.visitDocMethodParameter(this);
   }
 
+  @NotNull
+  public GrDocReferenceElement getTypeElement(){
+    GrDocReferenceElement child = findChildByClass(GrDocReferenceElement.class);
+    assert child != null;
+    return child;
+  }
 
+  @Nullable
+  public GrDocTagValueToken getParameterElement(){
+    return findChildByClass(GrDocTagValueToken.class);
+  }
 }

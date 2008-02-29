@@ -15,27 +15,22 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
-import com.intellij.lang.ASTNode;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocFieldReference;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import com.intellij.lang.ASTNode;
 
 /**
  * @author ilyas
  */
-public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements GrDocFieldReference {
+public class GrDocTagValueTokenImpl extends GroovyDocPsiElementImpl implements GrDocTagValueToken {
 
-  public GrDocFieldReferenceImpl(@NotNull ASTNode node) {
+  public GrDocTagValueTokenImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString() {
-    return "GrDocFieldReference";
+    return "GrDocTagValueToken";
   }
-
-  public void accept(GroovyElementVisitor visitor) {
-    visitor.visitDocFieldReference(this);
-  }
-
 
 }

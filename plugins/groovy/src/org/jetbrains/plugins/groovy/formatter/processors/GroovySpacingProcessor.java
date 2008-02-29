@@ -51,10 +51,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.*;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_COMMA;
 
 /**
  * @author ilyas
@@ -230,6 +232,37 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
       }
 
+    }
+
+    public void visitDocMethodReference(GrDocMethodReference reference) {
+      visitDocMember();
+    }
+
+
+    public void visitDocFieldReference(GrDocFieldReference reference) {
+      visitDocMember();
+    }
+
+    private void visitDocMember() {
+      myResult = Spacing.createSpacing(0, 0, 0, false, 0);
+    }
+
+    public void visitDocMethodParameterList(GrDocMethodParams params) {
+      if (myChild1.getElementType() == mGDOC_TAG_VALUE_LPAREN || myChild2.getElementType() == mGDOC_TAG_VALUE_RPAREN) {
+        myResult = Spacing.createSpacing(0, 0, 0, false, 0);
+        return;
+      }
+      if (myChild2.getElementType() == mGDOC_TAG_VALUE_COMMA) {
+        myResult = Spacing.createSpacing(0, 0, 0, false, 0);
+        return;
+      }
+      createSpaceInCode(true);
+    }
+
+    public void visitDocMethodParameter(GrDocMethodParameter parameter) {
+      if (myChild1.getTreePrev() == null) {
+        createSpaceInCode(true);
+      }
     }
 
     public void visitWhileStatement(GrWhileStatement statement) {

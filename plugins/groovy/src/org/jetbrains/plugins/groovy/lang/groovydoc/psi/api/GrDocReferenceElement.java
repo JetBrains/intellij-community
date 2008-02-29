@@ -15,8 +15,6 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
-
 /**
  * @author ilyas
  */

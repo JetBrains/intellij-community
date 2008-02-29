@@ -15,18 +15,8 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
-import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.Language;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-
 /**
  * @author ilyas
  */
-public abstract class GroovyDocElementType extends IElementType implements IGroovyDocElementType{
-
-  public GroovyDocElementType(@NotNull @NonNls String debugName, @Nullable Language language) {
-    super(debugName, language);
-  }
+public interface IGroovyDocElementType {
 }

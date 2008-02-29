@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 import com.intellij.psi.PsiElement;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,4 +34,7 @@ public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements Gr
     return "GrDocMethodParameterList";
   }
 
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitDocMethodParameterList(this);
+  }
 }

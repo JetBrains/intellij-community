@@ -28,8 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 
 /**
  * @author ven
@@ -264,6 +263,22 @@ public abstract class GroovyElementVisitor {
 
   public void visitMethod(GrMethod method) {
     visitElement(method);
+  }
+
+  public void visitDocMethodReference(GrDocMethodReference reference){
+    visitElement(reference);
+  }
+
+  public void visitDocFieldReference(GrDocFieldReference reference){
+    visitElement(reference);
+  }
+
+  public void visitDocMethodParameterList(GrDocMethodParams params){
+    visitElement(params);
+  }
+
+  public void visitDocMethodParameter(GrDocMethodParameter parameter){
+    visitElement(parameter);
   }
 
   public void visitConstructorInvocation(GrConstructorInvocation invocation) {

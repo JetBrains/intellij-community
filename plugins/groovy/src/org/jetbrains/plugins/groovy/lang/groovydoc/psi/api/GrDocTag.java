@@ -15,8 +15,15 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 
+import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiElement;
+
 /**
  * @author ilyas
  */
 public interface GrDocTag extends GroovyDocPsiElement {
+  @NotNull
+  PsiElement getNameIdentifier();
+
+  String getName();
 }

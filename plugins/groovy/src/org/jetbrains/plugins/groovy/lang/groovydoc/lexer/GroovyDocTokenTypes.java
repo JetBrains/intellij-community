@@ -17,31 +17,33 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType;
 
 /**
  * @author ilyas
  */
 public interface GroovyDocTokenTypes {
 
-  IElementType mGDOC_COMMENT_START = new GroovyDocElementType("GDOC_COMMENT_START");
-  IElementType mGDOC_COMMENT_END = new GroovyDocElementType("GDOC_COMMENT_END");
+  IElementType mGDOC_TAG_VALUE_TOKEN = new GroovyDocTagValueTokenType();
 
-  IElementType mGDOC_COMMENT_DATA = new GroovyDocElementType("GDOC_COMMENT_DATA");
-  IElementType mGDOC_TAG_NAME = new GroovyDocElementType("GDOC_TAG_NAME");
-  IElementType mGDOC_WHITESPACE = new GroovyDocElementType("GDOC_WHITESPACE");
-  IElementType mGDOC_TAG_VALUE_TOKEN = new GroovyDocElementType("GDOC_TAG_VALUE_TOKEN");
-  IElementType mGDOC_TAG_VALUE_LPAREN = new GroovyDocElementType("GDOC_TAG_VALUE_LPAREN");
-  IElementType mGDOC_TAG_VALUE_RPAREN = new GroovyDocElementType("GDOC_TAG_VALUE_RPAREN");
-  IElementType mGDOC_TAG_VALUE_GT = new GroovyDocElementType("GDOC_TAG_VALUE_GT");
-  IElementType mGDOC_TAG_VALUE_LT = new GroovyDocElementType("GDOC_TAG_VALUE_LT");
-  IElementType mGDOC_INLINE_TAG_END = new GroovyDocElementType("GDOC_INLINE_TAG_END");
-  IElementType mGDOC_INLINE_TAG_START = new GroovyDocElementType("DOC_INLINE_TAG_START");
-  IElementType mGDOC_TAG_VALUE_COMMA = new GroovyDocElementType("GDOC_TAG_VALUE_COMMA");
-  IElementType mGDOC_TAG_VALUE_SHARP_TOKEN = new GroovyDocElementType("GDOC_TAG_VALUE_SHARP_TOKEN");
-  IElementType mGDOC_ASTERISKS = new GroovyDocElementType("GDOC_LEADING_ASTERISKS");
+  IElementType mGDOC_COMMENT_START = new GroovyDocElementTypeImpl("GDOC_COMMENT_START");
+  IElementType mGDOC_COMMENT_END = new GroovyDocElementTypeImpl("GDOC_COMMENT_END");
 
-  IElementType mGDOC_COMMENT_BAD_CHARACTER = new GroovyDocElementType("DOC_COMMENT_BAD_CHARACTER");
+  IElementType mGDOC_COMMENT_DATA = new GroovyDocElementTypeImpl("GDOC_COMMENT_DATA");
+  IElementType mGDOC_TAG_NAME = new GroovyDocElementTypeImpl("GDOC_TAG_NAME");
+  IElementType mGDOC_WHITESPACE = new GroovyDocElementTypeImpl("GDOC_WHITESPACE");
+  IElementType mGDOC_TAG_PLAIN_VALUE_TOKEN = new GroovyDocElementTypeImpl("GDOC_TAG_VALUE_TOKEN");
+  IElementType mGDOC_TAG_VALUE_LPAREN = new GroovyDocElementTypeImpl("GDOC_TAG_VALUE_LPAREN");
+  IElementType mGDOC_TAG_VALUE_RPAREN = new GroovyDocElementTypeImpl("GDOC_TAG_VALUE_RPAREN");
+  IElementType mGDOC_TAG_VALUE_GT = new GroovyDocElementTypeImpl("GDOC_TAG_VALUE_GT");
+  IElementType mGDOC_TAG_VALUE_LT = new GroovyDocElementTypeImpl("GDOC_TAG_VALUE_LT");
+  IElementType mGDOC_INLINE_TAG_END = new GroovyDocElementTypeImpl("GDOC_INLINE_TAG_END");
+  IElementType mGDOC_INLINE_TAG_START = new GroovyDocElementTypeImpl("DOC_INLINE_TAG_START");
+  IElementType mGDOC_TAG_VALUE_COMMA = new GroovyDocElementTypeImpl("GDOC_TAG_VALUE_COMMA");
+  IElementType mGDOC_TAG_VALUE_SHARP_TOKEN = new GroovyDocElementTypeImpl("GDOC_TAG_VALUE_SHARP_TOKEN");
+  IElementType mGDOC_ASTERISKS = new GroovyDocElementTypeImpl("GDOC_LEADING_ASTERISKS");
+
+  IElementType mGDOC_COMMENT_BAD_CHARACTER = new GroovyDocElementTypeImpl("DOC_COMMENT_BAD_CHARACTER");
 
   TokenSet GROOVY_DOC_TOKENS = TokenSet.create(
       mGDOC_COMMENT_START,

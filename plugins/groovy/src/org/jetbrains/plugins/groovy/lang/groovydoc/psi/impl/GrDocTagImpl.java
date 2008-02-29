@@ -16,8 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
@@ -36,4 +38,16 @@ public class GrDocTagImpl extends GroovyDocPsiElementImpl implements GrDocTag {
   public String toString() {
     return "GroovyDocTag";
   }
+
+  public String getName() {
+    return getNameIdentifier().getText();
+  }
+
+  @NotNull
+  public PsiElement getNameIdentifier() {
+    PsiElement element = findChildByType(GroovyDocTokenTypes.mGDOC_TAG_NAME);
+    assert element != null;
+    return element;
+  }
+
 }

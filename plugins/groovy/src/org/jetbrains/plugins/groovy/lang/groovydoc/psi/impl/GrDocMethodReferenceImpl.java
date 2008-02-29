@@ -17,12 +17,15 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ilyas
  */
-public class GrDocMethodReferenceImpl extends GroovyDocPsiElementImpl implements GrDocMethodReference {
+public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implements GrDocMethodReference {
   
   public GrDocMethodReferenceImpl(@NotNull ASTNode node) {
     super(node);
@@ -32,4 +35,14 @@ public class GrDocMethodReferenceImpl extends GroovyDocPsiElementImpl implements
     return "GrDocMethodReference";
   }
 
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitDocMethodReference(this);
+  }
+
+  @NotNull
+  public GrDocMethodParams getParameterList() {
+    GrDocMethodParams child = findChildByClass(GrDocMethodParams.class);
+    assert child != null;
+    return child;
+  }
 }

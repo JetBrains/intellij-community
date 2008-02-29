@@ -23,9 +23,10 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.peer.PeerFactory;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementType;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementTypeImpl;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocLexer;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementType;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,12 +56,13 @@ public interface GroovyDocElementTypes extends GroovyDocTokenTypes {
     }
   };
 
-  GroovyDocElementType GDOC_TAG = new GroovyDocElementType("GroovyDocTag");
-  GroovyDocElementType GDOC_INLINED_TAG = new GroovyDocElementType("GroovyDocInlinedTag");
+  GroovyDocElementType GDOC_TAG = new GroovyDocElementTypeImpl("GroovyDocTag");
+  GroovyDocElementType GDOC_INLINED_TAG = new GroovyDocElementTypeImpl("GroovyDocInlinedTag");
 
-  GroovyDocElementType GDOC_REFERENCE_ELEMENT = new GroovyDocElementType("GroovyDocReferenceElement");
-  GroovyDocElementType GDOC_PARAM_REF = new GroovyDocElementType("GroovyDocParameterReference");
-  GroovyDocElementType GDOC_METHOD_REF = new GroovyDocElementType("GroovyDocMethodReference");
-  GroovyDocElementType GDOC_FIELD_REF = new GroovyDocElementType("GroovyDocFieldReference");
-  GroovyDocElementType GDOC_METHOD_PARAMS = new GroovyDocElementType("GroovyDocMethodParameterList");
+  GroovyDocElementType GDOC_REFERENCE_ELEMENT = new GroovyDocElementTypeImpl("GroovyDocReferenceElement");
+  GroovyDocElementType GDOC_PARAM_REF = new GroovyDocElementTypeImpl("GroovyDocParameterReference");
+  GroovyDocElementType GDOC_METHOD_REF = new GroovyDocElementTypeImpl("GroovyDocMethodReference");
+  GroovyDocElementType GDOC_FIELD_REF = new GroovyDocElementTypeImpl("GroovyDocFieldReference");
+  GroovyDocElementType GDOC_METHOD_PARAMS = new GroovyDocElementTypeImpl("GroovyDocMethodParameterList");
+  GroovyDocElementType GDOC_METHOD_PARAMETER = new GroovyDocElementTypeImpl("GroovyDocMethodParameter");
 }

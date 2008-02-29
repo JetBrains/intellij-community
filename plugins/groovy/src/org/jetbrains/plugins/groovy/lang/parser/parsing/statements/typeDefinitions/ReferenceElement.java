@@ -50,7 +50,7 @@ public class ReferenceElement implements GroovyElementTypes {
 //    return parse(builder, false, false, false, false);
 //  }
 
-  private static boolean parse(PsiBuilder builder, boolean checkUpperCase, boolean parseTypeArgs, boolean forImport, boolean forPackage) {
+  public static boolean parse(PsiBuilder builder, boolean checkUpperCase, boolean parseTypeArgs, boolean forImport, boolean forPackage) {
     PsiBuilder.Marker internalTypeMarker = builder.mark();
 
 //    char firstChar;

@@ -172,7 +172,7 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
     if (!REFERENCE_BEGIN.contains(type)) return false;
     PsiBuilder.Marker marker = builder.mark();
     if (mGDOC_TAG_VALUE_TOKEN == type) {
-      ParserUtils.eatElement(builder, GDOC_REFERENCE_ELEMENT);
+      builder.advanceLexer();
     }
     if (mGDOC_TAG_VALUE_SHARP_TOKEN == builder.getTokenType()) {
       builder.advanceLexer();
@@ -191,15 +191,15 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
   private RESULT parseFieldOrMethod(PsiBuilder builder) {
     if (builder.getTokenType() != mGDOC_TAG_VALUE_TOKEN) return ERROR;
     builder.advanceLexer();
+    PsiBuilder.Marker params = builder.mark();
     if (mGDOC_TAG_VALUE_LPAREN != builder.getTokenType()) {
+      params.drop();
       return FIELD;
     }
     builder.advanceLexer();
-    PsiBuilder.Marker params = builder.mark();
-    while (mGDOC_TAG_VALUE_TOKEN == builder.getTokenType() && !timeToEnd(builder)) {
-      ParserUtils.eatElement(builder, GDOC_REFERENCE_ELEMENT);
-      while (builder.getTokenType() != mGDOC_TAG_VALUE_RPAREN &&
-          mGDOC_TAG_VALUE_COMMA != builder.getTokenType() &&
+    while (parseMethodParameter(builder) && !timeToEnd(builder)) {
+      while (mGDOC_TAG_VALUE_COMMA != builder.getTokenType() &&
+          mGDOC_TAG_VALUE_RPAREN != builder.getTokenType() &&
           !timeToEnd(builder)) {
         builder.advanceLexer();
       }
@@ -214,10 +214,26 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
     return METHOD;
   }
 
+  private boolean parseMethodParameter(PsiBuilder builder) {
+    PsiBuilder.Marker param = builder.mark();
+    if (mGDOC_TAG_VALUE_TOKEN == builder.getTokenType()) {
+      builder.advanceLexer();
+    } else {
+      param.drop();
+      return false;
+    }
+
+    if (mGDOC_TAG_VALUE_TOKEN == builder.getTokenType()) {
+      builder.advanceLexer();
+    }
+    param.done(GDOC_METHOD_PARAMETER);
+
+    return true;
+  }
+
   private boolean parseReferenceOrType(PsiBuilder builder) {
     IElementType type = builder.getTokenType();
     if (mGDOC_TAG_VALUE_TOKEN != type) return false;
-    ParserUtils.eatElement(builder, GDOC_REFERENCE_ELEMENT);
     return true;
   }
 

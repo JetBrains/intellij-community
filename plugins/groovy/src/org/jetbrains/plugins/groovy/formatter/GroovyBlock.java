@@ -22,6 +22,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.ChameleonElement;
 import org.jetbrains.annotations.NotNull;
@@ -163,8 +164,10 @@ public class GroovyBlock implements Block, GroovyElementTypes {
    * @return true if node is incomplete
    */
   public boolean isIncomplete(@NotNull final ASTNode node) {
+    if (node.getElementType() instanceof IChameleonElementType) return false;
     ASTNode lastChild = node.getLastChildNode();
     while (lastChild != null &&
+        !(lastChild.getElementType() instanceof IChameleonElementType) &&
         (lastChild.getPsi() instanceof PsiWhiteSpace || lastChild.getPsi() instanceof PsiComment)) {
       lastChild = lastChild.getTreePrev();
     }

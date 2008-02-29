@@ -15,8 +15,13 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author ilyas
  */
 public interface GrDocMethodReference extends GrDocMemberReference{
+
+  @NotNull
+  GrDocMethodParams getParameterList();
 }

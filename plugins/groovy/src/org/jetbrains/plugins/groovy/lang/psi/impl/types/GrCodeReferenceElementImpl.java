@@ -39,6 +39,8 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceEl
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 
 import java.util.*;
 
@@ -102,6 +104,10 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
       return parentKind;
     } else if (parent instanceof GrPackageDefinition) {
       return PACKAGE_FQ;
+    } else if (parent instanceof GrDocReferenceElement) {
+      PsiElement element = parent.getParent();
+      if (element instanceof GrDocTag) return CLASS_OR_PACKAGE_FQ;
+      return CLASS_OR_PACKAGE;
     } else if (parent instanceof GrImportStatement) {
       final GrImportStatement importStatement = (GrImportStatement) parent;
       if (!importStatement.isStatic() || importStatement.isOnDemand()) {

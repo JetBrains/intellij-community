@@ -13,29 +13,24 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
+package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
-import com.intellij.lang.ASTNode;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocFieldReference;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author ilyas
  */
-public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements GrDocFieldReference {
+public class GroovyDocElementTypeImpl extends GroovyDocElementType {
 
-  public GrDocFieldReferenceImpl(@NotNull ASTNode node) {
-    super(node);
+  private String debugName = null;
+
+  public GroovyDocElementTypeImpl(String debugName) {
+    super(debugName, GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
+    this.debugName = debugName;
   }
 
   public String toString() {
-    return "GrDocFieldReference";
+    return debugName;
   }
-
-  public void accept(GroovyElementVisitor visitor) {
-    visitor.visitDocFieldReference(this);
-  }
-
-
 }
