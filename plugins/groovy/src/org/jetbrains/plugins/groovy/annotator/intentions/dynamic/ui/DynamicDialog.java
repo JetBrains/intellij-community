@@ -86,7 +86,7 @@ public abstract class DynamicDialog extends DialogWrapper {
   }
 
   private void setUpStatusLabel() {
-    if (!isTypeChekerPanelEnable()){
+    if (!isTypeChekerPanelEnable()) {
       myTypeStatusPanel.setVisible(false);
       return;
     }
@@ -345,7 +345,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     return myPanel;
   }
 
-  protected boolean isTableVisible(){
+  protected boolean isTableVisible() {
     return false;
   }
 
@@ -353,11 +353,15 @@ public abstract class DynamicDialog extends DialogWrapper {
     return myTable;
   }
 
-  protected boolean isTypeChekerPanelEnable(){
+  protected boolean isTypeChekerPanelEnable() {
     return false;
   }
 
   public Project getProject() {
     return myProject;
+  }
+
+  protected void setUpTypeLabel(String typeLabelText){
+    myTypeLabel.setText(typeLabelText);
   }
 }

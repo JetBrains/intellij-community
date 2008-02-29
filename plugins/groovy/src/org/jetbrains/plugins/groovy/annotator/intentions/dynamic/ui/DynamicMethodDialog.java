@@ -12,9 +12,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 import javax.swing.*;
-import javax.swing.event.EventListenerList;
-import javax.swing.event.TableModelListener;
 import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import java.util.List;
 
 /**
@@ -26,9 +25,9 @@ public class DynamicMethodDialog extends DynamicDialog {
     super(project, virtualMethod, referenceExpression);
 
     setupParameterList(virtualMethod.getArguments());
+    setTitle(GroovyBundle.message("add.dynamic.method"));
+    setUpTypeLabel(GroovyBundle.message("dynamic.method.return.type"));
   }
-
-  private EventListenerList myListenerList = new EventListenerList();
 
   protected boolean isTableVisible() {
     return true;
@@ -88,4 +87,6 @@ public class DynamicMethodDialog extends DynamicDialog {
 
     if (getTable().isEditing()) setOKActionEnabled(false);
   }
+
+
 }
