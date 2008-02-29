@@ -3,7 +3,11 @@
  */
 package com.intellij.psi.impl.source.parsing.xml;
 
+import org.jetbrains.annotations.Nullable;
+
 public interface XmlBuilder {
+  void doctype(@Nullable final CharSequence publicId, @Nullable final CharSequence systemId, final int startOffset, final int endOffset);
+
   enum ProcessingOrder {
     TAGS,
     TAGS_AND_TEXTS,

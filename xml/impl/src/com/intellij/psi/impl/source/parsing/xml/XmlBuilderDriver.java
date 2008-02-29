@@ -11,6 +11,7 @@ import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
@@ -59,9 +60,58 @@ public class XmlBuilderDriver {
       if (tt == XmlElementType.XML_TAG || tt == XmlElementType.HTML_TAG) {
         processTagNode(structure, child, builder);
       }
+      else if (tt == XmlElementType.XML_PROLOG) {
+        processPrologNode(builder, structure, child);
+      }
     }
 
     structure.disposeChildren(children, count);
+  }
+
+  private void processPrologNode(final XmlBuilder builder, final FlyweightCapableTreeStructure<LighterASTNode> structure,
+                                 final LighterASTNode prolog) {
+    final Ref<LighterASTNode[]> prologChildren = new Ref<LighterASTNode[]>(null);
+    final int prologChildrenCount = structure.getChildren(structure.prepareForGetChildren(prolog), prologChildren);
+    for (int i = 0; i < prologChildrenCount; i++) {
+      LighterASTNode node = prologChildren.get()[i];
+      if (node.getTokenType() == XmlElementType.XML_DOCTYPE) {
+        processDoctypeNode(builder, structure, node);
+        break;
+      }
+    }
+  }
+
+  private void processDoctypeNode(final XmlBuilder builder, final FlyweightCapableTreeStructure<LighterASTNode> structure,
+                                  final LighterASTNode doctype) {
+    final Ref<LighterASTNode[]> tokens = new Ref<LighterASTNode[]>(null);
+    final int tokenCount = structure.getChildren(structure.prepareForGetChildren(doctype), tokens);
+    if (tokenCount > 0) {
+      CharSequence publicId = null;
+      boolean afterPublic = false;
+      CharSequence systemId = null;
+      boolean afterSystem = false;
+      for (int i = 0; i < tokenCount; i++) {
+        LighterASTNode token = tokens.get()[i];
+        if (token.getTokenType() == XmlElementType.XML_DOCTYPE_PUBLIC) {
+          afterPublic = true;
+        }
+        else if (token.getTokenType() == XmlElementType.XML_DOCTYPE_SYSTEM) {
+          afterSystem = true;
+        }
+        else if (token.getTokenType() != TokenType.WHITE_SPACE && token.getTokenType() != XmlElementType.XML_COMMENT) {
+          if (token.getTokenType() == XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN) {
+            if (afterPublic) publicId = getTokenText(token);
+            else if (afterSystem) systemId = getTokenText(token);
+          }
+          afterPublic = afterSystem = false;
+        }
+      }
+      builder.doctype(publicId, systemId, doctype.getStartOffset(), doctype.getEndOffset());
+    }
+  }
+
+  private CharSequence getTokenText(final LighterASTNode token) {
+    return myText.subSequence(token.getStartOffset(), token.getEndOffset());
   }
 
   protected PsiBuilderImpl createBuilderAndParse() {
@@ -97,7 +147,7 @@ public class XmlBuilderDriver {
         break;
       }
       if (tt == XmlTokenType.XML_NAME || tt == XmlTokenType.XML_TAG_NAME) {
-        tagName = myText.subSequence(child.getStartOffset(), child.getEndOffset());
+        tagName = getTokenText(child);
       }
     }
 
@@ -117,7 +167,7 @@ public class XmlBuilderDriver {
       if (tt == XmlElementType.XML_TAG || tt == XmlElementType.HTML_TAG) processTagNode(structure, child, builder);
       if (processAttrs && tt == XmlElementType.XML_ATTRIBUTE) processAttributeNode(child, structure, builder);
       if (processTexts && tt == XmlElementType.XML_TEXT) processTextNode(structure, child, builder);
-      if (tt == XmlElementType.XML_ENTITY_REF) builder.entityRef(myText.subSequence(child.getStartOffset(), child.getEndOffset()), child.getStartOffset(), child.getEndOffset());
+      if (tt == XmlElementType.XML_ENTITY_REF) builder.entityRef(getTokenText(child), child.getStartOffset(), child.getEndOffset());
     }
 
     builder.endTag(localName, namespace, node.getStartOffset(), node.getEndOffset());
@@ -143,7 +193,7 @@ public class XmlBuilderDriver {
       IElementType tt = child.getTokenType();
       final int start = child.getStartOffset();
       final int end = child.getEndOffset();
-      final CharSequence physical = myText.subSequence(start, end);
+      final CharSequence physical = getTokenText(child);
 
       if (tt == XmlTokenType.XML_CDATA_START || tt == XmlTokenType.XML_CDATA_END) {
         builder.textElement("", physical, start, end);
@@ -232,7 +282,7 @@ public class XmlBuilderDriver {
     for (int i = 0; i < count; i++) {
       LighterASTNode child = children[i];
       if (child.getTokenType() == tt) {
-        name = myText.subSequence(child.getStartOffset(), child.getEndOffset());
+        name = getTokenText(child);
         break;
       }
     }

@@ -38,15 +38,15 @@ public abstract class DomService {
     return ServiceManager.getService(DomService.class);
   }
 
-  public List<VirtualFile> getAllFiles(Class<? extends DomFileDescription> description, Project project, final GlobalSearchScope scope) {
-    return ContainerUtil.findAll(getAllFiles(description, project), new Condition<VirtualFile>() {
+  public List<VirtualFile> getDomFileCandidates(Class<? extends DomFileDescription> description, Project project, final GlobalSearchScope scope) {
+    return ContainerUtil.findAll(getDomFileCandidates(description, project), new Condition<VirtualFile>() {
       public boolean value(final VirtualFile file) {
         return scope.contains(file);
       }
     });
   }
 
-  public abstract Collection<VirtualFile> getAllFiles(Class<? extends DomFileDescription> description, Project project);
+  public abstract Collection<VirtualFile> getDomFileCandidates(Class<? extends DomFileDescription> description, Project project);
 
   public abstract ModelMerger createModelMerger();
 

@@ -24,7 +24,7 @@ public class DomServiceImpl extends DomService {
     return new ModelMergerImpl();
   }
 
-  public Collection<VirtualFile> getAllFiles(Class<? extends DomFileDescription> description, Project project) {
+  public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomFileDescription> description, Project project) {
     return FileBasedIndex.getInstance().getContainingFiles(DomFileIndex.NAME, description.getName(), project);
   }
 

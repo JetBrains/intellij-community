@@ -22,6 +22,8 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentEnumerator;
 import com.intellij.util.xml.impl.DomApplicationComponent;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -42,16 +44,25 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
       public Map<String, Void> map(final FileBasedIndex.FileContent inputData) {
         final CharSequence content = inputData.content;
         final Ref<String> rootTagName = Ref.create(null);
-        final Ref<String> namespaceRef = Ref.create(null);
+        final Set<String> namespaces = new THashSet<String>();
         try {
           new XmlBuilderDriver(content).build(new XmlBuilder() {
+            public void doctype(@Nullable final CharSequence publicId, @Nullable final CharSequence systemId, final int startOffset, final int endOffset) {
+              if (publicId != null) {
+                namespaces.add(publicId.toString());
+              }
+              if (systemId != null) {
+                namespaces.add(systemId.toString());
+              }
+            }
+
             public ProcessingOrder startTag(final CharSequence localName,
                                             final String namespace,
                                             final int startoffset,
                                             final int endoffset,
                                             final int headerEndOffset) {
               rootTagName.set(localName.toString());
-              namespaceRef.set(namespace);
+              ContainerUtil.addIfNotNull(namespace, namespaces);
               throw new RootTagReachedException();
             }
 
@@ -77,13 +88,13 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
           final DomApplicationComponent component = DomApplicationComponent.getInstance();
           for (final DomFileDescription description : component.getFileDescriptions(tagName)) {
             final String[] strings = description.getAllPossibleRootTagNamespaces();
-            if (strings.length == 0 || Arrays.asList(strings).contains(namespaceRef.get())) {
+            if (strings.length == 0 || ContainerUtil.intersects(Arrays.asList(strings), namespaces)) {
               result.put(description.getClass().getName(), null);
             }
           }
           for (final DomFileDescription description : component.getAcceptingOtherRootTagNameDescriptions()) {
             final String[] strings = description.getAllPossibleRootTagNamespaces();
-            if (strings.length == 0 || Arrays.asList(strings).contains(namespaceRef.get())) {
+            if (strings.length == 0 || ContainerUtil.intersects(Arrays.asList(strings), namespaces)) {
               result.put(description.getClass().getName(), null);
             }
           }
@@ -127,7 +138,7 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
   }
 
   public int getVersion() {
-    return -1;
+    return 0;
   }
 
   private static class RootTagReachedException extends RuntimeException{

@@ -308,6 +308,10 @@ public class HtmlUtil {
       new HtmlBuilderDriver(content).build(new XmlBuilder() {
         @NonNls final Bag inTag = new HashBag();
         boolean metHttpEquiv = false;
+
+        public void doctype(@Nullable final CharSequence publicId, @Nullable final CharSequence systemId, final int startOffset, final int endOffset) {
+        }
+
         public ProcessingOrder startTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset,
                                         final int headerEndOffset) {
           @NonNls String name = localName.toString().toLowerCase();
