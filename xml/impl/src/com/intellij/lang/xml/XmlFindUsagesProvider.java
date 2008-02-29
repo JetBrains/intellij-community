@@ -25,7 +25,8 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
            element instanceof XmlEntityDecl ||
            element instanceof XmlTag ||
            element instanceof XmlAttributeValue ||
-           (PsiUtil.isInJspFile(element) && ( element instanceof PsiFile || element instanceof XmlComment));
+           element instanceof PsiFile ||
+           (PsiUtil.isInJspFile(element) && element instanceof XmlComment);
   }
 
   @NotNull

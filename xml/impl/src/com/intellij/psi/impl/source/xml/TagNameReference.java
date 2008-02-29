@@ -4,7 +4,6 @@ import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.jsp.impl.TldDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -27,7 +26,6 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
-import com.intellij.xml.impl.schema.SchemaNSDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -106,25 +104,23 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
     final XmlTag element = getTagElement();
     if (element == null) return null;
 
+    final String namespacePrefix = element.getNamespacePrefix();
+
     if ((newElementName.endsWith(TAG_EXTENSION) || newElementName.endsWith(TAGX_EXTENSION)) &&
         PsiUtil.isInJspFile(element.getContainingFile())
        ) {
-      final String namespacePrefix = element.getNamespacePrefix();
       newElementName = newElementName.substring(0,newElementName.lastIndexOf('.'));
 
       if (namespacePrefix.length() > 0) {
         newElementName = namespacePrefix + ":" + newElementName;
       }
     } else if (newElementName.indexOf(':') == -1) {
-      final String namespacePrefix = element.getNamespacePrefix();
-
       if (namespacePrefix.length() > 0) {
-
-        final XmlNSDescriptor nsDescriptor = element.getNSDescriptor(element.getNamespace(), true);
-
-        if (nsDescriptor instanceof TldDescriptor || nsDescriptor instanceof SchemaNSDescriptor) {
-          newElementName = namespacePrefix + ":" + newElementName;
+        final PsiElement psiElement = resolve();
+        if (psiElement instanceof PsiFile) {
+          newElementName = newElementName.substring(0,newElementName.lastIndexOf('.'));
         }
+        newElementName = namespacePrefix + ":" + newElementName;
       }
     }
 
