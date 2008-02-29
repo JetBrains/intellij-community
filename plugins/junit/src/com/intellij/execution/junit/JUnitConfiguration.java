@@ -23,7 +23,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.junit.coverage.JUnitCoverageConfigurable;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -73,7 +72,7 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
   }
 
   public RunProfileState getState(final DataContext context,
-                                  final RunnerInfo runnerInfo,
+                                  final Executor executor,
                                   RunnerSettings runnerSettings,
                                   ConfigurationPerRunnerSettings configurationSettings) {
     return TestObject.fromString(myData.TEST_OBJECT, getProject(), this, runnerSettings, configurationSettings);

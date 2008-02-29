@@ -16,10 +16,7 @@
 
 package com.intellij.execution.junit2.ui.actions;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunConfigurationExtension;
-import com.intellij.execution.RunnerRegistry;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -29,7 +26,6 @@ import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.JavaAwareFilter;
@@ -103,10 +99,10 @@ public class RerunFailedTestsAction extends AnAction {
     boolean isDebug = myConsoleProperties.isDebug();
     try {
       final RunProfile profile = new MyRunProfile(testMethods, configuration);
-      
-      final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(isDebug ? DefaultDebugExecutor.EXECUTOR_ID : DefaultRunExecutor.EXECUTOR_ID, profile);
+      final Executor executor = isDebug ? DefaultDebugExecutor.getDebugExecutorInstance() : DefaultRunExecutor.getRunExecutorInstance();
+      final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), profile);
       assert runner != null;
-      runner.execute(profile, dataContext, myRunnerSettings, myConfigurationPerRunnerSettings);
+      runner.execute(executor, profile, dataContext, myRunnerSettings, myConfigurationPerRunnerSettings);
     }
     catch (ExecutionException e1) {
       LOG.error(e1);
@@ -126,7 +122,7 @@ public class RerunFailedTestsAction extends AnAction {
     }
 
     public RunProfileState getState(DataContext context,
-                                    RunnerInfo runnerInfo,
+                                    Executor executor,
                                     RunnerSettings runnerSettings,
                                     ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
       myTestMethods.clear();

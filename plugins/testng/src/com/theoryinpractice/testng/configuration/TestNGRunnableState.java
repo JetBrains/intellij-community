@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -81,7 +80,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     myConfigurationPerRunnerSettings = configurationPerRunnerSettings;
     this.config = config;
     //TODO need to narrow this down a bit
-    setModulesToCompile(ModuleManager.getInstance(config.getProject()).getModules());
+    //setModulesToCompile(ModuleManager.getInstance(config.getProject()).getModules());
     client = new IDEARemoteTestRunnerClient();
     // Want debugging?
     if (runnerSettings.getData() instanceof DebuggingRunnerData) {
@@ -101,7 +100,7 @@ public class TestNGRunnableState extends JavaCommandLineState
   }
 
   @Override
-  public ExecutionResult execute(@NotNull final ProgramRunner runner) throws ExecutionException {
+  public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
     final TestNGConsoleView console = new TestNGConsoleView(config, runnerSettings, myConfigurationPerRunnerSettings);
     ProcessHandler processHandler = startProcess();
     processHandler.addProcessListener(new ProcessAdapter()

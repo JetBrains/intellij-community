@@ -207,7 +207,7 @@ public abstract class TestObject implements JavaCommandLine {
     return myJavaParameters;
   }
 
-  public ExecutionResult execute(@NotNull final ProgramRunner runner) throws ExecutionException {
+  public ExecutionResult execute(final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
     final ProcessHandler handler = startProcess();
     final ConsoleView consoleView;
 

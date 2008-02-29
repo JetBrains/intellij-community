@@ -1,10 +1,10 @@
 package org.jetbrains.idea.maven.runner.execution;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -24,7 +24,7 @@ import org.jetbrains.idea.maven.runner.RunnerBundle;
 import org.jetbrains.idea.maven.runner.executor.MavenExternalParameters;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 
-public class MavenRunConfiguration extends RunConfigurationBase implements LocatableConfiguration{
+public class MavenRunConfiguration extends RunConfigurationBase implements LocatableConfiguration, ModuleRunProfile {
   private MavenSettings mySettings;
 
   protected MavenRunConfiguration(Project project, ConfigurationFactory factory, String name) {
@@ -51,7 +51,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
   }
 
   public RunProfileState getState(DataContext context,
-                                  RunnerInfo runnerInfo,
+                                  Executor executor,
                                   final RunnerSettings runnerSettings,
                                   final ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
     JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
@@ -61,7 +61,6 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
       }
     };
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
-    state.setModulesToCompile(getModules());
     return state;
   }
 

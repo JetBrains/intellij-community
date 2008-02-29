@@ -9,7 +9,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.JavaAwareFilter;
@@ -85,7 +84,7 @@ public class RerunFailedTestsAction extends AnAction {
     try {
       final RunProfile profile = new ModuleRunProfile() {
         public RunProfileState getState(DataContext context,
-                                        RunnerInfo runnerInfo,
+                                        Executor executor,
                                         RunnerSettings runnerSettings,
                                         ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
           return new TestNGRunnableState(runnerSettings, configurationSettings, configuration) {
@@ -124,11 +123,10 @@ public class RerunFailedTestsAction extends AnAction {
         }
       };
 
-      final ProgramRunner runner = isDebug
-                                       ? RunnerRegistry.getInstance().getRunner(DefaultDebugExecutor.EXECUTOR_ID, profile)
-                                       : RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
+      final Executor executor = isDebug ? DefaultDebugExecutor.getDebugExecutorInstance() : DefaultRunExecutor.getRunExecutorInstance();
+      final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), profile);
       LOG.assertTrue(runner != null);
-      runner.execute(profile, dataContext, myRunnerSettings, myConfigurationPerRunnerSettings);
+      runner.execute(executor, profile, dataContext, myRunnerSettings, myConfigurationPerRunnerSettings);
     }
     catch (ExecutionException e1) {
       LOG.error(e1);

@@ -12,7 +12,6 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.junit.RefactoringListeners;
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
@@ -96,7 +95,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     this.project = project;
   }
 
-  public RunProfileState getState(DataContext dataContext, RunnerInfo runnerInfo, RunnerSettings runnerSettings, ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
+  public RunProfileState getState(DataContext dataContext, Executor executor, RunnerSettings runnerSettings, ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
     return new TestNGRunnableState(
         runnerSettings,
         configurationPerRunnerSettings,

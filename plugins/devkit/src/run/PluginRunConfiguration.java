@@ -17,10 +17,10 @@ package org.jetbrains.idea.devkit.run;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -69,7 +69,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
   }
 
   public RunProfileState getState(DataContext context,
-                                  RunnerInfo runnerInfo,
+                                  Executor executor,
                                   RunnerSettings runnerSettings,
                                   ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
     if (getModule() == null){
@@ -145,7 +145,6 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     };
 
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
-    state.setModulesToCompile(getModules());    //todo
     return state;
   }
 
