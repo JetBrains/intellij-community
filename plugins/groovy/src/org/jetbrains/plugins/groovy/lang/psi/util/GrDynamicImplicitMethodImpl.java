@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DContainingClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
@@ -29,6 +30,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -62,22 +64,34 @@ public class GrDynamicImplicitMethodImpl extends GrDynamicImplicitElement {
         final GrReferenceExpression refExpression = (GrReferenceExpression) myScope;
         final PsiClass expression = QuickfixUtil.findTargetClass(refExpression);
 
-        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DPClassNode(new DContainingClassElement(expression.getQualifiedName())));
-        if (classNode == null) return;
+        final String className = expression.getQualifiedName();
+
         final Module module = DynamicToolWindowWrapper.getModule(myProject);
         if (module == null) return;
 
-        final DefaultMutableTreeNode desiredNode;
+        DefaultMutableTreeNode desiredNode = null;
         final PsiElement method = myScope.getParent();
 
         final PsiType[] argumentTypes = QuickfixUtil.getMethodArgumentsTypes(((GrCallExpression) method));
         final String[] argumentNames = QuickfixUtil.getMethodArgumentsNames(((GrCallExpression) method));
-        final List<Pair<String,PsiType>> pairs = QuickfixUtil.swapArgumentsAndTypes(argumentNames, argumentTypes);
+        final List<Pair<String, PsiType>> pairs = QuickfixUtil.swapArgumentsAndTypes(argumentNames, argumentTypes);
 
-        final String returnType = DynamicManager.getInstance(myProject).getMethodReturnType(module.getName(), expression.getQualifiedName(), ((GrReferenceExpression) myScope).getName(), argumentTypes);
+        final PsiClassType fqClassName = PsiManager.getInstance(myProject).getElementFactory().createTypeByFQClassName(className, myProject.getAllScope());
+        final PsiClass psiClass = fqClassName.resolve();
+        if (psiClass == null) return;
 
-        desiredNode = TreeUtil.findNodeWithObject(classNode, new DMethodNode(new DMethodElement(
-            new DynamicVirtualMethod(refExpression.getName(), expression.getQualifiedName(), module.getName(), returnType, pairs))));
+        final Set<PsiClass> classes = GroovyUtils.findAllSupers(psiClass);
+        classes.add(psiClass);
+        for (PsiClass aClass : classes) {
+          final String returnType = DynamicManager.getInstance(myProject).getMethodReturnType(module.getName(), aClass.getQualifiedName(), ((GrReferenceExpression) myScope).getName(), argumentTypes);
+          if (returnType == null) continue;
+
+          final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DPClassNode(new DContainingClassElement(aClass.getQualifiedName())));
+          if (classNode == null) return;
+
+          desiredNode = TreeUtil.findNodeWithObject(classNode, new DMethodNode(new DMethodElement(
+              new DynamicVirtualMethod(refExpression.getName(), aClass.getQualifiedName(), module.getName(), returnType, pairs))));
+        }
 
         if (desiredNode == null) return;
         final TreePath path = TreeUtil.getPathFromRoot(desiredNode);

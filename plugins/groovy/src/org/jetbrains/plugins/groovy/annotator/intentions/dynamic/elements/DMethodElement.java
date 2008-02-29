@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualMethod;
 
 import java.util.List;
@@ -35,5 +36,10 @@ public class DMethodElement extends DItemElement {
 
   public void setParametersElements(DParameterElement[] parametersElements) {
     myParametersElements = parametersElements;
+  }
+
+  @NotNull
+  public DynamicVirtualMethod getDynamicVirtualElement() {
+    return ((DynamicVirtualMethod) super.getDynamicVirtualElement());
   }
 }
