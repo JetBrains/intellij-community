@@ -19,6 +19,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
@@ -65,4 +66,10 @@ public interface GrTypeDefinition extends GrTopStatement, NavigationItem, PsiCla
 
   @NotNull
   GrMethod[] getGroovyMethods();
+
+  @NotNull
+  PsiMethod[] findGroovyMethodsByName(@NonNls String name, boolean checkBases); //todo return GrMethod[]
+
+  @NotNull
+  GrMethod[] findGroovyMethodsBySignature(PsiMethod patternMethod, boolean checkBases);
 }

@@ -584,8 +584,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   @Nullable
   public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
     final MethodSignature patternSignature = patternMethod.getSignature(PsiSubstitutor.EMPTY);
-    final PsiMethod[] byName = findMethodsByName(patternMethod.getName(), checkBases, false);
-    for (PsiMethod method : byName) {
+    for (PsiMethod method : findMethodsByName(patternMethod.getName(), checkBases, false)) {
       final PsiClass clazz = method.getContainingClass();
       PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(clazz, this, PsiSubstitutor.EMPTY);
       assert superSubstitutor != null;
@@ -598,23 +597,38 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
-    List<PsiMethod> result = new ArrayList<PsiMethod>();
+    ArrayList<PsiMethod> result = new ArrayList<PsiMethod>();
+    findMethodsBySignature(patternMethod, checkBases, true, result);
+    return result.toArray(new PsiMethod[result.size()]);
+  }
+
+  @NotNull
+  public GrMethod[] findGroovyMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
+    ArrayList<GrMethod> result = new ArrayList<GrMethod>();
+    findMethodsBySignature(patternMethod, checkBases, false, result);
+    return result.toArray(new GrMethod[result.size()]);
+  }
+
+  private<T extends PsiMethod> void findMethodsBySignature(PsiMethod patternMethod, boolean checkBases, boolean includeSynthetic, final ArrayList<T> result) {
     final MethodSignature patternSignature = patternMethod.getSignature(PsiSubstitutor.EMPTY);
-    final PsiMethod[] byName = findMethodsByName(patternMethod.getName(), checkBases, false);
-    for (PsiMethod method : byName) {
+    for (PsiMethod method : findMethodsByName(patternMethod.getName(), checkBases, includeSynthetic)) {
       final PsiClass clazz = method.getContainingClass();
       PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(clazz, this, PsiSubstitutor.EMPTY);
       assert superSubstitutor != null;
       final MethodSignature signature = method.getSignature(superSubstitutor);
-      if (signature.equals(patternSignature)) result.add(method);
+      if (signature.equals(patternSignature)) //noinspection unchecked
+        result.add((T) method);
     }
-
-    return result.toArray(new PsiMethod[result.size()]);
   }
 
   @NotNull
   public PsiMethod[] findMethodsByName(@NonNls String name, boolean checkBases) {
     return findMethodsByName(name, checkBases, true);
+  }
+
+  @NotNull
+  public PsiMethod[] findGroovyMethodsByName(@NonNls String name, boolean checkBases) {
+    return findMethodsByName(name, checkBases, false);
   }
 
   private PsiMethod[] findMethodsByName(String name, boolean checkBases, boolean includeSyntheticAccessors) {

@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl;
@@ -123,11 +124,22 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
   }
 
   private boolean hasContradictingMethods(GrAccessorMethod proto, PsiClass clazz) {
-    for (PsiMethod method : clazz.findMethodsBySignature(proto, true)) {
+    PsiMethod[] methods = clazz instanceof GrTypeDefinition ?
+        ((GrTypeDefinition) clazz).findGroovyMethodsBySignature(proto, true) :
+        clazz.findMethodsBySignature(proto, true);
+    for (PsiMethod method : methods) {
       if (clazz.equals(method.getContainingClass())) return true;
       
       if (PsiUtil.isAccessible(clazz, method) && method.hasModifierProperty(PsiModifier.FINAL)) return true;
     }
+
+    //final property in supers
+    PsiClass aSuper = clazz.getSuperClass();
+    if (aSuper != null) {
+      PsiField field = aSuper.findFieldByName(getName(), true);
+      if (field instanceof GrField && ((GrField) field).isProperty() && field.hasModifierProperty(PsiModifier.FINAL)) return true;
+    }
+
     return false;
   }
 

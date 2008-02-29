@@ -1,0 +1,24 @@
+class A {
+  static final def TEST
+}
+
+class B extends A {
+  static final def TEST
+}
+-----
+public class A extends groovy.lang.GroovyObjectSupport {
+  public static final java.lang.Object getTEST() {
+    return null;
+  }
+
+  public static final void setTEST(java.lang.Object TEST) {
+    return ;
+  }
+
+  private static final java.lang.Object TEST = null;
+}
+---
+public class B extends A {
+  private static final java.lang.Object TEST = null;
+}
+---
