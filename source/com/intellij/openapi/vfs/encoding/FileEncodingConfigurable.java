@@ -5,7 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.fileTypes.FileOptionsProvider;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -22,7 +22,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-public class FileEncodingConfigurable implements Configurable {
+public class FileEncodingConfigurable implements FileOptionsProvider {
   private final Project myProject;
   private FileTreeTable myTreeView;
   private JScrollPane myTreePanel;
