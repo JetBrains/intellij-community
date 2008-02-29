@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -276,7 +276,7 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   private void runProcessOnFiles(final String where, final List<PsiFile> array) {
-    boolean success = CodeInsightUtil.preparePsiElementsForWrite(array);
+    boolean success = CodeInsightUtilBase.preparePsiElementsForWrite(array);
 
     if (!success) {
       List<PsiFile> writeables = new ArrayList<PsiFile>();

@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -62,7 +62,7 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
       }
     }
 
-    CodeInsightUtil.preparePsiElementsForWrite(toAnnotate);
+    CodeInsightUtilBase.preparePsiElementsForWrite(toAnnotate);
     for (PsiParameter psiParam : toAnnotate) {
       try {
         new AddAnnotationFix(myAnnotation, psiParam, myAnnosToRemove).invoke(project, null, psiParam.getContainingFile());

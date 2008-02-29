@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -24,7 +23,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.FilteredQuery;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -179,26 +177,7 @@ public class CodeInsightUtil {
   }
 
   public static boolean preparePsiElementsForWrite(@NotNull PsiElement... elements) {
-    return preparePsiElementsForWrite(Arrays.asList(elements));
-  }
-  public static boolean preparePsiElementsForWrite(Collection<? extends PsiElement> elements) {
-    if (elements.isEmpty()) return true;
-    Set<VirtualFile> files = new THashSet<VirtualFile>();
-    Project project = null;
-    for (PsiElement element : elements) {
-      project = element.getProject();
-      PsiFile file = element.getContainingFile();
-      if (file == null) continue;
-      VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile == null) continue;
-      files.add(virtualFile);
-    }
-    if (!files.isEmpty()) {
-      VirtualFile[] virtualFiles = files.toArray(new VirtualFile[files.size()]);
-      ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(virtualFiles);
-      return !status.hasReadonlyFiles();
-    }
-    return true;
+    return CodeInsightUtilBase.preparePsiElementsForWrite(Arrays.asList(elements));
   }
 
   private static final Key<Boolean> ANT_FILE_SIGN = new Key<Boolean>("FORCED ANT FILE");

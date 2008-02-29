@@ -1,7 +1,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -67,7 +67,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
       }
     }
 
-    CodeInsightUtil.preparePsiElementsForWrite(toAnnotate);
+    CodeInsightUtilBase.preparePsiElementsForWrite(toAnnotate);
     for (PsiMethod psiMethod : toAnnotate) {
       annotateMethod(psiMethod);
     }

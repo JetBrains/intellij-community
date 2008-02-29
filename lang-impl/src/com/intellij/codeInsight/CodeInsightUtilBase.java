@@ -1,22 +1,28 @@
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageDialect;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageDialect;
 import com.intellij.util.ReflectionCache;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.codeInsight.hint.HintManager;
+import gnu.trove.THashSet;
+
+import java.util.Collection;
+import java.util.Set;
 
 public class CodeInsightUtilBase {
   private CodeInsightUtilBase() {
@@ -97,5 +103,25 @@ public class CodeInsightUtilBase {
   public static boolean preparePsiElementForWrite(PsiElement element) {
     PsiFile file = element == null ? null : element.getContainingFile();
     return prepareFileForWrite(file);
+  }
+
+  public static boolean preparePsiElementsForWrite(Collection<? extends PsiElement> elements) {
+    if (elements.isEmpty()) return true;
+    Set<VirtualFile> files = new THashSet<VirtualFile>();
+    Project project = null;
+    for (PsiElement element : elements) {
+      project = element.getProject();
+      PsiFile file = element.getContainingFile();
+      if (file == null) continue;
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile == null) continue;
+      files.add(virtualFile);
+    }
+    if (!files.isEmpty()) {
+      VirtualFile[] virtualFiles = files.toArray(new VirtualFile[files.size()]);
+      ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(virtualFiles);
+      return !status.hasReadonlyFiles();
+    }
+    return true;
   }
 }
