@@ -414,7 +414,7 @@ public class DynamicManagerImpl extends DynamicManager {
     if (definedClass == null) return null;
 
     final List methodsresult = definedClass.getContent(DynamicFiltersFactory.createConcreteMethodWithParametersFilter(methodName, parametersTypes));
-    if (methodsresult == null || methodsresult.size() != 1) return null;
+    if (methodsresult == null || methodsresult.toArray().length != 1) return null;
 
     return ((Element) methodsresult.get(0));
   }
