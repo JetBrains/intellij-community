@@ -124,4 +124,12 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
 
     return myPoint;
   }
+
+  public boolean hasAnyExtensions() {
+    synchronized (lock) {
+      if (!myExplicitExtensions.isEmpty()) return true;
+      final ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
+      return point != null && point.getExtensions().length > 0;
+    }
+  }
 }

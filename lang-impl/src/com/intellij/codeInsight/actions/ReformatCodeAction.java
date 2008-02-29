@@ -11,7 +11,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -89,8 +88,8 @@ public class ReformatCodeAction extends AnAction {
 
       PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null) return;
-      if (element instanceof PsiPackage) {
-        dir = ((PsiPackage)element).getDirectories()[0];
+      if (element instanceof PsiDirectoryContainer) {
+        dir = ((PsiDirectoryContainer)element).getDirectories()[0];
       }
       else if (element instanceof PsiDirectory) {
         dir = (PsiDirectory)element;
@@ -199,7 +198,7 @@ public class ReformatCodeAction extends AnAction {
       }
       if (!(element instanceof PsiDirectory)) {
         PsiFile file = element.getContainingFile();
-        if (file == null || (!(file instanceof PsiJavaFile) && !(file instanceof XmlFile))) {
+        if (file == null || LanguageFormatting.INSTANCE.forContext(file) == null) {
           presentation.setEnabled(false);
           return;
         }

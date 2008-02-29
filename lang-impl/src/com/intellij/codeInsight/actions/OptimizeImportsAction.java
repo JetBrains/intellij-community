@@ -63,8 +63,8 @@ public class OptimizeImportsAction extends AnAction {
 
       PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null) return;
-      if (element instanceof PsiPackage) {
-        dir = ((PsiPackage)element).getDirectories()[0];
+      if (element instanceof PsiDirectoryContainer) {
+        dir = ((PsiDirectoryContainer)element).getDirectories()[0];
       }
       else if (element instanceof PsiDirectory) {
         dir = (PsiDirectory)element;
@@ -89,6 +89,11 @@ public class OptimizeImportsAction extends AnAction {
   }
 
   public void update(AnActionEvent event){
+    if (!LanguageImportStatements.INSTANCE.hasAnyExtensions()) {
+      event.getPresentation().setVisible(false);
+      return;
+    }
+
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -134,19 +139,12 @@ public class OptimizeImportsAction extends AnAction {
           return;
         }
       }
-      else{
-        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
-        if (aPackage == null){
-          presentation.setEnabled(false);
-          return;
-        }
-      }
     }
 
     presentation.setEnabled(true);
   }
 
-  private boolean isOptimizeImportsAvailable(final PsiFile file) {
+  private static boolean isOptimizeImportsAvailable(final PsiFile file) {
     return LanguageImportStatements.INSTANCE.forLanguage(file.getLanguage()) != null;
   }
 }

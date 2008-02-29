@@ -186,10 +186,11 @@
       <add-to-group group-id="CodeMenu" anchor="first"/>
     </group>
 
+    <action id="AutoIndentLines" class="com.intellij.codeInsight.generation.actions.AutoIndentLinesAction">
+      <add-to-group group-id="CodeFormatGroup" anchor="after" relative-to-action="ReformatCode"/>
+    </action>
+
     <group id="CodeMenu2">
-      <action id="ReformatCode" class="com.intellij.codeInsight.actions.ReformatCodeAction"/>
-      <action id="AutoIndentLines" class="com.intellij.codeInsight.generation.actions.AutoIndentLinesAction"/>
-      <action id="OptimizeImports" class="com.intellij.codeInsight.actions.OptimizeImportsAction"/>
       <separator/>
       <action id="MoveStatementDown" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementDownAction"/>
       <action id="MoveStatementUp" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementUpAction"/>

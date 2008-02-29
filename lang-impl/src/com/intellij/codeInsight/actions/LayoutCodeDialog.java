@@ -2,12 +2,12 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +88,7 @@ public class LayoutCodeDialog extends DialogWrapper {
   private void updateState() {
     myCbIncludeSubdirs.setEnabled(myRbDirectory.isSelected());
     myCbOptimizeImports.setEnabled(
-      !myRbSelectedText.isSelected() && !(myFile != null && !(myFile instanceof PsiJavaFile) && myRbFile.isSelected()));
+      !myRbSelectedText.isSelected() && !(myFile != null && LanguageImportStatements.INSTANCE.forLanguage(myFile.getLanguage()) == null && myRbFile.isSelected()));
   }
 
   protected JComponent createNorthPanel() {
@@ -132,7 +132,7 @@ public class LayoutCodeDialog extends DialogWrapper {
     }
 
     myCbOptimizeImports = new JCheckBox(CodeInsightBundle.message("reformat.option.optimize.imports"));
-    if (myTextSelected != null) {
+    if (myTextSelected != null && LanguageImportStatements.INSTANCE.hasAnyExtensions()) {
       gbConstraints.gridy++;
       gbConstraints.insets = new Insets(0, 0, 0, 0);
       panel.add(myCbOptimizeImports, gbConstraints);
