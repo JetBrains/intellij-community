@@ -40,9 +40,6 @@ public interface GrTypeDefinition extends GrTopStatement, NavigationItem, PsiCla
   public GrTypeDefinitionBody getBody();
 
   @NotNull
-  PsiMethod[] getMethods();
-
-  @NotNull
   GrField[] getFields();
 
   @NotNull
