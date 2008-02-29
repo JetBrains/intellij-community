@@ -1,6 +1,7 @@
 package com.intellij.xml;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -101,5 +102,32 @@ public abstract class XmlExtension {
   @Nullable
   public IntentionAction createAddTagFix(@NotNull final XmlTag tag) {
     return null;
+  }
+
+  public boolean canBeDuplicated(XmlAttribute attribute) {
+    return false;
+  }
+
+  public boolean isRequiredAttributeImplicitlyPresent(XmlTag tag, String attrName) {
+    return false;
+  }
+
+  public HighlightInfoType getHighlightInfoType(XmlFile file) {
+    return HighlightInfoType.ERROR;
+  }
+
+  public abstract boolean isPrefixDeclared(final XmlTag context, String namespacePrefix);
+
+  public boolean shouldBeHighlightedAsTag(XmlTag tag) {
+    return true;
+  }
+
+  @Nullable
+  public XmlElementDescriptor getElementDescriptor(XmlTag tag) {
+    final XmlTag parentTag = tag.getParentTag();
+    assert parentTag != null;
+    final XmlElementDescriptor descriptor = parentTag.getDescriptor();
+    assert descriptor != null;
+    return descriptor.getElementDescriptor(tag);
   }
 }

@@ -35,13 +35,16 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.jsp.impl.JspElementDescriptor;
 import com.intellij.jsp.impl.TldAttributeDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
  * Date: 18-Nov-2005
  */
-public class InsertRequiredAttributeFix implements IntentionAction {
+public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFix {
   private final XmlTag myTag;
   private final String myAttrName;
   private String[] myValues;
@@ -54,19 +57,30 @@ public class InsertRequiredAttributeFix implements IntentionAction {
     myValues = values;
   }
 
+  @NotNull
   public String getText() {
     return XmlErrorMessages.message("insert.required.attribute.quickfix.text", myAttrName);
   }
 
+  @NotNull
+  public String getName() {
+    return getText();
+  }
+
+  @NotNull
   public String getFamilyName() {
     return XmlErrorMessages.message("insert.required.attribute.quickfix.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    invoke(project, null, myTag.getContainingFile());
+  }
+
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myTag.isValid();
   }
 
-  public void invoke(final Project project, final Editor editor, PsiFile file) {
+  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(myTag);
     boolean indirectSyntax = false;

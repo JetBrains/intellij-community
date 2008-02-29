@@ -194,4 +194,15 @@ public class DefaultXmlExtension extends XmlExtension {
       runAfter.run(prefix);
     }
   }
+
+  public boolean isPrefixDeclared(final XmlTag context, String namespacePrefix) {
+    @NonNls String nsDeclarationAttrName = null;
+    for(XmlTag t = context; t != null; t = t.getParentTag()) {
+      if (t.hasNamespaceDeclarations()) {
+        if (nsDeclarationAttrName == null) nsDeclarationAttrName = "xmlns:"+namespacePrefix;
+        if (t.getAttributeValue(nsDeclarationAttrName) != null) return true;
+      }
+    }
+    return false;
+  }
 }

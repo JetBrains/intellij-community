@@ -12,12 +12,10 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.idea.LoggerFactory;
-import com.intellij.jsp.impl.JspElementDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -27,15 +25,9 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.jsp.JspManager;
-import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
-import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
-import com.intellij.psi.jsp.JspDirectiveKind;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.SmartList;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -66,10 +58,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   private static boolean ourDoJaxpTesting;
 
-  @NonNls private static final String TAGLIB_DIRECTIVE = "taglib";
-  @NonNls private static final String URI_ATT = "uri";
-  @NonNls private static final String TAGDIR_ATT = "tagdir";
-  @NonNls private static final String IMPORT_ATTR_NAME = "import";
   @NonNls private static final String XML = "xml";
 
   public List<HighlightInfo> getResult() {
@@ -138,32 +126,15 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       final String namespaceByPrefix = context.getNamespaceByPrefix(namespacePrefix);
 
       if (namespaceByPrefix.length() == 0) {
-        final PsiFile containingFile = context.getContainingFile();
+        final XmlFile containingFile = (XmlFile)context.getContainingFile();
         if (!HighlightLevelUtil.shouldInspect(containingFile)) return;
 
         if (!XML.equals(namespacePrefix) ) {
-          boolean taglibDeclaration = containingFile.getFileType() == StdFileTypes.JSP;
 
-          ProgressManager progressManager = ProgressManager.getInstance();
-
-          // check if there is invalid ns declaration
-          if (taglibDeclaration) {
-            final XmlTag[] directiveTags = PsiUtil.getJspFile(containingFile).getDirectiveTags(JspDirectiveKind.TAGLIB, false);
-            for(XmlTag t:directiveTags) {
-              progressManager.checkCanceled();
-              if (namespacePrefix.equals(t.getAttributeValue("prefix"))) return;
-            }
-          } else {
-            @NonNls String nsDeclarationAttrName = null;
-            for(XmlTag t = context; t != null; t = t.getParentTag()) {
-              progressManager.checkCanceled();
-              if (t.hasNamespaceDeclarations()) {
-                if (nsDeclarationAttrName == null) nsDeclarationAttrName = "xmlns:"+namespacePrefix;
-                if (t.getAttributeValue(nsDeclarationAttrName) != null) return;
-              }
-            }
+          final XmlExtension extension = XmlExtension.getExtension(containingFile);
+          if (extension.isPrefixDeclared(context, namespacePrefix)) {
+            return;
           }
-
           final String localizedMessage = XmlErrorMessages.message("unbound.namespace", namespacePrefix);
 
           if (namespacePrefix.length() == 0) {
@@ -179,12 +150,9 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
             return;
           }
 
-          final boolean error = containingFile.getFileType() == StdFileTypes.JSPX || containingFile.getFileType() == StdFileTypes.XHTML ||
-                                containingFile.getFileType() == StdFileTypes.XML;
+          final HighlightInfoType infoType = extension.getHighlightInfoType(containingFile);
 
           final int messageLength = namespacePrefix.length();
-          final HighlightInfoType infoType = error ? HighlightInfoType.ERROR:HighlightInfoType.WARNING;
-
           if (element instanceof XmlTag) {
             bindMessageToTag(
               (XmlTag)element,
@@ -252,10 +220,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   private void checkTagByDescriptor(final XmlTag tag) {
     String name = tag.getName();
 
-    if (tag instanceof JspDirective) {
-      checkDirective(name, tag);
-    }
-
     XmlElementDescriptor elementDescriptor = null;
 
     final PsiElement parent = tag.getParent();
@@ -264,7 +228,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       final XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
 
       if (parentDescriptor != null) {
-        elementDescriptor = tag instanceof JspDirective ? tag.getDescriptor() : parentDescriptor.getElementDescriptor(tag);
+        elementDescriptor = XmlExtension.getExtension((XmlFile)tag.getContainingFile()).getElementDescriptor(tag);
       }
 
       if (parentDescriptor != null &&
@@ -320,28 +284,26 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
     if (requiredAttributes != null) {
       for (final String attrName : requiredAttributes) {
-        if (tag.getAttribute(attrName, tag.getNamespace()) == null) {
-          if (!(elementDescriptor instanceof JspElementDescriptor) ||
-              !((JspElementDescriptor)elementDescriptor).isRequiredAttributeImplicitlyPresent(tag, attrName)
-              ) {
-            final InsertRequiredAttributeFix insertRequiredAttributeIntention = new InsertRequiredAttributeFix(
-                tag, attrName, null);
-            final String localizedMessage = XmlErrorMessages.message("element.doesnt.have.required.attribute", name, attrName);
-            final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
-            final LocalInspectionToolWrapper toolWrapper =
-              (LocalInspectionToolWrapper)profile.getInspectionTool(RequiredAttributesInspection.SHORT_NAME);
-            if (toolWrapper != null) {
-              RequiredAttributesInspection inspection = (RequiredAttributesInspection)toolWrapper.getTool();
-              reportOneTagProblem(
-                tag,
-                attrName,
-                localizedMessage,
-                insertRequiredAttributeIntention,
-                HighlightDisplayKey.find(RequiredAttributesInspection.SHORT_NAME),
-                inspection,
-                XmlEntitiesInspection.NOT_REQUIRED_ATTRIBUTE
-              );
-            }
+        if (tag.getAttribute(attrName, tag.getNamespace()) == null &&
+            !XmlExtension.getExtension((XmlFile)tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, attrName)) {
+
+          final InsertRequiredAttributeFix insertRequiredAttributeIntention = new InsertRequiredAttributeFix(
+              tag, attrName, null);
+          final String localizedMessage = XmlErrorMessages.message("element.doesnt.have.required.attribute", name, attrName);
+          final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
+          final LocalInspectionToolWrapper toolWrapper =
+            (LocalInspectionToolWrapper)profile.getInspectionTool(RequiredAttributesInspection.SHORT_NAME);
+          if (toolWrapper != null) {
+            RequiredAttributesInspection inspection = (RequiredAttributesInspection)toolWrapper.getTool();
+            reportOneTagProblem(
+              tag,
+              attrName,
+              localizedMessage,
+              insertRequiredAttributeIntention,
+              HighlightDisplayKey.find(RequiredAttributesInspection.SHORT_NAME),
+              inspection,
+              XmlEntitiesInspection.NOT_REQUIRED_ATTRIBUTE
+            );
           }
         }
       }
@@ -397,42 +359,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
 
     return false;
-  }
-
-  private void checkDirective(final String name, final XmlTag tag) {
-    if (TAGLIB_DIRECTIVE.equals(name)) {
-      final String uri = tag.getAttributeValue(URI_ATT);
-
-      if (uri == null) {
-        if (tag.getAttributeValue(TAGDIR_ATT) == null) {
-          final XmlToken element = XmlTagUtil.getStartTagNameElement(tag);
-          assert element != null;
-          final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
-            HighlightInfoType.WRONG_REF, element,
-            XmlErrorMessages.message("either.uri.or.tagdir.attribute.should.be.specified")
-          );
-
-          addToResults(highlightInfo);
-          final JspFile jspFile = (JspFile)tag.getContainingFile();
-          final JspManager jspManager = JspManager.getInstance(jspFile.getProject());
-          if (jspManager != null) {
-            QuickFixAction.registerQuickFixAction(
-            highlightInfo,
-            new InsertRequiredAttributeFix(
-                tag,
-                URI_ATT,
-                jspManager.getPossibleTldUris(jspFile)
-              )
-            );
-          }
-
-          QuickFixAction.registerQuickFixAction(
-            highlightInfo,
-            new InsertRequiredAttributeFix(tag, TAGDIR_ATT,null)
-          );
-        }
-      }
-    }
   }
 
   private static HighlightInfoType getTagProblemInfoType(XmlTag tag) {
@@ -532,15 +458,14 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
 
     final XmlAttribute[] attributes = tag.getAttributes();
-    final boolean jspDirective = tag instanceof JspDirective;
-
     ProgressManager progressManager = ProgressManager.getInstance();
+    final XmlExtension extension = XmlExtension.getExtension((XmlFile)tag.getContainingFile());
     for (XmlAttribute tagAttribute : attributes) {
       progressManager.checkCanceled();
       if (attribute != tagAttribute && Comparing.strEqual(attribute.getName(), tagAttribute.getName())) {
         final String localName = attribute.getLocalName();
 
-        if (jspDirective && IMPORT_ATTR_NAME.equals(localName)) continue; // multiple import attributes are allowed in jsp directive
+        if (extension.canBeDuplicated(tagAttribute)) continue; // multiple import attributes are allowed in jsp directive
 
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
           getTagProblemInfoType(tag),
@@ -671,7 +596,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   public void addMessage(PsiElement context, String message, int type) {
     if (message != null && message.length() > 0) {
-      if (context instanceof XmlTag && !(context instanceof JspXmlTagBase)) {
+      if (context instanceof XmlTag && XmlExtension.getExtension((XmlFile)context.getContainingFile()).shouldBeHighlightedAsTag((XmlTag)context)) {
         addElementsForTag((XmlTag)context, message, type == ERROR ? HighlightInfoType.ERROR : type == WARNING ? HighlightInfoType.WARNING : HighlightInfoType.INFO, null);
       }
       else {
