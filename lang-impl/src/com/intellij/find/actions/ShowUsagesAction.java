@@ -71,7 +71,7 @@ public class ShowUsagesAction extends AnAction {
     ArrayList<Usage> usages = new ArrayList<Usage>();
     CommonProcessors.CollectProcessor<Usage> collect = new CommonProcessors.CollectProcessor<Usage>(usages);
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
-    FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element);
+    FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, false);
     UsageViewPresentation presentation = findUsagesManager.processUsages(element, collect, handler);
     if (presentation == null) return;
     if (usages.isEmpty()) {

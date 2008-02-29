@@ -703,7 +703,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
             return true;
           }
 
-          public FindUsagesHandler createFindUsagesHandler(final PsiElement element) {
+          public FindUsagesHandler createFindUsagesHandler(final PsiElement element, final boolean forHighlightUsages) {
             if (element instanceof PsiDirectory) {
               final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
               return psiPackage == null
@@ -712,7 +712,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
                                                       findVariableOptions);
             }
 
-            if (element instanceof PsiMethod) {
+            if (element instanceof PsiMethod && !forHighlightUsages) {
               final PsiMethod[] methods = SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, JavaFindUsagesHandler.ACTION_STRING);
               if (methods.length > 1) {
                 return new JavaFindUsagesHandler(element, methods, findClassOptions, findMethodOptions, findPackageOptions,

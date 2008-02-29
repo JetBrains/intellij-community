@@ -10,5 +10,5 @@ public interface FindUsagesHandlerFactory {
   boolean canFindUsages(PsiElement element);
 
   @Nullable
-  FindUsagesHandler createFindUsagesHandler(PsiElement element);
+  FindUsagesHandler createFindUsagesHandler(PsiElement element, final boolean forHighlightUsages);
 }

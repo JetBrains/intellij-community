@@ -179,7 +179,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     SearchScope searchScope = new LocalSearchScope(context);
 
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
-    final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(target);
+    final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(target, true);
     Collection<PsiReference> refs;
     if (handler != null) {
       refs = handler.findReferencesToHighlight(target, searchScope);

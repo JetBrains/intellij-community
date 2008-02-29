@@ -124,7 +124,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     if (!CodeInsightUtilBase.prepareFileForWrite(method.getContainingFile())) return;
 
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
-    final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method);
+    final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method, false);
     assert handler != null;
 
     final FindUsagesOptions options = new FindUsagesOptions(project);
