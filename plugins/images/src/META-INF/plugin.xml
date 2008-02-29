@@ -7,6 +7,8 @@
     <version>1.1</version>
     <idea-version since-build="5383"/>
 
+    <depends optional="true" config-file="images-commander-integration.xml">com.intellij.commander</depends>
+
     <resource-bundle>org.intellij.images.ImagesBundle</resource-bundle>
 
     <extensions xmlns="com.intellij">
@@ -45,13 +47,11 @@
                 icon="/org/intellij/images/icons/EditExternaly.png">
             <keyboard-shortcut first-keystroke="control alt F4" keymap="$default"/>
             <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
-            <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="EditSource"/>
         </action>
         <action class="org.intellij.images.actions.ShowThumbnailsAction"
                 id="Images.ShowThumbnails">
             <keyboard-shortcut first-keystroke="shift control T" keymap="$default"/>
             <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="AddToFavorites"/>
-            <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="AddToFavorites"/>
         </action>
         <action class="org.intellij.images.actions.ToggleTransparencyChessboardAction"
                 id="Images.ToggleTransparencyChessboard"

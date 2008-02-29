@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
+
+<idea-plugin version="2">
+  <actions>
+    <group id="ImagesCommanderActions1">
+      <reference id="Images.EditExternaly"/>
+      <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="EditSource"/>
+    </group>
+
+    <group id="ImagesCommanderActions2">
+      <reference id="Images.ShowThumbnails"/>
+      <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="AddToFavorites"/>
+    </group>
+  </actions>
+
+</idea-plugin>
