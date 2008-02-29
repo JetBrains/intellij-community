@@ -1,0 +1,8 @@
+interface Foo {
+  def bar
+}
+-----
+public interface Foo {
+  public static final java.lang.Object bar = null;
+}
+---

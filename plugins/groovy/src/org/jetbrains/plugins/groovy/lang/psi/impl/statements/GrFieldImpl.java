@@ -93,7 +93,7 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
     if (!isProperty()) return null;
     final GrAccessorMethod setter = new GrAccessorMethodImpl(this, true);
     final PsiClass clazz = getContainingClass();
-    if (!hasContradictingMethods(setter, clazz)) {
+    if (!clazz.isInterface() && !hasContradictingMethods(setter, clazz)) {
       mySetter = setter;
     } else {
       mySetter = null;
@@ -114,7 +114,7 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
     if (!isProperty()) return null;
     final GrAccessorMethod getter = new GrAccessorMethodImpl(this, false);
     final PsiClass clazz = getContainingClass();
-    if (!hasContradictingMethods(getter, clazz)) {
+    if (!clazz.isInterface() && !hasContradictingMethods(getter, clazz)) {
       myGetter = getter;
     } else {
       myGetter = null;
