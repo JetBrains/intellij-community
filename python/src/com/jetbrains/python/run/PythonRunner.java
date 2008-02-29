@@ -10,6 +10,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PythonRunner extends DefaultProgramRunner {
 
+  @NotNull
+  public String getRunnerId() {
+    return "PythonRunner";
+  }
+
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
     return executorId.equals(DefaultRunExecutor.EXECUTOR_ID) && profile instanceof PythonRunConfiguration;
   }
