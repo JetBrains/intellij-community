@@ -510,7 +510,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (myActionsElement == null) {
       myActionsElement = descriptor.myActionsElement;
     } else if (descriptor.myActionsElement != null) {
-      myActionsElement.addContent(descriptor.myActionsElement.getChildren());
+      List children = descriptor.myActionsElement.removeContent();
+      myActionsElement.addContent(children);
     }
     myAppComponents = mergeComponents(myAppComponents, descriptor.myAppComponents);
     myProjectComponents = mergeComponents(myProjectComponents, descriptor.myProjectComponents);
