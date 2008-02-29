@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -975,7 +976,7 @@ public class ExpectedTypesProvider {
       return codeStyleManager.variableNameToPropertyName(name, variableKind);
     }
 
-    private void addBaseType(List<ExpectedTypeInfo> types, PsiClassType type, PsiMethod method) {
+    private void addBaseType(Set<ExpectedTypeInfo> types, PsiClassType type, PsiMethod method) {
       PsiType[] supers = type.getSuperTypes();
       boolean addedSuper = false;
       for (PsiType aSuper : supers) {
@@ -1010,7 +1011,7 @@ public class ExpectedTypesProvider {
       final PsiManager manager = methodCallExpr.getManager();
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
       final PsiMethod[] methods = myClassProvider.findDeclaredMethods(reference.getManager(), reference.getReferenceName());
-      List<ExpectedTypeInfo> types = new ArrayList<ExpectedTypeInfo>();
+      Set<ExpectedTypeInfo> types = new THashSet<ExpectedTypeInfo>();
       for (PsiMethod method : methods) {
         final PsiClass aClass = method.getContainingClass();
         if (!facade.getResolveHelper().isAccessible(method, reference, aClass)) continue;

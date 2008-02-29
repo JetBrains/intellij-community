@@ -78,9 +78,33 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     this.myInsertExplicitTypeParams = insertExplicitTypeParams;
   }
 
-  public boolean equals (ExpectedTypeInfo obj) {
-    ExpectedTypeInfoImpl info = (ExpectedTypeInfoImpl) obj;
-    return type.equals(info.type) && dimCount == info.dimCount && kind == info.kind && defaultType.equals(info.defaultType) && myTailType == info.myTailType;
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ExpectedTypeInfoImpl)) return false;
+
+    final ExpectedTypeInfoImpl that = (ExpectedTypeInfoImpl)o;
+
+    if (dimCount != that.dimCount) return false;
+    if (kind != that.kind) return false;
+    if (defaultType != null ? !defaultType.equals(that.defaultType) : that.defaultType != null) return false;
+    if (myTailType != null ? !myTailType.equals(that.myTailType) : that.myTailType != null) return false;
+    if (type != null ? !type.equals(that.type) : that.type != null) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = (type != null ? type.hashCode() : 0);
+    result = 31 * result + (defaultType != null ? defaultType.hashCode() : 0);
+    result = 31 * result + dimCount;
+    result = 31 * result + kind;
+    result = 31 * result + (myTailType != null ? myTailType.hashCode() : 0);
+    return result;
+  }
+
+  public boolean equals(ExpectedTypeInfo obj) {
+    return equals((Object)obj);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
