@@ -24,14 +24,6 @@ public abstract class DomChangeAdapter extends DomEventAdapter {
 
   protected abstract void elementChanged(DomElement element);
 
-  public void childAdded(CollectionElementAddedEvent event) {
-    elementChanged(event.getParent());
-  }
-
-  public void childRemoved(CollectionElementRemovedEvent event) {
-    elementChanged(event.getParent());
-  }
-
   public void elementChanged(ElementChangedEvent event) {
     elementChanged(event.getElement());
   }
@@ -44,7 +36,4 @@ public abstract class DomChangeAdapter extends DomEventAdapter {
     elementChanged(event.getElement());
   }
 
-  public void valueChanged(TagValueChangeEvent event) {
-    elementChanged(event.getElement());
-  }
 }

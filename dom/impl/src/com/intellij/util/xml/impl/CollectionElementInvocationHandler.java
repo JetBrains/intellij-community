@@ -6,7 +6,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.events.CollectionElementRemovedEvent;
+import com.intellij.util.xml.events.ElementChangedEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,10 +53,9 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
     final XmlTag tag = getXmlTag();
     if (tag == null) return;
 
-    final String namespace = tag.getNamespace();
     detach(true);
     deleteTag(tag);
-    getManager().fireEvent(new CollectionElementRemovedEvent(getProxy(), parent, getXmlElementName(), namespace));
+    getManager().fireEvent(new ElementChangedEvent(parent));
   }
 
   public DomElement createPathStableCopy() {

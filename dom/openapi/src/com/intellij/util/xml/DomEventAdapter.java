@@ -22,9 +22,6 @@ import com.intellij.util.xml.events.*;
  */
 public abstract class DomEventAdapter implements DomEventVisitor, DomEventListener {
 
-  public void valueChanged(TagValueChangeEvent event) {
-  }
-
   public void elementDefined(ElementDefinedEvent event) {
   }
 
@@ -34,18 +31,8 @@ public abstract class DomEventAdapter implements DomEventVisitor, DomEventListen
   public void elementChanged(ElementChangedEvent event) {
   }
 
-  public void childAdded(CollectionElementAddedEvent event) {
-  }
-
-  public void childRemoved(CollectionElementRemovedEvent event) {
-  }
-
   public void eventOccured(DomEvent event) {
     event.accept(this);
-  }
-
-  public final void visitValueChangeEvent(final TagValueChangeEvent event) {
-    valueChanged(event);
   }
 
   public final void visitElementDefined(final ElementDefinedEvent event) {
@@ -60,11 +47,4 @@ public abstract class DomEventAdapter implements DomEventVisitor, DomEventListen
     elementChanged(event);
   }
 
-  public final void visitCollectionElementAddedEvent(final CollectionElementAddedEvent event) {
-    childAdded(event);
-  }
-
-  public final void visitCollectionElementRemovedEvent(final CollectionElementRemovedEvent event) {
-    childRemoved(event);
-  }
 }

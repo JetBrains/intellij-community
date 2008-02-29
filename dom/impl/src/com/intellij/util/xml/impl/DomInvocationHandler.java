@@ -25,10 +25,9 @@ import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.events.CollectionElementAddedEvent;
+import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
-import com.intellij.util.xml.events.TagValueChangeEvent;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
@@ -169,7 +168,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
         setTagValue(tag, value);
       }
     });
-    myManager.fireEvent(new TagValueChangeEvent(getProxy(), value));
+    myManager.fireEvent(new ElementChangedEvent(getProxy()));
   }
 
   public final void copyFrom(DomElement other) {
@@ -802,10 +801,9 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     final EvaluatedXmlName name = createEvaluatedXmlName(description.getXmlName());
     final XmlTag tag = addEmptyTag(name, index);
     final CollectionElementInvocationHandler handler = new CollectionElementInvocationHandler(type, tag, description, this);
-    final DomElement element = handler.getProxy();
-    myManager.fireEvent(new CollectionElementAddedEvent(element, tag.getName()));
+    myManager.fireEvent(new ElementChangedEvent(getProxy()));
     handler.addRequiredChildren();
-    return element;
+    return handler.getProxy();
   }
 
   final void checkInitialized(final DomChildDescriptionImpl description) {
