@@ -35,7 +35,6 @@ import com.intellij.usageView.UsageViewManager;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -64,7 +63,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   private final Project myProject;
   private final com.intellij.usages.UsageViewManager myAnotherManager;
   private boolean myToOpenInNewTab = false;
-  private final List<Function<PsiElement,Factory<FindUsagesHandler>>> myHandlers = new ArrayList<Function<PsiElement, Factory<FindUsagesHandler>>>();
+  private final List<FindUsagesHandlerFactory> myHandlers = new ArrayList<FindUsagesHandlerFactory>();
 
   public static class SearchData {
     public SmartPsiElementPointer[] myElements = null;
@@ -94,32 +93,33 @@ public class FindUsagesManager implements JDOMExternalizable {
     myProject = project;
     myAnotherManager = anotherManager;
 
-    myHandlers.add(new Function<PsiElement, Factory<FindUsagesHandler>>() {
-      @Nullable
-      public Factory<FindUsagesHandler> fun(final PsiElement element) {
+    myHandlers.add(new FindUsagesHandlerFactory() {
+      public boolean canFindUsages(final PsiElement element) {
         if (element instanceof PsiFile) {
-          if (((PsiFile)element).getVirtualFile() == null) return null;
+          if (((PsiFile)element).getVirtualFile() == null) return false;
         }
         else if (!LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage()).canFindUsagesFor(element)) {
-          return null;
+          return false;
         }
+        return true;
+      }
 
-        return new Factory<FindUsagesHandler>() {
-          public FindUsagesHandler create() {
-            return new FindUsagesHandler(element);
-          }
-        };
+      public FindUsagesHandler createFindUsagesHandler(final PsiElement element) {
+        if (canFindUsages(element)) {
+          return new FindUsagesHandler(element);
+        }
+        return null;
       }
     });
   }
 
-  public void registerFindUsagesHandler(Function<PsiElement,Factory<FindUsagesHandler>> handler) {
+  public void registerFindUsagesHandler(FindUsagesHandlerFactory handler) {
     myHandlers.add(0, handler);
   }
 
   public boolean canFindUsages(@NotNull final PsiElement element) {
-    for (Function<PsiElement, Factory<FindUsagesHandler>> t : myHandlers) {
-      if (t.fun(element) != null) {
+    for (FindUsagesHandlerFactory factory : myHandlers) {
+      if (factory.canFindUsages(element)) {
         return true;
       }
     }
@@ -205,10 +205,9 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   @Nullable
   public FindUsagesHandler getFindUsagesHandler(PsiElement element) {
-    for (final Function<PsiElement,Factory<FindUsagesHandler>> function : myHandlers) {
-      final Factory<FindUsagesHandler> factory = function.fun(element);
-      if (factory != null) {
-        final FindUsagesHandler handler = factory.create();
+    for (FindUsagesHandlerFactory factory : myHandlers) {
+      if (factory.canFindUsages(element)) {
+        final FindUsagesHandler handler = factory.createFindUsagesHandler(element);
         if (handler != null) {
           return handler;
         }

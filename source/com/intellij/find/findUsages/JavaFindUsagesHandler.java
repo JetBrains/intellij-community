@@ -17,8 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -37,7 +35,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -701,46 +698,37 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     findVariableOptions.isSearchForTextOccurences = false;
 
     ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().registerFindUsagesHandler(
-      new NullableFunction<PsiElement, Factory<FindUsagesHandler>>() {
-        public Factory<FindUsagesHandler> fun(final PsiElement element) {
-          if (element instanceof PsiDirectory) {
-            final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
-            return psiPackage == null ? null : new Factory<FindUsagesHandler>() {
-              public FindUsagesHandler create() {
-                return new JavaFindUsagesHandler(psiPackage, findClassOptions, findMethodOptions, findPackageOptions, findThrowOptions,
-                                                    findVariableOptions);
-              }
-            };
+        new FindUsagesHandlerFactory() {
+          public boolean canFindUsages(final PsiElement element) {
+            return true;
           }
 
-          if (element instanceof PsiMethod) {
-            return new Factory<FindUsagesHandler>() {
-              @Nullable
-              public FindUsagesHandler create() {
-                final PsiMethod[] methods = SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, JavaFindUsagesHandler.ACTION_STRING);
-                if (methods.length > 1) {
-                  return new JavaFindUsagesHandler(element, methods, findClassOptions, findMethodOptions, findPackageOptions,
-                                                      findThrowOptions, findVariableOptions);
-                }
-                if (methods.length == 1) {
-                  return new JavaFindUsagesHandler(methods[0], findClassOptions, findMethodOptions, findPackageOptions,
-                                                      findThrowOptions, findVariableOptions);
-                }
-                return null;
-              }
-            };
-          }
-
-          return new NotNullFactory<FindUsagesHandler>() {
-            @NotNull
-            public FindUsagesHandler create() {
-              return new JavaFindUsagesHandler(element, findClassOptions, findMethodOptions, findPackageOptions,
-                                                        findThrowOptions, findVariableOptions);
+          public FindUsagesHandler createFindUsagesHandler(final PsiElement element) {
+            if (element instanceof PsiDirectory) {
+              final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
+              return psiPackage == null
+                     ? null
+                     : new JavaFindUsagesHandler(psiPackage, findClassOptions, findMethodOptions, findPackageOptions, findThrowOptions,
+                                                      findVariableOptions);
             }
-          };
-        }
-      }
-    );
+
+            if (element instanceof PsiMethod) {
+              final PsiMethod[] methods = SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, JavaFindUsagesHandler.ACTION_STRING);
+              if (methods.length > 1) {
+                return new JavaFindUsagesHandler(element, methods, findClassOptions, findMethodOptions, findPackageOptions,
+                                                    findThrowOptions, findVariableOptions);
+              }
+              if (methods.length == 1) {
+                return new JavaFindUsagesHandler(methods[0], findClassOptions, findMethodOptions, findPackageOptions,
+                                                    findThrowOptions, findVariableOptions);
+              }
+              return null;
+            }
+
+            return new JavaFindUsagesHandler(element, findClassOptions, findMethodOptions, findPackageOptions,
+                                                      findThrowOptions, findVariableOptions);
+          }
+        });
   }
 
   public Collection<PsiReference> findReferencesToHighlight(final PsiElement target, final SearchScope searchScope) {
