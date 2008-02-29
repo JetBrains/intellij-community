@@ -56,7 +56,7 @@ public class IdeRootPane extends JRootPane{
   private Application myApplication;
 
   IdeRootPane(ActionManager actionManager, UISettings uiSettings, DataManager dataManager, KeymapManager keymapManager,
-              final Application application){
+              final Application application, final String[] commandLineArgs){
     myActionManager = actionManager;
     myUISettings = uiSettings;
 
@@ -72,7 +72,7 @@ public class IdeRootPane extends JRootPane{
     setJMenuBar(new IdeMenuBar(myActionManager, dataManager, keymapManager));
 
     final Ref<Boolean> willOpenProject = new Ref<Boolean>(Boolean.FALSE);
-    application.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appFrameCreated(willOpenProject);
+    application.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appFrameCreated(commandLineArgs, willOpenProject);
     if (!willOpenProject.get()) {
       myWelcomePane = WelcomeScreen.createWelcomePanel();
       myContentPane.add(myWelcomePane);

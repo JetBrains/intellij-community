@@ -11,13 +11,13 @@ import org.jetbrains.annotations.NotNull;
 public interface AppLifecycleListener {
   Topic<AppLifecycleListener> TOPIC = Topic.create("Application lifecycle notifications", AppLifecycleListener.class);
 
-  void appFrameCreated(@NotNull Ref<Boolean> willOpenProject);
+  void appFrameCreated(final String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject);
   void appStarting(Project projectFromCommandLine);
   void projectFrameClosed();
   void projectOpenFailed();
 
   abstract class Adapter implements AppLifecycleListener {
-    public void appFrameCreated(@NotNull final Ref<Boolean> willOpenProject) {
+    public void appFrameCreated(final String[] commandLineArgs, @NotNull final Ref<Boolean> willOpenProject) {
     }
 
     public void appStarting(final Project projectFromCommandLine) {

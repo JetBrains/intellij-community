@@ -181,5 +181,10 @@
     <action id="MoveToChangeList" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction">
       <add-to-group group-id="EditorPopupMenu" relative-to-action="CutCopyPasteGroup" anchor="after"/>
     </action>
+
+    <action id="WelcomeScreen.GetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVcsAction"
+      icon="/general/getProjectfromVCS.png">
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+    </action>
   </actions>
 </component>

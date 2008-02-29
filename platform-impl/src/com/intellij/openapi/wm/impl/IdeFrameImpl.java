@@ -51,9 +51,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   private IdeRootPane myRootPane;
 
   public IdeFrameImpl(ApplicationInfoEx applicationInfoEx, ActionManager actionManager, UISettings uiSettings, DataManager dataManager,
-                      KeymapManager keymapManager, final Application application) {
+                      KeymapManager keymapManager, final Application application, final String[] commandLineArgs) {
     super(applicationInfoEx.getFullApplicationName());
-    myRootPane = new IdeRootPane(actionManager, uiSettings, dataManager, keymapManager, application);
+    myRootPane = new IdeRootPane(actionManager, uiSettings, dataManager, keymapManager, application, commandLineArgs);
     setRootPane(myRootPane);
 
     UIUtil.updateFrameIcon(this);

@@ -222,7 +222,7 @@ public class RecentProjectsManager implements ApplicationComponent, JDOMExternal
   }
 
   private class MyAppLifecycleListener extends AppLifecycleListener.Adapter {
-    public void appFrameCreated(@NotNull final Ref<Boolean> willOpenProject) {
+    public void appFrameCreated(final String[] commandLineArgs, @NotNull final Ref<Boolean> willOpenProject) {
       if (GeneralSettings.getInstance().isReopenLastProject() && getLastProjectPath() != null) {
         willOpenProject.set(Boolean.TRUE);
       }

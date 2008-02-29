@@ -1,6 +1,7 @@
 package com.intellij.platform;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -19,6 +20,17 @@ import java.io.File;
  * @author max
  */
 public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
+  public static PlatformProjectOpenProcessor getInstance() {
+    ProjectOpenProcessor[] processors = Extensions.getExtensions(EXTENSION_POINT_NAME);
+    for(ProjectOpenProcessor processor: processors) {
+      if (processor instanceof PlatformProjectOpenProcessor) {
+        return (PlatformProjectOpenProcessor) processor;
+      }
+    }
+    assert false;
+    return null;
+  }
+
   public static VirtualFile BASE_DIR = null;
 
   public boolean canOpenProject(final VirtualFile file) {

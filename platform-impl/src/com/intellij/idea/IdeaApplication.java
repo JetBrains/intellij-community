@@ -144,7 +144,7 @@ public class IdeaApplication {
       // application components. So it is proper to perform replacement only here.
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       // app.setupIdeQueue(IdeEventQueue.getInstance());
-      ((WindowManagerImpl)WindowManager.getInstance()).showFrame();
+      ((WindowManagerImpl)WindowManager.getInstance()).showFrame(args);
 
       app.invokeLater(new Runnable() {
         public void run() {

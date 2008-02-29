@@ -805,10 +805,8 @@
         icon="/general/openProject.png"/>
       <action id="WelcomeScreen.ReopenRecent" class="com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectsAction"
         icon="/general/reopenRecentProject.png"/>
-      <action id="WelcomeScreen.GetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVcsAction"
-        icon="/general/getProjectfromVCS.png"/>
 
-      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="last"/>
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
 </group>
 
     <group id="WelcomeScreen.Documentation.IDEA">

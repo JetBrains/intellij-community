@@ -12,9 +12,17 @@
       <action id="NextParameter" class="com.intellij.codeInsight.hint.actions.NextParameterAction"/>
       <action id="PrevParameter" class="com.intellij.codeInsight.hint.actions.PrevParameterAction"/>
     </group>
+
   </actions>
 
   <xi:include href="PlatformActions.xml" xpointer="xpointer(/component/*)"/>
   <xi:include href="VcsActions.xml" xpointer="xpointer(/component/*)"/>
   <xi:include href="LangActions.xml" xpointer="xpointer(/component/*)"/>
+
+  <actions>
+    <action id="OpenDirectoryProject" class="com.intellij.platform.OpenDirectoryProjectAction" icon="/general/openProject.png">
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+    </action>
+  </actions>
+
 </component>
