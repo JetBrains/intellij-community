@@ -170,7 +170,7 @@ public class PersistentEnumerator<Data> implements Forceable {
     return myStorage.getInt(META_DATA_OFFSET);
   }
 
-  public synchronized Collection<Data> getAllDataObjects(@Nullable final DataFilter filter) throws IOException {
+  public Collection<Data> getAllDataObjects(@Nullable final DataFilter filter) throws IOException {
     final List<Data> values = new ArrayList<Data>();
     traverseAllRecords(new RecordsProcessor() {
       public void process(final int record) throws IOException {
@@ -186,7 +186,7 @@ public class PersistentEnumerator<Data> implements Forceable {
     void process(int record) throws IOException;
   }
 
-  public void traverseAllRecords(RecordsProcessor p) throws IOException {
+  public synchronized void traverseAllRecords(RecordsProcessor p) throws IOException {
     traverseRecords(FIRST_VECTOR_OFFSET, SLOTS_PER_FIRST_VECTOR, p);
   }
 

@@ -102,7 +102,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     return filesize > 5 * 1024 * 1024 && myGarbageSize * 2 > filesize; // file is longer than 5MB and more than 50% of data is garbage
   }
 
-  private static File checkDataFile(final File file) throws IOException{
+  private static File checkDataFile(final File file) {
     final File dataFile = getDataFile(file);
     if (!file.exists()) {
       final File[] files = dataFile.getParentFile().listFiles(new FileFilter() {
@@ -224,11 +224,17 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
   public synchronized void close() throws IOException {
     myAppendCache.clear();
+    try {
+      putMetaData(myGarbageSize);
+    }
+    catch (IOException e) {
+      // ignore
+    }
     super.close();
     myValueStorage.dispose();
   }
 
-  public synchronized void compact() throws IOException {
+  private synchronized void compact() throws IOException {
     long now = System.currentTimeMillis();
     final String newPath = getDataFile(myFile).getPath() + ".new";
     final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath);
