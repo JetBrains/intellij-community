@@ -86,7 +86,7 @@ public class PyBlock implements Block {
                 dumpSubBlocks();
             }
         }
-        return _subBlocks;
+        return new ArrayList<Block>(_subBlocks);
     }
 
     private List<Block> buildSubBlocks() {
