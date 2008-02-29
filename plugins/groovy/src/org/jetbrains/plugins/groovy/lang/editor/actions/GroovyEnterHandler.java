@@ -115,6 +115,10 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     PsiDocumentManager.getInstance(project).commitDocument(document);
 
     IElementType type = iterator.getTokenType();
+    if (highlighter.createIterator(caret-1).getTokenType() != mGDOC_COMMENT_START &&
+        type == mGDOC_COMMENT_START) {
+      return false;
+    }
     if (type == mGDOC_WHITESPACE && caret == text.length()) return false; 
     if (GROOVY_DOC_TOKENS.contains(type) &&
         mGDOC_COMMENT_END != type) {

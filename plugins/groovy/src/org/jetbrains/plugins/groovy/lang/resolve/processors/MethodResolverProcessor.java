@@ -47,7 +47,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
   private boolean myIsConstructor;
 
-  public MethodResolverProcessor(String name, GroovyPsiElement place, boolean forCompletion, boolean isConstructor, PsiType[] argumentTypes, PsiType[] typeArguments) {
+  public MethodResolverProcessor(String name, GroovyPsiElement place, boolean forCompletion, boolean isConstructor, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments) {
     super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, forCompletion, PsiType.EMPTY_ARRAY);
     myIsConstructor = isConstructor;
     myArgumentTypes = argumentTypes;

@@ -16,9 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocFieldReference;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 
 /**
  * @author ilyas
@@ -37,5 +42,37 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
     visitor.visitDocFieldReference(this);
   }
 
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    //todo implement me!
+    return null;
+  }
+
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    //todo implement me!
+    return null;
+  }
+
+  public boolean isReferenceTo(PsiElement element) {
+    //todo implement me!
+    return false;
+  }
+
+  protected ResolveResult[] multiResolveImpl() {
+    String name = getReferenceName();
+    GrDocReferenceElement holder = getReferenceHolder();
+    PsiElement resolved;
+    if (holder != null) {
+      GrCodeReferenceElement referenceElement = holder.getReferenceElement();
+      resolved = referenceElement.resolve();
+    } else {
+      resolved = getEnclosingClassOrFile(this);
+    }
+    if (resolved != null) {
+      PropertyResolverProcessor processor = new PropertyResolverProcessor(name, this, false);
+      resolved.processDeclarations(processor, PsiSubstitutor.EMPTY, resolved, this);
+      return processor.getCandidates();
+    }
+    return new ResolveResult[0];
+  }
 
 }

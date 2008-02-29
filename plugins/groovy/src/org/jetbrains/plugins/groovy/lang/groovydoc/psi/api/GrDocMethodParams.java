@@ -15,8 +15,15 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 
+import com.intellij.psi.PsiType;
+
 /**
  * @author ilyas
  */
 public interface GrDocMethodParams extends GroovyDocPsiElement {
+
+  PsiType[] getParameterTypes();
+
+  GrDocMethodParameter[] getParameters();
+
 }
