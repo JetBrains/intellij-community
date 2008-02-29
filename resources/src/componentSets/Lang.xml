@@ -268,6 +268,12 @@
       <interface-class>com.intellij.lang.injection.InjectedLanguageManager</interface-class>
       <implementation-class>com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</interface-class>
+      <implementation-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</implementation-class>
+      <skipForDummyProject/>
+    </component>
   </project-components>
 
   <module-components>

@@ -105,11 +105,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <interface-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</interface-class>
-      <implementation-class>com.intellij.pom.wrappers.PsiEventWrapperAspect</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <implementation-class>com.intellij.jar.BuildJarProjectSettings</implementation-class>
       <skipForDummyProject/>
     </component>
