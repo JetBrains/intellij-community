@@ -9,13 +9,12 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import org.jdom.Document;
@@ -144,7 +143,7 @@ public class DynamicManagerImpl extends DynamicManager {
     if (isProperty) {
       element = findConcreteDynamicProperty(rootElement, containingClassName, elementName);
     } else if (isMethod) {
-      final List<Pair<String, PsiType>> list = ((DynamicVirtualMethod) virtualElement).getArguments();
+      final List<MyPair<String, PsiType>> list = ((DynamicVirtualMethod) virtualElement).getArguments();
       final PsiType[] psiTypes = QuickfixUtil.getArgumentsTypes(list);
       element = findConcreteDynamicMethod(rootElement, containingClassName, elementName, psiTypes);
     }

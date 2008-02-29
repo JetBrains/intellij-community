@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,12 +41,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.annotator.DomainClassAnnotator;
 import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.structure.GroovyElementPresentation;
 import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicVirtualElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualMethod;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualProperty;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
@@ -85,6 +84,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
+import org.jetbrains.plugins.groovy.structure.GroovyElementPresentation;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import java.util.*;
@@ -770,13 +770,13 @@ public class GroovyAnnotator implements Annotator {
     if (!(parent instanceof GrMethodCallExpression)) return null;
 
     GrExpression[] expressionArgument = ((GrMethodCallExpression) parent).getExpressionArguments();
-    List<Pair<String, PsiType>> pairs = new ArrayList<Pair<String, PsiType>>();
+    List<MyPair<String, PsiType>> pairs = new ArrayList<MyPair<String, PsiType>>();
 
     for (GrExpression expression : expressionArgument) {
       final PsiType type = expression.getType();
       if (type == null) return null;
 
-      pairs.add(new Pair<String, PsiType>(GroovyElementPresentation.getExpressionPresentableText(expression), type));
+      pairs.add(new MyPair<String, PsiType>(GroovyElementPresentation.getExpressionPresentableText(expression), type));
     }
 
     final PsiType[] types = QuickfixUtil.getArgumentsTypes(pairs);

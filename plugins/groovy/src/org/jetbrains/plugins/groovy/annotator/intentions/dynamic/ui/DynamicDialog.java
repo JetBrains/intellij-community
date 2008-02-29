@@ -27,8 +27,8 @@ import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.EventListenerList;
+import java.awt.*;
 import java.awt.event.*;
 import java.util.EventListener;
 import java.util.Set;
@@ -73,9 +73,8 @@ public abstract class DynamicDialog extends DialogWrapper {
     setUpStatusLabel();
     setUpTableNameLabel();
 
-    final Border border = BorderFactory.createEmptyBorder();
-    final TitledBorder border1 = BorderFactory.createTitledBorder(GroovyBundle.message("dynamic.properties.table.name"));
-    myTable.setBorder(border);
+    final Border border2 = BorderFactory.createLineBorder(Color.BLACK);
+    myTable.setBorder(border2);
 
     myTypeLabel.setLabelFor(myTypeComboBox);
     myClassLabel.setLabelFor(myClassComboBox);
@@ -144,12 +143,12 @@ public abstract class DynamicDialog extends DialogWrapper {
     myTypeComboBox.setEditable(true);
     myTypeComboBox.grabFocus();
 
-    myListenerList.add(DataChangedListener.class, new DataChangedListener());
+    addDataChangeListener();
 
     myTypeComboBox.addItemListener(
         new ItemListener() {
           public void itemStateChanged(ItemEvent e) {
-            fireNameDataChanged();
+            fireDataChanged();
           }
         }
     );
@@ -183,12 +182,16 @@ public abstract class DynamicDialog extends DialogWrapper {
       }
 
       public void documentChanged(DocumentEvent event) {
-        fireNameDataChanged();
+        fireDataChanged();
       }
     });
 
     final PsiClassType objectType = TypesUtil.createJavaLangObject(myReferenceExpression);
     myTypeComboBox.getEditor().setItem(createDocument(objectType.getPresentableText()));
+  }
+
+  protected void addDataChangeListener() {
+    myListenerList.add(DataChangedListener.class, new DataChangedListener());
   }
 
   private void trimDocumentText() {
@@ -206,7 +209,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     }
   }
 
-  private void updateOkStatus() {
+  protected void updateOkStatus() {
     GrTypeElement typeElement = getEnteredTypeName();
 
     if (typeElement == null) {
@@ -254,7 +257,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     return ((ContainingClassItem) item);
   }
 
-  private void fireNameDataChanged() {
+  protected void fireDataChanged() {
     Object[] list = myListenerList.getListenerList();
     for (Object aList : list) {
       if (aList instanceof DataChangedListener) {
@@ -352,5 +355,9 @@ public abstract class DynamicDialog extends DialogWrapper {
 
   protected boolean isTypeChekerPanelEnable(){
     return false;
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 }

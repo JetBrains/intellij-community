@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -89,14 +90,14 @@ public class QuickfixUtil {
     return names.toArray(new String[]{""});
   }
 
-  public static List<Pair<String, PsiType>> swapArgumentsAndTypes(String[] names, PsiType[] types) {
-    List<Pair<String, PsiType>> result = new ArrayList<Pair<String, PsiType>>();
+  public static List<MyPair<String, PsiType>> swapArgumentsAndTypes(String[] names, PsiType[] types) {
+    List<MyPair<String, PsiType>> result = new ArrayList<MyPair<String, PsiType>>();
 
     if (names.length != types.length) return null;
 
     for (int i = 0; i < names.length; i++) {
       String name = names[i];
-      result.add(new Pair<String, PsiType>(name, types[i]));
+      result.add(new MyPair<String, PsiType>(name, types[i]));
     }
 
     return result;
@@ -106,9 +107,9 @@ public class QuickfixUtil {
     return referenceExpression.getParent() instanceof GrMethodCallExpression;
   }
 
-  public static PsiType[] getArgumentsTypes(List<Pair<String, PsiType>> listOfPairs) {
+  public static PsiType[] getArgumentsTypes(List<MyPair<String, PsiType>> listOfPairs) {
     final List<PsiType> result = new ArrayList<PsiType>();
-    for (Pair<String, PsiType> listOfPair : listOfPairs) {
+    for (MyPair<String, PsiType> listOfPair : listOfPairs) {
       result.add(listOfPair.getSecond());
     }
 

@@ -1,15 +1,20 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiType;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualMethod;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 import javax.swing.*;
+import javax.swing.event.EventListenerList;
+import javax.swing.event.TableModelListener;
+import javax.swing.event.TableModelEvent;
 import java.util.List;
 
 /**
@@ -23,36 +28,64 @@ public class DynamicMethodDialog extends DynamicDialog {
     setupParameterList(virtualMethod.getArguments());
   }
 
+  private EventListenerList myListenerList = new EventListenerList();
+
   protected boolean isTableVisible() {
     return true;
   }
 
-  private void setupParameterList(List<Pair<String,PsiType>> arguments) {
+  private void setupParameterList(List<MyPair<String, PsiType>> arguments) {
     final JTable table = getTable();
 
-    final ListTableModel<Pair<String, PsiType>> dataModel = new ListTableModel<Pair<String, PsiType>>(new NameColumnInfo(), new TypeColumnInfo());
+    final ListTableModel<MyPair<String, PsiType>> dataModel = new ListTableModel<MyPair<String, PsiType>>(new NameColumnInfo(), new TypeColumnInfo());
+    dataModel.addTableModelListener(new TableModelListener(){
+      public void tableChanged(TableModelEvent e) {
+        fireDataChanged();
+      }
+    });
     dataModel.setItems(arguments);
     table.setModel(dataModel);
   }
 
-  private static class TypeColumnInfo extends ColumnInfo<Pair<String, PsiType>, String> {
+  private class TypeColumnInfo extends ColumnInfo<MyPair<String, PsiType>, String> {
     public TypeColumnInfo() {
       super(GroovyBundle.message("dynamic.name"));
     }
 
     //TODO: return PsiType
-    public String valueOf(Pair<String, PsiType> pair) {
-      return pair.getSecond().getCanonicalText();
+    public String valueOf(MyPair<String, PsiType> MyPair) {
+      return MyPair.getSecond().getCanonicalText();
+    }
+
+    public boolean isCellEditable(MyPair<String, PsiType> stringPsiTypeMyPair) {
+      return false;
+    }
+
+    public void setValue(MyPair<String, PsiType> pair, String value) {
+      PsiType type = null;
+      try {
+        type = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(value).getType();
+      } catch (IncorrectOperationException e) {
+      }
+
+      if (type == null) return;
+      pair.setSecond(type);
     }
   }
 
-  private static class NameColumnInfo extends ColumnInfo<Pair<String, PsiType>, String> {
+  private static class NameColumnInfo extends ColumnInfo<MyPair<String, PsiType>, String> {
     public NameColumnInfo() {
       super(GroovyBundle.message("dynamic.type"));
     }
 
-    public String valueOf(Pair<String, PsiType> pair) {
+    public String valueOf(MyPair<String, PsiType> pair) {
       return pair.getFirst();
     }
+  }
+
+  protected void updateOkStatus() {
+    super.updateOkStatus();
+
+    if (getTable().isEditing()) setOKActionEnabled(false);
   }
 }

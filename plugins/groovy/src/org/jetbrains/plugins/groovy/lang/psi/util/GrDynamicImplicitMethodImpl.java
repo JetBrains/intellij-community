@@ -4,7 +4,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -14,17 +13,18 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DContainingClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DMethodNode;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DPClassNode;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -74,7 +74,7 @@ public class GrDynamicImplicitMethodImpl extends GrDynamicImplicitElement {
 
         final PsiType[] argumentTypes = QuickfixUtil.getMethodArgumentsTypes(((GrCallExpression) method));
         final String[] argumentNames = QuickfixUtil.getMethodArgumentsNames(((GrCallExpression) method));
-        final List<Pair<String, PsiType>> pairs = QuickfixUtil.swapArgumentsAndTypes(argumentNames, argumentTypes);
+        final List<MyPair<String, PsiType>> pairs = QuickfixUtil.swapArgumentsAndTypes(argumentNames, argumentTypes);
 
         final PsiClassType fqClassName = PsiManager.getInstance(myProject).getElementFactory().createTypeByFQClassName(className, myProject.getAllScope());
         final PsiClass psiClass = fqClassName.resolve();
