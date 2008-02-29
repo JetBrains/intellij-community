@@ -148,7 +148,7 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
     Function<ResolveResult, PsiElement> fun = new Function<ResolveResult, PsiElement>() {
       public PsiElement fun(ResolveResult result) {
         PsiElement element = result.getElement();
-        if (element instanceof GrMethod && ((GrMethod) element).isConstructor()) return null;
+        if (element instanceof PsiMethod && ((PsiMethod) element).isConstructor()) return null;
         return element;
       }
     };
