@@ -62,9 +62,8 @@ public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements Gr
     PsiElementFactory factory = manager.getElementFactory();
     for (GrDocMethodParameter parameter : getParameters()) {
       GrDocReferenceElement typeElement = parameter.getTypeElement();
-      GrCodeReferenceElement referenceElement = typeElement.getReferenceElement();
       try {
-        PsiType type = factory.createTypeFromText(referenceElement.getText(), this);
+        PsiType type = factory.createTypeFromText(typeElement.getText(), this);
         type = TypesUtil.boxPrimitiveType(type, manager, scope);
         types.add(type);
       } catch (IncorrectOperationException e) {
