@@ -65,8 +65,8 @@ public interface GrTypeDefinition extends GrTopStatement, NavigationItem, PsiCla
   GrMethod[] getGroovyMethods();
 
   @NotNull
-  PsiMethod[] findGroovyMethodsByName(@NonNls String name, boolean checkBases); //todo return GrMethod[]
+  PsiMethod[] findCodeMethodsByName(@NonNls String name, boolean checkBases);
 
   @NotNull
-  GrMethod[] findGroovyMethodsBySignature(PsiMethod patternMethod, boolean checkBases);
+  PsiMethod[] findCodeMethodsBySignature(PsiMethod patternMethod, boolean checkBases);
 }

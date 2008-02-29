@@ -125,7 +125,7 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
 
   private boolean hasContradictingMethods(GrAccessorMethod proto, PsiClass clazz) {
     PsiMethod[] methods = clazz instanceof GrTypeDefinition ?
-        ((GrTypeDefinition) clazz).findGroovyMethodsBySignature(proto, true) :
+        ((GrTypeDefinition) clazz).findCodeMethodsBySignature(proto, true) :
         clazz.findMethodsBySignature(proto, true);
     for (PsiMethod method : methods) {
       if (clazz.equals(method.getContainingClass())) return true;

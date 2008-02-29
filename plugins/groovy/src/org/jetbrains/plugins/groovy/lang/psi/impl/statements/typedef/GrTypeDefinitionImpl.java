@@ -597,19 +597,16 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
-    ArrayList<PsiMethod> result = new ArrayList<PsiMethod>();
-    findMethodsBySignature(patternMethod, checkBases, true, result);
-    return result.toArray(new PsiMethod[result.size()]);
+    return findMethodsBySignature(patternMethod, checkBases, true);
   }
 
   @NotNull
-  public GrMethod[] findGroovyMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
-    ArrayList<GrMethod> result = new ArrayList<GrMethod>();
-    findMethodsBySignature(patternMethod, checkBases, false, result);
-    return result.toArray(new GrMethod[result.size()]);
+  public PsiMethod[] findCodeMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
+    return findMethodsBySignature(patternMethod, checkBases, false);
   }
 
-  private<T extends PsiMethod> void findMethodsBySignature(PsiMethod patternMethod, boolean checkBases, boolean includeSynthetic, final ArrayList<T> result) {
+  private PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases, boolean includeSynthetic) {
+    ArrayList<PsiMethod> result = new ArrayList<PsiMethod>();
     final MethodSignature patternSignature = patternMethod.getSignature(PsiSubstitutor.EMPTY);
     for (PsiMethod method : findMethodsByName(patternMethod.getName(), checkBases, includeSynthetic)) {
       final PsiClass clazz = method.getContainingClass();
@@ -617,8 +614,9 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       assert superSubstitutor != null;
       final MethodSignature signature = method.getSignature(superSubstitutor);
       if (signature.equals(patternSignature)) //noinspection unchecked
-        result.add((T) method);
+        result.add(method);
     }
+    return result.toArray(new PsiMethod[result.size()]);
   }
 
   @NotNull
@@ -627,7 +625,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   @NotNull
-  public PsiMethod[] findGroovyMethodsByName(@NonNls String name, boolean checkBases) {
+  public PsiMethod[] findCodeMethodsByName(@NonNls String name, boolean checkBases) {
     return findMethodsByName(name, checkBases, false);
   }
 
