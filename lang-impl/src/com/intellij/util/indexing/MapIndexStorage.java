@@ -37,6 +37,23 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     myMap = new PersistentHashMap<Key,ValueContainer<Value>>(myStorageFile, myKeyDescriptor, myValueContainerExternalizer);
     myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(16 * 1024, 4 * 1024) {
       @NotNull
+      public synchronized ChangeTrackingValueContainer<Value> get(final Key key) {
+        return super.get(key);
+      }
+
+      public synchronized void put(final Key key, final ChangeTrackingValueContainer<Value> value) {
+        super.put(key, value);
+      }
+
+      public synchronized boolean remove(final Key key) {
+        return super.remove(key);
+      }
+
+      public synchronized void clear() {
+        super.clear();
+      }
+
+      @NotNull
       public ChangeTrackingValueContainer<Value> createValue(final Key key) {
         return new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Computable<Value>() {
           public ValueContainer<Value> compute() throws StorageException {

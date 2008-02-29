@@ -26,20 +26,15 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private final Runnable myFlushRequest = new Runnable() {
     public void run() {
       if (!HeavyProcessLatch.INSTANCE.isRunning()) {
-        final Lock lock = getWriteLock();
-        lock.lock();
         try {
           myStorage.flush();
         }
         catch (IOException e) {
           LOG.error(e);
         }
-        finally {
-          lock.unlock();
-        }
       }
       else {
-        myFlushAlarm.addRequest(myFlushRequest, 20000 /* 15 sec */);  // postpone flushing
+        myFlushAlarm.addRequest(myFlushRequest, 20000 /* 20 sec */);  // postpone flushing
       }
     }
   };
