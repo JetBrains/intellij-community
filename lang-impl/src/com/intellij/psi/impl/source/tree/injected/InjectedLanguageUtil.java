@@ -143,7 +143,10 @@ public class InjectedLanguageUtil {
     PsiFile containingFile = host.getContainingFile();
     enumerate(host, containingFile, visitor, true);
   }
+
   public static void enumerate(@NotNull PsiElement host, @NotNull PsiFile containingFile, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor, boolean probeUp) {
+    //do not inject into nonphysical files except during completion
+    if (!containingFile.isPhysical() && containingFile.getOriginalFile() == null) return;
     Places places = probeElementsUp(host, containingFile, probeUp);
     if (places == null) return;
     for (Place place : places) {
@@ -397,9 +400,7 @@ public class InjectedLanguageUtil {
   }
 
   private static final InjectedPsiProvider INJECTED_PSI_PROVIDER = new InjectedPsiProvider();
-  private static Places probeElementsUp(final PsiElement element, PsiFile hostPsiFile, boolean probeUp) {
-    if (hostPsiFile == null) return null;
-
+  private static Places probeElementsUp(@NotNull PsiElement element, @NotNull PsiFile hostPsiFile, boolean probeUp) {
     PsiManager psiManager = hostPsiFile.getManager();
     final Project project = psiManager.getProject();
     InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(project);

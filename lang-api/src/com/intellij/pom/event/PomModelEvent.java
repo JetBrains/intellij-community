@@ -29,10 +29,11 @@ public class PomModelEvent extends EventObject {
     super(source);
   }
 
-  public Set<PomModelAspect> getChangedAspects(){
+  public Set<PomModelAspect> getChangedAspects() {
     if (myChangeSets != null) {
       return myChangeSets.keySet();
-    } else {
+    }
+    else {
       return Collections.emptySet();
     }
   }
@@ -77,7 +78,7 @@ public class PomModelEvent extends EventObject {
         pomChangeSet.merge(entry.getValue());
       }
       else {
-        myChangeSets.put(aspect, (PomChangeSet)entry.getValue());
+        myChangeSets.put(aspect, entry.getValue());
       }
     }
   }

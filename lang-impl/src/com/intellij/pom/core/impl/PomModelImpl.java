@@ -67,9 +67,9 @@ import java.util.*;
 public class PomModelImpl extends UserDataHolderBase implements PomModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.pom.core.impl.PomModelImpl");
   private final Project myProject;
-  private Map<Class<? extends PomModelAspect>, PomModelAspect> myAspects = new HashMap<Class<? extends PomModelAspect>, PomModelAspect>();
-  private Map<PomModelAspect, List<PomModelAspect>> myIncidence = new HashMap<PomModelAspect, List<PomModelAspect>>();
-  private Map<PomModelAspect, List<PomModelAspect>> myInvertedIncidence = new HashMap<PomModelAspect, List<PomModelAspect>>();
+  private final Map<Class<? extends PomModelAspect>, PomModelAspect> myAspects = new HashMap<Class<? extends PomModelAspect>, PomModelAspect>();
+  private final Map<PomModelAspect, List<PomModelAspect>> myIncidence = new HashMap<PomModelAspect, List<PomModelAspect>>();
+  private final Map<PomModelAspect, List<PomModelAspect>> myInvertedIncidence = new HashMap<PomModelAspect, List<PomModelAspect>>();
   private final Collection<PomModelListener> myListeners = new ArrayList<PomModelListener>();
 
   public PomModelImpl(Project project) {
@@ -104,12 +104,12 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   //private final Pair<PomModelAspect, PomModelAspect> myHolderPair = new Pair<PomModelAspect, PomModelAspect>(null, null);
-  public List<PomModelAspect> getAllDependencies(PomModelAspect aspect){
+  private List<PomModelAspect> getAllDependencies(PomModelAspect aspect){
     List<PomModelAspect> pomModelAspects = myIncidence.get(aspect);
     return pomModelAspects != null ? pomModelAspects : Collections.<PomModelAspect>emptyList();
   }
 
-  public List<PomModelAspect> getAllDependants(PomModelAspect aspect){
+  private List<PomModelAspect> getAllDependants(PomModelAspect aspect){
     List<PomModelAspect> pomModelAspects = myInvertedIncidence.get(aspect);
     return pomModelAspects != null ? pomModelAspects : Collections.<PomModelAspect>emptyList();
   }

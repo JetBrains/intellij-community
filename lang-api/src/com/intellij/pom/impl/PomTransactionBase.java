@@ -24,9 +24,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class PomTransactionBase implements PomTransaction{
-  private PsiElement myScope;
-  private PomModelAspect myAspect;
-  private PomModelEvent myAccumulatedEvent;
+  private final PsiElement myScope;
+  private final PomModelAspect myAspect;
+  private final PomModelEvent myAccumulatedEvent;
   public PomTransactionBase(PsiElement scope, final PomModelAspect aspect){
     myScope = scope;
     myAspect = aspect;
@@ -45,9 +45,7 @@ public abstract class PomTransactionBase implements PomTransaction{
       myAccumulatedEvent.registerChangeSet(myAspect, null);
       return;
     }
-    for (PomModelAspect aspect : event.getChangedAspects()) {
-      myAccumulatedEvent.merge(event);
-    }
+    myAccumulatedEvent.merge(event);
   }
 
   @Nullable

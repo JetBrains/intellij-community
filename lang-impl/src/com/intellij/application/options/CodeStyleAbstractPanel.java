@@ -69,21 +69,21 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 
 public abstract class CodeStyleAbstractPanel {
-  private static Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
   private final Editor myEditor;
   private final CodeStyleSettings mySettings;
   private boolean myShouldUpdatePreview;
-  protected final static int[] ourWrappings = new int[]{CodeStyleSettings.DO_NOT_WRAP,
+  protected static final int[] ourWrappings = new int[]{CodeStyleSettings.DO_NOT_WRAP,
     CodeStyleSettings.WRAP_AS_NEEDED,
     CodeStyleSettings.WRAP_ON_EVERY_ITEM,
     CodeStyleSettings.WRAP_ALWAYS};
   private long myLastDocumentModificationStamp;
   private String myTextToReformat = null;
-  private UserActivityWatcher myUserActivityWatcher = new UserActivityWatcher();
+  private final UserActivityWatcher myUserActivityWatcher = new UserActivityWatcher();
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  public CodeStyleAbstractPanel(CodeStyleSettings settings) {
+  protected CodeStyleAbstractPanel(CodeStyleSettings settings) {
     mySettings = settings;
     myEditor = createEditor();
     myUserActivityWatcher.addUserActivityListener(new UserActivityListener() {
@@ -142,7 +142,7 @@ public abstract class CodeStyleAbstractPanel {
 
   protected abstract EditorHighlighter createHighlighter(final EditorColorsScheme scheme);
 
-  protected void fillEditorSettings(final EditorSettings editorSettings) {
+  private void fillEditorSettings(final EditorSettings editorSettings) {
     editorSettings.setWhitespacesShown(true);
     editorSettings.setLineMarkerAreaShown(false);
     editorSettings.setLineNumbersShown(false);
@@ -267,8 +267,8 @@ public abstract class CodeStyleAbstractPanel {
       final LineNumberReader lineNumberReader = new LineNumberReader(reader);
       final StringBuffer result;
       try {
-        String line;
         result = new StringBuffer();
+        String line;
         while ((line = lineNumberReader.readLine()) != null) {
           result.append(line);
           result.append("\n");
