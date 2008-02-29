@@ -30,7 +30,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
     final ProgramRunner runner = getRunner(myExecutor.getId(), configuration);
     if (runner != null) {
       try {
-      runner.execute(configuration.getConfiguration(), context.getDataContext(), configuration.getRunnerSettings(runner),
+      runner.execute(myExecutor, configuration.getConfiguration(), context.getDataContext(), configuration.getRunnerSettings(runner),
                        configuration.getConfigurationSettings(runner));
       }
       catch (ExecutionException e) {

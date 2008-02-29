@@ -1,8 +1,8 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.diagnostic.Logger;
@@ -129,7 +129,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(id);
       if (runner != null) {
         ConfigurationPerRunnerSettings settings =
-          new ConfigurationPerRunnerSettings(runner.getInfo(), myConfiguration.createRunnerSettings(new InfoProvider(runner)));
+          new ConfigurationPerRunnerSettings(id, myConfiguration.createRunnerSettings(new InfoProvider(runner)));
         settings.readExternal(configurationElement);
         myConfigurationPerRunnerSettings.put(runner, settings);
       } else {
@@ -162,7 +162,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       ConfigurationPerRunnerSettings settings = myConfigurationPerRunnerSettings.get(runner);
       Element runnerElement = new Element(CONFIGURATION_ELEMENT);
       settings.writeExternal(runnerElement);
-      runnerElement.setAttribute(RUNNER_ID, runner.getInfo().getId());
+      runnerElement.setAttribute(RUNNER_ID, runner.getRunnerId());
       configurationPerRunnerSettings.add(runnerElement);
     }
     if (myUnloadedConfigurationPerRunnerSettings != null) {
@@ -182,7 +182,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       RunnerSettings settings = myRunnerSettings.get(runner);
       Element runnerElement = new Element(RUNNER_ELEMENT);
       settings.writeExternal(runnerElement);
-      runnerElement.setAttribute(RUNNER_ID, runner.getInfo().getId());
+      runnerElement.setAttribute(RUNNER_ID, runner.getRunnerId());
       runnerSettings.add(runnerElement);
     }
     if (myUnloadedRunnerSettings != null) {
@@ -225,7 +225,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   public ConfigurationPerRunnerSettings getConfigurationSettings(ProgramRunner runner) {
     ConfigurationPerRunnerSettings settings = myConfigurationPerRunnerSettings.get(runner);
     if (settings == null) {
-      settings = new ConfigurationPerRunnerSettings(runner.getInfo(), myConfiguration.createRunnerSettings(new InfoProvider(runner)));
+      settings = new ConfigurationPerRunnerSettings(runner.getRunnerId(), myConfiguration.createRunnerSettings(new InfoProvider(runner)));
       myConfigurationPerRunnerSettings.put(runner, settings);
     }
     return settings;
@@ -254,7 +254,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
       for (ProgramRunner runner : template.myConfigurationPerRunnerSettings.keySet()) {
         ConfigurationPerRunnerSettings data =
-          new ConfigurationPerRunnerSettings(runner.getInfo(), myConfiguration.createRunnerSettings(new InfoProvider(runner)));
+          new ConfigurationPerRunnerSettings(runner.getRunnerId(), myConfiguration.createRunnerSettings(new InfoProvider(runner)));
         myConfigurationPerRunnerSettings.put(runner, data);
         Element temp = new Element(DUMMY_ELEMENT_NANE);
         template.myConfigurationPerRunnerSettings.get(runner).writeExternal(temp);

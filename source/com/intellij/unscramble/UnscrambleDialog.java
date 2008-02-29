@@ -4,9 +4,9 @@
 package com.intellij.unscramble;
 
 import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.Executor;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.runners.GenericProgramRunner;
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
@@ -395,12 +395,12 @@ public class UnscrambleDialog extends DialogWrapper{
       }
     };
 
-    final RunnerInfo runnerInfo = GenericProgramRunner.DEFAULT_RUNNER_INFO;
-    toolbarActions.add(new CloseAction(runnerInfo, descriptor, project));
+    final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+    toolbarActions.add(new CloseAction(executor, descriptor, project));
     for (AnAction action: consoleView.createUpDownStacktraceActions()) {
       toolbarActions.add(action);
     }
-    ExecutionManager.getInstance(project).getContentManager().showRunContent(runnerInfo, descriptor);
+    ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
     return consoleView;
   }
   private static final class MyConsolePanel extends JPanel {

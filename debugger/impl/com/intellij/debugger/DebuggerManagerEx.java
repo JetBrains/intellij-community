@@ -7,6 +7,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfileState;
@@ -35,7 +36,8 @@ public abstract class DebuggerManagerEx extends DebuggerManager {
   public abstract void addDebuggerManagerListener(DebuggerManagerListener debuggerManagerListener);
   public abstract void removeDebuggerManagerListener(DebuggerManagerListener debuggerManagerListener);
 
-  public abstract DebuggerSession attachVirtualMachine(ProgramRunner runner,
+  public abstract DebuggerSession attachVirtualMachine(Executor executor, 
+                                                       ProgramRunner runner,
                                                        ModuleRunProfile profile,
                                                        RunProfileState state,
                                                        RemoteConnection connection,

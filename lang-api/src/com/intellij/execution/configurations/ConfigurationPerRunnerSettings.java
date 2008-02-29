@@ -15,23 +15,22 @@
  */
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
 public final class ConfigurationPerRunnerSettings implements JDOMExternalizable {
-  private final RunnerInfo myRunnerInfo;
   private final JDOMExternalizable mySettings;
+  private String myRunnerId;
 
-  public ConfigurationPerRunnerSettings(RunnerInfo runnerInfo, JDOMExternalizable settings) {
-    myRunnerInfo = runnerInfo;
+  public ConfigurationPerRunnerSettings(String runnerId, JDOMExternalizable settings) {
     mySettings = settings;
+    myRunnerId = runnerId;
   }
 
-  public RunnerInfo getRunnerInfo() {
-    return myRunnerInfo;
+  public String getRunnerId() {
+    return myRunnerId;
   }
 
   public JDOMExternalizable getSettings() {

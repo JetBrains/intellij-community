@@ -16,7 +16,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.runners.RunnerInfo;
+import com.intellij.execution.Executor;
 import com.intellij.openapi.actionSystem.DataContext;
 
 public interface RunProfile {
@@ -30,7 +30,7 @@ public interface RunProfile {
    * @return
    */
   RunProfileState getState(DataContext context,
-                           RunnerInfo runnerInfo,
+                           Executor executor,
                            RunnerSettings runnerSettings,
                            ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException;
 

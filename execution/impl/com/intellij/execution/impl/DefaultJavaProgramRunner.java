@@ -3,6 +3,7 @@ package com.intellij.execution.impl;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessAdapter;
@@ -31,24 +32,26 @@ import java.awt.event.KeyEvent;
 /**
  * @author spleaner
  */
-public class DefaultJavaProgramRunner extends GenericProgramRunner {
+public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
-    return executorId.equals(DefaultRunExecutor.EXECUTOR_ID) && profile instanceof ModuleRunProfile && !(profile instanceof RemoteConfiguration);
+    return executorId.equals(DefaultRunExecutor.EXECUTOR_ID) &&
+           profile instanceof ModuleRunProfile &&
+           !(profile instanceof RemoteConfiguration);
   }
 
   public JDOMExternalizable createConfigurationData(ConfigurationInfoProvider settingsProvider) {
     return null;
   }
 
-  public SettingsEditor<JDOMExternalizable> getSettingsEditor(RunConfiguration configuration) {
+  public SettingsEditor<JDOMExternalizable> getSettingsEditor(final Executor executor, RunConfiguration configuration) {
     return null;
   }
 
-  public void patch(Object javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException {
+  public void patch(JavaParameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException {
   }
 
   public void checkConfiguration(final RunnerSettings settings, final ConfigurationPerRunnerSettings configurationPerRunnerSettings)
-    throws RuntimeConfigurationException {
+      throws RuntimeConfigurationException {
   }
 
   public void onProcessStarted(final RunnerSettings settings, final ExecutionResult executionResult) {
@@ -59,33 +62,35 @@ public class DefaultJavaProgramRunner extends GenericProgramRunner {
   }
 
   @Nullable
-  public RunContentDescriptor doExecute(final RunProfileState state,
-                                         final RunProfile runProfile,
-                                         final Project project,
-                                         final RunContentDescriptor contentToReuse,
-                                         RunnerSettings settings,
-                                         ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
+  public RunContentDescriptor doExecute(final Executor executor,
+                                        final RunProfileState state,
+                                        final RunProfile runProfile,
+                                        final Project project,
+                                        final RunContentDescriptor contentToReuse,
+                                        RunnerSettings settings,
+                                        ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     ExecutionResult executionResult;
     if (state instanceof JavaCommandLine) {
       patch(((JavaCommandLine)state).getJavaParameters(), state.getRunnerSettings(), true);
-      final ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine) state);
-      executionResult = state.execute(this);
+      final ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
+      executionResult = state.execute(executor, this);
       if (proxy != null && executionResult != null) {
         proxy.attach(executionResult.getProcessHandler());
       }
-    } else {
-      executionResult = state.execute(this);
     }
-    
+    else {
+      executionResult = state.execute(executor, this);
+    }
+
     if (executionResult == null) {
       return null;
     }
 
     onProcessStarted(settings, executionResult);
 
-    final RunContentBuilder contentBuilder = new RunContentBuilder(project, this);
+    final RunContentBuilder contentBuilder = new RunContentBuilder(project, this, executor);
     contentBuilder.setExecutionResult(executionResult);
     contentBuilder.setRunProfile(runProfile, settings, configurationSettings);
     customizeContent(contentBuilder);
@@ -163,8 +168,8 @@ public class DefaultJavaProgramRunner extends GenericProgramRunner {
     }
   }
 
-
-  public RunnerInfo getInfo() {
-    return DEFAULT_RUNNER_INFO;
+  @NotNull
+  public String getRunnerId() {
+    return "Run";
   }
 }

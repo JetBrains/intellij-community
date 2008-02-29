@@ -97,7 +97,7 @@ public final class JavadocGenerationManager implements JDOMExternalizable, Proje
     try {
       final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, myConfiguration);
       assert runner != null;
-      runner.execute(myConfiguration, dataContext, null, null);
+      runner.execute(DefaultRunExecutor.getRunExecutorInstance(), myConfiguration, dataContext, null, null);
     }
     catch (ExecutionException e) {
       ExecutionErrorDialog.show(e, CommonBundle.getErrorTitle(), myProject);

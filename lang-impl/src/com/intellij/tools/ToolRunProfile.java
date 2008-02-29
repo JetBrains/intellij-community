@@ -6,6 +6,7 @@ package com.intellij.tools;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.execution.filters.TextConsoleBuilder;
@@ -14,7 +15,6 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene Zhuravlev
  *         Date: Mar 30, 2005
  */
-public class ToolRunProfile implements RunProfile{
+public class ToolRunProfile implements ModuleRunProfile{
   private final Tool myTool;
   private final GeneralCommandLine myCommandLine;
 
@@ -52,7 +52,7 @@ public class ToolRunProfile implements RunProfile{
     return null;
   }
 
-  public RunProfileState getState(DataContext context, RunnerInfo runnerInfo, RunnerSettings runnerSettings, ConfigurationPerRunnerSettings configurationSettings) {
+  public RunProfileState getState(DataContext context, Executor executor, RunnerSettings runnerSettings, ConfigurationPerRunnerSettings configurationSettings) {
     final Project project = PlatformDataKeys.PROJECT.getData(context);
     if (project == null || myCommandLine == null) {
       // can return null if creation of cmd line has been cancelled
@@ -71,8 +71,8 @@ public class ToolRunProfile implements RunProfile{
         return processHandler;
       }
 
-      public ExecutionResult execute(@NotNull ProgramRunner runner) throws ExecutionException {
-        final ExecutionResult result = super.execute(runner);
+      public ExecutionResult execute(@NotNull final Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+        final ExecutionResult result = super.execute(executor, runner);
         final ProcessHandler processHandler = result.getProcessHandler();
         if (processHandler != null) {
           processHandler.addProcessListener(new ToolProcessAdapter(project, myTool.synchronizeAfterExecution(), getName()));

@@ -29,6 +29,7 @@ import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessAdapter;
@@ -121,7 +122,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private boolean myIsFailed = false;
   private DebuggerSession mySession;
   protected @Nullable MethodReturnValueWatcher myReturnValueWatcher;
-  private Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD); 
+  private Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   protected DebugProcessImpl(Project project) {
     myProject = project;
@@ -152,9 +153,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
     if (method == null) {
       return null;
     }
-    return new Pair<Method, Value>(method, myReturnValueWatcher.getLastMethodReturnValue()); 
+    return new Pair<Method, Value>(method, myReturnValueWatcher.getLastMethodReturnValue());
   }
-  
+
   public void setWatchMethodReturnValuesEnabled(boolean enabled) {
     if (myReturnValueWatcher != null) {
       myReturnValueWatcher.setFeatureEnabled(enabled);
@@ -164,21 +165,21 @@ public abstract class DebugProcessImpl implements DebugProcess {
   public boolean isWatchMethodReturnValuesEnabled() {
     return myReturnValueWatcher != null && myReturnValueWatcher.isFeatureEnabled();
   }
-  
+
   public boolean canGetMethodReturnValue() {
     return myReturnValueWatcher != null;
   }
-  
+
   public NodeRenderer getAutoRenderer(ValueDescriptor descriptor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final Value value = descriptor.getValue();
     Type type = value != null ? value.type() : null;
-    
+
     // in case evaluation is not possible, force default renderer
     if (!DebuggerManagerEx.getInstanceEx(getProject()).getContext().isEvaluationPossible()) {
       return getDefaultRenderer(type);
     }
-    
+
     NodeRenderer renderer = myNodeRederersMap.get(type);
     if(renderer == null) {
       for (final NodeRenderer nodeRenderer : myRenderers) {
@@ -1295,8 +1296,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
           virtualMachineProxy.exit(-1);
         }
         else {
-          // some VM's (like IBM VM 1.4.2 bundled with WebSpere) does not 
-          // resume threads on dispose() like it should 
+          // some VM's (like IBM VM 1.4.2 bundled with WebSpere) does not
+          // resume threads on dispose() like it should
           virtualMachineProxy.resume();
           virtualMachineProxy.dispose();
         }
@@ -1531,14 +1532,15 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
     }
   }
-  
+
   @NotNull
   public GlobalSearchScope getSearchScope() {
     LOG.assertTrue(mySession != null, "Accessing debug session before its initialization");
     return mySession.getSearchScope();
   }
 
-  public @Nullable ExecutionResult attachVirtualMachine(final ProgramRunner runner,
+  public @Nullable ExecutionResult attachVirtualMachine(final Executor executor,
+                                                        final ProgramRunner runner,
                                                         final DebuggerSession session,
                                                         final RunProfileState state,
                                                         final RemoteConnection remoteConnection,
@@ -1555,7 +1557,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
     try {
       synchronized (myProcessListeners) {
-        myExecutionResult = state.execute(runner);
+        myExecutionResult = state.execute(executor, runner);
         if (myExecutionResult == null) {
           fail();
           return null;

@@ -2,6 +2,7 @@ package com.intellij.javadoc;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.execution.filters.TextConsoleBuilder;
@@ -10,7 +11,6 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessTerminatedListener;
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -84,7 +84,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
   }
 
   public RunProfileState getState(DataContext context,
-                                  RunnerInfo runnerInfo,
+                                  Executor executor,
                                   RunnerSettings runnerSettings,
                                   ConfigurationPerRunnerSettings configurationSettings) {
     return new MyJavaCommandLineState(myProject, myGenerationOptions);

@@ -3,15 +3,11 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.CommonBundle;
 import com.intellij.compiler.PsiClassWriter;
 import com.intellij.compiler.impl.FileSetCompileScope;
-import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunnerRegistry;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -30,8 +26,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.roots.ProjectClasspathTraversing;
+import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -281,7 +277,7 @@ public final class PreviewFormAction extends AnAction{
       final RunProfile profile = new MyRunProfile(module, parameters, UIDesignerBundle.message("progress.preview.started", formFile.getPresentableUrl()));
       ProgramRunner defaultRunner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
       LOG.assertTrue(defaultRunner != null);
-      defaultRunner.execute(profile, new DataContext() {   // IDEADEV-3596
+      defaultRunner.execute(DefaultRunExecutor.getRunExecutorInstance(), profile, new DataContext() {   // IDEADEV-3596
         public Object getData(String dataId) {
           if (dataId.equals(DataConstants.PROJECT)) {
             return module.getProject();
@@ -311,7 +307,7 @@ public final class PreviewFormAction extends AnAction{
     }
 
     public RunProfileState getState(final DataContext context,
-                                    final RunnerInfo runnerInfo,
+                                    final Executor executor,
                                     RunnerSettings runnerSettings,
                                     ConfigurationPerRunnerSettings configurationSettings) {
       final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
@@ -319,9 +315,9 @@ public final class PreviewFormAction extends AnAction{
           return myParams;
         }
 
-        public ExecutionResult execute(@NotNull final ProgramRunner runner) throws ExecutionException {
+        public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
           try {
-            return super.execute(runner);
+            return super.execute(executor, runner);
           }
           finally {
             final Project project = myModule.getProject();

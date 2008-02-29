@@ -15,14 +15,11 @@
  */
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.DefaultExecutionResult;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.*;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -30,15 +27,13 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class CommandLineState implements RunnableState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.CommandLineState");
   private TextConsoleBuilder myConsoleBuilder;  
-  private Module[] myModulesToCompile = Module.EMPTY_ARRAY;
-  
+
   private RunnerSettings myRunnerSettings;
   private ConfigurationPerRunnerSettings myConfigurationSettings;
 
@@ -55,7 +50,7 @@ public abstract class CommandLineState implements RunnableState {
     return myConfigurationSettings;
   }
 
-  public ExecutionResult execute(@NotNull ProgramRunner runner) throws ExecutionException {
+  public ExecutionResult execute(@NotNull final Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
     final ProcessHandler processHandler = startProcess();
     final TextConsoleBuilder builder = getConsoleBuilder();
     final ConsoleView console = builder != null ? builder.getConsole() : null;
@@ -80,23 +75,6 @@ public abstract class CommandLineState implements RunnableState {
 
   public void setConsoleBuilder(final TextConsoleBuilder consoleBuilder) {
     myConsoleBuilder = consoleBuilder;
-  }
-
-  public Module[] getModulesToCompile() {
-    return myModulesToCompile;
-  }
-
-  public void setModulesToCompile(Module[] modulesToCompile) {
-    if (modulesToCompile == null) modulesToCompile = Module.EMPTY_ARRAY;
-    for (final Module module : modulesToCompile) {
-      LOG.assertTrue(module != null);
-    }
-    myModulesToCompile = modulesToCompile;
-  }
-
-  public void setModuleToCompile(final Module module) {
-    if (module == null) return;
-    setModulesToCompile(new Module[]{module});
   }
 
   protected static class PauseOutputAction extends ToggleAction {

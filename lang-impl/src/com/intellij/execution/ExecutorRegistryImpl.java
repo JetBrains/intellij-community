@@ -1,10 +1,10 @@
 package com.intellij.execution;
 
-import com.intellij.execution.impl.RunDialog;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.actions.RunContextAction;
+import com.intellij.execution.impl.RunDialog;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -90,6 +90,10 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
     return myExecutors.toArray(new Executor[myExecutors.size()]);
   }
 
+  public Executor getExecutorById(final String executorId) {
+    return myId2Executor.get(executorId);
+  }
+
   @NonNls
   @NotNull
   public String getComponentName() {
@@ -145,7 +149,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
         enabled = runner != null;
 
         if (enabled) {
-          presentation.setDescription(runner.getInfo().getDescription());
+          presentation.setDescription(myExecutor.getDescription());
         }
       }
 
@@ -184,14 +188,14 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       LOG.assertTrue(component != null, "component MUST not be null!");
       if (runManager.getConfig().isShowSettingsBeforeRun()) {
-        final RunDialog dialog = new RunDialog(project, runner.getInfo());
+        final RunDialog dialog = new RunDialog(project, myExecutor);
         dialog.show();
         if (!dialog.isOK()) return;
         dataContext = recreateDataContext(project, component);
       }
 
       try {
-        runner.execute(configuration.getConfiguration(), dataContext, configuration.getRunnerSettings(runner),
+        runner.execute(myExecutor, configuration.getConfiguration(), dataContext, configuration.getRunnerSettings(runner),
                        configuration.getConfigurationSettings(runner));
       }
       catch (RunCanceledByUserException e) {

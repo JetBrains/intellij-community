@@ -9,15 +9,16 @@ import com.intellij.diagnostic.logging.LogConsole;
 import com.intellij.diagnostic.logging.LogConsoleManager;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.CloseAction;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
@@ -58,10 +59,12 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
 
   private RunnerLayoutUi myUi;
   private Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
+  private Executor myExecutor;
 
-  public RunContentBuilder(final Project project, final ProgramRunner runner) {
+  public RunContentBuilder(final Project project, final ProgramRunner runner, Executor executor) {
     myProject = project;
     myRunner = runner;
+    myExecutor = executor;
     myManager = new LogFilesManager(project, this);
   }
 
@@ -102,7 +105,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
       throw new IllegalStateException("Missing RunProfile");
     }
 
-    myUi = RunnerLayoutUi.Factory.getInstance(myProject).create("JavaRunner", myRunner.getInfo().getId(), myRunProfile.getName(), this);
+    myUi = RunnerLayoutUi.Factory.getInstance(myProject).create("JavaRunner", myExecutor.getId(), myRunProfile.getName(), this);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited, myUi.getComponent(), this);
@@ -164,7 +167,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
   }
 
   private ActionGroup createActionToolbar(final RunContentDescriptor contentDescriptor, final JComponent component) {
-    final RestartAction action = new RestartAction(myRunner, myRunProfile, getProcessHandler(), myRerunIcon, contentDescriptor, myRunnerSettings, myConfigurationSettings);
+    final RestartAction action = new RestartAction(myExecutor, myRunner, myRunProfile, getProcessHandler(), myRerunIcon, contentDescriptor, myRunnerSettings, myConfigurationSettings);
     action.registerShortcut(component);
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(action);
@@ -188,8 +191,8 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     actionGroup.addSeparator();
     actionGroup.add(myUi.getLayoutActions());
     actionGroup.addSeparator();
-    actionGroup.add(new CloseAction(myRunner.getInfo(), contentDescriptor, myProject));
-    actionGroup.add(new ContextHelpAction(myRunner.getInfo().getHelpId()));
+    actionGroup.add(new CloseAction(myExecutor, contentDescriptor, myProject));
+    actionGroup.add(new ContextHelpAction(myExecutor.getHelpId()));
     return actionGroup;
   }
 

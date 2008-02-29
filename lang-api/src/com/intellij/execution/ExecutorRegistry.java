@@ -15,4 +15,6 @@ public abstract class ExecutorRegistry implements ApplicationComponent {
 
   @NotNull
   public abstract Executor[] getRegisteredExecutors();
+
+  public abstract Executor getExecutorById(final String executorId);
 }

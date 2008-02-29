@@ -10,6 +10,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ToolProgramRunner extends DefaultProgramRunner {
 
+  @NotNull
+  public String getRunnerId() {
+    return "ToolProgramRunner";
+  }
+
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
     return DefaultRunExecutor.EXECUTOR_ID.equals(executorId) && profile instanceof ToolRunProfile;
   }

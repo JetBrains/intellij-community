@@ -6,6 +6,7 @@ package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
@@ -29,8 +30,10 @@ public class RestartAction extends AnAction {
   private final RunContentDescriptor myDescriptor;
   private RunnerSettings myRunnerSettings;
   private ConfigurationPerRunnerSettings myConfigurationSettings;
+  private Executor myExecutor;
 
-  public RestartAction(final ProgramRunner runner,
+  public RestartAction(final Executor executor,
+                       final ProgramRunner runner,
                        final RunProfile configuration,
                        final ProcessHandler processHandler,
                        final Icon icon,
@@ -45,6 +48,7 @@ public class RestartAction extends AnAction {
     myProcessHandler = processHandler;
     myRunner = runner;
     myDescriptor = descritor;
+    myExecutor = executor;
     // see IDEADEV-698
   }
 
@@ -52,7 +56,7 @@ public class RestartAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     try {
-      myRunner.execute(myProfile, new DataContext() {
+      myRunner.execute(myExecutor, myProfile, new DataContext() {
         public Object getData(final String dataId) {
           if (GenericProgramRunner.CONTENT_TO_REUSE.equals(dataId)) return myDescriptor;
           return dataContext.getData(dataId);

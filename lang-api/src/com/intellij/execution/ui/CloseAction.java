@@ -17,18 +17,18 @@ package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.runners.RunnerInfo;
+import com.intellij.execution.Executor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 
 public class CloseAction extends AnAction {
-  private RunnerInfo myInfo;
   private RunContentDescriptor myContentDescriptor;
   private final Project myProject;
+  private Executor myExecutor;
 
-  public CloseAction(RunnerInfo info, RunContentDescriptor contentDescriptor, Project project) {
-    myInfo = info;
+  public CloseAction(Executor executor, RunContentDescriptor contentDescriptor, Project project) {
+    myExecutor = executor;
     myContentDescriptor = contentDescriptor;
     myProject = project;
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
@@ -42,10 +42,10 @@ public class CloseAction extends AnAction {
     if (myContentDescriptor == null) {
       return;
     }
-    final boolean removedOk = ExecutionManager.getInstance(myProject).getContentManager().removeRunContent(myInfo, myContentDescriptor);
+    final boolean removedOk = ExecutionManager.getInstance(myProject).getContentManager().removeRunContent(myExecutor, myContentDescriptor);
     if (removedOk) {
       myContentDescriptor = null;
-      myInfo = null;
+      myExecutor = null;
     }
   }
 

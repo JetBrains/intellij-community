@@ -6,7 +6,6 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
@@ -26,17 +25,17 @@ public class JavaExecutionUtil {
   private JavaExecutionUtil() {
   }
 
-  public static boolean execute(@NotNull final Project project, String contentName,
+  public static boolean executeRun(@NotNull final Project project, String contentName,
                       final DataContext dataContext) throws ExecutionException {
-    return execute(project, contentName, dataContext, null);
+    return executeRun(project, contentName, dataContext, null);
   }
 
-  public static boolean execute(@NotNull final Project project, String contentName, DataContext dataContext, Filter[] filters) throws ExecutionException {
+  public static boolean executeRun(@NotNull final Project project, String contentName, DataContext dataContext, Filter[] filters) throws ExecutionException {
     final JavaParameters cmdLine = JavaParameters.JAVA_PARAMETERS.getData(dataContext);
     final DefaultRunProfile profile = new DefaultRunProfile(project, cmdLine, contentName, filters);
     final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
     if (runner != null) {
-      runner.execute(profile, dataContext, null, null);
+      runner.execute(DefaultRunExecutor.getRunExecutorInstance(), profile, dataContext, null, null);
       return true;
     }
 
@@ -57,7 +56,7 @@ public class JavaExecutionUtil {
     }
 
     public RunProfileState getState(DataContext context,
-                                    RunnerInfo runnerInfo,
+                                    Executor executor,
                                     RunnerSettings runnerSettings,
                                     ConfigurationPerRunnerSettings configurationSettings) {
       final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {

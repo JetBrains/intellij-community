@@ -518,7 +518,7 @@ class RunConfigurable extends BaseConfigurable {
   private void updateDialog() {
     if (myRunDialog == null) return;
     final StringBuilder buffer = new StringBuilder();
-    buffer.append(myRunDialog.getRunnerInfo().getId());
+    buffer.append(myRunDialog.getExecutor().getId());
     final SingleConfigurationConfigurable<RunConfiguration> configuration = getSelectedConfiguration();
     if (configuration != null) {
       buffer.append(" - ");

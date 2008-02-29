@@ -7,7 +7,6 @@ import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
@@ -63,7 +62,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   }
 
   public RunProfileState getState(final DataContext context,
-                                  final RunnerInfo runnerInfo,
+                                  final Executor executor,
                                   RunnerSettings runnerSettings,
                                   ConfigurationPerRunnerSettings configurationSettings) {
     final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
@@ -107,7 +106,6 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       }
     };
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
-    state.setModulesToCompile(getModules());
     return state;
   }
 

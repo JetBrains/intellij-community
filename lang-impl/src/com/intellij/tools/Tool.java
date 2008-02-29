@@ -224,7 +224,7 @@ public class Tool {
         final ToolRunProfile profile = new ToolRunProfile(this, dataContext);
         final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
         assert runner != null;
-        runner.execute(profile, dataContext, null, null);
+        runner.execute(new DefaultRunExecutor(), profile, dataContext, null, null);
       }
       else {
         GeneralCommandLine commandLine = createCommandLine(dataContext);

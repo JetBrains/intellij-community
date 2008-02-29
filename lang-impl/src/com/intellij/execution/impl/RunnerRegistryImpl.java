@@ -16,9 +16,6 @@ import java.util.List;
 public class RunnerRegistryImpl extends RunnerRegistry {
   private final List<ProgramRunner> myRunnersOrder = new ArrayList<ProgramRunner>();
 
-  public RunnerRegistryImpl() {
-  }
-
   @NotNull
   public String getComponentName() {
     return "RunnerRegistryImpl";
@@ -77,7 +74,7 @@ public class RunnerRegistryImpl extends RunnerRegistry {
   public ProgramRunner findRunnerById(String id) {
     ProgramRunner[] registeredRunners = getRegisteredRunners();
     for (ProgramRunner registeredRunner : registeredRunners) {
-      if (Comparing.equal(id, registeredRunner.getInfo().getId())) {
+      if (Comparing.equal(id, registeredRunner.getRunnerId())) {
         return registeredRunner;
       }
     }

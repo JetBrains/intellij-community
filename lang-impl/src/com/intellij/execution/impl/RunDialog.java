@@ -1,8 +1,8 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -16,22 +16,22 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 public class RunDialog extends DialogWrapper {
-  private final RunnerInfo myRunnerInfo;
   private final Project myProject;
   private RunConfigurable myConfigurable;
   private JComponent myCenterPanel;
   @NonNls public static String HELP_ID = "reference.dialogs.rundebug";
+  private Executor myExecutor;
 
-  public RunDialog(final Project project, final RunnerInfo runnerInfo) {
+  public RunDialog(final Project project, final Executor executor) {
     super(project, true);
     myProject = project;
-    myRunnerInfo = runnerInfo;
+    myExecutor = executor;
 
-    final String title = runnerInfo.getId();
+    final String title = executor.getId();
     setTitle(title);
 
-    setOKButtonText(runnerInfo.getStartActionText());
-    setOKButtonIcon(runnerInfo.getIcon());
+    setOKButtonText(executor.getStartActionText());
+    setOKButtonIcon(executor.getIcon());
 
     myConfigurable = new RunConfigurable(project, this);
     init();
@@ -102,7 +102,7 @@ public class RunDialog extends DialogWrapper {
     }
   }
 
-  public RunnerInfo getRunnerInfo() {
-    return myRunnerInfo;
+  public Executor getExecutor() {
+    return myExecutor;
   }
 }

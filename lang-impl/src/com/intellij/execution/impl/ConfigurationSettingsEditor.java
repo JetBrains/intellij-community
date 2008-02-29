@@ -1,12 +1,11 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.RunnerRegistry;
-import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -66,9 +65,9 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
       for (final Executor executor : executors) {
         for (ProgramRunner runner : runners) {
           if (runner.canRun(executor.getId(), myConfiguration)) {
-            JComponent perRunnerSettings = createCompositePerRunnerSettings(runner);
+            JComponent perRunnerSettings = createCompositePerRunnerSettings(executor, runner);
             if (perRunnerSettings != null) {
-              myRunnersComponent.addRunnerComponent(runner, perRunnerSettings);
+              myRunnersComponent.addExecutorComponent(executor, perRunnerSettings);
             }
           }
         }
@@ -93,12 +92,12 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
     }
   }
 
-  private JComponent createCompositePerRunnerSettings(final ProgramRunner runner) {
+  private JComponent createCompositePerRunnerSettings(final Executor executor, final ProgramRunner runner) {
     final SettingsEditor<JDOMExternalizable> configEditor = myConfiguration.getRunnerSettingsEditor(runner);
     SettingsEditor<JDOMExternalizable> runnerEditor;
 
     try {
-      runnerEditor = runner.getSettingsEditor(myConfiguration);
+      runnerEditor = runner.getSettingsEditor(executor, myConfiguration);
     }
     catch (AbstractMethodError error) {
       // this is stub code for plugin copatibility!
@@ -110,28 +109,22 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
     SettingsEditor<RunnerAndConfigurationSettingsImpl> wrappedRunEditor = null;
     if (configEditor != null) {
       wrappedConfigEditor = new SettingsEditorWrapper<RunnerAndConfigurationSettingsImpl, JDOMExternalizable>(configEditor,
-                                                                                                              new Convertor<RunnerAndConfigurationSettingsImpl, JDOMExternalizable>() {
-                                                                                                                public JDOMExternalizable convert(
-                                                                                                                  RunnerAndConfigurationSettingsImpl configurationSettings) {
-                                                                                                                  return configurationSettings
-                                                                                                                    .getConfigurationSettings(
-                                                                                                                      runner).getSettings();
-                                                                                                                }
-                                                                                                              });
+                                          new Convertor<RunnerAndConfigurationSettingsImpl, JDOMExternalizable>() {
+                                            public JDOMExternalizable convert(RunnerAndConfigurationSettingsImpl configurationSettings) {
+                                              return configurationSettings.getConfigurationSettings(runner).getSettings();
+                                            }
+                                          });
       myRunnerEditors.add(wrappedConfigEditor);
       Disposer.register(this, wrappedConfigEditor);
     }
 
     if (runnerEditor != null) {
       wrappedRunEditor = new SettingsEditorWrapper<RunnerAndConfigurationSettingsImpl, JDOMExternalizable>(runnerEditor,
-                                                                                                           new Convertor<RunnerAndConfigurationSettingsImpl, JDOMExternalizable>() {
-                                                                                                             public JDOMExternalizable convert(
-                                                                                                               RunnerAndConfigurationSettingsImpl configurationSettings) {
-                                                                                                               return configurationSettings
-                                                                                                                 .getRunnerSettings(runner)
-                                                                                                                 .getData();
-                                                                                                             }
-                                                                                                           });
+                                         new Convertor<RunnerAndConfigurationSettingsImpl, JDOMExternalizable>() {
+                                           public JDOMExternalizable convert(RunnerAndConfigurationSettingsImpl configurationSettings) {
+                                             return configurationSettings.getRunnerSettings(runner).getData();
+                                           }
+                                         });
       myRunnerEditors.add(wrappedRunEditor);
       Disposer.register(this, wrappedRunEditor);
     }
@@ -187,23 +180,22 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
       updateRunnerComponent();
       myRunnersList.setCellRenderer(new ColoredListCellRenderer() {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          ProgramRunner runner = (ProgramRunner)value;
-          RunnerInfo info = runner.getInfo();
-          setIcon(info.getIcon());
-          append(info.getId(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          Executor executor = (Executor)value;
+          setIcon(executor.getIcon());
+          append(executor.getId(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       });
     }
 
     private void updateRunnerComponent() {
-      ProgramRunner runner = (ProgramRunner)myRunnersList.getSelectedValue();
-      myLayout.show(myRunnerPanel, runner != null ? runner.getInfo().getId() : NO_RUNNER_COMPONENT);
+      Executor executor = (Executor)myRunnersList.getSelectedValue();
+      myLayout.show(myRunnerPanel, executor != null ? executor.getId() : NO_RUNNER_COMPONENT);
       myRunnersPanel.revalidate();
     }
 
-    public void addRunnerComponent(ProgramRunner runner, JComponent component) {
-      myRunnerPanel.add(component, runner.getInfo().getId());
-      myListModel.addElement(runner);
+    public void addExecutorComponent(Executor executor, JComponent component) {
+      myRunnerPanel.add(component, executor.getId());
+      myListModel.addElement(executor);
       ListScrollingUtil.ensureSelectionExists(myRunnersList);
     }
 

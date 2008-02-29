@@ -9,41 +9,31 @@ import javax.swing.*;
 /**
  * @author spleaner
  */
-public class Executor {
+public abstract class Executor {
   public static final ExtensionPointName<Executor> EXECUTOR_EXTENSION_NAME = ExtensionPointName.create("com.intellij.executor");
 
-  private Icon myIcon;
-  private String myActionName;
-  private String myId;
-  private String myContextActionId;
-
-  public Executor(final Icon icon, @NonNls @NotNull final String id, @NotNull final String actionName, @NotNull @NonNls final String contextActionId) {
-    myIcon = icon;
-    myId = id;
-    myActionName = actionName;
-    myContextActionId = contextActionId;
-  }
-
-  public Icon getIcon() {
-    return myIcon;
-  }
+  public abstract String getToolWindowId();
+  public abstract Icon getToolWindowIcon();
 
   @NotNull
-  public String getActionName() {
-    return myActionName;
-  }
+  public abstract Icon getIcon();
+  public abstract Icon getDisabledIcon();
+
+  public abstract String getDescription();
+
+  @NotNull
+  public abstract String getActionName();
 
   @NotNull
   @NonNls
-  public String getId() {
-    return myId;
-  }
+  public abstract String getId();
 
-  public String getStartActionText() {
-    return myId;
-  }
+  @NotNull
+  public abstract String getStartActionText();
 
-  public String getContextActionId() {
-    return myContextActionId;
-  }
+  @NonNls
+  public abstract String getContextActionId();
+
+  @NonNls
+  public abstract String getHelpId();
 }

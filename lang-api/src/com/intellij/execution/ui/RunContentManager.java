@@ -15,15 +15,17 @@
  */
 package com.intellij.execution.ui;
 
+import com.intellij.execution.Executor;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface RunContentManager {
+  @Nullable
   RunContentDescriptor getSelectedContent();
-  RunContentDescriptor getSelectedContent(RunnerInfo runnerInfo);
+  @Nullable
+  RunContentDescriptor getSelectedContent(Executor runnerInfo);
 
   /**
    * to reduce number of open contents RunContentManager reuses
@@ -33,18 +35,19 @@ public interface RunContentManager {
    * @param dataContext
    * @return
    */
-  RunContentDescriptor getReuseContent(ProgramRunner requestor, DataContext dataContext);
+  @Nullable
+  RunContentDescriptor getReuseContent(Executor requestor, DataContext dataContext);
 
-  void showRunContent(@NotNull RunnerInfo info, RunContentDescriptor descriptor, RunContentDescriptor contentToReuse);
-  void showRunContent(@NotNull RunnerInfo info, RunContentDescriptor descriptor);
-  void hideRunContent(@NotNull RunnerInfo info, RunContentDescriptor descriptor);
-  boolean removeRunContent(@NotNull RunnerInfo info, RunContentDescriptor descriptor);
+  void showRunContent(@NotNull Executor executor, RunContentDescriptor descriptor, RunContentDescriptor contentToReuse);
+  void showRunContent(@NotNull Executor executor, RunContentDescriptor descriptor);
+  void hideRunContent(@NotNull Executor executor, RunContentDescriptor descriptor);
+  boolean removeRunContent(@NotNull Executor executor, RunContentDescriptor descriptor);
 
-  void toFrontRunContent(ProgramRunner requestor, RunContentDescriptor descriptor);
-  void toFrontRunContent(RunnerInfo requestor, ProcessHandler handler);
+  void toFrontRunContent(Executor requestor, RunContentDescriptor descriptor);
+  void toFrontRunContent(Executor requestor, ProcessHandler handler);
 
   void addRunContentListener(RunContentListener listener);
   void removeRunContentListener(RunContentListener listener);
 
-  void addRunContentListener(RunContentListener myContentListener, RunnerInfo runnerInfo);
+  void addRunContentListener(RunContentListener myContentListener, Executor executor);
 }

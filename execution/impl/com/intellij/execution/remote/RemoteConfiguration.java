@@ -8,8 +8,8 @@ import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -49,7 +49,7 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   }
 
   public RunProfileState getState(final DataContext context,
-                                  final RunnerInfo runnerInfo,
+                                  final Executor executor,
                                   RunnerSettings runnerSettings,
                                   ConfigurationPerRunnerSettings configurationSettings) {
     GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)runnerSettings.getData());

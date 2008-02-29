@@ -3,12 +3,20 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.impl.*;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerContextListener;
+import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.ModuleRunProfile;
+import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.execution.configurations.RemoteState;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -94,7 +102,8 @@ public class DebuggerPanelsManager implements ProjectComponent {
 
   public
   @Nullable
-  RunContentDescriptor attachVirtualMachine(ModuleRunProfile runProfile,
+  RunContentDescriptor attachVirtualMachine(Executor executor,
+                                            ModuleRunProfile runProfile,
                                             ProgramRunner runner,
                                             RunProfileState state,
                                             RunContentDescriptor reuseContent,
@@ -102,7 +111,7 @@ public class DebuggerPanelsManager implements ProjectComponent {
                                             boolean pollConnection) throws ExecutionException {
 
     final DebuggerSession debuggerSession =
-      DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(runner, runProfile, state, remoteConnection, pollConnection);
+      DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(executor, runner, runProfile, state, remoteConnection, pollConnection);
     if (debuggerSession == null) {
       return null;
     }
@@ -138,7 +147,7 @@ public class DebuggerPanelsManager implements ProjectComponent {
   public void projectOpened() {
     RunContentManager contentManager = ExecutionManager.getInstance(myProject).getContentManager();
     LOG.assertTrue(contentManager != null, "Content manager is null");
-    contentManager.addRunContentListener(myContentListener, GenericDebuggerRunner.DEBUGGER_INFO);
+    contentManager.addRunContentListener(myContentListener, DefaultDebugExecutor.getDebugExecutorInstance());
   }
 
   public void projectClosed() {

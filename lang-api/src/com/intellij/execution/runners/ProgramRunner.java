@@ -17,7 +17,7 @@ package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -25,21 +25,23 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.JDOMExternalizable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface ProgramRunner<Settings extends JDOMExternalizable, Parameters> {
+public interface ProgramRunner<Settings extends JDOMExternalizable> {
   ExtensionPointName<ProgramRunner> PROGRAM_RUNNER_EP = ExtensionPointName.create("com.intellij.programRunner");
 
   interface Callback {
     void processStarted(RunContentDescriptor descriptor);
   }
 
+  @NotNull @NonNls
+  String getRunnerId();
+
   boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile);
 
   Settings createConfigurationData(ConfigurationInfoProvider settingsProvider);
-
-  void patch(Parameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException;
 
   void checkConfiguration(RunnerSettings settings, ConfigurationPerRunnerSettings configurationPerRunnerSettings)
     throws RuntimeConfigurationException;
@@ -48,22 +50,16 @@ public interface ProgramRunner<Settings extends JDOMExternalizable, Parameters> 
 
   AnAction[] createActions(ExecutionResult executionResult);
 
-  RunnerInfo getInfo();
+  SettingsEditor<Settings> getSettingsEditor(final Executor executor, RunConfiguration configuration);
 
-  SettingsEditor<Settings> getSettingsEditor(RunConfiguration configuration);
-
-  void execute(@NotNull RunProfile profile,
+  void execute(@NotNull final Executor executor, @NotNull RunProfile profile,
                @NotNull DataContext dataContext,
-               RunnerSettings settings,
+               @Nullable RunnerSettings settings,
                ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException;
 
-  void execute(@NotNull RunProfile profile,
+  void execute(@NotNull final Executor executor, @NotNull RunProfile profile,
                @NotNull DataContext dataContext,
-               @NotNull RunnerSettings settings,
+               @Nullable RunnerSettings settings,
                ConfigurationPerRunnerSettings configurationSettings,
                @Nullable final Callback callback) throws ExecutionException;
-
-  void execute(@NotNull RunnerAndConfigurationSettings settings,
-               @NotNull DataContext dataContext) throws ExecutionException;
-
 }

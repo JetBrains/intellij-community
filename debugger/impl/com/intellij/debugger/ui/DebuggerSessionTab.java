@@ -21,6 +21,8 @@ import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
@@ -107,7 +109,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
               if (debuggerSettings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION) {
                 try {
-                  ExecutionManager.getInstance(getProject()).getContentManager().hideRunContent(myRunner.getInfo(), myRunContentDescriptor);
+                  ExecutionManager.getInstance(getProject()).getContentManager().hideRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
                 }
                 catch (NullPointerException e) {
                   //if we can get closeProcess after the project have been closed
@@ -234,7 +236,9 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     }
 
     DefaultActionGroup group = new DefaultActionGroup();
-    RestartAction restarAction = new RestartAction(myRunner, myConfiguration, myRunContentDescriptor.getProcessHandler(), DEBUG_AGAIN_ICON,
+    final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
+    RestartAction restarAction = new RestartAction(executor,
+                                                   myRunner, myConfiguration, myRunContentDescriptor.getProcessHandler(), DEBUG_AGAIN_ICON,
                                                    myRunContentDescriptor, myRunnerSettings, myConfigurationSettings);
     group.add(restarAction);
     restarAction.registerShortcut(myUi.getComponent());
@@ -256,8 +260,8 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     group.addSeparator();
 
-    group.add(new CloseAction(myRunner.getInfo(), myRunContentDescriptor, getProject()));
-    group.add(new ContextHelpAction(myRunner.getInfo().getHelpId()));
+    group.add(new CloseAction(executor, myRunContentDescriptor, getProject()));
+    group.add(new ContextHelpAction(executor.getHelpId()));
 
     myUi.setLeftToolbar(group, ActionPlaces.DEBUGGER_TOOLBAR);
 
@@ -360,7 +364,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   protected void toFront() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ((WindowManagerImpl)WindowManager.getInstance()).getFrame(getProject()).toFront();
-      ExecutionManager.getInstance(getProject()).getContentManager().toFrontRunContent(myRunner, myRunContentDescriptor);
+      ExecutionManager.getInstance(getProject()).getContentManager().toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
     }
   }
 
