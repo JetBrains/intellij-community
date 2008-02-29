@@ -35,4 +35,5 @@ public interface GroovyIcons {
   public static final Icon PROPERTY = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/property.png");
   public static final Icon METHOD = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/method.png");
   public static final Icon DYNAMIC = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/dynamicProperty.png");
+  public static final Icon DEF = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/def.png");
 }
