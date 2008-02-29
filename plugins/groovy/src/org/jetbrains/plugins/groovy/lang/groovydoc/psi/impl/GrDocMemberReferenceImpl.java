@@ -18,25 +18,18 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.Function;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 
 /**
  * @author ilyas
@@ -106,12 +99,6 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
   }
 
   public Object[] getVariants() {
-    ArrayList<ResolveResult> candidates = getCandidates();
-    return filterCandidates(candidates);
-  }
-
-  private ArrayList<ResolveResult> getCandidates() {
-    ArrayList<ResolveResult> candidates = new ArrayList<ResolveResult>();
     GrDocReferenceElement holder = getReferenceHolder();
     PsiElement resolved;
     if (holder != null) {
@@ -121,16 +108,15 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
       resolved = getEnclosingClassOrFile(this);
     }
     if (resolved != null) {
-      PropertyResolverProcessor processor = new PropertyResolverProcessor(null, this, true);
-      resolved.processDeclarations(processor, PsiSubstitutor.EMPTY, resolved, this);
-      candidates.addAll(Arrays.asList(processor.getCandidates()));
+      PropertyResolverProcessor propertyProcessor = new PropertyResolverProcessor(null, this, true);
+      resolved.processDeclarations(propertyProcessor, PsiSubstitutor.EMPTY, resolved, this);
+      GroovyResolveResult[] propertyCandidates = propertyProcessor.getCandidates();
+      MethodResolverProcessor methodProcessor = new MethodResolverProcessor(null, this, true, false, null, PsiType.EMPTY_ARRAY);
+      resolved.processDeclarations(methodProcessor, PsiSubstitutor.EMPTY, resolved, this);
+      GroovyResolveResult[] methodCandidates = methodProcessor.getCandidates();
+      return ArrayUtil.mergeArrays(propertyCandidates, methodCandidates, Object.class);
     }
-    if (holder != null && resolved != null) {
-      MethodResolverProcessor processor = new MethodResolverProcessor(null, this, true, true, null, PsiType.EMPTY_ARRAY);
-      resolved.processDeclarations(processor, PsiSubstitutor.EMPTY, resolved, this);
-      candidates.addAll(Arrays.asList(processor.getCandidates()));
-    }
-    return candidates;
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   protected PsiElement getEnclosingClassOrFile(PsiElement element) {
@@ -143,18 +129,6 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
     }
     return parent;
   }
-
-  private static PsiElement[] filterCandidates(Collection<ResolveResult> candidates) {
-    Function<ResolveResult, PsiElement> fun = new Function<ResolveResult, PsiElement>() {
-      public PsiElement fun(ResolveResult result) {
-        PsiElement element = result.getElement();
-        if (element instanceof PsiMethod && ((PsiMethod) element).isConstructor()) return null;
-        return element;
-      }
-    };
-    return ContainerUtil.mapNotNull(candidates, fun).toArray(PsiElement.EMPTY_ARRAY);
-  }
-
 
   protected abstract ResolveResult[] multiResolveImpl();
 
