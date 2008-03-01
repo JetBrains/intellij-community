@@ -184,7 +184,7 @@ public class CompleteReferenceExpression {
     GroovyResolveResult[] candidates = processor.getCandidates();
     if (candidates.length == 0 && sameQualifier.length == 0) return PsiNamedElement.EMPTY_ARRAY;
     candidates = filterStaticsOK(candidates);
-    PsiElement[] elements = ResolveUtil.mapToElements(candidates);
+    PsiElement[] elements = PsiUtil.mapToElements(candidates);
     LookupElement[] propertyLookupElements = addPretendedProperties(elements);
     Object[] variants = GroovyCompletionUtil.getCompletionVariants(candidates);
     variants = ArrayUtil.mergeArrays(variants, propertyLookupElements, Object.class);

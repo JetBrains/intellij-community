@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 
 /**
  * @author ven
@@ -88,24 +90,34 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
       final PsiClass clazz = (PsiClass) element;
       final String qName = clazz.getQualifiedName();
       if (qName != null) {
-        final GrImportStatement added = file.addImportForClass(clazz);
-        if (!bindsCorrectly(element)) {
-          file.removeImport(added);
-          final GrCodeReferenceElement qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
-          getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
-          return qualifiedRef;
-        }
+        if (mayInsertImport()) {
+          final GrImportStatement added = file.addImportForClass(clazz);
+          if (!bindsCorrectly(element)) {
+            file.removeImport(added);
+            return bindWithQualifiedRef(qName);
+          }
 
-        return this;
+          return this;
+        }
+      } else {
+        AbstractMethodError        return bindWithQualifiedRef(qName);
       }
     } else if (element instanceof PsiPackage) {
       final String qName = ((PsiPackage) element).getQualifiedName();
-      final GrCodeReferenceElement qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
-      getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
-      return qualifiedRef;
+      return bindWithQualifiedRef(qName);
     }
 
     throw new IncorrectOperationException("Cannot bind");
+  }
+
+  private boolean mayInsertImport() {
+    return PsiTreeUtil.getParentOfType(this, GrDocComment.class) == null;
+  }
+
+  private PsiElement bindWithQualifiedRef(String qName) {
+    final GrCodeReferenceElement qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
+    getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
+    return qualifiedRef;
   }
 
   protected boolean bindsCorrectly(PsiElement element) {

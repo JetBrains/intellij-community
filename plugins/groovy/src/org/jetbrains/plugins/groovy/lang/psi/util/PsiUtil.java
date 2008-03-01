@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -45,8 +46,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -349,7 +352,7 @@ public class PsiUtil {
   }
 
   public static void shortenReference(GrCodeReferenceElement ref) {
-    if (ref.getQualifier() != null) {
+    if (ref.getQualifier() != null && mayShorten(ref)) {
       final PsiElement resolved = ref.resolve();
       if (resolved instanceof PsiClass) {
         ref.setQualifier(null);
@@ -360,6 +363,10 @@ public class PsiUtil {
         }
       }
     }
+  }
+
+  private static boolean mayShorten(GrCodeReferenceElement ref) {
+    return PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null;
   }
 
   @Nullable
@@ -451,5 +458,14 @@ public class PsiUtil {
     }
     return false;
 
+  }
+
+  public static PsiElement[] mapToElements(GroovyResolveResult[] candidates) {
+    PsiElement[] elements = new PsiElement[candidates.length];
+    for (int i = 0; i < elements.length; i++) {
+      elements[i] = candidates[i].getElement();
+    }
+
+    return elements;
   }
 }

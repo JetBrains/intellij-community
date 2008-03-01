@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
@@ -109,11 +110,11 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
     }
     if (resolved != null) {
       PropertyResolverProcessor propertyProcessor = new PropertyResolverProcessor(null, this, true);
-      resolved.processDeclarations(propertyProcessor, PsiSubstitutor.EMPTY, resolved, this);
-      GroovyResolveResult[] propertyCandidates = propertyProcessor.getCandidates();
+      resolved.processDeclarations(propertyProcessor, PsiSubstitutor.EMPTY, null, this);
+      PsiElement[] propertyCandidates = PsiUtil.mapToElements(propertyProcessor.getCandidates());
       MethodResolverProcessor methodProcessor = new MethodResolverProcessor(null, this, true, false, null, PsiType.EMPTY_ARRAY);
-      resolved.processDeclarations(methodProcessor, PsiSubstitutor.EMPTY, resolved, this);
-      GroovyResolveResult[] methodCandidates = methodProcessor.getCandidates();
+      resolved.processDeclarations(methodProcessor, PsiSubstitutor.EMPTY, null, this);
+      PsiElement[] methodCandidates = PsiUtil.mapToElements(methodProcessor.getCandidates());
       return ArrayUtil.mergeArrays(propertyCandidates, methodCandidates, Object.class);
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
