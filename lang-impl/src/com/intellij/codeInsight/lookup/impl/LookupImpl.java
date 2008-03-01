@@ -1,15 +1,15 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.CompletionBundle;
 import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
-import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -294,7 +294,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
     boolean isEmpty = array.isEmpty();
     if (isEmpty){
-      LookupItem<String> item = new LookupItem<String>(CompletionBundle.message("completion.no.suggestions"), "");
+      LookupItem<String> item = new LookupItem<String>(LangBundle.message("completion.no.suggestions"), "");
       item.setAttribute(EMPTY_ITEM_ATTRIBUTE, "");
       model.addElement(item);
       array.add(item);

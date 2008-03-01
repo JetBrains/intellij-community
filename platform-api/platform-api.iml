@@ -15,6 +15,7 @@
     <orderEntry type="library" exported="" name="jgoodies-forms" level="project" />
     <orderEntry type="module" module-name="forms_rt" exported="" />
     <orderEntry type="library" exported="" name="commons-codec" level="project" />
+    <orderEntry type="module" module-name="platform-resources_eng" exported="" />
     <orderEntryProperties />
   </component>
 </module>
