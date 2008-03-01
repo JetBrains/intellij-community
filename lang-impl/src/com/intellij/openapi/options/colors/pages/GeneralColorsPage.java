@@ -35,18 +35,17 @@ import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
-import com.intellij.openapi.options.OptionsBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Map;
-
-import org.jetbrains.annotations.NotNull;
 
 public class GeneralColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATT_DESCRIPTORS = new AttributesDescriptor[] {
