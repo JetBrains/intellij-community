@@ -18,7 +18,7 @@ public class FilesystemToolwindowOpener implements ProjectComponent {
   }
 
   public void projectOpened() {
-    final VirtualFile baseDir = PlatformProjectOpenProcessor.BASE_DIR;
+    final VirtualFile baseDir = ProjectBaseDirectory.getInstance(myProject).BASE_DIR;
     if (baseDir == null || !baseDir.isDirectory()) return;
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {

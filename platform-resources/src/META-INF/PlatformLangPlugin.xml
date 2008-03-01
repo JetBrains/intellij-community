@@ -37,6 +37,8 @@
                     serviceImplementation="com.intellij.usages.impl.rules.DirectoryGroupingRule"/>
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
                         serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
+    <applicationService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
+                        serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
 
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler"/>

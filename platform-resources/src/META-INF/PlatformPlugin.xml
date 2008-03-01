@@ -24,6 +24,8 @@
 
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
                         serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
+    <applicationService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
+                        serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
     
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor"/>
   </extensions>

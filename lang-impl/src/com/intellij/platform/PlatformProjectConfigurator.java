@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,16 +31,17 @@ public class PlatformProjectConfigurator implements ProjectComponent {
   }
 
   private void initDefaultModule() {
-    if (PlatformProjectOpenProcessor.BASE_DIR != null) {
+    final VirtualFile baseDir = ProjectBaseDirectory.getInstance(myProject).BASE_DIR;
+    if (baseDir != null) {
       final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
       final Module[] modules = moduleManager.getModules();
       if (modules.length == 0) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            String imlName = PlatformProjectOpenProcessor.getIprBaseName() + ".iml";
+            String imlName = PlatformProjectOpenProcessor.getIprBaseName(baseDir) + ".iml";
             final Module module = moduleManager.newModule(imlName, ModuleType.EMPTY);
             ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-            rootModel.addContentEntry(PlatformProjectOpenProcessor.BASE_DIR);
+            rootModel.addContentEntry(baseDir);
             rootModel.commit();
           }
         });

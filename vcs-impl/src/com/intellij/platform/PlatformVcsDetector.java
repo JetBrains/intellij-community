@@ -24,7 +24,7 @@ public class PlatformVcsDetector implements ProjectComponent {
   public void projectOpened() {
     StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
       public void run() {
-        VirtualFile file = PlatformProjectOpenProcessor.getBaseDir(myProject.getBaseDir());
+        VirtualFile file = ProjectBaseDirectory.getInstance(myProject).getBaseDir(myProject.getBaseDir());
         AbstractVcs vcs = myVcsManager.findVersioningVcs(file);
         if (vcs != null && vcs != myVcsManager.getVcsFor(file)) {
           myVcsManager.setAutoDirectoryMapping(file.getPath(), vcs.getName());

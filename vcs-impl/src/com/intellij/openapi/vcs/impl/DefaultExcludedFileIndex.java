@@ -3,15 +3,17 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.platform.ProjectBaseDirectory;
 
 /**
  * @author yole
  */
 public class DefaultExcludedFileIndex extends ExcludedFileIndex {
+  private Project myProject;
   private VirtualFile myBaseDir;
 
   public DefaultExcludedFileIndex(final Project project) {
+    myProject = project;
     myBaseDir = project.getBaseDir();
   }
 
@@ -24,9 +26,6 @@ public class DefaultExcludedFileIndex extends ExcludedFileIndex {
   }
 
   private VirtualFile getBaseDir() {
-    if (PlatformProjectOpenProcessor.BASE_DIR != null) {
-      return PlatformProjectOpenProcessor.BASE_DIR;
-    }
-    return myBaseDir;
+    return ProjectBaseDirectory.getInstance(myProject).getBaseDir(myBaseDir);
   }
 }

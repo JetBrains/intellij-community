@@ -3,14 +3,14 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.platform.ProjectBaseDirectory;
 
 /**
  * @author yole
  */
 public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
   public String getProjectTitle(final Project project) {
-    VirtualFile baseDir = PlatformProjectOpenProcessor.BASE_DIR;
+    VirtualFile baseDir = ProjectBaseDirectory.getInstance(project).BASE_DIR;
     if (baseDir != null) {
       return FileUtil.toSystemDependentName(baseDir.getPath());
     }
@@ -19,7 +19,7 @@ public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
 
   public String getFileTitle(final Project project, final VirtualFile file) {
     String url = file.getPresentableUrl();
-    VirtualFile baseDir = PlatformProjectOpenProcessor.BASE_DIR;
+    VirtualFile baseDir = ProjectBaseDirectory.getInstance(project).BASE_DIR;
     if (baseDir == null) baseDir = project.getBaseDir();
     if (baseDir != null) {
       //noinspection ConstantConditions

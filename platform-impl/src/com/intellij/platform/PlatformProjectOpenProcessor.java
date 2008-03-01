@@ -31,19 +31,18 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     return null;
   }
 
-  public static VirtualFile BASE_DIR = null;
-
   public boolean canOpenProject(final VirtualFile file) {
     return file.isDirectory() || !file.getFileType().isBinary();
   }
 
   @Nullable
   public Project doOpenProject(@NotNull final VirtualFile virtualFile, final Project projectToClose, final boolean forceOpenInNewFrame) {
+    VirtualFile baseDir = null;
     if (virtualFile.isDirectory()) {
-      BASE_DIR = virtualFile;
+      baseDir = virtualFile;
     }
 
-    final File projectFile = new File(getIprBaseName() + ".ipr");
+    final File projectFile = new File(getIprBaseName(baseDir) + ".ipr");
 
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project = null;
@@ -59,17 +58,18 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       project = projectManager.newProject(projectFile.getPath(), true, false);
     }
     if (project == null) return null;
+    ProjectBaseDirectory.getInstance(project).BASE_DIR = baseDir;
     openFileFromCommandLine(project, virtualFile);
     projectManager.openProject(project);
 
     return project;
   }
 
-  public static String getIprBaseName() {
+  public static String getIprBaseName(VirtualFile baseDir) {
     @NonNls String projectsDir = PathManager.getConfigPath() + "/platform/projects/";
     @NonNls String projectName;
-    if (BASE_DIR != null && BASE_DIR.isDirectory()) {
-      projectName = BASE_DIR.getPath().replace(":", "_").replace("/", "_").replace("\\", "_");
+    if (baseDir != null && baseDir.isDirectory()) {
+      projectName = baseDir.getPath().replace(":", "_").replace("/", "_").replace("\\", "_");
     }
     else {
       projectName = "dummy";
@@ -102,12 +102,5 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
   public String getName() {
     return "text editor";
-  }
-
-  public static VirtualFile getBaseDir(final VirtualFile baseDir) {
-    if (BASE_DIR != null) {
-      return BASE_DIR;
-    }
-    return baseDir;
   }
 }
