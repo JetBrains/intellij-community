@@ -91,6 +91,9 @@
   <projectService serviceInterface="com.intellij.codeEditor.printing.ExportToHTMLSettings"
                   serviceImplementation="com.intellij.codeEditor.printing.ExportToHTMLSettings"/>
 
+  <projectService serviceInterface="com.intellij.diagnostic.logging.LogConsolePreferences"
+                  serviceImplementation="com.intellij.diagnostic.logging.LogConsolePreferences"/>
+
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage"/>
 
