@@ -429,7 +429,7 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
   }
 
   public void addLogConsole(final String name, final String path, final long skippedContent){
-    final LogConsole log = new LogConsole(project, new File(path), skippedContent, name) {
+    final LogConsole log = new LogConsole(project, new File(path), skippedContent, name, true) {
       public boolean isActive() {
         return tabbedPane.getSelectedComponent() == this;
       }

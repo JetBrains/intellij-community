@@ -132,7 +132,7 @@ class ConsolePanel extends JPanel implements LogConsoleManager, Disposable {
   }
 
   public void addLogConsole(final String name, final String path, final long skippedContent){
-    final LogConsole log = new LogConsole(myConfiguration.getProject(), new File(path), skippedContent, name) {
+    final LogConsole log = new LogConsole(myConfiguration.getProject(), new File(path), skippedContent, name, true) {
       public boolean isActive() {
         return myTabs.getSelectedComponent() == this;
       }
