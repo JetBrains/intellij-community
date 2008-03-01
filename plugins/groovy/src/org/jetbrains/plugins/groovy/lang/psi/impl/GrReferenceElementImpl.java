@@ -100,7 +100,7 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
           return this;
         }
       } else {
-        AbstractMethodError        return bindWithQualifiedRef(qName);
+        return bindWithQualifiedRef(qName);
       }
     } else if (element instanceof PsiPackage) {
       final String qName = ((PsiPackage) element).getQualifiedName();

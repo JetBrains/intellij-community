@@ -230,4 +230,12 @@ public class ResolveUtil {
     return false;
   }
 
+  public static PsiElement[] mapToElements(GroovyResolveResult[] candidates) {
+    PsiElement[] elements = new PsiElement[candidates.length];
+    for (int i = 0; i < elements.length; i++) {
+      elements[i] = candidates[i].getElement();
+    }
+
+    return elements;
+  }
 }
