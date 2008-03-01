@@ -259,12 +259,14 @@ public class RunnerContentUi
     return cell.getCellFor(content);
   }
 
-  private void rebuildToolbar() {
-    rebuildCommonActions();
-    rebuildMinimizedActions();
+  private boolean rebuildToolbar() {
+    boolean hasToolbarContent = rebuildCommonActions();
+    hasToolbarContent |= rebuildMinimizedActions();
+    return hasToolbarContent;
   }
 
-  private void rebuildCommonActions() {
+  private boolean rebuildCommonActions() {
+    boolean hasToolbarContent = false;
     for (Grid each : myCommonActionsPlaceholder.keySet()) {
       Wrapper eachPlaceholder = myCommonActionsPlaceholder.get(each);
       DefaultActionGroup groupToBuild;
@@ -295,11 +297,17 @@ public class RunnerContentUi
         eachPlaceholder.setContent(tb.getComponent());
       }
 
+      if (groupToBuild.getChildrenCount() > 0) {
+        hasToolbarContent = true;
+      }
+
       myContextActions.put(each, contents);
     }
+
+    return hasToolbarContent;
   }
 
-  private void rebuildMinimizedActions() {
+  private boolean rebuildMinimizedActions() {
     for (Grid each : myMinimizedButtonsPlaceholder.keySet()) {
       Wrapper eachPlaceholder = myMinimizedButtonsPlaceholder.get(each);
       ActionToolbar tb = myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myMinimizedViewActions, true);
@@ -310,15 +318,19 @@ public class RunnerContentUi
 
     myTabs.revalidate();
     myTabs.repaint();
+
+    return myMinimizedViewActions.getChildrenCount() > 0;
   }
 
   private void updateTabsUI(final boolean validateNow) {
-    rebuildToolbar();
+    boolean hasToolbarContent = rebuildToolbar();
 
     java.util.List<TabInfo> tabs = myTabs.getTabs();
     for (TabInfo each : tabs) {
-      updateTabUI(each);
+      hasToolbarContent |= updateTabUI(each);
     }
+
+    myTabs.setHideTabs(!hasToolbarContent);
 
     myTabs.updateTabActions(validateNow);
 
@@ -327,12 +339,12 @@ public class RunnerContentUi
     }
   }
 
-  private void updateTabUI(TabInfo tab) {
+  private boolean updateTabUI(TabInfo tab) {
     String title = getTabFor(tab).getDisplayName();
     Icon icon = getTabFor(tab).getIcon();
 
     Grid grid = getGridFor(tab);
-    grid.updateGridUI();
+    boolean hasToolbarContent = grid.updateGridUI();
 
     List<Content> contents = grid.getContents();
     if (title == null) {
@@ -353,6 +365,8 @@ public class RunnerContentUi
 
 
     tab.setText(title).setIcon(grid.getTab().isDefault() ? null : icon);
+
+    return hasToolbarContent;
   }
 
   private void restoreLastUiState() {

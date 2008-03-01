@@ -127,10 +127,22 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
     return myViewContext.getStateFor(content);
   }
 
-  public void updateGridUI() {
+  public boolean updateGridUI() {
+    boolean hasToolbarContent = true;
+    boolean wasHidden = false;
     for (final GridCell cell : myPlaceInGrid2Cell.values()) {
-      cell.setHideTabs(myContents.size() == 1 && !cell.isDetached());
+      final boolean eachToHide = myContents.size() == 1 && !cell.isDetached();
+      cell.setHideTabs(eachToHide);
+      wasHidden |= eachToHide;
     }
+
+    if (wasHidden) {
+      final Content onlyContent = myContents.get(0);
+      hasToolbarContent = onlyContent.getSearchComponent() != null;      
+    }
+
+
+    return hasToolbarContent;
   }
 
   public boolean isEmpty() {
