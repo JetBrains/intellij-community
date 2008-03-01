@@ -40,8 +40,6 @@
     <include name="nanoxml-2.2.3.jar"/>
     <include name="microba.jar"/>
     <include name="alloy.jar"/>
-    <include name="resources.jar"/>
-    <include name="resources_en.jar"/>
     <include name="icons.jar"/>
     <include name="forms_rt.jar"/>
     <include name="oromatcher.jar"/>
@@ -147,7 +145,11 @@
         </fileset>
       </dir>
       <dir name="lib">
-        <fileset dir="${platform.dir}" includes="platform-api.jar"/>
+        <fileset dir="${platform.dir}">
+          <include name="platform-api.jar"/>
+          <include name="resources.jar"/>
+          <include name="resources_en.jar"/>
+        </fileset>
         <fileset dir="${out.dir}/deploy"/>
         <fileset refid="idea.libraries"/>
       </dir>
