@@ -44,6 +44,7 @@
     <include name="resources_en.jar"/>
     <include name="icons.jar"/>
     <include name="forms_rt.jar"/>
+    <include name="oromatcher.jar"/>
   </fileset>
 
   <path id="classpath.lib">
