@@ -51,4 +51,8 @@ public interface ViewContext extends Disposable {
   void validate(Content content, ActionCallback.Runnable toRestore);
 
   void restoreLayout();
+
+  boolean isMinimizeActionEnabled();
+
+  boolean isMoveToGridActionEnabled();
 }

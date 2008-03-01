@@ -17,7 +17,7 @@ public class CloseViewAction extends BaseRunnerViewAction {
   }
 
   public static boolean isEnabled(ViewContext context, Content[] content, String place) {
-    if (content.length == 0) {
+    if (!context.isMinimizeActionEnabled() || content.length == 0) {
       return false;
     }
 

@@ -107,6 +107,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     }
 
     myUi = RunnerLayoutUi.Factory.getInstance(myProject).create("JavaRunner", myExecutor.getId(), myRunProfile.getName(), this);
+    myUi.setMoveToGridActionEnabled(false).setMinimizeActionEnabled(false);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited, myUi.getComponent(), this);

@@ -8,7 +8,7 @@ import com.intellij.ui.content.Content;
 
 public class MoveToGridAction extends BaseRunnerViewAction {
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
-    if (content.length != 1) {
+    if (!context.isMoveToGridActionEnabled() || content.length != 1) {
       setEnabled(e, false);
       return;
     }

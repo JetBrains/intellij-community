@@ -69,6 +69,9 @@ public class RunnerContentUi
   private String myActionsPlace = ActionPlaces.UNKNOWN;
   private IdeFocusManager myFocusManager;
 
+  private boolean myMinimizeActionEnabled = true;
+  private boolean myMoveToGridActionEnabled = true;
+
   public RunnerContentUi(Project project, ActionManager actionManager, IdeFocusManager focusManager, RunnerLayout settings, String sessionName) {
     myProject = project;
     myLayoutSettings = settings;
@@ -523,6 +526,21 @@ public class RunnerContentUi
     }
   }
 
+  public void setMinimizeActionEnabled(final boolean enabled) {
+    myMinimizeActionEnabled = enabled;
+  }
+
+  public void setMovetoGridActionEnabled(final boolean enabled) {
+    myMoveToGridActionEnabled = enabled;
+  }
+
+  public boolean isMinimizeActionEnabled() {
+    return myMinimizeActionEnabled;
+  }
+
+  public boolean isMoveToGridActionEnabled() {
+    return myMoveToGridActionEnabled;
+  }
 
   private class MyComponent extends Wrapper.FocusHolder implements DataProvider {
     public MyComponent() {
@@ -857,4 +875,6 @@ public class RunnerContentUi
   public IdeFocusManager getFocusManager() {
     return myFocusManager;
   }
+
+
 }

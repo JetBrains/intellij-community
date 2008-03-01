@@ -197,4 +197,16 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
   public boolean isDisposed() {
     return getContentManager().isDisposed();
   }
+
+  @NotNull
+  public RunnerLayoutUi setMinimizeActionEnabled(final boolean enabled) {
+    myContentUI.setMinimizeActionEnabled(enabled);
+    return this;
+  }
+
+  @NotNull
+  public RunnerLayoutUi setMoveToGridActionEnabled(final boolean enabled) {
+    myContentUI.setMovetoGridActionEnabled(enabled);
+    return this;
+  }
 }

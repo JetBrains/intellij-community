@@ -53,6 +53,12 @@ public interface RunnerLayoutUi  {
 
   boolean isDisposed();
 
+  @NotNull
+  RunnerLayoutUi setMinimizeActionEnabled(boolean enabled);
+
+  @NotNull
+  RunnerLayoutUi setMoveToGridActionEnabled(boolean enabled);
+
   enum PlaceInGrid {
     left, center, right, bottom
   }
