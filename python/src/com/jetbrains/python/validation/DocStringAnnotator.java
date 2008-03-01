@@ -17,12 +17,14 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.Annotation;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.impl.PyFileImpl;
-import com.jetbrains.python.psi.*;
+import com.intellij.psi.PsiWhiteSpace;
 import com.jetbrains.python.PyHighlighter;
-import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyFileImpl;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -35,15 +37,24 @@ public class DocStringAnnotator extends PyAnnotator {
   @Override
   public void visitPyExpressionStatement(final PyExpressionStatement node) {
     PsiElement parent = node.getParent();
-    if (parent instanceof PyFileImpl && parent.getChildren()[0] == node) {
+    if (parent instanceof PyFileImpl && isFirstNotCommentChild(node, parent)) {
       annotateDocStringStmt(node);
     }
-    else if (parent instanceof PyStatementList && parent.getChildren()[0] == node) {
+    else if (parent instanceof PyStatementList && isFirstNotCommentChild(node, parent)) {
       PsiElement stmtParent = parent.getParent();
       if (stmtParent instanceof PyFunction || stmtParent instanceof PyClass) {
         annotateDocStringStmt(node);
       }
     }
+  }
+
+  private static boolean isFirstNotCommentChild(final PsiElement node, final PsiElement parent) {
+    PsiElement[] children = parent.getChildren();
+    for(PsiElement child: children) {
+      if (child == node) return true;
+      if (!(child instanceof PsiComment) && !(child instanceof PsiWhiteSpace)) break;
+    }
+    return false;
   }
 
   private void annotateDocStringStmt(PyExpressionStatement stmt) {
