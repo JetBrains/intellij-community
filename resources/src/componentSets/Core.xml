@@ -47,7 +47,7 @@
       <implementation-class>com.intellij.ide.FileIconPatcherImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.ide.RecentProjectsManager</interface-class>
+      <interface-class>com.intellij.ide.RecentProjectsManagerBase</interface-class>
       <implementation-class>com.intellij.ide.RecentProjectsManager</implementation-class>
     </component>
   </application-components>

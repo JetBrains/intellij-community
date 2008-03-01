@@ -20,9 +20,14 @@
   <xi:include href="/idea/LangActions.xml" xpointer="xpointer(/component/*)"/>
 
   <actions>
-    <action id="OpenDirectoryProject" class="com.intellij.platform.OpenDirectoryProjectAction" icon="/general/openProject.png">
+    <group id="WelcomeScreen.QuickStart.Platform">
+      <action id="OpenDirectoryProject" class="com.intellij.platform.OpenDirectoryProjectAction" icon="/general/openProject.png"/>
+
+      <action id="WelcomeScreen.ReopenRecent" class="com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectsAction"
+        icon="/general/reopenRecentProject.png"/>
+
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
-    </action>
+    </group>
   </actions>
 
 </component>

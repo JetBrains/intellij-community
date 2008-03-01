@@ -1,6 +1,6 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.ui.UIBundle;
@@ -12,10 +12,9 @@ import com.intellij.ui.UIBundle;
  * Time: 4:02:31 PM
  * To change this template use File | Settings | File Templates.
  */
-public class RecentProjectsAction extends WelcomePopupAction/*extends QuickSwitchSchemeAction*/ {
-
+public class RecentProjectsAction extends WelcomePopupAction {
   protected void fillActions(final DefaultActionGroup group) {
-    final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false);
+    final AnAction[] recentProjectActions = RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false);
     for (AnAction action : recentProjectActions) {
       group.add(action);
     }

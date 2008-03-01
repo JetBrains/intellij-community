@@ -807,7 +807,7 @@
         icon="/general/reopenRecentProject.png"/>
 
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
-</group>
+    </group>
 
     <group id="WelcomeScreen.Documentation.IDEA">
       <action id="WelcomeScreen.ReadHelp" class="com.intellij.openapi.wm.impl.welcomeScreen.ReadHelpAction"
