@@ -433,7 +433,7 @@ public class WelcomeScreen {
       String preinstalledPrefix = PathManager.getPreinstalledPluginsPath();
 
       for (IdeaPluginDescriptor plugin : myInstalledPlugins) {
-        if (plugin.getName().equals("IDEA CORE")) {
+        if (plugin.getName().equals("IDEA CORE") || ((IdeaPluginDescriptorImpl) plugin).isUseCoreClassLoader()) {
           // this is not really a plugin, so it shouldn't be displayed
           continue;
         }
