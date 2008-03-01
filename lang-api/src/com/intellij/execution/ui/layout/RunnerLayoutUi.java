@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerListener;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,9 @@ public interface RunnerLayoutUi  {
 
   @NotNull
   Content createContent(@NotNull String contentId, @NotNull JComponent component, @NotNull String displayName, @Nullable Icon icon, @Nullable JComponent toFocus);
+
+  @NotNull
+  Content createContent(@NotNull String contentId, @NotNull ComponentWithActions contentWithActions, @NotNull String displayName, @Nullable Icon icon, @Nullable JComponent toFocus);
 
   boolean removeContent(@Nullable Content content, boolean dispose);
 

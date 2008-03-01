@@ -2,6 +2,7 @@ package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -84,16 +85,28 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
 
   @NotNull
   public Content createContent(@NotNull String id, @NotNull JComponent component, @NotNull String displayName, @Nullable Icon icon, @Nullable JComponent focusable) {
-    final Content content = getContentFactory().createContent(component, displayName, false);
-    content.putUserData(CONTENT_TYPE, id);
-    content.putUserData(View.ID, id);
-    content.setIcon(icon);
-    if (focusable != null) {
-      content.setPreferredFocusableComponent(focusable);
-    }
-    return content;
+    return createContent(id, new ComponentWithActions.Impl(component), displayName, icon, focusable);
   }
 
+  @NotNull
+  public Content createContent(@NotNull final String contentId, @NotNull final ComponentWithActions withActions, @NotNull final String displayName,
+                               @Nullable final Icon icon,
+                               @Nullable final JComponent toFocus) {
+    final Content content = getContentFactory().createContent(withActions.getComponent(), displayName, false);
+    content.putUserData(CONTENT_TYPE, contentId);
+    content.putUserData(View.ID, contentId);
+    content.setIcon(icon);
+    if (toFocus != null) {
+      content.setPreferredFocusableComponent(toFocus);
+    }
+
+    if (!withActions.isContentBuiltIn()) {
+      content.setSearchComponent(withActions.getSearchComponent());
+      content.setActions(withActions.getToolbarActions(), withActions.getToolbarPlace(), withActions.getToolbarContextComponent());
+    }
+
+    return content;
+  }
 
   @NotNull
   public JComponent getComponent() {

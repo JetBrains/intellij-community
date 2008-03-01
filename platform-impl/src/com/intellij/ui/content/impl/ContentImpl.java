@@ -41,6 +41,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   private boolean myAlerting = false;
   private JComponent myActionsContextComponent;
+  private JComponent mySearchComponent;
 
   public ContentImpl(JComponent component, String displayName, boolean isPinnable) {
     myComponent = component;
@@ -228,5 +229,13 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   public void fireAlert() {
     myChangeSupport.firePropertyChange(PROP_ALERT, null, true);
+  }
+
+  public void setSearchComponent(@Nullable final JComponent comp) {
+    mySearchComponent = comp;
+  }
+
+  public JComponent getSearchComponent() {
+    return mySearchComponent;
   }
 }

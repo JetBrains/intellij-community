@@ -859,6 +859,8 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   }
 
   public JComponent getPreferredFocusableComponent() {
+    //ensure editor created
+    final JComponent component = getComponent();
     return myEditor.getContentComponent();
   }
 

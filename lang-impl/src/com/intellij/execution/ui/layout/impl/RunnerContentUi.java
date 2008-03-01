@@ -1,7 +1,7 @@
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.execution.ui.layout.actions.RestoreViewAction;
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.actions.RestoreViewAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -224,18 +224,25 @@ public class RunnerContentUi
     TabInfo tab = new TabInfo(grid).setObject(getStateFor(content).getTab()).setText("Tab");
 
 
-    Wrapper leftWrapper = new Wrapper();
-    myCommonActionsPlaceholder.put(grid, leftWrapper);
+    Wrapper left = new Wrapper();
+    myCommonActionsPlaceholder.put(grid, left);
 
-    Wrapper rightWrapper = new Wrapper();
-    myMinimizedButtonsPlaceholder.put(grid, rightWrapper);
 
-    NonOpaquePanel sideComponent = new NonOpaquePanel(new CommonToolbarLayout(leftWrapper, rightWrapper));
+    Wrapper minimizedToolbar = new Wrapper();
+    myMinimizedButtonsPlaceholder.put(grid, minimizedToolbar);
+
+
+    final Wrapper searchComponent = new Wrapper();
+    if (content.getSearchComponent() != null) {
+      searchComponent.setContent(content.getSearchComponent());
+    }
+
+    TwoSideComponent right = new TwoSideComponent(searchComponent, minimizedToolbar);
+
+
+    NonOpaquePanel sideComponent = new TwoSideComponent(left, right);
 
     tab.setSideComponent(sideComponent);
-
-    sideComponent.add(leftWrapper);
-    sideComponent.add(rightWrapper);
 
     tab.setTabLabelActions((ActionGroup)myActionManager.getAction(VIEW_TOOLBAR), TAB_TOOLBAR_PLACE);
 
@@ -757,6 +764,14 @@ public class RunnerContentUi
       });
   }
 
+  private class TwoSideComponent extends NonOpaquePanel {
+    private TwoSideComponent(JComponent left, JComponent right) {
+      setLayout(new CommonToolbarLayout(left, right));
+      add(left);
+      add(right);
+    }
+  }
+
   private static class CommonToolbarLayout extends AbstractLayoutManager {
     private final JComponent myLeft;
     private final JComponent myRight;
@@ -805,6 +820,23 @@ public class RunnerContentUi
 
         myRight.setBounds((int)myLeft.getBounds().getMaxX(), 0, parent.getWidth() - myLeft.getWidth(), parent.getHeight());
       }
+
+      toMakeVerticallyInCenter(myLeft, parent);
+      toMakeVerticallyInCenter(myRight, parent);
+
+    }
+
+    private void toMakeVerticallyInCenter(JComponent comp, Container parent) {
+      final Rectangle compBounds = comp.getBounds();
+      int compHeight = comp.getPreferredSize().height;
+      final int parentHeight = parent.getHeight();
+      if (compHeight > parentHeight) {
+        compHeight = parentHeight;
+      }
+      
+      int y = (int)Math.floor(parentHeight / 2.0 - compHeight / 2.0);
+      comp.setBounds(compBounds.x, y, compBounds.width, compHeight);
+
     }
   }
 

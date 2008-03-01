@@ -56,13 +56,17 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
   private Project myProject;
   private String myPath;
   private boolean myWasInitialized;
+  private JPanel myTopComponent = new JPanel(new BorderLayout());
+  private ActionGroup myActions;
+  private boolean myBuildInActions;
 
-  public LogConsole(Project project, File file, long skippedContents, String title) {
+  public LogConsole(Project project, File file, long skippedContents, String title, final boolean buildInActions) {
     super(new BorderLayout());
     mySkippedContents = skippedContents;
     myTitle = title;
     myProject = project;
     myPath = file.getAbsolutePath();
+    myBuildInActions = buildInActions;
     myReaderThread = new ReaderThread(file);
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     myConsole = builder.getConsole();
@@ -72,42 +76,10 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
 
   @SuppressWarnings({"NonStaticInitializer"})
   private JComponent createToolbar(){
-    DefaultActionGroup group = new DefaultActionGroup();
     final LogConsolePreferences registrar = getPreferences();
-    final ArrayList<LogFilter> filters = new ArrayList<LogFilter>();
-    filters.add(new LogFilter(DiagnosticBundle.message("log.console.filter.by.type", LogConsolePreferences.INFO), IconLoader.getIcon("/ant/filterInfo.png")){
-      public boolean isAcceptable(String line) {
-        return registrar.isApplicable(line, myPrevType);
-      }
-    });
-    filters.add(new LogFilter(DiagnosticBundle.message("log.console.filter.by.type", LogConsolePreferences.WARNING), IconLoader.getIcon("/ant/filterWarning.png")){
-      public boolean isAcceptable(String line) {
-        return registrar.isApplicable(line, myPrevType);
-      }
-    });
-    filters.add(new LogFilter(DiagnosticBundle.message("log.console.filter.by.type", LogConsolePreferences.ERROR), IconLoader.getIcon("/ant/filterError.png")){
-      public boolean isAcceptable(String line) {
-        return registrar.isApplicable(line, myPrevType);
-      }
-    });
-    filters.addAll(registrar.getRegisteredLogFilters());
-    for (final LogFilter filter : filters) {
-      group.add(new ToggleAction(filter.getName(), filter.getName(), filter.getIcon()){
-        public boolean isSelected(AnActionEvent e) {
-          return registrar.isFilterSelected(filter);
-        }
 
-        public void setSelected(AnActionEvent e, boolean state) {
-          registrar.setFilterSelected(filter, state);
-        }
-      });
-    }
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
     myFilter.reset();
     myFilter.setSelectedItem(registrar.CUSTOM_FILTER != null ? registrar.CUSTOM_FILTER : "");
-    panel.add(myFilter, BorderLayout.EAST);
     new AnAction(){
       {
         registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.SHIFT_DOWN_MASK)), LogConsole.this);
@@ -116,8 +88,66 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
         myFilter.requestFocusInWindow();
       }
     };
-    return panel;
+
+    if (myBuildInActions) {
+      final JComponent tbComp = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, getOrCreateActions(), true).getComponent();
+      myTopComponent.add(tbComp, BorderLayout.CENTER);
+      myTopComponent.add(myFilter, BorderLayout.EAST);
+    }
+
+
+    return myTopComponent;
   }
+
+  public ActionGroup getOrCreateActions() {
+    if (myActions != null) return myActions;
+
+    final LogConsolePreferences prefs = getPreferences();
+
+    DefaultActionGroup group = new DefaultActionGroup();
+
+    final AnAction[] actions = myConsole.createUpDownStacktraceActions();
+    for (AnAction action : actions) {
+      group.add(action);
+    }
+
+    group.addSeparator();
+
+    final ArrayList<LogFilter> filters = new ArrayList<LogFilter>();
+    filters.add(new LogFilter(DiagnosticBundle.message("log.console.filter.by.type", LogConsolePreferences.INFO), IconLoader.getIcon("/ant/filterInfo.png")){
+      public boolean isAcceptable(String line) {
+        return prefs.isApplicable(line, myPrevType);
+      }
+    });
+    filters.add(new LogFilter(DiagnosticBundle.message("log.console.filter.by.type", LogConsolePreferences.WARNING), IconLoader.getIcon("/ant/filterWarning.png")){
+      public boolean isAcceptable(String line) {
+        return prefs.isApplicable(line, myPrevType);
+      }
+    });
+    filters.add(new LogFilter(DiagnosticBundle.message("log.console.filter.by.type", LogConsolePreferences.ERROR), IconLoader.getIcon("/ant/filterError.png")){
+      public boolean isAcceptable(String line) {
+        return prefs.isApplicable(line, myPrevType);
+      }
+    });
+    filters.addAll(prefs.getRegisteredLogFilters());
+
+    for (final LogFilter filter : filters) {
+      group.add(new ToggleAction(filter.getName(), filter.getName(), filter.getIcon()){
+        public boolean isSelected(AnActionEvent e) {
+          return prefs.isFilterSelected(filter);
+        }
+
+        public void setSelected(AnActionEvent e, boolean state) {
+          prefs.setFilterSelected(filter, state);
+        }
+      });
+    }
+
+    myActions = group;
+
+    return myActions;
+  }
+
 
   public void onFilterStateChange(final LogFilter filter) {
     filterConsoleOutput(new Condition<String>() {
@@ -138,12 +168,6 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
   public JComponent getComponent() {
     if (!myWasInitialized) {
       myWasInitialized = true;
-      final DefaultActionGroup group = new DefaultActionGroup();
-      final AnAction[] actions = myConsole.createUpDownStacktraceActions();
-      for (AnAction action : actions) {
-        group.add(action);
-      }
-      add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false).getComponent(), BorderLayout.WEST);
       add(myConsole.getComponent(), BorderLayout.CENTER);
       add(createToolbar(), BorderLayout.NORTH);
     }
@@ -383,8 +407,27 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
     }
   }
 
+  public ActionGroup getToolbarActions() {
+    return getOrCreateActions();
+  }
+
+  public String getToolbarPlace() {
+    return ActionPlaces.UNKNOWN;
+  }
+
+  public JComponent getToolbarContextComponent() {
+    return myConsole.getComponent();
+  }
 
   public JComponent getPreferredFocusableComponent() {
     return myConsole.getPreferredFocusableComponent();
+  }
+
+  public JComponent getSearchComponent() {
+    return myFilter;
+  }
+
+  public boolean isContentBuiltIn() {
+    return myBuildInActions;
   }
 }

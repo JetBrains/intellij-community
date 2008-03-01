@@ -34,6 +34,7 @@ import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -290,7 +291,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   public void addLogConsole(final String name, final String path, final long skippedContent) {
     final Ref<Content> content = new Ref<Content>();
 
-    final LogConsole log = new LogConsole(myProject, new File(path), skippedContent, name) {
+    final LogConsole log = new LogConsole(myProject, new File(path), skippedContent, name, false) {
       public boolean isActive() {
         final Content logContent = content.get();
         return logContent != null && logContent.isSelected();
@@ -447,7 +448,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
   private Content addLogComponent(final AdditionalTabComponent tabComponent) {
     @NonNls final String id = "Log-" + tabComponent.getTabTitle();
-    final Content logContent = myUi.createContent(id, tabComponent.getComponent(), tabComponent.getTabTitle(),
+    final Content logContent = myUi.createContent(id, (ComponentWithActions)tabComponent, tabComponent.getTabTitle(),
                                                   IconLoader.getIcon("/fileTypes/text.png"), tabComponent.getPreferredFocusableComponent());
     logContent.setDescription(tabComponent.getTooltip());
     myAdditionalContent.put(tabComponent, logContent);

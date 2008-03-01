@@ -22,6 +22,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -140,7 +141,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
   }
 
   public void addLogConsole(final String name, final String path, final long skippedContent) {
-    final LogConsole log = new LogConsole(myProject, new File(path), skippedContent, name){
+    final LogConsole log = new LogConsole(myProject, new File(path), skippedContent, name, false){
       public boolean isActive() {
         final Content content = myUi.findContent(path);
         return content != null && content.isSelected();
@@ -210,7 +211,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
   }
 
   public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent, final String id) {
-    final Content content = myUi.createContent(id, tabComponent.getComponent(), tabComponent.getTabTitle(),
+    final Content content = myUi.createContent(id, (ComponentWithActions)tabComponent, tabComponent.getTabTitle(),
                                                IconLoader.getIcon("/debugger/console.png"), tabComponent.getPreferredFocusableComponent());
 
 

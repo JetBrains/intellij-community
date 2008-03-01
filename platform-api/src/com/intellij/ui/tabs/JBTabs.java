@@ -268,6 +268,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   private JComponent getToFocus() {
     final TabInfo info = getSelectedInfo();
 
+    if (info == null) return null;
+
     JComponent toFocus = null;
 
     if (isRequestFocusOnLastFocusedComponent() && info.getLastFocusOwner() != null && !isMyChildIsFocusedNow()) {
