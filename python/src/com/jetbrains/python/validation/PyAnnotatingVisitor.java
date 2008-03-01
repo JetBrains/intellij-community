@@ -23,7 +23,8 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 
-import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,28 +34,31 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class PyAnnotatingVisitor implements Annotator {
-    private static final Logger LOGGER
-            = Logger.getInstance(PyAnnotatingVisitor.class.getName());
-  private Set<? extends Class<? extends PyAnnotator>> _annotators;
+  private static final Logger LOGGER = Logger.getInstance(PyAnnotatingVisitor.class.getName());
+  private List<PyAnnotator> myAnnotators = new ArrayList<PyAnnotator>();
 
   public PyAnnotatingVisitor() {
-    _annotators = ((PythonLanguage) PythonFileType.INSTANCE.getLanguage()).getAnnotators();
+    for (Class<? extends PyAnnotator> cls : ((PythonLanguage)PythonFileType.INSTANCE.getLanguage()).getAnnotators()) {
+      PyAnnotator annotator;
+      try {
+        annotator = cls.newInstance();
+      }
+      catch (InstantiationException e) {
+        LOGGER.error(e);
+        continue;
+      }
+      catch (IllegalAccessException e) {
+        LOGGER.error(e);
+        continue;
+      }
+      myAnnotators.add(annotator);
+    }
   }
 
   public void annotate(PsiElement psiElement, AnnotationHolder holder) {
-        for(Class<? extends PyAnnotator> cls: _annotators) {
-            PyAnnotator annotator;
-            try {
-              annotator = cls.newInstance();
-            } catch (InstantiationException e) {
-              LOGGER.error(e);
-              continue;
-            } catch (IllegalAccessException e) {
-              LOGGER.error(e);
-              continue;
-            }
-            annotator.setHolder(holder);
-            psiElement.accept(annotator);
-        }
+    for(PyAnnotator annotator: myAnnotators) {
+      annotator.setHolder(holder);
+      psiElement.accept(annotator);
     }
+  }
 }
