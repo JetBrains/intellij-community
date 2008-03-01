@@ -2,7 +2,7 @@
   <!-- <version name="IntelliJ IDEA" major="6" minor="0.2 Beta"/> -->
   <version codename="Diana" major="1" minor="0" eap="true"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
-  <logo url="/idea_logo.png"/>
+  <logo url="/pycharm_logo.png"/>
   <about url="/idea_about.png"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="PyCharm" fullname="PyCharm"/>
