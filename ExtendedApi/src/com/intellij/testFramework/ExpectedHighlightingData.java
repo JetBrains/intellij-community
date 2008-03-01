@@ -17,8 +17,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
+import org.junit.Assert;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -208,6 +208,8 @@ public class ExpectedHighlightingData {
 
   public void checkResult(Collection<HighlightInfo> infos, String text) {
     String fileName = myFile == null ? "" : myFile.getName() + ": ";
+    String failMessage = "";
+
     for (HighlightInfo info : infos) {
       if (!expectedInfosContainsInfo(info)) {
         final int startOffset = info.startOffset;
@@ -220,15 +222,17 @@ public class ExpectedHighlightingData {
         int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
         int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
 
-        Assert.fail(fileName + "Extra text fragment highlighted " +
+        if (failMessage.length() != 0) failMessage += '\n';
+        failMessage += fileName + "Extra text fragment highlighted " +
                           "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
                           "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
                           " :'" +
                           s +
                           "'" + (desc == null ? "" : " (" + desc + ")")
-                          + " [" + info.type + "]");
+                          + " [" + info.type + "]";
       }
     }
+
     final Collection<ExpectedHighlightingSet> expectedHighlights = highlightingTypes.values();
     for (ExpectedHighlightingSet highlightingSet : expectedHighlights) {
       final Set<HighlightInfo> expInfos = highlightingSet.infos;
@@ -244,16 +248,18 @@ public class ExpectedHighlightingData {
           int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
           int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
 
-          Assert.assertTrue(fileName + "Text fragment was not highlighted " +
+          if (failMessage.length() != 0) failMessage += '\n';
+          failMessage += fileName + "Text fragment was not highlighted " +
                             "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
                             "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
                             " :'" +
                             s +
-                            "'" + (desc == null ? "" : " (" + desc + ")"),
-                            false);
+                            "'" + (desc == null ? "" : " (" + desc + ")");
         }
       }
     }
+
+    if (failMessage.length() > 0) Assert.fail(failMessage);
   }
 
   private static boolean infosContainsExpectedInfo(Collection<HighlightInfo> infos, HighlightInfo expectedInfo) {
