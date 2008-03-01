@@ -34,16 +34,16 @@
     </component>
   </project-components>
 
-  <xi:include href="Platform.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="UICore.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="WindowManagement.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="Editor.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="VCS.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="Lang.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="ProjectView.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="Profiles.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="Execution.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="LocalHistory.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/Platform.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/UICore.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/WindowManagement.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/Editor.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/VCS.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/Lang.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/ProjectView.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/Profiles.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/Execution.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/LocalHistory.xml" xpointer="xpointer(/components/*)"/>
 
   <application-components>
     <component>

@@ -26,11 +26,11 @@
     </component>
   </project-components>
 
-  <xi:include href="Platform.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="UICore.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="WindowManagement.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="Editor.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="VCS.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/Platform.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/UICore.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/WindowManagement.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/Editor.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/VCS.xml" xpointer="xpointer(/components/*)"/>
 
   <application-components>
     <component>
