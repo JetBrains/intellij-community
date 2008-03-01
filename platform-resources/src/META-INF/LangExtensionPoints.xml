@@ -262,4 +262,7 @@
   <extensionPoint name="treeStructureProvider"
                   interface="com.intellij.ide.projectView.TreeStructureProvider"
                   area="IDEA_PROJECT"/>
+
+  <extensionPoint name="defaultLiveTemplatesProvider"
+                  interface="com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider"/>
 </extensionPoints>

@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -36,15 +37,6 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
 
   private @NonNls static final String DELETED_TEMPLATES = "deleted_templates";
   private List<String> myDeletedTemplates = new ArrayList<String>();
-
-  private static final @NonNls String[] DEFAULT_TEMPLATES = new String[]{
-    "/liveTemplates/html_xml",
-    "/liveTemplates/iterations",
-    "/liveTemplates/other",
-    "/liveTemplates/output",
-    "/liveTemplates/plain",
-    "/liveTemplates/surround"
-  };
 
   public static final char SPACE_CHAR = ' ';
   public static final char TAB_CHAR = '\t';
@@ -287,9 +279,11 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
         readTemplateFile(file);
       }
 
-      for (String defTemplate : DEFAULT_TEMPLATES) {
-        String templateName = getDefaultTemplateName(defTemplate);
-        readDefTemplateFile(DecodeDefaultsUtil.getDefaultsInputStream(this, defTemplate), templateName);
+      for(DefaultLiveTemplatesProvider provider: Extensions.getExtensions(DefaultLiveTemplatesProvider.EP_NAME)) {
+        for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
+          String templateName = getDefaultTemplateName(defTemplate);
+          readDefTemplateFile(DecodeDefaultsUtil.getDefaultsInputStream(this, defTemplate), templateName);
+        }
       }
     } catch (Exception e) {
       LOG.error(e);
