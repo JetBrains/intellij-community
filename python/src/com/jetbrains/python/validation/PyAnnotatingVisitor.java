@@ -38,7 +38,7 @@ public class PyAnnotatingVisitor implements Annotator {
   private Set<? extends Class<? extends PyAnnotator>> _annotators;
 
   public PyAnnotatingVisitor() {
-    this._annotators = ((PythonLanguage) PythonFileType.INSTANCE.getLanguage()).getAnnotators();
+    _annotators = ((PythonLanguage) PythonFileType.INSTANCE.getLanguage()).getAnnotators();
   }
 
   public void annotate(PsiElement psiElement, AnnotationHolder holder) {
@@ -54,10 +54,7 @@ public class PyAnnotatingVisitor implements Annotator {
               continue;
             }
             annotator.setHolder(holder);
-            try {
-                psiElement.accept(annotator);
-            } catch (StopCurrentAnnotatorException e) {
-            }
+            psiElement.accept(annotator);
         }
     }
 }
