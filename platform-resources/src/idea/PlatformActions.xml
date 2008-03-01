@@ -97,6 +97,7 @@
         <group id="FileOpenGroup">
           <action id="NewDummyProject" class="com.intellij.ide.actions.NewDummyProjectAction" text="New Dummy Project"/>
           <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="/actions/menu-open.png"/>
+          <group id="$LRU" class="com.intellij.ide.actions.RecentProjectsGroup" popup="true"/>
         </group>
         <separator/>
         <group id="FileSettingsGroup">

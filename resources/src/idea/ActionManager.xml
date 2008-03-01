@@ -89,7 +89,6 @@
     </group>
 
     <group id="CloseProjectGroup">
-      <group id="$LRU" class="com.intellij.ide.actions.RecentProjectsGroup" popup="true"/>
       <action id="CloseProject" class="com.intellij.ide.actions.CloseProjectAction"/>
 
       <add-to-group group-id="FileOpenGroup" anchor="last"/>
