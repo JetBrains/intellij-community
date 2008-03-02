@@ -252,6 +252,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
     myValueStorage = PersistentHashMapValueStorage.create(getDataFile(myFile).getPath());
     LOG.info("Compacted " + myFile.getPath() + " in " + (System.currentTimeMillis() - now) + "ms.");
+    myGarbageSize = 0;
   }
 
   private HeaderRecord readValueId(final int keyId) throws IOException {
