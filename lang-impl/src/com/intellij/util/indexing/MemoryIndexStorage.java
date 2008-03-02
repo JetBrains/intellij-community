@@ -1,5 +1,6 @@
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -62,9 +63,14 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     }
     UpdatableValueContainer<Value> valueContainer = myMap.get(key);
     if (valueContainer == null) {
-      valueContainer = new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Computable<Value>() {
-        public ValueContainer<Value> compute() throws StorageException {
-          return myBackendStorage.read(key);
+      valueContainer = new ChangeTrackingValueContainer<Value>(new Computable<ValueContainer<Value>>() {
+        public ValueContainer<Value> compute() {
+          try {
+            return myBackendStorage.read(key);
+          }
+          catch (StorageException e) {
+            throw new RuntimeException(e);
+          }
         }
       });
       myMap.put(key, valueContainer);
@@ -76,9 +82,14 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     if (myBufferingEnabled.get()) {
       UpdatableValueContainer<Value> container = myMap.get(key);
       if (container == null) {
-        container = new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Computable<Value>() {
-          public ValueContainer<Value> compute() throws StorageException {
-            return myBackendStorage.read(key);
+        container = new ChangeTrackingValueContainer<Value>(new Computable<ValueContainer<Value>>() {
+          public ValueContainer<Value> compute() {
+            try {
+              return myBackendStorage.read(key);
+            }
+            catch (StorageException e) {
+              throw new RuntimeException(e);
+            }
           }
         });
         myMap.put(key, container);

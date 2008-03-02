@@ -1,6 +1,6 @@
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 
 import java.util.Iterator;
 import java.util.List;
@@ -10,17 +10,12 @@ import java.util.List;
  *         Date: Dec 20, 2007
  */
 class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.ChangeTrackingValueContainer");
   private final ValueContainerImpl<Value> myAdded;
   private final ValueContainerImpl<Value> myRemoved;
-  private final Computable<Value> myInitializer;
+  private final Computable<ValueContainer<Value>> myInitializer;
   private ValueContainerImpl<Value> myMerged = null;
 
-  public static interface Computable<T>{
-    ValueContainer<T> compute() throws StorageException;
-  }
-  
-  public ChangeTrackingValueContainer(Computable<Value> initializer) {
+  public ChangeTrackingValueContainer(Computable<ValueContainer<Value>> initializer) {
     myInitializer = initializer;
     myAdded = new ValueContainerImpl<Value>();
     myRemoved = new ValueContainerImpl<Value>();
@@ -76,27 +71,22 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
     }
     myMerged = new ValueContainerImpl<Value>();
 
-    try {
-      final ValueContainer<Value> fromDisk = myInitializer.compute();
+    final ValueContainer<Value> fromDisk = myInitializer.compute();
 
-      final ContainerAction<Value> addAction = new ContainerAction<Value>() {
-        public void perform(final int id, final Value value) {
-          myMerged.addValue(id, value);
-        }
-      };
-      final ContainerAction<Value> removeAction = new ContainerAction<Value>() {
-        public void perform(final int id, final Value value) {
-          myMerged.removeValue(id, value);
-        }
-      };
+    final ContainerAction<Value> addAction = new ContainerAction<Value>() {
+      public void perform(final int id, final Value value) {
+        myMerged.addValue(id, value);
+      }
+    };
+    final ContainerAction<Value> removeAction = new ContainerAction<Value>() {
+      public void perform(final int id, final Value value) {
+        myMerged.removeValue(id, value);
+      }
+    };
 
-      fromDisk.forEach(addAction);
-      myRemoved.forEach(removeAction);
-      myAdded.forEach(addAction);
-    }
-    catch (StorageException e) {
-      LOG.error(e);
-    }
+    fromDisk.forEach(addAction);
+    myRemoved.forEach(removeAction);
+    myAdded.forEach(addAction);
 
     return myMerged;
   }

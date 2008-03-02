@@ -1,6 +1,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.DataExternalizer;
@@ -55,8 +56,8 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
 
       @NotNull
       public ChangeTrackingValueContainer<Value> createValue(final Key key) {
-        return new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Computable<Value>() {
-          public ValueContainer<Value> compute() throws StorageException {
+        return new ChangeTrackingValueContainer<Value>(new Computable<ValueContainer<Value>>() {
+          public ValueContainer<Value> compute() {
             ValueContainer<Value> value = null;
             try {
               value = myMap.get(key);
@@ -65,7 +66,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
               }
             }
             catch (IOException e) {
-              throw new StorageException(e);
+              throw new RuntimeException(e);
             }
             return value;
           }
@@ -97,7 +98,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
           }
         }
         catch (IOException e) {
-          LOG.error(e);
+          throw new RuntimeException(e);
         }
       }
     };
@@ -116,6 +117,16 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     catch (IOException e) {
       throw new StorageException(e);
     }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw new StorageException(cause);
+      }
+      if (cause instanceof StorageException) {
+        throw (StorageException)cause;
+      }
+      throw e;
+    }
   }
 
   public void clear() throws StorageException{
@@ -125,14 +136,24 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     catch (IOException e) {
       LOG.error(e);
     }
-    myMap = null;
-    myCache.clear();
-    FileUtil.delete(myStorageFile);
     try {
+      myMap = null;
+      myCache.clear();
+      FileUtil.delete(myStorageFile);
       myMap = new PersistentHashMap<Key,ValueContainer<Value>>(myStorageFile, myKeyDescriptor, myValueContainerExternalizer);
     }
     catch (IOException e) {
       throw new StorageException(e);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw new StorageException(cause);
+      }
+      if (cause instanceof StorageException) {
+        throw (StorageException)cause;
+      }
+      throw e;
     }
   }
 
@@ -144,19 +165,41 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     catch (IOException e) {
       throw new StorageException(e);
     }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw new StorageException(cause);
+      }
+      if (cause instanceof StorageException) {
+        throw (StorageException)cause;
+      }
+      throw e;
+    }
   }
 
   @NotNull
-  public ValueContainer<Value> read(final Key key) throws StorageException {
-    return myCache.get(key);
+  public ChangeTrackingValueContainer<Value> read(final Key key) throws StorageException {
+    try {
+      return myCache.get(key);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw new StorageException(cause);
+      }
+      if (cause instanceof StorageException) {
+        throw (StorageException)cause;
+      }
+      throw e;
+    }
   }
 
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
-    myCache.get(key).addValue(inputId, value);
+    read(key).addValue(inputId, value);
   }
 
   public void removeValue(final Key key, final int inputId, final Value value) throws StorageException {
-    myCache.get(key).removeValue(inputId, value);
+    read(key).removeValue(inputId, value);
   }
 
   public void remove(final Key key) throws StorageException {
@@ -167,6 +210,16 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
     catch (IOException e) {
       throw new StorageException(e);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw new StorageException(cause);
+      }
+      if (cause instanceof StorageException) {
+        throw (StorageException)cause;
+      }
+      throw e;
     }
     finally {
       myKeyBeingRemoved = null;
