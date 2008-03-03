@@ -233,6 +233,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
           myFacetsConfigurator = createFacetsConfigurator();
           myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
         }
+        ApplicationManager.getApplication().saveAll();
       }
     });
 
