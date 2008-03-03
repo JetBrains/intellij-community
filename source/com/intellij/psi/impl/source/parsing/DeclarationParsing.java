@@ -403,7 +403,7 @@ public class DeclarationParsing extends Parsing {
   }
 
   @NotNull
-  private CompositeElement parseModifierList (Lexer lexer) {
+  public CompositeElement parseModifierList (Lexer lexer) {
     CompositeElement modifierList = ASTFactory.composite(MODIFIER_LIST);
     while (true) {
       IElementType tokenType = lexer.getTokenType();

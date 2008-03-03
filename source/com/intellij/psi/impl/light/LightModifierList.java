@@ -36,7 +36,7 @@ public class LightModifierList extends LightElement implements PsiModifierList{
   }
 
   public String getText(){
-    return null;
+    return "";
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){

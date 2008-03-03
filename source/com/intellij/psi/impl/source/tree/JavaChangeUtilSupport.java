@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.light.LightTypeElement;
@@ -23,6 +24,7 @@ import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
+import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -56,6 +58,15 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
     else if (original instanceof PsiKeyword) {
       final String text = original.getText();
       return createLeafFromText(text, table, manager, original, ((PsiKeyword)original).getTokenType());
+    }
+    else if (original instanceof PsiModifierList) {
+      final String text = original.getText();
+      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(original);
+      JavaLexer lexer = new JavaLexer(languageLevel);
+      lexer.start(text, 0, text.length(), 0);
+      TreeElement modifierListElement = new JavaParsingContext(table, languageLevel).getDeclarationParsing().parseModifierList(lexer);
+      if (CodeEditUtil.isNodeGenerated(original.getNode())) modifierListElement.acceptTree(new GeneratedMarkerVisitor());
+      return modifierListElement;
     }
     else if (original instanceof PsiReferenceExpression) {
       TreeElement element = createReferenceExpression(original.getManager(), original.getText(), table);
@@ -293,7 +304,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
   }
 
   private static final Key<Boolean> ALREADY_ESCAPED = new Key<Boolean>("ALREADY_ESCAPED");  
-  private static Key<Boolean> ESCAPEMENT_ENGAGED = new Key<Boolean>("ESCAPEMENT_ENGAGED");
+  private static final Key<Boolean> ESCAPEMENT_ENGAGED = new Key<Boolean>("ESCAPEMENT_ENGAGED");
   private static boolean conversionMayApply(ASTNode element) {
     PsiElement psi = element.getPsi();
     if (psi == null || !psi.isValid()) return false;
