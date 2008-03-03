@@ -448,5 +448,22 @@
       icon="/nodes/ModuleClosed.png">
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoProject"/>
     </action>
+
+    <group id="XDebugger.Actions">
+      <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction"/>
+      <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction"/>
+      <action id="XDebugger.Inspect" class="com.intellij.xdebugger.impl.ui.tree.actions.XInspectAction"/>
+    </group>
+
+    <group id="XDebugger.Evaluation.Dialog.Tree.Popup">
+      <reference ref="XDebugger.Inspect"/>
+      <reference ref="XDebugger.SetValue"/>
+      <reference ref="XDebugger.CopyValue"/>
+    </group>
+
+    <group id="XDebugger.Inspect.Tree.Popup">
+      <reference ref="XDebugger.Inspect"/>
+      <reference ref="XDebugger.CopyValue"/>
+    </group>
   </actions>
 </component>
