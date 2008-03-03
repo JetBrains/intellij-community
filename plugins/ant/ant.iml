@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="refactoring-impl" />
     <orderEntry type="module" module-name="idea-tests" />
+    <orderEntry type="module" module-name="xml" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

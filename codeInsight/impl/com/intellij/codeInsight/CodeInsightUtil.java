@@ -7,18 +7,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.FilteredQuery;
 import com.intellij.util.Processor;
@@ -178,34 +173,6 @@ public class CodeInsightUtil {
 
   public static boolean preparePsiElementsForWrite(@NotNull PsiElement... elements) {
     return CodeInsightUtilBase.preparePsiElementsForWrite(Arrays.asList(elements));
-  }
-
-  private static final Key<Boolean> ANT_FILE_SIGN = new Key<Boolean>("FORCED ANT FILE");
-
-  public static boolean isAntFile(final PsiFile file) {
-    if (file instanceof XmlFile) {
-      final XmlFile xmlFile = (XmlFile)file;
-      final XmlDocument document = xmlFile.getDocument();
-      if (document != null) {
-        final XmlTag tag = document.getRootTag();
-        if (tag != null && "project".equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
-          if (tag.getAttributeValue("default") != null) {
-            return true;
-          }
-          VirtualFile vFile = xmlFile.getVirtualFile();
-          if (vFile == null) {
-            final PsiFile origFile = xmlFile.getOriginalFile();
-            if (origFile != null) {
-              vFile = origFile.getVirtualFile();
-            }
-          }
-          if (vFile != null && vFile.getUserData(ANT_FILE_SIGN) != null) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
   }
 
   public static Set<PsiType> addSubtypes(PsiType psiType, 

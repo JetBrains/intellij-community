@@ -30,6 +30,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.intellij.lang.StdLanguages;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -176,7 +177,7 @@ public class JavaCompletionContributor extends CompletionContributor{
         if (ref != null) {
           completionData.completeReference(ref, lookupSet, insertedElement, matcher, file, context.getStartOffset());
         }
-        if (lookupSet.isEmpty() || !CodeInsightUtil.isAntFile(file)) {
+        if (lookupSet.isEmpty() || !XmlUtil.isAntFile(file)) {
           final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
           completionData.addKeywordVariants(keywordVariants, insertedElement, file);
           completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, matcher, file);

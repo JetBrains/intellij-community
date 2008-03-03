@@ -128,6 +128,7 @@ public class XmlUtil {
   public static final @NonNls String XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
   public static final List<String> ourSchemaUrisList = Arrays.asList(XmlUtil.SCHEMA_URIS);
   private static final ThreadLocal<String> XML_FILE_IN_PROGRESS = new ThreadLocal<String>();
+  public static final Key<Boolean> ANT_FILE_SIGN = new Key<Boolean>("FORCED ANT FILE");
 
 
   private XmlUtil() {
@@ -458,6 +459,32 @@ public class XmlUtil {
       }
     }
     return entityRef.getText();
+  }
+
+  public static boolean isAntFile(final PsiFile file) {
+    if (file instanceof XmlFile) {
+      final XmlFile xmlFile = (XmlFile)file;
+      final XmlDocument document = xmlFile.getDocument();
+      if (document != null) {
+        final XmlTag tag = document.getRootTag();
+        if (tag != null && "project".equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
+          if (tag.getAttributeValue("default") != null) {
+            return true;
+          }
+          VirtualFile vFile = xmlFile.getVirtualFile();
+          if (vFile == null) {
+            final PsiFile origFile = xmlFile.getOriginalFile();
+            if (origFile != null) {
+              vFile = origFile.getVirtualFile();
+            }
+          }
+          if (vFile != null && vFile.getUserData(ANT_FILE_SIGN) != null) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private static class XmlElementProcessor {

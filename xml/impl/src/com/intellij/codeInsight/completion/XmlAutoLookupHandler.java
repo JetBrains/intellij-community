@@ -1,12 +1,12 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.xml.util.XmlUtil;
 
 /**
  *
@@ -64,7 +64,7 @@ public class XmlAutoLookupHandler extends CodeCompletionHandler {
                                             final Ref<Boolean> isAnt) {
     Boolean isAntFile = isAnt.get();
     if (isAntFile == null) {
-      isAntFile = CodeInsightUtil.isAntFile(file);
+      isAntFile = XmlUtil.isAntFile(file);
       isAnt.set(isAntFile);
     }
     Boolean result = isRelevantLanguage.get();
