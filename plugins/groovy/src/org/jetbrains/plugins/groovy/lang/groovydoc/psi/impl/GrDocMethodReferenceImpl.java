@@ -54,11 +54,13 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
   protected ResolveResult[] multiResolveImpl() {
     String name = getReferenceName();
     GrDocReferenceElement holder = getReferenceHolder();
-    if (holder == null) return new ResolveResult[0];
-
-    GrCodeReferenceElement referenceElement = holder.getReferenceElement();
-    if (referenceElement == null) return new ResolveResult[0];
-    PsiElement resolved = referenceElement.resolve();
+    PsiElement resolved;
+    if (holder != null) {
+      GrCodeReferenceElement referenceElement = holder.getReferenceElement();
+      resolved = referenceElement != null ? referenceElement.resolve() : null;
+    } else {
+      resolved = getEnclosingClassOrFile(this);
+    }
     if (resolved != null) {
       PsiType[] parameterTypes = getParameterList().getParameterTypes();
       MethodResolverProcessor processor = new MethodResolverProcessor(name, this, false, false, parameterTypes, PsiType.EMPTY_ARRAY);
