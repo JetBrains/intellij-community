@@ -45,8 +45,10 @@ public class DuplicatesImpl {
       expandAllRegionsCoveringRange(project, editor, textRange);
       editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
       String prompt = provider.getConfirmDuplicatePrompt(match);
-      final int matchAnswer = Messages.showYesNoCancelDialog(project, prompt,
-          RefactoringBundle.message("process.duplicates.title"), Messages.getQuestionIcon());
+      final int matchAnswer = ApplicationManager.getApplication().isUnitTestMode()
+                              ? 0
+                              : Messages.showYesNoCancelDialog(project, prompt, RefactoringBundle.message("process.duplicates.title"),
+                                                               Messages.getQuestionIcon());
       HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighters.get(0));
       if (matchAnswer == 0) {
         final Runnable action = new Runnable() {
