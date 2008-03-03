@@ -88,7 +88,6 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
 
   public boolean SHOW_SIGNATURES_IN_LOOKUPS = true;
   public int LOOKUP_HEIGHT = 11;
-  public boolean SORT_XML_LOOKUP_ITEMS = true;
 
   public boolean SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO = false;
 

@@ -28,12 +28,10 @@ public class CodeCompletionPanel {
   private JTextField myFldJavadocAutocompletionDelayField;
   private JCheckBox myCbAutopopupJavaDoc;
   private JTextField myAutopopupJavaDocField;
-  private JLabel myLblLookupHeight;
   private JTextField myFldLookupHeight;
   private JCheckBox myCbShowSignaturesInLookup;
   private JCheckBox myCbAutocompleteCommonPrefix;
   private JCheckBox myCbShowStaticAfterInstance;
-  private JCheckBox myCbSortXmlItems;
 
   private JCheckBox myCbOnCodeCompletion;
   private JCheckBox myCbOnSmartTypeCompletion;
@@ -189,7 +187,6 @@ public class CodeCompletionPanel {
     myCbOnClassNameCompletion.setSelected(codeInsightSettings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION);
     myCbAutocompleteCommonPrefix.setSelected(codeInsightSettings.AUTOCOMPLETE_COMMON_PREFIX);
     myCbShowStaticAfterInstance.setSelected(codeInsightSettings.SHOW_STATIC_AFTER_INSTANCE);
-    myCbSortXmlItems.setSelected(codeInsightSettings.SORT_XML_LOOKUP_ITEMS);
 
     myCbAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_MEMBER_LOOKUP);
     myAutocompletionDelayField.setEnabled(codeInsightSettings.AUTO_POPUP_MEMBER_LOOKUP);
@@ -201,17 +198,17 @@ public class CodeCompletionPanel {
 
     myCbJavadocAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_JAVADOC_LOOKUP);
     myFldJavadocAutocompletionDelayField.setEnabled(codeInsightSettings.AUTO_POPUP_JAVADOC_LOOKUP);
-    myFldJavadocAutocompletionDelayField.setText(""+codeInsightSettings.JAVADOC_LOOKUP_DELAY);
+    myFldJavadocAutocompletionDelayField.setText(String.valueOf(codeInsightSettings.JAVADOC_LOOKUP_DELAY));
 
     myCbAutopopupJavaDoc.setSelected(codeInsightSettings.AUTO_POPUP_JAVADOC_INFO);
     myAutopopupJavaDocField.setEnabled(codeInsightSettings.AUTO_POPUP_JAVADOC_INFO);
-    myAutopopupJavaDocField.setText(""+codeInsightSettings.JAVADOC_INFO_DELAY);
+    myAutopopupJavaDocField.setText(String.valueOf(codeInsightSettings.JAVADOC_INFO_DELAY));
 
-    myFldLookupHeight.setText("" + codeInsightSettings.LOOKUP_HEIGHT);
+    myFldLookupHeight.setText(String.valueOf(codeInsightSettings.LOOKUP_HEIGHT));
 
     myCbParameterInfoPopup.setSelected(codeInsightSettings.AUTO_POPUP_PARAMETER_INFO);
     myParameterInfoDelayField.setEnabled(codeInsightSettings.AUTO_POPUP_PARAMETER_INFO);
-    myParameterInfoDelayField.setText(""+codeInsightSettings.PARAMETER_INFO_DELAY);
+    myParameterInfoDelayField.setText(String.valueOf(codeInsightSettings.PARAMETER_INFO_DELAY));
     myCbShowFullParameterSignatures.setSelected(codeInsightSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO);
 
     myCbAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_MEMBER_LOOKUP);
@@ -237,7 +234,6 @@ public class CodeCompletionPanel {
     codeInsightSettings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION = myCbOnClassNameCompletion.isSelected();
     codeInsightSettings.AUTOCOMPLETE_COMMON_PREFIX = myCbAutocompleteCommonPrefix.isSelected();
     codeInsightSettings.SHOW_STATIC_AFTER_INSTANCE = myCbShowStaticAfterInstance.isSelected();
-    codeInsightSettings.SORT_XML_LOOKUP_ITEMS = myCbSortXmlItems.isSelected();
     codeInsightSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO = myCbShowFullParameterSignatures.isSelected();
 
     codeInsightSettings.AUTO_POPUP_PARAMETER_INFO = myCbParameterInfoPopup.isSelected();
@@ -255,7 +251,7 @@ public class CodeCompletionPanel {
 
     codeInsightSettings.EXCLUDED_PACKAGES = getExcludedPackages();
 
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this.myPanel));
+    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
     if (project != null){
       DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     }
@@ -284,7 +280,6 @@ public class CodeCompletionPanel {
     isModified |= isModified(myCbOnClassNameCompletion, codeInsightSettings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION);
     isModified |= isModified(myCbAutocompleteCommonPrefix, codeInsightSettings.AUTOCOMPLETE_COMMON_PREFIX);
     isModified |= isModified(myCbShowStaticAfterInstance, codeInsightSettings.SHOW_STATIC_AFTER_INSTANCE);
-    isModified |= isModified(myCbSortXmlItems, codeInsightSettings.SORT_XML_LOOKUP_ITEMS);
     isModified |= isModified(myCbShowFullParameterSignatures, codeInsightSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO);
     isModified |= isModified(myCbParameterInfoPopup, codeInsightSettings.AUTO_POPUP_PARAMETER_INFO);
     isModified |= isModified(myCbAutocompletion, codeInsightSettings.AUTO_POPUP_MEMBER_LOOKUP);
