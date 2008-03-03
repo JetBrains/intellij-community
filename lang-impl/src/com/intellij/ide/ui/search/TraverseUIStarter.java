@@ -56,9 +56,8 @@ public class TraverseUIStarter implements ApplicationStarter {
     System.out.println("Starting searchable options index builder");
     try {
       startup();
-      System.out.println("Searchable options index builder completed");
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       System.out.println("Searchable options index builder failed");
       e.printStackTrace();
       System.exit(-1);
@@ -90,6 +89,8 @@ public class TraverseUIStarter implements ApplicationStarter {
       root.addContent(configurableElement);
     }
     JDOMUtil.writeDocument(new Document(root), OUTPUT_PATH, "\n");
+
+    System.out.println("Searchable options index builder completed");
 
     ((ApplicationEx)ApplicationManager.getApplication()).exit(true);
   }
