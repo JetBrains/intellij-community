@@ -156,6 +156,7 @@
       <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction"/>
       <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction"/>
       <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
+      <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
       <separator/>
 
       <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="GoToErrorGroup"/>

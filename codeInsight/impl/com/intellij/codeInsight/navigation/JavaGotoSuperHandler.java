@@ -1,11 +1,7 @@
-package com.intellij.codeInsight.navigation.actions;
+package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.lang.CodeInsightActions;
-import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -13,34 +9,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- *
- */
-public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsightActionHandler {
-
-  protected CodeInsightActionHandler getHandler() {
-    return this;
-  }
-
-  public void invoke(final Project project, Editor editor, PsiFile file) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
+public class JavaGotoSuperHandler implements CodeInsightActionHandler {
+  public void invoke(final Project project, final Editor editor, final PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
-    final Language language = PsiUtilBase.getLanguageAtOffset(file, offset);
-
-    final CodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.GOTO_SUPER.forLanguage(language);
-    if (codeInsightActionHandler != null) {
-      codeInsightActionHandler.invoke(project, editor, file);
-      return;
-    }
-
     PsiElement[] superElements = findSuperElements(file, offset);
     if (superElements == null || superElements.length == 0) return;
     if (superElements.length == 1) {
@@ -48,7 +26,7 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, superElement.getContainingFile().getVirtualFile(), superElement.getTextOffset());
       FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
     } else {
-      String title = superElements[0] instanceof PsiMethod  ?
+      String title = superElements[0] instanceof PsiMethod ?
                      CodeInsightBundle.message("goto.super.method.chooser.title") :
                      CodeInsightBundle.message("goto.super.class.chooser.title");
 
@@ -56,10 +34,7 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
     }
   }
 
-  public boolean startInWriteAction() {
-    return false;
-  }
-
+  @Nullable
   private static PsiElement[] findSuperElements(PsiFile file, int offset) {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
@@ -85,5 +60,9 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
       }
     }
     return null;
+  }
+
+  public boolean startInWriteAction() {
+    return false;
   }
 }

@@ -157,13 +157,6 @@
       <add-to-group group-id="LanguageSpecificCollapseGroup" anchor="last"/>
     </group>
 
-    <group id="GoToJavaCodeGroup">
-      <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
-
-      <add-to-group group-id="GoToCodeGroup" anchor="after" relative-to-action="GotoTypeDeclaration"/>
-
-    </group>
-
     <group id="GoToMenuEx">
       <separator/>
       <action id="MethodDown" class="com.intellij.codeInsight.navigation.actions.MethodDownAction"/>
