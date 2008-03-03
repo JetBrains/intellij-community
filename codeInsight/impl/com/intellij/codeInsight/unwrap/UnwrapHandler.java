@@ -2,6 +2,7 @@ package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -87,7 +88,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
     PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
     builder
-      .setTitle("Choose statement to remove")
+      .setTitle(CodeInsightBundle.message("unwrap.popup.title"))
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
