@@ -54,6 +54,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
   protected EditorActionHandler myOriginalHandler;
 
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEnterHandler");
+  public static final String DOC_COMMENT_START = "/**";
 
   public GroovyEnterHandler(EditorActionHandler actionHandler) {
     myOriginalHandler = actionHandler;
@@ -126,19 +127,19 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
       if (lineOffset > caret) return false;
       String line = text.substring(lineOffset, caret).replaceAll(" ", "");
       if (!line.startsWith("*") &&
-          !line.startsWith("/**") &&
+          !line.startsWith(DOC_COMMENT_START) &&
           type != mGDOC_COMMENT_START) {
         return false;
       }
       iterator = highlighter.createIterator(caret - 1);
-      if (line.startsWith("/**")) {
+      if (line.startsWith(DOC_COMMENT_START)) {
         if (caret == text.length() || isNotCompleteComment(iterator)) {
           myOriginalHandler.execute(editor, dataContext);
           if (settings.JD_LEADING_ASTERISKS_ARE_ENABLED) {
             EditorModificationUtil.insertStringAtCaret(editor, "* ");
             myOriginalHandler.execute(editor, dataContext);
             EditorModificationUtil.insertStringAtCaret(editor, "*/");
-            if (caret < text.length() && (text.charAt(caret) != '\n' || text.charAt(caret) != '\r')) {
+            if (caret < text.length() && (text.charAt(caret) != '\n' && text.charAt(caret) != '\r')) {
               myOriginalHandler.execute(editor, dataContext);
               editor.getCaretModel().moveCaretRelatively(3, -2, false, false, true);
             } else {
