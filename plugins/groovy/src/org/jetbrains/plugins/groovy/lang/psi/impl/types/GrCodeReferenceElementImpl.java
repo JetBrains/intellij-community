@@ -105,8 +105,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     } else if (parent instanceof GrPackageDefinition) {
       return PACKAGE_FQ;
     } else if (parent instanceof GrDocReferenceElement) {
-      PsiElement element = parent.getParent();
-      if (element instanceof GrDocTag) return CLASS_OR_PACKAGE_FQ;
       return CLASS_OR_PACKAGE;
     } else if (parent instanceof GrImportStatement) {
       final GrImportStatement importStatement = (GrImportStatement) parent;
