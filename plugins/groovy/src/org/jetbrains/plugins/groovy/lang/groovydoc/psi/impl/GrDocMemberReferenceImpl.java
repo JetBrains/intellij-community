@@ -19,6 +19,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.codeInsight.lookup.LookupItem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
  * @author ilyas
@@ -114,7 +118,24 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
       MethodResolverProcessor methodProcessor = new MethodResolverProcessor(null, this, true, false, null, PsiType.EMPTY_ARRAY);
       resolved.processDeclarations(methodProcessor, PsiSubstitutor.EMPTY, null, this);
       PsiElement[] methodCandidates = ResolveUtil.mapToElements(methodProcessor.getCandidates());
-      return ArrayUtil.mergeArrays(propertyCandidates, methodCandidates, Object.class);
+      PsiElement[] elements = ArrayUtil.mergeArrays(propertyCandidates, methodCandidates, PsiElement.class);
+
+      return ContainerUtil.map2Array(elements, new Function<PsiElement, Object>() {
+        public Object fun(PsiElement psiElement) {
+          LookupItem<PsiElement> lookupItem = null;
+          if (psiElement instanceof PsiNamedElement) {
+            if (psiElement instanceof PsiMethod) {
+              lookupItem = new LookupItem<PsiElement>(psiElement, ((PsiMethod) psiElement).getName());
+            } else {
+              String string = ((PsiNamedElement) psiElement).getName();
+              lookupItem = new LookupItem<PsiElement>(psiElement, string == null ? "" : string);
+            }
+            lookupItem.setAttribute(LookupItem.DO_AUTOCOMPLETE_ATTR, null);
+            lookupItem.setAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, true);
+          }
+          return lookupItem != null ? lookupItem : psiElement;
+        }
+      });
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }

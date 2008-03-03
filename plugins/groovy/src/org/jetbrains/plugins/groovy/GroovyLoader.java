@@ -49,6 +49,7 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.GrailsLoader;
+import org.jetbrains.plugins.grails.completion.handlers.ControllerReferenceInsertHandler;
 import org.jetbrains.plugins.grails.lang.gsp.psi.GspElementFactory;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesReferenceProvider;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
@@ -60,9 +61,11 @@ import org.jetbrains.plugins.groovy.editor.selection.GroovyLiteralSelectioner;
 import org.jetbrains.plugins.groovy.editor.selection.GroovyTypeCastSelectioner;
 import org.jetbrains.plugins.groovy.findUsages.*;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
+import org.jetbrains.plugins.groovy.lang.completion.InsertHandlerRegistry;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
 import org.jetbrains.plugins.groovy.lang.groovydoc.completion.GroovyDocCompletionData;
+import org.jetbrains.plugins.groovy.lang.groovydoc.completion.handlers.GroovyDocMethodHandler;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.references.GroovyDocReferenceProvider;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -119,8 +122,7 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
     GroovyEditorActionsManager.registerGroovyEditorActions();
 
     //Register Keyword completion
-    CompositeCompletionData compositeCompletionData = new CompositeCompletionData(new GroovyCompletionData(), new GroovyDocCompletionData());
-    CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE, compositeCompletionData);
+    setupCompletion();
 
     SelectWordUtil.registerSelectioner(new GroovyLiteralSelectioner());
     SelectWordUtil.registerSelectioner(new GroovyTypeCastSelectioner());
@@ -178,6 +180,14 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
 
       }
     });
+  }
+
+  private static void setupCompletion() {
+    InsertHandlerRegistry handlerRegistry = InsertHandlerRegistry.getInstance();
+    handlerRegistry.registerSpecificInsertHandler(new GroovyDocMethodHandler());
+    
+    CompositeCompletionData compositeCompletionData = new CompositeCompletionData(new GroovyCompletionData(), new GroovyDocCompletionData());
+    CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE, compositeCompletionData);
   }
 
   public void disposeComponent() {

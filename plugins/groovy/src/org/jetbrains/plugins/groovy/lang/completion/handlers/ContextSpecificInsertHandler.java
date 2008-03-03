@@ -26,5 +26,9 @@ public interface ContextSpecificInsertHandler {
 
   boolean isAcceptable(CompletionContext context, int startOffset, LookupData data, LookupItem item, boolean signatureSelected, char completionChar);
 
+  /**
+   * Handler can be executed ONLY if {@link #isAcceptable(CompletionContext, int, LookupData, LookupItem, boolean, char)}
+   * returns true.
+   */
   void handleInsert(CompletionContext context, int startOffset, LookupData data, LookupItem item, boolean signatureSelected, char completionChar);
 }

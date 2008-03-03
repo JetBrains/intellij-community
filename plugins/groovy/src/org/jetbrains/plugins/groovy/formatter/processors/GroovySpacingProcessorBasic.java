@@ -91,8 +91,10 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
       return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 100);
     }
 
-
     if (METHOD_DEFS.contains(rightNode.getElementType())) {
+      if (leftNode.getElementType() == GROOVY_DOC_COMMENT) {
+        return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD, settings.KEEP_LINE_BREAKS, 0);
+      }
       return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 100);
     }
 
