@@ -10,7 +10,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 
 public class JavaCatchUnwrapper extends JavaUnwrapper {
   public JavaCatchUnwrapper() {
-    super(CodeInsightBundle.message("unwrap.catch"));
+    super(CodeInsightBundle.message("remove.catch"));
   }
 
   public boolean isApplicableTo(PsiElement e) {

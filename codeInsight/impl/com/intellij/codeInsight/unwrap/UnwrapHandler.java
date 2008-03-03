@@ -15,17 +15,17 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -91,16 +91,16 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setCancelCalllback(new Computable<Boolean>() {
-        public Boolean compute() {
-          highlighter.dropHighlight();
-          return true;
-        }
-      })
       .setItemChoosenCallback(new Runnable() {
         public void run() {
           MyUnwrapAction a = (MyUnwrapAction)options.get(list.getSelectedIndex());
           a.actionPerformed(null);
+        }
+      })
+      .addListener(new JBPopupAdapter() {
+        @Override
+        public void onClosed(JBPopup popup) {
+          highlighter.dropHighlight();
         }
       });
 

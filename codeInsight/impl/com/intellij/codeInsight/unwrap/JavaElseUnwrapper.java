@@ -8,7 +8,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 
 public class JavaElseUnwrapper extends JavaUnwrapper {
   public JavaElseUnwrapper() {
-    super(CodeInsightBundle.message("unwrap.else"));
+    super(CodeInsightBundle.message("remove.else"));
   }
 
   public boolean isApplicableTo(PsiElement e) {
