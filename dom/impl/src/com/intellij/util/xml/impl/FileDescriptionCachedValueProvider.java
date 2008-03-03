@@ -175,6 +175,9 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
 
   @NotNull
   private Pair<DomFileDescription<T>,Object[]> findFileDescription(Module module, final String rootTagName) {
+    final DomFileDescription<T> mockDescription = myXmlFile.getUserData(DomManagerImpl.MOCK_DESCIPRTION);
+    if (mockDescription != null) return Pair.create(mockDescription, ArrayUtil.EMPTY_OBJECT_ARRAY);
+
     final XmlFile originalFile = (XmlFile)myXmlFile.getOriginalFile();
     if (originalFile != null) {
       final FileDescriptionCachedValueProvider<T> provider = myDomManager.<T>getOrCreateCachedValueProvider(originalFile);

@@ -57,7 +57,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   private static final Key<Object> MOCK = Key.create("MockElement");
   private static final Key<DomInvocationHandler> CACHED_HANDLER = Key.create("CachedInvocationHandler");
   private static final Key<FileDescriptionCachedValueProvider> CACHED_FILE_ELEMENT_PROVIDER = Key.create("CachedFileElementProvider");
-  private static final Key<DomFileDescription> MOCK_DESCIPRTION = Key.create("MockDescription");
+  static final Key<DomFileDescription> MOCK_DESCIPRTION = Key.create("MockDescription");
   private static final DomEventAdapter MODIFICATION_TRACKER = new DomChangeAdapter() {
 
     public void elementDefined(ElementDefinedEvent event) {
@@ -369,7 +369,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     DomFileDescription<T> description = file.getUserData(MOCK_DESCIPRTION);
     if (description == null) {
       description = new MockDomFileDescription<T>(aClass, rootTagName, file);
-      registerFileDescription(description);
+      _registerFileDescription(description);
       file.putUserData(MOCK_DESCIPRTION, description);
     }
     final DomFileElementImpl<T> fileElement = getFileElement(file);
