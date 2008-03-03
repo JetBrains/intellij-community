@@ -15,237 +15,138 @@
  */
 package com.intellij.openapi.extensions;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.graph.CachingSemiGraph;
+import com.intellij.util.graph.DFSTBuilder;
+import com.intellij.util.graph.GraphGenerator;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Alexander Kireyev
  */
-public abstract class LoadingOrder {
-  public static final LoadingOrder ANY = new LoadingOrder("ANY") {
-    int findPlace(Orderable[] orderables, int current) {
-      return DONT_CARE;
-    }
-  };
-  public static final LoadingOrder FIRST = new LoadingOrder("FIRST") {
-    int findPlace(Orderable[] orderables, int current) {
-      return SPECIAL;
-    }
-  };
-  public static final LoadingOrder LAST = new LoadingOrder("LAST") {
-    int findPlace(Orderable[] orderables, int current) {
-      return SPECIAL;
-    }
-  };
+public class LoadingOrder {
+  @NonNls private static final String FIRST_STR = "FIRST";
+  @NonNls private static final String LAST_STR = "LAST";
+  @NonNls private static final String BEFORE_STR = "BEFORE ";
+  @NonNls private static final String AFTER_STR = "AFTER ";
 
-  private static final int DONT_CARE = -1;
-  static final int ACCEPTABLE = -2;
-  private static final int SPECIAL = -3;
+  public static final LoadingOrder ANY = new LoadingOrder();
+  public static final LoadingOrder FIRST = new LoadingOrder(FIRST_STR);
+  public static final LoadingOrder LAST = new LoadingOrder(LAST_STR);
 
-  private final String myName; // for debug only
-  private static final String BEFORE_STR = "BEFORE:";
-  private static final String AFTER_STR = "AFTER:";
+  @NonNls private final String myName; // for debug only
+  private boolean myFirst;
+  private boolean myLast;
+  private final Set<String> myBefore = new HashSet<String>();
+  private final Set<String> myAfter = new HashSet<String>();
 
-  private LoadingOrder(String name) {
-    myName = name;
+  private LoadingOrder() {
+    myName = "ANY";
+  }
+
+  private LoadingOrder(@NonNls @NotNull String text) {
+    myName = text;
+    final String[] strings = text.split(",");
+    for (final String string : strings) {
+      String trimmed = string.trim();
+      if (trimmed.equalsIgnoreCase(FIRST_STR)) myFirst = true;
+      else if (trimmed.equalsIgnoreCase(LAST_STR)) myLast = true;
+      else if (StringUtil.startsWithIgnoreCase(trimmed, BEFORE_STR)) myBefore.add(trimmed.substring(BEFORE_STR.length()));
+      else if (StringUtil.startsWithIgnoreCase(trimmed, AFTER_STR)) myAfter.add(trimmed.substring(AFTER_STR.length()));
+      else throw new AssertionError("Invalid specification: " + trimmed + "; should be one of FIRST, LAST, BEFORE <id> or AFTER <id>");
+    }
+
   }
 
   public String toString() {
     return myName;
   }
 
-  public static LoadingOrder before(final String id) {
-    return new BeforeLoadingOrder(id);
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (!(o instanceof LoadingOrder)) return false;
+
+    final LoadingOrder that = (LoadingOrder)o;
+
+    if (myFirst != that.myFirst) return false;
+    if (myLast != that.myLast) return false;
+    if (!myAfter.equals(that.myAfter)) return false;
+    if (!myBefore.equals(that.myBefore)) return false;
+
+    return true;
   }
 
-  public static LoadingOrder after(final String id) {
-    return new AfterLoadingOrder(id);
+  public int hashCode() {
+    int result;
+    result = (myFirst ? 1 : 0);
+    result = 31 * result + (myLast ? 1 : 0);
+    result = 31 * result + myBefore.hashCode();
+    result = 31 * result + myAfter.hashCode();
+    return result;
   }
 
-  abstract int findPlace(Orderable[] orderables, int current);
-
-  public static void sort(Orderable[] orderables) {
-    Orderable first = null;
-    Orderable last = null;
-    List other = new ArrayList();
-    for (int i = 0; i < orderables.length; i++) {
-      Orderable orderable = orderables[i];
-      if (orderable.getOrder() == FIRST) {
-        if (first != null) {
-          throw new SortingException("More than one 'first' element", new Element[] {first.getDescribingElement(), orderable.getDescribingElement()});
-        }
-        first = orderable;
-      }
-      else if (orderable.getOrder() == LAST) {
-        if (last != null) {
-          throw new SortingException("More than one 'last' element", new Element[] {last.getDescribingElement(), orderable.getDescribingElement()});
-        }
-        last = orderable;
-      }
-      else {
-        other.add(orderable);
-      }
-    }
-    List result = new ArrayList();
-    if (first != null) {
-      result.add(first);
-    }
-    result.addAll(other);
-    if (last != null) {
-      result.add(last);
-    }
-
-    assert result.size() == orderables.length;
-
-    Orderable[] presorted = (Orderable[]) result.toArray(new Orderable[result.size()]);
-
-    int swapCount = 0;
-    int maxSwaps = presorted.length * presorted.length;
-    for (int i = 0; i < presorted.length; i++) {
-      Orderable orderable = presorted[i];
-      LoadingOrder order = orderable.getOrder();
-      int place = order.findPlace(presorted, i);
-      if (place == DONT_CARE || place == ACCEPTABLE || place == SPECIAL) {
-        continue;
-      }
-      if (place == 0 && presorted[0].getOrder() == FIRST) {
-        throw new SortingException("Element attempts to go before the specified first", new Element[] {orderable.getDescribingElement(), presorted[0].getDescribingElement()});
-      }
-      if (place == presorted.length - 1 && presorted[presorted.length - 1].getOrder() == LAST) {
-        throw new SortingException("Element attempts to go after the specified last", new Element[] {orderable.getDescribingElement(), presorted[presorted.length - 1].getDescribingElement()});
-      }
-      moveTo(presorted, i, place);
-      if (i > place) {
-        i = place;
-      }
-      else {
-        i--;
-      }
-      swapCount++;
-      if (swapCount > maxSwaps) {
-        List allElements = new ArrayList();
-        for (int j = 0; j < presorted.length; j++) {
-          allElements.add(presorted[j].getDescribingElement());
-        }
-        throw new SortingException("Could not satisfy sorting requirements", (Element[]) allElements.toArray(new Element[allElements.size()]));
-      }
-    }
-
-    System.arraycopy(presorted, 0, orderables, 0, presorted.length);
+  public static LoadingOrder before(@NonNls final String id) {
+    return new LoadingOrder(BEFORE_STR + id);
   }
 
-  private static void moveTo(Orderable[] orderables, int from, int to) {
-    if (to == from) return;
-    Orderable movedOrderable = orderables[from];
-    if (to > from) {
-      for (int i = from; i < to; i++) {
-        orderables[i] = orderables[i + 1];
-      }
-    }
-    else {
-      for (int i = from; i > to; i--) {
-        orderables[i] = orderables[i - 1];
-      }
-    }
-    orderables[to] = movedOrderable;
+  public static LoadingOrder after(@NonNls final String id) {
+    return new LoadingOrder(AFTER_STR + id);
   }
 
-  public static LoadingOrder readOrder(String orderAttr) {
-    if (orderAttr != null) {
-      if ("FIRST".equalsIgnoreCase(orderAttr)) return FIRST;
-      if ("LAST".equalsIgnoreCase(orderAttr)) return LAST;
-      if ("ANY".equalsIgnoreCase(orderAttr)) return ANY;
-      if (orderAttr.toUpperCase().startsWith(BEFORE_STR)) {
-        return before(orderAttr.substring(BEFORE_STR.length()));
-      }
-      if (orderAttr.toUpperCase().startsWith(AFTER_STR)) {
-        return after(orderAttr.substring(AFTER_STR.length()));
+  public static void sort(final Orderable[] orderables) {
+    final Map<String,Orderable> map = new HashMap<String, Orderable>();
+    for (final Orderable orderable : orderables) {
+      final String id = orderable.getOrderId();
+      if (StringUtil.isNotEmpty(id)) {
+        map.put(id, orderable);
       }
     }
-    return ANY;
-  }
 
-  private static class BeforeLoadingOrder extends LoadingOrder {
-    private final String myId;
+    DFSTBuilder<Orderable> builder = new DFSTBuilder<Orderable>(new GraphGenerator<Orderable>(new CachingSemiGraph<Orderable>(new GraphGenerator.SemiGraph<Orderable>() {
+      public Collection<Orderable> getNodes() {
+        return Arrays.asList(orderables);
+      }
 
-    public BeforeLoadingOrder(String id) {
-      super(LoadingOrder.BEFORE_STR + id);
-      myId = id;
-    }
+      public Iterator<Orderable> getIn(final Orderable n) {
+        final LoadingOrder order = n.getOrder();
 
-    int findPlace(Orderable[] orderables, int current) {
-      for (int i = 0; i < orderables.length; i++) {
-        Orderable orderable = orderables[i];
-        String orderId = orderable.getOrderId();
-        if (myId.equals(orderId)) {
-          if (current < i) {
-            return ACCEPTABLE;
-          }
-          else {
-            return i;
+        Set<Orderable> predecessors = new LinkedHashSet<Orderable>();
+        for (final String id : order.myAfter) {
+          final Orderable orderable = map.get(id);
+          if (orderable != null) {
+            predecessors.add(orderable);
           }
         }
-      }
-      return DONT_CARE;
-    }
 
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof BeforeLoadingOrder)) return false;
-
-      final BeforeLoadingOrder beforeLoadingOrder = (BeforeLoadingOrder) o;
-
-      if (!myId.equals(beforeLoadingOrder.myId)) return false;
-
-      return true;
-    }
-
-    public int hashCode() {
-      return myId.hashCode();
-    }
-  }
-
-  private static class AfterLoadingOrder extends LoadingOrder {
-    private final String myId;
-
-    public AfterLoadingOrder(String id) {
-      super(LoadingOrder.AFTER_STR + id);
-      myId = id;
-    }
-
-    int findPlace(Orderable[] orderables, int current) {
-      for (int i = 0; i < orderables.length; i++) {
-        Orderable orderable = orderables[i];
-        String orderId = orderable.getOrderId();
-        if (myId.equals(orderId)) {
-          if (current > i) {
-            return ACCEPTABLE;
-          }
-          else {
-            return i;
+        String id = n.getOrderId();
+        for (final Orderable orderable : orderables) {
+          final LoadingOrder hisOrder = orderable.getOrder();
+          if (StringUtil.isNotEmpty(id) && hisOrder.myBefore.contains(id) ||
+              order.myLast && !hisOrder.myLast ||
+              hisOrder.myFirst && !order.myFirst) {
+            predecessors.add(orderable);
           }
         }
+        return predecessors.iterator();
       }
-      return DONT_CARE;
+    })));
+
+    if (!builder.isAcyclic()) {
+      final Pair<Orderable,Orderable> dependency = builder.getCircularDependency();
+      throw new SortingException("Could not satisfy sorting requirements", new Element[]{dependency.first.getDescribingElement(), dependency.second.getDescribingElement()});
     }
 
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof AfterLoadingOrder)) return false;
+    Arrays.sort(orderables, builder.comparator());
+  }
 
-      final AfterLoadingOrder afterLoadingOrder = (AfterLoadingOrder) o;
-
-      if (!myId.equals(afterLoadingOrder.myId)) return false;
-
-      return true;
-    }
-
-    public int hashCode() {
-      return myId.hashCode();
-    }
+  public static LoadingOrder readOrder(@NonNls String orderAttr) {
+    return orderAttr != null ? new LoadingOrder(orderAttr) : ANY;
   }
 
   public interface Orderable {

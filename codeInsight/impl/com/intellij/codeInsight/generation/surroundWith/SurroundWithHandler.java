@@ -22,6 +22,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
@@ -97,8 +98,19 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
           return;
         }
         else {
-          doSurround(project, editor, surrounder, elements);
+          invokeSurrondInTestMode(project, editor, surrounder, descriptor, elements);
         }
+      }
+    }
+  }
+
+  @TestOnly
+  private static void invokeSurrondInTestMode(final Project project, final Editor editor, final Surrounder surrounder,
+                                              final SurroundDescriptor descriptor, final PsiElement[] elements) {
+    for (final Surrounder surrounder1 : descriptor.getSurrounders()) {
+      if (surrounder1.getClass().equals(surrounder.getClass())) {
+        doSurround(project, editor, surrounder, elements);
+        return;
       }
     }
   }

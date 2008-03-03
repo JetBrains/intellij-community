@@ -109,8 +109,7 @@ public class ExtensionComponentAdapter implements ComponentAdapter, LoadingOrder
   }
 
   public LoadingOrder getOrder() {
-    String orderAttr = myExtensionElement.getAttributeValue("order");
-    return LoadingOrder.readOrder(orderAttr);
+    return LoadingOrder.readOrder(myExtensionElement.getAttributeValue("order"));
   }
 
   public String getOrderId() {

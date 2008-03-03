@@ -47,7 +47,9 @@ public class PatternPackageSetParserExtension implements PackageSetParserExtensi
       return PatternPackageSet.SCOPE_ANY;
     }
 
-    lexer.advance();
+    if (scope != null) {
+      lexer.advance();
+    }
 
     return scope;
   }

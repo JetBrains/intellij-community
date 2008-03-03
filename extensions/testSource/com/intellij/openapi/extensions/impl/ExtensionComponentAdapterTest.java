@@ -23,8 +23,8 @@ public class ExtensionComponentAdapterTest extends MockObjectTestCase {
     assertEquals(LoadingOrder.ANY, createAdapter("<extension/>").getOrder());
     assertEquals(LoadingOrder.FIRST, createAdapter("<extension order=\"FIRST\"/>").getOrder());
     assertEquals(LoadingOrder.LAST, createAdapter("<extension order=\"LAST\"/>").getOrder());
-    assertEquals(LoadingOrder.before("test"), createAdapter("<extension order=\"BEFORE:test\"/>").getOrder());
-    assertEquals(LoadingOrder.after("test"), createAdapter("<extension order=\"AFTER:test\"/>").getOrder());
+    assertEquals(LoadingOrder.before("test"), createAdapter("<extension order=\"BEFORE test\"/>").getOrder());
+    assertEquals(LoadingOrder.after("test"), createAdapter("<extension order=\"AFTER test\"/>").getOrder());
   }
 
   public void testUnknownAttributes() {

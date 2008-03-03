@@ -281,33 +281,39 @@ public class ExtensionsImplTest extends TestCase {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer(), new Extensions.SimpleLogProvider());
     extensionsArea.registerExtensionPoint("ep1", TestExtensionClassOne.class.getName());
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
-        "<extension point=\"ep1\" order=\"LAST\"><text>6</text></extension>"));
+        "<extension point=\"ep1\" id=\"_7\" order=\"LAST\"><text>7</text></extension>"));
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
-        "<extension point=\"ep1\" order=\"FIRST\"><text>1</text></extension>"));
+        "<extension point=\"ep1\" id=\"fst\" order=\"FIRST\"><text>1</text></extension>"));
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
-        "<extension point=\"ep1\" id=\"id\"><text>3</text></extension>"));
+        "<extension point=\"ep1\" id=\"id\"><text>4</text></extension>"));
     ExtensionPoint extensionPoint = extensionsArea.getExtensionPoint("ep1");
     TestExtensionClassOne[] extensions = (TestExtensionClassOne[]) extensionPoint.getExtensions();
     assertEquals(3, extensions.length);
     assertEquals("1", extensions[0].getText());
-    assertEquals("3", extensions[1].getText());
-    assertEquals("6", extensions[2].getText());
+    assertEquals("4", extensions[1].getText());
+    assertEquals("7", extensions[2].getText());
     TestExtensionClassOne extension = new TestExtensionClassOne("xxx");
     extensionPoint.registerExtension(extension);
     extensionPoint.unregisterExtension(extension);
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
-        "<extension point=\"ep1\" order=\"BEFORE:id\"><text>2</text></extension>"));
+        "<extension point=\"ep1\" order=\"BEFORE id\"><text>3</text></extension>"));
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
-        "<extension point=\"ep1\" order=\"AFTER:id\"><text>4</text></extension>"));
-    extensionPoint.registerExtension(new TestExtensionClassOne("5"));
+        "<extension point=\"ep1\" order=\"AFTER id\"><text>6</text></extension>"));
+    extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
+        "<extension point=\"ep1\" order=\"last, after _7\"><text>8</text></extension>"));
+    extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
+        "<extension point=\"ep1\" order=\"after id, before _7, after fst\"><text>5</text></extension>"));
+    extensionPoint.registerExtension(new TestExtensionClassOne("2"));
     extensions = (TestExtensionClassOne[]) extensionPoint.getExtensions();
-    assertEquals(6, extensions.length);
+    assertEquals(8, extensions.length);
     assertEquals("1", extensions[0].getText());
     assertEquals("2", extensions[1].getText());
     assertEquals("3", extensions[2].getText());
     assertEquals("4", extensions[3].getText());
     assertEquals("5", extensions[4].getText());
     assertEquals("6", extensions[5].getText());
+    assertEquals("7", extensions[6].getText());
+    assertEquals("8", extensions[7].getText());
   }
 
   public interface MyInterface1 extends Runnable {
