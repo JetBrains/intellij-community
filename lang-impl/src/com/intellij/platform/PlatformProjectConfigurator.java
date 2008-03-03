@@ -6,7 +6,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,8 +21,8 @@ public class PlatformProjectConfigurator implements ProjectComponent {
   public PlatformProjectConfigurator(final Project project, MessageBus bus) {
     myProject = project;
     if (!project.isDefault()) {
-      bus.connect().subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
-        public void projectComponentsInitialized(final Project project) {
+      ProjectBaseDirectory.getInstance(project).addListener(new ProjectBaseDirectory.Listener() {
+        public void baseDirChanged() {
           initDefaultModule();
         }
       });
@@ -31,7 +30,7 @@ public class PlatformProjectConfigurator implements ProjectComponent {
   }
 
   private void initDefaultModule() {
-    final VirtualFile baseDir = ProjectBaseDirectory.getInstance(myProject).BASE_DIR;
+    final VirtualFile baseDir = ProjectBaseDirectory.getInstance(myProject).getBaseDir();
     if (baseDir != null) {
       final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
       final Module[] modules = moduleManager.getModules();

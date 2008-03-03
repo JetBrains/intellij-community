@@ -10,7 +10,7 @@ import com.intellij.platform.ProjectBaseDirectory;
  */
 public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
   public String getProjectTitle(final Project project) {
-    VirtualFile baseDir = ProjectBaseDirectory.getInstance(project).BASE_DIR;
+    VirtualFile baseDir = ProjectBaseDirectory.getInstance(project).getBaseDir();
     if (baseDir != null) {
       return FileUtil.toSystemDependentName(baseDir.getPath());
     }
@@ -19,7 +19,7 @@ public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
 
   public String getFileTitle(final Project project, final VirtualFile file) {
     String url = file.getPresentableUrl();
-    VirtualFile baseDir = ProjectBaseDirectory.getInstance(project).BASE_DIR;
+    VirtualFile baseDir = ProjectBaseDirectory.getInstance(project).getBaseDir();
     if (baseDir == null) baseDir = project.getBaseDir();
     if (baseDir != null) {
       //noinspection ConstantConditions

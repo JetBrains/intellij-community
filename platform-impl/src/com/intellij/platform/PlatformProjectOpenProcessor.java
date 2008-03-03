@@ -58,7 +58,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       project = projectManager.newProject(projectFile.getPath(), true, false);
     }
     if (project == null) return null;
-    ProjectBaseDirectory.getInstance(project).BASE_DIR = baseDir;
+    ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
     openFileFromCommandLine(project, virtualFile);
     projectManager.openProject(project);
 
