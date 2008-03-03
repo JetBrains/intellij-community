@@ -25,7 +25,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.CaretModel;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.ContextSpecificInsertHandler;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParameter;
 
 /**
  * @author ilyas
@@ -68,16 +72,33 @@ public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
       i++;
     }
     buffer.append(") ");
-    /**
-     * @see String#format(java.util.Locale, String, Object[])
-     */
+
     Editor editor = context.editor;
-    Document document = editor.getDocument();
     CaretModel caretModel = editor.getCaretModel();
+    int endOffset = shortenParamterReferences(context, startOffset, method, buffer);
+
+    caretModel.moveToOffset(endOffset);
+  }
+
+  private static int shortenParamterReferences(CompletionContext context, int startOffset, PsiMethod method, StringBuffer buffer) {
+    Document document = context.editor.getDocument();
     int offset = startOffset + method.getName().length();
     String paramText = buffer.toString();
     document.insertString(offset, paramText);
-    caretModel.moveToOffset(offset + paramText.length());
+    int endOffset = offset + paramText.length();
+
+    PsiDocumentManager.getInstance(context.project).commitDocument(document);
+    PsiReference ref = context.file.findReferenceAt(startOffset);
+    if (ref instanceof GrDocMethodReference) {
+      GrDocMethodReference methodReference = (GrDocMethodReference) ref;
+      GrDocMethodParams list = methodReference.getParameterList();
+      for (GrDocMethodParameter parameter : list.getParameters()) {
+        PsiUtil.shortenReferences(parameter);
+      }
+      endOffset = methodReference.getTextRange().getEndOffset() + 1;
+    }
+    return endOffset;
   }
+
 
 }

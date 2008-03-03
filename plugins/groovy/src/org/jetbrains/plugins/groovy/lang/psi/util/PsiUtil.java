@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -366,6 +367,7 @@ public class PsiUtil {
   }
 
   private static boolean mayShorten(GrCodeReferenceElement ref) {
+    if (PsiTreeUtil.getParentOfType(ref, GrDocMemberReference.class) != null) return true;
     return PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null;
   }
 
