@@ -173,10 +173,10 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     ProjectJdk jdk = params.getJdk();
     StringBuffer buffer = new StringBuffer();
     if (jdk != null) {
-      String jdkLibDir = getJdkLibDirParent(jdk);
+      String jdkDir = getJdkLibDirParent(jdk);
 
       for (String libPath : list) {
-        if (!libPath.contains(jdkLibDir)) {
+        if (!libPath.startsWith(jdkDir)) {
           buffer.append(libPath).append(File.pathSeparator);
         }
       }
