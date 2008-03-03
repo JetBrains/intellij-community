@@ -219,11 +219,13 @@
     </group>
 
     <group id="RefactoringMenu2">
-      <separator/>
-      <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction"/>
       <action id="MethodDuplicates" class="com.intellij.refactoring.actions.MethodDuplicatesAction"/>
       <action id="InvertBoolean" class="com.intellij.refactoring.actions.InvertBooleanAction"/>
-      <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction"/>
+
+      <add-to-group group-id="RefactoringMenu" anchor="before" relative-to-action="IntroduceVariable"/>
+    </group>
+
+    <group id="RefactoringMenu3">
       <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>
       <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction"/>
       <action id="IntroduceParameter" class="com.intellij.refactoring.actions.IntroduceParameterAction"/>

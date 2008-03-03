@@ -1,4 +1,3 @@
-
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;

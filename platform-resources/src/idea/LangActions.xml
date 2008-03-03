@@ -212,6 +212,9 @@
       <action id="CopyElement" class="com.intellij.ide.actions.CopyElementAction"/>
       <action id="CloneElement" class="com.intellij.ide.actions.CloneElementAction"/>
       <action id="SafeDelete" class="com.intellij.refactoring.actions.SafeDeleteAction"/>
+      <separator/>
+      <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction"/>
+      <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction"/>
 
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="AnalyzeMenu"/>
     </group>
