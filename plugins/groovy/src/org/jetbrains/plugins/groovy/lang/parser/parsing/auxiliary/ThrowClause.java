@@ -51,8 +51,6 @@ public class ThrowClause implements GroovyElementTypes {
       }
     }
 
-    ParserUtils.getToken(builder, mNLS);
-
     throwClauseMarker.done(THROW_CLAUSE);
   }
 }
