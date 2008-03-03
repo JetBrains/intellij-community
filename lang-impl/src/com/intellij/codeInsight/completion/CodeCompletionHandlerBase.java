@@ -299,9 +299,10 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     // is null in tests
     int hostStartOffset = injectedLanguageManager == null ? context.getStartOffset() : injectedLanguageManager.injectedToHost(oldFileCopy, TextRange.from(
       context.getStartOffset(), 0)).getStartOffset();
+
     Document document = oldFileCopy.getViewProvider().getDocument();
 
-    document.insertString(context.getStartOffset(), dummyIdentifier);
+    document.replaceString(context.getStartOffset(), context.getSelectionEndOffset(), dummyIdentifier);
     PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiFile fileCopy = InjectedLanguageUtil.findInjectedPsiAt(hostFile, hostStartOffset);
     if (fileCopy == null) {
