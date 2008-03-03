@@ -23,6 +23,11 @@
       <add-to-group group-id="EditorActions" anchor="last"/>
     </group>
 
+    <group id="GenerateGroup">
+      <action id="OverrideMethods" class="com.intellij.codeInsight.generation.actions.OverrideMethodsAction"/>
+      <action id="ImplementMethods" class="com.intellij.codeInsight.generation.actions.ImplementMethodsAction"/>
+    </group>
+
     <!-- File -->
 
     <action id="ReloadFromDisk" class="com.intellij.ide.actions.ReloadFromDiskAction">
@@ -158,6 +163,8 @@
 
     <!-- Code -->
     <group id="CodeMenu" popup="true">
+      <reference ref="OverrideMethods"/>
+      <reference ref="ImplementMethods"/>
       <separator/>
 
       <group id="CodeCompletionGroup" class="com.intellij.codeInsight.completion.actions.CodeCompletionGroup" popup="true">

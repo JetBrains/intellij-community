@@ -40,16 +40,21 @@
       <add-to-group group-id="EditorActions" anchor="last"/>
     </group>
 
-    <group id="GenerateGroup">
+    <group id="JavaGenerateGroup1">
       <action id="GenerateConstructor" class="com.intellij.codeInsight.generation.actions.GenerateConstructorAction"/>
       <action id="GenerateGetter" class="com.intellij.codeInsight.generation.actions.GenerateGetterAction"/>
       <action id="GenerateSetter" class="com.intellij.codeInsight.generation.actions.GenerateSetterAction"/>
       <action id="GenerateGetterAndSetter" class="com.intellij.codeInsight.generation.actions.GenerateGetterAndSetterAction"/>
       <action id="GenerateEquals" class="com.intellij.codeInsight.generation.actions.GenerateEqualsAction"/>
-      <action id="OverrideMethods" class="com.intellij.codeInsight.generation.actions.OverrideMethodsAction"/>
-      <action id="ImplementMethods" class="com.intellij.codeInsight.generation.actions.ImplementMethodsAction"/>
+
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </group>
+
+    <group id="JavaGenerateGroup2">
       <action id="DelegateMethods" class="com.intellij.codeInsight.generation.actions.GenerateDelegateAction"/>
       <action id="GenerateSuperMethodCall" class="com.intellij.codeInsight.generation.actions.GenerateSuperMethodCallAction"/>
+
+      <add-to-group group-id="GenerateGroup" anchor="last"/>
     </group>
 
     <group id="NewGroup1">
@@ -174,15 +179,13 @@
     </group>
 
     <group id="CodeMenu1">
-      <reference ref="OverrideMethods"/>
-      <reference ref="ImplementMethods"/>
       <reference ref="DelegateMethods"/>
       <separator/>
       <action id="SurroundWith" class="com.intellij.codeInsight.generation.actions.SurroundWithAction"/>
       <action id="Generate" class="com.intellij.codeInsight.generation.actions.GenerateAction"/>
       <action id="Unwrap" class="com.intellij.codeInsight.unwrap.UnwrapAction"/>
 
-      <add-to-group group-id="CodeMenu" anchor="first"/>
+      <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="ImplementMethods"/>
     </group>
 
     <action id="AutoIndentLines" class="com.intellij.codeInsight.generation.actions.AutoIndentLinesAction">
