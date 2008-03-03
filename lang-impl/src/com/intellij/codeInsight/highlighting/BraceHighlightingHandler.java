@@ -11,6 +11,7 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -27,12 +28,16 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
+import com.intellij.util.Processor;
+import com.intellij.concurrency.Job;
+import com.intellij.concurrency.JobScheduler;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -52,25 +57,71 @@ public class BraceHighlightingHandler {
   private FileType myFileType;
   private final CodeInsightSettings myCodeInsightSettings;
 
-  public BraceHighlightingHandler(@NotNull Project project, @NotNull Editor editor, @NotNull Alarm alarm) {
+  private BraceHighlightingHandler(@NotNull Project project, @NotNull Editor editor, @NotNull Alarm alarm, PsiFile psiFile) {
     myProject = project;
-
-    Document document = editor.getDocument();
-    if (!PsiDocumentManager.getInstance(myProject).isUncommited(document)) {
-      // when document is committed, try to highlight braces in injected lang - it's fast
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      editor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, psiFile);
-    }
 
     myEditor = editor;
     myAlarm = alarm;
     myDocument = (DocumentEx)myEditor.getDocument();
 
-    myPsiFile = PsiDocumentManager.getInstance(project).getPsiFile(myDocument);
+    myPsiFile = psiFile;
     myCodeInsightSettings = CodeInsightSettings.getInstance();
     if (myPsiFile != null) {
       myFileType = myPsiFile.getFileType();
     }
+  }
+
+  public static void lookForInjectedAndMatchBracesInOtherThread(@NotNull final Editor editor, @NotNull final Alarm alarm, final Processor<BraceHighlightingHandler> processor) {
+    final Project project = editor.getProject();
+    if (project == null) return;
+    final int offset = editor.getCaretModel().getOffset();
+    Job<Object> job = JobScheduler.getInstance().createJob("Brace highlighter", Job.DEFAULT_PRIORITY);
+    job.addTask(new Runnable() {
+      public void run() {
+        final PsiFile injected = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+          public PsiFile compute() {
+            Document document = editor.getDocument();
+            PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+            return getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
+          }
+        });
+        ApplicationManager.getApplication().invokeLater(new Runnable(){
+          public void run() {
+            Project editorProject = editor.getProject();
+            if (editorProject != null && !editorProject.isDisposed() && !project.isDisposed() && editor.getComponent().isShowing() && !editor.isViewer()) {
+              Editor newEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFileIfAny(editor, injected);
+              BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, alarm, injected);
+              processor.process(handler);
+            }
+          }
+        }, ModalityState.stateForComponent(editor.getComponent()));
+      }
+    });
+    job.schedule();
+  }
+
+  private static final Alarm ourAlarm = new Alarm();
+  public static PsiFile getInjectedFileIfAny(final Editor editor, final Project project, int offset, PsiFile psiFile, final Alarm alarm) {
+    Document document = editor.getDocument();
+    // when document is committed, try to highlight braces in injected lang - it's fast
+    if (!PsiDocumentManager.getInstance(project).isUncommited(document)) {
+      PsiFile injected = InjectedLanguageUtil.findInjectedPsiAt(psiFile, offset);
+      if (injected != null) {
+        return injected;
+      }
+    }
+    else if (alarm != null) {
+      ourAlarm.cancelAllRequests();
+      ourAlarm.addRequest(new Runnable(){
+        public void run() {
+          if (!project.isDisposed() && !editor.isDisposed()) {
+            PsiDocumentManager.getInstance(project).commitAllDocuments();
+            BraceHighlighter.updateBraces(editor, alarm);
+          }
+        }
+      }, 300, ModalityState.stateForComponent(editor.getComponent()));
+    }
+    return psiFile;
   }
 
   public void updateBraces() {

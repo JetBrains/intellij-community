@@ -368,7 +368,7 @@ public class InjectedLanguageUtil {
 
   @NotNull
   public static Editor getInjectedEditorForInjectedFileIfAny(@NotNull Editor editor, final PsiFile injectedFile) {
-    if (injectedFile == null) return editor;
+    if (injectedFile == null || editor instanceof EditorWindow) return editor;
     Document document = PsiDocumentManager.getInstance(editor.getProject()).getDocument(injectedFile);
     if (!(document instanceof DocumentWindowImpl)) return editor;
     DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;

@@ -1,7 +1,5 @@
 package com.intellij.codeInsight.highlighting;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -14,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.Alarm;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public class BraceHighlighter implements ProjectComponent {
@@ -50,7 +49,7 @@ public class BraceHighlighter implements ProjectComponent {
             myAlarm.cancelAllRequests();
             Editor editor = e.getEditor();
             if (editor.getProject() == myProject) {
-              updateBraces(editor);
+              updateBraces(editor, myAlarm);
             }
           }
         };
@@ -61,7 +60,7 @@ public class BraceHighlighter implements ProjectComponent {
             myAlarm.cancelAllRequests();
             Editor editor = e.getEditor();
             if (editor.getProject() == myProject) {
-              updateBraces(editor);
+              updateBraces(editor, myAlarm);
             }
           }
         };
@@ -72,7 +71,7 @@ public class BraceHighlighter implements ProjectComponent {
             myAlarm.cancelAllRequests();
             Editor[] editors = EditorFactory.getInstance().getEditors(e.getDocument(), myProject);
             for (Editor editor : editors) {
-              updateBraces(editor);
+              updateBraces(editor, myAlarm);
             }
           }
         };
@@ -84,7 +83,7 @@ public class BraceHighlighter implements ProjectComponent {
           }
 
           public void focusGained(Editor editor) {
-            updateBraces(editor);
+            updateBraces(editor, myAlarm);
           }
         };
         ((EditorEventMulticasterEx)eventMulticaster).addFocusChangeListner(myFocusChangeListener);
@@ -102,26 +101,22 @@ public class BraceHighlighter implements ProjectComponent {
     });
   }
 
-  private void updateBraces(final Editor editor) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          Project project = editor.getProject();
-          if (project != null && !project.isDisposed() && !myIsDisposed && !myProject.isDisposed() && editor.getComponent().isShowing() && !editor.isViewer()) {
-            new BraceHighlightingHandler(project, editor, myAlarm).updateBraces();
-          }
-        }
-      }, ModalityState.stateForComponent(editor.getComponent()));
+  static void updateBraces(final Editor editor, final Alarm alarm) {
+    BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(editor, alarm, new Processor<BraceHighlightingHandler>() {
+      public boolean process(final BraceHighlightingHandler handler) {
+        handler.updateBraces();
+        return false;
+      }
+    });
   }
 
   private void clearBraces(final Editor editor) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          Project project = editor.getProject();
-          if (project != null && !project.isDisposed() && !myIsDisposed && editor.getComponent().isShowing()) {
-            new BraceHighlightingHandler(project, editor, myAlarm).clearBraceHighlighters();
-          }
-        }
-      }, ModalityState.stateForComponent(editor.getComponent()));
+    BraceHighlightingHandler.lookForInjectedAndMatchBracesInOtherThread(editor, myAlarm, new Processor<BraceHighlightingHandler>() {
+      public boolean process(final BraceHighlightingHandler handler) {
+        handler.clearBraceHighlighters();
+        return false;
+      }
+    });
   }
 
   public void projectClosed() {

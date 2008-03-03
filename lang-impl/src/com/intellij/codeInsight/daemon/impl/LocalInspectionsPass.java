@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
@@ -450,7 +449,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  public static class InjectedPsiInspectionResult {
+  private static class InjectedPsiInspectionResult {
     public final LocalInspectionTool tool;
     public final PsiElement injectedPsi;
     public final List<ProblemDescriptor> foundProblems;
