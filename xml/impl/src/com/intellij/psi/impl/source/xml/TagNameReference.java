@@ -3,14 +3,12 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -116,10 +114,7 @@ public class TagNameReference implements PsiReference {
       if (metaData instanceof XmlElementDescriptor){
         getTagElement().setName(metaData.getName(getElement()));
       }
-    } else if (PsiUtil.isInJspFile(element) && element instanceof PsiFile) {
-      // implicit reference to tag file
-      return getElement();
-    }
+    } 
 
     throw new IncorrectOperationException("Cant bind to not a xml element definition!"+element+","+metaData);
   }
