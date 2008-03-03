@@ -29,6 +29,9 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     int line = document.getLineNumber(offset);
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    if (file == null) {
+      return null;
+    }
     for (XLineBreakpointType<?> type : XDebuggerUtil.getInstance().getLineBreakpointTypes()) {
       XLineBreakpoint<? extends XBreakpointProperties> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
       if (breakpoint != null) {

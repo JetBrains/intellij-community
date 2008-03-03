@@ -28,6 +28,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHintTreeComponent;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
+import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
@@ -44,12 +45,12 @@ public class ValueHint extends AbstractValueHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.ValueHint");
   private PsiExpression myCurrentExpression = null;
 
-  private ValueHint(Project project, Editor editor, Point point, int type, final PsiExpression selectedExpression, final TextRange textRange) {
+  private ValueHint(Project project, Editor editor, Point point, ValueHintType type, final PsiExpression selectedExpression, final TextRange textRange) {
     super(project, editor, point, type, textRange);
     myCurrentExpression = selectedExpression;
   }
 
-  public static ValueHint createValueHint(Project project, Editor editor, Point point, int type) {
+  public static ValueHint createValueHint(Project project, Editor editor, Point point, ValueHintType type) {
     Pair<PsiExpression, TextRange> pair = getSelectedExpression(project, editor, point, type);
     return new ValueHint(project, editor, point, type, pair.getFirst(), pair.getSecond());
   }
@@ -77,9 +78,9 @@ public class ValueHint extends AbstractValueHint {
             final Value value = evaluator.evaluate(evaluationContext);
 
             final WatchItemDescriptor descriptor = new WatchItemDescriptor(getProject(), text, value);
-            if (!isActiveTootlipApplicable(value) || getType() == MOUSE_OVER_HINT) {
+            if (!isActiveTootlipApplicable(value) || getType() == ValueHintType.MOUSE_OVER_HINT) {
               descriptor.setContext(evaluationContext);
-              if (getType() == MOUSE_OVER_HINT) {
+              if (getType() == ValueHintType.MOUSE_OVER_HINT) {
                 // force using default renderer for mouse over hint in order to not to call accidentaly methods while rendering
                 // otherwise, if the hint is invoked explicitly, show it with the right "auto" renderer
                 descriptor.setRenderer(debuggerContext.getDebugProcess().getDefaultRenderer(value));
@@ -87,7 +88,7 @@ public class ValueHint extends AbstractValueHint {
               descriptor.updateRepresentation(evaluationContext, new DescriptorLabelListener() {
                 public void labelChanged() {
                   if(getCurrentRange() != null) {
-                    if(getType() != MOUSE_OVER_HINT || descriptor.isValueValid()) {
+                    if(getType() != ValueHintType.MOUSE_OVER_HINT || descriptor.isValueValid()) {
                       final SimpleColoredText simpleColoredText = DebuggerTreeRenderer.getDescriptorText(debuggerContext, descriptor, true);
                       if (isActiveTootlipApplicable(value)){
                         simpleColoredText.append(" (" + DebuggerBundle.message("active.tooltip.suggestion") + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
@@ -156,7 +157,7 @@ public class ValueHint extends AbstractValueHint {
             });
           }
           if (!showHint(component)) return;
-          if(getType() == MOUSE_CLICK_HINT) {
+          if(getType() == ValueHintType.MOUSE_CLICK_HINT) {
             HintUtil.createInformationLabel(text).requestFocusInWindow();
           }
         }
@@ -220,7 +221,7 @@ public class ValueHint extends AbstractValueHint {
     return null;
   }
 
-  private static Pair<PsiExpression, TextRange> getSelectedExpression(final Project project, final Editor editor, final Point point, final int type) {
+  private static Pair<PsiExpression, TextRange> getSelectedExpression(final Project project, final Editor editor, final Point point, final ValueHintType type) {
     final Ref<PsiExpression> selectedExpression = Ref.create(null);
     final Ref<TextRange> currentRange = Ref.create(null);
 
@@ -237,7 +238,7 @@ public class ValueHint extends AbstractValueHint {
         int selectionStart = editor.getSelectionModel().getSelectionStart();
         int selectionEnd   = editor.getSelectionModel().getSelectionEnd();
 
-        if((type == MOUSE_CLICK_HINT || type == MOUSE_ALT_OVER_HINT) && (selectionStart <= offset && offset <= selectionEnd)) {
+        if((type == ValueHintType.MOUSE_CLICK_HINT || type == ValueHintType.MOUSE_ALT_OVER_HINT) && (selectionStart <= offset && offset <= selectionEnd)) {
           PsiElement ctx = (selectionStart > 0) ? psiFile.findElementAt(selectionStart - 1) : psiFile.findElementAt(selectionStart);
           try {
             String text = editor.getSelectionModel().getSelectedText();

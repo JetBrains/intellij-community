@@ -6,9 +6,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.impl.DebuggerSupport;
-import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
+import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,7 +36,7 @@ public class QuickEvaluateAction extends XDebuggerActionBase {
 
       if(editor != null) {
         LogicalPosition logicalPosition = editor.getCaretModel().getLogicalPosition();
-        ValueLookupManager.getInstance(project).showHint(myHandler, editor, editor.logicalPositionToXY(logicalPosition), AbstractValueHint.MOUSE_CLICK_HINT);
+        ValueLookupManager.getInstance(project).showHint(myHandler, editor, editor.logicalPositionToXY(logicalPosition), ValueHintType.MOUSE_CLICK_HINT);
       }
     }
 

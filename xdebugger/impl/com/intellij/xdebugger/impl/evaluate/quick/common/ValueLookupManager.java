@@ -64,14 +64,14 @@ public class ValueLookupManager implements EditorMouseMotionListener, ProjectCom
     }
   }
 
-  private void requestHint(final QuickEvaluateHandler handler, final Editor editor, final Point point, final int type) {
+  private void requestHint(final QuickEvaluateHandler handler, final Editor editor, final Point point, final ValueHintType type) {
     myAlarm.cancelAllRequests();
-    if(type == AbstractValueHint.MOUSE_OVER_HINT) {
+    if(type == ValueHintType.MOUSE_OVER_HINT) {
       myAlarm.addRequest(new Runnable() {
         public void run() {
           showHint(handler, editor, point, type);
         }
-      }, handler.getValueLookupDelay());
+      }, handler.getValueLookupDelay(myProject));
     } else {
       showHint(handler, editor, point, type);
     }
@@ -85,7 +85,7 @@ public class ValueLookupManager implements EditorMouseMotionListener, ProjectCom
     }
   }
 
-  public void showHint(final QuickEvaluateHandler handler, Editor editor, Point point, int type) {
+  public void showHint(final QuickEvaluateHandler handler, Editor editor, Point point, ValueHintType type) {
     myAlarm.cancelAllRequests();
     hideHint();
     if (editor.isDisposed() || !handler.canShowHint(myProject)) return;

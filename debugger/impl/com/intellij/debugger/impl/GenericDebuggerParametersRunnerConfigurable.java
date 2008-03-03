@@ -1,6 +1,6 @@
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.settings.DebuggerConfigurable;
+import com.intellij.xdebugger.impl.settings.DebuggerConfigurable;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.DebuggerBundle;

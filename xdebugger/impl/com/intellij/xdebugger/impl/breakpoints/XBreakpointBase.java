@@ -1,18 +1,16 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.pom.Navigatable;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
@@ -21,16 +19,13 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-
 /**
  * @author nik
  */
 public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointProperties, S extends XBreakpointBase.BreakpointState> extends UserDataHolderBase implements XBreakpoint<P> {
   private final XBreakpointType<Self, P> myType;
   private final @Nullable P myProperties;
-  private final S myState;
+  protected final S myState;
   private final XBreakpointManagerImpl myBreakpointManager;
 
   public XBreakpointBase(final XBreakpointType<Self, P> type, XBreakpointManagerImpl breakpointManager, final @Nullable P properties, final S state) {
@@ -47,7 +42,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     myProperties = type.createProperties();
     if (myProperties != null) {
       //noinspection unchecked
-      Object state = XmlSerializer.deserialize(myState.getPropertiesElement(), getStateClass(myProperties.getClass()));
+      Object state = XmlSerializer.deserialize(myState.getPropertiesElement(), XDebuggerUtilImpl.getStateClass(myProperties.getClass()));
       //noinspection unchecked
       myProperties.loadState(state);
     }
@@ -63,26 +58,6 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   protected final void fireBreakpointChanged() {
     myBreakpointManager.fireBreakpointChanged(this);
-  }
-
-  private static Class getStateClass(final Class<? extends XBreakpointProperties> propertiesClass) {
-    Type type = resolveVariable(PersistentStateComponent.class.getTypeParameters()[0], propertiesClass);
-    return ReflectionUtil.getRawType(type);
-  }
-
-  private static Type resolveVariable(final TypeVariable variable, final Class aClass) {
-    Type type;
-    Class current = aClass;
-    while ((type = ReflectionUtil.resolveVariable(variable, current, false)) == null) {
-      current = current.getSuperclass();
-      if (current == null) {
-        return null;
-      }
-    }
-    if (type instanceof TypeVariable) {
-      return resolveVariable((TypeVariable)type, aClass);
-    }
-    return type;
   }
 
   public XSourcePosition getSourcePosition() {

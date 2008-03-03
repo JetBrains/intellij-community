@@ -34,9 +34,6 @@ public abstract class AbstractValueHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint");
   @NonNls private final static String DIMENSION_SERVICE_KEY = "DebuggerActiveHint";
   private static final Icon COLLAPSED_TREE_ICON = IconLoader.getIcon("/general/add.png");
-  public final static int MOUSE_OVER_HINT       = 0;
-  public final static int MOUSE_ALT_OVER_HINT   = 1;
-  public final static int MOUSE_CLICK_HINT      = 2;
   private static final int HINT_TIMEOUT = 7000; // ms
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
     public void keyReleased(KeyEvent e) {
@@ -56,14 +53,14 @@ public abstract class AbstractValueHint {
   private Cursor myStoredCursor;
   private final Project myProject;
   private final Editor myEditor;
-  private final int myType;
+  private final ValueHintType myType;
   private Point myPoint;
   private LightweightHint myCurrentHint;
   private JBPopup myPopup;
   private boolean myHintHidden;
   private TextRange myCurrentRange;
 
-  public AbstractValueHint(Project project, Editor editor, Point point, int type, final TextRange textRange) {
+  public AbstractValueHint(Project project, Editor editor, Point point, ValueHintType type, final TextRange textRange) {
     myPoint = point;
     myProject = project;
     myEditor = editor;
@@ -111,10 +108,10 @@ public abstract class AbstractValueHint {
   }
 
   public boolean isKeepHint(Editor editor, Point point) {
-    if(myType == MOUSE_ALT_OVER_HINT) {
+    if(myType == ValueHintType.MOUSE_ALT_OVER_HINT) {
       return false;
     }
-    else if(myType == MOUSE_CLICK_HINT) {
+    else if(myType == ValueHintType.MOUSE_CLICK_HINT) {
       if(myCurrentHint != null && myCurrentHint.isVisible()) {
         return true;
       }
@@ -162,7 +159,7 @@ public abstract class AbstractValueHint {
       return;
     }
 
-    if (myType == MOUSE_ALT_OVER_HINT) {
+    if (myType == ValueHintType.MOUSE_ALT_OVER_HINT) {
       myHighlighter = myEditor.getMarkupModel().addRangeHighlighter(myCurrentRange.getStartOffset(), myCurrentRange.getEndOffset(),
                                                                     HighlighterLayer.SELECTION + 1, ourReferenceAttributes,
                                                                     HighlighterTargetArea.EXACT_RANGE);
@@ -200,7 +197,7 @@ public abstract class AbstractValueHint {
     return myEditor;
   }
 
-  protected int getType() {
+  protected ValueHintType getType() {
     return myType;
   }
 
@@ -297,7 +294,7 @@ public abstract class AbstractValueHint {
     return modifiers == InputEvent.ALT_MASK;
   }
 
-  public static int getType(final EditorMouseEvent e) {
-    return isAltMask(e.getMouseEvent().getModifiers()) ? MOUSE_ALT_OVER_HINT : MOUSE_OVER_HINT;
+  public static ValueHintType getType(final EditorMouseEvent e) {
+    return isAltMask(e.getMouseEvent().getModifiers()) ? ValueHintType.MOUSE_ALT_OVER_HINT : ValueHintType.MOUSE_OVER_HINT;
   }
 }

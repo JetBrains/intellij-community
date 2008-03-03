@@ -122,11 +122,11 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   public int getLine() {
-    return getState().getLine();
+    return myState.getLine();
   }
 
   public String getFileUrl() {
-    return getState().getFileUrl();
+    return myState.getFileUrl();
   }
 
   @Nullable
@@ -236,7 +236,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
   private void setLine(final int line) {
     if (getLine() != line) {
-      getState().setLine(line);
+      myState.setLine(line);
       fireBreakpointChanged();
     }
   }

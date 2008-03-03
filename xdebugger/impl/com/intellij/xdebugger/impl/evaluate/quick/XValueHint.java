@@ -13,6 +13,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
+import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -32,7 +33,7 @@ public class XValueHint extends AbstractValueHint {
   private final XDebugSession myDebugSession;
   private String myExpression;
 
-  public XValueHint(final Project project, final Editor editor, final Point point, final int type, final TextRange textRange,
+  public XValueHint(final Project project, final Editor editor, final Point point, final ValueHintType type, final TextRange textRange,
                     final XDebuggerEvaluator evaluator, final XDebugSession session) {
     super(project, editor, point, type, textRange);
     myEvaluator = evaluator;

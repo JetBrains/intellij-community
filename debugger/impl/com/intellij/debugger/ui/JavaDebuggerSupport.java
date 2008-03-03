@@ -1,6 +1,9 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.settings.DebuggerGeneralConfigurable;
+import com.intellij.debugger.settings.UserRenderersConfigurable;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.actions.*;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointFactory;
@@ -9,7 +12,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
@@ -38,6 +43,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   private ShowExecutionPointActionHandler myShowExecutionPointActionHandler;
   private EvaluateActionHandler myEvaluateActionHandler;
   private QuickEvaluateActionHandler myQuickEvaluateHandler;
+  private JavaDebuggerSettingsPanelProvider myDebuggerSettingsPanelProvider;
 
   public JavaDebuggerSupport() {
     myBreakpointPanelProvider = new JavaBreakpointPanelProvider();
@@ -54,6 +60,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     myShowExecutionPointActionHandler = new ShowExecutionPointActionHandler();
     myEvaluateActionHandler = new EvaluateActionHandler();
     myQuickEvaluateHandler = new QuickEvaluateActionHandler();
+    myDebuggerSettingsPanelProvider = new JavaDebuggerSettingsPanelProvider();
   }
 
   @NotNull
@@ -126,6 +133,11 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     return myQuickEvaluateHandler;
   }
 
+  @NotNull
+  public DebuggerSettingsPanelProvider getSettingsPanelProvider() {
+    return myDebuggerSettingsPanelProvider;
+  }
+
   private static class JavaBreakpointPanelProvider extends BreakpointPanelProvider<Breakpoint> {
     @NotNull
     public Collection<AbstractBreakpointPanel<Breakpoint>> getBreakpointPanels(@NotNull final Project project, @NotNull final DialogWrapper parentDialog) {
@@ -151,6 +163,23 @@ public class JavaDebuggerSupport extends DebuggerSupport {
 
     public void onDialogClosed(final Project project) {
       DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().updateAllRequests();
+    }
+  }
+
+  public static class JavaDebuggerSettingsPanelProvider extends DebuggerSettingsPanelProvider {
+    public int getPriority() {
+      return 1;
+    }
+
+    public Collection<? extends Configurable> getConfigurables(final Project project) {
+      ArrayList<Configurable> configurables = new ArrayList<Configurable>();
+      configurables.add(new DebuggerGeneralConfigurable(project));
+      configurables.add(new UserRenderersConfigurable(project));
+      return configurables;
+    }
+
+    public void apply() {
+      NodeRendererSettings.getInstance().fireRenderersChanged();
     }
   }
 }

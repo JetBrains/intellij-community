@@ -10,24 +10,31 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 
 /**
  * @author nik
  */
 public class XDebuggerUtilImpl extends XDebuggerUtil {
   private XLineBreakpointType<?>[] myLineBreakpointTypes;
-  private Map<Class<? extends XBreakpointType<?,?>>, XBreakpointType<?,?>> myTypeByClass;
+  private Map<Class<? extends XBreakpointType>, XBreakpointType<?,?>> myBreakpointTypeByClass;
+  private Map<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>> mySettingsByClass;
 
   public XLineBreakpointType<?>[] getLineBreakpointTypes() {
     if (myLineBreakpointTypes == null) {
@@ -78,17 +85,27 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   public <B extends XBreakpoint<?>> XBreakpointType<B, ?> findBreakpointType(@NotNull Class<? extends XBreakpointType<B, ?>> typeClass) {
-    if (myTypeByClass == null) {
-      myTypeByClass = new HashMap<Class<? extends XBreakpointType<?,?>>, XBreakpointType<?,?>>();
+    if (myBreakpointTypeByClass == null) {
+      myBreakpointTypeByClass = new HashMap<Class<? extends XBreakpointType>, XBreakpointType<?,?>>();
       for (XBreakpointType<?, ?> breakpointType : XBreakpointUtil.getBreakpointTypes()) {
-        if (breakpointType.getClass().equals(typeClass)) {
-          myTypeByClass.put(typeClass, breakpointType);
-        }
+        myBreakpointTypeByClass.put(breakpointType.getClass(), breakpointType);
       }
     }
-    XBreakpointType<?, ?> type = myTypeByClass.get(typeClass);
+    XBreakpointType<?, ?> type = myBreakpointTypeByClass.get(typeClass);
     //noinspection unchecked
     return (XBreakpointType<B, ?>)type;
+  }
+
+  public <T extends XDebuggerSettings<?>> T getDebuggerSettings(Class<T> aClass) {
+    if (mySettingsByClass == null) {
+      mySettingsByClass = new HashMap<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>>();
+      XDebuggerSettings[] extensions = Extensions.getExtensions(XDebuggerSettings.EXTENSION_POINT);
+      for (XDebuggerSettings extension : extensions) {
+        mySettingsByClass.put(extension.getClass(), extension);
+      }
+    }
+    //noinspection unchecked
+    return (T)mySettingsByClass.get(aClass);
   }
 
   @Nullable 
@@ -138,5 +155,25 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         return o1.getLine() - o2.getLine();
       }
     };
+  }
+
+  public static Class getStateClass(final Class<? extends PersistentStateComponent> aClass) {
+    Type type = resolveVariable(PersistentStateComponent.class.getTypeParameters()[0], aClass);
+    return ReflectionUtil.getRawType(type);
+  }
+
+  private static Type resolveVariable(final TypeVariable variable, final Class aClass) {
+    Type type;
+    Class current = aClass;
+    while ((type = ReflectionUtil.resolveVariable(variable, current, false)) == null) {
+      current = current.getSuperclass();
+      if (current == null) {
+        return null;
+      }
+    }
+    if (type instanceof TypeVariable) {
+      return resolveVariable((TypeVariable)type, aClass);
+    }
+    return type;
   }
 }

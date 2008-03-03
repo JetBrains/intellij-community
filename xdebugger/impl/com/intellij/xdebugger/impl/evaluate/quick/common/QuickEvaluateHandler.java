@@ -15,9 +15,9 @@ public abstract class QuickEvaluateHandler {
   public abstract boolean isEnabled(@NotNull Project project);
 
   @Nullable
-  public abstract AbstractValueHint createValueHint(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, int type);
+  public abstract AbstractValueHint createValueHint(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, ValueHintType type);
 
   public abstract boolean canShowHint(@NotNull Project project);
 
-  public abstract int getValueLookupDelay();
+  public abstract int getValueLookupDelay(final Project project);
 }

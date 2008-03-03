@@ -1,4 +1,4 @@
-package com.intellij.debugger.settings;
+package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
@@ -6,9 +6,8 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.ui.TabbedPaneWrapper;
 
 import javax.swing.*;
-import java.util.Iterator;
-import java.util.List;
 import java.awt.*;
+import java.util.List;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -20,23 +19,20 @@ public abstract class CompositeConfigurable extends BaseConfigurable {
   private TabbedPaneWrapper myTabbedPane;
 
   public void reset() {
-    for (Iterator<Configurable> iterator = getConfigurables().iterator(); iterator.hasNext();) {
-      Configurable configurable = iterator.next();
+    for (Configurable configurable : getConfigurables()) {
       configurable.reset();
     }
   }
 
   public void apply() throws ConfigurationException {
-    for (Iterator<Configurable> iterator = getConfigurables().iterator(); iterator.hasNext();) {
-      Configurable configurable = iterator.next();
+    for (Configurable configurable : getConfigurables()) {
       configurable.apply();
     }
   }
 
   public boolean isModified() {
-    for (Iterator<Configurable> iterator = getConfigurables().iterator(); iterator.hasNext();) {
-      Configurable configurable = iterator.next();
-      if(configurable.isModified()) {
+    for (Configurable configurable : getConfigurables()) {
+      if (configurable.isModified()) {
         return true;
       }
     }
@@ -56,8 +52,8 @@ public abstract class CompositeConfigurable extends BaseConfigurable {
   public void disposeUIResources() {
     myTabbedPane = null;
     if (myConfigurables != null) {
-      for (Iterator<Configurable> it = myConfigurables.iterator(); it.hasNext();) {
-        it.next().disposeUIResources();
+      for (final Configurable myConfigurable : myConfigurables) {
+        myConfigurable.disposeUIResources();
       }
       myConfigurables = null;
     }

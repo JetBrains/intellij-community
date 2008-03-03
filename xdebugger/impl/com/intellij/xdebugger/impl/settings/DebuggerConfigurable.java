@@ -1,6 +1,5 @@
-package com.intellij.debugger.settings;
+package com.intellij.xdebugger.impl.settings;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.Configurable;
@@ -9,27 +8,27 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Comparator;
 
 /**
  * @author Eugene Belyaev & Eugene Zhuravlev
  */
 public class DebuggerConfigurable extends CompositeConfigurable implements SearchableConfigurable {
-  public DebuggerConfigurable() {
-    super();
-  }
-
   public Icon getIcon() {
     return IconLoader.getIcon("/general/configurableDebugger.png");
   }
 
   public String getDisplayName() {
-    return DebuggerBundle.message("debugger.configurable.display.name");
+    return XDebuggerBundle.message("debugger.configurable.display.name");
   }
 
   public String getHelpTopic() {
@@ -42,14 +41,27 @@ public class DebuggerConfigurable extends CompositeConfigurable implements Searc
     if(project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }
-    configurables.add(new DebuggerGeneralConfigurable(project));
-    configurables.add(new UserRenderersConfigurable(project));
+    DebuggerSupport[] supports = DebuggerSupport.getDebuggerSupports();
+    List<DebuggerSettingsPanelProvider> providers = new ArrayList<DebuggerSettingsPanelProvider>();
+    for (DebuggerSupport support : supports) {
+      providers.add(support.getSettingsPanelProvider());
+    }
+    Collections.sort(providers, new Comparator<DebuggerSettingsPanelProvider>() {
+      public int compare(final DebuggerSettingsPanelProvider o1, final DebuggerSettingsPanelProvider o2) {
+        return o2.getPriority() - o1.getPriority();
+      }
+    });
+    for (DebuggerSettingsPanelProvider provider : providers) {
+      configurables.addAll(provider.getConfigurables(project));
+    }
     return configurables;
   }
 
   public void apply() throws ConfigurationException {
     super.apply();
-    NodeRendererSettings.getInstance().fireRenderersChanged();
+    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
+      support.getSettingsPanelProvider().apply();
+    }
   }
 
   @NonNls

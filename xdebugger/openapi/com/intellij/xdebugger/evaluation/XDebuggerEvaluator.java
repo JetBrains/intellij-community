@@ -1,10 +1,11 @@
 package com.intellij.xdebugger.evaluation;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.xdebugger.frame.XValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.xdebugger.frame.XValue;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.editor.Editor;
 
 /**
  * @author nik
@@ -32,8 +33,22 @@ public abstract class XDebuggerEvaluator {
    */
   public abstract void evaluate(@NotNull String expression, XEvaluationCallback callback);
 
+  /**
+   * Return text range of expression which can be evaluated.
+   * @param project project
+   * @param document document
+   * @param offset offset
+   * @return text range of expression
+   */
   @Nullable
-  public abstract TextRange getSelectedExpressionRange(@NotNull Editor editor, int offset);
+  public abstract TextRange getExpressionRangeAtOffset(final Project project, final Document document, int offset);
+
+  /**
+   * @return delay before showing value tooltip (in ms)
+   */
+  public int getValuePopupDelay() {
+    return 700;
+  }
 
   public static interface XEvaluationCallback {
 

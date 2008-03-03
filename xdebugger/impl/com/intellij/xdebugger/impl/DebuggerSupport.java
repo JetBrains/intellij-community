@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
+import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,6 +22,8 @@ public abstract class DebuggerSupport {
   @NotNull
   public abstract BreakpointPanelProvider<?> getBreakpointPanelProvider();
 
+  @NotNull
+  public abstract DebuggerSettingsPanelProvider getSettingsPanelProvider();
 
   @NotNull
   public abstract DebuggerActionHandler getStepOverHandler();
