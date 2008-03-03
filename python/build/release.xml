@@ -5,6 +5,9 @@
   <property name="platform.dir" value="${out.dir}/platform/platform15"/>
   <property name="idea.dir" value="${out.dir}/idea"/>
 
+  <property name="idea.system.path" value="${out.dir}/system"/>
+  <property name="idea.config.path" value="${out.dir}/config"/>
+  
   <target name="release" depends="compile,jar,zip"/>
 
   <target name="init">
@@ -117,7 +120,25 @@
     <replace file="${classes.dir}/idea/PythonApplicationInfo.xml" token="__BUILD_DATE__" value="${DSTAMP}"/>
   </target>
 
-  <target name="jar" depends="compile">
+  <target name="build_searchable_options">
+    <mkdir dir="${classes.dir}/search"/>
+    <copy file="${idea.home}/build/idea.license"
+          todir="${idea.system.path}"/>
+    <java classname="com.intellij.idea.Main"
+          fork="true"
+          args="traverseUI ${classes.dir}/search/searchableOptions.xml">
+      <jvmarg line="-ea -Didea.home.path=${idea.home} -Didea.system.path=${idea.system.path} -Didea.config.path=${idea.config.path} -Didea.platform.prefix=Python -Didea.load.plugins=Pythonid -Didea.no.jre.check=true"  />
+      <jvmarg value="-Xbootclasspath/p:${idea.dir}/jdk15/lib/boot.jar"/>
+
+       <classpath>
+         <path refid="classpath.lib"/>
+         <pathelement location="${classes.dir}"/>
+         <pathelement location="${idea.home}/lib/junit.jar"/>
+       </classpath>
+     </java>
+  </target>
+
+  <target name="jar" depends="compile,build_searchable_options">
     <mkdir dir="${out.dir}/jar"/>
     <mkdir dir="${out.dir}/deploy"/>
     <unzip src="${platform.dir}/platform.jar" dest="${out.dir}/jar"/>
