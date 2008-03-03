@@ -190,6 +190,7 @@ public class TargetElementUtilBase {
   }
 
   private static boolean isValidElement(@NotNull PsiElement element) {
+    if (!element.isValid()) return false;
     PsiFile file = element.getContainingFile();
     if (file == null) return false;
     if (file.getOriginalFile() != null) file = file.getOriginalFile();
