@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.WeighingService;
 
 public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   private String myPrefix;
@@ -30,7 +31,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   public Comparable[] getWeight(final LookupItem<?> item) {
     if (item.getAttribute(LookupItem.WEIGHT) != null) return item.getAttribute(LookupItem.WEIGHT);
 
-    final Comparable[] result = new Comparable[]{CompletionRegistrar.WEIGHING_KEY.weigh(item, myLocation)};
+    final Comparable[] result = new Comparable[]{WeighingService.weigh(CompletionRegistrar.WEIGHER_KEY, item, myLocation)};
 
     item.setAttribute(LookupItem.WEIGHT, result);
 

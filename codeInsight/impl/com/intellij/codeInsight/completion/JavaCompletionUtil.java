@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -15,13 +14,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.infos.CandidateInfo;
@@ -35,6 +32,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -72,6 +70,30 @@ public class JavaCompletionUtil {
   public static final OffsetKey LPAREN_OFFSET = OffsetKey.create("lparen");
   public static final OffsetKey RPAREN_OFFSET = OffsetKey.create("rparen");
   public static final OffsetKey ARG_LIST_END_OFFSET = OffsetKey.create("argListEnd");
+  static final NullableLazyKey<ExpectedTypeInfo[], CompletionLocation> EXPECTED_TYPES = NullableLazyKey.create("expectedTypes", new NullableFunction<CompletionLocation, ExpectedTypeInfo[]>() {
+    @Nullable
+    public ExpectedTypeInfo[] fun(final CompletionLocation location) {
+      final PsiExpression expr = PsiTreeUtil.getContextOfType(location.getCompletionParameters().getPosition(), PsiExpression.class, true);
+      if (expr != null) {
+        final ExpectedTypeInfo[] expectedInfos = ExpectedTypesProvider.getInstance(location.getProject()).getExpectedTypes(expr, true);
+        if(expectedInfos != null){
+          final Map<PsiType, ExpectedTypeInfo> map = new HashMap<PsiType, ExpectedTypeInfo>(expectedInfos.length);
+          for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
+            if (!map.containsKey(expectedInfo.getType())) {
+              map.put(expectedInfo.getType(), expectedInfo);
+            }
+          }
+          return map.values().toArray(new ExpectedTypeInfo[map.size()]);
+        }
+      }
+      return null;
+    }
+  });
+  static final NullableLazyKey<PsiMethod, CompletionLocation> POSITION_METHOD = NullableLazyKey.create("positionMethod", new NullableFunction<CompletionLocation, PsiMethod>() {
+    public PsiMethod fun(final CompletionLocation location) {
+      return PsiTreeUtil.getParentOfType(location.getCompletionParameters().getPosition(), PsiMethod.class, false);
+    }
+  });
 
   public static void completeLocalVariableName(Set<LookupItem> set, PrefixMatcher matcher, PsiVariable var){
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
@@ -616,5 +638,94 @@ public class JavaCompletionUtil {
         return null;
       }
     }
+  }
+
+  @Nullable
+  public static PsiType getPsiType(final Object o) {
+    if (o instanceof PsiVariable) {
+      return ((PsiVariable)o).getType();
+    }
+    else if (o instanceof PsiMethod) {
+      return ((PsiMethod)o).getReturnType();
+    }
+    else if (o instanceof PsiClass) {
+      final PsiClass psiClass = (PsiClass)o;
+      return JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory().createType(psiClass);
+    }
+    else if (o instanceof PsiExpression) {
+      return ((PsiExpression)o).getType();
+    }
+    return null;
+  }
+
+  public static int getNameEndMatchingDegree(final Object object, final String name, ExpectedTypeInfo[] expectedInfos, String prefix) {
+    int res = 0;
+    if (name != null && expectedInfos != null) {
+      if (prefix.equals(name)) {
+        res = Integer.MAX_VALUE;
+      } else {
+        final List<String> words = NameUtil.nameToWordsLowerCase(name);
+        final List<String> wordsNoDigits = NameUtil.nameToWordsLowerCase(truncDigits(name));
+        int max1 = calcMatch(words, 0, expectedInfos);
+        max1 = calcMatch(wordsNoDigits, max1, expectedInfos);
+        res = max1;
+      }
+    }
+
+    if (object instanceof String) res = 1;
+    else if (object instanceof PsiKeyword) res = -1;
+    return res;
+  }
+
+  static String truncDigits(String name){
+    int count = name.length() - 1;
+    while (count >= 0) {
+      char c = name.charAt(count);
+      if (!Character.isDigit(c)) break;
+      count--;
+    }
+    return name.substring(0, count + 1);
+  }
+
+  static int calcMatch(final List<String> words, int max, ExpectedTypeInfo[] myExpectedInfos) {
+    for (ExpectedTypeInfo myExpectedInfo : myExpectedInfos) {
+      String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).expectedName;
+      if (expectedName == null) continue;
+      max = calcMatch(expectedName, words, max);
+      max = calcMatch(truncDigits(expectedName), words, max);
+    }
+    return max;
+  }
+
+  static int calcMatch(final String expectedName, final List<String> words, int max) {
+    if (expectedName == null) return max;
+
+    String[] expectedWords = NameUtil.nameToWords(expectedName);
+    int limit = Math.min(words.size(), expectedWords.length);
+    for (int i = 0; i < limit; i++) {
+      String word = words.get(words.size() - i - 1);
+      String expectedWord = expectedWords[expectedWords.length - i - 1];
+      if (word.equalsIgnoreCase(expectedWord)) {
+        max = Math.max(max, i + 1);
+      }
+      else {
+        break;
+      }
+    }
+    return max;
+  }
+
+  @Nullable
+  static String getLookupObjectName(Object o) {
+    if (o instanceof PsiVariable) {
+      final PsiVariable variable = (PsiVariable)o;
+      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(variable.getProject());
+      VariableKind variableKind = codeStyleManager.getVariableKind(variable);
+      return codeStyleManager.variableNameToPropertyName(variable.getName(), variableKind);
+    }
+    if (o instanceof PsiMethod) {
+      return ((PsiMethod)o).getName();
+    }
+    return null;
   }
 }

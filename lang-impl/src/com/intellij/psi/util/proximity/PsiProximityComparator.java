@@ -11,8 +11,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.WeigherKey;
 import com.intellij.psi.WeighingComparable;
+import com.intellij.psi.WeighingService;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.ProximityLocation;
 import org.jetbrains.annotations.Nullable;
@@ -20,8 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Comparator;
 
 public class PsiProximityComparator implements Comparator<Object> {
-  public static final WeigherKey<PsiElement, ProximityLocation> KEY = WeigherKey.create("proximity");
   public static final Key<ProximityStatistician> STATISTICS_KEY = Key.create("proximity");
+  public static final Key<ProximityWeigher> WEIGHER_KEY = Key.create("proximity");
   private final PsiElement myContext;
 
   public PsiProximityComparator(PsiElement context) {
@@ -62,7 +62,7 @@ public class PsiProximityComparator implements Comparator<Object> {
     Module contextModule = ModuleUtil.findModuleForPsiElement(context);
     if (contextModule == null) return null;
 
-    return KEY.weigh(element, new ProximityLocation(context, contextModule));
+    return WeighingService.weigh(WEIGHER_KEY, element, new ProximityLocation(context, contextModule));
   }
 
 }

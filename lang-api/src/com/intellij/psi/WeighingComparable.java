@@ -28,8 +28,6 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
   }
 
   public int compareTo(final WeighingComparable<T,Loc> comparable) {
-    assert myWeighers == comparable.myWeighers;
-
     for (int i = 0; i < myComputedWeighs.length; i++) {
       final Comparable weight1 = getWeight(i);
       final Comparable weight2 = comparable.getWeight(i);

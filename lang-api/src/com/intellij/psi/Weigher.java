@@ -6,19 +6,14 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
  */
 public abstract class Weigher<T, Location> {
-  private final String myDebugName;
+  private String myDebugName;
 
-  protected Weigher() {
-    this(null);
-  }
-
-  protected Weigher(@NonNls final String debugName) {
+  public void setDebugName(final String debugName) {
     myDebugName = debugName;
   }
 
