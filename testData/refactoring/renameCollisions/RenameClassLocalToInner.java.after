@@ -1,0 +1,35 @@
+package renameCollisions;
+
+class StaticInnerClass {
+	public static final int SN_STATIC_FIELD = 2;
+	public static void snStaticMethod() {
+	}
+}
+
+public class RenameCollisions {
+	public static final int SN_STATIC_FIELD = 6;
+	public static void snStaticMethod() {
+	}
+
+	public static class StaticInnerClass {
+		public static final int SN_STATIC_FIELD = 10;
+		public static void snStaticMethod() {
+		}
+	}
+
+	public void instanceContext() {
+		renameCollisions.StaticInnerClass localClass = new renameCollisions.StaticInnerClass();
+		int var1 = SN_STATIC_FIELD;
+		renameCollisions.StaticInnerClass.snStaticMethod();
+
+		renameCollisions.RenameCollisions.StaticInnerClass staticInnerClass = new renameCollisions.RenameCollisions.StaticInnerClass();
+		int var3 = renameCollisions.RenameCollisions.StaticInnerClass.SN_STATIC_FIELD;
+		renameCollisions.RenameCollisions.StaticInnerClass.snStaticMethod();
+	}
+
+	public static void staticContext() {
+		renameCollisions.RenameCollisions.StaticInnerClass staticInnerClass = new renameCollisions.RenameCollisions.StaticInnerClass();
+		int var2 = renameCollisions.RenameCollisions.StaticInnerClass.SN_STATIC_FIELD;
+		renameCollisions.RenameCollisions.StaticInnerClass.snStaticMethod();
+	}
+}
