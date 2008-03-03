@@ -504,7 +504,7 @@ public class DynamicManagerImpl extends DynamicManager {
       listener.dynamicPropertyChange();
     }
 
-    fireChangeCodeAnalize();
+    fireChangeCodeAnalyze();
     fireChangeToolWindow();
   }
 
@@ -514,7 +514,8 @@ public class DynamicManagerImpl extends DynamicManager {
     window.getComponent().repaint();
   }
 
-  private void fireChangeCodeAnalize() {
+  private void fireChangeCodeAnalyze() {
+    PsiManager.getInstance(myProject).dropResolveCaches();
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
