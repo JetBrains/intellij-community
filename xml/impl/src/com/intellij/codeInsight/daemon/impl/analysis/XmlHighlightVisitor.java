@@ -559,7 +559,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       message = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
     }
     else {
-      message = XmlErrorMessages.message("cannot.resolve.symbol");
+      message = PsiBundle.message("cannot.resolve.symbol");
     }
 
     String description;
