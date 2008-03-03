@@ -40,9 +40,7 @@ public class StatisticsManagerImpl extends StatisticsManager {
     final String key1 = info.getContext();
     int unitNumber = getUnitNumber(key1);
     StatisticsUnit unit = getUnit(unitNumber);
-    final String key2 = info.getValue();
-    int count = unit.getData(key1, key2);
-    unit.putData(key1, key2, count + 1);
+    unit.incData(key1, info.getValue());
     myModifiedUnits.add(unit);
   }
 
