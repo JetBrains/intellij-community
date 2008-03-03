@@ -24,8 +24,8 @@ import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
-import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
@@ -201,12 +201,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
                   hasCommits |= commit(document, file);
                 }
               }
+              viewProvider.contentsSynchronized();
             }
-
             myUncommittedDocuments.remove(document);
             if (hasCommits) {
               InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
-              viewProvider.contentsSynchronized();
             }
           }
           finally {

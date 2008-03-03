@@ -34,6 +34,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -352,18 +353,24 @@ public class InjectedLanguageUtil {
     }
   }
 
-  public static Editor getEditorForInjectedLanguage(final Editor editor, PsiFile file) {
+  public static Editor getEditorForInjectedLanguage(@Nullable Editor editor, @Nullable PsiFile file) {
     if (editor == null || file == null || editor instanceof EditorWindow) return editor;
 
     int offset = editor.getCaretModel().getOffset();
     return getEditorForInjectedLanguage(editor, file, offset);
   }
 
-  public static Editor getEditorForInjectedLanguage(final Editor editor, final PsiFile file, final int offset) {
+  public static Editor getEditorForInjectedLanguage(@Nullable Editor editor, @Nullable PsiFile file, final int offset) {
     if (editor == null || file == null || editor instanceof EditorWindow) return editor;
     PsiFile injectedFile = findInjectedPsiAt(file, offset);
+    return getInjectedEditorForInjectedFileIfAny(editor, injectedFile);
+  }
+
+  @NotNull
+  public static Editor getInjectedEditorForInjectedFileIfAny(@NotNull Editor editor, final PsiFile injectedFile) {
     if (injectedFile == null) return editor;
     Document document = PsiDocumentManager.getInstance(editor.getProject()).getDocument(injectedFile);
+    if (!(document instanceof DocumentWindowImpl)) return editor;
     DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
     SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
@@ -377,7 +384,7 @@ public class InjectedLanguageUtil {
     return EditorWindow.create(documentWindow, (EditorImpl)editor, injectedFile);
   }
 
-  public static PsiFile findInjectedPsiAt(PsiFile host, int offset) {
+  public static PsiFile findInjectedPsiAt(@NotNull PsiFile host, int offset) {
     PsiElement injected = findInjectedElementAt(host, offset);
     if (injected != null) {
       return injected.getContainingFile();
@@ -386,7 +393,7 @@ public class InjectedLanguageUtil {
   }
 
   // consider injected elements
-  public static PsiElement findElementAt(PsiFile file, int offset) {
+  public static PsiElement findElementAt(@NotNull PsiFile file, int offset) {
     if (!isInjectedFragment(file)) {
       PsiElement injected = findInjectedElementAt(file, offset);
       if (injected != null) {
@@ -395,8 +402,7 @@ public class InjectedLanguageUtil {
     }
     //PsiElement at = file.findElementAt(offset);
     FileViewProvider viewProvider = file.getViewProvider();
-    PsiElement result = viewProvider.findElementAt(offset, viewProvider.getBaseLanguage());
-    return result;
+    return viewProvider.findElementAt(offset, viewProvider.getBaseLanguage());
   }
 
   private static final InjectedPsiProvider INJECTED_PSI_PROVIDER = new InjectedPsiProvider();
@@ -434,7 +440,7 @@ public class InjectedLanguageUtil {
     return null;
   }
 
-  public static PsiElement findInjectedElementAt(PsiFile file, final int offset) {
+  public static PsiElement findInjectedElementAt(@NotNull PsiFile file, final int offset) {
     if (isInjectedFragment(file)) return null;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
     documentManager.commitAllDocuments();
@@ -451,7 +457,7 @@ public class InjectedLanguageUtil {
     return null;
   }
 
-  private static PsiElement findInside(@NotNull PsiElement element, PsiFile file, final int offset, @NotNull final PsiDocumentManager documentManager) {
+  private static PsiElement findInside(@NotNull PsiElement element, @NotNull PsiFile file, final int offset, @NotNull final PsiDocumentManager documentManager) {
     final Ref<PsiElement> out = new Ref<PsiElement>();
     enumerate(element, file, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
@@ -639,7 +645,7 @@ public class InjectedLanguageUtil {
             throw new IllegalStateException("Seems you haven't called addPlace()");
           }
           PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-          assert !documentManager.isUncommited(myHostDocument);
+          assert ArrayUtil.indexOf(documentManager.getUncommittedDocuments(), myHostDocument) == -1;
           assert myHostPsiFile.getText().equals(myHostDocument.getText());
           
           DocumentWindowImpl documentWindow = new DocumentWindowImpl(myHostDocument, isOneLineEditor, prefixes, suffixes, relevantRangesInHostDocument);
