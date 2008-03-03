@@ -12,12 +12,13 @@ import java.util.List;
 public class JavaUnwrapDescriptor implements UnwrapDescriptor {
   private static final Unwrapper[] UNWRAPPERS = new Unwrapper[] {
     new JavaElseUnwrapper(),
+    new JavaElseRemover(),
     new JavaIfUnwrapper(),
     new JavaWhileUnwrapper(),
     new JavaForUnwrapper(),
     new JavaBracesUnwrapper(),
     new JavaTryUnwrapper(),
-    new JavaCatchUnwrapper(),
+    new JavaCatchRemover(),
   };
 
   public List<Pair<PsiElement, Unwrapper>> collectUnwrappers(Project project, Editor editor, PsiFile file) {

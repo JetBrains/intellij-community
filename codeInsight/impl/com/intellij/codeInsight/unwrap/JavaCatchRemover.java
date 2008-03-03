@@ -4,12 +4,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiCatchSection;
 import com.intellij.psi.PsiTryStatement;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.codeInsight.CodeInsightBundle;
 
-public class JavaCatchUnwrapper extends JavaUnwrapper {
-  public JavaCatchUnwrapper() {
+public class JavaCatchRemover extends JavaUnwrapper {
+  public JavaCatchRemover() {
     super(CodeInsightBundle.message("remove.catch"));
   }
 
@@ -21,7 +20,7 @@ public class JavaCatchUnwrapper extends JavaUnwrapper {
     return ((PsiTryStatement)el.getParent()).getCatchBlocks().length > 1;
   }
 
-  public void unwrap(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
+  public void unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
     element.delete();
   }
 }

@@ -160,7 +160,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               try {
-                myUnwrapper.unwrap(myProject, myEditor, myElement);
+                myUnwrapper.unwrap(myEditor, myElement);
               }
               catch (IncorrectOperationException ex) {
                 throw new RuntimeException(ex);

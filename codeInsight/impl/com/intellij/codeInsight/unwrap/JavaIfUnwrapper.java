@@ -2,7 +2,6 @@ package com.intellij.codeInsight.unwrap;
 
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.codeInsight.CodeInsightBundle;
 
@@ -15,7 +14,7 @@ public class JavaIfUnwrapper extends JavaUnwrapper {
     return e instanceof PsiIfStatement && !isElseBlock(e);
   }
 
-  public void unwrap(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
+  public void unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
     PsiStatement then = ((PsiIfStatement)element).getThenBranch();
     extractFromBlockOrSingleStatement(then, element);
 
