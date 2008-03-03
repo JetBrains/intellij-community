@@ -27,12 +27,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Element;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
@@ -175,7 +173,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     ProjectJdk jdk = params.getJdk();
     StringBuffer buffer = new StringBuffer();
     if (jdk != null) {
-      String jdkLibDir = getJdkLibDir(jdk);
+      String jdkLibDir = getJdkLibDirParent(jdk);
 
       for (String libPath : list) {
         if (!libPath.contains(jdkLibDir)) {
@@ -190,19 +188,9 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     }
   }
 
-  private static String getJdkLibDir(ProjectJdk jdk) {
-    String jdkLibDir;
-    if (SystemInfo.isMac) {
-      String path = jdk.getBinPath();
-      int index = path.indexOf("/bin");
-      assert index > 0;
-      path = path.substring(0, index) + File.separator + ".." + File.separator + "Classes";
-      jdkLibDir = new File(path).getAbsolutePath();
-    } else {
-      String path = jdk.getRtLibraryPath();
-      jdkLibDir = new File(path).getParentFile().getAbsolutePath();
-    }
-    return jdkLibDir;
+  private static String getJdkLibDirParent(ProjectJdk jdk) {
+    String rtLibraryPath = jdk.getRtLibraryPath();
+    return new File(rtLibraryPath).getParentFile().getParentFile().getParentFile().getAbsolutePath();  //strip /jre/lib/rt.jar
   }
 
   private void configureScript(JavaParameters params) {
