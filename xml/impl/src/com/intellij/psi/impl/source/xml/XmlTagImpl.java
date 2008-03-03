@@ -101,15 +101,15 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
 
     if (endTagName != null){
       final PsiReference[] psiReferences = new PsiReference[referencesFromProviders.length + 2];
-      psiReferences[0] = new TagNameReference(startTagName, true);
-      psiReferences[1] = new TagNameReference(endTagName, false);
+      psiReferences[0] = TagNameReference.create(this, startTagName, true);
+      psiReferences[1] = TagNameReference.create(this, endTagName, false);
 
       System.arraycopy(referencesFromProviders, 0, psiReferences, 2, referencesFromProviders.length);
       return psiReferences;
     }
     else{
       final PsiReference[] psiReferences = new PsiReference[referencesFromProviders.length + 1];
-      psiReferences[0] = new TagNameReference(startTagName, true);
+      psiReferences[0] = TagNameReference.create(this, startTagName, true);
 
       System.arraycopy(referencesFromProviders, 0, psiReferences, 1, referencesFromProviders.length);
       return psiReferences;

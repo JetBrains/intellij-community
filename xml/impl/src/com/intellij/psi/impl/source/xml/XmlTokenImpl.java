@@ -60,7 +60,7 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
       final PsiElement element = getPrevSibling();
       
       if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_END_TAG_START) {
-        return new PsiReference[] { new TagNameReference(getNode(), false)};
+        return new PsiReference[] {TagNameReference.create(this, getNode(), false)};
       }
     }
 

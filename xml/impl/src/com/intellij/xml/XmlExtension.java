@@ -1,14 +1,16 @@
 package com.intellij.xml;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -16,8 +18,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -55,6 +57,10 @@ public abstract class XmlExtension {
 
   @NotNull
   public abstract Set<String> guessUnboundNamespaces(@NotNull PsiElement element, final XmlFile file);
+
+  public TagNameReference createTagNameReference(final ASTNode nameElement, final boolean startTagFlag) {
+    return new TagNameReference(nameElement, startTagFlag);
+  }
 
   public static interface Runner<P, T extends Throwable> {
     void run(P param) throws T;
@@ -99,11 +105,6 @@ public abstract class XmlExtension {
     return null;
   }
 
-  @Nullable
-  public IntentionAction createAddTagFix(@NotNull final XmlTag tag) {
-    return null;
-  }
-
   public boolean canBeDuplicated(XmlAttribute attribute) {
     return false;
   }
@@ -129,5 +130,14 @@ public abstract class XmlExtension {
     final XmlElementDescriptor descriptor = parentTag.getDescriptor();
     assert descriptor != null;
     return descriptor.getElementDescriptor(tag);
+  }
+
+  @Nullable
+  public XmlNSDescriptor getNSDescriptor(final XmlTag element, final String namespace, final boolean strict) {
+    return element.getNSDescriptor(namespace, strict);  
+  }
+
+  public XmlTag getParentTagForNamespace(XmlTag tag, String namespace) {
+    return tag.getParentTag();
   }
 }
