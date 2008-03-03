@@ -48,16 +48,17 @@ public class IdeaApplication {
     if (Main.isHeadless(args)) {
       System.setProperty("java.awt.headless", Boolean.TRUE.toString());
     }
+
+    final String platformPrefix = System.getProperty("idea.platform.prefix");
+    @NonNls final String componentsDescriptor = platformPrefix != null
+                                                ? "componentSets/" + platformPrefix + "Components"
+                                                : "componentSets/IdeaComponents";
+
     if (Main.isCommandLine(args)) {
-      new CommandLineApplication(isInternal, false, Main.isHeadless(args), "componentSets/IdeaComponents");
+      new CommandLineApplication(isInternal, false, Main.isHeadless(args), componentsDescriptor);
     }
     else {
       System.setProperty("sun.awt.noerasebackground","true");
-
-      final String platformPrefix = System.getProperty("idea.platform.prefix");
-      @NonNls final String componentsDescriptor = platformPrefix != null
-                                                  ? "componentSets/" + platformPrefix + "Components"
-                                                  : "componentSets/IdeaComponents";
       ApplicationManagerEx.createApplication(componentsDescriptor, isInternal, false, false, false, "idea");
     }
 
