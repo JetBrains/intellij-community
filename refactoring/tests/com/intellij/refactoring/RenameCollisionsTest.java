@@ -11,9 +11,18 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 public class RenameCollisionsTest extends LightCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/renameCollisions/";
 
+  public void testRenameClassInnerToLocal() throws Exception {
+    doTest("LocalClass");
+  }
+
   public void testRenameClassLocalToInner() throws Exception {
     doTest("StaticInnerClass");
   }
+
+  // Fails due to IDEADEV-25199.
+  //public void testRenameClassThisToAlien() throws Exception {
+  //  doTest("String");
+  //}
 
   private void doTest(final String newName) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
