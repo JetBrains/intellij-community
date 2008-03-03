@@ -6,8 +6,8 @@ package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author spleaner
  */
-public abstract class HtmlLocalInspectionTool extends BaseJavaLocalInspectionTool {
+public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionTool {
 
   public static final Key<String> DO_NOT_VALIDATE_KEY = XmlHighlightVisitor.DO_NOT_VALIDATE_KEY;
   
