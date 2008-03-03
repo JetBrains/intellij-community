@@ -1,5 +1,6 @@
 <extensions>
   <appStarter implementation="com.intellij.codeInspection.InspectionMain"/>
+  <appStarter implementation="com.intellij.ide.ui.search.TraverseUIStarter"/>
 
   <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
 
