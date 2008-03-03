@@ -91,6 +91,8 @@
     <pathelement path="${production.dest.groovy_rt}"/>
   </path>
 
+  <taskdef name="groovyc" classname="org.codehaus.groovy.ant.Groovyc" classpathref="groovy.path"/>
+
   <target name="make.rt" description="makes runtime classes" depends="build.lexer, unzip.last.successful.IDEA.build">
     <mkdir dir="${production.dest.groovy_rt}"/>
 
@@ -144,10 +146,15 @@
       <classpath refid="rtFiles.output"/>
     </javac2>
 
-    <taskdef name="groovyc" classname="org.codehaus.groovy.ant.Groovyc" classpathref="groovy.path"/>
     <path id="output.path">
       <pathelement path="${production.dest.groovy}"/>
     </path>
+
+    <touch>
+      <fileset dir=".">
+        <include name="**/*.groovy"/>
+      </fileset>
+    </touch>
 
     <groovyc destdir="${production.dest.groovy}" srcDir=".">
       <classpath>
@@ -237,7 +244,6 @@
 
     </javac>
 
-    <taskdef name="groovyc" classname="org.codehaus.groovy.ant.Groovyc" classpathref="groovy.path"/>
     <path id="output.path">
       <pathelement path="${production.dest.groovy}"/>
     </path>
