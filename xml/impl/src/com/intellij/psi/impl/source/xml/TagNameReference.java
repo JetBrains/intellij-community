@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -97,6 +98,11 @@ public class TagNameReference implements PsiReference {
     if (newElementName.indexOf(':') == -1) {
       final String namespacePrefix = element.getNamespacePrefix();
       if (namespacePrefix.length() > 0) {
+        final PsiElement psiElement = resolve();
+        final int index = newElementName.lastIndexOf('.');
+        if (psiElement instanceof PsiFile && index > 0) {
+          newElementName = newElementName.substring(0, index);
+        }
         newElementName = namespacePrefix + ":" + newElementName;
       }
     }
