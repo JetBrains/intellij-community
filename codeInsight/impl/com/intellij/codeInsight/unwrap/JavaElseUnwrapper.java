@@ -15,14 +15,9 @@ public class JavaElseUnwrapper extends JavaUnwrapper {
     return isElseBlock(e) || isElseKeyword(e);
   }
 
-  private boolean isElseBlock(PsiElement el) {
-    PsiElement p = el.getParent();
-    return p instanceof PsiIfStatement && el == ((PsiIfStatement)p).getElseBranch();
-  }
-
-  private boolean isElseKeyword(PsiElement el) {
-    PsiElement p = el.getParent();
-    return p instanceof PsiIfStatement && el == ((PsiIfStatement)p).getElseElement();
+  private boolean isElseKeyword(PsiElement e) {
+    PsiElement p = e.getParent();
+    return p instanceof PsiIfStatement && e == ((PsiIfStatement)p).getElseElement();
   }
 
   public void unwrap(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {

@@ -16,6 +16,11 @@ public abstract class JavaUnwrapper implements Unwrapper {
     return myDescription;
   }
 
+  protected boolean isElseBlock(PsiElement e) {
+    PsiElement p = e.getParent();
+    return p instanceof PsiIfStatement && e == ((PsiIfStatement)p).getElseBranch();
+  }
+
   protected void extractFromBlockOrSingleStatement(PsiStatement block, PsiElement from) throws IncorrectOperationException {
     if (block instanceof PsiBlockStatement) {
       extractFromCodeBlock(((PsiBlockStatement)block).getCodeBlock(), from);

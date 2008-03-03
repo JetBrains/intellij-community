@@ -12,7 +12,7 @@ public class JavaIfUnwrapper extends JavaUnwrapper {
   }
 
   public boolean isApplicableTo(PsiElement e) {
-    return e instanceof PsiIfStatement;
+    return e instanceof PsiIfStatement && !isElseBlock(e);
   }
 
   public void unwrap(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
