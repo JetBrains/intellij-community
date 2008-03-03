@@ -95,6 +95,9 @@
   <projectService serviceInterface="com.intellij.diagnostic.logging.LogConsolePreferences"
                   serviceImplementation="com.intellij.diagnostic.logging.LogConsolePreferences"/>
 
+  <projectService serviceInterface="com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry"
+                  serviceImplementation="com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry"/>
+
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage"/>
 
@@ -135,6 +138,7 @@
 
   <lang.parserDefinition language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextParserDefinition"/>
   <lang.syntaxHighlighterFactory language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainSyntaxHighlighterFactory"/>
+  <lang.ast.factory language="TEXT" implementationClass="com.intellij.psi.impl.source.tree.PlainTextASTFactory"/>
 
   <getDataRule key="psi.File" implementationClass="com.intellij.ide.impl.dataRules.PsiFileRule"/>
   <getDataRule key="psi.Element" implementationClass="com.intellij.ide.impl.dataRules.PsiElementFromSelectionRule"/>
@@ -206,4 +210,6 @@
   <executor implementation="com.intellij.execution.executors.DefaultRunExecutor"/>
 
   <cutElementMarker implementation="com.intellij.ide.PsiCutElementMarker"/>
+
+  <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.PlainTextLineSelectioner"/>
 </extensions>

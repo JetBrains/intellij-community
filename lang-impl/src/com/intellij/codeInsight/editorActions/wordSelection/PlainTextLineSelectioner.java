@@ -1,14 +1,15 @@
 package com.intellij.codeInsight.editorActions.wordSelection;
 
+import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPlainText;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.editor.Editor;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
-public class PlainTextLineSelectioner extends BasicSelectioner {
+public class PlainTextLineSelectioner extends ExtendWordSelectionHandlerBase {
   public boolean canSelect(PsiElement e) {
     return e instanceof PsiPlainText;
   }
