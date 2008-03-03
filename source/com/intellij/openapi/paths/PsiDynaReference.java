@@ -6,7 +6,6 @@ package com.intellij.openapi.paths;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
@@ -236,7 +235,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
     return reference instanceof EmptyResolveMessageProvider ?
            ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern() :
-            XmlErrorMessages.message("cannot.resolve.symbol");
+            PsiBundle.message("cannot.resolve.symbol");
   }
 
   public LocalQuickFix[] getQuickFixes() {
