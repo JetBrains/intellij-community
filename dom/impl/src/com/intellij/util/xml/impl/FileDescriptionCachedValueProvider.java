@@ -241,8 +241,9 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     myLastResult = new DomFileElementImpl<T>(myXmlFile, rootElementClass, rootTagName, myDomManager);
     computeCachedValue(dependencyItems);
 
-    final Set<WeakReference<DomFileElementImpl>> references = myDomManager.getFileDescriptions().get(myFileDescription);
-    references.add(new WeakReference<DomFileElementImpl>(myLastResult));
+    if (!(myFileDescription instanceof MockDomFileDescription)) {
+      myDomManager.getFileDescriptions().get(myFileDescription).add(new WeakReference<DomFileElementImpl>(myLastResult));
+    }
     if (fireEvents) {
       events.add(new ElementDefinedEvent(myLastResult));
     }
@@ -250,6 +251,8 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   }
 
   private void removeFileElementFromCache(final DomFileElementImpl element, final DomFileDescription description) {
+    if (description instanceof MockDomFileDescription) return;
+
     final Set<WeakReference<DomFileElementImpl>> references = myDomManager.getFileDescriptions().get(description);
     for (Iterator<WeakReference<DomFileElementImpl>> iterator = references.iterator(); iterator.hasNext();) {
       final DomFileElementImpl fileElement = iterator.next().get();

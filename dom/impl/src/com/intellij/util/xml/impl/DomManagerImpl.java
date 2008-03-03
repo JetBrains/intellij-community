@@ -366,17 +366,13 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   @NotNull
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file, final Class<T> aClass, String rootTagName) {
     //noinspection unchecked
-    DomFileDescription<T> description = file.getUserData(MOCK_DESCIPRTION);
-    if (description == null) {
-      description = new MockDomFileDescription<T>(aClass, rootTagName, file);
-      _registerFileDescription(description);
-      file.putUserData(MOCK_DESCIPRTION, description);
+    if (file.getUserData(MOCK_DESCIPRTION) == null) {
+      file.putUserData(MOCK_DESCIPRTION, new MockDomFileDescription<T>(aClass, rootTagName, file));
     }
     final DomFileElementImpl<T> fileElement = getFileElement(file);
     assert fileElement != null;
     return fileElement;
   }
-
 
   private final UserDataCache<FileDescriptionCachedValueProvider, XmlFile, Object> myCachedFileElementCache =
     new UserDataCache<FileDescriptionCachedValueProvider, XmlFile, Object>() {
