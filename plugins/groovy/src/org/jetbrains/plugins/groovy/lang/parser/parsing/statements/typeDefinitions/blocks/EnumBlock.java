@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.ClassMember;
@@ -30,13 +29,13 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 16.03.2007
  */
 public class EnumBlock implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder, String enumName) {
+  public static boolean parse(PsiBuilder builder, String enumName) {
     //see also InterfaceBlock, EnumBlock, AnnotationBlock
     PsiBuilder.Marker ebMarker = builder.mark();
 
     if (!ParserUtils.getToken(builder, mLCURLY)) {
       ebMarker.rollbackTo();
-      return WRONGWAY;
+      return false;
     }
 
     Separators.parse(builder);
@@ -54,7 +53,7 @@ public class EnumBlock implements GroovyElementTypes {
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
 
     ebMarker.done(ENUM_BODY);
-    return ENUM_BODY;
+    return true;
   }
 
   private static boolean parseEnumConstantStart(PsiBuilder builder) {

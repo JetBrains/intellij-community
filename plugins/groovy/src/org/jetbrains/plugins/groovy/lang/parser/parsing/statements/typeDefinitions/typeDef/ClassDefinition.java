@@ -63,9 +63,7 @@ public class ClassDefinition implements GroovyElementTypes {
     }
 
     if (mLCURLY.equals(builder.getTokenType())) {
-      if (WRONGWAY.equals(ClassBlock.parse(builder, name))) {
-        return true;
-      }
+      ClassBlock.parse(builder, name);
     } else {
       builder.error(GroovyBundle.message("lcurly.expected"));
       return true;

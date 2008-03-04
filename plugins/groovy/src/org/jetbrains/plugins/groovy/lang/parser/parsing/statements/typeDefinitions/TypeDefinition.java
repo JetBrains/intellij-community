@@ -16,8 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions;
 
 import com.intellij.lang.PsiBuilder;
-import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef.AnnotationDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef.ClassDefinition;
@@ -31,13 +29,13 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modi
  */
 
 /*
- * TypeDefinitionInternal ::= ClassDefinition
+ * TypeDefinition ::= ClassDefinition
  *                          | InterfaceDefinition
  *                          | EnumDefinition
  *                          | AnnotationDefinition 
  */
 
-public class TypeDefinitionInternal implements GroovyElementTypes {
+public class TypeDefinition implements GroovyElementTypes {
   public static boolean parse(PsiBuilder builder) {
     PsiBuilder.Marker tdMarker = builder.mark();
     Modifiers.parse(builder);

@@ -46,7 +46,7 @@ public class EnumDefinition implements GroovyElementTypes {
       return true;
     }
 
-    if (WRONGWAY.equals(EnumBlock.parse(builder, name))) {
+    if (!EnumBlock.parse(builder, name)) {
       return true;
     }
 

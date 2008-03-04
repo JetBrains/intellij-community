@@ -28,14 +28,14 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 18.03.2007
  */
 public class AnnotationBlock implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
     //see also InterfaceBlock, EnumBlock, AnnotationBlock
     PsiBuilder.Marker abMarker = builder.mark();
 
     if (!ParserUtils.getToken(builder, mLCURLY)) {
       builder.error(GroovyBundle.message("lcurly.expected"));
       abMarker.rollbackTo();
-      return WRONGWAY;
+      return false;
     }
 
     while (AnnotationMember.parse(builder) && Separators.parse(builder));
@@ -44,6 +44,6 @@ public class AnnotationBlock implements GroovyElementTypes {
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
 
     abMarker.done(CLASS_BODY);
-    return CLASS_BODY;
+    return true;
   }
 }

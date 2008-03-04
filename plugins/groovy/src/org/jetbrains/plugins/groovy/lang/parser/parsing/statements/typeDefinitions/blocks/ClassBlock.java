@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.ClassMember;
@@ -28,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 16.03.2007
  */
 public class ClassBlock implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder, String className) {
+  public static boolean parse(PsiBuilder builder, String className) {
     //see also InterfaceBlock, EnumBlock, AnnotationBlock
     //allow errors
     PsiBuilder.Marker cbMarker = builder.mark();
@@ -36,7 +35,7 @@ public class ClassBlock implements GroovyElementTypes {
     if (!ParserUtils.getToken(builder, mLCURLY)) {
       builder.error(GroovyBundle.message("lcurly.expected"));
       cbMarker.rollbackTo();
-      return WRONGWAY;
+      return false;
     }
 
     while (ClassMember.parse(builder, className) && Separators.parse(builder));
@@ -45,6 +44,6 @@ public class ClassBlock implements GroovyElementTypes {
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
 
     cbMarker.done(CLASS_BODY);
-    return CLASS_BODY;
+    return true;
   }
 }

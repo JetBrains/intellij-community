@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members;
 
 import com.intellij.lang.PsiBuilder;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
