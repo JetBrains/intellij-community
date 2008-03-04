@@ -27,7 +27,7 @@ import com.intellij.psi.tree.TokenSet;
  * To change this template use File | Settings | File Templates.
  */
 public class PyWordsScanner extends DefaultWordsScanner {
-    public PyWordsScanner(PythonLanguage language) {
+    public PyWordsScanner() {
         super(new PythonLexer(),
                 TokenSet.create(PyTokenTypes.IDENTIFIER),
                 TokenSet.create(PyTokenTypes.END_OF_LINE_COMMENT),
