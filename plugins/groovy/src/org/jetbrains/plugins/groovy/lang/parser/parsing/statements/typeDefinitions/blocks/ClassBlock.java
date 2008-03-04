@@ -40,21 +40,9 @@ public class ClassBlock implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    ClassMember.parse(builder, className);
+    while (ClassMember.parse(builder, className) && Separators.parse(builder));
 
-    while (Separators.parse(builder)) {
-      ClassMember.parse(builder, className);
-    }
-
-    if (builder.getTokenType() != mRCURLY) {
-      builder.error(GroovyBundle.message("rcurly.expected"));
-    }
-
-    while (!builder.eof() && !ParserUtils.getToken(builder, mRCURLY)) {
-      ClassMember.parse(builder, className);
-
-      builder.advanceLexer();
-    }
+    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
 
     cbMarker.done(CLASS_BODY);
     return CLASS_BODY;

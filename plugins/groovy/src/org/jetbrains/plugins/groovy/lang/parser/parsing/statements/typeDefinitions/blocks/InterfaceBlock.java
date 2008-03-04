@@ -37,19 +37,9 @@ public class InterfaceBlock implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    InterfaceMember.parse(builder, interfaceName);
-    while (Separators.parse(builder)) {
-      InterfaceMember.parse(builder, interfaceName);
-    }
+    while (InterfaceMember.parse(builder, interfaceName) && Separators.parse(builder));
 
-    if (builder.getTokenType() != mRCURLY) {
-      builder.error(GroovyBundle.message("rcurly.expected"));
-    }
-
-    while (!builder.eof() && !ParserUtils.getToken(builder, mRCURLY)) {
-      InterfaceMember.parse(builder, interfaceName);
-      builder.advanceLexer();
-    }
+    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
 
     ibMarker.done(CLASS_BODY);
     return CLASS_BODY;

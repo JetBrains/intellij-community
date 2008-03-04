@@ -52,6 +52,12 @@ public class ConstructorBody implements GroovyElementTypes {
     Separators.parse(builder);
     OpenOrClosableBlock.parseBlockBody(builder);
 
+    if (builder.getTokenType() != mRCURLY) {
+      builder.error(GroovyBundle.message("rcurly.expected"));
+    } else {
+      builder.advanceLexer();
+    }
+
     cbMarker.done(OPEN_BLOCK);
     return true;
 

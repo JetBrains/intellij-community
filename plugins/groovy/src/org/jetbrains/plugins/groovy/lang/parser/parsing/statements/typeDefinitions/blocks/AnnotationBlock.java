@@ -38,21 +38,9 @@ public class AnnotationBlock implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    AnnotationMember.parse(builder);
+    while (AnnotationMember.parse(builder) && Separators.parse(builder));
 
-    while (Separators.parse(builder)) {
-      AnnotationMember.parse(builder);
-    }
-
-    if (builder.getTokenType() != mRCURLY) {
-      builder.error(GroovyBundle.message("rcurly.expected"));
-    }
-
-    while (!builder.eof() && !ParserUtils.getToken(builder, mRCURLY)) {
-      AnnotationMember.parse(builder);
-
-      builder.advanceLexer();
-    }
+    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
 
     abMarker.done(CLASS_BODY);
     return CLASS_BODY;

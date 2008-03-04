@@ -62,7 +62,6 @@ public class TypeDefinitionInternal implements GroovyElementTypes {
     }
 
     tdMarker.rollbackTo();
-    builder.error(GroovyBundle.message("class.or.interface.or.enum.or.annotation.expected"));
     return false;
   }
 }

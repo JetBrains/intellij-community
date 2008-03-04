@@ -51,14 +51,7 @@ public class EnumBlock implements GroovyElementTypes {
       ClassMember.parse(builder, enumName);
     }
 
-    if (builder.getTokenType() != mRCURLY) {
-      builder.error(GroovyBundle.message("rcurly.expected"));
-    }
-
-    while (!builder.eof() && !ParserUtils.getToken(builder, mRCURLY)) {
-      ClassMember.parse(builder, enumName);
-      builder.advanceLexer();
-    }
+    ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
 
     ebMarker.done(ENUM_BODY);
     return ENUM_BODY;
