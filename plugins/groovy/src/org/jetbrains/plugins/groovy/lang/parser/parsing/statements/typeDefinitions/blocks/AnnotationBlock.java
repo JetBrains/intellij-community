@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
@@ -38,8 +37,12 @@ public class AnnotationBlock implements GroovyElementTypes {
       return false;
     }
 
-    while (AnnotationMember.parse(builder) && Separators.parse(builder));
     Separators.parse(builder);
+
+    while (!builder.eof() && builder.getTokenType() != mRCURLY) {
+      if (!AnnotationMember.parse(builder)) builder.advanceLexer();
+      Separators.parse(builder);
+    }
 
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
 

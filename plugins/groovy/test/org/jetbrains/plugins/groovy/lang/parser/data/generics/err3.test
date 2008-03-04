@@ -27,25 +27,21 @@ Groovy script
           PsiElement(>)('>')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('t')
-      PsiErrorElement:'}' expected
-        <empty list>
-  PsiWhiteSpace(' ')
-  PsiErrorElement:';' or new line expected
-    PsiElement(=)('=')
-    PsiWhiteSpace(' ')
-    PsiElement(Integer)('5')
-  PsiElement(new line)('\n  ')
-  Variable definitions
-    Modifiers
-      PsiElement(def)('def')
-    PsiWhiteSpace(' ')
-    Variable
-      PsiElement(identifier)('foo')
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
-      Literal
-        PsiElement(Integer)('42')
-  PsiElement(new line)('\n')
-  PsiErrorElement:';' or new line expected
-    PsiElement(})('}')
+      PsiElement(Integer)('5')
+      PsiElement(new line)('\n  ')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Field
+          PsiElement(identifier)('foo')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(Integer)('42')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
