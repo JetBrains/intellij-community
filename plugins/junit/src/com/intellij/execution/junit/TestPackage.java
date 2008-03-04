@@ -147,7 +147,7 @@ public class TestPackage extends TestObject {
     }
   }
 
-  public static void findTestsWithProgress(final FindCallback callback, final TestClassFilter classFilter) {
+  private static void findTestsWithProgress(final FindCallback callback, final TestClassFilter classFilter) {
     if (isSyncSearch()) {
       THashSet<PsiClass> classes = new THashSet<PsiClass>();
       boolean isJUnit4 = ConfigurationUtil.findAllTestClasses(classFilter, classes);
