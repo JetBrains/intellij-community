@@ -15,6 +15,10 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     doTest("LocalClass");
   }
 
+  public void testRenameClassLocalToAlien() throws Exception {
+    doTest("String");
+  }
+
   public void testRenameClassLocalToInner() throws Exception {
     doTest("StaticInnerClass");
   }
