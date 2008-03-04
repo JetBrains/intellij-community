@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
+import com.intellij.codeInspection.XmlInspectionGroupNames;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.DocumentAdapter;
@@ -46,7 +46,7 @@ public class RequiredAttributesInspection extends XmlSuppressableInspectionTool 
 
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.HTML_INSPECTIONS;
+    return XmlInspectionGroupNames.HTML_INSPECTIONS;
   }
 
   @NotNull

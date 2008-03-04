@@ -4,10 +4,10 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
+import com.intellij.codeInspection.XmlInspectionGroupNames;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -31,7 +31,7 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
   @Nls
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.HTML_INSPECTIONS;
+    return XmlInspectionGroupNames.HTML_INSPECTIONS;
   }
 
   public boolean isEnabledByDefault() {

@@ -5,11 +5,7 @@
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.XmlSuppressableInspectionTool;
+import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -62,7 +58,7 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
 
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.XML_INSPECTIONS;
+    return XmlInspectionGroupNames.XML_INSPECTIONS;
   }
 
   @NotNull

@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.xml.XmlBundle;
 
 /**
  * User: anna
@@ -66,9 +65,5 @@ public interface GroupNames {
   String DEPENDENCY_GROUP_NAME = InspectionsBundle.message("group.names.dependency.issues");
   String MODULARIZATION_GROUP_NAME = InspectionsBundle.message("group.names.modularization.issues");
 
-  String HTML_INSPECTIONS = XmlBundle.message("html.inspections.group.name");
-  String JSP_INSPECTIONS = XmlBundle.message("jsp.inspections.group.name");
-
   String JAVAEE_GROUP_NAME = InspectionsBundle.message("group.names.javaee.issues");
-  String XML_INSPECTIONS = XmlBundle.message("xml.inspections.group.name");
 }

@@ -5,10 +5,10 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.XmlInspectionGroupNames;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.html.HtmlTag;
@@ -45,7 +45,7 @@ public class XmlWrongClosingTagNameInspection extends HtmlLocalInspectionTool {
   @Nls
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.XML_INSPECTIONS;
+    return XmlInspectionGroupNames.XML_INSPECTIONS;
   }
 
   @NotNull

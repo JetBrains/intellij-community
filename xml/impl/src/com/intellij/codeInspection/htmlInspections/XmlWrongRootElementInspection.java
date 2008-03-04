@@ -6,12 +6,8 @@ package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
@@ -33,7 +29,7 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
   @Nls
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.XML_INSPECTIONS;
+    return XmlInspectionGroupNames.XML_INSPECTIONS;
   }
 
   @Nls

@@ -5,8 +5,8 @@
 package com.intellij.xml.util;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
+import com.intellij.codeInspection.XmlInspectionGroupNames;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
@@ -29,7 +29,7 @@ public class CheckXmlFileWithXercesValidatorInspection extends XmlSuppressableIn
 
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.XML_INSPECTIONS;
+    return XmlInspectionGroupNames.XML_INSPECTIONS;
   }
 
   @NotNull

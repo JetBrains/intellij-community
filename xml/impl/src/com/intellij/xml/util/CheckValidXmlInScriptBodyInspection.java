@@ -12,7 +12,6 @@ package com.intellij.xml.util;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.XmlLexer;
@@ -122,7 +121,7 @@ public class CheckValidXmlInScriptBodyInspection extends XmlSuppressableInspecti
 
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.HTML_INSPECTIONS;
+    return XmlInspectionGroupNames.HTML_INSPECTIONS;
   }
 
   @NotNull

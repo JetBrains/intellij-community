@@ -6,7 +6,6 @@ package com.intellij.xml.util;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -68,7 +67,7 @@ public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool 
 
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.XML_INSPECTIONS;
+    return XmlInspectionGroupNames.XML_INSPECTIONS;
   }
 
   @NotNull
