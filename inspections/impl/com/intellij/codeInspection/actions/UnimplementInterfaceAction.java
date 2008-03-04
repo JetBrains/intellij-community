@@ -1,5 +1,6 @@
 package com.intellij.codeInspection.actions;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -26,7 +27,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
-    final PsiReference psiReference = file.findReferenceAt(editor.getCaretModel().getOffset());
+    final PsiReference psiReference = TargetElementUtil.findReference(editor);
     if (psiReference == null) return false;
 
     final PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiReferenceList.class);
