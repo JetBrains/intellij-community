@@ -140,7 +140,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   public void cleanup(final boolean finishedSuccessfully, final PsiFile file) {
     if (myRefCountHolder != null) {
-      registerReferencesFromInjectedFragments(file, myRefCountHolder);
+      if (finishedSuccessfully) {
+        registerReferencesFromInjectedFragments(file, myRefCountHolder);
+      }
       myRefCountHolder.finishAnalyzing(finishedSuccessfully);
     }
     myUninitializedVarProblems.clear();

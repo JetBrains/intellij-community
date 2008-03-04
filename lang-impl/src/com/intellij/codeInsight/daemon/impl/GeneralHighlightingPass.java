@@ -105,6 +105,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     for (final HighlightVisitor highlightVisitor : highlightVisitors) {
       if (!highlightVisitor.init(myUpdateAll, myFile)) {
         progress.cancel();
+        releaseHighlightVisitors(highlightVisitors, false);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             DaemonCodeAnalyzer.getInstance(myProject).restart();
