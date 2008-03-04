@@ -79,6 +79,11 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     assertEquals("List", ((PsiClass) resolved).getQualifiedName());
   }
 
+  public void testGrvy1139() throws Exception {
+    PsiReference ref = configureByFile("grvy1139/p/User.groovy");
+    assertNull(ref.resolve());
+  }
+
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();

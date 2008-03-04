@@ -25,6 +25,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -32,17 +33,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl.ReferenceKind.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -286,20 +287,25 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
                                            ReferenceKind kind) {
       final String refName = ref.getReferenceName();
       switch (kind) {
-        case CLASS_OR_PACKAGE_FQ: {
-          PsiClass aClass = manager.findClass(PsiUtil.getQualifiedReferenceText(ref), ref.getResolveScope());
-          if (aClass != null) {
-            boolean isAccessible = PsiUtil.isAccessible(ref, aClass);
-            return new GroovyResolveResult[]{new GroovyResolveResultImpl(aClass, isAccessible)};
-          }
-          //fallthrough
-        }
-
+        case CLASS_OR_PACKAGE_FQ:
         case PACKAGE_FQ:
-          PsiPackage aPackage = manager.findPackage(PsiUtil.getQualifiedReferenceText(ref));
-          if (aPackage != null) {
-            return new GroovyResolveResult[]{new GroovyResolveResultImpl(aPackage, true)};
+          String qName = PsiUtil.getQualifiedReferenceText(ref);
+          if (qName.indexOf('.') > 0) {
+            PsiClass aClass = manager.findClass(qName, ref.getResolveScope());
+            if (aClass != null) {
+              boolean isAccessible = PsiUtil.isAccessible(ref, aClass);
+              return new GroovyResolveResult[]{new GroovyResolveResultImpl(aClass, isAccessible)};
+            }
           }
+
+          if (kind == PACKAGE_FQ) {
+            PsiPackage aPackage = manager.findPackage(qName);
+            if (aPackage != null) {
+              return new GroovyResolveResult[]{new GroovyResolveResultImpl(aPackage, true)};
+            }
+          }
+
+          break;
 
         case CLASS:
         case CLASS_OR_PACKAGE: {
