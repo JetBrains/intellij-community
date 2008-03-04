@@ -1,7 +1,9 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -14,6 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.WeakHashMap;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,18 +76,28 @@ public class FileStatusMap {
 
   private static class FileStatus {
     private PsiElement dirtyScope; //Q: use WeakReference?
-    private PsiElement overridenDirtyScope;
     private PsiElement localInspectionsDirtyScope;
     public boolean defensivelyMarked; // file marked dirty without knowlesdge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
     private boolean wolfPassFinfished;
     private PsiElement externalDirtyScope;
+    private TIntObjectHashMap<PsiElement> customPassDirtyScopes = new TIntObjectHashMap<PsiElement>();
     private boolean errorFound;
 
     private FileStatus(PsiElement dirtyScope) {
       this.dirtyScope = dirtyScope;
-      overridenDirtyScope = dirtyScope;
       localInspectionsDirtyScope = dirtyScope;
       externalDirtyScope = dirtyScope;
+      TextEditorHighlightingPassRegistrarImpl registrar = (TextEditorHighlightingPassRegistrarImpl) TextEditorHighlightingPassRegistrar.getInstance(dirtyScope.getProject());
+      for(DirtyScopeTrackingHighlightingPassFactory factory: registrar.getDirtyScopeTrackingFactories()) {
+        customPassDirtyScopes.put(factory.getPassId(), dirtyScope);
+      }
+    }
+
+    public boolean allCustomDirtyScopesAreNull() {
+      for (Object o : customPassDirtyScopes.getValues()) {
+        if (o != null) return false;
+      }
+      return true;
     }
   }
 
@@ -114,9 +127,6 @@ public class FileStatusMap {
         case Pass.POST_UPDATE_ALL:
           status.dirtyScope = null;
           break;
-        case Pass.UPDATE_OVERRIDEN_MARKERS:
-          status.overridenDirtyScope = null;
-          break;
         case Pass.LOCAL_INSPECTIONS:
           status.localInspectionsDirtyScope = null;
           break;
@@ -127,7 +137,9 @@ public class FileStatusMap {
           status.externalDirtyScope = null;
           break;
         default:
-          //LOG.error("unknown id "+passId);
+          if (status.customPassDirtyScopes.containsKey(passId)) {
+            status.customPassDirtyScopes.put(passId, null);
+          }
           break;
       }
     }
@@ -152,13 +164,14 @@ public class FileStatusMap {
       switch (passId) {
         case Pass.UPDATE_ALL:
           return status.dirtyScope;
-        case Pass.UPDATE_OVERRIDEN_MARKERS:
-          return status.overridenDirtyScope;
         case Pass.LOCAL_INSPECTIONS:
           return status.localInspectionsDirtyScope;
         case Pass.EXTERNAL_TOOLS:
           return status.externalDirtyScope;
         default:
+          if (status.customPassDirtyScopes.containsKey(passId)) {
+            return status.customPassDirtyScopes.get(passId);
+          }
           LOG.assertTrue(false);
           return null;
       }
@@ -212,7 +225,7 @@ public class FileStatusMap {
       return status != null
              && !status.defensivelyMarked
              && status.dirtyScope == null
-             && status.overridenDirtyScope == null
+             && status.allCustomDirtyScopesAreNull()
              && status.localInspectionsDirtyScope == null
              && status.externalDirtyScope == null
              && status.wolfPassFinfished

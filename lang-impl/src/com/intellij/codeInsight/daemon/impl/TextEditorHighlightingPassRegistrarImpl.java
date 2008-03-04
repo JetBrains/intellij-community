@@ -7,6 +7,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
+import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -26,6 +27,7 @@ import java.util.Set;
  */
 public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx {
   private final TIntObjectHashMap<PassConfig> myRegisteredPassFactories = new TIntObjectHashMap<PassConfig>();
+  private final List<DirtyScopeTrackingHighlightingPassFactory> myDirtyScopeTrackingFactories = new ArrayList<DirtyScopeTrackingHighlightingPassFactory>();
   private int nextAvailableId = Pass.EXTERNAL_TOOLS+1;
   private boolean checkedForCycles;
   private final Project myProject;
@@ -79,6 +81,9 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     PassConfig registered = myRegisteredPassFactories.get(passId);
     assert registered == null: "Pass id "+passId +" has already been registered: "+ registered.passFactory;
     myRegisteredPassFactories.put(passId, info);
+    if (factory instanceof DirtyScopeTrackingHighlightingPassFactory) {
+      myDirtyScopeTrackingFactories.add((DirtyScopeTrackingHighlightingPassFactory) factory);
+    }
     return passId;
   }
 
@@ -214,4 +219,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     });
   }
 
+  public List<DirtyScopeTrackingHighlightingPassFactory> getDirtyScopeTrackingFactories() {
+    return myDirtyScopeTrackingFactories;
+  }
 }

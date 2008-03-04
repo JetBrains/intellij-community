@@ -1,9 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeHighlighting.*;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -16,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author cdr
 */
-public class OverriddenMarkersPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
+public class OverriddenMarkersPassFactory extends AbstractProjectComponent implements DirtyScopeTrackingHighlightingPassFactory {
   public OverriddenMarkersPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, false, Pass.UPDATE_OVERRIDEN_MARKERS);
@@ -37,5 +34,9 @@ public class OverriddenMarkersPassFactory extends AbstractProjectComponent imple
 
   private static TextRange calculateRangeToProcess(Editor editor) {
     return FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_OVERRIDEN_MARKERS);
+  }
+
+  public int getPassId() {
+    return Pass.UPDATE_OVERRIDEN_MARKERS;
   }
 }
