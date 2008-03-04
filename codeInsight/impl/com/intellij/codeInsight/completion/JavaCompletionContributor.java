@@ -5,7 +5,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
+import com.intellij.codeInsight.daemon.impl.JavaReferenceImporter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -388,7 +388,7 @@ public class JavaCompletionContributor extends CompletionContributor{
     final PsiFile file = context.getFile();
     final Project project = context.getProject();
 
-    ShowAutoImportPass.autoImportReferenceAtCursor(context.getEditor(), file, false); //let autoimport complete
+    JavaReferenceImporter.autoImportReferenceAtCursor(context.getEditor(), file, false); //let autoimport complete
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(file.getViewProvider());
 
     JavaCompletionUtil.initOffsets(file, project, context.getOffsetMap());

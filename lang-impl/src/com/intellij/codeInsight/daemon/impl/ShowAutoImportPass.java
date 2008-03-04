@@ -1,16 +1,14 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -21,7 +19,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -120,29 +117,9 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     return false;
   }
 
-  public static boolean autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file, final boolean allowCaretNearRef) {
-    int caretOffset = editor.getCaretModel().getOffset();
-    Document document = editor.getDocument();
-    int lineNumber = document.getLineNumber(caretOffset);
-    int startOffset = document.getLineStartOffset(lineNumber);
-    int endOffset = document.getLineEndOffset(lineNumber);
-
-    List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffset);
-    for (PsiElement element : elements) {
-      if (element instanceof PsiJavaCodeReferenceElement) {
-        PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element;
-        if (ref.resolve() == null) {
-          new ImportClassFix(ref).doFix(editor, false, allowCaretNearRef);
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   public static String getMessage(final boolean multiple, final String name) {
     final String messageKey = multiple ? "import.popup.multiple" : "import.popup.text";
-    String hintText = QuickFixBundle.message(messageKey, name);
+    String hintText = DaemonBundle.message(messageKey, name);
     hintText += " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
     return hintText;
   }

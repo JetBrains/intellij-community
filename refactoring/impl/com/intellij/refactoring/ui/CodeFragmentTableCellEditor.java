@@ -1,6 +1,6 @@
 package com.intellij.refactoring.ui;
 
-import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
+import com.intellij.codeInsight.daemon.impl.JavaReferenceImporter;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -49,7 +49,7 @@ public class CodeFragmentTableCellEditor extends AbstractCellEditor implements T
   public boolean stopCellEditing() {
     final Editor editor = myEditorTextField.getEditor();
     if (editor != null) {
-      ShowAutoImportPass.autoImportReferenceAtCursor(editor, myCodeFragment, true);
+      JavaReferenceImporter.autoImportReferenceAtCursor(editor, myCodeFragment, true);
     }
     super.stopCellEditing();
     PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
