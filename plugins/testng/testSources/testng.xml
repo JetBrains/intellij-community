@@ -8,6 +8,7 @@
       <class name="com.theoryinpractice.testng.inspection.ConvertOldAnnotationInspectionTest"/>
       <class name="com.theoryinpractice.testng.configuration.ConfigurationsTest"/>
       <class name="com.theoryinpractice.testng.inspection.UndeclaredTestsInspectionTest"/>
+      <class name="com.theoryinpractice.testng.intention.AddTestNGJarFixTest"/>
     </classes>
   </test>
 </suite>
