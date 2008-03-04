@@ -306,7 +306,10 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       FileSystemSynchronizer synchronizer = startupManager.getFileSystemSynchronizer();
 
       if (PsiManagerConfiguration.getInstance().REPOSITORY_ENABLED) {
-        synchronizer.registerCacheUpdater(myRepositoryManager.getCacheUpdater());
+        final CacheUpdater repositoryUpdater = myRepositoryManager.getCacheUpdater();
+        if (repositoryUpdater != null) {
+          synchronizer.registerCacheUpdater(repositoryUpdater);
+        }
         CacheUpdater[] updaters = myCacheManager.getCacheUpdaters();
         for (CacheUpdater updater : updaters) {
           synchronizer.registerCacheUpdater(updater);
