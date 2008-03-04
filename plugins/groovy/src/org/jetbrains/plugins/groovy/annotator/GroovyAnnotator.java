@@ -52,7 +52,9 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.Dynamic
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -135,6 +137,9 @@ public class GroovyAnnotator implements Annotator {
       checkNewExpression(holder, (GrNewExpression) element);
     } else if (element instanceof GrConstructorInvocation) {
       checkConstructorInvocation(holder, (GrConstructorInvocation) element);
+    }  else if (element.getParent() instanceof GrReferenceElement &&
+        element.getParent().getParent() instanceof GrDocReferenceElement) {
+      checkGrDocReferenceElement(holder, element);
     } else if (element instanceof GrPackageDefinition) {
       //todo: if reference isn't resolved it construct package definition 
       checkPackageReference(holder, (GrPackageDefinition) element);
@@ -152,6 +157,14 @@ public class GroovyAnnotator implements Annotator {
           element.getContainingFile() instanceof GroovyFile) {
         GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile) element.getContainingFile());
       }
+    }
+  }
+
+  private static void checkGrDocReferenceElement(AnnotationHolder holder, PsiElement element) {
+    ASTNode node = element.getNode();
+    if (node != null && TokenSets.BUILT_IN_TYPE.contains(node.getElementType())) {
+      Annotation annotation = holder.createInfoAnnotation(element, null);
+      annotation.setTextAttributes(DefaultHighlighter.KEYWORD);
     }
   }
 

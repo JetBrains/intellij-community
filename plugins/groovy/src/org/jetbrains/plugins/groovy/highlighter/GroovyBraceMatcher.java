@@ -37,6 +37,7 @@ public class GroovyBraceMatcher implements PairedBraceMatcher {
       new BracePair('{', GroovyTokenTypes.mLCURLY, '}', GroovyTokenTypes.mRCURLY, true),
 
       new BracePair('{', GroovyDocTokenTypes.mGDOC_INLINE_TAG_START, '}', GroovyDocTokenTypes.mGDOC_INLINE_TAG_END, true),
+      new BracePair('(', GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN, ')', GroovyDocTokenTypes.mGDOC_TAG_VALUE_RPAREN, false),
 
       new BracePair('"', GroovyTokenTypes.mGSTRING_SINGLE_BEGIN, '"', GroovyTokenTypes.mGSTRING_SINGLE_END, false),
       new BracePair('/', GroovyTokenTypes.mREGEX_BEGIN, '/', GroovyTokenTypes.mREGEX_END, false)

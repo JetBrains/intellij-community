@@ -104,8 +104,6 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     map.put("annotation", DefaultHighlighter.ANNOTATION);
     map.put("statmet", DefaultHighlighter.STATIC_METHOD_ACCESS);
     map.put("statfield", DefaultHighlighter.STATIC_FIELD);
-//    map.put("field", DefaultHighlighter.INSTANCE_FIELD);
-//    map.put("mc", DefaultHighlighter.METHOD_CALL);
     map.put("untyped", DefaultHighlighter.UNTYPED_ACCESS);
 
     return map;

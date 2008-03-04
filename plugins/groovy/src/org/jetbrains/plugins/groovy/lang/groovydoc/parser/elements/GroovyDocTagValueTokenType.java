@@ -24,16 +24,20 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.IGroovyDocElementType;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_SHARP_TOKEN;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.IGroovyDocElementType;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType.TagValueTokenType.REFERENCE_ELEMENT;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType.TagValueTokenType.VALUE_TOKEN;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParameter;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -45,6 +49,11 @@ public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType im
 
   private static final Set<String> TAGS_WITH_REFERENCES = new HashSet<String>();
   private static final Set<String> INLINED_TAGS_WITH_REFERENCES = new HashSet<String>();
+  private static final Set<String> BUILT_IN_TYPES = new HashSet<String>();
+
+  static {
+    BUILT_IN_TYPES.addAll(Arrays.asList("double", "long", "float", "short", "any", "char", "int", "byte", "boolean"));
+  }
 
   static {
     TAGS_WITH_REFERENCES.addAll(Arrays.asList("@see", "@throws", "@exception"));
@@ -103,7 +112,13 @@ public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType im
     final PsiBuilder builder = factory.createBuilder(chameleon, new GroovyLexer(), getLanguage(), chameleon.getText(), project);
 
     PsiBuilder.Marker rootMarker = builder.mark();
-    parseBody(builder);
+    if (BUILT_IN_TYPES.contains(chameleon.getText())) {
+      PsiBuilder.Marker marker = builder.mark();
+      builder.advanceLexer();
+      marker.done(GroovyElementTypes.REFERENCE_ELEMENT);
+    } else {
+      parseBody(builder);
+    }
     rootMarker.done(this);
     return builder.getTreeBuilt().getFirstChildNode();
   }
