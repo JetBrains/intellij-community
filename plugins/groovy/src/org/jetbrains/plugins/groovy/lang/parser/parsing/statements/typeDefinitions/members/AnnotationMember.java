@@ -30,9 +30,8 @@ public class AnnotationMember implements GroovyElementTypes {
 
     //type definition
     PsiBuilder.Marker typeDeclStartMarker = builder.mark();
-    GroovyElementType typeDef = TypeDefinition.parse(builder);
 
-    if (!WRONGWAY.equals(typeDef)) {
+    if (TypeDefinition.parse(builder)) {
       typeDeclStartMarker.drop();
       return true;
     } else {

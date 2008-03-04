@@ -27,15 +27,15 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class ListOrMapConstructorExpression implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
     if (!ParserUtils.getToken(builder, mLBRACK, GroovyBundle.message("lbrack.expected"))) {
       marker.drop();
-      return WRONGWAY;
+      return false;
     }
     if (ParserUtils.getToken(builder, mRBRACK)) {
       marker.done(LIST_OR_MAP);
-      return LIST_OR_MAP;
+      return true;
     } else if (ParserUtils.getToken(builder, mCOLON)) {
       ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
     } else {
@@ -45,6 +45,6 @@ public class ListOrMapConstructorExpression implements GroovyElementTypes {
     }
 
     marker.done(LIST_OR_MAP);
-    return LIST_OR_MAP;
+    return true;
   }
 }

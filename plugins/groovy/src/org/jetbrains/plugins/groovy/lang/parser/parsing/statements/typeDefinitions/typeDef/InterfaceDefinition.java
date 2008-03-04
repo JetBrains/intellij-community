@@ -30,15 +30,15 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 16.03.2007
  */
 public class InterfaceDefinition implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
     if (!ParserUtils.getToken(builder, kINTERFACE)) {
-      return WRONGWAY;
+      return false;
     }
 
     String name;
     if (!mIDENT.equals(builder.getTokenType())) {
       builder.error(GroovyBundle.message("identifier.expected"));
-      return WRONGWAY;
+      return false;
     } else {
       name = builder.getTokenText();
       builder.advanceLexer();
@@ -58,6 +58,6 @@ public class InterfaceDefinition implements GroovyElementTypes {
       builder.error(GroovyBundle.message("interface.body.expected"));
     }
 
-    return INTERFACE_DEFINITION;
+    return true;
   }
 }

@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitio
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef.ClassDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef.EnumDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef.InterfaceDefinition;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -37,14 +38,31 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitio
  */
 
 public class TypeDefinitionInternal implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
+    PsiBuilder.Marker tdMarker = builder.mark();
+    Modifiers.parse(builder);
+    if (builder.getTokenType() == kCLASS && ClassDefinition.parse(builder)) {
+      tdMarker.done(CLASS_DEFINITION);
+      return true;
+    }
 
-    if (builder.getTokenType() == kCLASS) return ClassDefinition.parse(builder);
-    if (builder.getTokenType() == kINTERFACE) return InterfaceDefinition.parse(builder);
-    if (builder.getTokenType() == kENUM) return EnumDefinition.parse(builder);
-    if (builder.getTokenType() == mAT) return AnnotationDefinition.parse(builder);
+    if (builder.getTokenType() == kINTERFACE && InterfaceDefinition.parse(builder)) {
+      tdMarker.done(INTERFACE_DEFINITION);
+      return true;
+    }
 
+    if (builder.getTokenType() == kENUM && EnumDefinition.parse(builder)) {
+      tdMarker.done(ENUM_DEFINITION);
+      return true;
+    }
+
+    if (builder.getTokenType() == mAT && AnnotationDefinition.parse(builder)) {
+      tdMarker.done(ANNOTATION_DEFINITION);
+      return true;
+    }
+
+    tdMarker.rollbackTo();
     builder.error(GroovyBundle.message("class.or.interface.or.enum.or.annotation.expected"));
-    return WRONGWAY;
+    return false;
   }
 }

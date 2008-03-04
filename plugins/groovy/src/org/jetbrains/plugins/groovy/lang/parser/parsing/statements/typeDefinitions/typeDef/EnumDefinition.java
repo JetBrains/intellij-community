@@ -28,28 +28,28 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
  * @date: 16.03.2007
  */
 public class EnumDefinition implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
     if (!ParserUtils.getToken(builder, kENUM)) {
-      return WRONGWAY;
+      return false;
     }
 
     String name;
     if (!mIDENT.equals(builder.getTokenType())) {
       builder.error(GroovyBundle.message("identifier.expected"));
-      return WRONGWAY;
+      return false;
     } else {
       name = builder.getTokenText();
       builder.advanceLexer();
     }
 
     if (WRONGWAY.equals(ImplementsClause.parse(builder))) {
-      return ENUM_DEFINITION;
+      return true;
     }
 
     if (WRONGWAY.equals(EnumBlock.parse(builder, name))) {
-      return ENUM_DEFINITION;
+      return true;
     }
 
-    return ENUM_DEFINITION;
+    return true;
   }
 }

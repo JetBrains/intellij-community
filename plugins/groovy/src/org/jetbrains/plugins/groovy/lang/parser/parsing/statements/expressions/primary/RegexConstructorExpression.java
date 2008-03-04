@@ -28,30 +28,29 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class RegexConstructorExpression implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
 
     PsiBuilder.Marker sMarker = builder.mark();
     if (ParserUtils.getToken(builder, mREGEX_BEGIN)) {
-      GroovyElementType result = regexConstructorValuePart(builder);
-      if (result.equals(WRONGWAY)) {
+      if (!regexConstructorValuePart(builder)) {
         if (!ParserUtils.getToken(builder, mREGEX_END)) {
           builder.error(GroovyBundle.message("identifier.or.block.expected"));
         }
         sMarker.done(REGEX);
-        return REGEX;
+        return true;
       } else {
-        while (ParserUtils.getToken(builder, mREGEX_CONTENT) && !result.equals(WRONGWAY)) {
-          result = regexConstructorValuePart(builder);
+        while (ParserUtils.getToken(builder, mREGEX_CONTENT)) {
+          if (!regexConstructorValuePart(builder)) break;
         }
         if (!ParserUtils.getToken(builder, mREGEX_END)) {
           builder.error(GroovyBundle.message("identifier.or.block.expected"));
         }
         sMarker.done(REGEX);
-        return REGEX;
+        return true;
       }
     } else {
       sMarker.drop();
-      return WRONGWAY;
+      return false;
     }
   }
 
@@ -61,16 +60,16 @@ public class RegexConstructorExpression implements GroovyElementTypes {
    * @param builder given builder
    * @return nothing
    */
-  private static GroovyElementType regexConstructorValuePart(PsiBuilder builder) {
+  private static boolean regexConstructorValuePart(PsiBuilder builder) {
     //ParserUtils.getToken(builder, mSTAR);
     if (mIDENT.equals(builder.getTokenType())) {
       PathExpression.parse(builder);
-      return PATH_EXPRESSION;
+      return true;
     } else if (mLCURLY.equals(builder.getTokenType())) {
       OpenOrClosableBlock.parseClosableBlock(builder);
-      return CLOSABLE_BLOCK;
+      return true;
     }
-    return WRONGWAY;
+    return false;
   }
 
 }

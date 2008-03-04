@@ -17,10 +17,9 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ImplementsClause;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ExtendsClause;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ImplementsClause;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.ClassBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeParameters;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -35,15 +34,15 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class ClassDefinition implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
     if (!ParserUtils.getToken(builder, kCLASS)) {
-      return WRONGWAY;
+      return false;
     }
 
     String name;
     if (!mIDENT.equals(builder.getTokenType())) {
       builder.error(GroovyBundle.message("identifier.expected"));
-      return WRONGWAY;
+      return false;
     } else {
       name = builder.getTokenText();
       builder.advanceLexer();
@@ -65,13 +64,13 @@ public class ClassDefinition implements GroovyElementTypes {
 
     if (mLCURLY.equals(builder.getTokenType())) {
       if (WRONGWAY.equals(ClassBlock.parse(builder, name))) {
-        return CLASS_DEFINITION;
+        return true;
       }
     } else {
       builder.error(GroovyBundle.message("lcurly.expected"));
-      return CLASS_DEFINITION;
+      return true;
     }
 
-    return CLASS_DEFINITION;
+    return true;
   }
 }
