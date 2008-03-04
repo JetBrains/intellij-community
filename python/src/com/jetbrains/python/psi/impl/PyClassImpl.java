@@ -22,6 +22,8 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.PyElementTypes;
 import org.jetbrains.annotations.NotNull;
@@ -108,5 +110,26 @@ public class PyClassImpl extends PyElementImpl implements PyClass {
 
   public String getDocString() {
     return DocStringAnnotator.findDocString(getStatementList());
+  }
+
+  public ItemPresentation getPresentation() {
+    return new ItemPresentation() {
+      public String getPresentableText() {
+        final String name = getName();
+        return name != null ? name : "<none>";
+      }
+
+      public String getLocationString() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      public Icon getIcon(final boolean open) {
+        return Icons.CLASS_ICON;
+      }
+
+      public TextAttributesKey getTextAttributesKey() {
+        return null;
+      }
+    };
   }
 }
