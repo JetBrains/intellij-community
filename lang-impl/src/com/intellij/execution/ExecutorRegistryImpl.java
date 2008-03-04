@@ -204,7 +204,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       catch (ExecutionException e1) {
         Messages.showErrorDialog(project, ExecutionBundle.message("error.running.configuration.with.error.error.message",
                                                                   configuration.getName(), e1.getMessage()),
-                                          ExecutionBundle.message("error.run.title"));
+                                          ExecutionBundle.message("run.error.message.title"));
       }
     }
 

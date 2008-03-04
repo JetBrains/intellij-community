@@ -156,8 +156,7 @@ public class TestRunnerUtil {
     }
     try {
       Constructor constructor = testClass.getConstructor(new Class[]{String.class});
-      TestCase test = (TestCase)constructor.newInstance(new Object[]{methodName});
-      return test;
+      return (Test)constructor.newInstance(new Object[]{methodName});
     }
     catch (NoSuchMethodException e) {
       try {

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * @author mike
  */
 public class PsiMethodUtil {
-  public static Condition<PsiClass> MAIN_CLASS = new Condition<PsiClass>() {
+  public static final Condition<PsiClass> MAIN_CLASS = new Condition<PsiClass>() {
     public boolean value(final PsiClass psiClass) {
       if (psiClass instanceof PsiAnonymousClass) return false;
       if (psiClass.isInterface()) return false;

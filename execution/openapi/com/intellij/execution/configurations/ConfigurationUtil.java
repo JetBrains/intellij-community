@@ -25,7 +25,7 @@ import com.intellij.psi.util.PsiMethodUtil;
  * Date: Jan 26, 2005
  */
 public class ConfigurationUtil {
-  public static Condition<PsiClass> PUBLIC_INSTANTIATABLE_CLASS = new Condition<PsiClass>() {
+  public static final Condition<PsiClass> PUBLIC_INSTANTIATABLE_CLASS = new Condition<PsiClass>() {
     public boolean value(final PsiClass psiClass) {
       if (!MAIN_CLASS.value(psiClass)) return false;
       if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
@@ -33,5 +33,5 @@ public class ConfigurationUtil {
       return true;
     }
   };
-  public static Condition<PsiClass> MAIN_CLASS = PsiMethodUtil.MAIN_CLASS;
+  public static final Condition<PsiClass> MAIN_CLASS = PsiMethodUtil.MAIN_CLASS;
 }

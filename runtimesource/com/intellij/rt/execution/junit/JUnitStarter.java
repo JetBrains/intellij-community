@@ -14,7 +14,7 @@ import java.util.Vector;
  *  @noinspection HardCodedStringLiteral
  */
 public class JUnitStarter {
-  public static int VERSION = 5;
+  public static final int VERSION = 5;
   public static final String IDE_VERSION = "-ideVersion";
   public static final String JUNIT4_PARAMETER = "-junit4";
 
@@ -110,16 +110,18 @@ public class JUnitStarter {
     try {
       System.setOut(new PrintStream(out));
       System.setErr(new PrintStream(err));
-      IdeaTestRunner testRunner = (IdeaTestRunner) getAgentClass().newInstance();
+      IdeaTestRunner testRunner = (IdeaTestRunner)getAgentClass().newInstance();
       if (isJUnit4) {
         testRunner.JUNIT4_API = (JUnit4API)Class.forName("com.intellij.rt.junit4.JUnit4Util").newInstance();
       }
       testRunner.setStreams(out, err);
       result = IdeaTestRunner.startRunnerWithArgs(testRunner, args);
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       e.printStackTrace(System.err);
       result = -2;
-    } finally {
+    }
+    finally {
       System.setOut(oldOut);
       System.setErr(oldErr);
     }
