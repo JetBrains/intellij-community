@@ -107,12 +107,6 @@ public class PyFunctionImpl extends PyElementImpl implements PyFunction {
   }
 
   public String getDocString() {
-    final PyStatement[] statements = getStatementList().getStatements();
-    if (statements.length == 0) return null;
-    if (statements [0] instanceof PyExpressionStatement) {
-      PyStringLiteralExpression expr = DocStringAnnotator.statementAsDocString((PyExpressionStatement) statements [0]);
-      if (expr != null) return expr.getStringValue();
-    }
-    return null;
+    return DocStringAnnotator.findDocString(getStatementList());
   }
 }

@@ -77,4 +77,15 @@ public class DocStringAnnotator extends PyAnnotator {
     }
     return null;
   }
+
+  @Nullable
+  public static String findDocString(final PyStatementList statementList) {
+    final PyStatement[] statements = statementList.getStatements();
+    if (statements.length == 0) return null;
+    if (statements [0] instanceof PyExpressionStatement) {
+      PyStringLiteralExpression expr = statementAsDocString((PyExpressionStatement) statements [0]);
+      if (expr != null) return expr.getStringValue();
+    }
+    return null;
+  }
 }

@@ -27,6 +27,7 @@ import com.jetbrains.python.PyElementTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.validation.DocStringAnnotator;
 
 import javax.swing.*;
 
@@ -38,64 +39,74 @@ import javax.swing.*;
  * To change this template use File | Settings | File Templates.
  */
 public class PyClassImpl extends PyElementImpl implements PyClass {
-    public PyClassImpl(ASTNode astNode) {
-        super(astNode);
-    }
+  public PyClassImpl(ASTNode astNode) {
+    super(astNode);
+  }
 
-    public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-        final ASTNode nameElement = getLanguage().getElementGenerator().createNameIdentifier(getProject(), name);
-        getNode().replaceChild(findNameIdentifier(), nameElement);
-        return this;
-    }
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    final ASTNode nameElement = getLanguage().getElementGenerator().createNameIdentifier(getProject(), name);
+    getNode().replaceChild(findNameIdentifier(), nameElement);
+    return this;
+  }
 
-    @Nullable @Override public String getName() {
-        ASTNode node = findNameIdentifier();
-        return node != null ? node.getText() : null;
-    }
+  @Nullable
+  @Override
+  public String getName() {
+    ASTNode node = findNameIdentifier();
+    return node != null ? node.getText() : null;
+  }
 
-    private ASTNode findNameIdentifier() {
-        return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
-    }
+  private ASTNode findNameIdentifier() {
+    return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
+  }
 
-    @Override public Icon getIcon(int flags) {
-        return Icons.CLASS_ICON;
-    }
+  @Override
+  public Icon getIcon(int flags) {
+    return Icons.CLASS_ICON;
+  }
 
-    @Override protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-        pyVisitor.visitPyClass(this);
-    }
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyClass(this);
+  }
 
-    public @NotNull PyStatementList getStatementList() {
-        return childToPsiNotNull(PyElementTypes.STATEMENT_LIST);
-    }
+  public
+  @NotNull
+  PyStatementList getStatementList() {
+    return childToPsiNotNull(PyElementTypes.STATEMENT_LIST);
+  }
 
-    @Override public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                                 @NotNull ResolveState substitutor,
-                                                 PsiElement lastParent,
-                                                 @NotNull PsiElement place)
-    {
-      final PyStatementList statementList = getStatementList();
-      for (PsiElement element : statementList.getChildren()) {
-        if (element instanceof PyFunction) {
-          if (!processor.execute(element, substitutor)) return false;
-        }
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState substitutor,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    final PyStatementList statementList = getStatementList();
+    for (PsiElement element : statementList.getChildren()) {
+      if (element instanceof PyFunction) {
+        if (!processor.execute(element, substitutor)) return false;
       }
-      for (PsiElement psiElement : statementList.getChildren()) {
-        if (psiElement instanceof PyAssignmentStatement) {
-          final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)psiElement;
-          final PyExpression[] targets = assignmentStatement.getTargets();
-          for (PyExpression target : targets) {
-            if (target instanceof PyReferenceExpression) {
-              if (!processor.execute(target, substitutor)) return false;
-            }
+    }
+    for (PsiElement psiElement : statementList.getChildren()) {
+      if (psiElement instanceof PyAssignmentStatement) {
+        final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)psiElement;
+        final PyExpression[] targets = assignmentStatement.getTargets();
+        for (PyExpression target : targets) {
+          if (target instanceof PyReferenceExpression) {
+            if (!processor.execute(target, substitutor)) return false;
           }
         }
       }
-      return processor.execute(this, substitutor);
     }
+    return processor.execute(this, substitutor);
+  }
 
-    public int getTextOffset() {
-        final ASTNode name = findNameIdentifier();
-        return name != null ? name.getStartOffset() : super.getTextOffset();
-    }
+  public int getTextOffset() {
+    final ASTNode name = findNameIdentifier();
+    return name != null ? name.getStartOffset() : super.getTextOffset();
+  }
+
+  public String getDocString() {
+    return DocStringAnnotator.findDocString(getStatementList());
+  }
 }
