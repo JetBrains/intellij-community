@@ -72,7 +72,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
         ArrayList<LogFileOptions> newList = new ArrayList<LogFileOptions>(myModel.getItems());
         final LogFileOptions selectedNameLocation = showEditorDialog("", "", false);
         if (selectedNameLocation != null) {
-          newList.add(new LogFileOptions(selectedNameLocation.getName(), selectedNameLocation.getPathPattern(), false, true, selectedNameLocation.isShowAll()));
+          newList.add(new LogFileOptions(selectedNameLocation.getName(), selectedNameLocation.getPathPattern(), true, true, selectedNameLocation.isShowAll()));
           myModel.setItems(newList);
           int index = myModel.getRowCount() - 1;
           myModel.fireTableRowsInserted(index, index);
