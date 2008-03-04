@@ -50,6 +50,14 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     doTest("param2");
   }
 
+  public void testRenameVarOuterFieldToLocal() throws Exception {
+    doTest("localVar3");
+  }
+
+  public void testRenameVarOuterFieldToParam() throws Exception {
+    doTest("param3");
+  }
+
   private void doTest(final String newName) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement element = TargetElementUtilBase
