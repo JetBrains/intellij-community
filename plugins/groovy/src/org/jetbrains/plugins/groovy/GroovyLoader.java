@@ -59,6 +59,7 @@ import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.editor.selection.GroovyLiteralSelectioner;
 import org.jetbrains.plugins.groovy.editor.selection.GroovyTypeCastSelectioner;
+import org.jetbrains.plugins.groovy.editor.selection.GroovyDocParamsSelectioner;
 import org.jetbrains.plugins.groovy.findUsages.*;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.completion.InsertHandlerRegistry;
@@ -124,8 +125,7 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
     //Register Keyword completion
     setupCompletion();
 
-    SelectWordUtil.registerSelectioner(new GroovyLiteralSelectioner());
-    SelectWordUtil.registerSelectioner(new GroovyTypeCastSelectioner());
+    registerSelectioners();
 
     MethodReferencesSearch.INSTANCE.registerExecutor(new AccessorReferencesSearcher());
     MethodReferencesSearch.INSTANCE.registerExecutor(new MethodLateBoundReferencesSearcher());
@@ -180,6 +180,12 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
 
       }
     });
+  }
+
+  private static void registerSelectioners() {
+    SelectWordUtil.registerSelectioner(new GroovyLiteralSelectioner());
+    SelectWordUtil.registerSelectioner(new GroovyTypeCastSelectioner());
+    SelectWordUtil.registerSelectioner(new GroovyDocParamsSelectioner());
   }
 
   private static void setupCompletion() {

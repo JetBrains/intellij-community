@@ -25,9 +25,12 @@ import com.intellij.psi.PsiElement;
  */
 public interface GrTypeCastExpression extends GrExpression {
   GrTypeElement getCastTypeElement();
+
   GrExpression getOperand();
+
   @NotNull
   PsiElement getLeftParen();
+
   @NotNull
   PsiElement getRightParen();
 }

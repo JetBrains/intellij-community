@@ -137,8 +137,7 @@ public class GroovyAnnotator implements Annotator {
       checkNewExpression(holder, (GrNewExpression) element);
     } else if (element instanceof GrConstructorInvocation) {
       checkConstructorInvocation(holder, (GrConstructorInvocation) element);
-    }  else if (element.getParent() instanceof GrReferenceElement &&
-        element.getParent().getParent() instanceof GrDocReferenceElement) {
+    } else if (element.getParent() instanceof GrDocReferenceElement) {
       checkGrDocReferenceElement(holder, element);
     } else if (element instanceof GrPackageDefinition) {
       //todo: if reference isn't resolved it construct package definition 

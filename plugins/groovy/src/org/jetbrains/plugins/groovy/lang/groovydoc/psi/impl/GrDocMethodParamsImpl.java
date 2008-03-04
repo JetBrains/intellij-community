@@ -28,11 +28,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParameter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -77,4 +80,18 @@ public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements Gr
   public GrDocMethodParameter[] getParameters() {
     return findChildrenByClass(GrDocMethodParameter.class);
   }
+
+  @NotNull
+  public PsiElement getLeftParen() {
+    ASTNode paren = getNode().findChildByType(GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN);
+    assert paren != null;
+    return paren.getPsi();
+  }
+
+  @Nullable
+  public PsiElement getRightParen() {
+    ASTNode paren = getNode().findChildByType(GroovyDocTokenTypes.mGDOC_TAG_VALUE_RPAREN);
+    return paren != null ? paren.getPsi() : null;
+  }
+
 }

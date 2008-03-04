@@ -113,9 +113,7 @@ public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType im
 
     PsiBuilder.Marker rootMarker = builder.mark();
     if (BUILT_IN_TYPES.contains(chameleon.getText())) {
-      PsiBuilder.Marker marker = builder.mark();
       builder.advanceLexer();
-      marker.done(GroovyElementTypes.REFERENCE_ELEMENT);
     } else {
       parseBody(builder);
     }
