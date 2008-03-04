@@ -186,12 +186,15 @@ public class VariableDefinitions implements GroovyElementTypes {
 
   private static boolean parseAssignment(PsiBuilder builder) {
     if (ParserUtils.getToken(builder, mASSIGN)) {
+      PsiBuilder.Marker marker = builder.mark();
       ParserUtils.getToken(builder, mNLS);
 
       if (!AssignmentExpression.parse(builder)) {
+        marker.rollbackTo();
         builder.error(GroovyBundle.message("expression.expected"));
         return false;
       } else {
+        marker.drop();
         return true;
       }
     }
