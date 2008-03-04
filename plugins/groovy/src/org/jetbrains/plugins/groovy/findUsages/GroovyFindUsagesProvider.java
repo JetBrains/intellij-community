@@ -79,7 +79,7 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider
                                                     PsiFormatUtil.SHOW_TYPE);
       final PsiClass clazz = method.getContainingClass();
       if (clazz != null) {
-        result += "of" + getDescriptiveName(clazz);
+        result += " of " + getDescriptiveName(clazz);
       }
 
       return result;
