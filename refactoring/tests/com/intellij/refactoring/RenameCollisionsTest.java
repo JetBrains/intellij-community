@@ -58,6 +58,10 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     doTest("myField");
   }
 
+  public void testRenameVarLocalToConst() throws Exception {
+    doTest("INNER_STATIC_FIELD");
+  }
+
   public void testRenameVarOuterConstToLocal() throws Exception {
     doTest("localVar3");
   }
@@ -72,6 +76,10 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
 
   public void testRenameVarOuterFieldToParam() throws Exception {
     doTest("param3");
+  }
+
+  public void testRenameVarParamToField() throws Exception {
+    doTest("myInnerField");
   }
 
   private void doTest(final String newName) throws Exception {
