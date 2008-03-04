@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -173,23 +174,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         LOG.assertTrue(frame != null);
         mySplitters.updateFileName(file);
         File ioFile = file == null ? null : new File(file.getPresentableUrl());
-        frame.setFileTitle(file == null ? null : getFileTitle(file), ioFile);
+        frame.setFileTitle(file == null ? null : FrameTitleBuilder.getInstance().getFileTitle(myProject, file), ioFile);
       }
     });
-  }
-
-  @Nullable
-  protected String getFileTitle(final VirtualFile file) {
-    String url = file.getPresentableUrl();
-    final VirtualFile baseDir = myProject.getBaseDir();
-    if (baseDir != null) {
-      //noinspection ConstantConditions
-      final String projectHomeUrl = baseDir.getPresentableUrl();
-      if (url.startsWith(projectHomeUrl)) {
-        url = "..." + url.substring(projectHomeUrl.length());
-      }
-    }
-    return url;
   }
 
   //-------------------------------------------------------
@@ -1224,12 +1211,16 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
   private final class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() { // update color of all open files
       assertThread();
+      LOG.debug("FileEditorManagerImpl.MyFileStatusListener.fileStatusesChanged()");
       final VirtualFile[] openFiles = getOpenFiles();
       for (int i = openFiles.length - 1; i >= 0; i--) {
         final VirtualFile file = openFiles[i];
         LOG.assertTrue(file != null);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("updating file status in tab for " + file.getPath());
+            }
             updateFileStatus(file);
           }
         }, ModalityState.NON_MODAL);
