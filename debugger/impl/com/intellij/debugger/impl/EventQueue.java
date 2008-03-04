@@ -87,11 +87,7 @@ public class EventQueue<E> {
     return myIsClosed;
   }
 
-  public static interface EventGetter<E> {
-    void event(E event);
-  }
-
-  public void getCurrentEvent(EventGetter<E> getter) {
-    getter.event(myCurrentEvent);
+  public E getCurrentEvent() {
+    return myCurrentEvent;
   }
 }

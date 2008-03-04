@@ -5,7 +5,6 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.managerThread.DebuggerCommand;
 import com.intellij.debugger.engine.managerThread.DebuggerManagerThread;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
-import com.intellij.debugger.impl.EventQueue;
 import com.intellij.debugger.impl.InvokeAndWaitThread;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +24,7 @@ import com.sun.jdi.VMDisconnectedException;
 public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerCommandImpl> implements DebuggerManagerThread {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebuggerManagerThreadImpl");
   public static final int COMMAND_TIMEOUT = 3000;
+  private static final int RESTART_TIMEOUT = 500;
 
   DebuggerManagerThreadImpl() {
     //noinspection HardCodedStringLiteral
@@ -90,20 +90,14 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
    */
 
   public void terminateAndInvoke(DebuggerCommandImpl command, int terminateTimeout) {
-    final DebuggerCommandImpl[] currentCommand = new DebuggerCommandImpl[1];
-
-    myEvents.getCurrentEvent(new EventQueue.EventGetter<DebuggerCommandImpl>() {
-      public void event(DebuggerCommandImpl command) {
-        currentCommand[0] = command;
-      }
-    });
+    final DebuggerCommandImpl currentCommand = myEvents.getCurrentEvent();
 
     invoke(command, Priority.HIGH);
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
     alarm.addRequest(new Runnable() {
       public void run() {
-        if (currentCommand[0] != null) {
-          terminateCommand(currentCommand[0]);
+        if (currentCommand != null) {
+          terminateCommand(currentCommand);
         }
       }
     }, terminateTimeout);
@@ -121,25 +115,20 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
    */
 
   public void terminateCommand(final DebuggerCommandImpl command) {
-    myEvents.getCurrentEvent(new EventQueue.EventGetter<DebuggerCommandImpl>() {
-      public void event(DebuggerCommandImpl currentCommand) {
-        if (command == currentCommand) {
-          restartWorkerThread();
-        }
+    if (command == myEvents.getCurrentEvent()) {
+      getCurrentRequest().interrupt();
+      try {
+        getCurrentRequest().join(RESTART_TIMEOUT);
       }
-    });
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+      startNewWorkerThread();
+    }
   }
 
   public DebuggerCommandImpl getCurrentCommand() {
-    final DebuggerCommandImpl[] command = new DebuggerCommandImpl[1];
-
-    myEvents.getCurrentEvent(new EventQueue.EventGetter<DebuggerCommandImpl>() {
-      public void event(DebuggerCommandImpl debuggerCommand) {
-        command[0] = debuggerCommand;
-      }
-    });
-
-    return command[0];
+    return myEvents.getCurrentEvent();
   }
 
 

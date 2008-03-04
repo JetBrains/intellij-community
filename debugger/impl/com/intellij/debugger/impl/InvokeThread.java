@@ -15,25 +15,43 @@ import java.util.concurrent.*;
  */
 public abstract class InvokeThread<E> {
   public static enum Priority {
-    HIGH, NORMAL, LOW;
+    HIGH, NORMAL, LOW
   }
-  private static final int RESTART_TIMEOUT = 500;
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.InvokeThread");
   private final String myWorkerThreadName;
 
   private static ThreadLocal<WorkerThreadRequest> ourWorkerRequest = new ThreadLocal<WorkerThreadRequest>();
 
-  public abstract static class WorkerThreadRequest<E> implements Runnable {
+  public static final class WorkerThreadRequest<E> implements Runnable {
     private final InvokeThread<E> myOwner;
     private volatile Future<?> myRequestFuture;
 
-    protected WorkerThreadRequest(InvokeThread<E> owner) {
+    WorkerThreadRequest(InvokeThread<E> owner) {
       myOwner = owner;
+    }
+
+    public void run() {
+      synchronized (this) {
+        while (myRequestFuture == null) {
+          try {
+            wait();
+          }
+          catch (InterruptedException e) {
+          }
+        }
+      }
+      ourWorkerRequest.set(this);
+      try {
+        myOwner.run(this);
+      } 
+      finally {
+        ourWorkerRequest.set(null);
+        boolean b = Thread.interrupted(); // reset interrupted status to return into pool
+      }
     }
 
     public void interrupt() {
       assert myRequestFuture != null;
-
       myRequestFuture.cancel( true );  
     }
 
@@ -46,7 +64,8 @@ public abstract class InvokeThread<E> {
       assert myRequestFuture != null;
       try {
         myRequestFuture.get();
-      } catch(CancellationException ex) {
+      } 
+      catch(CancellationException ignored) {
       }
     }
 
@@ -55,15 +74,17 @@ public abstract class InvokeThread<E> {
       try {
         myRequestFuture.get(timeout, TimeUnit.MILLISECONDS);
       }
-      catch (TimeoutException e) {
-        return;
-      } catch (CancellationException e) {
-        return;
+      catch (TimeoutException ignored) {
+      } 
+      catch (CancellationException ignored) {
       }
     }
 
     final void setRequestFuture(Future<?> requestFuture) {
-      myRequestFuture = requestFuture;
+      synchronized (this) {
+        myRequestFuture = requestFuture;
+        notifyAll();
+      }
     }
 
     public InvokeThread<E> getOwner() {
@@ -73,25 +94,6 @@ public abstract class InvokeThread<E> {
     public boolean isDone() {
       assert myRequestFuture != null;
       return myRequestFuture.isDone();
-    }
-
-    protected void beforeRun() {
-      int retry = 0;
-      while (myRequestFuture == null && retry < 20) {
-        try {
-          Thread.sleep(100);
-          ++retry;
-        }
-        catch (InterruptedException e) {
-        }
-      }
-      assert myRequestFuture != null;
-      ourWorkerRequest.set(this);
-    }
-
-    protected void afterRun() {
-      ourWorkerRequest.set(null);
-      boolean b = Thread.interrupted(); // reset interrupted status to return into pool
     }
   }
 
@@ -108,34 +110,13 @@ public abstract class InvokeThread<E> {
   protected abstract void processEvent(E e);
 
   protected void startNewWorkerThread() {
-    final WorkerThreadRequest workerRequest = new WorkerThreadRequest(this) {
-      public void run() {
-         beforeRun();
-         try {
-           InvokeThread.this.run(this);
-         } finally {
-           afterRun();
-         }
-      }
-    };
+    final WorkerThreadRequest workerRequest = new WorkerThreadRequest<E>(this);
     myCurrentRequest = workerRequest;
     workerRequest.setRequestFuture( ApplicationManager.getApplication().executeOnPooledThread(workerRequest) );
   }
 
-  protected void restartWorkerThread() {
-    getCurrentRequest().interrupt();
-    try {
-      getCurrentRequest().join(RESTART_TIMEOUT);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-    startNewWorkerThread();
-  }
-
   public void run(WorkerThreadRequest current) {
-
-    for(;;) {
+    while(true) {
       try {
         if(current.isInterrupted()) {
           break;
