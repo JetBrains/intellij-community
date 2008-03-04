@@ -28,6 +28,16 @@ public class LoadingOrderTest extends MockObjectTestCase {
     assertSequence(array, "1anyany2");
   }
 
+  public void testStability() {
+    ArrayList<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    target.add(createElement(LoadingOrder.ANY, null, "1"));
+    target.add(createElement(LoadingOrder.ANY, null, "2"));
+    target.add(createElement(LoadingOrder.ANY, null, "3"));
+    target.add(createElement(LoadingOrder.ANY, null, "4"));
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    assertSequence(array, "1234");
+  }
+
   public void testComplexSorting() {
     ArrayList<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
     @NonNls String idOne = "idone";
@@ -45,11 +55,11 @@ public class LoadingOrderTest extends MockObjectTestCase {
   public void testComplexSorting2() {
     ArrayList<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
     @NonNls String idOne = "idone";
-    target.add(createElement(LoadingOrder.before(idOne), null, "3"));
-    target.add(createElement(LoadingOrder.after(idOne), null, "5"));
+    target.add(createElement(LoadingOrder.before(idOne), null, "2"));
+    target.add(createElement(LoadingOrder.after(idOne), null, "4"));
     target.add(createElement(LoadingOrder.FIRST, null, "1"));
-    target.add(createElement(LoadingOrder.ANY, idOne, "4"));
-    target.add(createElement(LoadingOrder.ANY, null, "2"));
+    target.add(createElement(LoadingOrder.ANY, idOne, "3"));
+    target.add(createElement(LoadingOrder.ANY, null, "5"));
     target.add(createElement(LoadingOrder.LAST, null, "6"));
     LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
     assertSequence(array, "123456");

@@ -285,25 +285,25 @@ public class ExtensionsImplTest extends TestCase {
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
         "<extension point=\"ep1\" id=\"fst\" order=\"FIRST\"><text>1</text></extension>"));
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
-        "<extension point=\"ep1\" id=\"id\"><text>4</text></extension>"));
+        "<extension point=\"ep1\" id=\"id\"><text>3</text></extension>"));
     ExtensionPoint extensionPoint = extensionsArea.getExtensionPoint("ep1");
     TestExtensionClassOne[] extensions = (TestExtensionClassOne[]) extensionPoint.getExtensions();
     assertEquals(3, extensions.length);
     assertEquals("1", extensions[0].getText());
-    assertEquals("4", extensions[1].getText());
+    assertEquals("3", extensions[1].getText());
     assertEquals("7", extensions[2].getText());
     TestExtensionClassOne extension = new TestExtensionClassOne("xxx");
     extensionPoint.registerExtension(extension);
     extensionPoint.unregisterExtension(extension);
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
-        "<extension point=\"ep1\" order=\"BEFORE id\"><text>3</text></extension>"));
+        "<extension point=\"ep1\" order=\"BEFORE id\"><text>2</text></extension>"));
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
-        "<extension point=\"ep1\" order=\"AFTER id\"><text>6</text></extension>"));
+        "<extension point=\"ep1\" order=\"AFTER id\"><text>4</text></extension>"));
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
         "<extension point=\"ep1\" order=\"last, after _7\"><text>8</text></extension>"));
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
-        "<extension point=\"ep1\" order=\"after id, before _7, after fst\"><text>5</text></extension>"));
-    extensionPoint.registerExtension(new TestExtensionClassOne("2"));
+        "<extension point=\"ep1\" order=\"after:id, before _7, after fst\"><text>5</text></extension>"));
+    extensionPoint.registerExtension(new TestExtensionClassOne("6"));
     extensions = (TestExtensionClassOne[]) extensionPoint.getExtensions();
     assertEquals(8, extensions.length);
     assertEquals("1", extensions[0].getText());

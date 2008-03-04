@@ -34,7 +34,9 @@ public class LoadingOrder {
   @NonNls private static final String FIRST_STR = "FIRST";
   @NonNls private static final String LAST_STR = "LAST";
   @NonNls private static final String BEFORE_STR = "BEFORE ";
+  @NonNls private static final String BEFORE_STR_OLD = "BEFORE:";
   @NonNls private static final String AFTER_STR = "AFTER ";
+  @NonNls private static final String AFTER_STR_OLD = "AFTER:";
 
   public static final LoadingOrder ANY = new LoadingOrder();
   public static final LoadingOrder FIRST = new LoadingOrder(FIRST_STR);
@@ -57,8 +59,10 @@ public class LoadingOrder {
       String trimmed = string.trim();
       if (trimmed.equalsIgnoreCase(FIRST_STR)) myFirst = true;
       else if (trimmed.equalsIgnoreCase(LAST_STR)) myLast = true;
-      else if (StringUtil.startsWithIgnoreCase(trimmed, BEFORE_STR)) myBefore.add(trimmed.substring(BEFORE_STR.length()));
-      else if (StringUtil.startsWithIgnoreCase(trimmed, AFTER_STR)) myAfter.add(trimmed.substring(AFTER_STR.length()));
+      else if (StringUtil.startsWithIgnoreCase(trimmed, BEFORE_STR)) myBefore.add(trimmed.substring(BEFORE_STR.length()).trim());
+      else if (StringUtil.startsWithIgnoreCase(trimmed, BEFORE_STR_OLD)) myBefore.add(trimmed.substring(BEFORE_STR_OLD.length()).trim());
+      else if (StringUtil.startsWithIgnoreCase(trimmed, AFTER_STR)) myAfter.add(trimmed.substring(AFTER_STR.length()).trim());
+      else if (StringUtil.startsWithIgnoreCase(trimmed, AFTER_STR_OLD)) myAfter.add(trimmed.substring(AFTER_STR_OLD.length()).trim());
       else throw new AssertionError("Invalid specification: " + trimmed + "; should be one of FIRST, LAST, BEFORE <id> or AFTER <id>");
     }
 
@@ -110,7 +114,9 @@ public class LoadingOrder {
 
     DFSTBuilder<Orderable> builder = new DFSTBuilder<Orderable>(new GraphGenerator<Orderable>(new CachingSemiGraph<Orderable>(new GraphGenerator.SemiGraph<Orderable>() {
       public Collection<Orderable> getNodes() {
-        return Arrays.asList(orderables);
+        final ArrayList<Orderable> list = new ArrayList<Orderable>(Arrays.asList(orderables));
+        Collections.reverse(list);
+        return list;
       }
 
       public Iterator<Orderable> getIn(final Orderable n) {
