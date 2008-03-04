@@ -38,6 +38,7 @@ public class InterfaceBlock implements GroovyElementTypes {
     }
 
     while (InterfaceMember.parse(builder, interfaceName) && Separators.parse(builder));
+    Separators.parse(builder);
 
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
 

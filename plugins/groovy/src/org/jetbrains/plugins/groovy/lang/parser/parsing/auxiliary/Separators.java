@@ -28,20 +28,14 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class Separators implements GroovyElementTypes {
 
   public static boolean parse(PsiBuilder builder) {
-    if (mSEMI.equals(builder.getTokenType())) {
+    if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
       builder.advanceLexer();
-      while (ParserUtils.getToken(builder, mNLS)) {
-        // Parse newLines
-      }
-      return true;
-    } else if (mNLS.equals(builder.getTokenType())) {
-      builder.advanceLexer();
-      while (ParserUtils.getToken(builder, mSEMI) ||
-              ParserUtils.getToken(builder, mNLS)) {
+      while (ParserUtils.getToken(builder, mNLS) || ParserUtils.getToken(builder, mSEMI)) {
         // Parse newLines
       }
       return true;
     }
+
     return false;
   }
 
