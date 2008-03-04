@@ -200,6 +200,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testCodeDuplicatesWithComments() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testSCR32924() throws Exception {
     doDuplicatesTest();
   }

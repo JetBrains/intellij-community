@@ -370,12 +370,19 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     checkCanBeChainedConstructor();
 
+    List<PsiElement> elements = new ArrayList<PsiElement>();
+    for (PsiElement element : myElements) {
+      if (!(element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
+        elements.add(element);
+      }
+    }
+
     if (myExpression != null) {
-      myDuplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), new ArrayList<PsiVariable>());
+      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), Arrays.asList(myInputVariables), new ArrayList<PsiVariable>());
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
     }
     else {
-      myDuplicatesFinder = new DuplicatesFinder(myElements, Arrays.asList(myInputVariables), Arrays.asList(myOutputVariables));
+      myDuplicatesFinder = new DuplicatesFinder(elements.toArray(new PsiElement[elements.size()]), Arrays.asList(myInputVariables), Arrays.asList(myOutputVariables));
       myDuplicates = myDuplicatesFinder.findDuplicates(myTargetClass);
     }
 
