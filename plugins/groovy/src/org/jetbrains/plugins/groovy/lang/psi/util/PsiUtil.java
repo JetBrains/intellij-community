@@ -22,6 +22,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -414,7 +415,8 @@ public class PsiUtil {
             if (owner instanceof PsiMember) {
               //members from java.lang.Class can be invoked without ".class"
               PsiClass containingClass = ((PsiMember) owner).getContainingClass();
-              if (containingClass != null && "java.lang.Class".equals(containingClass.getQualifiedName())) {
+              PsiClass javaLangClass = place.getManager().findClass("java.lang.Class", place.getResolveScope());
+              if (containingClass != null && javaLangClass != null && InheritanceUtil.isInheritorOrSelf(javaLangClass, containingClass, true)) {
                 return true;
               }
             }
