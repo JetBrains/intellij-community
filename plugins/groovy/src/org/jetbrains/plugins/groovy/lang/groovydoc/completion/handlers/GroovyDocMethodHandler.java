@@ -46,10 +46,21 @@ public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
     }
     if (!(element instanceof GrDocComment)) return false;
 
+    int offset = context.editor.getCaretModel().getOffset();
+    String text = file.getText();
+    if (offset >= text.length()) return false;
+
     return item.getObject() instanceof PsiMethod;
   }
 
   public void handleInsert(CompletionContext context, int startOffset, LookupData data, LookupItem item, boolean signatureSelected, char completionChar) {
+
+    Editor editor = context.editor;
+    int offset = editor.getCaretModel().getOffset();
+    String fileText = context.file.getText();
+    if (offset >= fileText.length()) return;
+    if (fileText.charAt(offset) == '(') return;
+    
     Object o = item.getObject();
     assert o instanceof PsiMethod;
     PsiMethod method = (PsiMethod) o;
@@ -73,7 +84,6 @@ public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
     }
     buffer.append(") ");
 
-    Editor editor = context.editor;
     CaretModel caretModel = editor.getCaretModel();
     int endOffset = shortenParamterReferences(context, startOffset, method, buffer);
 
