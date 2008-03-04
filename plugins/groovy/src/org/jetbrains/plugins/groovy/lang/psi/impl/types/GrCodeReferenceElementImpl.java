@@ -289,7 +289,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
         case CLASS_OR_PACKAGE_FQ: {
           PsiClass aClass = manager.findClass(PsiUtil.getQualifiedReferenceText(ref), ref.getResolveScope());
           if (aClass != null) {
-            boolean isAccessible = com.intellij.psi.util.PsiUtil.isAccessible(aClass, ref, null);
+            boolean isAccessible = PsiUtil.isAccessible(ref, aClass);
             return new GroovyResolveResult[]{new GroovyResolveResultImpl(aClass, isAccessible)};
           }
           //fallthrough
@@ -310,7 +310,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
               PsiClass[] classes = ((PsiPackage) qualifierResolved).getClasses();
               for (final PsiClass aClass : classes) {
                 if (refName.equals(aClass.getName())) {
-                  boolean isAccessible = com.intellij.psi.util.PsiUtil.isAccessible(aClass, ref, null);
+                  boolean isAccessible = PsiUtil.isAccessible(ref, aClass);
                   return new GroovyResolveResult[]{new GroovyResolveResultImpl(aClass, isAccessible)};
                 }
               }
@@ -321,11 +321,11 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
                     return new GroovyResolveResult[]{new GroovyResolveResultImpl(subpackage, true)};
                 }
               }
-            } else if (kind == CLASS && qualifierResolved instanceof PsiClass) {
+            } else if ((kind == CLASS || kind == CLASS_OR_PACKAGE) && qualifierResolved instanceof PsiClass) {
               PsiClass[] classes = ((PsiClass) qualifierResolved).getInnerClasses();
               for (final PsiClass aClass : classes) {
                 if (refName.equals(aClass.getName())) {
-                  boolean isAccessible = com.intellij.psi.util.PsiUtil.isAccessible(aClass, ref, null);
+                  boolean isAccessible = PsiUtil.isAccessible(ref, aClass);
                   return new GroovyResolveResult[]{new GroovyResolveResultImpl(aClass, isAccessible)};
                 }
               }

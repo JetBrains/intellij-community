@@ -429,8 +429,10 @@ public class PsiUtil {
 
   public static boolean isAccessible(PsiElement place, PsiMember member) {
 
+    if (PsiTreeUtil.getParentOfType(place, GrDocComment.class) != null) return true;
+    
     if (place instanceof GrReferenceExpression && ((GrReferenceExpression) place).getQualifierExpression() == null) {
-      if (member.getContainingClass() instanceof GroovyScriptClass) { //calling toplevel script membbers from the same script file
+      if (member.getContainingClass() instanceof GroovyScriptClass) { //calling toplevel script members from the same script file
         return true;
       }
     }
