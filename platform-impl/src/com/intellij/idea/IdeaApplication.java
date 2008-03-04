@@ -49,10 +49,7 @@ public class IdeaApplication {
       System.setProperty("java.awt.headless", Boolean.TRUE.toString());
     }
 
-    final String platformPrefix = System.getProperty("idea.platform.prefix");
-    @NonNls final String componentsDescriptor = platformPrefix != null
-                                                ? "componentSets/" + platformPrefix + "Components"
-                                                : "componentSets/IdeaComponents";
+    @NonNls final String componentsDescriptor = getComponentSetsDescriptor();
 
     if (Main.isCommandLine(args)) {
       new CommandLineApplication(isInternal, false, Main.isHeadless(args), componentsDescriptor);
@@ -64,6 +61,13 @@ public class IdeaApplication {
 
     myStarter = getStarter();
     myStarter.premain(args);
+  }
+
+  @NonNls
+  public static String getComponentSetsDescriptor() {
+    final String platformPrefix = System.getProperty("idea.platform.prefix");
+    return platformPrefix != null ? "componentSets/" + platformPrefix + "Components"
+                                  : "componentSets/IdeaComponents";
   }
 
   protected ApplicationStarter getStarter() {
