@@ -19,7 +19,7 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     doTest("String");
   }
 
-  // Fails due to IDEADEV-25194.
+  //Fails due to IDEADEV-25194.
   //public void testRenameClassLocalToAlien2() throws Exception {
   //  doTest("String");
   //}
@@ -28,13 +28,22 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     doTest("StaticInnerClass");
   }
 
-  // Fails due to IDEADEV-25199.
+  //Fails due to IDEADEV-25199.
   //public void testRenameClassThisFqnToAlien() throws Exception {
   //  doTest("String");
   //}
 
   public void testRenameClassThisToAlien() throws Exception {
     doTest("String");
+  }
+
+  //Fails due to IDEADEV-25197.
+  //public void testRenameVarOuterFieldToInnerField() throws Exception {
+  //  doTest("SI_STATIC_FIELD");
+  //}
+
+  public void testRenameVarOuterFieldToParam() throws Exception {
+    doTest("param2");
   }
 
   private void doTest(final String newName) throws Exception {
