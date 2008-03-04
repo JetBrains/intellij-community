@@ -239,6 +239,14 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   protected void findAndInvokeIntentionAction(final Collection<HighlightInfo> infos, String intentionActionName, final Editor editor,
                                               final PsiFile file) throws IncorrectOperationException {
+    IntentionAction intentionAction = findIntentionAction(infos, intentionActionName, editor, file);
+
+    assertNotNull(intentionAction);
+    intentionAction.invoke(myProject, myEditor, myFile);
+  }
+
+  protected IntentionAction findIntentionAction(final Collection<HighlightInfo> infos, final String intentionActionName, final Editor editor,
+                                              final PsiFile file) {
     IntentionAction intentionAction = LightQuickFixTestCase.findActionWithText(LightQuickFixTestCase.getAvailableActions(infos, editor, file),
       intentionActionName
     );
@@ -260,9 +268,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
         intentionActionName
       );
     }
-
-    assertNotNull(intentionAction);
-    intentionAction.invoke(myProject, myEditor, myFile);
+    return intentionAction;
   }
 
   public void checkHighlighting(Editor editor, boolean checkWarnings, boolean checkInfos) {

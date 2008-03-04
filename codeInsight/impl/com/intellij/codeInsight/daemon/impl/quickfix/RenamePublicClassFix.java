@@ -8,8 +8,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -18,10 +18,10 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class RenamePublicClassFix implements IntentionAction {
-  private final PsiClass myClass;
+  private final PsiNamedElement myClass;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.RenameFileFix");
 
-  public RenamePublicClassFix(PsiClass aClass) {
+  public RenamePublicClassFix(PsiNamedElement aClass) {
     myClass = aClass;
   }
 
