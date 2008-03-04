@@ -34,19 +34,18 @@ public class RefCountHolder {
   private final Map<PsiElement,Boolean> myPossiblyDuplicateElements = new ConcurrentHashMap<PsiElement, Boolean>();
   private final AtomicInteger myState = new AtomicInteger(State.VIRGIN);
 
-  private interface State {
-    int VIRGIN = 0;                   // just created or cleared
-    int BEING_WRITTEN_BY_GHP = 1;     // general highlighting pass is storing references during analysis
-    int READY = 2;                    // may be used for higlighting unused stuff
-    int BEING_USED_BY_PHP = 3;        // post highlighting pass is retrieving info
+  private abstract static class State {
+    public static final int VIRGIN = 0;                   // just created or cleared
+    public static final int BEING_WRITTEN_BY_GHP = 1;     // general highlighting pass is storing references during analysis
+    public static final int READY = 2;                    // may be used for higlighting unused stuff
+    public static final int BEING_USED_BY_PHP = 3;        // post highlighting pass is retrieving info
   }
 
   private static final Key<RefCountHolder> REF_COUND_HOLDER_IN_FILE_KEY = Key.create("REF_COUND_HOLDER_IN_FILE_KEY");
   public static RefCountHolder getInstance(PsiFile file) {
     RefCountHolder refCountHolder = file.getUserData(REF_COUND_HOLDER_IN_FILE_KEY);
-    UserDataHolderEx holder = (UserDataHolderEx)file;
     if (refCountHolder == null) {
-      refCountHolder = holder.putUserDataIfAbsent(REF_COUND_HOLDER_IN_FILE_KEY, new RefCountHolder(file));
+      refCountHolder = ((UserDataHolderEx)file).putUserDataIfAbsent(REF_COUND_HOLDER_IN_FILE_KEY, new RefCountHolder(file));
     }
     return refCountHolder;
   }

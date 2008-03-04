@@ -90,22 +90,24 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<AtomicInteger>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
   private HighlightVisitor[] createHighlightVisitors(final ProgressIndicator progress) {
-    AtomicInteger count = myProject.getUserData(HIGHLIGHT_VISITOR_INSTANCE_COUNT);
-    if (count == null) {
-      count = ((UserDataHolderEx)myProject).putUserDataIfAbsent(HIGHLIGHT_VISITOR_INSTANCE_COUNT, new AtomicInteger(0));
-    }
+    int oldCount = incVisitorUsageCount(1);
     HighlightVisitor[] highlightVisitors = Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject);
-    if (count.getAndIncrement() != 0) {
+    if (oldCount != 0) {
       highlightVisitors = highlightVisitors.clone();
       for (int i = 0; i < highlightVisitors.length; i++) {
         HighlightVisitor highlightVisitor = highlightVisitors[i];
         highlightVisitors[i] = highlightVisitor.clone();
       }
     }
-    for (final HighlightVisitor highlightVisitor : highlightVisitors) {
+    for (int i = 0; i < highlightVisitors.length; i++) {
+      HighlightVisitor highlightVisitor = highlightVisitors[i];
       if (!highlightVisitor.init(myUpdateAll, myFile)) {
         progress.cancel();
-        releaseHighlightVisitors(highlightVisitors, false);
+        for (int j = i - 1; j >= 0; j--) {
+          HighlightVisitor visitor = highlightVisitors[j];
+          visitor.cleanup(false, myFile);
+        }
+        incVisitorUsageCount(-1);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             DaemonCodeAnalyzer.getInstance(myProject).restart();
@@ -121,9 +123,18 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     for (HighlightVisitor visitor : highlightVisitors) {
       visitor.cleanup(finishedSuccessfully, myFile);
     }
+    incVisitorUsageCount(-1);
+  }
+
+  // returns old value
+  private int incVisitorUsageCount(int delta) {
     AtomicInteger count = myProject.getUserData(HIGHLIGHT_VISITOR_INSTANCE_COUNT);
-    int i = count.decrementAndGet();
-    assert i >=0 : i;
+    if (count == null) {
+      count = ((UserDataHolderEx)myProject).putUserDataIfAbsent(HIGHLIGHT_VISITOR_INSTANCE_COUNT, new AtomicInteger(0));
+    }
+    int old = count.getAndAdd(delta);
+    assert old + delta >= 0 : old +";" + delta;
+    return old;
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
