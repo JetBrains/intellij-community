@@ -4,26 +4,26 @@
  */
 package com.intellij.debugger.ui;
 
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.HelpID;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.help.HelpManager;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.HelpID;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,8 +32,6 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.Iterator;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ExportDialog extends DialogWrapper {
   private JTextArea myTextArea = new JTextArea();
@@ -187,17 +185,8 @@ public class ExportDialog extends DialogWrapper {
         List frames = threadReference.frames();
         for (Iterator frit = frames.iterator(); frit.hasNext();) {
           StackFrame stackFrame = (StackFrame)frit.next();
-          Location location = stackFrame.location();
-          Method method = location.method();
-          buffer.append("\n\t  ").append(method.name()).append("():").append(Integer.toString(location.lineNumber()));
-          try {
-            String sourceName = location.sourceName();
-            buffer.append(", ").append(sourceName);
-          }
-          catch (AbsentInformationException e) {
-          }
-          catch (InternalError e) {
-          }
+          final Location location = stackFrame.location();
+          buffer.append("\n\t  ").append(renderLocation(location));
         }
       }
       catch (IncompatibleThreadStateException e) {
@@ -206,6 +195,22 @@ public class ExportDialog extends DialogWrapper {
       buffer.append("\n\n");
     }
     return buffer.toString();
+  }
+
+  private String renderLocation(final Location location) {
+    String sourceName;
+    try {
+      sourceName = location.sourceName();
+    }
+    catch (AbsentInformationException e) {
+      sourceName = "Unknown Source";
+    }
+    return DebuggerBundle.message(
+        "export.threads.stackframe.format",
+        location.declaringType().name() + "." + location.method().name(), 
+        sourceName, 
+        location.lineNumber()
+    );
   }
 
   private String threadName(ThreadReference threadReference) {
