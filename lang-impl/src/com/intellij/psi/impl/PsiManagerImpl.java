@@ -134,7 +134,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
     myCacheManager = cacheManager;
 
-    myModificationTracker = new PsiModificationTrackerImpl(this);
+    myModificationTracker = new PsiModificationTrackerImpl();
     myTreeChangePreprocessors.add(myModificationTracker);
     myResolveCache = new ResolveCache(this);
     myCachedValuesManager = new CachedValuesManagerImpl(this);

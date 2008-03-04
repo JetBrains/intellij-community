@@ -15,14 +15,9 @@ import com.intellij.psi.util.PsiModificationTracker;
 public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTreeChangePreprocessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiModificationTrackerImpl");
 
-  private PsiManager myManager;
   private long myModificationCount = 0;
   private long myOutOfCodeBlockModificationCount = 0;
   private long myJavaStructureModificationCount = 0;
-
-  public PsiModificationTrackerImpl(PsiManager manager) {
-    myManager = manager;
-  }
 
   public void incCounter(){
     myModificationCount++;
@@ -36,6 +31,9 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
 
   public void treeChanged(PsiTreeChangeEventImpl event) {
     myModificationCount++;
+    if (event.getParent() instanceof PsiDirectory) {
+      myOutOfCodeBlockModificationCount++;
+    }
   }
 
   public long getModificationCount() {
