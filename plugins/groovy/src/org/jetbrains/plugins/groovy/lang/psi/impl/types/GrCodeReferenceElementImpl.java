@@ -298,11 +298,9 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
             }
           }
 
-          if (kind == PACKAGE_FQ) {
-            PsiPackage aPackage = manager.findPackage(qName);
-            if (aPackage != null) {
-              return new GroovyResolveResult[]{new GroovyResolveResultImpl(aPackage, true)};
-            }
+          PsiPackage aPackage = manager.findPackage(qName);
+          if (aPackage != null) {
+            return new GroovyResolveResult[]{new GroovyResolveResultImpl(aPackage, true)};
           }
 
           break;

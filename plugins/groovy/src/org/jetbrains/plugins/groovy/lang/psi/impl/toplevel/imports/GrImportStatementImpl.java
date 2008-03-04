@@ -77,7 +77,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
             GrCodeReferenceElement ref = getImportReference();
             if (ref != null) {
               String qName = PsiUtil.getQualifiedReferenceText(ref);
-              if (qName != null) {
+              if (qName != null && qName.indexOf('.') > 0) {
                 if (!isStatic()) {
                   PsiClass clazz = getManager().findClass(qName, getResolveScope());
                   if (clazz != null && !processor.execute(clazz, substitutor)) return false;
