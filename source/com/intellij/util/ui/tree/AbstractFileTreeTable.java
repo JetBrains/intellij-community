@@ -6,11 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.ChangeEncodingUpdateGroup;
-import com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.TreeTableSpeedSearch;
 import com.intellij.util.IconUtil;
@@ -40,6 +37,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     myProject = project;
 
     myModel = (MyModel)getTableModel();
+    myModel.setTreeTable(this);
 
     new TreeTableSpeedSearch(this, new Convertor<TreePath, String>() {
       public String convert(final TreePath o) {
@@ -99,6 +97,10 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     getColumnModel().getColumn(1).setPreferredWidth(60);
   }
 
+  protected boolean isNullObject(final T value) {
+    return false;
+  }
+
   private String getProjectNodeText() {
     return "Project";
   }
@@ -109,6 +111,10 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
 
   public TableColumn getValueColumn() {
     return getColumnModel().getColumn(1);
+  }
+
+  protected boolean isValueEditableForFile(final VirtualFile virtualFile) {
+    return true;
   }
 
   public static void press(final Container comboComponent) {
@@ -197,13 +203,12 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
 
   private static class MyModel<T> extends DefaultTreeModel implements TreeTableModel {
     private final Map<VirtualFile, T> myCurrentMapping = new HashMap<VirtualFile, T>();
-    private final Project myProject;
     private final Class<T> myValueClass;
     private final String myValueTitle;
+    private AbstractFileTreeTable<T> myTreeTable;
 
     private MyModel(final Project project, final Class<T> valueClass, final String valueTitle) {
       super(new ProjectRootNode(project));
-      myProject = project;
       myValueClass = valueClass;
       myValueTitle = valueTitle;
     }
@@ -264,25 +269,20 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
         case 0:
           return false;
         case 1:
-          Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-          if (userObject instanceof VirtualFile) {
-            VirtualFile file = (VirtualFile)userObject;
-            Pair<String, Boolean> pair = ChangeEncodingUpdateGroup.update(myProject, file);
-            return pair.getSecond();
-          }
-          return true;
+          final Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+          return !(userObject instanceof VirtualFile || userObject == null) || myTreeTable.isValueEditableForFile((VirtualFile)userObject);
         default:
           throw new RuntimeException("invalid column " + column);
       }
     }
 
     public void setValueAt(final Object aValue, final Object node, final int column) {
-      DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
-      Object userObject = treeNode.getUserObject();
+      final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
+      final Object userObject = treeNode.getUserObject();
       if (userObject instanceof Project) return;
-      VirtualFile file = (VirtualFile)userObject;
-      T t = (T)aValue;
-      if (t == ChooseFileEncodingAction.NO_ENCODING || t == null) {
+      final VirtualFile file = (VirtualFile)userObject;
+      final T t = (T)aValue;
+      if (t == null || myTreeTable.isNullObject(t)) {
         myCurrentMapping.remove(file);
       }
       else {
@@ -295,6 +295,10 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
       myCurrentMapping.clear();
       myCurrentMapping.putAll(mappings);
       ((ProjectRootNode)getRoot()).clearCachedChildren();
+    }
+
+    void setTreeTable(final AbstractFileTreeTable<T> treeTable) {
+      myTreeTable = treeTable;
     }
   }
 

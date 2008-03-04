@@ -105,4 +105,14 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
       }
     });
   }
+
+  @Override
+  protected boolean isNullObject(final Charset value) {
+    return value == ChooseFileEncodingAction.NO_ENCODING;
+  }
+
+  @Override
+  protected boolean isValueEditableForFile(final VirtualFile virtualFile) {
+    return ChangeEncodingUpdateGroup.update(getProject(), virtualFile).getSecond();
+  }
 }
