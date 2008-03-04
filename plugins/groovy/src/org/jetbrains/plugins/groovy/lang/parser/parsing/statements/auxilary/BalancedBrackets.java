@@ -30,7 +30,6 @@ public class BalancedBrackets implements GroovyElementTypes {
   public static boolean parse(PsiBuilder builder) {
     PsiBuilder.Marker bbm = builder.mark();
 
-    IElementType balancedTokens;
     IElementType myBracket = null;
 
     if (ParserUtils.getToken(builder, mLPAREN)) {
@@ -51,9 +50,7 @@ public class BalancedBrackets implements GroovyElementTypes {
       return false;
     }
 
-    balancedTokens = BalancedTokens.parse(builder);
-
-    if (WRONGWAY.equals(balancedTokens)) {
+    if (!BalancedTokens.parse(builder)) {
       bbm.rollbackTo();
       return false;
     }

@@ -30,20 +30,19 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 26.03.2007
  */
 public class ConstructorBody implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
     PsiBuilder.Marker cbMarker = builder.mark();
 
     if (!ParserUtils.getToken(builder, mLCURLY)) {
       builder.error(GroovyBundle.message("lcurly.expected"));
       cbMarker.rollbackTo();
-      return WRONGWAY;
+      return false;
     }
 
     ParserUtils.getToken(builder, mNLS);
 
     PsiBuilder.Marker constructorInvokationMarker = builder.mark();
-    boolean b = parseExplicitConstructor(builder);
-    if (b) {
+    if (parseExplicitConstructor(builder)) {
       constructorInvokationMarker.done(EXPLICIT_CONSTRUCTOR);
     } else {
       constructorInvokationMarker.rollbackTo();
@@ -53,14 +52,8 @@ public class ConstructorBody implements GroovyElementTypes {
     Separators.parse(builder);
     OpenOrClosableBlock.parseBlockBody(builder);
 
-    if (!ParserUtils.getToken(builder, mRCURLY)) {
-      builder.error(GroovyBundle.message("rcurly.expected"));
-      cbMarker.rollbackTo();
-      return CONSTRUCTOR_BODY_ERROR;
-    }
-
     cbMarker.done(OPEN_BLOCK);
-    return OPEN_BLOCK;
+    return true;
 
   }
 

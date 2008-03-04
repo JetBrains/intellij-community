@@ -24,13 +24,13 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
  * @date: 16.03.2007
  */
 public class BalancedTokens implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
     //todo: handle differents brackets cases
 
     do {
       if (!BalancedBrackets.parse(builder)) break;
     } while (true);
 
-    return BALANCED_TOKENS;
+    return true;
   }
 }

@@ -199,7 +199,7 @@ public class PathExpression implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  private static GroovyElementType appendedBlockParse(PsiBuilder builder) {
+  private static boolean appendedBlockParse(PsiBuilder builder) {
     return OpenOrClosableBlock.parseClosableBlock(builder);
   }
 
