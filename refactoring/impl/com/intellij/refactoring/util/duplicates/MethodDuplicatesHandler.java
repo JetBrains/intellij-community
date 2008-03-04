@@ -149,7 +149,20 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     final DuplicatesFinder duplicatesFinder;
     final PsiElement[] pattern;
     if (statements.length != 1 || !(statements[0] instanceof PsiReturnStatement)) {
-      pattern = statements;
+      final PsiStatement lastStatement = statements[statements.length - 1];
+      if (lastStatement instanceof PsiReturnStatement) {
+        final PsiExpression returnValue = ((PsiReturnStatement)lastStatement).getReturnValue();
+        if (returnValue instanceof PsiReferenceExpression && ((PsiReferenceExpression)returnValue).resolve() instanceof PsiVariable) {
+          pattern = new PsiElement[statements.length - 1];
+          System.arraycopy(statements, 0, pattern, 0, statements.length - 1);
+        }
+        else {
+          pattern = statements;
+        }
+      }
+      else {
+        pattern = statements;
+      }
     } else {
       final PsiExpression returnValue = ((PsiReturnStatement)statements[0]).getReturnValue();
       if (returnValue != null) {
@@ -212,6 +225,19 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         }
       }
       VisibilityUtil.escalateVisibility(myMethod, match.getMatchStart());
+      final PsiCodeBlock body = myMethod.getBody();
+      assert body != null;
+      final PsiStatement[] statements = body.getStatements();
+      if (statements[statements.length - 1] instanceof PsiReturnStatement) {
+        final PsiExpression value = ((PsiReturnStatement)statements[statements.length - 1]).getReturnValue();
+        if (value instanceof PsiReferenceExpression) {
+          final PsiElement var = ((PsiReferenceExpression)value).resolve();
+          if (var instanceof PsiVariable) {
+            match.replace(methodCallExpression, (PsiVariable)var);
+            return;
+          }
+        }
+      }
       match.replace(methodCallExpression, null);
     }
 

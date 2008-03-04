@@ -33,11 +33,6 @@ public final class Match {
   private Ref<PsiExpression> myInstanceExpression = null;
   private final Map<PsiVariable, PsiType> myChangedParams = new HashMap<PsiVariable, PsiType>();
 
-  Match(PsiExpression expression) {
-    myMatchStart = expression;
-    myMatchEnd = expression;
-  }
-
   Match(PsiElement start, PsiElement end) {
     LOG.assertTrue(start.getParent() == end.getParent());
     myMatchStart = start;

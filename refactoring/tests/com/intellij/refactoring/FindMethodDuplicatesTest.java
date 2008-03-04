@@ -13,14 +13,30 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 
 public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
   private void doTest() throws Exception {
+    doTest(true);
+  }
+
+  private void doTest(final boolean shouldSucceed) throws Exception {
      final String filePath = "/refactoring/methodDuplicates/" + getTestName(false) + ".java";
     configureByFile(filePath);
     final PsiElement targetElement = TargetElementUtilBase.findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     final PsiMethod psiMethod = (PsiMethod)targetElement;
 
-    MethodDuplicatesHandler.invokeOnScope(getProject(), psiMethod, new AnalysisScope(getFile()));
-    checkResultByFile(filePath + ".after");
+    try {
+      MethodDuplicatesHandler.invokeOnScope(getProject(), psiMethod, new AnalysisScope(getFile()));
+    }
+    catch (RuntimeException e) {
+      if (shouldSucceed) {
+        assert false : "duplicates were not found";
+      }
+      return;
+    }
+    if (shouldSucceed) {
+      checkResultByFile(filePath + ".after");
+    } else {
+      assert false : "duplicates found";
+    }
   }
 
   public void testAnonymousTest() throws Exception {
@@ -53,5 +69,13 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
 
   public void testRefReplacement1() throws Exception {
     doTest();
+  }
+
+  public void testReturnVariable() throws Exception {
+    doTest();
+  }
+
+  public void testReturnExpression() throws Exception {
+    doTest(false);
   }
 }
