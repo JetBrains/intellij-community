@@ -29,5 +29,7 @@
     <gotoClassContributor implementation="com.jetbrains.python.PyGotoClassContributor"/>
     <codeInsight.parameterInfo language="Python" implementationClass="com.jetbrains.python.PyParameterInfoHandler"/>
     <colorSettingsPage implementation="com.jetbrains.python.PythonColorsPage"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyWordSelectionHandler"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyStatementSelectionHandler"/>
   </extensions>
 </idea-plugin>
