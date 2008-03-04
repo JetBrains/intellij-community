@@ -1,7 +1,6 @@
-
 package com.intellij.ide.actions;
 
-import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -18,7 +17,7 @@ public class CloseProjectAction extends AnAction {
     assert project != null;
 
     ProjectUtil.closeProject(project);
-    RecentProjectsManager.getInstance().updateLastProjectPath();
+    RecentProjectsManagerBase.getInstance().updateLastProjectPath();
   }
 
   public void update(AnActionEvent event){

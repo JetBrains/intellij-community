@@ -93,12 +93,6 @@
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
 
-    <group id="CloseProjectGroup">
-      <action id="CloseProject" class="com.intellij.ide.actions.CloseProjectAction"/>
-
-      <add-to-group group-id="FileOpenGroup" anchor="last"/>
-    </group>
-
     <group id="ProjectSettingsGroup">
       <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
       <action id="ConvertProject" class="com.intellij.ide.impl.convert.ConvertProjectAction"/>
