@@ -11,7 +11,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiManagerConfiguration implements ApplicationComponent, JDOMExternalizable {
-  public boolean REPOSITORY_ENABLED = false;
+  public boolean REPOSITORY_ENABLED = true;
 
   public static PsiManagerConfiguration getInstance() {
     return ApplicationManager.getApplication().getComponent(PsiManagerConfiguration.class);
