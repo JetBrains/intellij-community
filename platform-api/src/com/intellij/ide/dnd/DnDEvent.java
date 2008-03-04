@@ -91,6 +91,8 @@ public interface DnDEvent extends Transferable, UserDataHolder {
 
   void setCursor(Cursor cursor);
 
+  void cleanUp();
+
   interface DropTargetHighlightingType {
     int RECTANGLE = 1;
     int FILLED_RECTANGLE = 2;

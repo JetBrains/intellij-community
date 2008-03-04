@@ -111,8 +111,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
       public void run() {
         myLastProcessedOverComponent = null;
         myCurrentDragContext = null;
-        myCurrentEvent = null;
-        myLastProcessedEvent = null;
+        resetEvents("cleanup");
       }
     };
 
@@ -491,9 +490,18 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     myLastHighlightedRec = aRectangle;
   }
 
-  private void resetCurrentEvent(@NonNls String s) {
-    myCurrentEvent = null;
-    LOG.debug("Reset Current Event: " + s);
+  private void resetEvents(@NonNls String s) {
+    myCurrentEvent = resetEvent(myCurrentEvent);
+    myLastProcessedEvent = resetEvent(myLastProcessedEvent);
+    myLastHighlightedEvent = resetEvent(myLastHighlightedEvent);
+    LOG.debug("Reset events: " + s);
+  }
+
+  @Nullable
+  private static DnDEventImpl resetEvent(DnDEvent event) {
+    if (event == null) return null;
+    event.cleanUp();
+    return null;
   }
 
   private class MyDragGestureListnener implements DragGestureListener {
@@ -586,7 +594,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
       if (target != null) {
         target.cleanUpOnLeave();
       }
-      resetCurrentEvent("dragDropEnd:" + dsde.getDragSourceContext().getComponent());
+      resetEvents("dragDropEnd:" + dsde.getDragSourceContext().getComponent());
       Highlighters.hide(TEXT | ERROR_TEXT);
     }
 
@@ -624,7 +632,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
         dtde.rejectDrop();
       }
       finally {
-        resetCurrentEvent("Stop dragging2");
+        resetEvents("Stop dragging2");
       }
     }
 

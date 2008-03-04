@@ -6,8 +6,6 @@ package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 
@@ -269,4 +267,11 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
     myCursor = cursor;
   }
 
+  public void cleanUp() {
+    myAttachedObject = null;
+    myDelegatedTarget = null;
+    myDropHandler = null;
+    myHandlerComponent = null;
+    myManager = null;
+  }
 }

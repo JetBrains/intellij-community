@@ -38,23 +38,23 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-public class JBTabs extends JComponent implements PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener {
+public class JBTabs extends JComponent implements PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable {
 
   private static DataKey<JBTabs> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
 
   private ActionManager myActionManager;
-  private List<TabInfo> myVisibleInfos = new ArrayList<TabInfo>();
-  private Set<TabInfo> myHiddenInfos = new HashSet<TabInfo>();
+  private final List<TabInfo> myVisibleInfos = new ArrayList<TabInfo>();
+  private final Set<TabInfo> myHiddenInfos = new HashSet<TabInfo>();
 
   private TabInfo mySelectedInfo;
-  private Map<TabInfo, TabLabel> myInfo2Label = new HashMap<TabInfo, TabLabel>();
-  private Map<TabInfo, JComponent> myInfo2Toolbar = new HashMap<TabInfo, JComponent>();
+  private final Map<TabInfo, TabLabel> myInfo2Label = new HashMap<TabInfo, TabLabel>();
+  private final Map<TabInfo, JComponent> myInfo2Toolbar = new HashMap<TabInfo, JComponent>();
   private Dimension myHeaderFitSize;
 
   private static final int INNER = 1;
 
-  private List<MouseListener> myTabMouseListeners = new ArrayList<MouseListener>();
-  private List<TabsListener> myTabListeners = new ArrayList<TabsListener>();
+  private final List<MouseListener> myTabMouseListeners = new ArrayList<MouseListener>();
+  private final List<TabsListener> myTabListeners = new ArrayList<TabsListener>();
   private boolean myFocused;
 
   private ActionGroup myPopupGroup;
@@ -111,6 +111,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     myActionManager = actionManager;
     myFocusManager = focusManager;
 
+    Disposer.register(parent, this);
+
     myNavigationActions = new DefaultActionGroup();
 
     if (myActionManager != null) {
@@ -125,7 +127,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
         if (myMorePopup != null) return;
         processFocusChange();
       }
-    }, FocusEvent.FOCUS_EVENT_MASK, parent);
+    }, FocusEvent.FOCUS_EVENT_MASK, this);
 
     myPopupListener = new PopupMenuListener() {
       public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
@@ -148,7 +150,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       }
     });
 
-    Disposer.register(parent, new Disposable() {
+    Disposer.register(this, new Disposable() {
       public void dispose() {
         removeTimerUpdate();
       }
@@ -161,7 +163,19 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     };
     myAnimator.setTakInitialDelay(false);
 
-    Disposer.register(parent, myAnimator);
+    Disposer.register(this, myAnimator);
+  }
+
+  public void dispose() {
+    mySelectedInfo = null;
+    myAllTabs = null;
+    myAttractions.clear();
+    myVisibleInfos.clear();
+    myUiDecorator = null;
+    myImage = null;
+    myActivePopup = null;
+    myInfo2Label.clear();
+    myInfo2Toolbar.clear();
   }
 
   private void processFocusChange() {
