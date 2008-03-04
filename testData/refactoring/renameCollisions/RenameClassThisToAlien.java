@@ -5,36 +5,34 @@ import static java.lang.String.valueOf;
 
 public class RenameCollisions<caret> {
 	public static final int STATIC_FIELD = 5;
-	public static final int SN_STATIC_FIELD = 6;
 	public static void staticMethod() {
 	}
-	public static void snStaticMethod() {
-	}
+	private int myField;
 	public void method() {
-	}
-	public void snMethod() {
 	}
 
 	public void instanceContext() {
 		CASE_INSENSITIVE_ORDER.getClass();
-		staticMethod();
-		valueOf(20);
-		method();
+		valueOf(0);
 
-		int var6 = RenameCollisions.SN_STATIC_FIELD;
 		String.CASE_INSENSITIVE_ORDER.getClass();
-		RenameCollisions.snStaticMethod();
-		String.valueOf(20);
+		String.valueOf(0);
+
+		int var6 = STATIC_FIELD;
+		staticMethod();
+
+		myField++;
+		method();
 	}
 
 	public static void staticContext() {
 		CASE_INSENSITIVE_ORDER.getClass();
-		staticMethod();
-		valueOf(20);
+		valueOf(0);
 
-		int var6 = RenameCollisions.SN_STATIC_FIELD;
 		String.CASE_INSENSITIVE_ORDER.getClass();
-		RenameCollisions.snStaticMethod();
-		String.valueOf(20);
+		String.valueOf(0);
+
+		int var6 = STATIC_FIELD;
+		staticMethod();
 	}
 }

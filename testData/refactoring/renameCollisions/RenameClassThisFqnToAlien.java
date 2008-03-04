@@ -3,7 +3,7 @@ package renameCollisions;
 import static java.lang.String.CASE_INSENSITIVE_ORDER;
 import static java.lang.String.valueOf;
 
-public class String<caret> {
+public class RenameCollisions<caret> {
 	public static final int STATIC_FIELD = 5;
 	public static void staticMethod() {
 	}
@@ -15,24 +15,24 @@ public class String<caret> {
 		CASE_INSENSITIVE_ORDER.getClass();
 		valueOf(0);
 
-		java.lang.String.CASE_INSENSITIVE_ORDER.getClass();
-		java.lang.String.valueOf(0);
+		String.CASE_INSENSITIVE_ORDER.getClass();
+		String.valueOf(0);
 
-		int var6 = STATIC_FIELD;
-		staticMethod();
+		int var6 = RenameCollisions.STATIC_FIELD;
+		RenameCollisions.staticMethod();
 
-		myField++;
-		method();
+		this.myField++;
+		this.method();
 	}
 
 	public static void staticContext() {
 		CASE_INSENSITIVE_ORDER.getClass();
 		valueOf(0);
 
-		java.lang.String.CASE_INSENSITIVE_ORDER.getClass();
-		java.lang.String.valueOf(0);
+		String.CASE_INSENSITIVE_ORDER.getClass();
+		String.valueOf(0);
 
-		int var6 = STATIC_FIELD;
-		staticMethod();
+		int var6 = RenameCollisions.STATIC_FIELD;
+		RenameCollisions.staticMethod();
 	}
 }

@@ -20,9 +20,13 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
   }
 
   // Fails due to IDEADEV-25199.
-  //public void testRenameClassThisToAlien() throws Exception {
+  //public void testRenameClassThisFqnToAlien() throws Exception {
   //  doTest("String");
   //}
+
+  public void testRenameClassThisToAlien() throws Exception {
+    doTest("String");
+  }
 
   private void doTest(final String newName) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");

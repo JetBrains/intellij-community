@@ -18,11 +18,11 @@ public class String<caret> {
 		java.lang.String.CASE_INSENSITIVE_ORDER.getClass();
 		java.lang.String.valueOf(0);
 
-		int var6 = STATIC_FIELD;
-		staticMethod();
+		int var6 = String.STATIC_FIELD;
+		String.staticMethod();
 
-		myField++;
-		method();
+		this.myField++;
+		this.method();
 	}
 
 	public static void staticContext() {
@@ -32,7 +32,7 @@ public class String<caret> {
 		java.lang.String.CASE_INSENSITIVE_ORDER.getClass();
 		java.lang.String.valueOf(0);
 
-		int var6 = STATIC_FIELD;
-		staticMethod();
+		int var6 = String.STATIC_FIELD;
+		String.staticMethod();
 	}
 }
