@@ -109,7 +109,8 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
 
   public synchronized void disposeComponent() {
     if (myExecutors.size() > 0) {
-      for (Executor executor : myExecutors) {
+      List<Executor> executors = new ArrayList<Executor>(myExecutors);
+      for (Executor executor : executors) {
         deinitExecutor(executor);
       }
 
