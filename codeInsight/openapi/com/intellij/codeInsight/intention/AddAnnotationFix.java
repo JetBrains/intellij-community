@@ -34,6 +34,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +53,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
     myAnnotationsToRemove = annotationsToRemove;
   }
 
-  public AddAnnotationFix(final String fqn, String... annotationsToRemove) {
+  public AddAnnotationFix(@NonNls final String fqn, @NonNls String... annotationsToRemove) {
     this(fqn, null,annotationsToRemove);
   }
 
