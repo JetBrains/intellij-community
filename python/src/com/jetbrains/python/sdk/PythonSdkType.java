@@ -1,14 +1,15 @@
 package com.jetbrains.python.sdk;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.SdkVersionUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.PythonFileType;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
-import com.jetbrains.python.PythonFileType;
 
 import javax.swing.*;
 import java.io.File;
@@ -18,6 +19,16 @@ import java.util.TreeSet;
  * @author yole
  */
 public class PythonSdkType extends SdkType {
+  public static PythonSdkType getInstance() {
+    for (SdkType sdkType : Extensions.getExtensions(EP_NAME)) {
+      if (sdkType instanceof PythonSdkType) {
+        return (PythonSdkType)sdkType;
+      }
+    }
+    assert false;
+    return null;
+  }
+
   public PythonSdkType() {
     super("Python SDK");
   }
