@@ -4,6 +4,7 @@
  */
 package com.theoryinpractice.testng.intention;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +40,7 @@ public class TestNGOrderEntryFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    final PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
+    final PsiReference reference = TargetElementUtil.findReference(editor);
     if (!(reference instanceof PsiJavaCodeReferenceElement)) return false;
     if (reference.resolve() != null) return false;
     @NonNls final String referenceName = ((PsiJavaCodeReferenceElement)reference).getReferenceName();

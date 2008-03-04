@@ -1,0 +1,2 @@
+@Test<caret>
+class B{}
