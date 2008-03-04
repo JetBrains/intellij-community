@@ -20,7 +20,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -350,8 +349,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       writeEnumConstants(text, (GrEnumTypeDefinition) typeDefinition);
     }
 
-    boolean wasRunMethodPresent = false;
-
     Set<MethodSignature> methodSignatures = new HashSet<MethodSignature>();
 
     PsiMethod[] methods = typeDefinition == null ? PsiMethod.EMPTY_ARRAY : typeDefinition.getMethods();
@@ -387,8 +384,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
           writeMethod(text, method, parameters);
         }
       }
-
-      wasRunMethodPresent = wasRunMethod(method);
     }
 
     for (GrMembersDeclaration declaration : membersDeclarations) {
@@ -455,16 +450,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       String typeText = getTypeText(superParams[j].getType());
       text.append("(").append(typeText).append(")").append(getDefaultValueText(typeText));
     }
-  }
-
-  private boolean wasRunMethod(PsiMethod method) {
-    boolean runMethodPresent = false;
-    if ("run".equals(method.getName())) {
-      PsiType returnType = method.getReturnType();
-
-      runMethodPresent = returnType != null && "java.lang.Object".equals(computeTypeText(returnType));
-    }
-    return runMethodPresent;
   }
 
   private void writePackageStatement(StringBuffer text, GrPackageDefinition packageDefinition) {
