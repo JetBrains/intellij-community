@@ -290,11 +290,14 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
         case CLASS_OR_PACKAGE_FQ:
         case PACKAGE_FQ:
           String qName = PsiUtil.getQualifiedReferenceText(ref);
-          if (qName.indexOf('.') > 0) {
-            PsiClass aClass = manager.findClass(qName, ref.getResolveScope());
-            if (aClass != null) {
-              boolean isAccessible = PsiUtil.isAccessible(ref, aClass);
-              return new GroovyResolveResult[]{new GroovyResolveResultImpl(aClass, isAccessible)};
+
+          if (kind == CLASS_OR_PACKAGE_FQ) {
+            if (qName.indexOf('.') > 0) {
+              PsiClass aClass = manager.findClass(qName, ref.getResolveScope());
+              if (aClass != null) {
+                boolean isAccessible = PsiUtil.isAccessible(ref, aClass);
+                return new GroovyResolveResult[]{new GroovyResolveResultImpl(aClass, isAccessible)};
+              }
             }
           }
 
