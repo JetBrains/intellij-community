@@ -443,7 +443,6 @@ public class InjectedLanguageUtil {
   public static PsiElement findInjectedElementAt(@NotNull PsiFile file, final int offset) {
     if (isInjectedFragment(file)) return null;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
-    documentManager.commitAllDocuments();
 
     PsiElement element = file.getViewProvider().findElementAt(offset, file.getLanguage());
     PsiElement inj = element == null ? null : findInside(element, file, offset, documentManager);
