@@ -19,6 +19,11 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     doTest("String");
   }
 
+  // Fails due to IDEADEV-25194.
+  //public void testRenameClassLocalToAlien2() throws Exception {
+  //  doTest("String");
+  //}
+
   public void testRenameClassLocalToInner() throws Exception {
     doTest("StaticInnerClass");
   }
