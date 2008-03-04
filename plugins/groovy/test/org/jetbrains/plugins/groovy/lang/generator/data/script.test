@@ -1,9 +1,6 @@
-class s {
-}
-
-println "foo"
+println "bugaga"
 -----
-public class toGenerate1 extends groovy.lang.Script {
+public class script extends groovy.lang.Script {
   public static final void main(java.lang.String[] args) {
     return ;
   }
@@ -12,6 +9,4 @@ public class toGenerate1 extends groovy.lang.Script {
     return null;
   }
 }
----
-public class s extends groovy.lang.GroovyObjectSupport {}
 ---

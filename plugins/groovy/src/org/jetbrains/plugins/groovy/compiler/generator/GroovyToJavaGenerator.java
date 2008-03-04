@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.util.containers.CharTrie;
 
 import java.io.*;
@@ -275,7 +276,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   private void writeTypeDefinition(StringBuffer text, String typeDefinitionName, PsiClass typeDefinition, GrPackageDefinition packageDefinition) {
-    final boolean isScript = typeDefinition == null;
+    final boolean isScript = typeDefinition instanceof GroovyScriptClass;
 
     writePackageStatement(text, packageDefinition);
 
@@ -295,12 +296,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         text.append("public ");
       }
     }
-
-    if (isScript) {
-      text.append("public ");
-    }
-
-//    text.append(" ");
 
     if (isInterface) text.append("interface");
     else if (isEnum) text.append("enum");
@@ -402,10 +397,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       }
     }
 
-    if (isScript && !wasRunMethodPresent) {
-      writeRunMethod(text);
-    }
-
     text.append("}");
   }
 
@@ -484,12 +475,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append("\n");
       text.append("\n");
     }
-  }
-
-  private void writeRunMethod(StringBuffer text) {
-    text.append("\n  public java.lang.Object run() {\n" +
-        "    return null;\n" +
-        "  }\n");
   }
 
   private void writeConstructor(final StringBuffer text, GrConstructor constructor, boolean isEnum) {

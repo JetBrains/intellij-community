@@ -3,7 +3,7 @@ def foo = ""
 def getFoo () {
 }
 -----
-public class getterAlredyDefined {
+public class getterAlredyDefined extends groovy.lang.Script {
   public static final void main(java.lang.String[] args) {
     return ;
   }
