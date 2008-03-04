@@ -37,9 +37,14 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     doTest("String");
   }
 
-  //Fails due to IDEADEV-25197.
-  //public void testRenameVarOuterConstToInnerField() throws Exception {
-  //  doTest("SI_STATIC_FIELD");
+  //Fails due to IDEADEV-25198.
+  //public void testRenameMethodStaticToAlien() throws Exception {
+  //  doTest("valueOf");
+  //}
+
+  //Fails due to IDEADEV-25198.
+  //public void testRenameVarConstToAlien() throws Exception {
+  //  doTest("CASE_INSENSITIVE_ORDER");
   //}
 
   public void testRenameVarConstToParam() throws Exception {
@@ -58,6 +63,11 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     doTest("myField");
   }
 
+  //Fails due to IDEADEV-25198.
+  //public void testRenameVarLocalToAlien() throws Exception {
+  //  doTest("BOTTOM");
+  //}
+
   public void testRenameVarLocalToConst() throws Exception {
     doTest("INNER_STATIC_FIELD");
   }
@@ -65,6 +75,11 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
   public void testRenameVarLocalToOuterField() throws Exception {
     doTest("myField");
   }
+
+  //Fails due to IDEADEV-25197.
+  //public void testRenameVarOuterConstToInnerField() throws Exception {
+  //  doTest("SI_STATIC_FIELD");
+  //}
 
   public void testRenameVarOuterConstToLocal() throws Exception {
     doTest("localVar3");
@@ -81,6 +96,11 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
   public void testRenameVarOuterFieldToParam() throws Exception {
     doTest("param3");
   }
+
+  //Fails due to IDEADEV-25198.
+  //public void testRenameVarParamToAlien() throws Exception {
+  //  doTest("BOTTOM");
+  //}
 
   public void testRenameVarParamToField() throws Exception {
     doTest("myInnerField");
