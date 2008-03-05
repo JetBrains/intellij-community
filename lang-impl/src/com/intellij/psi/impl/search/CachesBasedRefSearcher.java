@@ -19,6 +19,8 @@ import com.intellij.util.QueryExecutor;
  * @author max
  */
 public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
+  public static boolean DEBUG = false;
+
   public boolean execute(final ReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
 
@@ -47,6 +49,7 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
       }
     });
     if (StringUtil.isEmpty(text)) return true;
+    if (DEBUG) System.out.println("Searching for :"+text);
 
     SearchScope searchScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
       public SearchScope compute() {
@@ -57,11 +60,23 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
 
     final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
+        if (DEBUG) {
+          System.out.println("!!! About to check "+element);
+        }
         if (ignoreInjectedPsi && element instanceof PsiLanguageInjectionHost) return true;
         final PsiReference[] refs = element.getReferences();
         for (PsiReference ref : refs) {
+          if (CachesBasedRefSearcher.DEBUG) {
+            System.out.println("!!!!!!!!!!!!!! Ref "+ref);
+          }
           if (ref.getRangeInElement().contains(offsetInElement)) {
+            if (CachesBasedRefSearcher.DEBUG) {
+              System.out.println("!!!!!!!!!!!!!!!!!!!!! Ref "+ref + " contains");
+            }
             if (ref.isReferenceTo(refElement)) {
+              if (CachesBasedRefSearcher.DEBUG) {
+                System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   Found ref "+ref);
+              }
               return consumer.process(ref);
             }
           }
