@@ -55,11 +55,6 @@ public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
   public void handleInsert(CompletionContext context, int startOffset, LookupData data, LookupItem item, boolean signatureSelected, char completionChar) {
 
     Editor editor = context.editor;
-    int offset = editor.getCaretModel().getOffset();
-    String fileText = context.file.getText();
-    if (offset >= fileText.length()) return;
-    if (fileText.charAt(offset) == '(') return;
-    
     Object o = item.getObject();
     assert o instanceof PsiMethod;
     PsiMethod method = (PsiMethod) o;

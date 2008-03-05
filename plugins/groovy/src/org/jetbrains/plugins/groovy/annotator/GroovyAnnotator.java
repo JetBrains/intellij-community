@@ -52,7 +52,9 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.Dynamic
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -152,11 +154,20 @@ public class GroovyAnnotator implements Annotator {
       }
     } else {
       final ASTNode node = element.getNode();
-      if (node != null && !(element instanceof PsiWhiteSpace) && !GroovyTokenTypes.COMMENT_SET.contains(node.getElementType()) &&
-          element.getContainingFile() instanceof GroovyFile) {
+      if (node != null && !(element instanceof PsiWhiteSpace) &&
+          !GroovyTokenTypes.COMMENT_SET.contains(node.getElementType()) &&
+          element.getContainingFile() instanceof GroovyFile &&
+          !isDocCommentElement(element)) {
         GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile) element.getContainingFile());
       }
     }
+  }
+
+  private static boolean isDocCommentElement(PsiElement element) {
+    if (element == null) return false;
+    ASTNode node = element.getNode();
+    return node != null && PsiTreeUtil.getParentOfType(element, GrDocComment.class) != null ||
+        element instanceof GrDocComment;
   }
 
   private static void checkGrDocReferenceElement(AnnotationHolder holder, PsiElement element) {
