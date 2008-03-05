@@ -178,6 +178,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   private void findSuperMethodRecursilvely(Set<PsiMethod> methods, PsiClass psiClass, boolean allowStatic,
                                            Set<PsiClass> visited, MethodSignature signature, @NotNull Set<MethodSignature> discoveredSupers) {
+    if (psiClass == null) return;
     if (visited.contains(psiClass)) return;
     visited.add(psiClass);
     PsiClassType[] superClassTypes = psiClass.getSuperTypes();
