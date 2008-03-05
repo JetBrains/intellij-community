@@ -457,9 +457,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       Set<PostCallInstructionImpl> postCalls = new LinkedHashSet<PostCallInstructionImpl>();
       addFinallyEdges(finallyInstruction, postCalls);
 
-      if (tryEnd != null) {
-        postCalls.add(addCallNode(finallyInstruction, tryCatchStatement, tryEnd));
+      if (tryEnd == null) {
+        tryEnd = startNode(null);
+        finishNode(tryEnd);
       }
+
+      postCalls.add(addCallNode(finallyInstruction, tryCatchStatement, tryEnd));
+
       for (InstructionImpl catchEnd : catches) {
         if (catchEnd != null) {
           postCalls.add(addCallNode(finallyInstruction, tryCatchStatement, catchEnd));
