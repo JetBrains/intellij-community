@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
@@ -38,6 +39,7 @@ import org.jetbrains.groovy.compiler.rt.MessageCollector;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
+import org.jetbrains.plugins.grails.module.GrailsModuleType;
 
 import java.io.*;
 import java.util.*;
@@ -83,7 +85,14 @@ public class GroovyCompiler implements TranslatingCompiler {
       classPathBuilder.append(rtJarPath);
       classPathBuilder.append(File.pathSeparator);
 
-      String libPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath() + "/lib";
+      Module module = entry.getKey();
+      ModuleType moduleType = module.getModuleType();
+      String groovyPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath();
+      String grailsPath = GroovyGrailsConfiguration.getInstance().getGrailsInstallPath();
+
+      String libPath = ((moduleType instanceof GrailsModuleType && grailsPath != null && grailsPath.length() > 0) ||
+          groovyPath == null || groovyPath.length() == 0 ? grailsPath : groovyPath) + "/lib";
+
       libPath = libPath.replace(File.separatorChar, '/');
       VirtualFile lib = LocalFileSystem.getInstance().findFileByPath(libPath);
       if (lib != null) {
@@ -273,7 +282,9 @@ public class GroovyCompiler implements TranslatingCompiler {
     if (compileScope.getFiles(GroovyFileType.GROOVY_FILE_TYPE, true).length == 0) return true;
 
     final String groovyInstallPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath();
-    if (groovyInstallPath == null || groovyInstallPath.length() == 0) {
+    final String grailsInstallPath = GroovyGrailsConfiguration.getInstance().getGrailsInstallPath();
+    if ((groovyInstallPath == null || groovyInstallPath.length() == 0) &&
+        (grailsInstallPath == null || grailsInstallPath.length() == 0)) {
       Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.facet"), GroovyBundle.message("cannot.compile"));
       return false;
     }

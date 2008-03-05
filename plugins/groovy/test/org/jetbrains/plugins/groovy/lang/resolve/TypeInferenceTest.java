@@ -76,7 +76,7 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
     assertNull(ref.getType());
   }
 
-  public void testCircular1() throws Exception {
+  public void  testCircular1() throws Exception {
     GrReferenceExpression ref = (GrReferenceExpression) configureByFile("circular1/A.groovy").getElement();
     assertNull(ref.getType());
   }
