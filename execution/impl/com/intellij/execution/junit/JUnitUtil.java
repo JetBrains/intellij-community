@@ -90,7 +90,7 @@ public class JUnitUtil {
       if (visited != null && visited.contains(psiClass)) return false;
       if (visited == null) visited = new THashSet<PsiClass>();
       visited.add(psiClass);
-      return isTestClass(superClass, false, null);
+      return isTestClass(superClass, false, visited);
     }
     return false;
   }
