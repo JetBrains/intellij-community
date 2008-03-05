@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -33,16 +34,14 @@ import java.util.regex.Pattern;
 public class InspectionToolRegistrar implements ApplicationComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolRegistrar");
 
-  private ArrayList<Class> myInspectionTools;
-  private ArrayList<Class> myLocalInspectionTools;
-  private ArrayList<Class> myGlobalInspectionTools;
+  private ArrayList<Factory<InspectionTool>> myInspectionToolFactories;
 
   private AtomicBoolean myToolsAreInitialized = new AtomicBoolean(false);
 
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
 
   public void ensureInitialized() {
-    if (myInspectionTools == null) {
+    if (myInspectionToolFactories == null) {
       Set<InspectionToolProvider> providers = new THashSet<InspectionToolProvider>();
       providers.addAll(Arrays.asList(ApplicationManager.getApplication().getComponents(InspectionToolProvider.class)));
       providers.addAll(Arrays.asList(Extensions.getExtensions(InspectionToolProvider.EXTENSION_POINT_NAME)));
@@ -51,9 +50,7 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   }
 
   public void registerTools(final InspectionToolProvider[] providers) {
-    myInspectionTools = new ArrayList<Class>();
-    myLocalInspectionTools = new ArrayList<Class>();
-    myGlobalInspectionTools = new ArrayList<Class>();
+    myInspectionToolFactories = new ArrayList<Factory<InspectionTool>>();
     for (InspectionToolProvider provider : providers) {
       Class[] classes = provider.getInspectionClasses();
       for (Class aClass : classes) {
@@ -89,38 +86,42 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   public void initComponent() {
   }
 
-  private void registerLocalInspection(Class toolClass) {
+  public void registerInspectionToolFactory(Factory<InspectionTool> factory) {
     ensureInitialized();
-    myLocalInspectionTools.add(toolClass);
+    myInspectionToolFactories.add(factory);
+  }
+
+  private void registerLocalInspection(final Class toolClass) {
+    registerInspectionToolFactory(new Factory<InspectionTool>() {
+      public InspectionTool create() {
+        return new LocalInspectionToolWrapper((LocalInspectionTool)instantiateTool(toolClass));
+      }
+    });
   }
 
   private void registerGlobalInspection(final Class aClass) {
-    ensureInitialized();
-    myGlobalInspectionTools.add(aClass);
+    registerInspectionToolFactory(new Factory<InspectionTool>() {
+      public InspectionTool create() {
+        return new GlobalInspectionToolWrapper((GlobalInspectionTool) instantiateTool(aClass));
+      }
+    });
   }
 
-  private void registerInspectionTool(Class toolClass) {
+  private void registerInspectionTool(final Class toolClass) {
+    registerInspectionToolFactory(new Factory<InspectionTool>() {
+      public InspectionTool create() {
+        return (InspectionTool)instantiateTool(toolClass);
+      }
+    });
     ensureInitialized();
-    if (!myInspectionTools.contains(toolClass)) {
-      myInspectionTools.add(toolClass);
-    }
   }
 
   public InspectionTool[] createTools() {
     ensureInitialized();
-    int ordinaryToolsSize = myInspectionTools.size();
-    final int withLocal = ordinaryToolsSize + myLocalInspectionTools.size();
-    InspectionTool[] tools = new InspectionTool[withLocal + myGlobalInspectionTools.size()];
-    for (int i = 0; i < ordinaryToolsSize; i++) {
-      tools[i] = (InspectionTool)instantiateTool(myInspectionTools.get(i));
+    InspectionTool[] tools = new InspectionTool[myInspectionToolFactories.size()];
+    for(int i=0; i<tools.length; i++) {
+      tools [i] = myInspectionToolFactories.get(i).create();
     }
-    for(int i = ordinaryToolsSize; i < withLocal; i++){
-      tools[i] = new LocalInspectionToolWrapper((LocalInspectionTool)instantiateTool(myLocalInspectionTools.get(i - ordinaryToolsSize)));
-    }
-    for(int i = withLocal; i < tools.length; i++){
-      tools[i] = new GlobalInspectionToolWrapper((GlobalInspectionTool)instantiateTool(myGlobalInspectionTools.get(i - withLocal)));
-    }
-
     buildInspectionIndex(tools);
 
     return tools;
