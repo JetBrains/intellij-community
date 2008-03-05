@@ -1,5 +1,3 @@
-package renameCollisions;
-
 import static java.lang.String.CASE_INSENSITIVE_ORDER;
 import static java.lang.String.valueOf;
 

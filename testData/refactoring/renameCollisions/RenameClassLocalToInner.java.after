@@ -7,10 +7,6 @@ class StaticInnerClass {
 }
 
 public class RenameCollisions {
-	public static final int SN_STATIC_FIELD = 6;
-	public static void snStaticMethod() {
-	}
-
 	public static class StaticInnerClass {
 		public static final int SN_STATIC_FIELD = 10;
 		public static void snStaticMethod() {
@@ -19,7 +15,7 @@ public class RenameCollisions {
 
 	public void instanceContext() {
 		renameCollisions.StaticInnerClass localClass = new renameCollisions.StaticInnerClass();
-		int var1 = SN_STATIC_FIELD;
+		int var1 = renameCollisions.StaticInnerClass.SN_STATIC_FIELD;
 		renameCollisions.StaticInnerClass.snStaticMethod();
 
 		renameCollisions.RenameCollisions.StaticInnerClass staticInnerClass = new renameCollisions.RenameCollisions.StaticInnerClass();

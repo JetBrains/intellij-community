@@ -7,10 +7,6 @@ class <caret>LocalClass {
 }
 
 public class RenameCollisions {
-	public static final int SN_STATIC_FIELD = 6;
-	public static void snStaticMethod() {
-	}
-
 	public static class StaticInnerClass {
 		public static final int SN_STATIC_FIELD = 10;
 		public static void snStaticMethod() {
@@ -19,7 +15,7 @@ public class RenameCollisions {
 
 	public void instanceContext() {
 		LocalClass localClass = new LocalClass();
-		int var1 = SN_STATIC_FIELD;
+		int var1 = LocalClass.SN_STATIC_FIELD;
 		LocalClass.snStaticMethod();
 
 		StaticInnerClass staticInnerClass = new StaticInnerClass();
