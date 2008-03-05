@@ -24,15 +24,14 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyElementEx;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyElementVisitor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -42,7 +41,7 @@ import com.jetbrains.python.psi.PyElementVisitor;
  * To change this template use File | Settings | File Templates.
  */
 @SuppressWarnings("deprecation")
-public class PyElementImpl extends ASTWrapperPsiElement implements PyElementEx {
+public class PyElementImpl extends ASTWrapperPsiElement implements PyElement {
 
     public PyElementImpl(ASTNode astNode) {
         super(astNode);
@@ -101,7 +100,7 @@ public class PyElementImpl extends ASTWrapperPsiElement implements PyElementEx {
         pyVisitor.visitPyElement(this);
     }
 
-    protected static <T extends PyElementEx> T[] nodesToPsi(ASTNode[] nodes, T[] array) {
+    protected static <T extends PyElement> T[] nodesToPsi(ASTNode[] nodes, T[] array) {
         T[] psiElements = (T[]) java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), nodes.length);
         for (int i = 0; i < nodes.length; i++) {
             //noinspection unchecked
@@ -111,13 +110,13 @@ public class PyElementImpl extends ASTWrapperPsiElement implements PyElementEx {
     }
 
     @NotNull
-    protected <T extends PyElementEx> T[] childrenToPsi(TokenSet filterSet, T[] array) {
+    protected <T extends PyElement> T[] childrenToPsi(TokenSet filterSet, T[] array) {
         final ASTNode[] nodes = getNode().getChildren(filterSet);
         return nodesToPsi(nodes, array);
     }
 
     @Nullable
-    protected <T extends PyElementEx> T childToPsi(TokenSet filterSet, int index) {
+    protected <T extends PyElement> T childToPsi(TokenSet filterSet, int index) {
         final ASTNode[] nodes = getNode().getChildren(filterSet);
         if (nodes.length <= index) {
             return null;
@@ -127,7 +126,7 @@ public class PyElementImpl extends ASTWrapperPsiElement implements PyElementEx {
     }
 
     @Nullable
-    protected <T extends PyElementEx> T childToPsi(IElementType elType) {
+    protected <T extends PyElement> T childToPsi(IElementType elType) {
         final ASTNode node = getNode().findChildByType(elType);
         if (node == null) {
             return null;
@@ -137,7 +136,7 @@ public class PyElementImpl extends ASTWrapperPsiElement implements PyElementEx {
     }
 
     @NotNull
-    protected <T extends PyElementEx> T childToPsiNotNull(TokenSet filterSet, int index) {
+    protected <T extends PyElement> T childToPsiNotNull(TokenSet filterSet, int index) {
         final PyElement child = childToPsi(filterSet, index);
         if (child == null) {
             throw new RuntimeException("child must not be null");

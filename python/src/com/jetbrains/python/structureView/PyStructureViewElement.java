@@ -23,19 +23,12 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.swing.Icon;
-
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyParameter;
-import com.jetbrains.python.psi.PyParameterList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -68,11 +61,11 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     }
 
     public StructureViewTreeElement[] getChildren() {
-        final List<PyElementEx> childrenElements = new ArrayList<PyElementEx>();
+        final List<PyElement> childrenElements = new ArrayList<PyElement>();
         _element.acceptChildren(new PyElementVisitor() {
             @Override public void visitElement(PsiElement element) {
                 if (element instanceof PsiNamedElement && ((PsiNamedElement)element).getName() != null) {
-                  childrenElements.add((PyElementEx)element);
+                  childrenElements.add((PyElement)element);
                 }
                 else {
                   element.acceptChildren(this);

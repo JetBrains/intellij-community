@@ -23,7 +23,7 @@ package com.jetbrains.python.psi;
  * Time: 22:22:17
  * To change this template use File | Settings | File Templates.
  */
-public interface PyImportElement extends PyElementEx {
+public interface PyImportElement extends PyElement {
 
   PyReferenceExpression getImportReference();
 

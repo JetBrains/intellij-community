@@ -17,11 +17,8 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -39,28 +36,7 @@ public class PyUtil {
     private PyUtil() {
     }
 
-    public static FileType findPythonFileType() {
-        for (FileType type : FileTypeManager.getInstance()
-                .getRegisteredFileTypes()) {
-            String defaultExt = type.getDefaultExtension();
-            //noinspection ConstantConditions
-            if (defaultExt != null && defaultExt.equalsIgnoreCase("py")) {
-                return type;
-            }
-        }
-        throw new IllegalStateException("no python language loaded??");
-    }
-
-    public static PythonLanguage getLanguage() {
-        for (Language language : Language.getRegisteredLanguages()) {
-            if (language instanceof PythonLanguage) {
-                return (PythonLanguage) language;
-            }
-        }
-        throw new IllegalStateException("No python language");
-    }
-
-    public static void ensureWritable(PsiElement element) {
+  public static void ensureWritable(PsiElement element) {
         PsiDocumentManager docmgr = PsiDocumentManager.getInstance(
                 element.getProject());
         PsiFile containingFile = element.getContainingFile();
@@ -172,13 +148,13 @@ public class PyUtil {
         }
         if (forceAdd) {
             PyListLiteralExpression listLiteral =
-                    expr.getLanguage().getElementGenerator().createListLiteral(project);
+                    PythonLanguage.getInstance().getElementGenerator().createListLiteral(project);
             try {
                 listLiteral.add(add);
             } catch (IncorrectOperationException e) {
                 throw new IllegalStateException(e);
             }
-            PyBinaryExpression binExpr = expr.getLanguage().getElementGenerator()
+            PyBinaryExpression binExpr = PythonLanguage.getInstance().getElementGenerator()
                     .createBinaryExpression(project, "+", expr, listLiteral);
             ASTNode exprNode = expr.getNode();
             assert exprNode != null;

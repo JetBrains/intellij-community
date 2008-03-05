@@ -26,6 +26,6 @@ import org.jetbrains.annotations.NotNull;
  * Time: 0:26:47
  * To change this template use File | Settings | File Templates.
  */
-public interface PyClass extends PsiNamedElement, PyElementEx, PyDocStringOwner {
+public interface PyClass extends PsiNamedElement, PyElement, PyDocStringOwner {
     @NotNull PyStatementList getStatementList();
 }

@@ -23,8 +23,8 @@ package com.jetbrains.python.psi;
  * Time: 16:39:33
  * To change this template use File | Settings | File Templates.
  */
-public interface PyStatementList extends PyElementEx {
-    public static PyStatementList[] EMPTY_ARRAY = new PyStatementList[0]; 
+public interface PyStatementList extends PyElement {
+    PyStatementList[] EMPTY_ARRAY = new PyStatementList[0]; 
 
     PyStatement[] getStatements();
 }

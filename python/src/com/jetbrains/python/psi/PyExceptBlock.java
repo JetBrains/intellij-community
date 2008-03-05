@@ -26,8 +26,8 @@ import org.jetbrains.annotations.NotNull;
  * Time: 23:37:32
  * To change this template use File | Settings | File Templates.
  */
-public interface PyExceptBlock extends PyElementEx {
-    static PyExceptBlock[] EMPTY_ARRAY = new PyExceptBlock[0];
+public interface PyExceptBlock extends PyElement {
+    PyExceptBlock[] EMPTY_ARRAY = new PyExceptBlock[0];
 
     @Nullable PyExpression getExceptClass();
     @Nullable PyExpression getTarget();

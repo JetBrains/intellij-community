@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * Time: 13:44:24
  * To change this template use File | Settings | File Templates.
  */
-public interface PyArgumentList extends PyElementEx {
+public interface PyArgumentList extends PyElement {
     @NotNull PyExpression[] getArguments();
 
     @Nullable PyKeywordArgument getKeywordArgument(String name);

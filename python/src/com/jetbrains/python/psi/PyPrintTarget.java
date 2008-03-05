@@ -23,5 +23,5 @@ package com.jetbrains.python.psi;
  * Time: 11:34:36
  * To change this template use File | Settings | File Templates.
  */
-public interface PyPrintTarget extends PyElementEx {
+public interface PyPrintTarget extends PyElement {
 }

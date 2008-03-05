@@ -23,6 +23,6 @@ package com.jetbrains.python.psi;
  * Time: 10:41:59
  * To change this template use File | Settings | File Templates.
  */
-public interface PyExpression extends PyElementEx {
-    public static PyExpression[] EMPTY_ARRAY = new PyExpression[0];
+public interface PyExpression extends PyElement {
+  PyExpression[] EMPTY_ARRAY = new PyExpression[0];
 }
