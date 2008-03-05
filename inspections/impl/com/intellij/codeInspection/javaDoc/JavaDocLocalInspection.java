@@ -782,6 +782,8 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       }
       else if (child instanceof PsiDocTagValue) {
         buf.append(child.getText());
+      } else if (child instanceof PsiInlineDocTag) {
+        buf.append(child.getText());
       }
     }
 
