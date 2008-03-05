@@ -11,7 +11,7 @@ public class RenameCollisions {
 	public static void snStaticMethod() {
 	}
 
-	class LocalClass {
+	class Local<caret>Class {
 		public static final int SN_STATIC_FIELD = 14;
 		public void snMethod() {
 		}
