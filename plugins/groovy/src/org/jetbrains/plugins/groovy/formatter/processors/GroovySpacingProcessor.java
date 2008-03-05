@@ -359,9 +359,9 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
       } else if (myChild1.getElementType() == kELSE) {
         if (myChild2.getElementType() == IF_STATEMENT) {
           if (mySettings.SPECIAL_ELSE_IF_TREATMENT) {
-            createSpaceProperty(false, false, 0);
+            createSpaceProperty(true, false, 0);
           } else {
-            myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+            myResult = Spacing.createSpacing(1, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
           }
         } else {
           if (myChild2.getElementType() == BLOCK_STATEMENT || myChild2.getElementType() == OPEN_BLOCK) {
