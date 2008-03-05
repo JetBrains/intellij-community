@@ -117,9 +117,8 @@
 
     <group id="JavaCodeEditorGroup">
       <action id="EditorContextInfo" class="com.intellij.codeInsight.hint.actions.ShowContainerInfoAction"/>
-      <action id="ShowErrorDescription" class="com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction"/>
 
-      <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
+      <add-to-group group-id="CodeEditorViewGroup" anchor="before" relative-to-action="ShowErrorDescription"/>
     </group>
 
     <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">

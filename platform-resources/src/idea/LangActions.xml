@@ -99,6 +99,7 @@
         <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction"/>
         <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
         <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction"/>
+        <action id="ShowErrorDescription" class="com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction"/>
       </group>
       <separator/>
 
