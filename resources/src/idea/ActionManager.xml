@@ -20,7 +20,6 @@
 
   <actions>
 
-    <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
     <action id="TogglePopupHints" class="com.intellij.ide.actions.TogglePopupHintsAction"/>
     <action id="FindModal" class="com.intellij.openapi.editor.actions.FindAction" icon="/actions/menu-find.png"/>
 

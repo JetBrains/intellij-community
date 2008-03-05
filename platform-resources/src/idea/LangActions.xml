@@ -28,6 +28,8 @@
       <action id="ImplementMethods" class="com.intellij.codeInsight.generation.actions.ImplementMethodsAction"/>
     </group>
 
+    <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
+
     <!-- File -->
 
     <action id="ReloadFromDisk" class="com.intellij.ide.actions.ReloadFromDiskAction">
