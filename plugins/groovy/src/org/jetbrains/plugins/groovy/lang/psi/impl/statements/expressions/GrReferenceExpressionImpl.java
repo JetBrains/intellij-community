@@ -119,7 +119,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     } else if (resolved instanceof GrField && ((GrField) resolved).isProperty()) {
       final GrField field = (GrField) resolved;
       final String oldName = getReferenceName();
-      if (!oldName.equals(field.getName())) { //was accessor reference to property
+      if (oldName != null && !oldName.equals(field.getName())) { //was accessor reference to property
         if (oldName.startsWith("get")) {
           return doHandleElementRename("get" + StringUtil.capitalize(newElementName));
         } else if (oldName.startsWith("set")) {

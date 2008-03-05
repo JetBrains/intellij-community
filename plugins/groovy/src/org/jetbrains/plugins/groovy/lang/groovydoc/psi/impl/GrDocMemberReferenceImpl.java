@@ -15,13 +15,14 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.codeInsight.lookup.LookupItem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,11 +30,11 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
  * @author ilyas
@@ -46,6 +47,24 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
   @Nullable
   public GrDocReferenceElement getReferenceHolder() {
     return findChildByClass(GrDocReferenceElement.class);
+  }
+
+  public boolean isReferenceTo(PsiElement element) {
+    return getManager().areElementsEquivalent(element, resolve());
+  }
+
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    if (isReferenceTo(element)) return this;
+    return null;
+  }
+
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    PsiElement nameElement = getReferenceNameElement();
+    ASTNode node = nameElement.getNode();
+    ASTNode newNameNode = GroovyPsiElementFactory.getInstance(getProject()).createDocMemberReferenceNameFromText(newElementName).getNode();
+    assert newNameNode != null && node != null;
+    node.getTreeParent().replaceChild(node, newNameNode);
+    return this;
   }
 
   @NotNull
@@ -124,7 +143,7 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
       PsiElement[] methodCandidates = ResolveUtil.mapToElements(methodProcessor.getCandidates());
       PsiElement[] constructorCandidates = ResolveUtil.mapToElements(constructorProcessor.getCandidates());
 
-      PsiElement[] elements = ArrayUtil.mergeArrays(ArrayUtil.mergeArrays(propertyCandidates, methodCandidates, PsiElement.class), 
+      PsiElement[] elements = ArrayUtil.mergeArrays(ArrayUtil.mergeArrays(propertyCandidates, methodCandidates, PsiElement.class),
           constructorCandidates, PsiElement.class);
 
       return ContainerUtil.map2Array(elements, new Function<PsiElement, Object>() {

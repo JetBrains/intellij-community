@@ -17,14 +17,17 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocFieldReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
@@ -46,18 +49,31 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    //todo implement me!
-    return null;
-  }
+    final PsiElement resolved = resolve();
+    if (resolved instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod) resolved;
+      final String oldName = getReferenceName();
+      if (!method.getName().equals(oldName)) { //was property reference to accessor
+        if (PropertyUtil.isSimplePropertyAccessor(method)) {
+          final String newPropertyName = PropertyUtil.getPropertyName(newElementName);
+          if (newPropertyName != null) {
+            return super.handleElementRename(newPropertyName);
+          }
+        }
+      }
+    } else if (resolved instanceof GrField && ((GrField) resolved).isProperty()) {
+      final GrField field = (GrField) resolved;
+      final String oldName = getReferenceName();
+      if (oldName != null && oldName.equals(field.getName())) {
+        if (oldName.startsWith("get")) {
+          return super.handleElementRename("get" + StringUtil.capitalize(newElementName));
+        } else if (oldName.startsWith("set")) {
+          return super.handleElementRename("set" + StringUtil.capitalize(newElementName));
+        }
+      }
+    }
 
-  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    //todo implement me!
-    return null;
-  }
-
-  public boolean isReferenceTo(PsiElement element) {
-    //todo implement me!
-    return false;
+    return super.handleElementRename(newElementName);
   }
 
   protected ResolveResult[] multiResolveImpl() {
@@ -80,7 +96,7 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
         resolved.processDeclarations(methodProcessor, PsiSubstitutor.EMPTY, resolved, this);
         resolved.processDeclarations(constructorProcessor, PsiSubstitutor.EMPTY, resolved, this);
         candidates = ArrayUtil.mergeArrays(methodProcessor.getCandidates(), constructorProcessor.getCandidates(), GroovyResolveResult.class);
-        if (candidates.length > 0 ) {
+        if (candidates.length > 0) {
           candidates = new GroovyResolveResult[]{candidates[0]};
         }
       }

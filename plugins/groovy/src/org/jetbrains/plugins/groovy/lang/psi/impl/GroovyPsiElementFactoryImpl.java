@@ -19,6 +19,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +45,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentImpl;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -65,6 +72,17 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
     if (!(statement instanceof GrReferenceExpression)) return null;
 
     return ((GrReferenceExpression) statement).getReferenceNameElement();
+  }
+
+  public PsiElement createDocMemberReferenceNameFromText(String idText) {
+    PsiFile file = createGroovyFile("/** @see A#" + idText + " */");
+    PsiElement element = file.getFirstChild();
+    assert element instanceof GrDocComment;
+    GrDocTag tag = PsiTreeUtil.getChildOfType(element, GrDocTag.class);
+    assert tag != null : "Doc tag points to null";
+    GrDocMemberReference reference = PsiTreeUtil.getChildOfType(tag, GrDocMemberReference.class);
+    assert reference != null : "DocMemberReference ponts to null";
+    return reference.getReferenceNameElement();
   }
 
   public GrCodeReferenceElement createReferenceElementFromText(String refName) {

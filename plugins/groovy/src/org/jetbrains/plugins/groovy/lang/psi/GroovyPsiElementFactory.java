@@ -87,7 +87,7 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract PsiElement createReferenceNameFromText(String idText);
 
-//  public abstract PsiClassType createTypeReferenceNameFromText(String idText);
+  public abstract PsiElement createDocMemberReferenceNameFromText(String idText);
 
   public abstract GrTopStatement createTopElementFromText(String text);
 

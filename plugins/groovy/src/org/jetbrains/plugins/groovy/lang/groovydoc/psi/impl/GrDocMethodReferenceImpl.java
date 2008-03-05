@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
@@ -74,21 +75,28 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
     return new ResolveResult[0];
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    //todo implement me!
-    return null;
-  }
-
-  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    //todo implement me!
-    return null;
-  }
-
   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PsiNamedElement && Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName())) {
       return getManager().areElementsEquivalent(element, resolve());
     }
     return false;
+  }
+
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    final PsiElement resolved = resolve();
+    if (resolved instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod) resolved;
+      final String oldName = getReferenceName();
+      if (!method.getName().equals(oldName)) { //was property reference to accessor
+        if (PropertyUtil.isSimplePropertyAccessor(method)) {
+          final String newPropertyName = PropertyUtil.getPropertyName(newElementName);
+          if (newPropertyName != null) {
+            return super.handleElementRename(newPropertyName);
+          }
+        }
+      }
+    }
+    return super.handleElementRename(newElementName);
   }
 
 }
