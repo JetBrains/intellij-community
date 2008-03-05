@@ -57,7 +57,7 @@ class PreferedProducerFind {
     final RuntimeConfigurationProducer first = producers.get(0);
     for (Iterator<RuntimeConfigurationProducer> it = producers.iterator(); it.hasNext();) {
       RuntimeConfigurationProducer producer = it.next();
-      if (RuntimeConfigurationProducer.COMPARATOR.compare(producer, first) >= 0) {
+      if (producer != first && RuntimeConfigurationProducer.COMPARATOR.compare(producer, first) >= 0) {
         it.remove();
       }
     }
