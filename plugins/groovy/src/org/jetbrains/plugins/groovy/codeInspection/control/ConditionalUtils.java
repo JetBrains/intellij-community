@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 @NonNls
-public class ConditionalUtils {
+class ConditionalUtils {
 
   private ConditionalUtils() {
     super();

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 
-public class RenameFix extends GroovyFix {
+class RenameFix extends GroovyFix {
 
   private final String targetName;
 
