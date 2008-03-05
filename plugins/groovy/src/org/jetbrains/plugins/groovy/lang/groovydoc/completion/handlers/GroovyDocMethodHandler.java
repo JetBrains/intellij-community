@@ -48,9 +48,8 @@ public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
 
     int offset = context.editor.getCaretModel().getOffset();
     String text = file.getText();
-    if (offset >= text.length()) return false;
+    return offset < text.length() && item.getObject() instanceof PsiMethod;
 
-    return item.getObject() instanceof PsiMethod;
   }
 
   public void handleInsert(CompletionContext context, int startOffset, LookupData data, LookupItem item, boolean signatureSelected, char completionChar) {
