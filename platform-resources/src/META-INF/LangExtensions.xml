@@ -217,4 +217,7 @@
   <cutElementMarker implementation="com.intellij.ide.PsiCutElementMarker"/>
 
   <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.PlainTextLineSelectioner"/>
+
+  <customFileTypeFactory implementation="com.intellij.ide.highlighter.custom.impl.CustomFileTypeFactoryImpl"/>
+  <syntaxHighlighter factoryClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeHighlighterProvider"/>
 </extensions>
