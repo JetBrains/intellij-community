@@ -116,9 +116,16 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
       resolved.processDeclarations(propertyProcessor, PsiSubstitutor.EMPTY, null, this);
       PsiElement[] propertyCandidates = ResolveUtil.mapToElements(propertyProcessor.getCandidates());
       MethodResolverProcessor methodProcessor = new MethodResolverProcessor(null, this, true, false, null, PsiType.EMPTY_ARRAY);
+      MethodResolverProcessor constructorProcessor = new MethodResolverProcessor(null, this, false, true, null, PsiType.EMPTY_ARRAY);
+
       resolved.processDeclarations(methodProcessor, PsiSubstitutor.EMPTY, null, this);
+      resolved.processDeclarations(constructorProcessor, PsiSubstitutor.EMPTY, resolved, this);
+
       PsiElement[] methodCandidates = ResolveUtil.mapToElements(methodProcessor.getCandidates());
-      PsiElement[] elements = ArrayUtil.mergeArrays(propertyCandidates, methodCandidates, PsiElement.class);
+      PsiElement[] constructorCandidates = ResolveUtil.mapToElements(constructorProcessor.getCandidates());
+
+      PsiElement[] elements = ArrayUtil.mergeArrays(ArrayUtil.mergeArrays(propertyCandidates, methodCandidates, PsiElement.class), 
+          constructorCandidates, PsiElement.class);
 
       return ContainerUtil.map2Array(elements, new Function<PsiElement, Object>() {
         public Object fun(PsiElement psiElement) {

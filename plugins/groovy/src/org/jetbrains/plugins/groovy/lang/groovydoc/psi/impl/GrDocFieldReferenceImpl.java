@@ -18,12 +18,15 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocFieldReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 /**
  * @author ilyas
@@ -70,7 +73,18 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
     if (resolved != null) {
       PropertyResolverProcessor processor = new PropertyResolverProcessor(name, this, false);
       resolved.processDeclarations(processor, PsiSubstitutor.EMPTY, resolved, this);
-      return processor.getCandidates();
+      GroovyResolveResult[] candidates = processor.getCandidates();
+      if (candidates.length == 0) {
+        MethodResolverProcessor methodProcessor = new MethodResolverProcessor(name, this, false, false, null, PsiType.EMPTY_ARRAY);
+        MethodResolverProcessor constructorProcessor = new MethodResolverProcessor(name, this, false, true, null, PsiType.EMPTY_ARRAY);
+        resolved.processDeclarations(methodProcessor, PsiSubstitutor.EMPTY, resolved, this);
+        resolved.processDeclarations(constructorProcessor, PsiSubstitutor.EMPTY, resolved, this);
+        candidates = ArrayUtil.mergeArrays(methodProcessor.getCandidates(), constructorProcessor.getCandidates(), GroovyResolveResult.class);
+        if (candidates.length > 0 ) {
+          candidates = new GroovyResolveResult[]{candidates[0]};
+        }
+      }
+      return candidates;
     }
     return new ResolveResult[0];
   }

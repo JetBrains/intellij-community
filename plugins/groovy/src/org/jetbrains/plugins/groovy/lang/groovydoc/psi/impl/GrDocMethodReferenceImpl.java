@@ -19,11 +19,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,8 +66,10 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
     if (resolved != null) {
       PsiType[] parameterTypes = getParameterList().getParameterTypes();
       MethodResolverProcessor processor = new MethodResolverProcessor(name, this, false, false, parameterTypes, PsiType.EMPTY_ARRAY);
+      MethodResolverProcessor constructorProcessor = new MethodResolverProcessor(name, this, false, true, parameterTypes, PsiType.EMPTY_ARRAY);
       resolved.processDeclarations(processor, PsiSubstitutor.EMPTY, resolved, this);
-      return processor.getCandidates();
+      resolved.processDeclarations(constructorProcessor, PsiSubstitutor.EMPTY, resolved, this);
+      return ArrayUtil.mergeArrays(processor.getCandidates(), constructorProcessor.getCandidates(), GroovyResolveResult.class);
     }
     return new ResolveResult[0];
   }

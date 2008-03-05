@@ -52,9 +52,9 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.Dynamic
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementType;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -137,6 +137,8 @@ public class GroovyAnnotator implements Annotator {
       checkMap(((GrListOrMap) element).getNamedArguments(), holder);
     } else if (element instanceof GrNewExpression) {
       checkNewExpression(holder, (GrNewExpression) element);
+    } else if (element instanceof GrDocMemberReference) {
+      checkGrDocMemberReference((GrDocMemberReference) element, holder);
     } else if (element instanceof GrConstructorInvocation) {
       checkConstructorInvocation(holder, (GrConstructorInvocation) element);
     } else if (element.getParent() instanceof GrDocReferenceElement) {
@@ -665,6 +667,14 @@ public class GroovyAnnotator implements Annotator {
         final Annotation annotation = holder.createErrorAnnotation(ref, GroovyBundle.message("interface.expected.here"));
         annotation.registerFix(new ChangeExtendsImplementsQuickFix(extendsClause, implementsClause));
       }
+    }
+  }
+
+  private static void checkGrDocMemberReference(final GrDocMemberReference reference, AnnotationHolder holder){
+    PsiElement resolved = reference.resolve();
+    if (resolved == null) {
+      Annotation annotation = holder.createErrorAnnotation(reference, GroovyBundle.message("cannot.resolve", reference.getReferenceName()));
+      annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
     }
   }
 
