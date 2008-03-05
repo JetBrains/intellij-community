@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,15 +16,19 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PlatformProjectConfigurator implements ProjectComponent {
   private Project myProject;
+  private ProjectBaseDirectory.Listener myListener;
+  private ProjectBaseDirectory myProjectBaseDir;
 
-  public PlatformProjectConfigurator(final Project project, MessageBus bus) {
+  public PlatformProjectConfigurator(final Project project) {
     myProject = project;
     if (!project.isDefault()) {
-      ProjectBaseDirectory.getInstance(project).addListener(new ProjectBaseDirectory.Listener() {
+      myListener = new ProjectBaseDirectory.Listener() {
         public void baseDirChanged() {
           initDefaultModule();
         }
-      });
+      };
+      myProjectBaseDir = ProjectBaseDirectory.getInstance(project);
+      myProjectBaseDir.addListener(myListener);
     }
   }
 
@@ -52,6 +55,9 @@ public class PlatformProjectConfigurator implements ProjectComponent {
   }
 
   public void projectClosed() {
+    if (myProjectBaseDir != null) {
+      myProjectBaseDir.removeListener(myListener);
+    }
   }
 
   @NotNull
