@@ -20,8 +20,6 @@
     <lang.psiStructureViewFactory language="Python" implementationClass="com.jetbrains.python.structureView.PyStructureViewFactory"/>
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.PythonDocumentationProvider"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
-    <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
-    <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
     <backspaceHandlerDelegate implementation="com.jetbrains.python.editor.PythonBackspaceHandler"/>
     <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
     <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>
@@ -31,5 +29,10 @@
     <colorSettingsPage implementation="com.jetbrains.python.PythonColorsPage"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyWordSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyStatementSelectionHandler"/>
+
+    <!-- Run/Debug -->
+    <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
+    <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
+    <configurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
   </extensions>
 </idea-plugin>

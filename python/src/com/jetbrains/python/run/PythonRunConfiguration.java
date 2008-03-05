@@ -13,20 +13,18 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author yole
  */
-public class PythonRunConfiguration extends RunConfigurationBase {
+public class PythonRunConfiguration extends RunConfigurationBase implements LocatableConfiguration {
   public String SCRIPT_NAME;
   public String PARAMETERS;
   public String WORKING_DIRECTORY;
@@ -101,5 +99,17 @@ public class PythonRunConfiguration extends RunConfigurationBase {
 
   public void setEnvs(final Map<String, String> envs) {
     myEnvs = envs;
+  }
+
+  public boolean isGeneratedName() {
+    return Comparing.equal(getName(), suggestedName());
+  }
+
+  public String suggestedName() {
+    String name = new File(SCRIPT_NAME).getName();
+    if (name.endsWith(".py")) {
+      return name.substring(0, name.length()-3);
+    }
+    return name;
   }
 }
