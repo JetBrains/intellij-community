@@ -1,27 +1,33 @@
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
-import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.AfterCallInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallEnvironment;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 
 import java.util.*;
 
@@ -83,7 +89,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     myEndInScope = endInScope;
     myIsInScope = startInScope == null;
 
-    final InstructionImpl first = startNode(null);
+    startNode(null);
     if (scope instanceof GrClosableBlock) {
       buildFlowForClosure((GrClosableBlock) scope);
     }
@@ -420,6 +426,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       myCatchedExceptionInfos.push(new ExceptionInfo(catchClauses[i]));
     }
 
+    List<Pair<InstructionImpl, GroovyPsiElement>> oldPending = null;
+    if (finallyClause != null) {
+      //copy pending instructions
+      oldPending = myPending;
+      myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
+    }
+
     InstructionImpl tryBeg = null;
     InstructionImpl tryEnd = null;
     if (tryBlock != null) {
@@ -479,6 +492,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       addNode(retInsn);
       flowAbrupted();
       finishNode(finallyInstruction);
+
+      assert oldPending != null;
+      oldPending.addAll(myPending);
+      myPending = oldPending;
     }
   }
 

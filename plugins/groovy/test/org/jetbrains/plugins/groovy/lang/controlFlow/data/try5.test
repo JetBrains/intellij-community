@@ -1,0 +1,26 @@
+if (ddd) return fXRec
+
+fScript = 8
+
+try {
+}
+finally {
+}
+
+
+fScript.previewTask(taskName)
+-----
+0(1) element: null
+1(2) element: IF statement
+2(3,5) READ ddd
+3(4) element: RETURN statement
+4(13) READ fXRec
+5(6) WRITE fScript
+6(8) element: Open block
+7(10) element: Finally clause
+8(7,9)  CALL 7
+9(11) AFTER CALL 8
+10(9)  RETURN
+11(12) READ fScript
+12(13) READ taskName
+13() element: null
