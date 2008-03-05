@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.actions;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.SuppressManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -69,7 +70,25 @@ public class AddNoInspectionCommentFix extends SuppressIntentionAction {
       }
     }
     boolean caretWasBeforeStatement = editor != null && editor.getCaretModel().getOffset() == container.getTextRange().getStartOffset();
-    container.getParent().addBefore(factory.createCommentFromText(COMMENT_START_TEXT +  myID, null), container);
+    boolean added = false;
+    if (container instanceof PsiDeclarationStatement && SuppressManager.getInstance().canHave15Suppressions(element)) {
+      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)container;
+      final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
+      for (PsiElement declaredElement : declaredElements) {
+        if (declaredElement instanceof PsiLocalVariable) {
+          final PsiModifierList modifierList = ((PsiLocalVariable)declaredElement).getModifierList();
+          if (modifierList != null) {
+            AddSuppressInspectionFix.addSuppressAnnotation(project, editor, container, modifierList, myID);
+            added = true;
+            break;
+          }
+        }
+      }
+    }
+    if (!added) {
+      container.getParent().addBefore(factory.createCommentFromText(COMMENT_START_TEXT +  myID, null), container);
+    }
+
     if (caretWasBeforeStatement) {
       editor.getCaretModel().moveToOffset(container.getTextRange().getStartOffset());
     }
