@@ -68,14 +68,34 @@ public class PythonSdkType extends SdkType {
   }
 
   public boolean isValidSdkHome(final String path) {
+    return isPythonSdkHome(path) || isJythonSdkHome(path);
+  }
+
+  private static boolean isPythonSdkHome(final String path) {
+    File f = getPythonBinaryPath(path);
+    return f != null && f.exists();
+  }
+
+  private static boolean isJythonSdkHome(final String path) {
+    File f = getJythonBinaryPath(path);
+    return f != null && f.exists();
+  }
+
+  private static File getJythonBinaryPath(final String path) {
     if (SystemInfo.isWindows) {
-      return new File(path, "python.exe").exists();
+      return new File(path, "jython.bat");
+    }
+    return null;
+  }
+
+  private static File getPythonBinaryPath(final String path) {
+    if (SystemInfo.isWindows) {
+      return new File(path, "python.exe");
     }
     else if (SystemInfo.isMac) {
-      return new File(new File(path, "bin"), "python").exists();
+      return new File(new File(path, "bin"), "python");
     }
-    
-    return false;
+    return null;
   }
 
   public String suggestSdkName(final String currentSdkName, final String sdkHome) {
@@ -83,11 +103,10 @@ public class PythonSdkType extends SdkType {
   }
 
   public AdditionalDataConfigurable createAdditionalDataConfigurable(final SdkModel sdkModel, final SdkModificator sdkModificator) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   public void saveAdditionalData(final SdkAdditionalData additionalData, final Element additional) {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   public String getPresentableName() {
@@ -118,13 +137,23 @@ public class PythonSdkType extends SdkType {
 
   @Nullable
   public String getVersionString(final String sdkHome) {
-    String pythonBinary;
-    if (SystemInfo.isWindows) {
-      pythonBinary = new File(sdkHome, "python.exe").getPath();
+    String binaryPath = getInterpreterPath(sdkHome);
+    final boolean isJython = isJythonSdkHome(sdkHome);
+    String marker = isJython ? "Jython" : "Python";
+    String version = SdkVersionUtil.readVersionFromProcessOutput(sdkHome, new String[] { binaryPath, "--version" }, marker);
+    if (version != null && isJython) {
+      int p = version.indexOf(" on ");
+      if (p >= 0) {
+        return version.substring(0, p);
+      }
     }
-    else {
-      pythonBinary = "python";
+    return version;
+  }
+
+  public static String getInterpreterPath(final String sdkHome) {
+    if (isJythonSdkHome(sdkHome)) {
+      return getJythonBinaryPath(sdkHome).getPath();
     }
-    return SdkVersionUtil.readVersionFromProcessOutput(sdkHome, new String[] { pythonBinary, "-V" }, "Python");
+    return getPythonBinaryPath(sdkHome).getPath();
   }
 }

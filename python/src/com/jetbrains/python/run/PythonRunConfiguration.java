@@ -13,10 +13,13 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,12 +59,7 @@ public class PythonRunConfiguration extends RunConfigurationBase {
         final Sdk projectJdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
         assert projectJdk != null;
 
-        if (SystemInfo.isMac) {
-          commandLine.setExePath(projectJdk.getHomePath() + "/bin/python");
-        }
-        else {
-          commandLine.setExePath(projectJdk.getHomePath() + File.separator + "python");
-        }
+        commandLine.setExePath(PythonSdkType.getInterpreterPath(projectJdk.getHomePath()));
 
         commandLine.addParameter(SCRIPT_NAME);
         commandLine.getParametersList().addParametersString(PARAMETERS);
@@ -79,8 +77,10 @@ public class PythonRunConfiguration extends RunConfigurationBase {
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
-    final Sdk projectJdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
-    if (projectJdk == null) throw new RuntimeConfigurationException("Please, specify Python SDK");
+    final Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
+    if (projectSdk == null || !(projectSdk.getSdkType() instanceof PythonSdkType)) {
+      throw new RuntimeConfigurationException("Please, specify Python SDK");
+    }
   }
 
   public void readExternal(Element element) throws InvalidDataException {
