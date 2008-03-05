@@ -16,7 +16,7 @@
           <jar name="resources_en.jar">
             <module name="python">  <patternset refid="resources.included"/> </module>
           </jar>
-          <fileset dir="${project.home}/plugins/python/lib"/>
+          <fileset dir="${project.home}/plugins/python/lib" includes="*.jar"/>
         </dir>
       </dir>
     </layout>

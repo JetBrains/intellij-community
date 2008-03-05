@@ -182,7 +182,7 @@
           <include name="resources_en.jar"/>
         </fileset>
         <fileset dir="${out.dir}/deploy"/>
-        <fileset dir="${basedir}/../lib"/>
+        <fileset dir="${basedir}/../lib" includes="*.jar"/>
         <fileset refid="idea.libraries"/>
       </dir>
       <dir name="plugins">
