@@ -119,10 +119,11 @@ public class LibraryCompositionSettings {
   }
 
   @Nullable
-  public Library createLibrary(final @NotNull ModifiableRootModel rootModel) {
+  public Library createLibrary(final ModifiableRootModel rootModel, @Nullable LibrariesContainer additionalContainer) {
     if (!myAddedJars.isEmpty()) {
       VirtualFile[] roots = myAddedJars.toArray(new VirtualFile[myAddedJars.size()]);
-      return LibrariesContainerFactory.createContainer(rootModel).createLibrary(myLibraryName, myLibraryLevel, roots, VirtualFile.EMPTY_ARRAY);
+      return LibrariesContainerFactory.createLibrary(additionalContainer, LibrariesContainerFactory.createContainer(rootModel),
+                                                     myLibraryName, myLibraryLevel, roots, VirtualFile.EMPTY_ARRAY);
     }
     return null;
   }
@@ -141,5 +142,28 @@ public class LibraryCompositionSettings {
 
   public Icon getIcon() {
     return myIcon;
+  }
+
+  @Nullable
+  public Library addLibraries(final ModifiableRootModel rootModel, final List<Library> addedLibraries) {
+    return addLibraries(rootModel, addedLibraries, null);
+  }
+
+  @Nullable
+  public Library addLibraries(final @NotNull ModifiableRootModel rootModel, final @NotNull List<Library> addedLibraries,
+                              final @Nullable LibrariesContainer librariesContainer) {
+    Library library = createLibrary(rootModel, librariesContainer);
+
+    if (library != null) {
+      addedLibraries.add(library);
+      if (getLibraryLevel() != LibrariesContainer.LibraryLevel.MODULE) {
+        rootModel.addLibraryEntry(library);
+      }
+    }
+    for (Library usedLibrary : getUsedLibraries()) {
+      addedLibraries.add(usedLibrary);
+      rootModel.addLibraryEntry(usedLibrary);
+    }
+    return library;
   }
 }

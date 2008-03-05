@@ -14,8 +14,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
@@ -25,7 +23,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -319,12 +316,9 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
       myContainer = LibrariesContainerFactory.createContainer(facet.getModule().getProject(), myContext);
     }
 
-    public Library createProjectLibrary(final String baseName, final VirtualFile[] roots, final VirtualFile[] sources) {
-      return myContainer.createLibrary(baseName, LibrariesContainer.LibraryLevel.PROJECT, roots, sources);
+    public LibrariesContainer getContainer() {
+      return myContainer;
     }
 
-    public VirtualFile[] getLibraryFiles(Library library, OrderRootType rootType) {
-      return myContainer.getLibraryFiles(library, rootType);
-    }
   }
 }

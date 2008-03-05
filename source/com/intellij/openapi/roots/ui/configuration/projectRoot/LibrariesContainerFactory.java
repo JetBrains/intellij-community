@@ -50,6 +50,17 @@ public class LibrariesContainerFactory {
     return new StructureConfigurableLibrariesContainer(project, context);
   }
 
+  public static Library createLibrary(@Nullable LibrariesContainer container1, @NotNull LibrariesContainer container2,
+                               @NotNull @NonNls final String name, @NotNull final LibrariesContainer.LibraryLevel level,
+                               @NotNull final VirtualFile[] classRoots, @NotNull final VirtualFile[] sourceRoots) {
+    if (container1 != null && container1.canCreateLibrary(level)) {
+      return container1.createLibrary(name, level, classRoots, sourceRoots);
+    }
+    else {
+      return container2.createLibrary(name, level, classRoots, sourceRoots);
+    }
+  }
+
   @NotNull
   public static Library createLibraryInTable(final @NonNls String name, final VirtualFile[] roots, final VirtualFile[] sources, final LibraryTable table) {
     LibraryTable.ModifiableModel modifiableModel = table.getModifiableModel();
@@ -74,6 +85,7 @@ public class LibrariesContainerFactory {
     }
     return name;
   }
+
 
   private abstract static class LibrariesContainerBase implements LibrariesContainer {
     @NotNull

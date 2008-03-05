@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -121,4 +122,6 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   public void fireFacetModelChanged(final Module module) {
     myFacetContextChangeDispatcher.getMulticaster().facetModelChanged(module);
   }
+
+  public abstract LibrariesContainer getContainer();
 }

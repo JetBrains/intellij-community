@@ -30,4 +30,5 @@ public abstract class FacetLibrariesValidator extends FacetEditorValidator {
 
   public abstract void onFacetInitialized(Facet facet);
 
+  public abstract boolean isLibrariesAdded();
 }

@@ -13,8 +13,12 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,5 +79,13 @@ public abstract class ProjectConfigurableContext extends FacetEditorContextBase 
   @Nullable
   public WizardContext getWizardContext() {
     return null;
+  }
+
+  public Library createProjectLibrary(final String baseName, final VirtualFile[] roots, final VirtualFile[] sources) {
+    return getContainer().createLibrary(baseName, LibrariesContainer.LibraryLevel.PROJECT, roots, sources);
+  }
+
+  public VirtualFile[] getLibraryFiles(Library library, OrderRootType rootType) {
+    return getContainer().getLibraryFiles(library, rootType);
   }
 }

@@ -16,12 +16,28 @@
 
 package com.intellij.facet.ui;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 
 /**
  * @author nik
  */
 public abstract class FacetConfigurationQuickFix {
+  private final String myFixButtonText;
+
+  protected FacetConfigurationQuickFix() {
+    this(null);
+  }
+
+  protected FacetConfigurationQuickFix(final @Nullable String fixButtonText) {
+    myFixButtonText = fixButtonText;
+  }
+
+  @Nullable
+  public final String getFixButtonText() {
+    return myFixButtonText;
+  }
 
   public abstract void run(JComponent place);
 

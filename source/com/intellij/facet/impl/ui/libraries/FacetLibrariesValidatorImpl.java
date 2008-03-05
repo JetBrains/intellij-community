@@ -8,31 +8,14 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
-import com.intellij.facet.ui.libraries.FacetLibrariesValidator;
-import com.intellij.facet.ui.libraries.FacetLibrariesValidatorDescription;
-import com.intellij.facet.ui.libraries.LibraryInfo;
-import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
+import com.intellij.facet.ui.libraries.*;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Icons;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -42,13 +25,11 @@ import java.util.*;
  * @author nik
  */
 public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
-  private static final Icon QUICK_FIX_ICON = IconLoader.getIcon("/actions/intentionBulb.png");
   private LibrariesValidatorContext myContext;
   private final FacetValidatorsManager myValidatorsManager;
   private RequiredLibrariesInfo myRequiredLibraries;
   private final FacetLibrariesValidatorDescription myDescription;
-  private List<VirtualFile> myAddedRoots;
-  private List<Library> myAddedLibraries;
+  private LibraryCompositionSettings myLibraryCompositionSettings;
 
   public FacetLibrariesValidatorImpl(LibraryInfo[] requiredLibraries, FacetLibrariesValidatorDescription description,
                                      final LibrariesValidatorContext context, FacetValidatorsManager validatorsManager) {
@@ -56,13 +37,16 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     myValidatorsManager = validatorsManager;
     myRequiredLibraries = new RequiredLibrariesInfo(requiredLibraries);
     myDescription = description;
-    myAddedRoots = new ArrayList<VirtualFile>();
-    myAddedLibraries = new ArrayList<Library>();
   }
 
   public void setRequiredLibraries(final LibraryInfo[] requiredLibraries) {
     myRequiredLibraries = new RequiredLibrariesInfo(requiredLibraries);
     onChange();
+  }
+
+  public boolean isLibrariesAdded() {
+    return myLibraryCompositionSettings != null &&
+           (!myLibraryCompositionSettings.getUsedLibraries().isEmpty() || !myLibraryCompositionSettings.getAddedJars().isEmpty());
   }
 
   public FacetLibrariesValidatorDescription getDescription() {
@@ -83,55 +67,19 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
     String missingJars = IdeBundle.message("label.missed.libraries.prefix") + " " + info.getMissingJarsText();
     final String text = IdeBundle.message("label.missed.libraries.text", missingJars, info.getClassNames()[0]);
-    return new ValidationResult(text, new LibrariesQuickFix(info.getLibraryInfos()));
-  }
-
-  private void addLibrary(final Library selectedValue) {
-    ModifiableRootModel rootModel = myContext.getModifiableRootModel();
-    if (rootModel == null) {
-      myAddedLibraries.add(selectedValue);
-    }
-    else {
-      rootModel.addLibraryEntry(selectedValue);
-    }
-    onChange();
+    LibraryInfo[] missingLibraries = info.getLibraryInfos();
+    final String baseDir = myContext.getProject().getBaseDir().getPath();
+    myLibraryCompositionSettings = new LibraryCompositionSettings(missingLibraries, myDescription.getDefaultLibraryName(), baseDir, myDescription.getDefaultLibraryName(), null);
+    return new ValidationResult(text, new LibrariesQuickFix(this, myLibraryCompositionSettings, myContext.getLibrariesContainer()));
   }
 
   private void onChange() {
     myValidatorsManager.validate();
   }
 
-  private void addJars(JComponent place) {
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, false, false, true);
-    descriptor.setTitle(IdeBundle.message("file.chooser.select.paths.title"));
-    descriptor.setDescription(IdeBundle.message("file.chooser.multiselect.description"));
-    final VirtualFile[] files = FileChooser.chooseFiles(place, descriptor);
-    addRoots(files);
-  }
-
-  public void addRoots(final VirtualFile... files) {
-    if (files.length == 0) return;
-
-    ModifiableRootModel rootModel = myContext.getModifiableRootModel();
-    final Project project = myContext.getProject();
-    if (rootModel == null || project == null) {
-      myAddedRoots.addAll(Arrays.asList(files));
-    }
-    else {
-      Library library = new WriteAction<Library>() {
-        protected void run(final Result<Library> result) {
-          result.setResult(createLibrary(files));
-        }
-      }.execute().getResultObject();
-      if (library != null) {
-        rootModel.addLibraryEntry(library);
-      }
-    }
-    onChange();
-  }
-
-  private Library createLibrary(final VirtualFile[] roots) {
-    return myContext.createProjectLibrary(myDescription.getDefaultLibraryName(), roots);
+  @Nullable
+  public LibraryCompositionSettings getLibraryCompositionSettings() {
+    return myLibraryCompositionSettings;
   }
 
   public void onFacetInitialized(Facet facet) {
@@ -144,21 +92,10 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
   public List<Library> setupLibraries(final Module module) {
     ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-
     List<Library> addedLibraries = new ArrayList<Library>();
-    for (Library library : myAddedLibraries) {
-      model.addLibraryEntry(library);
-      addedLibraries.add(library);
-    }
+    if (myLibraryCompositionSettings == null) return addedLibraries;
 
-    if (!myAddedRoots.isEmpty()) {
-      VirtualFile[] roots = myAddedRoots.toArray(new VirtualFile[myAddedRoots.size()]);
-      LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
-      Library library = LibrariesContainerFactory.createLibraryInTable(myDescription.getDefaultLibraryName(), roots, VirtualFile.EMPTY_ARRAY, libraryTable);
-      model.addLibraryEntry(library);
-      addedLibraries.add(library);
-    }
-
+    myLibraryCompositionSettings.addLibraries(model, addedLibraries, myContext.getLibrariesContainer());
     if (model.isChanged()) {
       model.commit();
     }
@@ -168,17 +105,13 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     return addedLibraries;
   }
 
-  private void downloadJars(final LibraryDownloadInfo[] downloadInfos, JComponent place) {
-    LibraryDownloader downloader = new LibraryDownloader(downloadInfos, null, place);
-    VirtualFile[] roots = downloader.download();
-    addRoots(roots);
-  }
-
   private List<VirtualFile> collectRoots(final @Nullable ModuleRootModel rootModel) {
     ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
-    roots.addAll(myAddedRoots);
-    for (Library library : myAddedLibraries) {
-      roots.addAll(Arrays.asList(myContext.getFiles(library, OrderRootType.CLASSES)));
+    if (myLibraryCompositionSettings != null) {
+      roots.addAll(myLibraryCompositionSettings.getAddedJars());
+      for (Library library : myLibraryCompositionSettings.getUsedLibraries()) {
+        roots.addAll(Arrays.asList(myContext.getLibrariesContainer().getLibraryFiles(library, OrderRootType.CLASSES)));
+      }
     }
     if (rootModel != null) {
       RootPolicy<List<VirtualFile>> policy = new CollectingLibrariesPolicy();
@@ -193,7 +126,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     public List<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry, final List<VirtualFile> value) {
       Library library = libraryOrderEntry.getLibrary();
       if (library != null) {
-        value.addAll(Arrays.asList(myContext.getFiles(library, OrderRootType.CLASSES)));
+        value.addAll(Arrays.asList(myContext.getLibrariesContainer().getLibraryFiles(library, OrderRootType.CLASSES)));
       }
       return value;
     }
@@ -211,78 +144,59 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
   }
 
-  private class LibrariesQuickFix extends FacetConfigurationQuickFix {
-    private final LibraryInfo[] myMissingLibraries;
+  private static class LibrariesQuickFix extends FacetConfigurationQuickFix {
+    private final FacetLibrariesValidatorImpl myValidator;
+    private final LibraryCompositionSettings myLibrarySettings;
+    private LibrariesContainer myLibrariesContainer;
 
-    public LibrariesQuickFix(final LibraryInfo[] missingLibraries) {
-      myMissingLibraries = missingLibraries;
+    public LibrariesQuickFix(FacetLibrariesValidatorImpl validator, final LibraryCompositionSettings libraryCompositionSettings,
+                             final LibrariesContainer librariesContainer) {
+      super(IdeBundle.message("missing.libraries.fix.button"));
+      myValidator = validator;
+      myLibrarySettings = libraryCompositionSettings;
+      myLibrariesContainer = librariesContainer;
     }
 
     public void run(final JComponent place) {
-      Library[] allLibraries = myContext.getLibraries();
-      List<Library> suitableLibraries = new ArrayList<Library>();
-      RequiredLibrariesInfo missingLibrariesInfo = new RequiredLibrariesInfo(myMissingLibraries);
-      for (Library library : allLibraries) {
-        if (myAddedLibraries.contains(library)) continue;
-
-        if (missingLibrariesInfo.checkLibraries(myContext.getFiles(library, OrderRootType.CLASSES)) == null) {
-          suitableLibraries.add(library);
+      LibraryDownloadingMirrorsMap mirrorsMap = new LibraryDownloadingMirrorsMap();
+      for (LibraryInfo libraryInfo : myLibrarySettings.getLibraryInfos()) {
+        LibraryDownloadInfo downloadingInfo = libraryInfo.getDownloadingInfo();
+        if (downloadingInfo != null) {
+          RemoteRepositoryInfo repositoryInfo = downloadingInfo.getRemoteRepository();
+          if (repositoryInfo != null) {
+            mirrorsMap.registerRepository(repositoryInfo);
+          }
         }
       }
-
-      final Ref<ListPopup> popupRef = Ref.create(null);
-      final String useLibrary = IdeBundle.message("facet.libraries.use.library.popup.item");
-      final String downloadJars = IdeBundle.message("facet.libraries.download.jars.popup.item");
-      final String addJars = IdeBundle.message("facet.libraries.create.new.library.popup.item");
-      final BaseListPopupStep librariesStep;
-      List<String> popupItems = new ArrayList<String>();
-      if (!suitableLibraries.isEmpty()) {
-        librariesStep = new BaseListPopupStep<Library>(IdeBundle.message("add.library.popup.title"), suitableLibraries, Icons.LIBRARY_ICON) {
-          @NotNull
-          public String getTextFor(final Library value) {
-            return value.getName();
-          }
-
-          public PopupStep onChosen(final Library selectedValue, final boolean finalChoice) {
-            addLibrary(selectedValue);
-            return FINAL_CHOICE;
-          }
-        };
-        popupItems.add(useLibrary);
-      }
-      else {
-        librariesStep = null;
-      }
-
-      final LibraryDownloadInfo[] downloadInfos = LibraryDownloader.getDownloadingInfos(myMissingLibraries);
-      if (downloadInfos.length > 0) {
-        popupItems.add(downloadJars);
-      }
-      popupItems.add(addJars);
-
-      final BaseListPopupStep popupStep = new BaseListPopupStep<String>(null, popupItems, QUICK_FIX_ICON) {
-        public boolean hasSubstep(final String selectedValue) {
-          return useLibrary.equals(selectedValue);
-        }
-
-        public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
-          if (useLibrary.equals(selectedValue)) {
-            return librariesStep;
-          }
-          popupRef.get().cancel();
-          if (downloadJars.equals(selectedValue)) {
-            downloadJars(downloadInfos, place);
-          }
-          else {
-            addJars(place);
-          }
-          return FINAL_CHOICE;
-        }
-      };
-      final ListPopup popup = JBPopupFactory.getInstance().createListPopup(popupStep);
-      popupRef.set(popup);
-      popup.showUnderneathOf(place);
+      LibraryCompositionOptionsPanel panel = new LibraryCompositionOptionsPanel(myLibrariesContainer, myLibrarySettings, mirrorsMap);
+      LibraryCompositionDialog dialog = new LibraryCompositionDialog(place, panel, mirrorsMap);
+      dialog.show();
+      myValidator.onChange();
     }
   }
 
+  private static class LibraryCompositionDialog extends DialogWrapper {
+    private LibraryCompositionOptionsPanel myPanel;
+    private final LibraryDownloadingMirrorsMap myMirrorsMap;
+
+    private LibraryCompositionDialog(final JComponent parent, final LibraryCompositionOptionsPanel panel,
+                                     final LibraryDownloadingMirrorsMap mirrorsMap) {
+      super(parent, true);
+      setTitle(IdeBundle.message("specify.libraries.dialog.title"));
+      myPanel = panel;
+      myMirrorsMap = mirrorsMap;
+      init();
+    }
+
+    protected JComponent createCenterPanel() {
+      return myPanel.getMainPanel();
+    }
+
+    protected void doOKAction() {
+      myPanel.apply();
+      if (myPanel.getLibraryCompositionSettings().downloadFiles(myMirrorsMap, myPanel.getMainPanel())) {
+        super.doOKAction();
+      }
+    }
+  }
 }

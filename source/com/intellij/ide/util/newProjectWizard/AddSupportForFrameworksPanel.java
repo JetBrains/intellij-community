@@ -257,19 +257,7 @@ public class AddSupportForFrameworksPanel {
     for (FrameworkSupportSettings settings : selectedFrameworks) {
       FrameworkSupportConfigurable configurable = settings.getConfigurable();
 
-      LibraryCompositionSettings compositionSettings = settings.getLibraryCompositionSettings();
-      Library library = compositionSettings.createLibrary(rootModel);
-
-      if (library != null) {
-        addedLibraries.add(library);
-        if (compositionSettings.getLibraryLevel() != LibrariesContainer.LibraryLevel.MODULE) {
-          rootModel.addLibraryEntry(library);
-        }
-      }
-      for (Library usedLibrary : compositionSettings.getUsedLibraries()) {
-        addedLibraries.add(usedLibrary);
-        rootModel.addLibraryEntry(usedLibrary);
-      }
+      Library library = settings.getLibraryCompositionSettings().addLibraries(rootModel, addedLibraries);
 
       configurable.addSupport(module, rootModel, library);
     }

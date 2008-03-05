@@ -11,6 +11,7 @@ import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -94,7 +95,6 @@ public class FacetErrorPanel {
       }
       watcher.addUserActivityListener(new UserActivityListener() {
         public void stateChanged() {
-          //todo[nik] run only one validator
           validate();
         }
       });
@@ -109,6 +109,10 @@ public class FacetErrorPanel {
           myWarningLabel.setVisible(true);
           myCurrentQuickFix = validationResult.getQuickFix();
           myQuickFixButton.setVisible(myCurrentQuickFix != null);
+          if (myCurrentQuickFix != null) {
+            String buttonText = myCurrentQuickFix.getFixButtonText();
+            myQuickFixButton.setText(buttonText != null ? buttonText : IdeBundle.message("button.facet.quickfix.text"));
+          }
           changeValidity(false);
           return;
         }

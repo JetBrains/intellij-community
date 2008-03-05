@@ -4,14 +4,13 @@
 
 package com.intellij.facet.impl.ui.libraries;
 
+import com.intellij.facet.impl.ui.FacetEditorContextBase;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +29,10 @@ public class DelegatingLibrariesValidatorContext implements LibrariesValidatorCo
     return myDelegate.getProject();
   }
 
+  public LibrariesContainer getLibrariesContainer() {
+    return ((FacetEditorContextBase)myDelegate).getContainer();
+  }
+
   @NotNull
   public ModulesProvider getModulesProvider() {
     return myDelegate.getModulesProvider();
@@ -45,16 +48,4 @@ public class DelegatingLibrariesValidatorContext implements LibrariesValidatorCo
     return myDelegate.getRootModel();
   }
 
-  @NotNull
-  public Library[] getLibraries() {
-    return myDelegate.getLibraries();
-  }
-
-  public Library createProjectLibrary(final String name, final VirtualFile[] roots) {
-    return myDelegate.createProjectLibrary(name, roots, VirtualFile.EMPTY_ARRAY);
-  }
-
-  public VirtualFile[] getFiles(final Library library, final OrderRootType rootType) {
-    return myDelegate.getLibraryFiles(library, rootType);
-  }
 }

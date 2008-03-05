@@ -25,7 +25,7 @@ public class LibraryDownloadingMirrorsMap {
     }
   }
 
-  private void registerRepository(final RemoteRepositoryInfo remoteRepository) {
+  public void registerRepository(final RemoteRepositoryInfo remoteRepository) {
     if (!myMirrors.containsKey(remoteRepository)) {
       myMirrors.put(remoteRepository, remoteRepository.getDefaultMirror());
     }

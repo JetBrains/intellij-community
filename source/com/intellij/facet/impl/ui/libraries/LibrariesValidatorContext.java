@@ -7,10 +7,8 @@ package com.intellij.facet.impl.ui.libraries;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,15 +23,11 @@ public interface LibrariesValidatorContext {
   ModifiableRootModel getModifiableRootModel();
 
   @NotNull
-  Library[] getLibraries();
-
-  @NotNull
   ModulesProvider getModulesProvider();
 
   @Nullable
   Project getProject();
 
-  Library createProjectLibrary(String name, VirtualFile[] roots);
+  LibrariesContainer getLibrariesContainer();
 
-  VirtualFile[] getFiles(final Library library, final OrderRootType rootType);
 }

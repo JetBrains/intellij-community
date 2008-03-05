@@ -9,15 +9,13 @@ import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
 
 /**
@@ -25,9 +23,11 @@ import com.intellij.openapi.module.Module;
  */
 public class LibrariesValidatorContextImpl implements LibrariesValidatorContext {
   private Module myModule;
+  private LibrariesContainer myLibrariesContainer;
 
-  public LibrariesValidatorContextImpl(final Module module) {
+  public LibrariesValidatorContextImpl(final @NotNull Module module) {
     myModule = module;
+    myLibrariesContainer = LibrariesContainerFactory.createContainer(module);
   }
 
   @Nullable
@@ -38,11 +38,6 @@ public class LibrariesValidatorContextImpl implements LibrariesValidatorContext 
   @Nullable
   public ModifiableRootModel getModifiableRootModel() {
     return null;
-  }
-
-  @NotNull
-  public Library[] getLibraries() {
-    return getProjectLibraryTable().getLibraries();
   }
 
   private LibraryTable getProjectLibraryTable() {
@@ -59,11 +54,8 @@ public class LibrariesValidatorContextImpl implements LibrariesValidatorContext 
     return myModule.getProject();
   }
 
-  public Library createProjectLibrary(String name, VirtualFile[] roots) {
-    return LibrariesContainerFactory.createLibraryInTable(name, roots, VirtualFile.EMPTY_ARRAY, getProjectLibraryTable());
+  public LibrariesContainer getLibrariesContainer() {
+    return myLibrariesContainer;
   }
 
-  public VirtualFile[] getFiles(final Library library, final OrderRootType rootType) {
-    return library.getFiles(rootType);
-  }
 }
