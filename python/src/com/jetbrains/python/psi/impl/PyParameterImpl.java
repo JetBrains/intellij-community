@@ -18,14 +18,17 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.psi.PyElementVisitor;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyParameter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,39 +37,48 @@ import com.jetbrains.python.psi.PyParameter;
  * Time: 23:04:59
  * To change this template use File | Settings | File Templates.
  */
-public class PyParameterImpl extends PyElementImpl implements PyParameter {
-    public PyParameterImpl(ASTNode astNode) {
-        super(astNode);
-    }
+public class PyParameterImpl extends PyPresentableElementImpl implements PyParameter {
+  public PyParameterImpl(ASTNode astNode) {
+    super(astNode);
+  }
 
-    @Nullable @Override public String getName() {
-        ASTNode node = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
-        return node != null ? node.getText() : null;
-    }
+  @Nullable
+  @Override
+  public String getName() {
+    ASTNode node = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
+    return node != null ? node.getText() : null;
+  }
 
-    public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-        final ASTNode nameElement = getLanguage().getElementGenerator().createNameIdentifier(getProject(), name);
-        getNode().replaceChild(getNode().getFirstChildNode(), nameElement);
-        return this;
-    }
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    final ASTNode nameElement = getLanguage().getElementGenerator().createNameIdentifier(getProject(), name);
+    getNode().replaceChild(getNode().getFirstChildNode(), nameElement);
+    return this;
+  }
 
-    @Override protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-        pyVisitor.visitPyParameter(this);
-    }
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyParameter(this);
+  }
 
-    public boolean isPositionalContainer() {
-        return getNode().findChildByType(PyTokenTypes.MULT) != null;
-    }
+  public boolean isPositionalContainer() {
+    return getNode().findChildByType(PyTokenTypes.MULT) != null;
+  }
 
-    public boolean isKeywordContainer() {
-        return getNode().findChildByType(PyTokenTypes.EXP) != null;
-    }
+  public boolean isKeywordContainer() {
+    return getNode().findChildByType(PyTokenTypes.EXP) != null;
+  }
 
-    public @Nullable PyExpression getDefaultValue() {
-        ASTNode[] nodes = getNode().getChildren(PyElementTypes.EXPRESSIONS);
-        if (nodes.length > 0) {
-            return (PyExpression) nodes [0].getPsi();
-        }
-        return null;
+  public
+  @Nullable
+  PyExpression getDefaultValue() {
+    ASTNode[] nodes = getNode().getChildren(PyElementTypes.EXPRESSIONS);
+    if (nodes.length > 0) {
+      return (PyExpression)nodes[0].getPsi();
     }
+    return null;
+  }
+
+  public Icon getIcon(final int flags) {
+    return Icons.PARAMETER_ICON;
+  }
 }

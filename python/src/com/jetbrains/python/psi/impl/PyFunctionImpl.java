@@ -38,7 +38,7 @@ import javax.swing.*;
  * Time: 23:01:25
  * To change this template use File | Settings | File Templates.
  */
-public class PyFunctionImpl extends PyElementImpl implements PyFunction {
+public class PyFunctionImpl extends PyPresentableElementImpl implements PyFunction {
   public PyFunctionImpl(ASTNode astNode) {
     super(astNode);
   }

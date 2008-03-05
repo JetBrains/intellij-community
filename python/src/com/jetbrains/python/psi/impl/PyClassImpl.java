@@ -22,14 +22,12 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.jetbrains.python.psi.*;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.validation.DocStringAnnotator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.validation.DocStringAnnotator;
 
 import javax.swing.*;
 
@@ -40,7 +38,7 @@ import javax.swing.*;
  * Time: 0:27:33
  * To change this template use File | Settings | File Templates.
  */
-public class PyClassImpl extends PyElementImpl implements PyClass {
+public class PyClassImpl extends PyPresentableElementImpl implements PyClass {
   public PyClassImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -110,26 +108,5 @@ public class PyClassImpl extends PyElementImpl implements PyClass {
 
   public String getDocString() {
     return DocStringAnnotator.findDocString(getStatementList());
-  }
-
-  public ItemPresentation getPresentation() {
-    return new ItemPresentation() {
-      public String getPresentableText() {
-        final String name = getName();
-        return name != null ? name : "<none>";
-      }
-
-      public String getLocationString() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-      }
-
-      public Icon getIcon(final boolean open) {
-        return Icons.CLASS_ICON;
-      }
-
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
-    };
   }
 }
