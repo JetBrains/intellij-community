@@ -1,5 +1,3 @@
-package renameCollisions;
-
 class <caret>LocalClass {
 	public static final int STATIC_FIELD = 5;
 	public static void staticMethod() {

@@ -20,7 +20,7 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
   }
 
   //Fails due to IDEADEV-25194.
-  //public void testRenameClassLocalToAlien2() throws Exception {
+  //public void testRenameClassLocalToAlienNoImports() throws Exception {
   //  doTest("String");
   //}
 
