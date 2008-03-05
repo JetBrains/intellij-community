@@ -30,13 +30,21 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use File | Settings | File Templates.
  */
 public interface PyFunction extends PsiNamedElement, PyElement, PyDocStringOwner {
-    /**
-     * Returns the AST node for the function name identifier.
-     *
-     * @return the node, or null if the function is incomplete (only the "def"
-     * keyword was typed)
-     */
-    @Nullable ASTNode getNameNode();
-    @NotNull PyParameterList getParameterList();
-    @NotNull PyStatementList getStatementList();
+  /**
+   * Returns the AST node for the function name identifier.
+   *
+   * @return the node, or null if the function is incomplete (only the "def"
+   *         keyword was typed)
+   */
+  @Nullable
+  ASTNode getNameNode();
+
+  @NotNull
+  PyParameterList getParameterList();
+
+  @NotNull
+  PyStatementList getStatementList();
+
+  @Nullable
+  PyClass getContainingClass();
 }

@@ -8,6 +8,12 @@
     Jemerov, Keith Lea</vendor>
   <change-notes>Updated for IntelliJ IDEA 7.0</change-notes>
 
+  <application-components>
+    <component>
+      <implementation-class>com.jetbrains.python.PyInspectionToolProvider</implementation-class>
+    </component>
+  </application-components>
+
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.jetbrains.python.PythonFileTypeFactory"/>
     <lang.syntaxHighlighterFactory key="Python" implementationClass="com.jetbrains.python.PySyntaxHighlighterFactory"/>

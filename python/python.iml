@@ -3,6 +3,8 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/pluginResources" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pySrc" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -11,6 +13,15 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="psi-extapi" />
     <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/jython.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntryProperties />
   </component>
   <component name="copyright">

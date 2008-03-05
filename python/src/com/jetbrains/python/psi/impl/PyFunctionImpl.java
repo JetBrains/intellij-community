@@ -76,6 +76,17 @@ public class PyFunctionImpl extends PyPresentableElementImpl implements PyFuncti
     return childToPsiNotNull(PyElementTypes.STATEMENT_LIST);
   }
 
+  public PyClass getContainingClass() {
+    final PsiElement parent = getParent();
+    if (parent instanceof PyStatementList) {
+      PsiElement pparent = parent.getParent();
+      if (pparent instanceof PyClass) {
+        return (PyClass) pparent;
+      }
+    }
+    return null;
+  }
+
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyFunction(this);
