@@ -187,8 +187,10 @@ public class GrAccessorMethodImpl extends LightElement implements GrAccessorMeth
   public String getName() {
     final String propName = myProperty.getName();
     assert propName != null;
-    if (myIsSetter) return "set" + StringUtil.capitalize(propName);
-    return "get" + StringUtil.capitalize(propName);
+    String capitalized = StringUtil.capitalize(propName);
+    if (myIsSetter) return "set" + capitalized;
+    if (PsiType.BOOLEAN.equals(myProperty.getTypeGroovy())) return "is" + capitalized;
+    return "get" + capitalized;
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
