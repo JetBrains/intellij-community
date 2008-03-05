@@ -49,7 +49,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                                          @NotNull final Module sourceModule,
                                          Module targetModule,
                                          final String outputRelativePath,
-                                         String possibleBaseOuputPath,
+                                         @Nullable String possibleBaseOuputPath,
                                          @Nullable PackagingFileFilter fileFilter) {
     final File outputPath = getModuleOutputPath(sourceModule);
 
@@ -59,11 +59,13 @@ public class DeploymentUtilImpl extends DeploymentUtil {
       ok = checkModuleOutputExists(outputPath, sourceModule, context);
       boolean added = addItemsRecursively(items, outputPath, targetModule, outputRelativePath, fileFilter, possibleBaseOuputPath);
       if (!added) {
+        LOG.assertTrue(possibleBaseOuputPath != null);
         String additionalMessage = CompilerBundle.message("message.text.change.module.output.directory.or.module.exploded.directory",
-                                                      ModuleUtil.getModuleNameInReadAction(sourceModule),
-                                                      ModuleUtil.getModuleNameInReadAction(targetModule));
-        reportRecursiveCopying(context, outputPath.getPath(), appendToPath(possibleBaseOuputPath,outputRelativePath), CompilerBundle.message(
-          "module.output.directory", ModuleUtil.getModuleNameInReadAction(sourceModule)), additionalMessage);
+                                                          ModuleUtil.getModuleNameInReadAction(sourceModule),
+                                                          ModuleUtil.getModuleNameInReadAction(targetModule));
+        reportRecursiveCopying(context, outputPath.getPath(), appendToPath(possibleBaseOuputPath, outputRelativePath),
+                               CompilerBundle.message("module.output.directory", ModuleUtil.getModuleNameInReadAction(sourceModule)),
+                               additionalMessage);
         ok = false;
       }
     }
@@ -105,7 +107,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                              @NotNull final BuildRecipe items,
                              @NotNull final LibraryLink libraryLink,
                              @NotNull final Module module,
-                             final String possibleBaseOutputPath) {
+                             @Nullable final String possibleBaseOutputPath) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         String outputRelativePath;
@@ -242,7 +244,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                                            @NotNull Module module,
                                            String outputRelativePath,
                                            @Nullable PackagingFileFilter fileFilter,
-                                           String possibleBaseOutputPath) {
+                                           @Nullable String possibleBaseOutputPath) {
     if (outputRelativePath == null) outputRelativePath = "";
     outputRelativePath = trimForwardSlashes(outputRelativePath);
 
@@ -386,7 +388,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                                    @NotNull ModuleLink[] containingModules,
                                    @NotNull BuildRecipe instructions,
                                    @NotNull CompileContext context,
-                                   String explodedPath, final String linkContainerDescription, @Nullable Map<Module, PackagingFileFilter> fileFilters) {
+                                   @Nullable String possibleExplodedPath, final String linkContainerDescription, @Nullable Map<Module, PackagingFileFilter> fileFilters) {
     for (ModuleLink moduleLink : containingModules) {
       Module childModule = moduleLink.getModule();
       if (childModule != null && StdModuleTypes.JAVA.equals(childModule.getModuleType())) {
@@ -405,7 +407,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
           addJarJavaModuleOutput(instructions, childModule, relativePath, context, linkContainerDescription, fileFilter);
         }
         else if (PackagingMethod.COPY_FILES.equals(packagingMethod)) {
-          addModuleOutputContents(context, instructions, childModule, module, moduleLink.getURI(), explodedPath, fileFilter);
+          addModuleOutputContents(context, instructions, childModule, module, moduleLink.getURI(), possibleExplodedPath, fileFilter);
         }
         else if (PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST.equals(packagingMethod)) {
           moduleLink.setPackagingMethod(PackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST);
@@ -503,20 +505,13 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     return null;
   }
 
+  @Nullable
   public static String getOrCreateExplodedDir(final BuildParticipant buildParticipant) {
     BuildConfiguration buildConfiguration = buildParticipant.getBuildConfiguration();
     if (buildConfiguration.isExplodedEnabled()) {
       return buildConfiguration.getExplodedPath();
     }
     return buildParticipant.getOrCreateTemporaryDirForExploded();
-  }
-
-  @Nullable
-  public static String getDirectoryToBuildExploded(BuildParticipant buildParticipant) {
-    if (buildParticipant.getBuildConfiguration().willBuildExploded()) {
-      return getOrCreateExplodedDir(buildParticipant);
-    }
-    return null;
   }
 
   public static BuildParticipantProvider<?>[] getBuildParticipantProviders() {

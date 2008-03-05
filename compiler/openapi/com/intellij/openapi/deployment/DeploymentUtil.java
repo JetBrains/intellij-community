@@ -49,7 +49,7 @@ public abstract class DeploymentUtil {
                                                   @NotNull Module sourceModule,
                                                   Module targetModule,
                                                   @NonNls String outputRelativePath,
-                                                  @NonNls String possibleBaseOuputPath,
+                                                  @Nullable @NonNls String possibleBaseOuputPath,
                                                   @Nullable PackagingFileFilter fileFilter);
 
   public abstract void addLibraryLink(@NotNull CompileContext context,
@@ -69,7 +69,7 @@ public abstract class DeploymentUtil {
                                               @NotNull Module module,
                                               String outputRelativePath,
                                               @Nullable PackagingFileFilter fileFilter,
-                                              String possibleBaseOutputPath);
+                                              @Nullable String possibleBaseOutputPath);
 
   public static void reportRecursiveCopying(CompileContext context, final String sourceDirPath, String targetDirPath,
                                             final String dirTitle, String additionalMessage) {
