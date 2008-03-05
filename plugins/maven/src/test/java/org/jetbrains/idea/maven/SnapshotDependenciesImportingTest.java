@@ -52,12 +52,7 @@ public class SnapshotDependenciesImportingTest extends ImportingTestCase {
                           "<artifactId>m1</artifactId>" +
                           "<version>1</version>" +
 
-                          "<repositories>" +
-                          "  <repository>" +
-                          "    <id>internal</id>" +
-                          "    <url>file://" + remoteRepoDir.getPath() + "</url>" +
-                          "  </repository>" +
-                          "</repositories>" +
+                          repositoriesSection() +
 
                           "<dependencies>" +
                           "  <dependency>" +
@@ -71,12 +66,7 @@ public class SnapshotDependenciesImportingTest extends ImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>" + version + "</version>" +
 
-                          "<distributionManagement>" +
-                          "  <repository>" +
-                          "    <id>internal</id>" +
-                          "    <url>file://" + remoteRepoDir.getPath() + "</url>" +
-                          "  </repository>" +
-                          "</distributionManagement>");
+                          distributionManagementSection());
 
     importProject();
     assertModules("project", "m1", "m2");
@@ -93,6 +83,42 @@ public class SnapshotDependenciesImportingTest extends ImportingTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
+  public void testNamingLibraryTheSameWayRegardlessAvailableSnapshotVersion() throws Exception {
+    deployArtifact("test", "foo", "1-SNAPSHOT");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  repositoriesSection() +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>test</groupId>" +
+                  "    <artifactId>foo</artifactId>" +
+                  "    <version>1-SNAPSHOT</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+    assertModuleLibDeps("project", "test:foo:1-SNAPSHOT");
+
+    removeFromLocalRepository("test");
+    
+    importProject();
+    assertModuleLibDeps("project", "test:foo:1-SNAPSHOT");
+  }
+
+  private void deployArtifact(String groupId, String artifactId, String version) throws IOException {
+    String moduleName = "___" + artifactId;
+    createModulePom(moduleName,
+                    "<groupId>" + groupId + "</groupId>" +
+                    "<artifactId>" + artifactId + "</artifactId>" +
+                    "<version>" + version + "</version>" +
+
+                    distributionManagementSection());
+
+    deploy(moduleName);
+  }
+
   private void deploy(String modulePath) {
     VirtualFile pom = projectRoot.findFileByRelativePath(modulePath + "/pom.xml");
 
@@ -106,5 +132,23 @@ public class SnapshotDependenciesImportingTest extends ImportingTestCase {
   private void removeFromLocalRepository(String groupId) throws IOException {
     String path = getRepositoryPath() + "/" + groupId;
     FileUtils.deleteDirectory(path);
+  }
+
+  private String repositoriesSection() {
+    return "<repositories>" +
+           "  <repository>" +
+           "    <id>internal</id>" +
+           "    <url>file://" + remoteRepoDir.getPath() + "</url>" +
+           "  </repository>" +
+           "</repositories>";
+  }
+
+  private String distributionManagementSection() {
+     return "<distributionManagement>" +
+            "  <repository>" +
+            "    <id>internal</id>" +
+            "    <url>file://" + remoteRepoDir.getPath() + "</url>" +
+            "  </repository>" +
+            "</distributionManagement>";
   }
 }

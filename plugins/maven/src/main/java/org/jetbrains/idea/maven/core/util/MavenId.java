@@ -1,29 +1,23 @@
 package org.jetbrains.idea.maven.core.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import org.apache.maven.artifact.Artifact;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
 import java.text.ParseException;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public class MavenId implements Comparable<MavenId>{
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.core.util.MavenId");
-
-  @NonNls public String groupId;
-  @NonNls public String artifactId;
-  @NonNls public String version;
-  @NonNls public String classifier;
+  public String groupId;
+  public String artifactId;
+  public String version;
+  public String classifier;
+  private String baseVersion;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public MavenId() {
   }
 
-  public MavenId(@NonNls final String groupId, @NonNls final String artifactId, @NonNls final String version) {
+  public MavenId(String groupId, String artifactId, String version) {
     this.groupId = groupId;
     this.artifactId = artifactId;
     this.version = version;
@@ -31,6 +25,7 @@ public class MavenId implements Comparable<MavenId>{
 
   public MavenId(Artifact artifact) {
     this(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
+    this.baseVersion = artifact.getBaseVersion();
     this.classifier = artifact.getClassifier();
   }
 
@@ -57,9 +52,12 @@ public class MavenId implements Comparable<MavenId>{
   }
 
   public String toString() {
-    String result = version != null
-                    ? MessageFormat.format("{0}:{1}:{2}", groupId, artifactId, version)
+    String selectedVersion = baseVersion == null ? version : baseVersion;
+
+    String result = selectedVersion != null
+                    ? MessageFormat.format("{0}:{1}:{2}", groupId, artifactId, selectedVersion)
                     : MessageFormat.format("{0}:{1}", groupId, artifactId);
+    
     return classifier == null ? result : result + ":" + classifier;
   }
 
