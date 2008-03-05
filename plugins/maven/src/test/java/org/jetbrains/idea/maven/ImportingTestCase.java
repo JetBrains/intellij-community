@@ -16,8 +16,6 @@ import com.intellij.util.PathUtil;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
@@ -42,15 +40,6 @@ public abstract class ImportingTestCase extends MavenTestCase {
 
   @Override
   protected void setUpModule() {
-  }
-
-  protected String getRepositoryPath() {
-    String path = getMavenCoreState().getEffectiveLocalRepository().getPath();
-    return FileUtil.toSystemIndependentName(path);
-  }
-
-  protected MavenCoreSettings getMavenCoreState() {
-    return myProject.getComponent(MavenCore.class).getState();
   }
 
   protected PomTreeStructure.RootNode createMavenTree() {
@@ -168,14 +157,8 @@ public abstract class ImportingTestCase extends MavenTestCase {
   }
 
   protected void assertModuleLibDep(String moduleName, String depName, String path, String sourcePath, String javadocPath) {
-    LibraryOrderEntry lib = null;
+    LibraryOrderEntry lib = getModuleLibDep(moduleName, depName);
 
-    for (OrderEntry e : getRootManager(moduleName).getOrderEntries()) {
-      if (e instanceof LibraryOrderEntry && e.getPresentableName().equals(depName)) {
-        lib = (LibraryOrderEntry)e;
-      }
-    }
-    assertNotNull("library dependency not found: " + depName, lib);
     assertModuleLibDepPath(lib, OrderRootType.CLASSES, path);
     assertModuleLibDepPath(lib, OrderRootType.SOURCES, sourcePath);
     assertModuleLibDepPath(lib, JavadocOrderRootType.getInstance(), javadocPath);
@@ -188,6 +171,26 @@ public abstract class ImportingTestCase extends MavenTestCase {
     assertEquals(1, urls.length);
     assertEquals(path, urls[0]);
   }
+
+  protected void assertModuleLibDepClassesValidity(String moduleName, String depName, boolean areValid) {
+    LibraryOrderEntry lib = getModuleLibDep(moduleName, depName);
+
+    String jarUrl = lib.getUrls(OrderRootType.CLASSES)[0];
+    assertEquals(areValid, lib.getLibrary().isValid(jarUrl, OrderRootType.CLASSES));
+  }
+
+  private LibraryOrderEntry getModuleLibDep(String moduleName, String depName) {
+    LibraryOrderEntry lib = null;
+
+    for (OrderEntry e : getRootManager(moduleName).getOrderEntries()) {
+      if (e instanceof LibraryOrderEntry && e.getPresentableName().equals(depName)) {
+        lib = (LibraryOrderEntry)e;
+      }
+    }
+    assertNotNull("library dependency not found: " + depName, lib);
+    return lib;
+  }
+
 
   protected void assertModuleLibDeps(String moduleName, String... expectedDeps) {
     assertModuleDeps(moduleName, LibraryOrderEntry.class, expectedDeps);

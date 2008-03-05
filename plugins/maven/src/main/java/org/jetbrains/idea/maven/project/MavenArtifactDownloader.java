@@ -224,7 +224,6 @@ public class MavenArtifactDownloader {
     }
   }
 
-
   private static void generateSources(Project project, final List<MavenRunnerParameters> commands) {
     final MavenCore core = project.getComponent(MavenCore.class);
     final MavenRunner runner = project.getComponent(MavenRunner.class);

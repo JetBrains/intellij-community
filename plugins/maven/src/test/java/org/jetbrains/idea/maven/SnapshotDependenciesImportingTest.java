@@ -95,6 +95,7 @@ public class SnapshotDependenciesImportingTest extends ImportingTestCase {
 
   private void deploy(String modulePath) {
     VirtualFile pom = projectRoot.findFileByRelativePath(modulePath + "/pom.xml");
+
     MavenRunnerParameters rp = new MavenRunnerParameters(pom.getPath(), Arrays.asList("deploy"), null);
     MavenRunnerSettings rs = new MavenRunnerSettings();
     MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(rp, getMavenCoreState(), rs);
