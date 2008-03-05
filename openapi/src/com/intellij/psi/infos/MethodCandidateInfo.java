@@ -103,23 +103,24 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
   public PsiSubstitutor inferTypeArguments(final boolean forCompletion) {
+    return inferTypeArguments(forCompletion, myArgumentList == null ? PsiExpression.EMPTY_ARRAY : myArgumentList.getExpressions());
+  }
+
+  public PsiSubstitutor inferTypeArguments(final boolean forCompletion, final PsiExpression[] arguments) {
     PsiMethod method = getElement();
-    PsiSubstitutor partialSubstitutor = mySubstitutor;
-    PsiExpression[] arguments = myArgumentList == null ? PsiExpression.EMPTY_ARRAY : myArgumentList.getExpressions();
     PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
     if (!method.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null && PsiUtil.isRawSubstitutor(containingClass, partialSubstitutor)) {
-        return createRawSubstitutor(partialSubstitutor, typeParameters);
+      if (containingClass != null && PsiUtil.isRawSubstitutor(containingClass, mySubstitutor)) {
+        return createRawSubstitutor(mySubstitutor, typeParameters);
       }
     }
 
     PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
     return helper.inferTypeArguments(typeParameters,
                                                    method.getParameterList().getParameters(),
-                                                   arguments,
-                                                   partialSubstitutor,
+                                                   arguments, mySubstitutor,
                                                    myArgumentList.getParent(),
                                                    forCompletion);
   }
