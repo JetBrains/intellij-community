@@ -53,6 +53,7 @@
           <include name = "?*.jar"/>
       </fileset>
     <fileset  refid="idea.libraries"/>
+    <fileset dir="${basedir}/../lib"/>
   </path>
 
   <path id="sourcepath">
@@ -89,6 +90,7 @@
       <include name="**/?*.html"/>
       <include name="**/?*.dtd"/>
       <include name="**/?*.tld"/>
+      <include name="**/?*.py"/>
   </patternset>
 
   <target name="compile" depends="init">
@@ -106,14 +108,22 @@
 
     <!-- copy resources -->
     <copy todir="${classes.dir}">
-        <fileset dir="${basedir}/../resources">
-            <patternset refid="resources.pt"/>
-            <type type="file"/>
-        </fileset>
-        <fileset dir="${basedir}/../src">
-            <patternset refid="resources.pt"/>
-            <type type="file"/>
-        </fileset>
+      <fileset dir="${basedir}/../resources">
+          <patternset refid="resources.pt"/>
+          <type type="file"/>
+      </fileset>
+      <fileset dir="${basedir}/../pluginResources">
+          <patternset refid="resources.pt"/>
+          <type type="file"/>
+      </fileset>
+      <fileset dir="${basedir}/../pySrc">
+          <patternset refid="resources.pt"/>
+          <type type="file"/>
+      </fileset>
+      <fileset dir="${basedir}/../src">
+          <patternset refid="resources.pt"/>
+          <type type="file"/>
+      </fileset>
     </copy>
 
     <replace file="${classes.dir}/idea/PythonApplicationInfo.xml" token="__BUILD_NUMBER__" value="${build.number}"/>
@@ -172,6 +182,7 @@
           <include name="resources_en.jar"/>
         </fileset>
         <fileset dir="${out.dir}/deploy"/>
+        <fileset dir="${basedir}/../lib"/>
         <fileset refid="idea.libraries"/>
       </dir>
       <dir name="plugins">
