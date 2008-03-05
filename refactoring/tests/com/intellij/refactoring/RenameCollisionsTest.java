@@ -37,6 +37,34 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     doTest("String");
   }
 
+  public void testRenameMethodIndiInstancesInnerToOuter() throws Exception {
+    doTest("method");
+  }
+
+  public void testRenameMethodIndiInstancesOuterToInner() throws Exception {
+    doTest("siMethod");
+  }
+
+  //Fails due to IDEADEV-25197.
+  //public void testRenameMethodInnerInstanceToOuterInstance() throws Exception {
+  //  doTest("method");
+  //}
+
+  //Fails due to IDEADEV-25197.
+  //public void testRenameMethodInnerStaticToOuterStatic() throws Exception {
+  //  doTest("staticMethod");
+  //}
+
+  //Fails due to IDEADEV-25197.
+  //public void testRenameMethodOuterInstanceToInnerInstance() throws Exception {
+  //  doTest("innerMethod");
+  //}
+
+  //Fails due to IDEADEV-25197.
+  //public void testRenameMethodOuterStaticToInnerStatic() throws Exception {
+  //  doTest("siStaticMethod");
+  //}
+
   //Fails due to IDEADEV-25198.
   //public void testRenameMethodStaticToAlien() throws Exception {
   //  doTest("valueOf");
