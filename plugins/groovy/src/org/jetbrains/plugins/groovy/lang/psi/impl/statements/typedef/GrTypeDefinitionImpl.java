@@ -494,6 +494,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   public void subtreeChanged() {
     myMethods = null;
     myConstructors = null;
+    myGroovyMethods = null;
     super.subtreeChanged();
   }
 
