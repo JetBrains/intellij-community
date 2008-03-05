@@ -17,10 +17,9 @@ package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +50,8 @@ public interface PyElementGenerator {
   PyBinaryExpression createBinaryExpression(Project project, String s,
                                             PyExpression expr,
                                             PyExpression listLiteral);
+
+  PyExpression createExpressionFromText(Project project, String text);
 
   PyCallExpression createCallExpression(Project project,
                                         String functionName);

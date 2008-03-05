@@ -23,10 +23,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.psi.*;
-import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
@@ -208,7 +208,14 @@ public class PyElementGeneratorImpl implements PyElementGenerator {
         return binExpr;
     }
 
-    public PyCallExpression createCallExpression(Project project,
+  public PyExpression createExpressionFromText(final Project project, final String text) {
+    final PsiFile dummyFile = createDummyFile(project, text);
+    final PyExpressionStatement expressionStatement =
+                (PyExpressionStatement) dummyFile.getFirstChild();
+    return expressionStatement.getExpression();
+  }
+
+  public PyCallExpression createCallExpression(Project project,
                                                  String functionName) {
         final PsiFile dummyFile = createDummyFile(project, functionName + "()");
         return (PyCallExpression) dummyFile.getFirstChild().getFirstChild();

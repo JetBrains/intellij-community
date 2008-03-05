@@ -12,6 +12,9 @@
     <component>
       <implementation-class>com.jetbrains.python.PyInspectionToolProvider</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.jetbrains.python.PyIntentionsRegistrar</implementation-class>
+    </component>
   </application-components>
 
   <extensions defaultExtensionNs="com.intellij">
