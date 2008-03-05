@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.idea.devkit.build.ant.BuildJarTarget;
@@ -68,8 +69,8 @@ public class GenerateAntTest extends IdeaTestCase {
 
   private void checkBuildsEqual(String generated, String expected) throws IncorrectOperationException {
     final CodeStyleManager manager = CodeStyleManager.getInstance(myProject);
-    XmlTag genTag = getJavaFacade().getElementFactory().createTagFromText(StringUtil.convertLineSeparators(generated));
-    XmlTag expTag = getJavaFacade().getElementFactory().createTagFromText(StringUtil.convertLineSeparators(expected));
+    XmlTag genTag = XmlElementFactory.getInstance(myProject).createTagFromText(StringUtil.convertLineSeparators(generated));
+    XmlTag expTag = XmlElementFactory.getInstance(myProject).createTagFromText(StringUtil.convertLineSeparators(expected));
     if (!tagsEqual(genTag, expTag)) {
       genTag = (XmlTag)manager.reformat(manager.reformat(genTag));
       expTag = (XmlTag)manager.reformat(manager.reformat(expTag));
