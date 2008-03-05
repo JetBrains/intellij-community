@@ -3,7 +3,7 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +82,7 @@ public class XmlTagValueImpl implements XmlTagValue{
         myTag.deleteChildRange(myElements[0], myElements[myElements.length - 1]);
       }
       if(value != null && value.length() > 0) {
-        XmlText displayText = JavaPsiFacade.getInstance(myTag.getProject()).getElementFactory().createDisplayText("x");
+        XmlText displayText = XmlElementFactory.getInstance(myTag.getProject()).createDisplayText("x");
         displayText = (XmlText)myTag.add(displayText);
         displayText.setValue(value);
       }

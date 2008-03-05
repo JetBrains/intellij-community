@@ -10,9 +10,9 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
@@ -82,7 +82,7 @@ public class RenameTagBeginOrEndIntentionAction implements LocalQuickFix {
 
       if (target != null) {
         try {
-          final XmlTag newTag = JavaPsiFacade.getInstance(project).getElementFactory().createTagFromText("<" + myTargetName + "/>");
+          final XmlTag newTag = XmlElementFactory.getInstance(project).createTagFromText("<" + myTargetName + "/>");
           target.replace(newTag.getChildren()[1]);
         }
         catch (IncorrectOperationException e) {

@@ -289,13 +289,13 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         if (rootTag != null) {
           for (XmlTag tag : rootTag.getSubTags()) {
             if (Comparing.strEqual(tag.getAttributeValue("name"), externalName)) {
-              tag.add(JavaPsiFacade.getInstance(xmlFile.getProject()).getElementFactory().createTagFromText("<annotation name=\'" + annotationFQName + "\'/>"));
+              tag.add(XmlElementFactory.getInstance(xmlFile.getProject()).createTagFromText("<annotation name=\'" + annotationFQName + "\'/>"));
               return;
             }
           }
           @NonNls final String text =
             "<item name=\'" + externalName + "\'>\n" + "  <annotation name=\'" + annotationFQName + "\'/>\n" + "</item>";
-          rootTag.add(JavaPsiFacade.getInstance(xmlFile.getProject()).getElementFactory().createTagFromText(text));
+          rootTag.add(XmlElementFactory.getInstance(xmlFile.getProject()).createTagFromText(text));
         }
       }
     }

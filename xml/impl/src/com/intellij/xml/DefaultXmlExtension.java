@@ -5,9 +5,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.*;
@@ -142,7 +141,7 @@ public class DefaultXmlExtension extends XmlExtension {
     if (prefix == null) {
       prefix = "x";
     }
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final XmlElementFactory elementFactory = XmlElementFactory.getInstance(project);
 
     @NonNls final String qname = "xmlns" + (prefix.length() > 0 ? ":"+ prefix :"");
     final XmlAttribute attribute = elementFactory.createXmlAttribute(qname, namespace);

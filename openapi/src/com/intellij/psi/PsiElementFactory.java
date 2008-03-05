@@ -19,8 +19,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +30,7 @@ import java.util.Map;
  * Service for creating instances of Java, JavaDoc, JSP and XML PSI elements which don't have
  * an underlying source code file.
  *
- * @see PsiManager#getElementFactory()
+ * @see com.intellij.psi.JavaPsiFacade#getElementFactory()
  */
 public interface PsiElementFactory extends PsiJavaParserFacade {
   /**
@@ -340,17 +338,6 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
   @NotNull PsiDocTag createParamTag(@NotNull String parameterName, String description) throws IncorrectOperationException;
 
   /**
-   * Creates an XML attribute with the specified name and value.
-   *
-   * @param name  the name of the attribute to create.
-   * @param value the value of the attribute to create.
-   * @return the created attribute instance.
-   * @throws IncorrectOperationException if either <code>name</code> or <code>value</code> are not valid.
-   */
-  @NotNull XmlAttribute createXmlAttribute(@NotNull @NonNls String name, String value) throws IncorrectOperationException;
-
-
-  /**
    * Creates a Java expression code fragment from the text of the expression.
    *
    * @param text         the text of the expression to create.
@@ -446,8 +433,6 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
    */
   @NotNull PsiPackageStatement createPackageStatement(@NotNull String name) throws IncorrectOperationException;
 
-  @NotNull XmlTag getAntImplicitDeclarationTag() throws IncorrectOperationException;
-
   /**
    * Creates a Java reference code fragment from the text of a Java reference to a
    * package or class.
@@ -495,33 +480,4 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
    * @throws IncorrectOperationException if some of the references are invalid.
    */
   @NotNull PsiReferenceList createReferenceList(@NotNull PsiJavaCodeReferenceElement[] references) throws IncorrectOperationException;
-
-  /**
-   * Creates an XML text element from the specified string, escaping the special
-   * characters in the string as necessary.
-   *
-   * @param s the text of the element to create.
-   * @return the created element.
-   * @throws IncorrectOperationException if the creation failed for some reason.
-   */
-  @NotNull XmlText createDisplayText(@NotNull @NonNls String s) throws IncorrectOperationException;
-
-  /**
-   * Creates an XHTML tag with the specified text.
-   *
-   * @param s the text of an XHTML tag (which can contain attributes and subtags).
-   * @return the created tag instance.
-   * @throws IncorrectOperationException if the text does not specify a valid XML fragment.
-   */
-  @NotNull XmlTag createXHTMLTagFromText(@NotNull @NonNls String s) throws IncorrectOperationException;
-
-  /**
-   * Creates an XML tag with the specified text.
-   *
-   * @param text the text of an XML tag (which can contain attributes and subtags).
-   * @return the created tag instance.
-   * @throws com.intellij.util.IncorrectOperationException if the text does not specify a valid XML fragment.
-   */
-  @NotNull
-  XmlTag createTagFromText(@NotNull @NonNls String text) throws IncorrectOperationException;
 }

@@ -425,7 +425,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     model.runTransaction(new PomTransactionBase(this, aspect) {
       public PomModelEvent runInner() throws IncorrectOperationException{
         final String oldName = getName();
-        final XmlTagImpl dummyTag = (XmlTagImpl)JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createTagFromText(XmlTagTextUtil.composeTagText(name, "aa"));
+        final XmlTagImpl dummyTag = (XmlTagImpl)XmlElementFactory.getInstance(getManager().getProject()).createTagFromText(XmlTagTextUtil.composeTagText(name, "aa"));
         final XmlTagImpl tag = XmlTagImpl.this;
         final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(tag);
         ChangeUtil.replaceChild(tag, (TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(tag), ChangeUtil.copyElement((TreeElement)XmlChildRole.START_TAG_NAME_FINDER.findChild(dummyTag), charTableByTree));
@@ -773,7 +773,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
       return null;
     }
     else {
-      PsiElement xmlAttribute = add(JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createXmlAttribute(qname, value));
+      PsiElement xmlAttribute = add(XmlElementFactory.getInstance(getManager().getProject()).createXmlAttribute(qname, value));
       while(!(xmlAttribute instanceof XmlAttribute)) xmlAttribute = xmlAttribute.getNextSibling();
       return (XmlAttribute)xmlAttribute;
     }
@@ -949,7 +949,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   private ASTNode expandTag() throws IncorrectOperationException{
     ASTNode endTagStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(this);
     if(endTagStart == null){
-      final XmlTagImpl tagFromText = (XmlTagImpl)JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createTagFromText("<" + getName() + "></" + getName() + ">");
+      final XmlTagImpl tagFromText = (XmlTagImpl)XmlElementFactory.getInstance(getManager().getProject()).createTagFromText("<" + getName() + "></" + getName() + ">");
       final ASTNode startTagStart = XmlChildRole.START_TAG_END_FINDER.findChild(tagFromText);
       endTagStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(tagFromText);
       final LeafElement emptyTagEnd = (LeafElement)XmlChildRole.EMPTY_TAG_END_FINDER.findChild(this);

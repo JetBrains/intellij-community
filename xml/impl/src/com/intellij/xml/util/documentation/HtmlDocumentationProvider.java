@@ -4,10 +4,7 @@ import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.jsp.impl.TldAttributeDescriptor;
 import com.intellij.jsp.impl.TldDescriptor;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -266,7 +263,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
 
     if (descriptor != null && !isAttributeContext(context) ) {
       try {
-        final XmlTag tagFromText = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createTagFromText("<"+ key + " xmlns=\"" + XmlUtil.XHTML_URI + "\"/>");
+        final XmlTag tagFromText = XmlElementFactory.getInstance(psiManager.getProject()).createTagFromText("<"+ key + " xmlns=\"" + XmlUtil.XHTML_URI + "\"/>");
         final XmlElementDescriptor tagDescriptor = tagFromText.getDescriptor();
         return tagDescriptor != null ? tagDescriptor.getDeclaration() : null;
       }

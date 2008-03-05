@@ -4,7 +4,6 @@
 
 package com.intellij.xml.util;
 
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
@@ -17,6 +16,6 @@ public class XmlElementFactory {
   }
 
   public static XmlText createXmlTextFromText(PsiManager psiManager, String text) throws IncorrectOperationException {
-    return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createTagFromText("<foo>" + text + "</foo>").getValue().getTextElements()[0];
+    return com.intellij.psi.XmlElementFactory.getInstance(psiManager.getProject()).createTagFromText("<foo>" + text + "</foo>").getValue().getTextElements()[0];
   }
 }

@@ -1,6 +1,5 @@
 package com.intellij.psi.impl;
 
-import com.intellij.lang.ASTFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -13,11 +12,8 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import com.intellij.xml.util.XmlTagTextUtil;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -380,12 +376,6 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
-  public XmlTag getAntImplicitDeclarationTag() throws IncorrectOperationException {
-    return createTagFromText(
-        "<implicit-properties-ant-declaration-tag-for-intellij-idea xmlns=\"" + XmlUtil.ANT_URI + "\"/>");
-  }
-
-  @NotNull
   public PsiJavaCodeReferenceCodeFragment createReferenceCodeFragment(@NotNull String text,
                                                                       PsiElement context,
                                                                       boolean isPhysical,
@@ -437,19 +427,6 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     text += "{}";
     PsiMethod method = createMethodFromText(text, null);
     return method.getThrowsList();
-  }
-
-  @NotNull
-  public XmlText createDisplayText(@NotNull String s) throws IncorrectOperationException {
-    final XmlTag tagFromText = createTagFromText("<a>" + XmlTagTextUtil.getCDATAQuote(s) + "</a>");
-    final XmlText[] textElements = tagFromText.getValue().getTextElements();
-    if (textElements.length == 0) return (XmlText)ASTFactory.composite(XmlElementType.XML_TEXT);
-    return textElements[0];
-  }
-
-  @NotNull
-  public XmlTag createXHTMLTagFromText(@NotNull String text) throws IncorrectOperationException {
-    return ((XmlFile)PsiFileFactory.getInstance(myManager.getProject()).createFileFromText("dummy.xhtml", text)).getDocument().getRootTag();
   }
 
   @NotNull
@@ -566,19 +543,6 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       buffer.append(string);
     }
     return createDocTagFromText(buffer.toString(), null);
-  }
-
-  @NotNull
-  public XmlTag createTagFromText(@NotNull String text) throws IncorrectOperationException {
-    final XmlTag tag = ((XmlFile)PsiFileFactory.getInstance(myManager.getProject()).createFileFromText("dummy.xml", text)).getDocument().getRootTag();
-    if (tag == null) throw new IncorrectOperationException("Incorrect tag text");
-    return tag;
-  }
-
-  @NotNull
-  public XmlAttribute createXmlAttribute(@NotNull String name, String value) throws IncorrectOperationException {
-    XmlTag tag = ((XmlFile)PsiFileFactory.getInstance(myManager.getProject()).createFileFromText("dummy.xml", "<tag " + name + "=\"" + value + "\"/>")).getDocument().getRootTag();
-    return tag.getAttributes()[0];
   }
 
   @NotNull

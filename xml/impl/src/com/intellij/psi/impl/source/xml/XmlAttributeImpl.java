@@ -69,8 +69,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   public void setValue(String valueText) throws IncorrectOperationException{
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
     final PomModel model = PomManager.getModel(getProject());
-    final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((CompositeElement)JavaPsiFacade
-      .getInstance(getManager().getProject()).getElementFactory().createXmlAttribute("a", valueText));
+    final XmlAttribute attribute = XmlElementFactory.getInstance(getManager().getProject()).createXmlAttribute("a", valueText);
+    final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((CompositeElement)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this, aspect) {
       public PomModelEvent runInner(){
@@ -256,8 +256,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
     final String oldName = name.getText();
     final PomModel model = PomManager.getModel(getProject());
-    final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((CompositeElement)JavaPsiFacade
-      .getInstance(getManager().getProject()).getElementFactory().createXmlAttribute(nameText, ""));
+    final XmlAttribute attribute = XmlElementFactory.getInstance(getManager().getProject()).createXmlAttribute(nameText, "");
+    final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((CompositeElement)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(getParent(), aspect) {
       public PomModelEvent runInner(){

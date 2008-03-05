@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
@@ -753,7 +754,7 @@ public class XmlUtil {
 
     // bug in PSI: cannot add child to <tag/>
     if (parent.getSubTags().length == 0 && parent.getText().endsWith("/>")) {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(parent.getProject()).getElementFactory();
+      final XmlElementFactory factory = XmlElementFactory.getInstance(parent.getProject());
       final String name = parent.getName();
       final String text = parent.getText();
       final XmlTag tag = factory.createTagFromText(text.substring(0, text.length() - 2) + "></" + name + ">");
@@ -1064,7 +1065,7 @@ public class XmlUtil {
       }
       XmlTag retTag;
       if (bodyText != null && bodyText.length() > 0) {
-        retTag = JavaPsiFacade.getInstance(xmlTag.getProject()).getElementFactory().createTagFromText("<" + tagStart + ">" + bodyText + "</" + qname + ">");
+        retTag = XmlElementFactory.getInstance(xmlTag.getProject()).createTagFromText("<" + tagStart + ">" + bodyText + "</" + qname + ">");
         if (enforceNamespacesDeep) {
           retTag.acceptChildren(new XmlRecursiveElementVisitor() {
             @Override public void visitXmlTag(XmlTag tag) {
@@ -1090,7 +1091,7 @@ public class XmlUtil {
         }
       }
       else {
-        retTag = JavaPsiFacade.getInstance(xmlTag.getProject()).getElementFactory().createTagFromText("<" + tagStart + "/>");
+        retTag = XmlElementFactory.getInstance(xmlTag.getProject()).createTagFromText("<" + tagStart + "/>");
       }
       return retTag;
     }
