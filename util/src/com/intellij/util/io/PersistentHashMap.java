@@ -226,8 +226,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     super.close();
     myValueStorage.dispose();
   }
-
-  private synchronized void compact() throws IOException {
+  
+  // made public for tests
+  public synchronized void compact() throws IOException {
     long now = System.currentTimeMillis();
     final String newPath = getDataFile(myFile).getPath() + ".new";
     final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath);
@@ -248,8 +249,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     myValueStorage.dispose();
     newStorage.dispose();
 
-    new File(newPath).renameTo(getDataFile(myFile));
-
+    FileUtil.rename(new File(newPath), getDataFile(myFile));
+    
     myValueStorage = PersistentHashMapValueStorage.create(getDataFile(myFile).getPath());
     LOG.info("Compacted " + myFile.getPath() + " in " + (System.currentTimeMillis() - now) + "ms.");
     myGarbageSize = 0;
