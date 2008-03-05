@@ -30,8 +30,12 @@ public abstract class BaseCodeInsightAction extends CodeInsightAction {
     if (!myLookForInjectedEditor) return editor;
     Editor injectedEditor = editor;
     if (editor != null) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument());
-      injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, psiFile);
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      PsiFile psiFile = documentManager.getCachedPsiFile(editor.getDocument());
+      if (psiFile != null) {
+        documentManager.commitAllDocuments();
+        injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, psiFile);
+      }
     }
     return injectedEditor;
   }
@@ -39,10 +43,6 @@ public abstract class BaseCodeInsightAction extends CodeInsightAction {
   @Nullable
   protected Editor getBaseEditor(final DataContext dataContext, final Project project) {
     return super.getEditor(dataContext, project);
-  }
-
-  public boolean isValidForLookup(Lookup lookup, DataContext context) {
-    return isValidForLookup();
   }
 
   public void update(AnActionEvent event) {
@@ -56,13 +56,9 @@ public abstract class BaseCodeInsightAction extends CodeInsightAction {
 
     final Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
     if (activeLookup != null){
-      if (!isValidForLookup(activeLookup, dataContext)){
-        presentation.setEnabled(false);
-      }
-      else{
-        presentation.setEnabled(true);
-      }
-    } else {
+      presentation.setEnabled(isValidForLookup());
+    }
+    else {
       super.update(event);
     }
   }
