@@ -9,7 +9,8 @@ public class MethodDeclarationRangeHandler implements DeclarationRangeHandler {
   @NotNull
   public TextRange getDeclarationRange(@NotNull final PsiElement container) {
     PsiMethod method = (PsiMethod)container;
-    int startOffset = method.getModifierList().getTextRange().getStartOffset();
+    final TextRange textRange = method.getModifierList().getTextRange();
+    int startOffset = textRange != null ? textRange.getStartOffset():method.getTextOffset();
     int endOffset = method.getThrowsList().getTextRange().getEndOffset();
     return new TextRange(startOffset, endOffset);
   }
