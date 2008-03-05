@@ -166,6 +166,7 @@
     <group id="CodeMenu" popup="true">
       <reference ref="OverrideMethods"/>
       <reference ref="ImplementMethods"/>
+      <action id="Generate" class="com.intellij.codeInsight.generation.actions.GenerateAction"/>
       <separator/>
 
       <group id="CodeCompletionGroup" class="com.intellij.codeInsight.completion.actions.CodeCompletionGroup" popup="true">
@@ -433,6 +434,29 @@
       <reference ref="VersionControlsGroup"/>
       <separator/>
       <reference ref="CompareTwoFiles"/>
+    </group>
+
+    <group id="EditorLangPopupMenu">
+      <separator/>
+      <group id="EditorPopupMenu.GoTo" popup="true">
+        <reference ref="ShowNavBar"/>
+        <reference ref="GotoDeclaration"/>
+        <reference ref="GotoImplementation"/>
+        <reference ref="GotoTypeDeclaration"/>
+        <reference ref="GotoSuperMethod"/>
+      </group>
+      <reference ref="Generate"/>
+      <separator/>
+
+      <group id="EditorPopupMenu.Run">
+        <reference ref="RunContextPopupGroup"/>
+      </group>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+
+      <add-to-group group-id="EditorPopupMenu" relative-to-action="CloseEditor" anchor="after"/>
     </group>
 
     <group id="UsageView.Popup">

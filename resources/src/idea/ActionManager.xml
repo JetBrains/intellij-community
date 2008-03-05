@@ -169,7 +169,6 @@
       <reference ref="DelegateMethods"/>
       <separator/>
       <action id="SurroundWith" class="com.intellij.codeInsight.generation.actions.SurroundWithAction"/>
-      <action id="Generate" class="com.intellij.codeInsight.generation.actions.GenerateAction"/>
       <action id="Unwrap" class="com.intellij.codeInsight.unwrap.UnwrapAction"/>
 
       <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="ImplementMethods"/>
@@ -401,15 +400,6 @@
 
     <group id="EditorPopupMenu2">
       <separator/>
-      <group id="EditorPopupMenu.GoTo" popup="true">
-        <reference ref="ShowNavBar"/>
-        <reference ref="GotoDeclaration"/>
-        <reference ref="GotoImplementation"/>
-        <reference ref="GotoTypeDeclaration"/>
-        <reference ref="GotoSuperMethod"/>
-      </group>
-      <reference ref="Generate"/>
-      <separator/>
       <reference ref="EvaluateExpression"/>
       <reference ref="RunToCursor"/>
       <reference ref="ForceRunToCursor"/>
@@ -417,18 +407,25 @@
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <reference ref="Compile"/>
-      <reference ref="RunContextPopupGroup"/>
-      <reference ref="ValidateXml"/>
-      <separator/>
-      <reference ref="VersionControlsGroup"/>
-      <separator/>
-      <reference ref="ExternalToolsGroup"/>
-      <action id="ShowAppliedStylesAction" class="com.intellij.psi.css.actions.ShowAppliedStylesAction"/>
 
-      <add-to-group group-id="EditorPopupMenu" relative-to-action="CloseEditor" anchor="after"/>
+      <add-to-group group-id="EditorLangPopupMenu" relative-to-action="EditorPopupMenu.Run" anchor="before"/>
     </group>
 
+    <group id="EditorCompilePopupMenu">
+      <reference ref="Compile"/>
+
+      <add-to-group group-id="EditorPopupMenu.Run" anchor="first"/>
+    </group>
+
+    <group id="EditorValidatePopupMenu">
+      <reference ref="ValidateXml"/>
+
+      <add-to-group group-id="EditorPopupMenu.Run" anchor="last"/>
+    </group>
+
+    <action id="ShowAppliedStylesAction" class="com.intellij.psi.css.actions.ShowAppliedStylesAction">
+      <add-to-group group-id="EditorLangPopupMenu" anchor="last"/>
+    </action>
 
     <group id="EditorTabPopupMenuEx">
       <separator/>
