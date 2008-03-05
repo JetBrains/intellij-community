@@ -262,14 +262,14 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
     findSuperMethodRecursilvely(methods, containingClass, false, new HashSet<PsiClass>(), createMethodSignature(this), new HashSet<MethodSignature>());
 
-    return methods.toArray(PsiMethod.EMPTY_ARRAY);
+    return methods.toArray(new PsiMethod[methods.size()]);
   }
 
   @NotNull
   public PsiMethod[] findSuperMethods(PsiClass parentClass) {
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
     findSuperMethodRecursilvely(methods, parentClass, false, new HashSet<PsiClass>(), createMethodSignature(this), new HashSet<MethodSignature>());
-    return methods.toArray(PsiMethod.EMPTY_ARRAY);
+    return methods.toArray(new PsiMethod[methods.size()]);
   }
 
   @NotNull
@@ -305,7 +305,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
     findSuperMethodRecursilvely(methods, containingClass, false, new HashSet<PsiClass>(), createMethodSignature(this), new HashSet<MethodSignature>());
 
-    return methods.toArray(PsiMethod.EMPTY_ARRAY);
+    return methods.toArray(new PsiMethod[methods.size()]);
   }
 
   /*
