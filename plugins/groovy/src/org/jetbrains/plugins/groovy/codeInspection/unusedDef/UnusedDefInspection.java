@@ -132,9 +132,11 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
       if (resolved instanceof GrVariable) var = (GrVariable) resolved;
     }
 
-    //noinspection SimplifiableIfStatement
     if (var != null) {
-      return ReferencesSearch.search(var, new LocalSearchScope(owner)).forEach(new Processor<PsiReference>() {
+      GrControlFlowOwner scope = PsiTreeUtil.getParentOfType(var, GrControlFlowOwner.class);
+      assert scope != null;
+
+      return ReferencesSearch.search(var, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
         public boolean process(PsiReference ref) {
           GrControlFlowOwner hisOwner = PsiTreeUtil.getParentOfType(ref.getElement(), GrControlFlowOwner.class);
           return hisOwner == owner;
