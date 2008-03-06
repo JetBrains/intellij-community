@@ -92,7 +92,7 @@ public class PythonParserDefinition implements ParserDefinition {
   }
 
   public PsiFile createFile(FileViewProvider viewProvider) {
-    return new PyFileImpl(viewProvider, (PythonLanguage)PythonFileType.INSTANCE.getLanguage(), PythonFileType.INSTANCE);
+    return new PyFileImpl(viewProvider);
   }
 
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {

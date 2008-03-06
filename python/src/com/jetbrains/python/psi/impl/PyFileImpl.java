@@ -28,80 +28,76 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.PythonFileType;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA. User: yole Date: 28.05.2005 Time: 10:08:07 To
- * change this template use File | Settings | File Templates.
- */
 public class PyFileImpl extends PsiFileBase implements PyFile {
-    private final FileType fileType;
-    public PyFileImpl(FileViewProvider viewProvider, PythonLanguage language,
-                      FileType pythonFileType) {
-        super(viewProvider, language);
-        this.fileType = pythonFileType;
-    }
+  public PyFileImpl(FileViewProvider viewProvider) {
+    super(viewProvider, PythonLanguage.getInstance());
+  }
 
-    @NotNull
-    public FileType getFileType() {
-        return fileType;
-    }
+  @NotNull
+  public FileType getFileType() {
+    return PythonFileType.INSTANCE;
+  }
 
-    public String toString() {
-        return "PyFile:" + getName();
-    }
+  public String toString() {
+    return "PyFile:" + getName();
+  }
 
-    public Icon getIcon(int i) {
-        return fileType.getIcon();
-    }
+  public Icon getIcon(int flags) {
+    return PythonFileType.INSTANCE.getIcon();
+  }
 
-    public void accept(PsiElementVisitor visitor) {
-        if (visitor instanceof PyElementVisitor) {
-            ((PyElementVisitor) visitor).visitPyFile(this);
-        } else {
-            super.accept(visitor);
-        }
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof PyElementVisitor) {
+      ((PyElementVisitor)visitor).visitPyFile(this);
     }
+    else {
+      super.accept(visitor);
+    }
+  }
 
-    public boolean processDeclarations(PsiScopeProcessor processor,
-                                       ResolveState substitutor,
-                                       PsiElement lastParent,
-                                       PsiElement place) {
-        final PsiElement[] children = getChildren();
-        for (PsiElement child : children) {
-            if (!child.processDeclarations(processor, substitutor, lastParent,
-                    place)) {
-                return false;
-            }
-        }
-        return true;
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState substitutor,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    final PsiElement[] children = getChildren();
+    for (PsiElement child : children) {
+      if (!child.processDeclarations(processor, substitutor, lastParent, place)) {
+        return false;
+      }
     }
+    return true;
+  }
 
-    @Nullable public <T extends PyElement> T getContainingElement(
-            Class<T> aClass) {
-        return null;
-    }
+  @Nullable
+  public <T extends PyElement> T getContainingElement(Class<T> aClass) {
+    return null;
+  }
 
-    public @Nullable PyElement getContainingElement(TokenSet tokenSet) {
-      return null;
-    }
+  @Nullable
+  public PyElement getContainingElement(TokenSet tokenSet) {
+    return null;
+  }
 
-    @PsiCached
-    public List<PyStatement> getStatements() {
-        List<PyStatement> stmts = new ArrayList<PyStatement>();
-        for (PsiElement child : getChildren()) {
-            if (child instanceof PyStatement) {
-                PyStatement statement = (PyStatement) child;
-                stmts.add(statement);
-            }
-        }
-        return stmts;
+  @PsiCached
+  public List<PyStatement> getStatements() {
+    List<PyStatement> stmts = new ArrayList<PyStatement>();
+    for (PsiElement child : getChildren()) {
+      if (child instanceof PyStatement) {
+        PyStatement statement = (PyStatement)child;
+        stmts.add(statement);
+      }
     }
+    return stmts;
+  }
 
   public PythonLanguage getPyLanguage() {
-    return (PythonLanguage) getLanguage();
+    return (PythonLanguage)getLanguage();
   }
 }
