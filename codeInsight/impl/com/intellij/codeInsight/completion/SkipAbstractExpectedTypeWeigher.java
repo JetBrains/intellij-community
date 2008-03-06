@@ -8,6 +8,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.statistics.StatisticsManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,9 +53,8 @@ public class SkipAbstractExpectedTypeWeigher extends CompletionWeigher {
     if (infos != null) {
       final PsiType type = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory().createType(psiClass);
       for (final ExpectedTypeInfo info : infos) {
-        final PsiType infoType = info.getType().getDeepComponentType();
-        final PsiType defaultType = info.getDefaultType().getDeepComponentType();
-        //todo raw
+        final PsiType infoType = TypeConversionUtil.erasure(info.getType().getDeepComponentType());
+        final PsiType defaultType = TypeConversionUtil.erasure(info.getDefaultType().getDeepComponentType());
         if (!defaultType.equals(infoType) && infoType.isAssignableFrom(type)) {
           if (!defaultType.isAssignableFrom(type)) return Result.NON_DEFAULT;
           isDefaultType = true;
