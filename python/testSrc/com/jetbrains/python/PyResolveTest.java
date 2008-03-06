@@ -10,7 +10,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.ResolveTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 
 public class PyResolveTest extends ResolveTestCase {
   private PsiElement resolve() throws Exception {
@@ -30,7 +30,7 @@ public class PyResolveTest extends ResolveTestCase {
 
   public void testVar() throws Exception {
     PsiElement targetElement = resolve();
-    assertTrue(targetElement instanceof PyReferenceExpression);
+    assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testQualifiedFunc() throws Exception {
@@ -40,7 +40,7 @@ public class PyResolveTest extends ResolveTestCase {
 
   public void testQualifiedVar() throws Exception {
     PsiElement targetElement = resolve();
-    assertTrue(targetElement instanceof PyReferenceExpression);
+    assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   @Override

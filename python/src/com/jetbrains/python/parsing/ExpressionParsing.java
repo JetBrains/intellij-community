@@ -209,7 +209,7 @@ public class ExpressionParsing extends Parsing {
 
   public boolean parseMemberExpression(PsiBuilder builder, boolean isTargetExpression) {
     PsiBuilder.Marker expr = builder.mark();
-    if (!parsePrimaryExpression(builder, false)) {
+    if (!parsePrimaryExpression(builder, isTargetExpression)) {
       expr.drop();
       return false;
     }

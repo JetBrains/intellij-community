@@ -92,7 +92,7 @@ public class PyClassImpl extends PyPresentableElementImpl implements PyClass {
         final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)psiElement;
         final PyExpression[] targets = assignmentStatement.getTargets();
         for (PyExpression target : targets) {
-          if (target instanceof PyReferenceExpression) {
+          if (target instanceof PyTargetExpression) {
             if (!processor.execute(target, substitutor)) return false;
           }
         }

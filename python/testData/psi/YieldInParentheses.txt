@@ -10,7 +10,7 @@ PyFile:YieldInParentheses.py
     PsiWhiteSpace('\n  ')
     PyStatementList
       PyAssignmentStatement
-        PyReferenceExpression: x
+        PyTargetExpression
           PsiElement(Py:IDENTIFIER)('x')
         PsiWhiteSpace(' ')
         PsiElement(Py:EQ)('=')
