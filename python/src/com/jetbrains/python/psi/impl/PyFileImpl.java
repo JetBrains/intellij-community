@@ -68,7 +68,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
                                      @NotNull PsiElement place) {
     final PsiElement[] children = getChildren();
     for (PsiElement child : children) {
-      if (!child.processDeclarations(processor, substitutor, lastParent, place)) {
+      if (child == lastParent) continue;
+      if (!child.processDeclarations(processor, substitutor, null, place)) {
         return false;
       }
     }
