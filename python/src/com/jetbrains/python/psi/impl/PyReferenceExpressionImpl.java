@@ -217,12 +217,16 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   public boolean shouldHighlightIfUnresolved() {
-    return false;
+    return getQualifier() == null && !isBuiltInConstant();
   }
 
-  public
+  private boolean isBuiltInConstant() {
+    String name = getReferencedName();
+    return "None".equals(name) || "True".equals(name) || "False".equals(name);
+  }
+
   @Nullable
-  String getUnresolvedDescription() {
+  public String getUnresolvedDescription() {
     return null;
   }
 
