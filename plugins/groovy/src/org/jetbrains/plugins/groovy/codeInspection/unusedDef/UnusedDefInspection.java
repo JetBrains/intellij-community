@@ -103,7 +103,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
       public boolean execute(int num) {
         final ReadWriteVariableInstruction instruction = (ReadWriteVariableInstruction) flow[num];
         final PsiElement element = instruction.getElement();
-        if (isLocalAssignment(element) && isUsedInCurrentFlowOnly(element, owner)) {
+        if (isLocalAssignment(element) && isUsedInToplevelFlowOnly(element, owner)) {
           if (element instanceof GrReferenceExpression) {
             PsiElement parent = element.getParent();
             PsiElement toHighlight = null;
@@ -123,7 +123,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     });
   }
 
-  private boolean isUsedInCurrentFlowOnly(PsiElement element, final GrControlFlowOwner owner) {
+  private boolean isUsedInToplevelFlowOnly(PsiElement element, final GrControlFlowOwner owner) {
     GrVariable var = null;
     if (element instanceof GrVariable) {
       var = (GrVariable) element;
@@ -133,13 +133,13 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     }
 
     if (var != null) {
-      GrControlFlowOwner scope = PsiTreeUtil.getParentOfType(var, GrControlFlowOwner.class);
+      final GrControlFlowOwner scope = PsiTreeUtil.getParentOfType(var, GrControlFlowOwner.class);
       assert scope != null;
 
       return ReferencesSearch.search(var, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
         public boolean process(PsiReference ref) {
           GrControlFlowOwner hisOwner = PsiTreeUtil.getParentOfType(ref.getElement(), GrControlFlowOwner.class);
-          return hisOwner == owner;
+          return hisOwner == scope;
         }
       });
     }
