@@ -1,10 +1,16 @@
 package com.jetbrains.python.sdk;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.SdkVersionUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PythonFileType;
@@ -13,12 +19,17 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.TreeSet;
 
 /**
  * @author yole
  */
 public class PythonSdkType extends SdkType {
+  private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
+
   public static PythonSdkType getInstance() {
     for (SdkType sdkType : Extensions.getExtensions(EP_NAME)) {
       if (sdkType instanceof PythonSdkType) {
@@ -116,6 +127,9 @@ public class PythonSdkType extends SdkType {
   public void setupSdkPaths(final Sdk sdk) {
     final SdkModificator sdkModificator = sdk.getSdkModificator();
     VirtualFile libDir = sdk.getHomeDirectory().findChild("Lib");
+    final String stubsPath =
+        PathManager.getSystemPath() + File.separator + "python_stubs" + File.separator + sdk.getHomePath().hashCode() + File.separator;
+    new File(stubsPath).mkdirs();
     if (libDir != null) {
       if (SystemInfo.isMac) {
         for (VirtualFile child : libDir.getChildren()) {
@@ -125,11 +139,14 @@ public class PythonSdkType extends SdkType {
             break;
           }
         }
+        generateStubs(sdk.getHomePath() + "/bin", stubsPath);
       }
       else {
         sdkModificator.addRoot(libDir, OrderRootType.SOURCES);
         sdkModificator.addRoot(libDir, OrderRootType.CLASSES);
+        generateStubs(sdk.getHomePath(), stubsPath);
       }
+      sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(stubsPath), OrderRootType.SOURCES);
     }
 
     sdkModificator.commitChanges();
@@ -155,5 +172,35 @@ public class PythonSdkType extends SdkType {
       return getJythonBinaryPath(sdkHome).getPath();
     }
     return getPythonBinaryPath(sdkHome).getPath();
+  }
+
+  public static void generateStubs(String binPath, final String stubsRoot) {
+    try {
+      final String text = FileUtil.loadTextAndClose(new InputStreamReader(PythonSdkType.class.getResourceAsStream("generator.py")));
+      final File tempFile = FileUtil.createTempFile("gen", "");
+
+      FileWriter out = new FileWriter(tempFile);
+      out.write(text);
+      out.close();
+
+      GeneralCommandLine commandLine = new GeneralCommandLine();
+      commandLine.setExePath(binPath + File.separator + "python");
+
+      commandLine.addParameter(tempFile.getAbsolutePath());
+      commandLine.addParameter(stubsRoot);
+      try {
+        final OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
+        handler.startNotify();
+        handler.waitFor();
+        handler.destroyProcess();
+      }
+      catch (ExecutionException e) {
+        LOG.error(e);
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+
   }
 }

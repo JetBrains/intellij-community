@@ -21,10 +21,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.*;
 import com.jetbrains.python.PyElementTypes;
-import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -68,9 +68,9 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     // a reference can never be resolved within the same assignment statement
-    if (lastParent != null) {
-      return true;
-    }
+    //if (lastParent != null) {
+    //  return true;
+    //}
 
     if (PsiTreeUtil.getParentOfType(this, PyFunction.class) == null && PsiTreeUtil.getParentOfType(place, PyFunction.class) != null) {
 
@@ -89,6 +89,6 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
         return false;
       }
     }
-    return true;
+    return processor.execute(this, substitutor);
   }
 }

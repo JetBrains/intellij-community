@@ -25,11 +25,11 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.psi.*;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.jetbrains.python.PyTokenTypes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -118,6 +118,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
               final PsiElement c = ((PyCallExpression)value).getCalledFunctionReference().resolve();
               return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), c, c, c);
             }
+          } else if (element instanceof PyReferenceExpression && parent instanceof PyImportElement) {
+            final PsiElement c = ((PyReferenceExpression)element).resolve();
+            return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), c, c, c);
           }
         }
       }
