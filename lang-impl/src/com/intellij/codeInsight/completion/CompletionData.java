@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * @deprecated {@see com.intellij.codeInsight.completion.CompletionContributor}
@@ -241,6 +242,10 @@ public class CompletionData {
     }
     else if (tailType != TailType.NONE) {
       ret.setTailType(tailType);
+    }
+    final Map<Object, Serializable> itemProperties = variant.getItemProperties();
+    for (final Object key : itemProperties.keySet()) {
+      ret.setAttribute(key, itemProperties.get(key));
     }
 
     if(matcher.prefixMatches(ret)){

@@ -36,7 +36,7 @@ import java.util.*;
  * Time: 18:55:15
  * To change this template use Options | File Templates.
  */
-public class XmlCompletionData extends JavaAwareCompletionData {
+public class XmlCompletionData extends CompletionData {
   public XmlCompletionData() {
     declareFinalScope(XmlTag.class);
     declareFinalScope(XmlAttribute.class);
@@ -108,7 +108,7 @@ public class XmlCompletionData extends JavaAwareCompletionData {
     return TrueFilter.INSTANCE;
   }
 
-  private static class XmlAttributeValueInsertHandler extends DefaultInsertHandler {
+  private static class XmlAttributeValueInsertHandler extends BasicInsertHandler {
     public void handleInsert(CompletionContext context,
                              int startOffset,
                              LookupData data,
@@ -116,6 +116,7 @@ public class XmlCompletionData extends JavaAwareCompletionData {
                              boolean signatureSelected,
                              char completionChar) {
       super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+      /*
       final PsiElement current = context.file.findElementAt(context.getStartOffset());
       final String text = current.getText();
       final CaretModel caretModel = context.editor.getCaretModel();
@@ -134,6 +135,7 @@ public class XmlCompletionData extends JavaAwareCompletionData {
           break;
         }
       }
+      */
     }
   }
 
