@@ -68,9 +68,9 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     // a reference can never be resolved within the same assignment statement
-    //if (lastParent != null) {
-    //  return true;
-    //}
+    if (lastParent != null) {
+      return true;
+    }
 
     if (PsiTreeUtil.getParentOfType(this, PyFunction.class) == null && PsiTreeUtil.getParentOfType(place, PyFunction.class) != null) {
 
@@ -89,6 +89,6 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
         return false;
       }
     }
-    return processor.execute(this, substitutor);
+    return true;
   }
 }
