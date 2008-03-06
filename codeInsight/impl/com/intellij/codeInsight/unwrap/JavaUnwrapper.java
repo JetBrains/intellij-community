@@ -26,20 +26,31 @@ public abstract class JavaUnwrapper implements Unwrapper {
       extractFromCodeBlock(((PsiBlockStatement)block).getCodeBlock(), from);
     }
     else if (block != null && !(block instanceof PsiEmptyStatement)) {
-      extract(new PsiElement[]{block}, from);
+      extract(block, block, from);
     }
   }
 
   protected void extractFromCodeBlock(PsiCodeBlock block, PsiElement from) throws IncorrectOperationException {
     if (block == null) return;
-    extract(block.getStatements(), from);
+    extract(block.getFirstBodyElement(), block.getLastBodyElement(), from);
   }
 
-  private void extract(PsiElement[] elements, PsiElement from) throws IncorrectOperationException {
-    if (elements.length == 0) return;
+  private void extract(PsiElement first, PsiElement last, PsiElement from) throws IncorrectOperationException {
+    if (first == null)  return;
 
-    PsiElement first = elements[0];
-    PsiElement last = elements[elements.length - 1];
+    // trim leading empty spaces
+    while (first != last && first instanceof PsiWhiteSpace) {
+      first = first.getNextSibling();
+    }
+
+    // trim trailing empty spaces
+    while (last != first && last instanceof PsiWhiteSpace) {
+      last = last.getPrevSibling();
+    }
+
+    // nothing to extract
+    if (first == last && last instanceof PsiWhiteSpace) return;
+
     from.getParent().addRangeBefore(first, last, from);
   }
 }

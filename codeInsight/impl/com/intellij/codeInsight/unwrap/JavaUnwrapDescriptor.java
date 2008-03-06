@@ -19,6 +19,7 @@ public class JavaUnwrapDescriptor implements UnwrapDescriptor {
     new JavaBracesUnwrapper(),
     new JavaTryUnwrapper(),
     new JavaCatchRemover(),
+    new JavaSynchronizedUnwrapper(),
   };
 
   public List<Pair<PsiElement, Unwrapper>> collectUnwrappers(Project project, Editor editor, PsiFile file) {

@@ -56,12 +56,6 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
   protected void showOptions(final List<AnAction> options, final Editor editor) {
     if (options.isEmpty()) return;
-
-    if (options.size() == 1) {
-      options.get(0).actionPerformed(null);
-      return;
-    }
-
     showPopup(options, editor);
   }
 
