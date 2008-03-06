@@ -18,8 +18,6 @@ package com.jetbrains.python.psi;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
  * Created by IntelliJ IDEA.
  * User: yole
@@ -30,7 +28,7 @@ import java.util.List;
 public interface PyBinaryExpression extends PyExpression {
   PyExpression getLeftExpression();
   @Nullable PyExpression getRightExpression();
-  List<PyElementType> getOperator();
+  PyElementType getOperator();
   boolean isOperator(String chars);
 
   PyExpression getOppositeExpression(PyExpression expression)

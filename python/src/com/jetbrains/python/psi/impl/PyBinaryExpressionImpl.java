@@ -25,9 +25,6 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Created by IntelliJ IDEA.
  * User: yole
@@ -58,17 +55,8 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     }
 
     @PsiCached
-    public List<PyElementType> getOperator() {
-        List<PyElementType> list = new ArrayList<PyElementType>(3);
-        ASTNode child = getNode().getFirstChildNode();
-        while (child != null) {
-            IElementType elType = child.getElementType();
-            if (elType instanceof PyElementType && PyElementTypes.BINARY_OPS.contains(elType)) {
-                list.add((PyElementType) elType);
-            }
-            child = child.getTreeNext();
-        }
-        return list;
+    public PyElementType getOperator() {
+        return (PyElementType)getNode().findChildByType(PyElementTypes.BINARY_OPS).getElementType();
     }
 
     @PsiCached
