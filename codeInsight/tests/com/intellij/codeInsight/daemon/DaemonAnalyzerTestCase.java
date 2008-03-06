@@ -28,6 +28,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.testFramework.ExpectedHighlightingData;
@@ -162,11 +163,16 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
         return (fileType == StdFileTypes.JAVA || fileType == StdFileTypes.CLASS) && !file.getName().equals("package-info.java");
       }
     };
-    getJavaFacade().setAssertOnFileLoadingFilter(javaFilesFilter); // check repository work
+    final JavaPsiFacadeEx facade = getJavaFacade();
+    if (facade != null) {
+      facade.setAssertOnFileLoadingFilter(javaFilesFilter); // check repository work
+    }
 
     Collection<HighlightInfo> infos = doHighlighting();
 
-    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
+    if (facade != null) {
+      facade.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
+    }
 
     data.checkResult(infos, myEditor.getDocument().getText());
 
@@ -219,9 +225,12 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     action1.doCollectInformation(new MockProgressIndicator());
     result.addAll(action1.getHighlights());
 
-    PostHighlightingPass action2 = new PostHighlightingPass(file.getProject(), file, editor, 0, file.getTextLength());
-    action2.doCollectInformation(new MockProgressIndicator());
-    result.addAll(action2.getHighlights());
+    PostHighlightingPassFactory phpFactory = file.getProject().getComponent(PostHighlightingPassFactory.class);
+    if (phpFactory != null) {
+      PostHighlightingPass action2 = new PostHighlightingPass(file.getProject(), file, editor, 0, file.getTextLength());
+      action2.doCollectInformation(new MockProgressIndicator());
+      result.addAll(action2.getHighlights());
+    }
 
     LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(file, document, 0, file.getTextLength());
     inspectionsPass.doCollectInformation(new MockProgressIndicator());
