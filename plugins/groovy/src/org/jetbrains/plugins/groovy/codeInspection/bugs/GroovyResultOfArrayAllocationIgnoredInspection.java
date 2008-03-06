@@ -15,13 +15,17 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 public class GroovyResultOfArrayAllocationIgnoredInspection extends BaseInspection {
 
@@ -39,8 +43,12 @@ public class GroovyResultOfArrayAllocationIgnoredInspection extends BaseInspecti
 
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "Result of <code>new #ref()</code> is ignored #loc";
-
+    final Boolean isCompleteExpression = (Boolean) args[0];
+    if (isCompleteExpression.booleanValue()) {
+      return "Result of <code>#ref</code> is ignored #loc";
+    } else {
+      return "Result of <code>new #ref[]</code> is ignored #loc";
+    }
   }
 
   public boolean isEnabledByDefault() {
@@ -53,15 +61,28 @@ public class GroovyResultOfArrayAllocationIgnoredInspection extends BaseInspecti
 
   private static class Visitor extends BaseInspectionVisitor {
 
-    public void visitNewExpression(GrNewExpression grNewExpression) {
-      super.visitNewExpression(grNewExpression);
-      if (!(grNewExpression.getParent() instanceof GrCodeBlock)) {
+    public void visitNewExpression(GrNewExpression newExpression) {
+      super.visitNewExpression(newExpression);
+      final PsiElement parent = newExpression.getParent();
+      if (!(parent instanceof GrCodeBlock)) {
         return;
       }
-      if (grNewExpression.getArrayCount() == 0) {
+      if (newExpression.getArrayCount() == 0) {
         return;
       }
-      registerError(grNewExpression.getReferenceElement());
+      if (parent instanceof GrOpenBlock) {
+        final GrOpenBlock openBlock = (GrOpenBlock) parent;
+        if (ControlFlowUtils.openBlockCompletesWithStatement(openBlock, newExpression)) {
+          return;
+        }
+      }
+
+      final GrCodeReferenceElement referenceElement = newExpression.getReferenceElement();
+      if (referenceElement != null) {
+        registerError(referenceElement, Boolean.FALSE);
+      } else {
+        registerError(newExpression, Boolean.TRUE);
+      }
     }
   }
 }

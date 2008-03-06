@@ -15,12 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 
 public class GroovyResultOfObjectAllocationIgnoredInspection extends BaseInspection {
@@ -53,15 +56,22 @@ public class GroovyResultOfObjectAllocationIgnoredInspection extends BaseInspect
 
   private static class Visitor extends BaseInspectionVisitor {
 
-    public void visitNewExpression(GrNewExpression grNewExpression) {
-      super.visitNewExpression(grNewExpression);
-      if (!(grNewExpression.getParent() instanceof GrCodeBlock)) {
+    public void visitNewExpression(GrNewExpression newExpression) {
+      super.visitNewExpression(newExpression);
+      final PsiElement parent = newExpression.getParent();
+      if (!(parent instanceof GrCodeBlock)) {
         return;
       }
-      if (grNewExpression.getArrayCount() != 0) {
+      if (parent instanceof GrOpenBlock) {
+        final GrOpenBlock openBlock = (GrOpenBlock) parent;
+        if (ControlFlowUtils.openBlockCompletesWithStatement(openBlock, newExpression)) {
+          return;
+        }
+      }
+      if (newExpression.getArrayCount() != 0) {
         return;
       }
-      registerError(grNewExpression.getReferenceElement());
+      registerError(newExpression.getReferenceElement());
     }
   }
 }
