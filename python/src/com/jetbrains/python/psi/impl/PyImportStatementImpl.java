@@ -20,10 +20,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyImportStatement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,17 +34,23 @@ import com.jetbrains.python.psi.PyImportStatement;
  * To change this template use File | Settings | File Templates.
  */
 public class PyImportStatementImpl extends PyElementImpl implements PyImportStatement {
-    public PyImportStatementImpl(ASTNode astNode) {
-        super(astNode);
-    }
-
-  @Override
-  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, final PsiElement lastParent,
-                                     @NotNull final PsiElement place) {
-    return getImportElement().processDeclarations(processor, state, lastParent, place);
+  public PyImportStatementImpl(ASTNode astNode) {
+    super(astNode);
   }
 
-  public PyImportElement getImportElement() {
-    return (PyImportElement)getNode().findChildByType(PyElementTypes.IMPORT_ELEMENT).getPsi();
+  @Override
+  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
+                                     @NotNull final ResolveState state,
+                                     final PsiElement lastParent,
+                                     @NotNull final PsiElement place) {
+    for (PyImportElement element : getImportElements()) {
+      if (element == lastParent) continue;
+      if (!element.processDeclarations(processor, state, null, place)) return false;
+    }
+    return true;
+  }
+
+  public PyImportElement[] getImportElements() {
+    return childrenToPsi(TokenSet.create(PyElementTypes.IMPORT_ELEMENT), new PyImportElement[0]);
   }
 }

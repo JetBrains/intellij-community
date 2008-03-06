@@ -24,5 +24,5 @@ package com.jetbrains.python.psi;
  * To change this template use File | Settings | File Templates.
  */
 public interface PyImportStatement extends PyStatement {
-  PyImportElement getImportElement();
+  PyImportElement[] getImportElements();
 }

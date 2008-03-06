@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -70,7 +71,14 @@ public class PyResolveUtil {
     }
 
     public boolean execute(PsiElement element, ResolveState substitutor) {
-      if (element instanceof PsiNamedElement) {
+      if (element instanceof PyFile) {
+        final VirtualFile file = ((PyFile)element).getVirtualFile();
+        if (file != null && _name.equals(file.getNameWithoutExtension())) {
+          _result = element;
+          return false;
+        }
+      }
+      else if (element instanceof PsiNamedElement) {
         if (_name.equals(((PsiNamedElement)element).getName())) {
           _result = element;
           return false;

@@ -96,6 +96,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final String referencedName = getReferencedName();
     if (referencedName == null) return null;
 
+    if (getParent() instanceof PyImportElement || getParent() instanceof PyFromImportStatement) {
+      return ResolveImportUtil.resolveImportReference(this);
+    }
+
     final PyExpression qualifier = getQualifier();
     if (qualifier != null) {
       if (qualifier instanceof PyCallExpression) {
@@ -123,10 +127,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         }
       }
       return null; // TODO?
-    }
-
-    if (getParent() instanceof PyImportElement || getParent() instanceof PyFromImportStatement) {
-      return ResolveImportUtil.resolveImportReference(this, referencedName);
     }
 
     return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), this, this, null);
