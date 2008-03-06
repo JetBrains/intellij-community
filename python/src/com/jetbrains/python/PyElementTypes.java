@@ -1,8 +1,8 @@
 package com.jetbrains.python;
 
 import com.intellij.psi.tree.TokenSet;
-import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.impl.*;
 
 public class PyElementTypes {
   private PyElementTypes() {
@@ -146,4 +146,13 @@ public class PyElementTypes {
         TARGET_EXPRESSION);
 
     public static final TokenSet STATEMENT_LISTS = TokenSet.create(STATEMENT_LIST);
+
+  public static final TokenSet BINARY_OPS = TokenSet.create(PyTokenTypes.OR_KEYWORD, PyTokenTypes.AND_KEYWORD,
+          PyTokenTypes.LT, PyTokenTypes.GT, PyTokenTypes.OR, PyTokenTypes.XOR,
+          PyTokenTypes.AND, PyTokenTypes.LTLT, PyTokenTypes.GTGT,
+          PyTokenTypes.EQEQ, PyTokenTypes.GE, PyTokenTypes.LE, PyTokenTypes.NE,
+          PyTokenTypes.NE_OLD, PyTokenTypes.IN_KEYWORD, PyTokenTypes.IS_KEYWORD,
+          PyTokenTypes.NOT_KEYWORD, PyTokenTypes.PLUS, PyTokenTypes.MINUS,
+          PyTokenTypes.MULT, PyTokenTypes.FLOORDIV, PyTokenTypes.DIV, PyTokenTypes.PERC);
+  
 }

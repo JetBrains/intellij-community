@@ -17,7 +17,11 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyPrefixExpression;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -30,4 +34,13 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
     public PyPrefixExpressionImpl(ASTNode astNode) {
         super(astNode);
     }
+
+  public PyExpression getOperand() {
+    return (PyExpression)childToPsiNotNull(PyElementTypes.EXPRESSIONS, 0);
+  }
+
+  @NotNull
+  public PyElementType getOperationSign() {
+    return (PyElementType)getNode().findChildByType(PyElementTypes.BINARY_OPS).getElementType();
+  }
 }

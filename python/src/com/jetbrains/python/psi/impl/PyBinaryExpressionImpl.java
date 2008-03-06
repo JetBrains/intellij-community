@@ -19,11 +19,10 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.PyTokenTypes;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -37,15 +36,8 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExpression {
-    private final TokenSet BINARY_OPS = TokenSet.create(PyTokenTypes.OR_KEYWORD, PyTokenTypes.AND_KEYWORD,
-            PyTokenTypes.LT, PyTokenTypes.GT, PyTokenTypes.OR, PyTokenTypes.XOR,
-            PyTokenTypes.AND, PyTokenTypes.LTLT, PyTokenTypes.GTGT,
-            PyTokenTypes.EQEQ, PyTokenTypes.GE, PyTokenTypes.LE, PyTokenTypes.NE,
-            PyTokenTypes.NE_OLD, PyTokenTypes.IN_KEYWORD, PyTokenTypes.IS_KEYWORD,
-            PyTokenTypes.NOT_KEYWORD, PyTokenTypes.PLUS, PyTokenTypes.MINUS,
-            PyTokenTypes.MULT, PyTokenTypes.FLOORDIV, PyTokenTypes.DIV, PyTokenTypes.PERC);
 
-    public PyBinaryExpressionImpl(ASTNode astNode) {
+  public PyBinaryExpressionImpl(ASTNode astNode) {
         super(astNode);
     }
 
@@ -71,7 +63,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
         ASTNode child = getNode().getFirstChildNode();
         while (child != null) {
             IElementType elType = child.getElementType();
-            if (elType instanceof PyElementType && BINARY_OPS.contains(elType)) {
+            if (elType instanceof PyElementType && PyElementTypes.BINARY_OPS.contains(elType)) {
                 list.add((PyElementType) elType);
             }
             child = child.getTreeNext();
@@ -85,7 +77,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
         StringBuffer buf = new StringBuffer();
         while (child != null) {
             IElementType elType = child.getElementType();
-            if (elType instanceof PyElementType && BINARY_OPS.contains(elType)) {
+            if (elType instanceof PyElementType && PyElementTypes.BINARY_OPS.contains(elType)) {
                 buf.append(child.getText());
             }
             child = child.getTreeNext();
