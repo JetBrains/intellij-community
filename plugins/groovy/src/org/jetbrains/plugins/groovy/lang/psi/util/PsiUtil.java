@@ -296,8 +296,12 @@ public class PsiUtil {
     if (method.isConstructor()) return false;
 
     String methodName = method.getName();
+    if (methodName.length() <= "is".length()) return false;
+
     if (!methodName.startsWith("get") || methodName.length() <= "get".length() ||
-        !Character.isUpperCase(methodName.charAt("get".length()))) return false;
+        !Character.isUpperCase(methodName.charAt("get".length()))) {
+      if (!methodName.startsWith("is") || !Character.isUpperCase(methodName.charAt("is".length()))) return false;
+    }
 
     if (propertyName != null && !checkPropertyName(method, propertyName)) return false;
 
@@ -309,7 +313,7 @@ public class PsiUtil {
     String accessorNamePart;
     if (method instanceof GrAccessorMethod) accessorNamePart = ((GrAccessorMethod) method).getProperty().getName();
     else {
-      accessorNamePart = methodName.substring(3); //"set" or "get"
+      accessorNamePart = methodName.startsWith("is") ? methodName.substring(2) : methodName.substring(3); //"set" or "get" or "is"
       if (Character.isLowerCase(accessorNamePart.charAt(0))) return false;
       accessorNamePart = StringUtil.decapitalize(accessorNamePart);
     }
