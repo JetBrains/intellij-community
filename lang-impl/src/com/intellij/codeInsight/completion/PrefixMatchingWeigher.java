@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
 */
 public class PrefixMatchingWeigher extends CompletionWeigher {
-  private static final NotNullLazyKey<String, CompletionLocation> PREFIX_CAPITALS = NotNullLazyKey.create("prefixCapitals", new NotNullFunction<CompletionLocation, String>() {
+  public static final NotNullLazyKey<String, CompletionLocation> PREFIX_CAPITALS = NotNullLazyKey.create("prefixCapitals", new NotNullFunction<CompletionLocation, String>() {
     @NotNull
     public String fun(final CompletionLocation location) {
       return StringUtil.capitalsOnly(location.getPrefix());

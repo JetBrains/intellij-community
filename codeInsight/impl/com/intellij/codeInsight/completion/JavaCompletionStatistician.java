@@ -38,7 +38,7 @@ public class JavaCompletionStatistician extends CompletionStatistician{
       if (type == CompletionType.CLASS_NAME && isClass) {
         final String qualifiedName = ((PsiClass)o).getQualifiedName();
         if (qualifiedName != null) {
-          return new StatisticsInfo("classNameCompletion#" + location.getCompletionParameters().getOriginalFile().getLanguage(), qualifiedName);
+          return new StatisticsInfo("classNameCompletion#" + PrefixMatchingWeigher.PREFIX_CAPITALS.getValue(location), qualifiedName);
         }
       }
     }

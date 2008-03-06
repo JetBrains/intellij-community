@@ -8,6 +8,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,7 +26,7 @@ public class PreferExpectedTypeWeigher extends CompletionWeigher {
 
     if (object instanceof PsiClass) {
       for (final ExpectedTypeInfo info : expectedInfos) {
-        if (info.getType().getDeepComponentType().equals(itemType)) {
+        if (TypeConversionUtil.erasure(info.getType().getDeepComponentType()).equals(TypeConversionUtil.erasure(itemType))) {
           return SkipAbstractExpectedTypeWeigher.getSkippingStatus(item, location) != SkipAbstractExpectedTypeWeigher.Result.ACCEPT ? 2 : 1;
         }
       }

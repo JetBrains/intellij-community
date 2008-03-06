@@ -8,6 +8,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
+import com.intellij.psi.statistics.StatisticsManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,6 +32,8 @@ public class SkipAbstractExpectedTypeWeigher extends CompletionWeigher {
 
     final Object object = item.getObject();
     if (!(object instanceof PsiClass)) return Result.ACCEPT;
+
+    if (StatisticsManager.getInstance().getUseCount(CompletionRegistrar.STATISTICS_KEY, item, location) > 1) return Result.ACCEPT;
 
     PsiClass psiClass = (PsiClass)object;
 
