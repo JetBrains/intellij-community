@@ -189,7 +189,7 @@ public class GrAccessorMethodImpl extends LightElement implements GrAccessorMeth
     assert propName != null;
     String capitalized = StringUtil.capitalize(propName);
     if (myIsSetter) return "set" + capitalized;
-    if (PsiType.BOOLEAN.equals(myProperty.getTypeGroovy())) return "is" + capitalized;
+    if (PsiType.BOOLEAN.equals(myProperty.getDeclaredType())) return "is" + capitalized;
     return "get" + capitalized;
   }
 
