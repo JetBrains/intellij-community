@@ -17,7 +17,12 @@ public abstract class JavaElseUnwrapperBase extends JavaUnwrapper {
 
   @Override
   public void collectElementsToIgnore(PsiElement element, Set<PsiElement> result) {
-    result.add(element.getParent());
+    PsiElement parent = element.getParent();
+    
+    while (parent instanceof PsiIfStatement) {
+      result.add(parent);
+      parent = parent.getParent();
+    }
   }
 
   private boolean isElseKeyword(PsiElement e) {
