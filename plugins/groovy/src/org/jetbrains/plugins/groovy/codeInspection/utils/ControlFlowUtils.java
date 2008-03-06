@@ -330,33 +330,36 @@ public class ControlFlowUtils {
   public static boolean openBlockCompletesWithStatement(
       @NotNull GrOpenBlock body,
       @NotNull GrStatement statement) {
-    GroovyPsiElement statementToCheck = statement;
+    GroovyPsiElement elementToCheck = statement;
     while (true) {
-      if (statementToCheck == null) {
+      if (elementToCheck == null) {
         return false;
       }
       final GroovyPsiElement container =
-          getContainingStatementOrBlock(statementToCheck);
+          getContainingStatementOrBlock(elementToCheck);
       if (container == null) {
         return false;
       }
       if (isLoop(container)) {
         return false;
       }
-      if (container instanceof GrOpenBlock) {
-        if (statementToCheck instanceof GrStatement) {
-          if (!statementIsLastInCodeBlock((GrOpenBlock) container, (GrStatement) statementToCheck)) {
+      if (container instanceof GrCodeBlock) {
+        if (elementToCheck instanceof GrStatement) {
+          final GrCodeBlock codeBlock = (GrCodeBlock) container;
+          if (!statementIsLastInCodeBlock(codeBlock, (GrStatement) elementToCheck)) {
             return false;
           }
         }
-        if (container.equals(body)) {
-          return true;
+        if (container instanceof GrOpenBlock) {
+          if (container.equals(body)) {
+            return true;
+          }
+          elementToCheck = PsiTreeUtil.getParentOfType(container, GrStatement.class);
+        } else {
+          elementToCheck = container;
         }
-        statementToCheck =
-            PsiTreeUtil.getParentOfType(container,
-                GrStatement.class);
       } else {
-        statementToCheck = container;
+        elementToCheck = container;
       }
     }
   }
@@ -417,6 +420,9 @@ public class ControlFlowUtils {
       if (statement.equals(childStatement)) {
         return true;
       }
+      if (!(childStatement instanceof GrReturnStatement)) {
+        return false;
+      }
     }
     return false;
   }
@@ -428,6 +434,9 @@ public class ControlFlowUtils {
       final GrStatement childStatement = statements[i];
       if (statement.equals(childStatement)) {
         return true;
+      }
+      if (!(childStatement instanceof GrReturnStatement)) {
+        return false;
       }
     }
     return false;

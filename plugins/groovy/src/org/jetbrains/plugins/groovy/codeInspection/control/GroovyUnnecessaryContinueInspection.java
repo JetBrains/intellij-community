@@ -63,10 +63,10 @@ public class GroovyUnnecessaryContinueInspection extends BaseInspection {
 
   @Nullable
   protected GroovyFix buildFix(PsiElement location) {
-    return new UnnecessaryReturnFix();
+    return new UnnecessaryContinueFix();
   }
 
-  private static class UnnecessaryReturnFix extends GroovyFix {
+  private static class UnnecessaryContinueFix extends GroovyFix {
 
     @NotNull
     public String getName() {

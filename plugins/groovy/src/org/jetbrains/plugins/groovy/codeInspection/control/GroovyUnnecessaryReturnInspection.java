@@ -81,6 +81,7 @@ public class GroovyUnnecessaryReturnInspection extends BaseInspection {
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+
     public void visitReturnStatement(GrReturnStatement returnStatement) {
       super.visitReturnStatement(returnStatement);
       final GrExpression returnValue = returnStatement.getReturnValue();
@@ -96,7 +97,6 @@ public class GroovyUnnecessaryReturnInspection extends BaseInspection {
       if (body == null) {
         return;
       }
-
       if (ControlFlowUtils.openBlockCompletesWithStatement(body, returnStatement)) {
         registerStatementError(returnStatement);
       }
