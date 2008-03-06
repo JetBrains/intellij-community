@@ -25,4 +25,5 @@ package com.jetbrains.python.psi;
  */
 public interface PyFromImportStatement extends PyStatement {
   boolean isStarImport();
+  PyImportElement[] getImportElements();
 }

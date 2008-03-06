@@ -17,9 +17,18 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.psi.PyElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -40,5 +49,29 @@ public class PyFromImportStatementImpl extends PyElementImpl implements PyFromIm
 
   public boolean isStarImport() {
     return getNode().findChildByType(PyTokenTypes.MULT) != null;
+  }
+
+  public PyImportElement[] getImportElements() {
+    List<PyImportElement> result = new ArrayList<PyImportElement>();
+    final ASTNode importKeyword = getNode().findChildByType(PyTokenTypes.IMPORT_KEYWORD);
+    if (importKeyword != null) {
+      for(ASTNode node = importKeyword.getTreeNext(); node != null; node = node.getTreeNext()) {
+        if (node.getElementType() == PyElementTypes.IMPORT_ELEMENT) {
+          result.add((PyImportElement) node.getPsi());
+        }
+      }
+    }
+    return result.toArray(new PyImportElement[result.size()]);
+  }
+
+  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, final PsiElement lastParent,
+                                     @NotNull final PsiElement place) {
+    PyImportElement[] importElements = getImportElements();
+    for(PyImportElement element: importElements) {
+      if (!element.processDeclarations(processor, state, lastParent, place)) {
+        return false;
+      }
+    }
+    return true;
   }
 }
