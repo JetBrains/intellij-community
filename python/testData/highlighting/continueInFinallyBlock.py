@@ -1,5 +1,5 @@
 while True:
   try:
-    x
+    print "a"
   finally:
     <error descr="'continue' not supported inside 'finally' clause">continue</error>

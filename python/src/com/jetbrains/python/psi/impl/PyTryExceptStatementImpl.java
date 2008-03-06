@@ -96,22 +96,19 @@ public class PyTryExceptStatementImpl extends PyElementImpl implements PyTryExce
                                      @NotNull ResolveState substitutor,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    if (lastParent != null) {
-      return true;
-    }
-
-    if (!getTryStatementList().processDeclarations(processor, substitutor, null, place)) {
+    final PyStatementList tryStatementList = getTryStatementList();
+    if (tryStatementList != lastParent && !tryStatementList.processDeclarations(processor, substitutor, null, place)) {
       return false;
     }
 
     for (PyExceptBlock block : getExceptBlocks()) {
-      if (!block.processDeclarations(processor, substitutor, null, place)) {
+      if (block != lastParent && !block.processDeclarations(processor, substitutor, null, place)) {
         return false;
       }
     }
 
     PyStatementList elseStatementList = getElseStatementList();
-    if (elseStatementList != null) {
+    if (elseStatementList != null && elseStatementList != lastParent) {
       return elseStatementList.processDeclarations(processor, substitutor, null, place);
     }
     return true;
