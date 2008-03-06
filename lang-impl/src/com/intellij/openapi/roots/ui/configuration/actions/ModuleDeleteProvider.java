@@ -1,8 +1,8 @@
 package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.ide.DeleteProvider;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -24,20 +24,21 @@ import java.util.Map;
 
 public class ModuleDeleteProvider  implements DeleteProvider  {
   public boolean canDeleteElement(DataContext dataContext) {
-    return dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY) != null;
+    return LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext) != null;
   }
 
   public void deleteElement(DataContext dataContext) {
-    final Module[] modules = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
+    final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     assert modules != null;
-    int ret = Messages.showOkCancelDialog(
-      ProjectBundle.message("module.remove.confirmation.prompt", StringUtil.join(Arrays.asList(modules), new Function<Module, String>() {
-        public String fun(final Module module) {
-          return "\'" + module.getName() + "\'";
-        }
-      }, ", "), modules.length), ProjectBundle.message("module.remove.confirmation.title"), Messages.getQuestionIcon());
-    if (ret != 0) return;
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    String names = StringUtil.join(Arrays.asList(modules), new Function<Module, String>() {
+      public String fun(final Module module) {
+        return "\'" + module.getName() + "\'";
+      }
+    }, ", ");
+    int ret = Messages.showOkCancelDialog(ProjectBundle.message("module.remove.confirmation.prompt", names, modules.length),
+                                          ProjectBundle.message("module.remove.confirmation.title"), Messages.getQuestionIcon());
+    if (ret != 0) return;
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
         final Runnable action = new Runnable() {

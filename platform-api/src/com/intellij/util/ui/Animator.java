@@ -30,7 +30,7 @@ public abstract class Animator implements Disposable {
   private int myCurrentFrame = 0;
   private int myQueuedFrames = 0;
 
-  private boolean myRepeatable;
+  private final boolean myRepeatable;
 
   private int myRepeatCount;
 
@@ -59,7 +59,8 @@ public abstract class Animator implements Disposable {
           else {
             repaint = false;
           }
-        } else {
+        }
+        else {
           myLastAnimated = true;
 
           if (myQueuedFrames > myTotalFrames) return;

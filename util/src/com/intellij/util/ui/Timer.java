@@ -21,13 +21,13 @@ import com.intellij.openapi.Disposable;
 public abstract class Timer implements Disposable {
 
   private Thread myThread;
-  private int mySpan;
+  private final int mySpan;
 
   private boolean myRunning;
   private boolean myDisposed;
   private boolean myRestartRequest;
 
-  private String myName;
+  private final String myName;
 
   private boolean myTakeInitialDelay = true;
   private boolean myInitiallySlept = false;
@@ -36,7 +36,7 @@ public abstract class Timer implements Disposable {
   public Timer(String name, int span) {
     myName = name;
     mySpan = span;
-    myThread = new Thread(name) {
+    myThread = new Thread(name+" timer") {
       public void run() {
         try {
           while(true) {
@@ -56,7 +56,8 @@ public abstract class Timer implements Disposable {
               onTimer();
             }
           }
-        } catch (InterruptedException e) {
+        }
+        catch (InterruptedException e) {
         }
         myDisposed = true;
       }

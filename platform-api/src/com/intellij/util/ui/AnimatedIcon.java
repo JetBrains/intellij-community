@@ -17,7 +17,6 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,7 +34,7 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
 
   protected Animator myAnimator;
 
-  private String myName;
+  private final String myName;
 
   protected AnimatedIcon(final String name) {
     myName = name;
