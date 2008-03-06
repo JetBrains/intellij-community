@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.hint.QuestionAction;
-import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -42,7 +41,7 @@ public class ImportNSAction implements QuestionAction {
     final Object[] objects = myNamespaces.toArray();
     Arrays.sort(objects);
     final JList list = new JList(objects);
-    list.setCellRenderer(new FQNameCellRenderer());
+    list.setCellRenderer(XmlNSRenderer.INSTANCE);
     list.setSelectedIndex(0);
     final Runnable runnable = new Runnable() {
 

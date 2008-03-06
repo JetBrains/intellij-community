@@ -8,7 +8,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -224,7 +223,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     
     if (namespacesToChooseFrom.length > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
       final JList list = new JList(namespacesToChooseFrom);
-      list.setCellRenderer(new FQNameCellRenderer());
+      list.setCellRenderer(XmlNSRenderer.INSTANCE);
       Runnable runnable = new Runnable() {
         public void run() {
           final int index = list.getSelectedIndex();
