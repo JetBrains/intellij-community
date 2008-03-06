@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PyElementType extends IElementType {
-  private Class<? extends PsiElement> _psiElementClass;
+  protected Class<? extends PsiElement> _psiElementClass;
   private static final Class[] PARAMETER_TYPES = new Class[]{ASTNode.class};
 
   public PyElementType(@NotNull @NonNls String debugName) {

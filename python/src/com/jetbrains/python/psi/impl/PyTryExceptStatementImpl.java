@@ -21,14 +21,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExceptBlock;
 import com.jetbrains.python.psi.PyStatementList;
-import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.PyTryExceptStatement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.

@@ -87,7 +87,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
         + " is neither left exp or right exp");
   }
 
-    protected void deletePyChild(PyElementImpl element)
+    protected void deletePyChild(PyBaseElementImpl element)
             throws IncorrectOperationException {
       PyExpression left = getLeftExpression();
       PyExpression right = getRightExpression();

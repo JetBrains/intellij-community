@@ -17,6 +17,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.stubs.MayHaveStubsInside;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,6 +27,9 @@ import org.jetbrains.annotations.NotNull;
  * Time: 0:26:47
  * To change this template use File | Settings | File Templates.
  */
-public interface PyClass extends PsiNamedElement, PyElement, PyDocStringOwner {
-    @NotNull PyStatementList getStatementList();
+public interface PyClass extends PsiNamedElement, PyElement, PyDocStringOwner, PyClassStub {
+  @NotNull
+  @MayHaveStubsInside
+  PyStatementList getStatementList();
+
 }

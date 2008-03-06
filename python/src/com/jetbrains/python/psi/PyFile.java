@@ -5,6 +5,7 @@ package com.jetbrains.python.psi;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.stubs.MayHaveStubsInside;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,6 +16,7 @@ public interface PyFile extends PyElement, PsiFile {
     FileType getFileType();
 
     @PsiCached
+    @MayHaveStubsInside
     List<PyStatement> getStatements();
 
     PythonLanguage getPyLanguage();

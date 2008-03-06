@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
@@ -38,9 +39,13 @@ import javax.swing.*;
  * Time: 0:27:33
  * To change this template use File | Settings | File Templates.
  */
-public class PyClassImpl extends PyPresentableElementImpl implements PyClass {
+public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implements PyClass {
   public PyClassImpl(ASTNode astNode) {
     super(astNode);
+  }
+
+  public PyClassImpl(final PsiElement parent, final PyClassStub stub, final IElementType nodeType) {
+    super(parent, stub, nodeType);
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
@@ -52,8 +57,14 @@ public class PyClassImpl extends PyPresentableElementImpl implements PyClass {
   @Nullable
   @Override
   public String getName() {
-    ASTNode node = findNameIdentifier();
-    return node != null ? node.getText() : null;
+    final PyClassStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
+    }
+    else {
+      ASTNode node = findNameIdentifier();
+      return node != null ? node.getText() : null;
+    }
   }
 
   private ASTNode findNameIdentifier() {

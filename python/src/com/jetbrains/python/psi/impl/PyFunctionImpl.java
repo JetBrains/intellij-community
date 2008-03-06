@@ -22,12 +22,12 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.psi.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.validation.DocStringAnnotator;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -38,7 +38,7 @@ import javax.swing.*;
  * Time: 23:01:25
  * To change this template use File | Settings | File Templates.
  */
-public class PyFunctionImpl extends PyPresentableElementImpl implements PyFunction {
+public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> implements PyFunction {
   public PyFunctionImpl(ASTNode astNode) {
     super(astNode);
   }

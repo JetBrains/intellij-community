@@ -21,11 +21,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyTokenTypes;
 
 import java.util.Arrays;
 
@@ -225,7 +225,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   @SuppressWarnings({"SuspiciousMethodCalls"})
-  protected void deletePyChild(PyElementImpl element) throws IncorrectOperationException {
+  protected void deletePyChild(PyBaseElementImpl element) throws IncorrectOperationException {
     if (Arrays.asList(getArguments()).contains(element)) {
       ASTNode node = element.getNode();
       ASTNode next = getNextComma(node);

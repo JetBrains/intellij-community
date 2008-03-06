@@ -16,9 +16,8 @@
 
 package com.jetbrains.python.psi;
 
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.lang.ASTNode;
-
+import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * Time: 23:01:03
  * To change this template use File | Settings | File Templates.
  */
-public interface PyFunction extends PsiNamedElement, PyElement, PyDocStringOwner {
+public interface PyFunction extends PsiNamedElement, PyElement, PyDocStringOwner, PyFunctionStub {
   /**
    * Returns the AST node for the function name identifier.
    *

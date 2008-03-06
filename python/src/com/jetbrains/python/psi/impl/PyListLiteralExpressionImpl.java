@@ -19,8 +19,8 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.psi.*;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +82,7 @@ public class PyListLiteralExpressionImpl extends PyElementImpl
                 this, null, (PyExpression) psiElement);
     }
 
-    protected void deletePyChild(PyElementImpl element)
+    protected void deletePyChild(PyBaseElementImpl element)
             throws IncorrectOperationException {
         PyUtil.ensureWritable(this);
         if (element instanceof PyExpression) {
