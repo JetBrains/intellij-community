@@ -15,11 +15,13 @@
 
 package org.jetbrains.plugins.groovy.actions;
 
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 
 public class NewClassAction extends NewActionBase {
   public NewClassAction() {
@@ -46,6 +48,16 @@ public class NewClassAction extends NewActionBase {
 
   @NotNull
   protected PsiElement[] doCreate(String newName, PsiDirectory directory) throws Exception {
-    return new PsiElement[]{createClassFromTemplate(directory, newName, "GroovyClass.groovy")};
+    PsiFile file = createClassFromTemplate(directory, newName, "GroovyClass.groovy");
+    if (file instanceof GroovyFile) {
+      GroovyFile groovyFile = (GroovyFile) file;
+      PsiClass[] classes = groovyFile.getClasses();
+      if (classes.length == 1 && classes[0] instanceof GrTypeDefinition) {
+        GrTypeDefinition definition = (GrTypeDefinition) classes[0];
+        PsiElement lbrace = definition.getLBraceGroovy();
+        return lbrace != null ? new PsiElement[]{definition, lbrace} : new PsiElement[]{definition};
+      }
+    }
+    return new PsiElement[]{file};
   }
 }

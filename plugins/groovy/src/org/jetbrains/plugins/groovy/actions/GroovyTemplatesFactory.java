@@ -18,9 +18,14 @@ package org.jetbrains.plugins.groovy.actions;
 import com.intellij.ide.fileTemplates.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -87,8 +92,6 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
 
     final PsiManager psiManager = PsiManager.getInstance(directory.getProject());
     final PsiFile file = psiManager.getElementFactory().createFileFromText(fileName, text);
-
-//    CodeStyleManager.getInstance(psiManager).reformat(file, false);
 
     return (PsiFile) directory.add(file);
   }

@@ -696,6 +696,20 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   @Nullable
+  public PsiElement getLBraceGroovy() {
+    GrTypeDefinitionBody body = getBody();
+    if (body == null) return null;
+    return body.getLBrace();
+  }
+
+  @Nullable
+  public PsiElement getRBraceGroovy() {
+    GrTypeDefinitionBody body = getBody();
+    if (body == null) return null;
+    return body.getRBrace();
+  }
+
+  @Nullable
   public PsiIdentifier getNameIdentifier() {
     return new JavaIdentifier(getManager(), getContainingFile(), getNameIdentifierGroovy().getTextRange());
   }

@@ -17,9 +17,12 @@ package org.jetbrains.plugins.groovy.actions;
 
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 public class NewScriptAction extends NewActionBase {
   public NewScriptAction() {
@@ -46,6 +49,14 @@ public class NewScriptAction extends NewActionBase {
 
   @NotNull
   protected PsiElement[] doCreate(String newName, PsiDirectory directory) throws Exception {
-    return new PsiElement[]{createClassFromTemplate(directory, newName, "GroovyScript.groovy")};
+    PsiFile file = createClassFromTemplate(directory, newName, "GroovyScript.groovy");
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(file.getProject());
+    PsiElement lastChild = file.getLastChild();
+    if (lastChild != null && lastChild.getNode() != null && lastChild.getNode().getElementType() != GroovyTokenTypes.mNLS) {
+      file.add(factory.createLineTerminator(1));
+    }
+    file.add(factory.createLineTerminator(1));
+    PsiElement child = file.getLastChild();
+    return child != null ? new PsiElement[]{file, child} : new PsiElement[]{file};
   }
 }

@@ -69,4 +69,10 @@ public interface GrTypeDefinition extends GrTopStatement, NavigationItem, PsiCla
 
   @NotNull
   PsiMethod[] findCodeMethodsBySignature(PsiMethod patternMethod, boolean checkBases);
+
+  @Nullable
+  PsiElement getLBraceGroovy();
+
+  @Nullable
+  PsiElement getRBraceGroovy();
 }

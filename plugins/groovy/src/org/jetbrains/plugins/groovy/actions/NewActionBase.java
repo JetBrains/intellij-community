@@ -51,14 +51,23 @@ public abstract class NewActionBase extends CreateElementActionBase {
 
   protected abstract String getDialogTitle();
 
-  public void update(final AnActionEvent e) {
-    super.update(e);
+  public void update(final AnActionEvent event) {
+    super.update(event);
+    final Presentation presentation = event.getPresentation();
+    final DataContext context = event.getDataContext();
+    Module module = (Module) context.getData(DataConstants.MODULE);
 
-    final Presentation presentation = e.getPresentation();
+    if (!GroovyGrailsConfiguration.isSuitableModule(module) ||
+        !presentation.isEnabled() ||
+        !NewActionBase.isUnderSourceRoots(event) ||
+        !ActionsUtil.isGroovyConfigured(event)){
+      presentation.setEnabled(false);
+      presentation.setVisible(false);
+    } else {
+      presentation.setEnabled(true);
+      presentation.setVisible(true);
+    }
 
-    boolean isEnabled = presentation.isEnabled() && isUnderSourceRoots(e) && ActionsUtil.isGroovyConfigured(e);
-    presentation.setEnabled(isEnabled);
-    presentation.setVisible(isEnabled);
   }
 
   public static boolean isUnderSourceRoots(final AnActionEvent e) {

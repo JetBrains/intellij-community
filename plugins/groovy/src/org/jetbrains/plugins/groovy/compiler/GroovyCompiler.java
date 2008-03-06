@@ -90,7 +90,7 @@ public class GroovyCompiler implements TranslatingCompiler {
       String groovyPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath();
       String grailsPath = GroovyGrailsConfiguration.getInstance().getGrailsInstallPath();
 
-      String libPath = ((moduleType instanceof GrailsModuleType && grailsPath != null && grailsPath.length() > 0) ||
+      String libPath = (moduleType instanceof GrailsModuleType && grailsPath != null && grailsPath.length() > 0 ||
           groovyPath == null || groovyPath.length() == 0 ? grailsPath : groovyPath) + "/lib";
 
       libPath = libPath.replace(File.separatorChar, '/');
