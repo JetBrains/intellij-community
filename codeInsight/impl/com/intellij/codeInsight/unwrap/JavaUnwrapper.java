@@ -3,6 +3,8 @@ package com.intellij.codeInsight.unwrap;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
+import java.util.Set;
+
 public abstract class JavaUnwrapper implements Unwrapper {
   private String myDescription;
 
@@ -11,6 +13,9 @@ public abstract class JavaUnwrapper implements Unwrapper {
   }
 
   public abstract boolean isApplicableTo(PsiElement e);
+
+  public void collectElementsToIgnore(PsiElement element, Set<PsiElement> result) {
+  }
 
   public String getDescription(PsiElement e) {
     return myDescription;

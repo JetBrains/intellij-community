@@ -1,13 +1,15 @@
 package com.intellij.codeInsight.unwrap;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class JavaUnwrapDescriptor implements UnwrapDescriptor {
   private static final Unwrapper[] UNWRAPPERS = new Unwrapper[] {
@@ -26,9 +28,13 @@ public class JavaUnwrapDescriptor implements UnwrapDescriptor {
     PsiElement e = findTargetElement(editor, file);
 
     List<Pair<PsiElement, Unwrapper>> result = new ArrayList<Pair<PsiElement, Unwrapper>>();
+    Set<PsiElement> ignored = new HashSet<PsiElement>();
     while (e != null) {
       for (Unwrapper u : UNWRAPPERS) {
-        if (u.isApplicableTo(e)) result.add(new Pair<PsiElement, Unwrapper>(e, u));
+        if (u.isApplicableTo(e) && !ignored.contains(e)) {
+          result.add(new Pair<PsiElement, Unwrapper>(e, u));
+          u.collectElementsToIgnore(e, ignored);
+        }
       }
       e = e.getParent();
     }

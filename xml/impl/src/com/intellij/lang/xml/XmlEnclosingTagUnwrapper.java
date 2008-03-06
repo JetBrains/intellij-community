@@ -9,9 +9,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.ASTNode;
 
+import java.util.Set;
+
 public class XmlEnclosingTagUnwrapper implements Unwrapper {
   public boolean isApplicableTo(PsiElement e) {
     return true;
+  }
+
+  public void collectElementsToIgnore(PsiElement element, Set<PsiElement> result) {
   }
 
   public String getDescription(PsiElement e) {
