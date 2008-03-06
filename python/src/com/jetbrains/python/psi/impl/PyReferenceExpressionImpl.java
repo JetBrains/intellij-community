@@ -181,7 +181,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor();
-    PyResolveUtil.treeWalkUp(processor, this, this, this);
+    PyResolveUtil.treeWalkUp(processor, this, this, null);
     return processor.getResult();
   }
 
