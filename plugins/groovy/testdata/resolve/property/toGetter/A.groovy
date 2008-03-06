@@ -1,5 +1,5 @@
 class A {
-  private int property
+  int property
 
   int getProperty() {
     return property

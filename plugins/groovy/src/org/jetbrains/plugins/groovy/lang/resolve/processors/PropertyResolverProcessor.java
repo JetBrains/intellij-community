@@ -15,20 +15,24 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.scope.NameHint;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.EnumSet;
+import java.util.Iterator;
 
 /**
  * @author ven
  */
 public class PropertyResolverProcessor extends ResolverProcessor {
-  private static Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor");
+  private GroovyResolveResult myProperty = null;
 
   public PropertyResolverProcessor(String name, PsiElement place, boolean forCompletion) {
     super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, forCompletion, PsiType.EMPTY_ARRAY);
@@ -48,11 +52,39 @@ public class PropertyResolverProcessor extends ResolverProcessor {
         return false;
       }
     } else if (myName == null || myName.equals(((PsiNamedElement) element).getName())) {
-      if (element instanceof GrField && ((GrField) element).isProperty()) return true;
+      if (element instanceof GrField && ((GrField) element).isProperty()) {
+        if (myProperty == null) {
+          boolean isAccessible = isAccessible((PsiNamedElement) element);
+          boolean isStaticsOK = isStaticsOK((PsiNamedElement) element);
+          myProperty = new GroovyResolveResultImpl(element, myCurrentFileResolveContext, substitutor, isAccessible, isStaticsOK);
+        }
+        return true;
+      }
       return super.execute(element, substitutor);
     }
 
     return true;
+  }
+
+  public GroovyResolveResult[] getCandidates() {
+    if (myProperty != null) {
+      boolean containingAccessorFound = false;
+      for (Iterator<GroovyResolveResult> it = myCandidates.iterator(); it.hasNext();) {
+        PsiElement element = it.next().getElement();
+        if (element instanceof GrMethod && PsiTreeUtil.isAncestor(element, myPlace, false)) {
+          it.remove();
+          containingAccessorFound = true;
+          break;
+        }
+      }
+
+      if (containingAccessorFound) {
+        myCandidates.add(myProperty);
+      }
+      myProperty = null;
+    }
+
+    return super.getCandidates();
   }
 
   public <T> T getHint(Class<T> hintClass) {

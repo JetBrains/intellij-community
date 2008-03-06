@@ -137,8 +137,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   public void testRecursive1() throws Exception {
     PsiReference ref = configureByFile("recursive1/A.groovy");
     PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    assertEquals(resolved, PsiTreeUtil.getParentOfType(ref.getElement(), PsiMethod.class));
+    assertTrue(resolved instanceof GrField);
   }
 
   public void testRecursive2() throws Exception {
