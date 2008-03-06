@@ -10,4 +10,5 @@ import java.util.List;
 
 public interface UnwrapDescriptor {
   List<Pair<PsiElement, Unwrapper>> collectUnwrappers(Project project, Editor editor, PsiFile file);
+  boolean showOptionsDialog();
 }

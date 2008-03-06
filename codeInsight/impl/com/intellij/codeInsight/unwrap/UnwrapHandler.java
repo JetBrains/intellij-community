@@ -37,25 +37,37 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     List<AnAction> options = collectOptions(project, editor, file);
-    showOptions(options, editor);
+    selectOption(options, editor, file);
   }
 
   private List<AnAction> collectOptions(Project project, Editor editor, PsiFile file) {
     List<AnAction> result = new ArrayList<AnAction>();
-    for (UnwrapDescriptor d : LanguageUnwrappers.INSTANCE.allForLanguage(file.getLanguage())) {
-      for (Pair<PsiElement, Unwrapper> each : d.collectUnwrappers(project, editor, file)) {
-        result.add(createUnwrapAction(each.getSecond(), each.getFirst(), editor, project));
-      }
+
+    UnwrapDescriptor d = getUnwrapDescription(file);
+
+    for (Pair<PsiElement, Unwrapper> each : d.collectUnwrappers(project, editor, file)) {
+      result.add(createUnwrapAction(each.getSecond(), each.getFirst(), editor, project));
     }
+
     return result;
+  }
+
+  private UnwrapDescriptor getUnwrapDescription(PsiFile file) {
+    return LanguageUnwrappers.INSTANCE.forLanguage(file.getLanguage());
   }
 
   private AnAction createUnwrapAction(Unwrapper u, PsiElement el, Editor ed, Project p) {
     return new MyUnwrapAction(p, ed, u, el);
   }
 
-  protected void showOptions(final List<AnAction> options, final Editor editor) {
+  protected void selectOption(List<AnAction> options, Editor editor, PsiFile file) {
     if (options.isEmpty()) return;
+
+    if (!getUnwrapDescription(file).showOptionsDialog()) {
+      options.get(0).actionPerformed(null);
+      return;
+    }
+
     showPopup(options, editor);
   }
 

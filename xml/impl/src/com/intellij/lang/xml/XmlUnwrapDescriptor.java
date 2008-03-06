@@ -26,4 +26,8 @@ public class XmlUnwrapDescriptor implements UnwrapDescriptor {
     PsiElement e = file.findElementAt(offset);
     return PsiTreeUtil.getParentOfType(e, XmlTag.class);
   }
+
+  public boolean showOptionsDialog() {
+    return false;
+  }
 }

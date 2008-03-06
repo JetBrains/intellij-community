@@ -40,4 +40,8 @@ public class JavaUnwrapDescriptor implements UnwrapDescriptor {
     int offset = editor.getCaretModel().getOffset();
     return file.findElementAt(offset);
   }
+
+  public boolean showOptionsDialog() {
+    return true;
+  }
 }
