@@ -498,6 +498,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     catch(Exception ex) {
       LOG.error(ex);
     }
+    catch(AssertionError ex) {
+      LOG.error(ex);
+    }
     finally {
       myListeners.getMulticaster().changeListUpdateDone();
       synchronized (myPendingUpdatesLock) {
