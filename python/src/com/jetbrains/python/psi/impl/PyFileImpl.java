@@ -18,10 +18,10 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.ResolveState;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.psi.*;
@@ -72,6 +72,16 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
         return false;
       }
     }
+
+    final String fileName = getName();
+    if (!fileName.equals("__builtin__.py")) {
+      final Project project = getProject();
+      final PsiFile[] builtinFiles = FilenameIndex.getFilesByName(project, "__builtin__.py", GlobalSearchScope.allScope(project));
+      if (builtinFiles.length > 0 && builtinFiles [0] instanceof PyFile) {
+        if (!builtinFiles [0].processDeclarations(processor, substitutor, null, place)) return false;
+      }
+    }
+
     return true;
   }
 
