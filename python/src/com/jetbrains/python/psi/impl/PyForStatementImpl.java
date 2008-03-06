@@ -35,47 +35,53 @@ import com.jetbrains.python.psi.PyStatementList;
  * To change this template use File | Settings | File Templates.
  */
 public class PyForStatementImpl extends PyElementImpl implements PyForStatement {
-    public PyForStatementImpl(ASTNode astNode) {
-        super(astNode);
+  public PyForStatementImpl(ASTNode astNode) {
+    super(astNode);
+  }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyForStatement(this);
+  }
+
+  @NotNull
+  public PyStatementList getStatementList() {
+    return childToPsiNotNull(PyElementTypes.STATEMENT_LISTS, 0);
+  }
+
+  @Nullable
+  public PyStatementList getElseStatementList() {
+    return childToPsi(PyElementTypes.STATEMENT_LISTS, 1);
+  }
+
+  @Nullable
+  public PyExpression getTargetExpression() {
+    return childToPsi(PyElementTypes.EXPRESSIONS, 0);
+  }
+
+  @Nullable
+  public PyExpression getLoopExpression() {
+    return childToPsi(PyElementTypes.EXPRESSIONS, 1);
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState substitutor,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    final PyExpression target = getTargetExpression();
+    if (target != null && target != lastParent && !target.processDeclarations(processor, substitutor, null, place)) {
+      return false;
     }
 
-    @Override protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-        pyVisitor.visitPyForStatement(this);
+    final PyStatementList statementList = getStatementList();
+    if (statementList != lastParent && !statementList.processDeclarations(processor, substitutor, null, place)) {
+      return false;
     }
-
-    public @NotNull PyStatementList getStatementList() {
-        return childToPsiNotNull(PyElementTypes.STATEMENT_LISTS, 0);
+    PyStatementList elseList = getElseStatementList();
+    if (elseList != null && elseList != lastParent) {
+      return elseList.processDeclarations(processor, substitutor, null, place);
     }
-
-    public @Nullable
-    PyStatementList getElseStatementList() {
-      return childToPsi(PyElementTypes.STATEMENT_LISTS, 1);
-    }
-
-    public @Nullable PyExpression getTargetExpression() {
-        return childToPsi(PyElementTypes.EXPRESSIONS, 0);
-    }
-
-    public @Nullable PyExpression getLoopExpression() {
-        return childToPsi(PyElementTypes.EXPRESSIONS, 1);
-    }
-
-    @Override public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                                 @NotNull ResolveState substitutor,
-                                                 PsiElement lastParent,
-                                                 @NotNull PsiElement place)
-    {
-        if (lastParent != null) {
-            return true;
-        }
-
-        if (!getStatementList().processDeclarations(processor, substitutor, null, place)) {
-            return false;
-        }
-        PyStatementList elseList = getElseStatementList();
-        if (elseList != null) {
-            return elseList.processDeclarations(processor, substitutor, null, place);
-        }
-        return true;
-    }
+    return true;
+  }
 }
