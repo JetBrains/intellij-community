@@ -2,7 +2,9 @@ package com.intellij.util.indexing;
 
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -41,6 +43,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -334,7 +337,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       synchronizer.registerCacheUpdater(new UnindexedFilesUpdater(project, ProjectRootManager.getInstance(project), this));
       }
 
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
       new Task.Modal(null, "Updating index", false) {
         public void run(@NotNull final ProgressIndicator indicator) {
           synchronizer.execute();
@@ -344,16 +348,29 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     else {
       final Semaphore semaphore = new Semaphore();
       semaphore.down();
-      new Task.Backgroundable(null, "Updating index", false) {
-        public void run(@NotNull final ProgressIndicator indicator) {
-          try {
-            synchronizer.execute();
-          }
-          finally {
-            semaphore.up();
-          }
+      Runnable runnable = new Runnable() {
+        public void run() {
+          // due to current assertions in 'progress management' subsystem 
+          // we have to queue the task only from event dispatch thread
+          // when these are solved, it is ok to remove invokeLater() calls from here
+          new Task.Backgroundable(null, "Updating index", false) {
+            public void run(@NotNull final ProgressIndicator indicator) {
+              try {
+                synchronizer.execute();
+              }
+              finally {
+                semaphore.up();
+              }
+            }
+          }.queue();
         }
-      }.queue();
+      };
+      if (application.isUnitTestMode()) {
+        application.invokeLater(runnable, ModalityState.NON_MODAL);
+      }
+      else {
+        SwingUtilities.invokeLater(runnable);
+      }
       semaphore.waitFor();
     }
   }
