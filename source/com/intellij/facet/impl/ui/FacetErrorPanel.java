@@ -8,15 +8,16 @@ import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
-import com.intellij.ide.IdeBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +25,8 @@ import java.util.List;
  * @author nik
  */
 public class FacetErrorPanel {
+  @NonNls private static final String HTML_PREFIX = "<html><body>";
+  @NonNls private static final String HTML_SUFFIX = "</body></html>";
   private JPanel myMainPanel;
   private JPanel myButtonPanel;
   private JButton myQuickFixButton;
@@ -105,7 +108,7 @@ public class FacetErrorPanel {
         ValidationResult validationResult = validator.check();
         if (!validationResult.isOk()) {
           myMainPanel.setVisible(true);
-          myWarningLabel.setText(validationResult.getErrorMessage());
+          myWarningLabel.setText(HTML_PREFIX + validationResult.getErrorMessage() + HTML_SUFFIX);
           myWarningLabel.setVisible(true);
           myCurrentQuickFix = validationResult.getQuickFix();
           myQuickFixButton.setVisible(myCurrentQuickFix != null);
