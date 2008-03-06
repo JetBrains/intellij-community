@@ -16,14 +16,16 @@ import org.jetbrains.annotations.NotNull;
 public class RecursiveCallParameterWeigher extends CompletionWeigher {
 
   public Comparable weigh(@NotNull final LookupElement<?> element, final CompletionLocation location) {
+    if (location.getCompletionType() != CompletionType.SMART) return 0;
+
     final Object object = element.getObject();
-    final ExpectedTypeInfo[] myExpectedInfos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
-    if (myExpectedInfos != null) {
+    final ExpectedTypeInfo[] expectedInfos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
+    if (expectedInfos != null) {
       final PsiType itemType = JavaCompletionUtil.getPsiType(object);
       if (itemType != null) {
         final PsiMethod positionMethod = JavaCompletionUtil.POSITION_METHOD.getValue(location);
         if (positionMethod != null) {
-          for (final ExpectedTypeInfo expectedInfo : myExpectedInfos) {
+          for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
             if (expectedInfo.getCalledMethod() == positionMethod && expectedInfo.getType().isAssignableFrom(itemType)) {
               return 0;
             }

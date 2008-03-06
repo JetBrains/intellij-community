@@ -177,34 +177,26 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     }
   }
 
-  protected void sortItems(PsiElement context, LookupItem[] items) {
-    if (context == null || shouldSortItems(context.getContainingFile(), items)) {
-      final PsiProximityComparator proximityComparator = new PsiProximityComparator(context);
+  protected static void sortItems(PsiElement context, LookupItem[] items) {
+    final PsiProximityComparator proximityComparator = new PsiProximityComparator(context);
+    final Comparator<? super LookupItem> comparator = new Comparator<LookupItem>() {
+      public int compare(LookupItem o1, LookupItem o2) {
+        double priority1 = o1.getPriority();
+        double priority2 = o2.getPriority();
+        if (priority1 > priority2) return -1;
+        if (priority2 > priority1) return 1;
 
-      final Comparator<? super LookupItem> comparator = new Comparator<LookupItem>() {
-        public int compare(LookupItem o1, LookupItem o2) {
-          double priority1 = o1.getPriority();
-          double priority2 = o2.getPriority();
-          if (priority1 > priority2) return -1;
-          if (priority2 > priority1) return 1;
+        int grouping1 = o1.getGrouping();
+        int grouping2 = o2.getGrouping();
+        if (grouping1 > grouping2) return -1;
+        if (grouping2 > grouping1) return 1;
 
-          int grouping1 = o1.getGrouping();
-          int grouping2 = o2.getGrouping();
-          if (grouping1 > grouping2) return -1;
-          if (grouping2 > grouping1) return 1;
+        int stringCompare = o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
+        return stringCompare != 0 ? stringCompare : proximityComparator.compare(o1.getObject(), o2.getObject());
+      }
+    };
+    Arrays.sort(items, comparator);
 
-          int stringCompare = o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
-          return stringCompare != 0 ? stringCompare : proximityComparator.compare(o1.getObject(), o2.getObject());
-        }
-
-
-      };
-      Arrays.sort(items, comparator);
-    }
-  }
-
-  protected boolean shouldSortItems(final PsiFile containingFile, final LookupItem[] items) {
-    return true;
   }
 
   public Lookup getActiveLookup() {

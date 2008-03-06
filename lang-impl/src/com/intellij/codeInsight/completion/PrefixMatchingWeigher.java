@@ -22,8 +22,11 @@ public class PrefixMatchingWeigher extends CompletionWeigher {
   });
 
   public Comparable weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
-    return (StringUtil.capitalsOnly(item.getLookupString()).startsWith(PREFIX_CAPITALS.getValue(location)) ? 4 : 0) +
-           (item.getLookupString().startsWith(location.getPrefix()) ? 2 : 0) +
-           (StringUtil.startsWithIgnoreCase(item.getLookupString(), location.getPrefix()) ? 1 : 0);
+    if (location.getCompletionType() == CompletionType.CLASS_NAME) return 0;
+
+    final String lookupString = item.getLookupString();
+    return (StringUtil.capitalsOnly(lookupString).startsWith(PREFIX_CAPITALS.getValue(location)) ? 4 : 0) +
+           (lookupString.startsWith(location.getPrefix()) ? 2 : 0) +
+           (StringUtil.startsWithIgnoreCase(lookupString, location.getPrefix()) ? 1 : 0);
   }
 }

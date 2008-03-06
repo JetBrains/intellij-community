@@ -5,22 +5,22 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.psi.PsiField;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
 */
-public class PreferFieldsAndGettersWeigher extends CompletionWeigher {
+public class PreferAccessibleWeigher extends CompletionWeigher {
 
   public Comparable weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
-    if (location.getCompletionType() != CompletionType.SMART) return 0;
-
     final Object object = item.getObject();
-    if (object instanceof PsiField) return 2;
-    if (object instanceof PsiMethod && PropertyUtil.isSimplePropertyGetter((PsiMethod)object)) return 1;
+    if (object instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)object;
+      if (!JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(method, location.getCompletionParameters().getPosition(), null)) return -2;
+    }
+
     return 0;
   }
 }

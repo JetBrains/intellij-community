@@ -15,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 public class PreferLocalVariableWeigher extends CompletionWeigher {
 
   public Comparable weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
+    if (location.getCompletionType() != CompletionType.SMART) return 0;
+
     final Object object = item.getObject();
     return object instanceof PsiLocalVariable || object instanceof PsiParameter;
   }

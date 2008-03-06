@@ -1,19 +1,19 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
-import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.WeighingService;
+import com.intellij.psi.WeighingComparable;
+import com.intellij.psi.statistics.StatisticsManager;
 
 public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
-  private String myPrefix;
   private final CompletionParameters myParameters;
   private final CompletionLocation myLocation;
 
   public CompletionPreferencePolicy(String prefix, final CompletionParameters parameters) {
     myParameters = parameters;
-    setPrefix(prefix);
-    myLocation = new CompletionLocation(myParameters.getCompletionType(), myPrefix, myParameters);
+    myLocation = new CompletionLocation(myParameters.getCompletionType(), prefix, myParameters);
   }
 
   public CompletionType getCompletionType() {
@@ -21,7 +21,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   }
 
   public void setPrefix(String prefix) {
-    myPrefix = prefix;
+    myLocation.setPrefix(prefix);
   }
 
   public void itemSelected(LookupItem item) {
@@ -42,15 +42,17 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   public int compare(final LookupItem item1, final LookupItem item2) {
     if (item1 == item2) return 0;
 
-    if (myParameters.getCompletionType() == CompletionType.SMART) {
-      if (item2.getAttribute(LookupItem.DONT_PREFER) != null) return -1;
-      return 0;
-    }
+    double priority1 = item1.getPriority();
+    double priority2 = item2.getPriority();
+    if (priority1 > priority2) return -1;
+    if (priority1 < priority2) return 1;
 
-    if (item1.getAllLookupStrings().contains(myPrefix)) return -1;
-    if (item2.getAllLookupStrings().contains(myPrefix)) return 1;
 
-    return doCompare(item1.getPriority(), item2.getPriority(), getWeight(item1), getWeight(item2));
+    final WeighingComparable<LookupElement<?>,CompletionLocation> w1 =
+        WeighingService.weigh(CompletionRegistrar.PRESELECT_KEY, (LookupElement<?>)item2, myLocation);
+    final WeighingComparable<LookupElement<?>, CompletionLocation> w2 =
+        WeighingService.weigh(CompletionRegistrar.PRESELECT_KEY, (LookupElement<?>)item1, myLocation);
+    return w1.compareTo(w2);
   }
 
   public static int doCompare(final double priority1, final double priority2, final Comparable[] weight1, final Comparable[] weight2) {

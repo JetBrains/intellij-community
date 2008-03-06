@@ -8,7 +8,6 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -20,18 +19,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.statistics.JavaStatisticsManager;
-import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -66,15 +60,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
         final ExpectedTypeInfo[] expectedInfos =
             expr != null ? ExpectedTypesProvider.getInstance(context.project).getExpectedTypes(expr, true) : null;
 
-        final Set<PsiClass> classes =
-            expectedInfos != null && expectedInfos.length > 0 ? getFirstClasses(expectedInfos) : Collections.<PsiClass>emptySet();
 
         final DefaultInsertHandler defaultHandler = new DefaultInsertHandler();
         for (final LookupItem item : set) {
           final Object o = item.getObject();
-          if (classes.contains(o) && !shouldPrefer((PsiClass)o)) {
-            item.setAttribute(LookupItem.DONT_PREFER, "");
-          }
           InsertHandler oldHandler = item.getInsertHandler();
           if (oldHandler == null) {
             oldHandler = defaultHandler;
@@ -218,13 +207,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
             PsiType type = myType.getType();
             if (type instanceof PsiArrayType) {
               flag = false;
-              type = ((PsiArrayType)type).getComponentType();
-            }
-            if (!(type instanceof PsiClassType)) continue;
-            final PsiClass typeClass = ((PsiClassType)type).resolve();
-
-            if (InheritanceUtil.isInheritorOrSelf(psiClass, typeClass, true)) {
-              StatisticsManager.getInstance().incUseCount(JavaStatisticsManager.createInfo(type, psiClass));
             }
           }
           if (flag) {
@@ -236,43 +218,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
 
   }
 
-
-  public static THashSet<PsiClass> getFirstClasses(final ExpectedTypeInfo[] expectedInfos) {
-    final THashSet<PsiClass> set = new THashSet<PsiClass>();
-    for (final ExpectedTypeInfo info : expectedInfos) {
-      addFirstPsiType(set, info.getType());
-      addFirstPsiType(set, info.getDefaultType());
-    }
-    return set;
-  }
-
-  private static void addFirstPsiType(final THashSet<PsiClass> set, final PsiType type) {
-    if (type instanceof PsiClassType) {
-      final PsiClass psiClass = ((PsiClassType)type).resolve();
-      if (psiClass != null) {
-        set.add(psiClass);
-      }
-    }
-  }
-
-  private static boolean shouldPrefer(final PsiClass psiClass) {
-    int toImplement = OverrideImplementUtil.getMethodSignaturesToImplement(psiClass).size();
-    if (toImplement > 2) return false;
-
-    for (final PsiMethod method : psiClass.getMethods()) {
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        toImplement++;
-        if (toImplement > 2) return false;
-      }
-    }
-
-    if (toImplement > 0) return true;
-
-    if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
-    if (CommonClassNames.JAVA_LANG_STRING.equals(psiClass.getQualifiedName())) return false;
-    if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) return false;
-    return true;
-  }
 
   private static void setTailType(PsiElement position, LookupItem item, ExpectedTypeInfo[] expectedTypeInfos) {
     final PsiExpression enclosing = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);

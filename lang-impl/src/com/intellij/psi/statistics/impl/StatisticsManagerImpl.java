@@ -30,6 +30,8 @@ public class StatisticsManagerImpl extends StatisticsManager {
   private final HashSet<StatisticsUnit> myModifiedUnits = new HashSet<StatisticsUnit>();
 
   public int getUseCount(@NotNull final StatisticsInfo info) {
+    if (info == StatisticsInfo.EMPTY) return 0;
+
     String key1 = info.getContext();
     int unitNumber = getUnitNumber(key1);
     StatisticsUnit unit = getUnit(unitNumber);
@@ -37,6 +39,8 @@ public class StatisticsManagerImpl extends StatisticsManager {
   }
 
   public void incUseCount(@NotNull final StatisticsInfo info) {
+    if (info == StatisticsInfo.EMPTY) return;
+
     final String key1 = info.getContext();
     int unitNumber = getUnitNumber(key1);
     StatisticsUnit unit = getUnit(unitNumber);

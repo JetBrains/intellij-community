@@ -2,7 +2,6 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
-import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
@@ -34,6 +33,7 @@ import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -84,29 +84,21 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myProject = project;
     myEditor = editor;
     myItems = items;
-    myPrefix = prefix;
     myItemPreferencePolicy = itemPreferencePolicy;
 
-    myEditor.putUserData(LOOKUP_IN_EDITOR_KEY, this);
-
-    if (myPrefix == null){
-      myPrefix = "";
-    }
+    myPrefix = StringUtil.notNullize(prefix);
     myInitialPrefix = myPrefix;
 
-    final JComponent bottomLabel = HintUtil.createAdComponent(bottomText);
+    myItemsMap = initWeightMap();
 
-    myList = new JList() ;
-    myList.setFocusable(false);
-
+    myList = new JList();
     myCellRenderer = new LookupCellRenderer(this);
     myList.setCellRenderer(myCellRenderer);
-    myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-    myItemsMap = initWeightMap(itemPreferencePolicy);
-
     updateList();
+    
+    myList.setFocusable(false);
 
+    myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
 
     JScrollPane scrollPane = new JScrollPane(myList);
@@ -114,7 +106,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     getComponent().add(scrollPane, BorderLayout.CENTER);
     scrollPane.setBorder(null);
     if (StringUtil.isNotEmpty(bottomText)) {
-      getComponent().add(bottomLabel, BorderLayout.SOUTH);
+      getComponent().add(HintUtil.createAdComponent(bottomText), BorderLayout.SOUTH);
     }
     getComponent().setBorder(new BegPopupMenuBorder());
 
@@ -144,81 +136,92 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
     }, this);
 
-    myList.addListSelectionListener(
-      new ListSelectionListener() {
-        public void valueChanged(ListSelectionEvent e){
-          LookupItem item = (LookupItem)myList.getSelectedValue();
-          if (item != null && item.getAttribute(EMPTY_ITEM_ATTRIBUTE) != null){
-            item = null;
-          }
-          fireCurrentItemChanged(item);
+    myList.addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e){
+        LookupItem item = (LookupItem)myList.getSelectedValue();
+        if (item != null && item.getAttribute(EMPTY_ITEM_ATTRIBUTE) != null){
+          item = null;
         }
+        fireCurrentItemChanged(item);
       }
-    );
+    });
 
-    myList.addMouseListener(
-      new MouseAdapter() {
-        public void mouseClicked(MouseEvent e){
-          if (e.getClickCount() == 2){
-            CommandProcessor.getInstance().executeCommand(
-                myProject, new Runnable() {
-                public void run() {
-                  finishLookup(NORMAL_SELECT_CHAR);
-                }
-              },
-                "",
-                null
-            );
-          }
+    myList.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent e){
+        if (e.getClickCount() == 2){
+          CommandProcessor.getInstance().executeCommand(
+              myProject, new Runnable() {
+            public void run() {
+              finishLookup(NORMAL_SELECT_CHAR);
+            }
+          },
+              "",
+              null
+          );
         }
       }
-    );
+    });
     selectMostPreferableItem();
 
     final Application application = ApplicationManager.getApplication();
 
     if (!application.isUnitTestMode()) {
       application.invokeLater(
-        new Runnable() {
-          public void run(){
-            if (myIndex >= 0 && myIndex < myList.getModel().getSize()){
-              ListScrollingUtil.selectItem(myList, myIndex);
-            }
-            else if(myItems.length > 0){
-              ListScrollingUtil.selectItem(myList, 0);
+          new Runnable() {
+            public void run(){
+              if (myIndex >= 0 && myIndex < myList.getModel().getSize()){
+                ListScrollingUtil.selectItem(myList, myIndex);
+              }
+              else if(myItems.length > 0){
+                ListScrollingUtil.selectItem(myList, 0);
+              }
             }
           }
-        }
       );
     }
+
+    myEditor.putUserData(LOOKUP_IN_EDITOR_KEY, this);
   }
 
   public int getPreferredItemsCount() {
     return myPreferredItemsCount;
   }
 
-  private SortedMap<LookupItemWeightComparable, List<LookupItem>> initWeightMap(final LookupItemPreferencePolicy policy) {
+  @TestOnly
+  public void resort() {
+    for (final LookupItem item : myItems) {
+      item.setAttribute(LookupItem.WEIGHT, null);
+    }
+
+    myItemsMap.clear();
+    myItemsMap.putAll(initWeightMap());
+    updateList();
+  }
+
+  private SortedMap<LookupItemWeightComparable, List<LookupItem>> initWeightMap() {
     final SortedMap<LookupItemWeightComparable, List<LookupItem>> map = new TreeMap<LookupItemWeightComparable, List<LookupItem>>();
 
-    if (policy instanceof CompletionPreferencePolicy && ((CompletionPreferencePolicy)policy).getCompletionType() == CompletionType.SMART) {
-      final Document document = myEditor.getDocument();
-      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      assert psiFile != null;
-      final PsiElement element = psiFile.findElementAt(myEditor.getCaretModel().getOffset());
+    final Document document = myEditor.getDocument();
+    final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    assert psiFile != null;
+    final PsiElement element = psiFile.findElementAt(myEditor.getCaretModel().getOffset());
 
-      for (final LookupItem item : myItems) {
-        final Comparable[] weight = getWeight(policy, element, item);
-        final LookupItemWeightComparable key = new LookupItemWeightComparable(item.getPriority(), weight);
-        List<LookupItem> list = map.get(key);
-        if (list == null) map.put(key, list = new ArrayList<LookupItem>());
-        list.add(item);
-      }
+    for (final LookupItem item : myItems) {
+      final Comparable[] weight = getWeight(myItemPreferencePolicy, element, item);
+      final LookupItemWeightComparable key = new LookupItemWeightComparable(item.getPriority(), weight);
+      List<LookupItem> list = map.get(key);
+      if (list == null) map.put(key, list = new ArrayList<LookupItem>());
+      list.add(item);
     }
     return map;
   }
 
+  public LookupItemPreferencePolicy getItemPreferencePolicy() {
+    return myItemPreferencePolicy;
+  }
+
   private static Comparable[] getWeight(final LookupItemPreferencePolicy itemPreferencePolicy, final PsiElement context,
-                                 final LookupItem item) {
+                                        final LookupItem item) {
     if (itemPreferencePolicy instanceof CompletionPreferencePolicy) {
       return ((CompletionPreferencePolicy)itemPreferencePolicy).getWeight(item);
     }
@@ -252,9 +255,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   private boolean suits(LookupItem<?> item, PatternMatcher matcher, Pattern pattern) {
     for (final String text : item.getAllLookupStrings()) {
-        if (StringUtil.startsWithIgnoreCase(text, myPrefix) || matcher.matches(text, pattern)) {
-          return true;
-        }
+      if (StringUtil.startsWithIgnoreCase(text, myPrefix) || matcher.matches(text, pattern)) {
+        return true;
+      }
     }
     return false;
   }
@@ -378,38 +381,38 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
 
     ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        public void run(){
-          myCanceled = false;
-          hide();
+        new Runnable() {
+          public void run(){
+            myCanceled = false;
+            hide();
 
-          int lookupStart = getLookupStart();
-          //SD - start
-          //this patch fixes the problem, that template is finished after showing lookup
-          LogicalPosition lookupPosition = myEditor.offsetToLogicalPosition(lookupStart);
-          myEditor.getCaretModel().moveToLogicalPosition(lookupPosition);
-          //SD - end
+            int lookupStart = getLookupStart();
+            //SD - start
+            //this patch fixes the problem, that template is finished after showing lookup
+            LogicalPosition lookupPosition = myEditor.offsetToLogicalPosition(lookupStart);
+            myEditor.getCaretModel().moveToLogicalPosition(lookupPosition);
+            //SD - end
 
-          if (myEditor.getSelectionModel().hasSelection()){
-            myEditor.getDocument().deleteString(myEditor.getSelectionModel().getSelectionStart(), myEditor.getSelectionModel().getSelectionEnd());
-          }
-          if (s.startsWith(myPrefix)){
-            myEditor.getDocument().insertString(lookupStart + prefixLength, s.substring(prefixLength));
-          }
-          else{
-            if (prefixLength > 0){
-              FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.camelHumps");
-              myEditor.getDocument().deleteString(lookupStart, lookupStart + prefixLength);
+            if (myEditor.getSelectionModel().hasSelection()){
+              myEditor.getDocument().deleteString(myEditor.getSelectionModel().getSelectionStart(), myEditor.getSelectionModel().getSelectionEnd());
             }
-            myEditor.getDocument().insertString(lookupStart, s);
+            if (s.startsWith(myPrefix)){
+              myEditor.getDocument().insertString(lookupStart + prefixLength, s.substring(prefixLength));
+            }
+            else{
+              if (prefixLength > 0){
+                FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.camelHumps");
+                myEditor.getDocument().deleteString(lookupStart, lookupStart + prefixLength);
+              }
+              myEditor.getDocument().insertString(lookupStart, s);
+            }
+            int offset = lookupStart + s.length();
+            myEditor.getCaretModel().moveToOffset(offset);
+            myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+            myEditor.getSelectionModel().removeSelection();
+            fireItemSelected(item, completionChar);
           }
-          int offset = lookupStart + s.length();
-          myEditor.getCaretModel().moveToOffset(offset);
-          myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          myEditor.getSelectionModel().removeSelection();
-          fireItemSelected(item, completionChar);
         }
-      }
     );
   }
 
@@ -556,15 +559,15 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     final String _commonPrefix = commonPrefix;
     CommandProcessor.getInstance().executeCommand(
         myProject, new Runnable() {
-        public void run(){
-          if (_subprefix != null){ // correct case
-            int lookupStart = getLookupStart();
-            myEditor.getDocument().replaceString(lookupStart, lookupStart + _subprefix.length(), _subprefix);
-          }
-          myPrefix += _commonPrefix;
-          EditorModificationUtil.insertStringAtCaret(myEditor, _commonPrefix);
+      public void run(){
+        if (_subprefix != null){ // correct case
+          int lookupStart = getLookupStart();
+          myEditor.getDocument().replaceString(lookupStart, lookupStart + _subprefix.length(), _subprefix);
         }
-      },
+        myPrefix += _commonPrefix;
+        EditorModificationUtil.insertStringAtCaret(myEditor, _commonPrefix);
+      }
+    },
         null,
         null
     );
@@ -627,8 +630,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public static int doSelectMostPreferableItem(final LookupItemPreferencePolicy itemPreferencePolicy,
-                                                 final String prefix,
-                                                 Object[] items) {
+                                               final String prefix,
+                                               Object[] items) {
     if (itemPreferencePolicy == null){
       return -1;
     }

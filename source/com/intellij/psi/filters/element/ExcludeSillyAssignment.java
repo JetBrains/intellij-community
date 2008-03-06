@@ -1,10 +1,8 @@
 package com.intellij.psi.filters.element;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.FilterUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,14 +14,12 @@ import com.intellij.psi.filters.FilterUtil;
 public class ExcludeSillyAssignment implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
     if(!(element instanceof PsiElement)) return true;
-    final PsiElement previousElement = FilterUtil.getPreviousElement(context, false);
-    if(previousElement==null || !"=".equals(previousElement.getText())) return true;
-    final PsiElement id = FilterUtil.getPreviousElement(previousElement, false);
-    if(id instanceof PsiIdentifier && id.getParent() instanceof PsiReference){
-      final PsiElement resolve = ((PsiReference)id.getParent()).resolve();
-      if(resolve != null && context.getManager().areElementsEquivalent((PsiElement)element, resolve)) return false;
-    }
-    return true;
+
+    final PsiAssignmentExpression expression = PsiTreeUtil.getParentOfType(context, PsiAssignmentExpression.class, false, PsiClass.class);
+    if (expression == null) return true;
+
+    final PsiExpression left = expression.getLExpression();
+    return !(left instanceof PsiReference) || !((PsiReference)left).isReferenceTo((PsiElement)element);
   }
 
   public boolean isClassAcceptable(Class hintClass) {

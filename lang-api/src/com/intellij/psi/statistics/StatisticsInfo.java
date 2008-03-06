@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NonNls;
  * @author peter
  */
 public class StatisticsInfo implements Comparable<StatisticsInfo>{
+  public static final StatisticsInfo EMPTY = new StatisticsInfo("empty", "empty");
+
   private static final StatisticsManager ourManager = StatisticsManager.getInstance();
   private final String myContext;
   private final String myValue;

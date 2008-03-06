@@ -13,6 +13,6 @@ import com.intellij.psi.statistics.StatisticsInfo;
 public class DefaultCompletionStatistician extends CompletionStatistician{
 
   public StatisticsInfo serialize(final LookupElement element, final CompletionLocation location) {
-    return new StatisticsInfo("completion", element.getLookupString());
+    return new StatisticsInfo("completion#" + location.getCompletionParameters().getOriginalFile().getLanguage(), element.getLookupString());
   }
 }

@@ -58,7 +58,6 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
   public static final Object INDICATE_ANONYMOUS = Key.create("INDICATE ANONYMOUS");
   public static final Key<String> INSERT_TYPE_PARAMS = Key.create("INSERT_TYPE_PARAMS");
 
-  public static final Key<Object> DONT_PREFER = Key.create("DONT_PREFER");
   public static final Key<Comparable[]> WEIGHT = Key.create("WEIGHT");
 
   public static final Object CASE_INSENSITIVE = Key.create("CASE_INSENSITIVE");

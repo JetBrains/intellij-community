@@ -195,6 +195,8 @@
   <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PrefixMatchingWeigher" id="prefix" order="after stats"/>
   <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.LookupElementProximityWeigher" id="proximity" order="after prefix"/>
 
+  <weigher key="preferredCompletionItem" implementationClass="com.intellij.codeInsight.completion.PrefixMatchingWeigher" id="prefix" order="first"/>
+
   <completion.contributor implementation="com.intellij.codeInsight.completion.LegacyCompletionContributor"/>
   <lookup.charFilter implementation="com.intellij.codeInsight.completion.CompletionCharFilter" order="last"/>
   <lookup.charFilter implementation="com.intellij.refactoring.IdentifierCharFilter" id="identifier"/>

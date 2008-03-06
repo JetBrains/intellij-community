@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public class LookupElementProximityWeigher extends CompletionWeigher {
 
   public Comparable weigh(@NotNull final LookupElement<?> item, final CompletionLocation location) {
-    if (item.getObject() instanceof PsiElement) {
+    if (location.getCompletionType() != CompletionType.CLASS_NAME && item.getObject() instanceof PsiElement) {
       return PsiProximityComparator.getProximity((PsiElement)item.getObject(), location.getCompletionParameters().getPosition());
     }
     return null;
