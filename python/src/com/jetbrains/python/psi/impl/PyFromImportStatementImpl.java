@@ -29,15 +29,16 @@ import com.jetbrains.python.psi.PyFromImportStatement;
  * To change this template use File | Settings | File Templates.
  */
 public class PyFromImportStatementImpl extends PyElementImpl implements PyFromImportStatement {
-    public PyFromImportStatementImpl(ASTNode astNode) {
-        super(astNode);
-    }
+  public PyFromImportStatementImpl(ASTNode astNode) {
+    super(astNode);
+  }
 
-    @Override protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-        pyVisitor.visitPyFromImportStatement(this);
-    }
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyFromImportStatement(this);
+  }
 
-    public boolean isStarImport() {
-        return getNode().findChildByType(PyTokenTypes.MULT) != null;
-    }
+  public boolean isStarImport() {
+    return getNode().findChildByType(PyTokenTypes.MULT) != null;
+  }
 }
