@@ -20,12 +20,15 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +54,11 @@ public class PyFromImportStatementImpl extends PyElementImpl implements PyFromIm
     return getNode().findChildByType(PyTokenTypes.MULT) != null;
   }
 
+  @Nullable
+  public PyReferenceExpression getImportSource() {
+    return childToPsi(TokenSet.create(PyElementTypes.REFERENCE_EXPRESSION), 0);
+  }
+
   public PyImportElement[] getImportElements() {
     List<PyImportElement> result = new ArrayList<PyImportElement>();
     final ASTNode importKeyword = getNode().findChildByType(PyTokenTypes.IMPORT_KEYWORD);
@@ -66,10 +74,21 @@ public class PyFromImportStatementImpl extends PyElementImpl implements PyFromIm
 
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, final PsiElement lastParent,
                                      @NotNull final PsiElement place) {
-    PyImportElement[] importElements = getImportElements();
-    for(PyImportElement element: importElements) {
-      if (!element.processDeclarations(processor, state, lastParent, place)) {
-        return false;
+    if (isStarImport()) {
+      PyReferenceExpression expr = getImportSource();
+      if (expr != null) {
+        final PsiElement importedFile = ResolveImportUtil.resolveImportReference(expr, expr.getReferencedName());
+        if (importedFile != null) {
+          return importedFile.processDeclarations(processor, state, null, place);
+        }
+      }
+    }
+    else {
+      PyImportElement[] importElements = getImportElements();
+      for(PyImportElement element: importElements) {
+        if (!element.processDeclarations(processor, state, lastParent, place)) {
+          return false;
+        }
       }
     }
     return true;

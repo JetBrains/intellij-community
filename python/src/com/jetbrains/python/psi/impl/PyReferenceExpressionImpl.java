@@ -21,8 +21,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
@@ -127,9 +125,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return null; // TODO?
     }
 
-    if (getParent() instanceof PyImportElement) {
-      final PsiFile[] files = FilenameIndex.getFilesByName(getProject(), referencedName + ".py", GlobalSearchScope.allScope(getProject()));
-      if (files.length == 1) return files[0];
+    if (getParent() instanceof PyImportElement || getParent() instanceof PyFromImportStatement) {
+      return ResolveImportUtil.resolveImportReference(this, referencedName);
     }
 
     return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), this, this, null);

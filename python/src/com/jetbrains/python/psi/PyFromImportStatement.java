@@ -16,6 +16,8 @@
 
 package com.jetbrains.python.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Created by IntelliJ IDEA.
  * User: yole
@@ -25,5 +27,7 @@ package com.jetbrains.python.psi;
  */
 public interface PyFromImportStatement extends PyStatement {
   boolean isStarImport();
+  @Nullable
+  PyReferenceExpression getImportSource();
   PyImportElement[] getImportElements();
 }
