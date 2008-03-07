@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -29,6 +30,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.FactoryMap;
@@ -40,13 +42,11 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
-import gnu.trove.THashMap;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -102,7 +102,6 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   private final EventDispatcher<DomEventListener> myListeners = EventDispatcher.create(DomEventListener.class);
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
   private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache();
-  private final Map<DomFileDescription<?>,Set<WeakReference<DomFileElementImpl>>> myFileDescriptions = new THashMap<DomFileDescription<?>,Set<WeakReference<DomFileElementImpl>>>();
 
   private final GenericValueReferenceProvider myGenericValueReferenceProvider = new GenericValueReferenceProvider();
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
@@ -173,6 +172,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     startupManager.registerStartupActivity(new Runnable() {
       public void run() {
         final VirtualFileAdapter listener = new VirtualFileAdapter() {
+          private final List<XmlFile> myDeletedFiles = new SmartList<XmlFile>();
+
           public void contentsChanged(VirtualFileEvent event) {
             processVfsChange(event.getFile());
           }
@@ -181,28 +182,36 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
             processVfsChange(event.getFile());
           }
 
-          public void fileDeleted(VirtualFileEvent event) {
-            List<XmlFile> toChange = null;
-            for (final Set<WeakReference<DomFileElementImpl>> set : myFileDescriptions.values()) {
-              for (Iterator<WeakReference<DomFileElementImpl>> it = set.iterator(); it.hasNext();) {
-                WeakReference<DomFileElementImpl> reference = it.next();
-                final DomFileElementImpl element = reference.get();
-                if (element == null) {
-                  it.remove();
-                  continue;
-                }
-                final XmlFile file = element.getFile();
-                if (!file.isValid()) {
-                  it.remove();
-                  if (toChange == null) toChange = new ArrayList<XmlFile>();
-                  toChange.add(file);
-                }
+          public void beforeFileDeletion(final VirtualFileEvent event) {
+            beforeFileDeletion(event.getFile());
+          }
+
+          private void beforeFileDeletion(final VirtualFile file) {
+            if (project.isDisposed()) return;
+
+            if (file.isDirectory() && file instanceof NewVirtualFile) {
+              for (final VirtualFile child : ((NewVirtualFile)file).getCachedChildren()) {
+                beforeFileDeletion(child);
+              }
+              return;
+            }
+
+            if (StdFileTypes.XML.equals(file.getFileType())) {
+              final PsiFile psiFile = psiManager.findFile(file);
+              if (psiFile instanceof XmlFile) {
+                myDeletedFiles.add((XmlFile)psiFile);
               }
             }
-            if (toChange != null) {
-              for (final XmlFile file : toChange) {
-                processFileChange(file);
+          }
+
+          public void fileDeleted(VirtualFileEvent event) {
+            if (!myDeletedFiles.isEmpty()) {
+              if (!project.isDisposed()) {
+                for (final XmlFile file : myDeletedFiles) {
+                  processXmlFileChange(file, true);
+                }
               }
+              myDeletedFiles.clear();
             }
           }
 
@@ -398,12 +407,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     return myApplicationComponent.getFileDescriptions(rootTagName);
   }
 
-  public final DomFileDescription[] getAcceptingOtherRootTagNameDescriptions() {
+  public final Set<DomFileDescription> getAcceptingOtherRootTagNameDescriptions() {
     return myApplicationComponent.getAcceptingOtherRootTagNameDescriptions();
-  }
-
-  public final Map<DomFileDescription<?>, Set<WeakReference<DomFileElementImpl>>> getFileDescriptions() {
-    return myFileDescriptions;
   }
 
   @Nullable
@@ -599,8 +604,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     registerFileDescription(description);
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
-        myFileDescriptions.remove(description);
         getFileDescriptions(description.getRootTagName()).remove(description);
+        getAcceptingOtherRootTagNameDescriptions().remove(description);
       }
     });
   }
@@ -624,8 +629,6 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       //noinspection unchecked
       myAnnotationsManager.registerDomElementsAnnotator(annotator, description.getRootElementClass());
     }
-
-    myFileDescriptions.put(description, new HashSet<WeakReference<DomFileElementImpl>>());
   }
 
   @NotNull

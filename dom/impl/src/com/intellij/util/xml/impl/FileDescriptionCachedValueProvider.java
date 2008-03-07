@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.util.*;
 
 /**
@@ -125,7 +124,6 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
         myModCount++;
         computeCachedValue(ArrayUtil.EMPTY_OBJECT_ARRAY);
         if (fireEvents && myLastResult != null) {
-          removeFileElementFromCache(myLastResult, myFileDescription);
           myLastResult.resetRoot(true);
           return Arrays.<DomEvent>asList(new ElementUndefinedEvent(myLastResult));
         }
@@ -220,7 +218,6 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     final List<DomEvent> events = fireEvents ? new SmartList<DomEvent>() : Collections.<DomEvent>emptyList();
     if (oldValue != null) {
       assert oldFileDescription != null;
-      removeFileElementFromCache(oldValue, oldFileDescription);
       oldValue.resetRoot(true);
       if (fireEvents) {
         events.add(new ElementUndefinedEvent(oldValue));
@@ -241,26 +238,10 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     myLastResult = new DomFileElementImpl<T>(myXmlFile, rootElementClass, rootTagName, myDomManager);
     computeCachedValue(dependencyItems);
 
-    if (!(myFileDescription instanceof MockDomFileDescription)) {
-      myDomManager.getFileDescriptions().get(myFileDescription).add(new WeakReference<DomFileElementImpl>(myLastResult));
-    }
     if (fireEvents) {
       events.add(new ElementDefinedEvent(myLastResult));
     }
     return events;
-  }
-
-  private void removeFileElementFromCache(final DomFileElementImpl element, final DomFileDescription description) {
-    if (description instanceof MockDomFileDescription) return;
-
-    final Set<WeakReference<DomFileElementImpl>> references = myDomManager.getFileDescriptions().get(description);
-    for (Iterator<WeakReference<DomFileElementImpl>> iterator = references.iterator(); iterator.hasNext();) {
-      final DomFileElementImpl fileElement = iterator.next().get();
-      if (fileElement == null || fileElement == element) {
-        iterator.remove();
-        return;
-      }
-    }
   }
 
   private void computeCachedValue(@NotNull final Object[] dependencyItems) {
@@ -273,8 +254,8 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     final Set<Object> deps = new LinkedHashSet<Object>();
     deps.add(this);
     deps.add(myXmlFile);
-    Set<DomFileDescription<?>> domFileDescriptions = myDomManager.getFileDescriptions().keySet();
-    for (final DomFileDescription<?> fileDescription : new HashSet<DomFileDescription<?>>(domFileDescriptions)) {
+    Set<DomFileDescription> domFileDescriptions = DomApplicationComponent.getInstance().getAllFileDescriptions();
+    for (final DomFileDescription<?> fileDescription : new HashSet<DomFileDescription>(domFileDescriptions)) {
       deps.addAll(fileDescription.getDependencyItems(myXmlFile));
     }
     return deps.toArray();

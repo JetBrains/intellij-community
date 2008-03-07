@@ -62,8 +62,8 @@ public class DomApplicationComponent {
     return myRootTagName2FileDescription.get(rootTagName);
   }
 
-  public final synchronized DomFileDescription[] getAcceptingOtherRootTagNameDescriptions() {
-    return myAcceptingOtherRootTagNamesDescriptions.toArray(new DomFileDescription[myAcceptingOtherRootTagNamesDescriptions.size()]);
+  public final synchronized Set<DomFileDescription> getAcceptingOtherRootTagNameDescriptions() {
+    return myAcceptingOtherRootTagNamesDescriptions;
   }
 
   public final synchronized void registerFileDescription(final DomFileDescription description) {
@@ -71,6 +71,15 @@ public class DomApplicationComponent {
     if (description.acceptsOtherRootTagNames()) {
       myAcceptingOtherRootTagNamesDescriptions.add(description);
     }
+  }
+
+  @Nullable
+  public final synchronized Set<DomFileDescription> getAllFileDescriptions() {
+    final THashSet<DomFileDescription> set = new THashSet<DomFileDescription>(myAcceptingOtherRootTagNamesDescriptions);
+    for (final Set<DomFileDescription> descriptions : myRootTagName2FileDescription.values()) {
+      set.addAll(descriptions);
+    }
+    return set;
   }
 
   @Nullable

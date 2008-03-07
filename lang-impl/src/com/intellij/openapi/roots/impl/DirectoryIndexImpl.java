@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
@@ -962,12 +963,11 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
 
     private void addDirsRecursively(ArrayList<VirtualFile> list, VirtualFile dir) {
-      if (!myDirToInfoMap.containsKey(dir)) return;
+      if (!myDirToInfoMap.containsKey(dir) || !(dir instanceof NewVirtualFile)) return;
 
       list.add(dir);
 
-      VirtualFile[] children = dir.getChildren();
-      for (VirtualFile child : children) {
+      for (VirtualFile child : ((NewVirtualFile)dir).getCachedChildren()) {
         if (child.isDirectory()) {
           addDirsRecursively(list, child);
         }

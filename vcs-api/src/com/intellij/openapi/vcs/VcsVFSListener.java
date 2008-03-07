@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 
 import java.util.*;
 
@@ -110,12 +111,9 @@ public abstract class VcsVFSListener {
   }
 
   private void addFileToDelete(VirtualFile file) {
-    if (file.isDirectory() && !isDirectoryVersioningSupported()){
-      VirtualFile[] children = file.getChildren();
-      if (children != null){
-        for (VirtualFile child : children) {
-          addFileToDelete(child);
-        }
+    if (file.isDirectory() && file instanceof NewVirtualFile && !isDirectoryVersioningSupported()){
+      for (VirtualFile child : ((NewVirtualFile)file).getCachedChildren()) {
+        addFileToDelete(child);
       }
     } else {
       final VcsDeleteType type = needConfirmDeletion(file);
