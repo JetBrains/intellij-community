@@ -37,7 +37,7 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
     return true;
   }
 
-  public synchronized void visit(final PsiElement element, final HighlightInfoHolder holder) {
+  public void visit(final PsiElement element, final HighlightInfoHolder holder) {
     myHolder = holder;
     assert !myAnnotationHolder.hasAnnotations() : myAnnotationHolder;
     element.accept(this);
