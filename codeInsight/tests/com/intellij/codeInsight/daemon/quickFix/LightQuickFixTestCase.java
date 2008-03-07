@@ -3,6 +3,8 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.Commenter;
+import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -14,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -76,7 +77,11 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   public static Pair<String, Boolean> parseActionHint(final PsiFile file, String contents) {
     PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(file);
 
-    String comment = hostFile instanceof XmlFile ? "<!--" : "//";
+    final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(hostFile.getLanguage());
+    String comment = commenter.getLineCommentPrefix();
+    if (comment == null) {
+      comment = commenter.getBlockCommentPrefix();
+    }
     // "quick fix action text to perform" "should be available"
     Pattern pattern = Pattern.compile("^" + comment + " \"([^\"]*)\" \"(\\S*)\".*", Pattern.DOTALL);
     Matcher matcher = pattern.matcher(contents);
