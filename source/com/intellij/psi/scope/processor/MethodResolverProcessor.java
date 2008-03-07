@@ -4,6 +4,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiConflictResolver;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
@@ -30,7 +31,7 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor implement
 
 
   public void handleEvent(Event event, Object associated) {
-    if (event == Event.CHANGE_LEVEL) {
+    if (event == JavaScopeProcessorEvent.CHANGE_LEVEL) {
       if (myHasAccessibleStaticCorrectCandidate) myStopAcceptingCandidates = true;
     }
     super.handleEvent(event, associated);

@@ -20,13 +20,9 @@ import com.intellij.psi.ResolveState;
 import org.jetbrains.annotations.Nullable;
 
 public interface PsiScopeProcessor {
-  enum Event {
-    START_STATIC,
-    CHANGE_LEVEL,
-    SET_DECLARATION_HOLDER,
-    SET_CURRENT_FILE_CONTEXT,
-    CHANGE_PROPERTY_PREFIX,
-    SET_PARAMETERS
+  interface Event {
+    Event SET_DECLARATION_HOLDER = new Event() {
+    };
   }
 
   /**

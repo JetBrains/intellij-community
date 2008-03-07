@@ -6,6 +6,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
 
@@ -47,7 +48,7 @@ public abstract class VariablesProcessor extends BaseScopeProcessor implements E
   }
 
   public final void handleEvent(Event event, Object associated){
-    if(event == Event.START_STATIC)
+    if(event == JavaScopeProcessorEvent.START_STATIC)
       myStaticScopeFlag = true;
   }
 

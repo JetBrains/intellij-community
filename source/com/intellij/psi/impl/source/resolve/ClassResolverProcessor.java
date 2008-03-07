@@ -6,6 +6,7 @@ import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
@@ -68,9 +69,9 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   private boolean myStaticContext = false;
 
   public void handleEvent(Event event, Object associated) {
-    if (event == Event.START_STATIC) {
+    if (event == JavaScopeProcessorEvent.START_STATIC) {
       myStaticContext = true;
-    } else if (event == Event.SET_CURRENT_FILE_CONTEXT) {
+    } else if (event == JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT) {
       myCurrentFileContext = (PsiElement)associated;
     }
   }

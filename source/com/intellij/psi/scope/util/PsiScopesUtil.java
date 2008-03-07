@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.processor.MethodsProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -33,20 +34,20 @@ public class PsiScopesUtil {
 
     while(scope != null){
       if(scope instanceof PsiClass){
-        processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, scope);
+        processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, scope);
       }
       if (!scope.processDeclarations(processor, state, prevParent, entrance)) return false;
 
       if (scope instanceof PsiModifierListOwner && !(scope instanceof PsiParameter/* important for not loading tree! */)){
         PsiModifierList modifierList = ((PsiModifierListOwner)scope).getModifierList();
         if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)){
-          processor.handleEvent(PsiScopeProcessor.Event.START_STATIC, null);
+          processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
         }
       }
       if (scope == maxScope) break;
       prevParent = scope;
       scope = prevParent.getContext();
-      processor.handleEvent(PsiScopeProcessor.Event.CHANGE_LEVEL, null);
+      processor.handleEvent(JavaScopeProcessorEvent.CHANGE_LEVEL, null);
     }
 
     return true;
@@ -129,7 +130,7 @@ public class PsiScopesUtil {
             else target = null;
           }
           else if(target instanceof PsiClass){
-            processor.handleEvent(PsiScopeProcessor.Event.START_STATIC, null);
+            processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
           }
           final PsiType[] types = referenceElement.getTypeParameters();
           if(target instanceof PsiClass) {
@@ -233,7 +234,7 @@ public class PsiScopesUtil {
             if (qualifier instanceof PsiJavaCodeReferenceElement) {
               final JavaResolveResult result = ((PsiJavaCodeReferenceElement) qualifier).advancedResolve(false);
               if (result.getElement() instanceof PsiClass) {
-                processor.handleEvent(PsiScopeProcessor.Event.START_STATIC, null);
+                processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
                 processQualifierResult(result, processor, methodCall);
               }
             }

@@ -6,6 +6,7 @@ import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiConflictResolver;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.conflictResolvers.JavaVariableConflictResolver;
 import com.intellij.psi.scope.processor.ConflictFilterProcessor;
 import com.intellij.psi.util.PsiUtil;
@@ -53,10 +54,10 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
 
   public final void handleEvent(Event event, Object associated) {
     super.handleEvent(event, associated);
-    if(event == Event.START_STATIC){
+    if(event == JavaScopeProcessorEvent.START_STATIC){
       myStaticScopeFlag = true;
     }
-    else if (Event.SET_CURRENT_FILE_CONTEXT.equals(event)) {
+    else if (JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT.equals(event)) {
       myCurrentFileContext = (PsiElement)associated;
     }
   }

@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,10 +73,10 @@ public class JavaCompletionProcessor extends BaseScopeProcessor
 
 
   public void handleEvent(Event event, Object associated){
-    if(event == Event.START_STATIC){
+    if(event == JavaScopeProcessorEvent.START_STATIC){
       myStatic = true;
     }
-    if(event == Event.CHANGE_LEVEL){
+    if(event == JavaScopeProcessorEvent.CHANGE_LEVEL){
       myMembersFlag = true;
     }
   }

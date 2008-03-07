@@ -30,6 +30,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
@@ -96,11 +97,11 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     PsiScopeProcessor processorToUse = processor;
     if (myInStaticImport) {
       // allows to complete members
-      processor.handleEvent(PsiScopeProcessor.Event.CHANGE_LEVEL, null);
+      processor.handleEvent(JavaScopeProcessorEvent.CHANGE_LEVEL, null);
     }
     else {
       if (isStaticClassReference()) {
-        processor.handleEvent(PsiScopeProcessor.Event.START_STATIC, null);
+        processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
       }
       processorToUse = new PsiScopeProcessor() {
         public boolean execute(PsiElement element, ResolveState state) {

@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
@@ -239,7 +240,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
 
     public void handleEvent(Event event, Object associated) {
-      if (Event.SET_CURRENT_FILE_CONTEXT.equals(event)) {
+      if (JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT.equals(event)) {
         if (associated instanceof PsiImportStaticStatement) {
           final PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)associated;
           if (importStaticStatement.isOnDemand()) {
@@ -322,12 +323,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
           PsiElement resolved = statement.resolve();
           if (resolved instanceof PsiClass) {
-            processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, statement);
+            processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, statement);
             if (!processor.execute(resolved, state)) return false;
           }
         }
       }
-      processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, null);
+      processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, null);
 
       // check in current package
       String packageName = getPackageName();
@@ -343,7 +344,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         if (statement.isOnDemand()) {
           PsiElement resolved = statement.resolve();
           if (resolved != null) {
-            processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, statement);
+            processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, statement);
             processOnDemandTarget(resolved, processor, state, place);
           }
         }
@@ -352,7 +353,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
     if(classHint == null || classHint.shouldProcess(PsiPackage.class)){
       final PsiPackage rootPackage = JavaPsiFacade.getInstance(getManager().getProject()).findPackage("");
-      processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, rootPackage);
+      processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, rootPackage);
       if(rootPackage != null) rootPackage.processDeclarations(processor, state, null, place);
     }
 
@@ -369,7 +370,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
           final PsiClass targetElement = importStaticStatement.resolveTargetClass();
           if (targetElement != null) {
             staticImportProcessor.setNameToFilter(referenceName);
-            staticImportProcessor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, importStaticStatement);
+            staticImportProcessor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, importStaticStatement);
             final boolean result = targetElement.processDeclarations(staticImportProcessor, state, lastParent, place);
             if (!result) return false;
           }
@@ -382,18 +383,18 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
           final PsiClass targetElement = importStaticStatement.resolveTargetClass();
           if (targetElement != null) {
             staticImportProcessor.setNameToFilter(null);
-            staticImportProcessor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, importStaticStatement);
+            staticImportProcessor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, importStaticStatement);
             final boolean result = targetElement.processDeclarations(staticImportProcessor, state, lastParent, place);
             if (!result) return false;
           }
         }
       }
 
-      staticImportProcessor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, null);
+      staticImportProcessor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, null);
     }
 
     if (classHint == null || classHint.shouldProcess(PsiClass.class)){
-      processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, null);
+      processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, null);
 
       PsiJavaCodeReferenceElement[] implicitlyImported = getImplicitlyImportedPackageReferences();
       for (PsiJavaCodeReferenceElement aImplicitlyImported : implicitlyImported) {

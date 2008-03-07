@@ -3,6 +3,7 @@ package com.intellij.psi.scope.processor;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiConflictResolver;
 
 import java.util.List;
@@ -56,10 +57,10 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor {
   }
 
   public void handleEvent(Event event, Object associated) {
-    if (event == Event.START_STATIC) {
+    if (event == JavaScopeProcessorEvent.START_STATIC) {
       myStaticScopeFlag = true;
     }
-    else if (Event.SET_CURRENT_FILE_CONTEXT.equals(event)) {
+    else if (JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT.equals(event)) {
       myCurrentFileContext = (PsiElement)associated;
     }
   }

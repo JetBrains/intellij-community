@@ -8,6 +8,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiConflictResolver;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 
@@ -55,7 +56,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
   }
 
   public void handleEvent(Event event, Object associated){
-    if(event == Event.CHANGE_LEVEL && myName != null){
+    if(event == JavaScopeProcessorEvent.CHANGE_LEVEL && myName != null){
       myCachedResult = getResult();
     }
   }
