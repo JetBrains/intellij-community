@@ -1,2 +1,2 @@
-def m = [int : "int". float : "float"]
+def m = [int : "int", float : "float"]
 print m.int.<ref>toUpperCase()
