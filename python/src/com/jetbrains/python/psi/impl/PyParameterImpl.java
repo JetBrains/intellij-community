@@ -22,9 +22,9 @@ import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,5 +80,20 @@ public class PyParameterImpl extends PyPresentableElementImpl implements PyParam
 
   public Icon getIcon(final int flags) {
     return Icons.PARAMETER_ICON;
+  }
+
+  public PyType getType() {
+    if (getParent() instanceof PyParameterList) {
+      PyParameterList parameterList = (PyParameterList) getParent();
+      final PyParameter[] params = parameterList.getParameters();
+      if (params [0] == this && parameterList.getParent() instanceof PyFunction) {
+        PyFunction func = (PyFunction) parameterList.getParent();
+        final PyClass containingClass = func.getContainingClass();
+        if (containingClass != null) {
+          return new PyClassType(containingClass);
+        }
+      }
+    }
+    return null;
   }
 }
