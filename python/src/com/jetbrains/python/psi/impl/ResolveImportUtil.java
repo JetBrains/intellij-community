@@ -47,6 +47,7 @@ public class ResolveImportUtil {
     if (files.length == 1) return files[0];
 
     final Module module = ModuleUtil.findModuleForPsiElement(importRef);
+    if (module == null) return null;
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
     for(VirtualFile root: contentRoots) {
       final VirtualFile childFile = root.findChild(referencedName + ".py");
