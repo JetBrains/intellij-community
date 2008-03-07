@@ -124,8 +124,9 @@ public class TypedHandler implements TypedActionHandler {
 
     boolean handled = false;
     for(TypedHandlerDelegate delegate: delegates) {
-      handled = delegate.checkAutoPopup(charTyped, project, editor, file);
-      if (handled) break;
+      final TypedHandlerDelegate.Result result = delegate.checkAutoPopup(charTyped, project, editor, file);
+      handled = result == TypedHandlerDelegate.Result.STOP;
+      if (result != TypedHandlerDelegate.Result.CONTINUE) break;
     }
 
     if (!handled) {
@@ -149,19 +150,18 @@ public class TypedHandler implements TypedActionHandler {
 
     final VirtualFile virtualFile = file.getVirtualFile();
     FileType fileType;
-    FileType originalFileType = null;
 
     if (virtualFile != null){
-      originalFileType = fileType = virtualFile.getFileType();
+      fileType = virtualFile.getFileType();
     }
     else {
       fileType = file.getFileType();
     }
 
     for(TypedHandlerDelegate delegate: delegates) {
-      if (delegate.beforeCharTyped(charTyped, project, editor, file, fileType)) {
-        return;
-      }
+      final TypedHandlerDelegate.Result result = delegate.beforeCharTyped(charTyped, project, editor, file, fileType);
+      if (result == TypedHandlerDelegate.Result.STOP) return;
+      if (result == TypedHandlerDelegate.Result.DEFAULT) break;
     }
 
     if (')' == charTyped){
@@ -187,9 +187,9 @@ public class TypedHandler implements TypedActionHandler {
     }
 
     for(TypedHandlerDelegate delegate: delegates) {
-      if (delegate.charTyped(charTyped, project, editor, file)) {
-        return;
-      }
+      final TypedHandlerDelegate.Result result = delegate.charTyped(charTyped, project, editor, file);
+      if (result == TypedHandlerDelegate.Result.STOP) return;
+      if (result == TypedHandlerDelegate.Result.DEFAULT) break;
     }
     if ('{' == charTyped) {
       indentOpenedBrace(project, editor);
@@ -198,7 +198,7 @@ public class TypedHandler implements TypedActionHandler {
 
   static boolean charTypedWeWantToShowSmartnessInInjectedLanguageWithoutPerformanceLoss(final char charTyped) {
     return charTyped == '"' || charTyped == '\'' || charTyped == '[' || charTyped == '(' || charTyped == ']' || charTyped == ')' ||
-      charTyped == '{' || charTyped == '}' || charTyped == '.';
+           charTyped == '{' || charTyped == '}' || charTyped == '.';
   }
 
   private static void handleAfterLParen(Editor editor, FileType fileType, char lparenChar){

@@ -21,8 +21,8 @@ public abstract class TypedHandlerDelegate {
    * @param editor
    * @param file
    */
-  public boolean checkAutoPopup(char charTyped, final Project project, final Editor editor, final PsiFile file) {
-    return false;
+  public Result checkAutoPopup(char charTyped, final Project project, final Editor editor, final PsiFile file) {
+    return Result.CONTINUE;
   }
 
   /**
@@ -36,8 +36,8 @@ public abstract class TypedHandlerDelegate {
    * @return true if the typing has been processed - in this case, no further delegates are called and the character is not inserted.
    *         false otherwise.
    */
-  public boolean beforeCharTyped(char c, final Project project, final Editor editor, final PsiFile file, final FileType fileType) {
-    return false;
+  public Result beforeCharTyped(char c, final Project project, final Editor editor, final PsiFile file, final FileType fileType) {
+    return Result.CONTINUE;
   }
 
   /**
@@ -48,7 +48,13 @@ public abstract class TypedHandlerDelegate {
    * @param editor
    * @param file
    */
-  public boolean charTyped(char c, final Project project, final Editor editor, final PsiFile file) {
-    return false;
+  public Result charTyped(char c, final Project project, final Editor editor, final PsiFile file) {
+    return Result.CONTINUE;
+  }
+
+  public enum Result {
+    STOP,
+    CONTINUE,
+    DEFAULT
   }
 }

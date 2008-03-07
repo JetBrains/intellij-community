@@ -29,20 +29,20 @@ import org.jetbrains.annotations.Nullable;
 public class JavaTypedHandler extends TypedHandlerDelegate {
   private boolean myJavaLTTyped;
 
-  public boolean checkAutoPopup(final char charTyped, final Project project, final Editor editor, final PsiFile file) {
+  public Result checkAutoPopup(final char charTyped, final Project project, final Editor editor, final PsiFile file) {
     if (charTyped == '@' && file instanceof PsiJavaFile) {
       autoPopupJavadocLookup(project, editor);
-      return true;
+      return Result.STOP;
     }
     if (charTyped == '#' || charTyped == '.') {
       AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, new MemberAutoLookupCondition());
-      return true;
+      return Result.STOP;
     }
 
-    return false;
+    return Result.CONTINUE;
   }
 
-  public boolean beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile file, final FileType fileType) {
+  public Result beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile file, final FileType fileType) {
     final FileType originalFileType = getOriginalFileType(file);
 
     int offsetBefore = editor.getCaretModel().getOffset();
@@ -59,30 +59,30 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       if (file instanceof PsiJavaFile && !(file instanceof JspFile) &&
           CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
                ((PsiJavaFile)file).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
-        if (handleJavaGT(editor)) return true;
+        if (handleJavaGT(editor)) return Result.STOP;
       }
     }
 
     if (originalFileType == StdFileTypes.JAVA && c == '}') {
-      if (handleJavaArrayInitializerRBrace(editor)) return true;
+      if (handleJavaArrayInitializerRBrace(editor)) return Result.STOP;
     }
     if (c == ';') {
-      if (handleSemicolon(editor, fileType)) return true;
+      if (handleSemicolon(editor, fileType)) return Result.STOP;
     }
-    return false;
+    return Result.CONTINUE;
   }
 
-  public boolean charTyped(final char c, final Project project, final Editor editor, final PsiFile file) {
+  public Result charTyped(final char c, final Project project, final Editor editor, final PsiFile file) {
     if (myJavaLTTyped) {
       myJavaLTTyped = false;
       handleAfterJavaLT(editor);
-      return true;
+      return Result.STOP;
     }
     final FileType type = getOriginalFileType(file);
     if (type == StdFileTypes.JAVA && c == '{') {
-      if (handleJavaArrayInitializerLBrace(editor)) return true;
+      if (handleJavaArrayInitializerLBrace(editor)) return Result.STOP;
     }
-    return false;
+    return Result.CONTINUE;
   }
 
   @Nullable

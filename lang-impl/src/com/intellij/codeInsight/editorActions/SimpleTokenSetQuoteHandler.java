@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.Document;
 public class SimpleTokenSetQuoteHandler implements QuoteHandler {
   protected final TokenSet myLiteralTokenSet;
 
-  public SimpleTokenSetQuoteHandler(IElementType[] _literalTokens) {
+  public SimpleTokenSetQuoteHandler(IElementType... _literalTokens) {
     myLiteralTokenSet = TokenSet.create(_literalTokens);
   }
 
@@ -35,6 +35,7 @@ public class SimpleTokenSetQuoteHandler implements QuoteHandler {
   }
 
   public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
+    int start = iterator.getStart();
     try {
       Document doc = editor.getDocument();
       CharSequence chars = doc.getCharsSequence();
@@ -53,7 +54,7 @@ public class SimpleTokenSetQuoteHandler implements QuoteHandler {
       }
     }
     finally {
-      while(iterator.atEnd() || iterator.getStart() != offset) iterator.retreat();
+      while(iterator.atEnd() || iterator.getStart() != start) iterator.retreat();
     }
 
     return false;

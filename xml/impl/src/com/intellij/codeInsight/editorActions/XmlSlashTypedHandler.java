@@ -21,7 +21,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlUtil;
 
 public class XmlSlashTypedHandler extends TypedHandlerDelegate {
-  public boolean beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile, final FileType fileType) {
+  public Result beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile, final FileType fileType) {
     if (editedFile instanceof XmlFile && c == '/') {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -38,7 +38,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
            ) {
           editor.getCaretModel().moveToOffset(offset + 1);
           editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          return true;
+          return Result.STOP;
         } else if (tokenType == XmlTokenType.XML_TAG_END &&
                    offset == element.getTextOffset()
                   ) {
@@ -50,14 +50,11 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
           }
         }
       }
-
-      return false;
-
     }
-    return false;
+    return Result.CONTINUE;
   }
 
-  public boolean charTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile) {
+  public Result charTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile) {
     if (editedFile instanceof XmlFile && c == '/') {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -65,13 +62,13 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
       FileViewProvider provider = file.getViewProvider();
       final int offset = editor.getCaretModel().getOffset();
       PsiElement element = provider.findElementAt(offset - 1, XMLLanguage.class);
-      if (element == null) return false;
-      if (!(element.getLanguage() instanceof XMLLanguage)) return false;
+      if (element == null) return Result.CONTINUE;
+      if (!(element.getLanguage() instanceof XMLLanguage)) return Result.CONTINUE;
 
       ASTNode prevLeaf = element.getNode();
       final String prevLeafText = prevLeaf != null ? prevLeaf.getText():null;
       if (prevLeaf != null && !"/".equals(prevLeafText)) {
-        if (!"/".equals(prevLeafText.trim())) return false;
+        if (!"/".equals(prevLeafText.trim())) return Result.CONTINUE;
       }
       while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
       if(prevLeaf instanceof OuterLanguageElement) {
@@ -79,23 +76,23 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
         prevLeaf = element.getNode();
         while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
       }
-      if(prevLeaf == null) return false;
+      if(prevLeaf == null) return Result.CONTINUE;
 
       XmlTag tag = PsiTreeUtil.getParentOfType(prevLeaf.getPsi(), XmlTag.class);
       if(tag == null) { // prevLeaf maybe in one tree and element in another
         PsiElement element2 = provider.findElementAt(prevLeaf.getStartOffset(), XMLLanguage.class);
         tag = PsiTreeUtil.getParentOfType(element2, XmlTag.class);
-        if (tag == null) return false;
+        if (tag == null) return Result.CONTINUE;
       }
 
-      if (tag instanceof JspXmlTagBase || tag instanceof JspXmlRootTag) return false;
-      if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) != null) return false;
-      if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return false;
-      if (PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class) != null) return false;
+      if (tag instanceof JspXmlTagBase || tag instanceof JspXmlRootTag) return Result.CONTINUE;
+      if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) != null) return Result.CONTINUE;
+      if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return Result.CONTINUE;
+      if (PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class) != null) return Result.CONTINUE;
 
       EditorModificationUtil.insertStringAtCaret(editor, ">");
-      return true;
+      return Result.STOP;
     }
-    return false;
+    return Result.CONTINUE;
   }
 }
