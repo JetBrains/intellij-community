@@ -5,7 +5,6 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.encoding.HtmlHttpEquivEncodingReferenceProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.encoding.XmlEncodingReferenceProvider;
-import com.intellij.lang.properties.PropertiesReferenceProvider;
 import com.intellij.patterns.PlatformPatterns;
 import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.patterns.XmlPatterns.*;
@@ -23,11 +22,6 @@ import com.intellij.psi.xml.*;
  */
 public class XmlReferenceContributor extends PsiReferenceContributor {
   public void registerReferenceProviders(final PsiReferenceRegistrar registrar) {
-    PsiReferenceProvider propertiesReferenceProvider = new PropertiesReferenceProvider(false);
-
-    XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, new String[]{"code"}, new ScopeFilter(new ParentElementFilter(
-      new AndFilter(new NamespaceFilter(XmlUtil.SPRING_URI),
-                    new AndFilter(new ClassFilter(XmlTag.class), new TextFilter("message", "theme"))), 2)), propertiesReferenceProvider);
 
     final JavaClassListReferenceProvider classListProvider = new JavaClassListReferenceProvider();
     registrar.registerReferenceProvider(xmlAttributeValue(), classListProvider, PsiReferenceRegistrar.LOWER_PRIORITY);
