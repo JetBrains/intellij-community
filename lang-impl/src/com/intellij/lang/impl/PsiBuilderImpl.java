@@ -14,6 +14,7 @@ import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.pom.tree.events.TreeChangeEvent;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -97,6 +98,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @NonNls private static final String UNBALANCED_MESSAGE =
     "Unbalanced tree. Most probably caused by unbalanced markers. Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem";
+  private PsiElement myInjectionHost;
 
   public static void registerWhitespaceToken(IElementType type) {
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
@@ -116,6 +118,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     if (chameleon instanceof ChameleonElement) { // Shall always be true BTW
       myOriginalTree = chameleon.getTreeParent().getUserData(BlockSupport.TREE_TO_BE_REPARSED);
     }
+    myInjectionHost = chameleon.getTreeParent().getPsi().getContext();
 
     myFileLevelParsing = myCharTable == null || myOriginalTree != null;
 
@@ -148,6 +151,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   public void enforceCommentTokens(TokenSet tokens) {
     myComments = tokens;
+  }
+
+  @Nullable
+  public PsiElement getInjectionHost() {
+    return myInjectionHost;
   }
 
   @Nullable

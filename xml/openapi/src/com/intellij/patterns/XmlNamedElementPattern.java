@@ -35,7 +35,7 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
     });
   }
 
-  public Self withNamespace(final String... namespaces) {
+  public Self withNamespace(@NonNls final String... namespaces) {
     return withNamespace(PlatformPatterns.string().oneOf(namespaces));
   }
 
