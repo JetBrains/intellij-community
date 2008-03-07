@@ -132,7 +132,7 @@ public class JavaResolveUtil {
           !(placeParent instanceof PsiTypeParameter)) {
         PsiClass aClass = (PsiClass)placeParent;
 
-        if (memberClass != null && manager.areElementsEquivalent(memberClass, aClass.getSuperClass())) return aClass;
+        if (memberClass != null && aClass.isInheritor(memberClass, true)) return aClass;
 
         lastClass = aClass;
       }
