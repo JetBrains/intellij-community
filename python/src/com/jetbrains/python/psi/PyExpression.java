@@ -16,6 +16,9 @@
 
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.psi.types.PyType;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Created by IntelliJ IDEA.
  * User: yole
@@ -25,4 +28,7 @@ package com.jetbrains.python.psi;
  */
 public interface PyExpression extends PyElement {
   PyExpression[] EMPTY_ARRAY = new PyExpression[0];
+
+  @Nullable
+  PyType getType();
 }

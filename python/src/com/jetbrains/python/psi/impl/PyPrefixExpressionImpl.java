@@ -21,6 +21,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,5 +43,9 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
   @NotNull
   public PyElementType getOperationSign() {
     return (PyElementType)getNode().findChildByType(PyElementTypes.BINARY_OPS).getElementType();
+  }
+
+  public PyType getType() {
+    return null;
   }
 }

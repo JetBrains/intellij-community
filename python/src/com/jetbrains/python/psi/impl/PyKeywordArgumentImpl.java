@@ -24,6 +24,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PsiCached;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.types.PyType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,33 +34,38 @@ import com.jetbrains.python.psi.PyKeywordArgument;
  * To change this template use File | Settings | File Templates.
  */
 public class PyKeywordArgumentImpl extends PyElementImpl implements PyKeywordArgument {
-    public PyKeywordArgumentImpl(ASTNode astNode) {
-        super(astNode);
-    }
+  public PyKeywordArgumentImpl(ASTNode astNode) {
+    super(astNode);
+  }
 
-    @Nullable
-    @PsiCached
-    public String getKeyword() {
-        ASTNode node = getKeywordNode();
-        return node != null ? node.getText() : null;
-    }
+  @Nullable
+  @PsiCached
+  public String getKeyword() {
+    ASTNode node = getKeywordNode();
+    return node != null ? node.getText() : null;
+  }
 
-    @PsiCached
-    public ASTNode getKeywordNode() {
-        return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
-    }
+  @PsiCached
+  public ASTNode getKeywordNode() {
+    return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
+  }
 
-    @PsiCached
-    public PyExpression getValueExpression() {
-        return PsiTreeUtil.getChildOfType(this, PyExpression.class);
-    }
+  @PsiCached
+  public PyExpression getValueExpression() {
+    return PsiTreeUtil.getChildOfType(this, PyExpression.class);
+  }
 
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() + ": " + getKeyword();
-    }
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + ": " + getKeyword();
+  }
 
-    protected @Nullable Class<? extends PsiElement> getValidChildClass() {
-        return PyExpression.class;
-    }
+  @Nullable
+  protected Class<? extends PsiElement> getValidChildClass() {
+    return PyExpression.class;
+  }
+
+  public PyType getType() {
+    return null;
+  }
 }

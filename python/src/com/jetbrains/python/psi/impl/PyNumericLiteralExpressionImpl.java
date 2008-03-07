@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyNumericLiteralExpression;
+import com.jetbrains.python.psi.types.PyType;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -132,5 +133,9 @@ public class PyNumericLiteralExpressionImpl extends PyElementImpl
       throw new IllegalStateException("No radix found: " + text);
     }
     return new BigInteger(text, radix);
+  }
+
+  public PyType getType() {
+    return null;
   }
 }

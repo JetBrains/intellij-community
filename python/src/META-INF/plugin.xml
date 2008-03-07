@@ -43,5 +43,8 @@
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
     <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
     <configurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
+
+    <projectService serviceInterface="com.jetbrains.python.psi.impl.PyBuiltinCache"
+                    serviceImplementation="com.jetbrains.python.psi.impl.PyBuiltinCache"/>
   </extensions>
 </idea-plugin>

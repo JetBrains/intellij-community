@@ -23,6 +23,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.PyTokenTypes;
@@ -35,49 +36,60 @@ import com.jetbrains.python.PyTokenTypes;
  * To change this template use File | Settings | File Templates.
  */
 public class PyTargetExpressionImpl extends PyElementImpl implements PyTargetExpression {
-    public PyTargetExpressionImpl(ASTNode astNode) {
-        super(astNode);
+  public PyTargetExpressionImpl(ASTNode astNode) {
+    super(astNode);
+  }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyTargetExpression(this);
+  }
+
+  @Nullable
+  @Override
+  public String getName() {
+    ASTNode node = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
+    return node != null ? node.getText() : null;
+  }
+
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    final ASTNode nameElement = getLanguage().getElementGenerator().createNameIdentifier(getProject(), name);
+    getNode().replaceChild(getNode().getFirstChildNode(), nameElement);
+    return this;
+  }
+
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState substitutor,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    // in statements, process only the section in which the original expression was located
+    PsiElement parent = getParent();
+    if (parent instanceof PyStatement && lastParent == null && PsiTreeUtil.isAncestor(parent, place, true)) {
+      return true;
     }
 
-    @Override protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-        pyVisitor.visitPyTargetExpression(this);
+    // never resolve to references within the same assignment statement
+    if (getParent() instanceof PyAssignmentStatement) {
+      PsiElement placeParent = place.getParent();
+      while (placeParent != null && placeParent instanceof PyExpression) {
+        placeParent = placeParent.getParent();
+      }
+      if (placeParent == getParent()) {
+        return true;
+      }
     }
 
-    @Nullable @Override public String getName() {
-        ASTNode node = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
-        return node != null ? node.getText() : null;
+    if (this == place) {
+      return true;
     }
+    return processor.execute(this, substitutor);
+  }
 
-    public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-        final ASTNode nameElement = getLanguage().getElementGenerator().createNameIdentifier(getProject(), name);
-        getNode().replaceChild(getNode().getFirstChildNode(), nameElement);
-        return this;
+  public PyType getType() {
+    if (getParent() instanceof PyAssignmentStatement) {
+      final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)getParent();
+      return assignmentStatement.getAssignedValue().getType();
     }
-
-    public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                       @NotNull ResolveState substitutor,
-                                       PsiElement lastParent,
-                                       @NotNull PsiElement place) {
-        // in statements, process only the section in which the original expression was located
-        PsiElement parent = getParent();
-        if (parent instanceof PyStatement && lastParent == null && PsiTreeUtil.isAncestor(parent, place, true)) {
-            return true;
-        }
-
-        // never resolve to references within the same assignment statement
-        if (getParent() instanceof PyAssignmentStatement) {
-            PsiElement placeParent = place.getParent();
-            while (placeParent != null && placeParent instanceof PyExpression) {
-                placeParent = placeParent.getParent();
-            }
-            if (placeParent == getParent()) {
-                return true;
-            }
-        }
-
-        if (this == place) {
-            return true;
-        }
-        return processor.execute(this, substitutor);
-    }
+    return null;
+  }
 }

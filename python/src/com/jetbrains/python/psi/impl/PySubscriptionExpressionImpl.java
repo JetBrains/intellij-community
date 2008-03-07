@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PySubscriptionExpression;
+import com.jetbrains.python.psi.types.PyType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,7 +28,11 @@ import com.jetbrains.python.psi.PySubscriptionExpression;
  * To change this template use File | Settings | File Templates.
  */
 public class PySubscriptionExpressionImpl extends PyElementImpl implements PySubscriptionExpression {
-    public PySubscriptionExpressionImpl(ASTNode astNode) {
-        super(astNode);
-    }
+  public PySubscriptionExpressionImpl(ASTNode astNode) {
+    super(astNode);
+  }
+
+  public PyType getType() {
+    return null;
+  }
 }

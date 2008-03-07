@@ -25,6 +25,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.types.PyType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,27 +35,33 @@ import com.jetbrains.python.psi.PyTupleExpression;
  * To change this template use File | Settings | File Templates.
  */
 public class PyTupleExpressionImpl extends PyElementImpl implements PyTupleExpression {
-    public PyTupleExpressionImpl(ASTNode astNode) {
-        super(astNode);
-    }
+  public PyTupleExpressionImpl(ASTNode astNode) {
+    super(astNode);
+  }
 
-    @Override protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-        pyVisitor.visitPyTupleExpression(this);
-    }
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyTupleExpression(this);
+  }
 
-    @NotNull public PyExpression[] getElements() {
-        return childrenToPsi(PyElementTypes.EXPRESSIONS, PyExpression.EMPTY_ARRAY);
-    }
+  @NotNull
+  public PyExpression[] getElements() {
+    return childrenToPsi(PyElementTypes.EXPRESSIONS, PyExpression.EMPTY_ARRAY);
+  }
 
-    public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                       @NotNull ResolveState substitutor,
-                                       PsiElement lastParent,
-                                       @NotNull PsiElement place) {
-        for (PyExpression expression: getElements()) {
-            if (!expression.processDeclarations(processor, substitutor, lastParent, place)) {
-                return false;
-            }
-        }
-        return true;
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState substitutor,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    for (PyExpression expression : getElements()) {
+      if (!expression.processDeclarations(processor, substitutor, lastParent, place)) {
+        return false;
+      }
     }
+    return true;
+  }
+
+  public PyType getType() {
+    return null;
+  }
 }

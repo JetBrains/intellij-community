@@ -26,6 +26,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyModuleType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,31 +105,16 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     final PyExpression qualifier = getQualifier();
     if (qualifier != null) {
-      if (qualifier instanceof PyCallExpression) {
-        final PyCallExpression callExpression = (PyCallExpression)qualifier;
-        final PyReferenceExpression expression = callExpression.getCalledFunctionReference();
-        final PsiElement element = expression.resolve();
-        if (element != null) {
-          return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), element, element, element);
-        }
+      PyType qualifierType = qualifier.getType();
+      if (qualifierType instanceof PyClassType) {
+        final PyClassType classType = (PyClassType)qualifierType;
+        return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), classType.getPyClass(), null, this);
       }
-      else if (qualifier instanceof PyReferenceExpression) {
-        final PsiElement element = ((PyReferenceExpression)qualifier).resolve();
-        if (element != null) {
-          final PsiElement parent = element.getParent();
-          if (parent instanceof PyAssignmentStatement) {
-            final PyExpression value = ((PyAssignmentStatement)parent).getAssignedValue();
-            if (value instanceof PyCallExpression) {
-              final PsiElement c = ((PyCallExpression)value).getCalledFunctionReference().resolve();
-              return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), c, c, c);
-            }
-          } else if (element instanceof PyReferenceExpression && parent instanceof PyImportElement) {
-            final PsiElement c = ((PyReferenceExpression)element).resolve();
-            return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), c, c, c);
-          }
-        }
+      if (qualifierType instanceof PyModuleType) {
+        final PyModuleType moduleType = (PyModuleType)qualifierType;
+        return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), moduleType.getModule(), null, this);
       }
-      return null; // TODO?
+      return null;
     }
 
     return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), this, this, null);
@@ -230,5 +218,16 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   @Override
   public String toString() {
     return "PyReferenceExpression: " + getReferencedName();
+  }
+
+  public PyType getType() {
+    PsiElement target = resolve();
+    if (target instanceof PyExpression) {
+      return ((PyExpression) target).getType();
+    }
+    if (target instanceof PyFile) {
+      return new PyModuleType((PyFile) target);
+    }
+    return null;
   }
 }

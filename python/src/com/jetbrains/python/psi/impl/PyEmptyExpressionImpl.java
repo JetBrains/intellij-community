@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyEmptyExpression;
+import com.jetbrains.python.psi.types.PyType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -30,4 +31,8 @@ public class PyEmptyExpressionImpl extends PyElementImpl implements PyEmptyExpre
     public PyEmptyExpressionImpl(ASTNode astNode) {
         super(astNode);
     }
+
+  public PyType getType() {
+    return null;
+  }
 }

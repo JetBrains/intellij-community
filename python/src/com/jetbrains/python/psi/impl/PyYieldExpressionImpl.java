@@ -19,6 +19,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyYieldExpression;
+import com.jetbrains.python.psi.types.PyType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,11 +29,15 @@ import com.jetbrains.python.psi.PyYieldExpression;
  * To change this template use File | Settings | File Templates.
  */
 public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpression {
-    public PyYieldExpressionImpl(ASTNode astNode) {
-        super(astNode);
-    }
+  public PyYieldExpressionImpl(ASTNode astNode) {
+    super(astNode);
+  }
 
-    protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-        pyVisitor.visitPyYieldExpression(this);
-    }
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyYieldExpression(this);
+  }
+
+  public PyType getType() {
+    return null;
+  }
 }

@@ -19,6 +19,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyGeneratorExpression;
+import com.jetbrains.python.psi.types.PyType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,11 +29,16 @@ import com.jetbrains.python.psi.PyGeneratorExpression;
  * To change this template use File | Settings | File Templates.
  */
 public class PyGeneratorExpressionImpl extends PyElementImpl implements PyGeneratorExpression {
-    public PyGeneratorExpressionImpl(ASTNode astNode) {
-        super(astNode);
-    }
+  public PyGeneratorExpressionImpl(ASTNode astNode) {
+    super(astNode);
+  }
 
-    @Override protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-        pyVisitor.visitPyGeneratorExpression(this);
-    }
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyGeneratorExpression(this);
+  }
+
+  public PyType getType() {
+    return null;
+  }
 }

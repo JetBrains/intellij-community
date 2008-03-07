@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.types.PyType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,23 +32,28 @@ import com.jetbrains.python.psi.PyParenthesizedExpression;
  * To change this template use File | Settings | File Templates.
  */
 public class PyParenthesizedExpressionImpl extends PyElementImpl implements PyParenthesizedExpression {
-    public PyParenthesizedExpressionImpl(ASTNode astNode) {
-        super(astNode);
-    }
+  public PyParenthesizedExpressionImpl(ASTNode astNode) {
+    super(astNode);
+  }
 
-    @Override protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-        pyVisitor.visitPyParenthesizedExpression(this);
-    }
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyParenthesizedExpression(this);
+  }
 
-    @SuppressWarnings({"ConstantConditions"})
-    public PyExpression getContainedExpression() {
-        for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
-            if (child instanceof PyExpression) {
-                return (PyExpression) child;
-            }
-        }
-        throw new IllegalStateException("no contained expression");
+  @SuppressWarnings({"ConstantConditions"})
+  public PyExpression getContainedExpression() {
+    for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof PyExpression) {
+        return (PyExpression)child;
+      }
     }
+    throw new IllegalStateException("no contained expression");
+  }
+
+  public PyType getType() {
+    return null;
+  }
 
   @Override
   protected Class<? extends PsiElement> getValidChildClass() {

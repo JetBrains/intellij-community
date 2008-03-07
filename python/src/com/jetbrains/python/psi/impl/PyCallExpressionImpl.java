@@ -17,9 +17,12 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -67,5 +70,14 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   @Override
   public String toString() {
     return "PyCallExpression: " + getCalledFunctionReference().getReferencedName();
+  }
+
+  public PyType getType() {
+    PyReferenceExpression callee = getCalledFunctionReference();
+    PsiElement target = callee.resolve();
+    if (target instanceof PyClass) {
+      return new PyClassType((PyClass) target);
+    }
+    return null;
   }
 }

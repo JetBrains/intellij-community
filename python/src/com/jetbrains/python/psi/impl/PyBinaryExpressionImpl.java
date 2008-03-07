@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -35,46 +36,44 @@ import org.jetbrains.annotations.Nullable;
 public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExpression {
 
   public PyBinaryExpressionImpl(ASTNode astNode) {
-        super(astNode);
-    }
+    super(astNode);
+  }
 
-    @Override
-    protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-        pyVisitor.visitPyBinaryExpression(this);
-    }
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyBinaryExpression(this);
+  }
 
-    @PsiCached
-    public PyExpression getLeftExpression() {
-        return PsiTreeUtil.getChildOfType(this, PyExpression.class);
-    }
+  @PsiCached
+  public PyExpression getLeftExpression() {
+    return PsiTreeUtil.getChildOfType(this, PyExpression.class);
+  }
 
-    @PsiCached
-    public PyExpression getRightExpression() {
-        return PsiTreeUtil.getNextSiblingOfType(getLeftExpression(),
-                PyExpression.class);
-    }
+  @PsiCached
+  public PyExpression getRightExpression() {
+    return PsiTreeUtil.getNextSiblingOfType(getLeftExpression(), PyExpression.class);
+  }
 
-    @PsiCached
-    public PyElementType getOperator() {
-        return (PyElementType)getNode().findChildByType(PyElementTypes.BINARY_OPS).getElementType();
-    }
+  @PsiCached
+  public PyElementType getOperator() {
+    return (PyElementType)getNode().findChildByType(PyElementTypes.BINARY_OPS).getElementType();
+  }
 
-    @PsiCached
-    public boolean isOperator(String chars) {
-        ASTNode child = getNode().getFirstChildNode();
-        StringBuffer buf = new StringBuffer();
-        while (child != null) {
-            IElementType elType = child.getElementType();
-            if (elType instanceof PyElementType && PyElementTypes.BINARY_OPS.contains(elType)) {
-                buf.append(child.getText());
-            }
-            child = child.getTreeNext();
-        }
-        return buf.toString().equals(chars);
+  @PsiCached
+  public boolean isOperator(String chars) {
+    ASTNode child = getNode().getFirstChildNode();
+    StringBuffer buf = new StringBuffer();
+    while (child != null) {
+      IElementType elType = child.getElementType();
+      if (elType instanceof PyElementType && PyElementTypes.BINARY_OPS.contains(elType)) {
+        buf.append(child.getText());
+      }
+      child = child.getTreeNext();
     }
+    return buf.toString().equals(chars);
+  }
 
-  public PyExpression getOppositeExpression(PyExpression expression)
-      throws IllegalArgumentException {
+  public PyExpression getOppositeExpression(PyExpression expression) throws IllegalArgumentException {
     PyExpression right = getRightExpression();
     PyExpression left = getLeftExpression();
     if (expression.equals(left)) {
@@ -83,25 +82,29 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     if (expression.equals(right)) {
       return left;
     }
-    throw new IllegalArgumentException("expression " + expression
-        + " is neither left exp or right exp");
+    throw new IllegalArgumentException("expression " + expression + " is neither left exp or right exp");
   }
 
-    protected void deletePyChild(PyBaseElementImpl element)
-            throws IncorrectOperationException {
-      PyExpression left = getLeftExpression();
-      PyExpression right = getRightExpression();
-      if (left == element) {
-        replace(right);
-      } else if (right == element) {
-        replace(left);
-      } else {
-        throw new IncorrectOperationException("Element " + element
-            + " is neither left expression or right expression");
-      }
+  protected void deletePyChild(PyBaseElementImpl element) throws IncorrectOperationException {
+    PyExpression left = getLeftExpression();
+    PyExpression right = getRightExpression();
+    if (left == element) {
+      replace(right);
     }
+    else if (right == element) {
+      replace(left);
+    }
+    else {
+      throw new IncorrectOperationException("Element " + element + " is neither left expression or right expression");
+    }
+  }
 
-    protected @Nullable Class<? extends PsiElement> getValidChildClass() {
-        return PyElement.class;
-    }
+  @Nullable
+  protected Class<? extends PsiElement> getValidChildClass() {
+    return PyElement.class;
+  }
+
+  public PyType getType() {
+    return null;
+  }
 }

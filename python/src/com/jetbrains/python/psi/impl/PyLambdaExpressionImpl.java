@@ -19,6 +19,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyLambdaExpression;
+import com.jetbrains.python.psi.types.PyType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,11 +29,15 @@ import com.jetbrains.python.psi.PyLambdaExpression;
  * To change this template use File | Settings | File Templates.
  */
 public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExpression {
-    public PyLambdaExpressionImpl(ASTNode astNode) {
-        super(astNode);
-    }
+  public PyLambdaExpressionImpl(ASTNode astNode) {
+    super(astNode);
+  }
 
-    protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-        pyVisitor.visitPyLambdaExpression(this);
-    }
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyLambdaExpression(this);
+  }
+
+  public PyType getType() {
+    return null;
+  }
 }
