@@ -2,6 +2,7 @@ package com.intellij.find.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.find.FindBundle;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -15,6 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
+import org.jetbrains.annotations.NotNull;
 
 public class FindUsagesAction extends AnAction {
 
@@ -35,28 +37,31 @@ public class FindUsagesAction extends AnAction {
       return;
     }
 
-    chooseAmbiguousTarget(e, project);
-  }
-
-  private static void chooseAmbiguousTarget(final AnActionEvent e, final Project project) {
-    Editor editor = e.getData(PlatformDataKeys.EDITOR);
-    if (editor != null) {
-      int offset = editor.getCaretModel().getOffset();
-      if (GotoDeclarationAction.chooseAmbiguousTarget(editor, offset, new PsiElementProcessor<PsiElement>() {
-        public boolean execute(final PsiElement element) {
-          new PsiElement2UsageTargetAdapter(element).findUsages();
-          return false;
-        }
-      }, FindBundle.message("find.usages.ambiguous.title"))) return;
-    }
-    Messages.showMessageDialog(project,
-          FindBundle.message("find.no.usages.at.cursor.error"),
-          CommonBundle.getErrorTitle(),
-          Messages.getErrorIcon()
-        );
+    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    chooseAmbiguousTargetAndPerform(project, editor, new PsiElementProcessor<PsiElement>() {
+      public boolean execute(final PsiElement element) {
+        new PsiElement2UsageTargetAdapter(element).findUsages();
+        return false;
+      }
+    });
   }
 
   public void update(AnActionEvent event){
     FindUsagesInFileAction.updateFindUsagesAction(event);
+  }
+
+  static void chooseAmbiguousTargetAndPerform(@NotNull final Project project, final Editor editor,
+                                                      PsiElementProcessor<PsiElement> processor) {
+    if (editor == null) {
+      Messages.showMessageDialog(project, FindBundle.message("find.no.usages.at.cursor.error"), CommonBundle.getErrorTitle(),
+                                 Messages.getErrorIcon());
+    }
+    else {
+      int offset = editor.getCaretModel().getOffset();
+      boolean chosen = GotoDeclarationAction.chooseAmbiguousTarget(editor, offset, processor, FindBundle.message("find.usages.ambiguous.title"));
+      if (!chosen) {
+        HintManager.getInstance().showInformationHint(editor, FindBundle.message("find.no.usages.at.cursor.error"));
+      }
+    }
   }
 }

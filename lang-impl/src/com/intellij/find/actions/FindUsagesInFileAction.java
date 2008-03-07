@@ -1,6 +1,7 @@
 package com.intellij.find.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.find.FindBundle;
 import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
@@ -23,10 +24,9 @@ public class FindUsagesInFileAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if(project==null){
-      return;
-    }
+    if (project == null) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
 
     UsageTarget[] usageTargets = (UsageTarget[])dataContext.getData(UsageView.USAGE_TARGETS);
     if (usageTargets != null) {
@@ -35,13 +35,16 @@ public class FindUsagesInFileAction extends AnAction {
         usageTargets[0].findUsagesInEditor(fileEditor);
       }
     }
-    else {
+    else if (editor == null) {
       Messages.showMessageDialog(
         project,
         FindBundle.message("find.no.usages.at.cursor.error"),
         CommonBundle.getErrorTitle(),
         Messages.getErrorIcon()
       );
+    }
+    else {
+      HintManager.getInstance().showInformationHint(editor, FindBundle.message("find.no.usages.at.cursor.error"));
     }
   }
 
@@ -56,14 +59,14 @@ public class FindUsagesInFileAction extends AnAction {
     }
 
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    if (editor != null) {
+    if (editor == null) {
+      UsageTarget[] target = (UsageTarget[])dataContext.getData(UsageView.USAGE_TARGETS);
+      return target != null && target.length > 0;
+    }
+    else {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
       return file != null && !(LanguageFindUsages.INSTANCE.forLanguage(file.getLanguage()) instanceof EmptyFindUsagesProvider);
-    }
-    else {
-      UsageTarget[] target = (UsageTarget[])dataContext.getData(UsageView.USAGE_TARGETS);
-      return target != null && target.length > 0;
     }
   }
 

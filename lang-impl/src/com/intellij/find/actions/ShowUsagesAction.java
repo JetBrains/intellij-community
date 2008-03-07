@@ -1,14 +1,12 @@
 package com.intellij.find.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
+import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
-import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -18,7 +16,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,6 +33,7 @@ import com.intellij.usages.impl.GroupNode;
 import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.CommonProcessors;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,9 +55,14 @@ public class ShowUsagesAction extends AnAction {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.usages");
 
     UsageTarget[] usageTargets = e.getData(UsageView.USAGE_TARGETS_KEY);
-    Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     if (usageTargets == null) {
-      chooseAmbiguousTarget(project, editor);
+      FindUsagesAction.chooseAmbiguousTargetAndPerform(project, editor, new PsiElementProcessor<PsiElement>() {
+        public boolean execute(final PsiElement element) {
+          showElementUsages(project, element, editor);
+          return false;
+        }
+      });
     }
     else {
       PsiElement element = ((PsiElement2UsageTargetAdapter)usageTargets[0]).getElement();
@@ -67,7 +70,7 @@ public class ShowUsagesAction extends AnAction {
     }
   }
 
-  private static void showElementUsages(final Project project, final PsiElement element, Editor editor) {
+  private static void showElementUsages(@NotNull Project project, final PsiElement element, Editor editor) {
     ArrayList<Usage> usages = new ArrayList<Usage>();
     CommonProcessors.CollectProcessor<Usage> collect = new CommonProcessors.CollectProcessor<Usage>(usages);
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
@@ -91,8 +94,7 @@ public class ShowUsagesAction extends AnAction {
   }
 
   private static String searchScopePresentableName(PsiElement element, final FindUsagesHandler handler) {
-    final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager();
-    SearchScope searchScope = findUsagesManager.getCurrentSearchScope(handler);
+    SearchScope searchScope = FindUsagesManager.getCurrentSearchScope(handler);
     if (searchScope == null) searchScope = ProjectScope.getAllScope(element.getProject());
     return searchScope.getDisplayName();
   }
@@ -220,23 +222,6 @@ public class ShowUsagesAction extends AnAction {
       groupNode.setParent(root);
       addUsageNodes(groupNode, nodes);
     }
-  }
-
-  private static void chooseAmbiguousTarget(final Project project, final Editor editor) {
-    if (editor != null) {
-      int offset = editor.getCaretModel().getOffset();
-      if (GotoDeclarationAction.chooseAmbiguousTarget(editor, offset, new PsiElementProcessor<PsiElement>() {
-        public boolean execute(final PsiElement element) {
-          showElementUsages(project, element, editor);
-          return false;
-        }
-      }, FindBundle.message("find.usages.ambiguous.title"))) return;
-    }
-    Messages.showMessageDialog(project,
-          FindBundle.message("find.no.usages.at.cursor.error"),
-          CommonBundle.getErrorTitle(),
-          Messages.getErrorIcon()
-        );
   }
 
   public void update(AnActionEvent e){

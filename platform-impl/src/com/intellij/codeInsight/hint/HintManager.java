@@ -252,9 +252,9 @@ public class HintManager implements ApplicationComponent {
    * @param p point in layered pane coordinate system.
    * @param reviveOnEditorChange
    */
-  public void showEditorHint(final LightweightHint hint,
-                             final Editor editor,
-                             Point p,
+  public void showEditorHint(@NotNull final LightweightHint hint,
+                             @NotNull Editor editor,
+                             @NotNull Point p,
                              int flags,
                              int timeout,
                              boolean reviveOnEditorChange) {
@@ -495,7 +495,7 @@ public class HintManager implements ApplicationComponent {
     showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false);
   }
 
-  public void showInformationHint(Editor editor, String text) {
+  public void showInformationHint(@NotNull Editor editor, String text) {
     JLabel label = HintUtil.createInformationLabel(text);
     LightweightHint hint = new LightweightHint(label);
     Point p = getHintPosition(hint, editor, ABOVE);

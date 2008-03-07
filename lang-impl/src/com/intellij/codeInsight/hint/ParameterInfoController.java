@@ -40,8 +40,8 @@ public class ParameterInfoController {
   private final CaretListener myEditorCaretListener;
   private final DocumentListener myEditorDocumentListener;
   private final PropertyChangeListener myLookupListener;
-  private final @NotNull ParameterInfoHandler myHandler;
-  private ShowParameterInfoHandler.BestLocationPointProvider myProvider;
+  @NotNull private final ParameterInfoHandler<Object, Object> myHandler;
+  private final ShowParameterInfoHandler.BestLocationPointProvider myProvider;
 
   private final Alarm myAlarm = new Alarm();
   private static final int DELAY = 200;
