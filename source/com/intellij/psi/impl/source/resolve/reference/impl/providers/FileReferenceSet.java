@@ -9,8 +9,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.JspContextManager;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -231,14 +229,14 @@ public class FileReferenceSet {
   private Collection<PsiFileSystemItem> getContextByFile(final @NotNull PsiFile file) {
 
     final Project project = file.getProject();
-    final JspContextManager manager = JspContextManager.getInstance(project);
-    if (manager != null) {
-      final PsiFileSystemItem item = manager.getContextFolder(file);
+    final FileContextProvider contextProvider = FileContextProvider.getProvider(file);
+    if (contextProvider != null) {
+      final PsiFileSystemItem item = contextProvider.getContextFolder(file);
       if (item != null) {
         return Collections.singleton(item);
       }
       if (useIncludingFileAsContext()) {
-        final JspFile contextFile = manager.getContextFile(file);
+        final PsiFile contextFile = contextProvider.getContextFile(file);
         if (contextFile != null) {
           return Collections.<PsiFileSystemItem>singleton(contextFile.getParent());
         }

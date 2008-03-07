@@ -198,6 +198,7 @@
   <extensionPoint name="scopeTreeExpander" interface="com.intellij.ide.scopeView.ScopeTreeStructureExpander" area="IDEA_PROJECT"/>
 
   <extensionPoint name="lang.elementManipulator" interface="com.intellij.openapi.fileTypes.ClassExtensionPoint"/>
+  <extensionPoint name="fileContextProvider" interface="com.intellij.psi.FileContextProvider" area="IDEA_PROJECT"/>
 
   <extensionPoint name="psi.referenceContributor" interface="com.intellij.psi.PsiReferenceContributor"/>
 
