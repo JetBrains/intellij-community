@@ -161,8 +161,22 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   public Object[] getVariants() {
-    if (getQualifier() != null) {
-      return new Object[0]; // TODO?
+    final PyExpression qualifier = getQualifier();
+    if (qualifier != null) {
+      PyType qualifierType = qualifier.getType();
+      PsiElement variantsOwner = null;
+      if (qualifierType instanceof PyClassType) {
+        variantsOwner = ((PyClassType) qualifierType).getPyClass();
+      }
+      else if (qualifierType instanceof PyModuleType) {
+        variantsOwner = ((PyModuleType) qualifierType).getModule();
+      }
+      if (variantsOwner != null) {
+        final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor();
+        variantsOwner.processDeclarations(processor, ResolveState.initial(), null, this);
+        return processor.getResult();
+      }
+      return new Object[0];
     }
 
     final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor();

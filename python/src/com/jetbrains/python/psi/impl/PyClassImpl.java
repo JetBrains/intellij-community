@@ -95,6 +95,11 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     final PyStatementList statementList = getStatementList();
     for (PsiElement element : statementList.getChildren()) {
       if (element instanceof PyFunction) {
+        final PyFunction function = (PyFunction)element;
+        final String name = function.getName();
+        if (processor instanceof PyResolveUtil.VariantsProcessor && name != null && name.startsWith("__") && name.endsWith("__")) {
+          continue;
+        }
         if (!processor.execute(element, substitutor)) return false;
       }
     }
@@ -108,6 +113,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
           }
         }
       }
+    }
+    if (processor instanceof PyResolveUtil.VariantsProcessor) {
+      return true;
     }
     return processor.execute(this, substitutor);
   }
