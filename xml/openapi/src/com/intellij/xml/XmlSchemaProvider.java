@@ -19,16 +19,16 @@ package com.intellij.xml;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -40,6 +40,9 @@ public abstract class XmlSchemaProvider {
   @Nullable
   public static XmlFile findSchema(@NotNull @NonNls String url, @Nullable Module module, @NotNull PsiFile file) {
     for (XmlSchemaProvider provider: Extensions.getExtensions(EP_NAME)) {
+      if (file instanceof XmlFile && !provider.isAvailable((XmlFile)file)) {
+        continue;
+      }
       final XmlFile schema = provider.getSchema(url, module, file);
       if (schema != null) {
         return schema;
@@ -50,13 +53,8 @@ public abstract class XmlSchemaProvider {
 
   @Nullable
   public static XmlFile findSchema(@NotNull @NonNls String url, @NotNull PsiFile baseFile) {
-    VirtualFile file = baseFile.getVirtualFile();
-    if (file == null) {
-      final PsiFile originalFile = baseFile.getOriginalFile();
-      if (originalFile != null)
-        file = originalFile.getVirtualFile();
-    }
-    final Module module = file != null ? ProjectRootManager.getInstance(baseFile.getProject()).getFileIndex().getModuleForFile(file) : null;
+    final PsiDirectory directory = baseFile.getParent();
+    final Module module = ModuleUtil.findModuleForPsiElement(directory == null ? baseFile : directory);
     return findSchema(url, module, baseFile);
   }
 

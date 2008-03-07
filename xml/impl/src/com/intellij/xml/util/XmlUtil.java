@@ -3,6 +3,7 @@ package com.intellij.xml.util;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
@@ -12,21 +13,22 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import static com.intellij.patterns.StandardPatterns.string;
+import com.intellij.patterns.StringPattern;
+import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
+import static com.intellij.patterns.XmlPatterns.xmlTag;
 import com.intellij.psi.*;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
-import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -49,10 +51,6 @@ import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
-import com.intellij.patterns.StringPattern;
-import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
-import static com.intellij.patterns.XmlPatterns.xmlTag;
-import static com.intellij.patterns.StandardPatterns.string;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -217,6 +215,10 @@ public class XmlUtil {
 
   @Nullable
   public static XmlFile findNamespace(PsiFile base, @NotNull String uri) {
+    final String location = ExternalResourceManager.getInstance().getResourceLocation(uri);
+    if (!location.equals(uri)) { // is mapped
+      return findXmlFile(base, location); 
+    }
     final XmlFile xmlFile = XmlSchemaProvider.findSchema(uri, base);
     return xmlFile == null ? findXmlFile(base, uri) : xmlFile;
   }
@@ -224,10 +226,9 @@ public class XmlUtil {
   @Nullable
   public static XmlFile findXmlFile(PsiFile base, @NotNull String uri) {
     PsiFile result = null;
-    final JspFile jspFile = PsiUtil.getJspFile(base);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      String data = jspFile != null ? jspFile.getUserData(TEST_PATH) : base.getUserData(TEST_PATH);
+      String data = base.getUserData(TEST_PATH);
 
       if (data == null) {
         PsiFile originalFile = base.getOriginalFile();
@@ -245,35 +246,6 @@ public class XmlUtil {
     }
     if (result == null) {
       result = PsiUtil.findRelativeFile(uri, base);
-    }
-
-    if (result == null || !(result instanceof XmlFile)) {
-      final JspManager jspManager = JspManager.getInstance(base.getProject());
-      if (jspManager != null) {
-        if (jspFile != null) {
-          result = jspManager.getTldFileByUri(uri, jspFile);
-          if (result == null && JSTL_CORE_URI2.equals(uri)) {
-            result = jspManager.getTldFileByUri(JSTL_CORE_URI, jspFile);
-          }
-        }
-        else {
-          // check facelets file
-          if (base instanceof XmlFile && XML_FILE_IN_PROGRESS.get() == null) {
-            XML_FILE_IN_PROGRESS.set("");
-            try {
-              final XmlDocument document = ((XmlFile)base).getDocument();
-              final XmlTag rootTag = document != null ? document.getRootTag() : null;
-
-              if (rootTag != null && rootTag.getPrefixByNamespace(FACELETS_URI) != null) {
-                result = jspManager.getTldFileByUri(uri, ModuleUtil.findModuleForPsiElement(base), null);
-              }
-            }
-            finally {
-              XML_FILE_IN_PROGRESS.set(null);
-            }
-          }
-        }
-      }
     }
 
     if (result instanceof XmlFile) {
