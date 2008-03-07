@@ -1,7 +1,5 @@
 package com.intellij.debugger.impl;
 
-import com.intellij.util.concurrency.Semaphore;
-
 /**
  * Created by IntelliJ IDEA.
  * User: lex
@@ -9,25 +7,27 @@ import com.intellij.util.concurrency.Semaphore;
  * Time: 12:56:52 PM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class InvokeAndWaitEventImpl extends Semaphore implements InvokeAndWaitEvent{
-
-  public final void release() {
-    up();
+public abstract class InvokeAndWaitEventImpl implements InvokeAndWaitEvent{
+  private boolean myOnHold = false;
+  
+  public synchronized final void release() {
+    if (myOnHold) {
+      myOnHold = false;
+      notifyAll();
+    }
   }
 
-  public final void hold() {
-    down();
+  public synchronized final void hold() {
+    myOnHold = true;
   }
 
-  public final void down() {
-    super.down();
-  }
-
-  public final void up() {
-    super.up();
-  }
-
-  public final void waitFor() {
-    super.waitFor();
+  public synchronized final void waitFor() {
+    while (myOnHold) {
+      try {
+        wait();
+      }
+      catch (InterruptedException ignored) {
+      }
+    }
   }
 }

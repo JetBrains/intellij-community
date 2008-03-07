@@ -16,11 +16,15 @@ public abstract class DebuggerCommandImpl extends InvokeAndWaitEventImpl {
   }
 
   public final void notifyCancelled() {
-    commandCancelled();
-    release();
+    try {
+      commandCancelled();
+    }
+    finally {
+      release();
+    }
   }
 
-  public void run() throws Exception{
+  public final void run() throws Exception{
     try {
       action();
     }
