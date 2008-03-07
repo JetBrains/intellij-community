@@ -24,4 +24,8 @@ public class PythonCompletionTest extends LightCodeInsightTestCase{
   public void testLocalVar() throws Exception {
     doTest();
   }
+
+  public void testSelfMethod() throws Exception {
+    doTest();
+  }
 }
