@@ -260,7 +260,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
           for (CandidateInfo info : list) {
             PsiMethod method = (PsiMethod) info.getElement();
             if (!isSameDeclaration(place, method) &&
-                isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, PsiSubstitutor.EMPTY))
+                isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, substitutor))
               return false;
           }
         }
@@ -270,7 +270,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
           for (CandidateInfo info : byName) {
             PsiMethod method = (PsiMethod) info.getElement();
             if (!isSameDeclaration(place, method) &&
-                isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, PsiSubstitutor.EMPTY))
+                isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, substitutor))
               return false;
           }
         }

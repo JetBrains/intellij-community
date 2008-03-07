@@ -89,7 +89,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
         String className = ((PsiClass) element).getName();
         final MethodResolverProcessor processor = new MethodResolverProcessor(className, ref, false, true, argTypes, PsiType.EMPTY_ARRAY);
         processor.setCurrentFileResolveContext(context);
-        final boolean toBreak = element.processDeclarations(processor, PsiSubstitutor.EMPTY, null, ref);
+        final boolean toBreak = element.processDeclarations(processor, classResult.getSubstitutor(), null, ref);
         constructorResults.addAll(Arrays.asList(processor.getCandidates()));
         if (!toBreak) break;
       }
