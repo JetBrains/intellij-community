@@ -7,18 +7,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.JspContextManager;
-import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +35,7 @@ public class FileReferenceSet {
   public static final Function<PsiFile, Collection<PsiFileSystemItem>> ABSOLUTE_TOP_LEVEL = new Function<PsiFile, Collection<PsiFileSystemItem>>() {
           @Nullable
           public Collection<PsiFileSystemItem> fun(final PsiFile file) {
-            return FileReferenceSet.getAbsoluteTopLevelDirLocations(file);
+            return getAbsoluteTopLevelDirLocations(file);
           }
         };
 
@@ -58,23 +54,11 @@ public class FileReferenceSet {
     String text;
     int offset;
 
-    if (element instanceof XmlAttributeValue) {
-      text = ((XmlAttributeValue)element).getValue();
-      String s = element.getText();
-      offset = StringUtil.startsWithChar(s, '"') || StringUtil.startsWithChar(s, '\'') ? 1 : 0;
-    }
-    else if (element instanceof XmlTag) {
-      final XmlTag tag = ((XmlTag)element);
-      text = tag.getValue().getTrimmedText();
-      offset = XmlUtil.getTextRangeInTagValue(tag).getStartOffset();
-    }
-    else {
-      return null;
-    }
-    if (text == null) {
-      return null;
-    }
-
+    final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
+    assert manipulator != null;
+    final TextRange range = manipulator.getRangeInElement(element);
+    offset = range.getStartOffset();
+    text = range.substring(element.getText());
     for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
       text = helper.trimUrl(text);
     }

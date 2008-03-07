@@ -5,9 +5,9 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.fileTypes.ClassExtension;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -20,7 +20,6 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
     super(EP_NAME);
   }
 
-  @Nullable
   public static <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull T element) {
     return ElementManipulators.INSTANCE.forClass(element.getClass());
   }
@@ -31,4 +30,9 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
     return manipulator.getRangeInElement(element).getStartOffset();
   }
 
+  public static TextRange getValueTextRange(final PsiElement element) {
+    final ElementManipulator<PsiElement> manipulator = getManipulator(element);
+    assert manipulator != null: element.getClass().getName();
+    return manipulator.getRangeInElement(element);
+  }
 }
