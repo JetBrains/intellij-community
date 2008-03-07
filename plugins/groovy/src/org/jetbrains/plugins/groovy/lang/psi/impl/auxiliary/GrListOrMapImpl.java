@@ -74,7 +74,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
       PsiManager manager = listOrMap.getManager();
       final GlobalSearchScope scope = listOrMap.getResolveScope();
       if (listOrMap.isMapLiteral()) {
-        return manager.getElementFactory().createTypeByFQClassName("java.util.Map", scope);
+        return inferMapInitializerType(listOrMap, manager, scope);
       }
 
       PsiElement parent = listOrMap.getParent();
@@ -86,6 +86,35 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
         }
       }
 
+      return inferListInitializedType(listOrMap, manager, scope);
+    }
+
+    private PsiClassType inferMapInitializerType(GrListOrMapImpl listOrMap, PsiManager manager, GlobalSearchScope scope) {
+      PsiClass mapClass = manager.findClass("java.util.Map", scope);
+      PsiElementFactory factory = manager.getElementFactory();
+      if (mapClass != null) {
+        PsiTypeParameter[] typeParameters = mapClass.getTypeParameters();
+        if (typeParameters.length == 2) {
+          GrNamedArgument[] namedArgs = listOrMap.getNamedArguments();
+          GrExpression[] values = new GrExpression[namedArgs.length];
+          for (int i = 0; i < values.length; i++) {
+            GrExpression expr = namedArgs[i].getExpression();
+            if (expr == null) return null;
+            values[i] = expr;
+          }
+          PsiType initializerType = getInitializerType(values);
+          PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.
+              put(typeParameters[0], factory.createTypeByFQClassName("java.lang.Object", scope)). //todo detail key type
+              put(typeParameters[1], initializerType);
+          return factory.createType(mapClass, substitutor);
+        } else {
+          return manager.getElementFactory().createType(mapClass);
+        }
+      }
+      return null;
+    }
+
+    private PsiType inferListInitializedType(GrListOrMapImpl listOrMap, PsiManager manager, GlobalSearchScope scope) {
       PsiClass listClass = manager.findClass("java.util.List", scope);
       if (listClass != null) {
         PsiTypeParameter[] typeParameters = listClass.getTypeParameters();

@@ -248,6 +248,24 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         return getManager().getElementFactory().createTypeByFQClassName("java.lang.Class",
             getResolveScope());
       }
+
+      GrExpression qualifier = getQualifierExpression();
+      if (qualifier != null) {
+        PsiType qType = qualifier.getType();
+        if (qType instanceof PsiClassType) {
+          PsiClassType.ClassResolveResult qResult = ((PsiClassType) qType).resolveGenerics();
+          PsiClass clazz = qResult.getElement();
+          if (clazz != null) {
+            PsiClass mapClass = manager.findClass("java.util.Map", getResolveScope());
+            if (mapClass != null && mapClass.getTypeParameters().length == 2) {
+              PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(mapClass, clazz, qResult.getSubstitutor());
+              if (substitutor != null) {
+                return substitutor.substitute(mapClass.getTypeParameters()[1]);
+              }
+            }
+          }
+        }
+      }
     }
 
     if (result != null) {
