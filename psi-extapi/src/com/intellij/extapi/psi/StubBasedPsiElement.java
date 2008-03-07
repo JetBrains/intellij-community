@@ -64,7 +64,10 @@ public class StubBasedPsiElement<T extends StubElement> extends ASTDelegatePsiEl
 
   public PsiElement getParent() {
     if (myParent == null) {
-      myParent = myNode.getTreeParent().getPsi();
+      final ASTNode treeParent = myNode.getTreeParent();
+      if (treeParent != null) {
+        myParent = treeParent.getPsi();
+      }
     }
     return myParent;
   }
