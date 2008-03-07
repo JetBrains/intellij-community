@@ -129,9 +129,8 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
       if (element instanceof PsiClass) {
         final PsiMethod[] constructors = ((PsiClass) element).getConstructors();
         for (PsiMethod constructor : constructors) {
-          if (helper.isAccessible(constructor, this, null)) {
-            result.add(new GroovyResolveResultImpl(constructor, true));
-          }
+          boolean isAccessible = helper.isAccessible(constructor, this, null);
+          result.add(new GroovyResolveResultImpl(constructor, null, classResult.getSubstitutor(), isAccessible, true));
         }
       }
     }
