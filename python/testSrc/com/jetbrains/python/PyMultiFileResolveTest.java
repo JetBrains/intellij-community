@@ -4,10 +4,7 @@ import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -32,6 +29,31 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyFunction);
     assertEquals("func", ((PyFunction) element).getName());
+  }
+
+  public void testFromPackageImport() throws Exception {
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PsiDirectory);
+    assertEquals("mypackage", ((PsiDirectory) element).getName());
+  }
+
+  public void testFromPackageImportFile() throws Exception {
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PsiFile);
+    assertEquals("myfile.py", ((PyFile) element).getName());
+  }
+
+  public void testFromQualifiedPackageImport() throws Exception {
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PsiDirectory);
+    assertEquals("mypackage", ((PsiDirectory) element).getName());
+  }
+
+  public void testFromQualifiedPackageImportFile() throws Exception {
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PsiFile);
+    assertEquals("myfile.py", ((PsiFile) element).getName());
+    assertEquals("mypackage", ((PsiFile) element).getContainingDirectory().getName());
   }
 
   private PsiElement doResolve() throws Exception {

@@ -96,7 +96,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final String referencedName = getReferencedName();
     if (referencedName == null) return null;
 
-    if (getParent() instanceof PyImportElement || getParent() instanceof PyFromImportStatement) {
+    if (PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class) != null) {
       return ResolveImportUtil.resolveImportReference(this);
     }
 
