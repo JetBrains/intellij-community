@@ -41,6 +41,10 @@ public class DebuggerUIUtil {
   }
 
   public static void invokeLater(final Runnable runnable) {
+    ApplicationManager.getApplication().invokeLater(runnable);
+  }
+
+  public static void invokeOnEventDispatch(final Runnable runnable) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run();
     }

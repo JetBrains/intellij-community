@@ -30,7 +30,7 @@ public class ExecutionPointHighlighter {
   }
 
   public void show(final XSourcePosition position) {
-    DebuggerUIUtil.invokeLater(new Runnable() {
+    DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
       public void run() {
         doShow(position);
       }
@@ -38,7 +38,7 @@ public class ExecutionPointHighlighter {
   }
 
   public void hide() {
-    DebuggerUIUtil.invokeLater(new Runnable() {
+    DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
       public void run() {
         doHide();
       }

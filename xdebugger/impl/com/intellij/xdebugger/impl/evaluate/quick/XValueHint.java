@@ -52,7 +52,7 @@ public class XValueHint extends AbstractValueHint {
         result.computePresentation(new XValueNode() {
           public void setPresentation(@NonNls @NotNull final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String value,
                                       final boolean hasChildren) {
-            DebuggerUIUtil.invokeLater(new Runnable() {
+            DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
               public void run() {
                 doShowHint(result, name, value, hasChildren);
               }

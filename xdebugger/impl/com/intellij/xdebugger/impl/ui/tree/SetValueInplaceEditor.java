@@ -43,7 +43,7 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
     myNode.setValueModificationStarted();
     myModifier.setValue(myExpressionEditor.getText(), new XValueModifier.XModificationCallback() {
       public void valueModified() {
-        DebuggerUIUtil.invokeLater(new Runnable() {
+        DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
           public void run() {
             myTree.rebuildAndRestore(treeState);
           }
@@ -51,7 +51,7 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
       }
 
       public void errorOccured(@NotNull final String errorMessage) {
-        DebuggerUIUtil.invokeLater(new Runnable() {
+        DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
           public void run() {
             myTree.rebuildAndRestore(treeState);
             //todo[nik] show hint instead

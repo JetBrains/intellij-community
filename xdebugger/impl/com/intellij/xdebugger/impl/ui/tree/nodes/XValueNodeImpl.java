@@ -29,7 +29,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   public void setPresentation(@NotNull final String name, @Nullable final Icon icon, @Nullable final String type, @NotNull final String value,
                               final boolean hasChildren) {
-    DebuggerUIUtil.invokeLater(new Runnable() {
+    DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
       public void run() {
         setIcon(icon);
         myName = name;

@@ -65,6 +65,10 @@ public abstract class EvaluationDialogBase extends DialogWrapper {
     super.dispose();
   }
 
+  protected String getDimensionServiceKey() {
+    return "#xdebugger.evaluate";
+  }
+
   protected abstract XDebuggerEditorBase getInputEditor();
 
   public abstract void startEvaluation(XDebuggerEvaluator.XEvaluationCallback callback);
