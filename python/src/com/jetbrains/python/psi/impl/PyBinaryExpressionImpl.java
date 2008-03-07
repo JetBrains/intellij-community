@@ -17,14 +17,12 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -97,11 +95,6 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     else {
       throw new IncorrectOperationException("Element " + element + " is neither left expression or right expression");
     }
-  }
-
-  @Nullable
-  protected Class<? extends PsiElement> getValidChildClass() {
-    return PyElement.class;
   }
 
   public PyType getType() {

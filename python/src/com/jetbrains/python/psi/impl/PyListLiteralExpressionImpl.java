@@ -24,7 +24,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PyListLiteralExpressionImpl extends PyElementImpl implements PyListLiteralExpression {
   public PyListLiteralExpressionImpl(ASTNode astNode) {
@@ -91,10 +90,6 @@ public class PyListLiteralExpressionImpl extends PyElementImpl implements PyList
     }
   }
 
-  @Nullable
-  protected Class<? extends PsiElement> getValidChildClass() {
-    return PyExpression.class;
-  }
 
   public PyType getType() {
     return new PyClassType(PyBuiltinCache.getInstance(getProject()).getListClass());

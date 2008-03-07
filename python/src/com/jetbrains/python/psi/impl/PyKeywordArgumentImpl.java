@@ -17,14 +17,13 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PsiCached;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyKeywordArgument;
 import com.jetbrains.python.psi.types.PyType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -60,10 +59,7 @@ public class PyKeywordArgumentImpl extends PyElementImpl implements PyKeywordArg
     return getClass().getSimpleName() + ": " + getKeyword();
   }
 
-  @Nullable
-  protected Class<? extends PsiElement> getValidChildClass() {
-    return PyExpression.class;
-  }
+
 
   public PyType getType() {
     return null;

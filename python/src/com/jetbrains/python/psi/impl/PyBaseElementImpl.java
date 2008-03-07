@@ -198,23 +198,9 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
                   "not my child");
       }
 
-      Class<? extends PsiElement> cls = getValidChildClass();
-      if (cls == null) {
-          throw new IncorrectOperationException("Delete not imlpemented for "
-                  + this);
-      }
-      if (!cls.isInstance(oldel) || !cls.isInstance(newel)) {
-          throw new IncorrectOperationException("Elements must be instance "
-                  + "of " + cls.getSimpleName() + ", but are " + oldel + ", "
-                  + newel);
-      }
       PsiElement copy = newel.copy();
       getNode().replaceChild(oldel.getNode(), copy.getNode());
       return copy;
-  }
-
-  protected @Nullable Class<? extends PsiElement> getValidChildClass() {
-      return null;
   }
 
   protected static ASTNode getPrevComma(ASTNode after) {

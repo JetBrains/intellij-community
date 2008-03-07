@@ -22,7 +22,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyIfStatement;
+import com.jetbrains.python.psi.PyStatementList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,8 +97,4 @@ public class PyIfStatementImpl extends PyElementImpl implements PyIfStatement {
         return true;
     }
 
-  @Override
-  protected Class<? extends PsiElement> getValidChildClass() {
-    return PyElement.class;
-  }
 }

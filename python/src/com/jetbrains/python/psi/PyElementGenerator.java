@@ -60,4 +60,6 @@ public interface PyElementGenerator {
                                                   PyExpression expr);
 
   void setStringValue(PyStringLiteralExpression string, String value);
+
+  PyImportStatement createImportStatementFromText(Project project, String text);
 }

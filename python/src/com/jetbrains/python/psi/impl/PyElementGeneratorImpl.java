@@ -234,4 +234,9 @@ public class PyElementGeneratorImpl implements PyElementGenerator {
         Project project = string.getProject();
         strNode.getTreeParent().replaceChild(strNode, createStringLiteralFromString(project, string.getContainingFile(), value).getNode());
     }
+
+  public PyImportStatement createImportStatementFromText(final Project project, final String text) {
+    final PsiFile dummyFile = createDummyFile(project, text);
+    return (PyImportStatement)dummyFile.getFirstChild();
+  }
 }

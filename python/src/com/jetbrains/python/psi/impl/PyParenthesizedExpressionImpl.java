@@ -18,7 +18,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyParenthesizedExpression;
@@ -55,8 +54,5 @@ public class PyParenthesizedExpressionImpl extends PyElementImpl implements PyPa
     return null;
   }
 
-  @Override
-  protected Class<? extends PsiElement> getValidChildClass() {
-    return PyElement.class;
-  }
+
 }
