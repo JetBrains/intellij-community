@@ -870,4 +870,25 @@ public class InjectedLanguageUtil {
     TextRange editable = documentWindow.intersectWithEditable(elementRange);
     return !elementRange.equals(editable); //) throw new IncorrectOperationException("Can't change "+ UsageViewUtil.createNodeText(element, true));
   }
+
+  public static boolean isSelectionIsAboutToOverflowInjectedFragment(EditorWindow injectedEditor) {
+    int selStart = injectedEditor.getSelectionModel().getSelectionStart();
+    int selEnd = injectedEditor.getSelectionModel().getSelectionEnd();
+
+    DocumentWindow document = injectedEditor.getDocument();
+
+    boolean isStartOverflows = selStart == 0;
+    if (!isStartOverflows) {
+      int hostPrev = document.injectedToHost(selStart - 1);
+      isStartOverflows = document.hostToInjected(hostPrev) == selStart;
+    }
+
+    boolean isEndOverflows = selEnd == document.getTextLength();
+    if (!isEndOverflows) {
+      int hostNext = document.injectedToHost(selEnd + 1);
+      isEndOverflows = document.hostToInjected(hostNext) == selEnd;
+    }
+
+    return isStartOverflows && isEndOverflows;
+  }
 }

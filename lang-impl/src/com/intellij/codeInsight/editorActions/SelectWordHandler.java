@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,13 +34,10 @@ public class SelectWordHandler extends EditorActionHandler {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: execute(editor='" + editor + "')");
     }
-    if (editor instanceof EditorWindow && editor.getSelectionModel().hasSelection()) {
-      int start = editor.getSelectionModel().getSelectionStart();
-      int end = editor.getSelectionModel().getSelectionEnd();
-      if (end - start == editor.getDocument().getTextLength()) {
-        //spread selection beyond injected fragment
-        editor = ((EditorWindow)editor).getDelegate();
-      }
+    if (editor instanceof EditorWindow && editor.getSelectionModel().hasSelection()
+        && InjectedLanguageUtil.isSelectionIsAboutToOverflowInjectedFragment((EditorWindow)editor)) {
+      // selection about to spread beyond injected fragment
+      editor = ((EditorWindow)editor).getDelegate();
     }
     Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
     if (project == null) {
