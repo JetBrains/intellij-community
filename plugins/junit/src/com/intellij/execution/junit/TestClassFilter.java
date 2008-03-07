@@ -59,8 +59,8 @@ public class TestClassFilter implements TreeClassChooser.ClassFilterWithScope {
 
   public static TestClassFilter create(final SourceScope sourceScope, Module module) throws JUnitUtil.NoJUnitException {
     if (sourceScope == null) throw new JUnitUtil.NoJUnitException();
-    return new TestClassFilter(module != null ? JUnitUtil.getTestCaseClass(module) : JUnitUtil.getTestCaseClass(sourceScope),
-                               sourceScope.getGlobalSearchScope());
+    PsiClass testCase = module == null ? JUnitUtil.getTestCaseClass(sourceScope) : JUnitUtil.getTestCaseClass(module);
+    return new TestClassFilter(testCase, sourceScope.getGlobalSearchScope());
   }
 
   public GlobalSearchScope getScope() { return myScope; }
