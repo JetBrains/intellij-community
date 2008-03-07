@@ -18,6 +18,7 @@ package com.jetbrains.python.validation;
 
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.psi.PsiElement;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,13 +28,23 @@ import com.intellij.lang.annotation.AnnotationHolder;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class PyAnnotator extends PyElementVisitor {
-    private AnnotationHolder _holder;
+  private AnnotationHolder _holder;
 
-    public AnnotationHolder getHolder() {
-        return _holder;
-    }
+  public AnnotationHolder getHolder() {
+    return _holder;
+  }
 
-    public void setHolder(AnnotationHolder holder) {
-        _holder = holder;
+  public void setHolder(AnnotationHolder holder) {
+    _holder = holder;
+  }
+
+  public synchronized void annotateElement(final PsiElement psiElement, final AnnotationHolder holder) {
+    setHolder(holder);
+    try {
+      psiElement.accept(this);
     }
+    finally {
+      setHolder(null);
+    }
+  }
 }

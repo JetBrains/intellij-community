@@ -57,8 +57,7 @@ public class PyAnnotatingVisitor implements Annotator {
 
   public void annotate(PsiElement psiElement, AnnotationHolder holder) {
     for(PyAnnotator annotator: myAnnotators) {
-      annotator.setHolder(holder);
-      psiElement.accept(annotator);
+      annotator.annotateElement(psiElement, holder);
     }
   }
 }
