@@ -135,6 +135,7 @@ public class StatementParsing extends Parsing {
     PsiBuilder.Marker exprStatement = builder.mark();
     if (builder.getTokenType() == PyTokenTypes.YIELD_KEYWORD) {
       getExpressionParser().parseYieldOrTupleExpression(builder, false);
+      checkEndOfStatement(builder, inSuite);
       exprStatement.done(PyElementTypes.EXPRESSION_STATEMENT);
       return;
     }

@@ -15,3 +15,11 @@ PyFile:YieldStatement.py
           PsiWhiteSpace(' ')
           PyNumericLiteralExpression
             PsiElement(Py:INTEGER_LITERAL)('42')
+  PsiWhiteSpace('\n\n')
+  PyExpressionStatement
+    PyCallExpression: f
+      PyReferenceExpression: f
+        PsiElement(Py:IDENTIFIER)('f')
+      PyArgumentList
+        PsiElement(Py:LPAR)('(')
+        PsiElement(Py:RPAR)(')')            
