@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
@@ -14,22 +13,23 @@ public class JavaForUnwrapper extends JavaUnwrapper {
     return e instanceof PsiForStatement || e instanceof PsiForeachStatement;
   }
 
-  public void unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
+  @Override
+  protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
     if (element instanceof PsiForStatement) {
-      unwrapInitializer(element);
+      unwrapInitializer(element, context);
     }
-    unwrapBody(element);
+    unwrapBody(element, context);
 
-    element.delete();
+    context.delete(element);
   }
 
-  private void unwrapInitializer(PsiElement element) throws IncorrectOperationException {
+  private void unwrapInitializer(PsiElement element, Context context) throws IncorrectOperationException {
     PsiStatement init = ((PsiForStatement)element).getInitialization();
-    extractFromBlockOrSingleStatement(init, element);
+    context.extractFromBlockOrSingleStatement(init, element);
   }
 
-  private void unwrapBody(PsiElement element) throws IncorrectOperationException {
+  private void unwrapBody(PsiElement element, Context context) throws IncorrectOperationException {
     PsiStatement body = ((PsiLoopStatement)element).getBody();
-    extractFromBlockOrSingleStatement(body, element);
+    context.extractFromBlockOrSingleStatement(body, element);
   }
 }

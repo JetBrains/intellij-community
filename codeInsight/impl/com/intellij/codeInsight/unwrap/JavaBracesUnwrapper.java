@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
@@ -23,8 +22,9 @@ public class JavaBracesUnwrapper extends JavaUnwrapper {
            || p instanceof PsiCatchSection;
   }
 
-  public void unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
-    extractFromBlockOrSingleStatement((PsiStatement)element, element);
-    element.delete();
+  @Override
+  protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
+    context.extractFromBlockOrSingleStatement((PsiStatement)element, element);
+    context.delete(element);
   }
 }

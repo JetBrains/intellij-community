@@ -1,9 +1,10 @@
 package com.intellij.codeInsight.unwrap;
 
-import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.util.IncorrectOperationException;
 
 public class JavaIfUnwrapper extends JavaUnwrapper {
   public JavaIfUnwrapper() {
@@ -14,10 +15,11 @@ public class JavaIfUnwrapper extends JavaUnwrapper {
     return e instanceof PsiIfStatement && !isElseBlock(e);
   }
 
-  public void unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
+  @Override
+  protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
     PsiStatement then = ((PsiIfStatement)element).getThenBranch();
-    extractFromBlockOrSingleStatement(then, element);
+    context.extractFromBlockOrSingleStatement(then, element);
 
-    element.delete();
+    context.delete(element);
   }
 }

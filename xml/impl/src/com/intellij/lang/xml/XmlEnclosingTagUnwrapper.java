@@ -10,6 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.ASTNode;
 
 import java.util.Set;
+import java.util.List;
 
 public class XmlEnclosingTagUnwrapper implements Unwrapper {
   public boolean isApplicableTo(PsiElement e) {
@@ -21,6 +22,10 @@ public class XmlEnclosingTagUnwrapper implements Unwrapper {
 
   public String getDescription(PsiElement e) {
     return XmlBundle.message("unwrap.enclosing.tag.name.action.name");
+  }
+
+  public TextRange collectTextRanges(PsiElement e, List<TextRange> toExtract) {
+    return e.getTextRange();
   }
 
   public void unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {

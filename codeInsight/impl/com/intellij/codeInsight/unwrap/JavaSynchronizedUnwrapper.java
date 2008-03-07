@@ -1,8 +1,9 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSynchronizedStatement;
 import com.intellij.util.IncorrectOperationException;
 
 public class JavaSynchronizedUnwrapper extends JavaUnwrapper {
@@ -14,10 +15,11 @@ public class JavaSynchronizedUnwrapper extends JavaUnwrapper {
     return e instanceof PsiSynchronizedStatement;
   }
 
-  public void unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
+  @Override
+  protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
     PsiCodeBlock body = ((PsiSynchronizedStatement)element).getBody();
-    extractFromCodeBlock(body, element);
+    context.extractFromCodeBlock(body, element);
 
-    element.delete();
+    context.delete(element);
   }
 }

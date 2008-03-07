@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -88,7 +89,10 @@ public class UnwrapHandler implements CodeInsightActionHandler {
         if (index < 0) return;
 
         MyUnwrapAction a = (MyUnwrapAction)options.get(index);
-        highlighter.highlight(a.getElement());
+
+        List<TextRange> toExtract = new ArrayList<TextRange>();
+        TextRange wholeRange = a.collectTextRanges(toExtract);
+        highlighter.highlight(wholeRange, toExtract);
       }
     });
 
@@ -116,32 +120,48 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   }
 
   private static class MyScopeHighlighter {
+    private static final int HIGHLIGHTER_LEVEL = HighlighterLayer.SELECTION + 1;
+
     private Editor myEditor;
-    private RangeHighlighter myPreviousHighliter;
+    private List<RangeHighlighter> myActiveHighliters = new ArrayList<RangeHighlighter>();
 
     private MyScopeHighlighter(Editor editor) {
       myEditor = editor;
     }
 
-    public void highlight(PsiElement element) {
+    public void highlight(TextRange wholeRange, List<TextRange> toExtract) {
       dropHighlight();
 
-      myPreviousHighliter = myEditor.getMarkupModel().addRangeHighlighter(
-        element.getTextOffset(),
-        element.getTextOffset() + element.getTextLength(),
-        HighlighterLayer.SELECTION + 1,
-        getTestAttributes(),
-        HighlighterTargetArea.EXACT_RANGE);
+      List<TextRange> toRemove = RangeSplitter.split(wholeRange, toExtract);
+
+      for (TextRange r : toRemove) {
+        addHighliter(r, HIGHLIGHTER_LEVEL, getTestAttributesForRemoval());
+      }
+      for (TextRange r : toExtract) {
+        addHighliter(r, HIGHLIGHTER_LEVEL, getTestAttributesForExtract());
+      }
     }
 
-    private TextAttributes getTestAttributes() {
+    private void addHighliter(TextRange r, int level, TextAttributes attr) {
+      myActiveHighliters.add(myEditor.getMarkupModel().addRangeHighlighter(
+          r.getStartOffset(), r.getEndOffset(), level, attr, HighlighterTargetArea.EXACT_RANGE));
+    }
+
+    private TextAttributes getTestAttributesForRemoval() {
+      EditorColorsManager manager = EditorColorsManager.getInstance();
+      return manager.getGlobalScheme().getAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES);
+    }
+
+    private TextAttributes getTestAttributesForExtract() {
       EditorColorsManager manager = EditorColorsManager.getInstance();
       return manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     }
 
     public void dropHighlight() {
-      if (myPreviousHighliter == null) return;
-      myEditor.getMarkupModel().removeHighlighter(myPreviousHighliter);
+      for (RangeHighlighter h : myActiveHighliters) {
+        myEditor.getMarkupModel().removeHighlighter(h);
+      }
+      myActiveHighliters.clear();
     }
   }
 
@@ -182,8 +202,8 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       return myUnwrapper.getDescription(myElement);
     }
 
-    public PsiElement getElement() {
-      return myElement;
+    public TextRange collectTextRanges(List<TextRange> toExtract) {
+      return myUnwrapper.collectTextRanges(myElement, toExtract);
     }
   }
 }
