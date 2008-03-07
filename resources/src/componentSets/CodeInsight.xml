@@ -5,10 +5,6 @@
       <implementation-class>com.intellij.codeInsight.folding.impl.CodeFoldingSettingsImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.codeInsight.lookup.impl.LookupManagerActions</interface-class>
-      <implementation-class>com.intellij.codeInsight.lookup.impl.LookupManagerActions</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.codeInsight.DefaultBraceMatcherLoader</implementation-class>
     </component>
   </application-components>
