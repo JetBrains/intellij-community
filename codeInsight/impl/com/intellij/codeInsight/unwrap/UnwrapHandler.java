@@ -90,8 +90,8 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
         MyUnwrapAction a = (MyUnwrapAction)options.get(index);
 
-        List<TextRange> toExtract = new ArrayList<TextRange>();
-        TextRange wholeRange = a.collectTextRanges(toExtract);
+        List<PsiElement> toExtract = new ArrayList<PsiElement>();
+        PsiElement wholeRange = a.collectAffectedElements(toExtract);
         highlighter.highlight(wholeRange, toExtract);
       }
     });
@@ -129,17 +129,33 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       myEditor = editor;
     }
 
-    public void highlight(TextRange wholeRange, List<TextRange> toExtract) {
+    public void highlight(PsiElement wholeAffected, List<PsiElement> toExtract) {
       dropHighlight();
 
-      List<TextRange> toRemove = RangeSplitter.split(wholeRange, toExtract);
+      Pair<TextRange, List<TextRange>> ranges = collectTextRanges(wholeAffected, toExtract);
 
-      for (TextRange r : toRemove) {
+      TextRange wholeRange = ranges.first;
+
+      List<TextRange> rangesToExtract = ranges.second;
+      List<TextRange> rangesToRemove = RangeSplitter.split(wholeRange, rangesToExtract);
+
+      for (TextRange r : rangesToRemove) {
         addHighliter(r, HIGHLIGHTER_LEVEL, getTestAttributesForRemoval());
       }
-      for (TextRange r : toExtract) {
+      for (TextRange r : rangesToExtract) {
         addHighliter(r, HIGHLIGHTER_LEVEL, getTestAttributesForExtract());
       }
+    }
+
+    private Pair<TextRange, List<TextRange>> collectTextRanges(PsiElement wholeElement, List<PsiElement> elementsToExtract) {
+      TextRange affectedRange = wholeElement.getTextRange();
+      List<TextRange> rangesToExtract = new ArrayList<TextRange>();
+
+      for (PsiElement e : elementsToExtract) {
+        rangesToExtract.add(e.getTextRange());
+      }
+
+      return new Pair<TextRange, List<TextRange>>(affectedRange, rangesToExtract);
     }
 
     private void addHighliter(TextRange r, int level, TextAttributes attr) {
@@ -202,8 +218,8 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       return myUnwrapper.getDescription(myElement);
     }
 
-    public TextRange collectTextRanges(List<TextRange> toExtract) {
-      return myUnwrapper.collectTextRanges(myElement, toExtract);
+    public PsiElement collectAffectedElements(List<PsiElement> toExtract) {
+      return myUnwrapper.collectAffectedElements(myElement, toExtract);
     }
   }
 }

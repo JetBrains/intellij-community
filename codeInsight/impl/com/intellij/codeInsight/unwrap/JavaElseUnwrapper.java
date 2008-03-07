@@ -5,7 +5,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiStatement;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.util.TextRange;
 
 import java.util.List;
 
@@ -15,9 +14,9 @@ public class JavaElseUnwrapper extends JavaElseUnwrapperBase {
   }
 
   @Override
-  public TextRange collectTextRanges(PsiElement e, List<TextRange> toExtract) {
-    super.collectTextRanges(e, toExtract);
-    return findTopmostIfStatement(e).getTextRange();
+  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
+    super.collectAffectedElements(e, toExtract);
+    return findTopmostIfStatement(e);
   }
 
   @Override

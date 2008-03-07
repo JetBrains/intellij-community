@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
@@ -25,12 +24,12 @@ public abstract class JavaUnwrapper implements Unwrapper {
     return myDescription;
   }
 
-  public TextRange collectTextRanges(PsiElement e, List<TextRange> toExtract) {
+  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
     try {
       Context c = new Context(false);
       doUnwrap(e, c);
-      toExtract.addAll(c.myRangesToExtract);
-      return e.getTextRange();
+      toExtract.addAll(c.myElementsToExtract);
+      return e;
     }
     catch (IncorrectOperationException ex) {
       throw new RuntimeException(ex);
@@ -49,7 +48,7 @@ public abstract class JavaUnwrapper implements Unwrapper {
   }
 
   protected static class Context {
-    private List<TextRange> myRangesToExtract = new ArrayList<TextRange>();
+    private List<PsiElement> myElementsToExtract = new ArrayList<PsiElement>();
     private boolean myIsEffective;
 
     public Context(boolean isEffective) {
@@ -57,7 +56,7 @@ public abstract class JavaUnwrapper implements Unwrapper {
     }
 
     public void addElementToExtract(PsiElement e) {
-      myRangesToExtract.add(e.getTextRange());
+      myElementsToExtract.add(e);
     }
 
     public void extractFromBlockOrSingleStatement(PsiStatement block, PsiElement from) throws IncorrectOperationException {

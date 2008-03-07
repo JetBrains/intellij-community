@@ -24,8 +24,8 @@ public class XmlEnclosingTagUnwrapper implements Unwrapper {
     return XmlBundle.message("unwrap.enclosing.tag.name.action.name");
   }
 
-  public TextRange collectTextRanges(PsiElement e, List<TextRange> toExtract) {
-    return e.getTextRange();
+  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
+    return e;
   }
 
   public void unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {

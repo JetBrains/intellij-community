@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 
@@ -16,10 +15,10 @@ public interface Unwrapper {
   String getDescription(PsiElement e);
 
   /**
-   * @param toExtract text ranges that will be extracted
-   * @return TextRange that represents the whole affected code structure (the code that will be removed)
+   * @param toExtract the elements that will be extracted
+   * @return TextRange the whole affected code structure (the code that will be removed)
    */
-  TextRange collectTextRanges(PsiElement e, List<TextRange> toExtract);
+  PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract);
 
   void unwrap(Editor editor, PsiElement element) throws IncorrectOperationException;
 }

@@ -3,7 +3,6 @@ package com.intellij.codeInsight.unwrap;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.util.TextRange;
 
 import java.util.List;
 
@@ -13,9 +12,9 @@ public class JavaElseRemover extends JavaElseUnwrapperBase {
   }
 
   @Override
-  public TextRange collectTextRanges(PsiElement e, List<TextRange> toExtract) {
-    super.collectTextRanges(e, toExtract);
-    return ((PsiIfStatement)e.getParent()).getElseBranch().getTextRange();
+  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
+    super.collectAffectedElements(e, toExtract);
+    return ((PsiIfStatement)e.getParent()).getElseBranch();
   }
 
   @Override
