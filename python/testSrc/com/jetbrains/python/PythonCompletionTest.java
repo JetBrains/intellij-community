@@ -28,4 +28,8 @@ public class PythonCompletionTest extends LightCodeInsightTestCase{
   public void testSelfMethod() throws Exception {
     doTest();
   }
+
+  public void testSelfField() throws Exception {
+    doTest();
+  }
 }

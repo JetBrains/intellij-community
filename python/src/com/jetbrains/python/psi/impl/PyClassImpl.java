@@ -97,10 +97,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       if (element instanceof PyFunction) {
         final PyFunction function = (PyFunction)element;
         final String name = function.getName();
-        if (processor instanceof PyResolveUtil.VariantsProcessor && name != null && name.startsWith("__") && name.endsWith("__")) {
-          continue;
+        if ("__init__".equals(name)) {
+          if (!processFields(processor, function, substitutor)) return false;
         }
-        if (!processor.execute(element, substitutor)) return false;
+        else {
+          if (!processor.execute(element, substitutor)) return false;
+        }
       }
     }
     for (PsiElement psiElement : statementList.getChildren()) {
@@ -118,6 +120,26 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       return true;
     }
     return processor.execute(this, substitutor);
+  }
+
+  private static boolean processFields(final PsiScopeProcessor processor, final PyFunction function, final ResolveState substitutor) {
+    final PyParameter[] params = function.getParameterList().getParameters();
+    if (params.length == 0) return true;
+    final PyStatement[] statements = function.getStatementList().getStatements();
+    for(PyStatement stmt: statements) {
+      if (stmt instanceof PyAssignmentStatement) {
+        final PyExpression[] targets = ((PyAssignmentStatement)stmt).getTargets();
+        for(PyExpression target: targets) {
+          if (target instanceof PyTargetExpression) {
+            PyExpression qualifier = ((PyTargetExpression) target).getQualifier();
+            if (qualifier != null && qualifier.getText().equals(params [0].getName())) {
+              if (!processor.execute(target, substitutor)) return false;
+            }
+          }
+        }
+      }
+    }
+    return true;
   }
 
   public int getTextOffset() {

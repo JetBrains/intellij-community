@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PyElementTypes;
 
 /**
  * Created by IntelliJ IDEA.
@@ -91,5 +92,10 @@ public class PyTargetExpressionImpl extends PyElementImpl implements PyTargetExp
       return assignmentStatement.getAssignedValue().getType();
     }
     return null;
+  }
+
+  public PyExpression getQualifier() {
+    final ASTNode[] nodes = getNode().getChildren(PyElementTypes.EXPRESSIONS);
+    return (PyExpression)(nodes.length == 1 ? nodes[0].getPsi() : null);
   }
 }

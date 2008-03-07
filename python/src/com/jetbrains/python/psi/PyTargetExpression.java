@@ -17,6 +17,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiNamedElement;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,4 +27,6 @@ import com.intellij.psi.PsiNamedElement;
  * To change this template use File | Settings | File Templates.
  */
 public interface PyTargetExpression extends PyExpression, PsiNamedElement {
+  @Nullable
+  PyExpression getQualifier();
 }
