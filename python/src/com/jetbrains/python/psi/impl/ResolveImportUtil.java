@@ -2,7 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -22,7 +22,7 @@ public class ResolveImportUtil {
 
   @Nullable
   static PsiElement resolveImportReference(final PyReferenceExpression importRef) {
-    String referencedName = importRef.getReferencedName();
+    final String referencedName = importRef.getReferencedName();
     if (referencedName == null) return null;
 
     final PyExpression qualifier = importRef.getQualifier();
@@ -48,19 +48,41 @@ public class ResolveImportUtil {
 
     final Module module = ModuleUtil.findModuleForPsiElement(importRef);
     if (module == null) return null;
-    final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-    for(VirtualFile root: contentRoots) {
-      final VirtualFile childFile = root.findChild(referencedName + ".py");
-      if (childFile != null) {
-        return PsiManager.getInstance(importRef.getProject()).findFile(childFile);
+
+    RootPolicy<PsiElement> resolvePolicy = new RootPolicy<PsiElement>() {
+      public PsiElement visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleOrderEntry, final PsiElement value) {
+        if (value != null) return value;
+        return resolveInRoots(moduleOrderEntry.getRootModel().getContentRoots(), referencedName, importRef);
       }
 
-      final VirtualFile childDir = root.findChild(referencedName);
-      if (childDir != null) {
-        return PsiManager.getInstance(importRef.getProject()).findDirectory(childDir);
+      public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
+        if (value != null) return value;
+        return resolveInRoots(jdkOrderEntry.getRootFiles(OrderRootType.CLASSES), referencedName, importRef);
       }
+    };
+    return ModuleRootManager.getInstance(module).processOrder(resolvePolicy, null);
+  }
+
+  @Nullable
+  private static PsiElement resolveInRoots(final VirtualFile[] roots, final String referencedName, final PyReferenceExpression importRef) {
+    for(VirtualFile contentRoot: roots) {
+      PsiElement result = resolveInRoot(contentRoot, referencedName, importRef);
+      if (result != null) return result;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiElement resolveInRoot(final VirtualFile root, final String referencedName, final PyReferenceExpression importRef) {
+    final VirtualFile childFile = root.findChild(referencedName + ".py");
+    if (childFile != null) {
+      return PsiManager.getInstance(importRef.getProject()).findFile(childFile);
     }
 
+    final VirtualFile childDir = root.findChild(referencedName);
+    if (childDir != null) {
+      return PsiManager.getInstance(importRef.getProject()).findDirectory(childDir);
+    }
     return null;
   }
 
