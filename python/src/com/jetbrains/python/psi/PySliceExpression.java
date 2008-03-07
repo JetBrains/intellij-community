@@ -24,4 +24,5 @@ package com.jetbrains.python.psi;
  * To change this template use File | Settings | File Templates.
  */
 public interface PySliceExpression extends PyExpression {
+  PyExpression getOperand();
 }

@@ -17,6 +17,8 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySliceExpression;
 import com.jetbrains.python.psi.types.PyType;
 
@@ -33,6 +35,10 @@ public class PySliceExpressionImpl extends PyElementImpl implements PySliceExpre
     }
 
   public PyType getType() {
-    return null;
+    return getOperand().getType();
+  }
+
+  public PyExpression getOperand() {
+    return childToPsiNotNull(PyElementTypes.EXPRESSIONS, 0);
   }
 }
