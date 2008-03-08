@@ -18,6 +18,7 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -30,6 +31,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 public class GroovyDocumentationProvider implements DocumentationProvider {
   @Nullable
   public String getQuickNavigateInfo(PsiElement element) {
+    if (element instanceof GrAccessorMethod) {
+      element = ((GrAccessorMethod) element).getProperty();
+    }
+    
     if (element instanceof GrVariable) {
       GrVariable variable = (GrVariable) element;
       StringBuffer buffer = new StringBuffer();
