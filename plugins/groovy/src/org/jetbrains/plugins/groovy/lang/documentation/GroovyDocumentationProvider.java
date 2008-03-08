@@ -59,16 +59,16 @@ public class GroovyDocumentationProvider implements DocumentationProvider {
     } else if (element instanceof PsiMethod) {
       StringBuffer buffer = new StringBuffer();
       PsiMethod method = (PsiMethod) element;
-      PsiClass hisClass = method.getContainingClass();
-      if (hisClass != null) {
-        String qName = hisClass.getQualifiedName();
-        if (qName != null) {
-          buffer.append(qName).append("\n");
-        }
-      }
-
       if (method instanceof DefaultGroovyMethod) {
         buffer.append("[GDK] ");
+      } else {
+        PsiClass hisClass = method.getContainingClass();
+        if (hisClass != null) {
+          String qName = hisClass.getQualifiedName();
+          if (qName != null) {
+            buffer.append(qName).append("\n");
+          }
+        }
       }
 
       if (!method.isConstructor()) {
