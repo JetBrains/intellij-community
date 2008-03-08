@@ -1,0 +1,1 @@
+print Long.newInstance().<ref>longValue()

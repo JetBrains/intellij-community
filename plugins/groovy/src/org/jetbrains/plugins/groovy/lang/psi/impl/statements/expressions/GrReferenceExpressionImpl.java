@@ -431,7 +431,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
             if (resolved instanceof PsiClass) { //omitted .class
               PsiClass javaLangClass = PsiUtil.getJavaLangClass(resolved, refExpr.getResolveScope());
               if (javaLangClass != null) {
-                javaLangClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr);
+                PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+                PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
+                if (typeParameters.length == 1) {
+                  substitutor = substitutor.put(typeParameters[0], qualifierType);
+                }
+                javaLangClass.processDeclarations(processor, substitutor, null, refExpr);
               }
             }
           }
