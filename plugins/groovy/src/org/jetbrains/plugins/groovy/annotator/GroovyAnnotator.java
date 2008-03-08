@@ -554,7 +554,7 @@ public class GroovyAnnotator implements Annotator {
       GrExpression lValue = assignment.getLValue();
       GrExpression rValue = assignment.getRValue();
       if (rValue != null) {
-        PsiType lType = lValue.getType();
+        PsiType lType = lValue.getNominalType();
         PsiType rType = rValue.getType();
         if (lType != null && rType != null) {
           checkAssignability(holder, lType, rType, rValue);
