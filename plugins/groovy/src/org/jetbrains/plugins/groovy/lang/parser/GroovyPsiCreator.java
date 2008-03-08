@@ -61,6 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relatio
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrInstanceofExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrSafeCastExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrTypeCastExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrBuiltinTypeClassExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
@@ -225,6 +226,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (elem.equals(CAST_EXPRESSION)) return new GrTypeCastExpressionImpl(node);
     if (elem.equals(SAFE_CAST_EXPRESSION)) return new GrSafeCastExpressionImpl(node);
     if (elem.equals(INSTANCEOF_EXPRESSION)) return new GrInstanceofExpressionImpl(node);
+    if (elem.equals(BUILT_IN_TYPE_EXPRESSION)) return new GrBuiltinTypeClassExpressionImpl(node);
     if (elem.equals(ARRAY_TYPE)) return new GrArrayTypeElementImpl(node);
     if (elem.equals(BUILT_IN_TYPE)) return new GrBuiltInTypeElementImpl(node);
     if (elem.equals(GSTRING)) return new GrStringImpl(node);

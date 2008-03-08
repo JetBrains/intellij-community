@@ -35,7 +35,7 @@ public class PrimaryExpression implements GroovyElementTypes {
   public static boolean parse(PsiBuilder builder) {
 
     if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
-      ParserUtils.eatElement(builder, BUILT_IN_TYPE);
+      ParserUtils.eatElement(builder, BUILT_IN_TYPE_EXPRESSION);
       return true;
     }
     if (kTHIS.equals(builder.getTokenType())) {

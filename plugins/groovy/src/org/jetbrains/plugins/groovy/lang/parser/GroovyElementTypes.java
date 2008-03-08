@@ -114,6 +114,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType SUPER_REFERENCE_EXPRESSION = new GroovyElementType("Super reference expressions");
   GroovyElementType NEW_EXPRESSION = new GroovyElementType("New expressions");
   GroovyElementType PRIMARY_EXPRESSION = new GroovyElementType("Primary expressions");
+  GroovyElementType BUILT_IN_TYPE_EXPRESSION = new GroovyElementType("Built in type expression");
 
   // Lists & maps
   GroovyElementType LIST_OR_MAP = new GroovyElementType("Generalized list");

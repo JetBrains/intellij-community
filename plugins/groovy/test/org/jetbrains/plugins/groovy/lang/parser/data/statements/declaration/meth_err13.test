@@ -10,7 +10,7 @@ Groovy script
       PsiElement(identifier)('Foo')
     Arguments
       PsiElement(()('(')
-      Built in type
+      builtin type class expression
         PsiElement(int)('int')
       PsiErrorElement:',' expected
         <empty list>

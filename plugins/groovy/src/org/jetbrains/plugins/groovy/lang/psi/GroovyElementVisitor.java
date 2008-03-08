@@ -181,6 +181,10 @@ public abstract class GroovyElementVisitor {
     visitExpression(expression);
   }
 
+  public void visitBuiltinTypeClassExpression(GrBuiltinTypeClassExpression expression) {
+    visitExpression(expression);
+  }
+
   public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
     visitExpression(expression);
   }

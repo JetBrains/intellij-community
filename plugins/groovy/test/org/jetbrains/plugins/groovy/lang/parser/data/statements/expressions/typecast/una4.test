@@ -5,7 +5,7 @@ Groovy script
     PsiElement(()('(')
     Property by index
       Property by index
-        Built in type
+        builtin type class expression
           PsiElement(double)('double')
         PsiWhiteSpace(' ')
         Arguments
