@@ -31,10 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 public class GroovyDocumentationProvider implements DocumentationProvider {
   @Nullable
   public String getQuickNavigateInfo(PsiElement element) {
-    if (element instanceof GrAccessorMethod) {
-      element = ((GrAccessorMethod) element).getProperty();
-    }
-    
     if (element instanceof GrVariable) {
       GrVariable variable = (GrVariable) element;
       StringBuffer buffer = new StringBuffer();
