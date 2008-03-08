@@ -137,11 +137,11 @@
 
     <action id="Groovy.NewClass" class="org.jetbrains.plugins.groovy.actions.NewClassAction"
             text="Groovy Class" description="Create new Groovy class">
-      <add-to-group group-id="NewGroup" anchor="first"/>
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="Grails"/>
     </action>
     <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction"
             text="Groovy Script" description="Create new Groovy script">
-      <add-to-group group-id="NewGroup" anchor="first"/>
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Groovy.NewClass"/>
     </action>
 
     <group id="Grails" class="org.jetbrains.plugins.grails.actions.GrailsGroup"
