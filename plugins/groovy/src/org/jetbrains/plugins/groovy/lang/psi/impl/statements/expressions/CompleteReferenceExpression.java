@@ -99,7 +99,7 @@ public class CompleteReferenceExpression {
     if (type == null) {
       return propertyVariants;
     }
-    dynamicPropertiesOfClass = DynamicManager.getInstance(refExpr.getProject()).findDynamicPropertiesOfClass(module.getName(), type.getCanonicalText());
+    dynamicPropertiesOfClass = DynamicManager.getInstance(refExpr.getProject()).getPropertiesNamesOfClass(type.getCanonicalText());
 
 //    if (type instanceof PsiPrimitiveType) {
 //      type = ((PsiPrimitiveType) type).getBoxedType(refExpr);
@@ -111,14 +111,14 @@ public class CompleteReferenceExpression {
       if (psiClass == null) {
         return propertyVariants;
       }
-      final Set<PsiClass> supers = GroovyUtils.findAllSupers(psiClass);
+      final Iterable<PsiClass> supers = GroovyUtils.findAllSupers(psiClass, new HashSet<PsiClassType>());
 
       if (dynamicPropertiesOfClass.length != 0) {
         propertyVariants = ArrayUtil.mergeArrays(propertyVariants, dynamicPropertiesOfClass, Object.class);
       }
 
       for (PsiClass aSuper : supers) {
-        dynamicPropertiesOfClass = DynamicManager.getInstance(refExpr.getProject()).findDynamicPropertiesOfClass(module.getName(), aSuper.getQualifiedName());
+        dynamicPropertiesOfClass = DynamicManager.getInstance(refExpr.getProject()).getPropertiesNamesOfClass(aSuper.getQualifiedName());
         propertyVariants = ArrayUtil.mergeArrays(propertyVariants, dynamicPropertiesOfClass, Object.class);
       }
     }

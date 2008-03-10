@@ -1,45 +1,35 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
-import com.intellij.psi.PsiType;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualMethod;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 12.02.2008
  */
-public class DMethodElement extends DItemElement {
-  DParameterElement[] myParametersElements;
+public class DMethodElement extends DItemElement implements Comparable{
+  public List<MyPair> myPairs = new ArrayList<MyPair>();
 
-  public DMethodElement(DynamicVirtualMethod virtualMethod) {
-    super(virtualMethod);
+  public DMethodElement() {
+    super(null, null);
   }
 
-  public DMethodElement(DynamicVirtualMethod virtualMethod, boolean isSetParameters) {
-    this(virtualMethod);
+  public DMethodElement(String name, String returnType, List<MyPair> pairs) {
+    super(name, returnType);
 
-    if (isSetParameters) {
-      final List<MyPair<String, PsiType>> list = virtualMethod.getArguments();
-      for (int i = 0; i < list.size(); i++) {
-        MyPair<String, PsiType> MyPair = list.get(i);
-        addContent(new DParameterElement(MyPair.getFirst(), MyPair.getSecond().getCanonicalText(),i));
-      }
-    }
+    myPairs = pairs;
   }
 
-  public DParameterElement[] getParametersElements() {
-    return myParametersElements;
+  public List<MyPair> getPairs() {
+    return myPairs;
   }
 
-  public void setParametersElements(DParameterElement[] parametersElements) {
-    myParametersElements = parametersElements;
-  }
+  public int compareTo(Object o) {
+    if (!(o instanceof DMethodElement)) return 0;
+    final DMethodElement otherMethod = (DMethodElement) o;
 
-  @NotNull
-  public DynamicVirtualMethod getDynamicVirtualElement() {
-    return ((DynamicVirtualMethod) super.getDynamicVirtualElement());
+    return getName().compareTo(otherMethod.getName()) + getType().compareTo(otherMethod.getType());
   }
 }

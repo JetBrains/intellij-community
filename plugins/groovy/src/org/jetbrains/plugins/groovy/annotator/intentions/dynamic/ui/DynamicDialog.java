@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
@@ -15,9 +16,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicVirtualElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -31,7 +36,7 @@ import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.EventListener;
-import java.util.Set;
+import java.util.HashSet;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -49,12 +54,15 @@ public abstract class DynamicDialog extends DialogWrapper {
   private JLabel myTableLabel;
   private final DynamicManager myDynamicManager;
   private final Project myProject;
-  private final DynamicVirtualElement myDynamicElement;
+  private final DItemElement myDynamicElement;
   private EventListenerList myListenerList = new EventListenerList();
   private final GrReferenceExpression myReferenceExpression;
+  private final Module myModule;
 
-  public DynamicDialog(Project project, DynamicVirtualElement virtualElement, GrReferenceExpression referenceExpression) {
-    super(project, true);
+  public DynamicDialog(Module module, DItemElement virtualElement, GrReferenceExpression referenceExpression) {
+    super(module.getProject(), true);
+    myProject = module.getProject();
+    myModule = module;
 
     if (!isTableVisible()) {
       myTable.setVisible(false);
@@ -62,9 +70,9 @@ public abstract class DynamicDialog extends DialogWrapper {
     }
     myReferenceExpression = referenceExpression;
     setTitle(GroovyInspectionBundle.message("dynamic.element"));
-    myProject = project;
+
     myDynamicElement = virtualElement;
-    myDynamicManager = DynamicManager.getInstance(project);
+    myDynamicManager = DynamicManager.getInstance(myProject);
 
     init();
 
@@ -109,14 +117,27 @@ public abstract class DynamicDialog extends DialogWrapper {
 
 
   private void setUpContainingClassComboBox() {
-    final String typeDefinition = myDynamicElement.getContainingClassName();
+    final DynamicManager dynamicManager = DynamicManager.getInstance(myProject);
+//    final Collection<DClassElement> classElements = dynamicManager.getAllContainingClasses();
+//    for (DClassElement classElement : classElements) {
+//      if(myDynamicElement instanceof DMethodElement) {
+//        final DMethodElement method = dynamicManager.findConcreteDynamicMethod(classElement.getName(), myDynamicElement.getName(), QuickfixUtil.getArgumentsTypes(((DMethodElement) myDynamicElement).getPairs()));
+//      }
+//    }
+    final String typeDefinition;
+// .getClassElement().getName();
+    final PsiClass targetClass = QuickfixUtil.findTargetClass(myReferenceExpression);
+
+    if (targetClass == null) typeDefinition = "java.lang.Object";
+    else typeDefinition = targetClass.getQualifiedName();
+
     final PsiClassType type = TypesUtil.createType(typeDefinition, myReferenceExpression);
     final PsiClass psiClass = type.resolve();
 
     if (psiClass == null) return;
 
     myClassComboBox.addItem(new ContainingClassItem(psiClass));
-    final Set<PsiClass> classes = GroovyUtils.findAllSupers(psiClass);
+    final Iterable<PsiClass> classes = GroovyUtils.findAllSupers(psiClass, new HashSet<PsiClassType>());
     for (PsiClass aClass : classes) {
       myClassComboBox.addItem(new ContainingClassItem(aClass));
     }
@@ -290,11 +311,17 @@ public abstract class DynamicDialog extends DialogWrapper {
         myDynamicElement.setType(type.getPresentableText());
       }
     }
-    myDynamicElement.setContainingClassName(getEnteredContaningClass().getContainingClass().getQualifiedName());
 
-    myDynamicManager.addDynamicElement(myDynamicElement);
+    final DynamicManager dynamicManager = DynamicManager.getInstance(myProject);
+    final DClassElement classElement = dynamicManager.getOrCreateClassElement(myModule, getEnteredContaningClass().getContainingClass().getQualifiedName(), true);
 
+    if (myDynamicElement instanceof DMethodElement) {
+      dynamicManager.addMethod(classElement, ((DMethodElement) myDynamicElement));
+    } else if (myDynamicElement instanceof DPropertyElement) {
+      dynamicManager.addProperty(classElement, ((DPropertyElement) myDynamicElement));
+    }
 
+    myDynamicManager.fireChange();
     super.doOKAction();
   }
 
@@ -361,7 +388,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     return myProject;
   }
 
-  protected void setUpTypeLabel(String typeLabelText){
+  protected void setUpTypeLabel(String typeLabelText) {
     myTypeLabel.setText(typeLabelText);
   }
 }

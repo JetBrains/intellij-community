@@ -14,14 +14,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DContainingClassElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DMethodNode;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DPClassNode;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
@@ -29,8 +26,8 @@ import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -41,7 +38,7 @@ public class GrDynamicImplicitMethodImpl extends GrDynamicImplicitElement {
     super(manager, nameIdentifier, type, writable, referenceExpression);
   }
 
-  public GrDynamicImplicitMethodImpl(PsiManager manager, @NonNls String name, @NonNls String type, GrReferenceExpression referenceExpression) {
+  public GrDynamicImplicitMethodImpl(PsiManager manager, @NonNls String name, @NonNls String type, PsiElement referenceExpression) {
     super(manager, name, type, referenceExpression);
   }
 
@@ -64,33 +61,42 @@ public class GrDynamicImplicitMethodImpl extends GrDynamicImplicitElement {
         final GrReferenceExpression refExpression = (GrReferenceExpression) myScope;
         final PsiClass expression = QuickfixUtil.findTargetClass(refExpression);
 
-        final String className = expression.getQualifiedName();
+        final String className;
+        if (expression == null) return;
 
-        final Module module = DynamicToolWindowWrapper.getModule(myProject);
+        className = expression.getQualifiedName();
+        if (className == null) return;
+
+        final Module module = DynamicToolWindowWrapper.getActiveModule(myProject);
         if (module == null) return;
 
         DefaultMutableTreeNode desiredNode = null;
         final PsiElement method = myScope.getParent();
 
-        final PsiType[] argumentTypes = QuickfixUtil.getMethodArgumentsTypes(((GrCallExpression) method));
+        final String[] argumentTypes = QuickfixUtil.getMethodArgumentsTypes(((GrCallExpression) method));
         final String[] argumentNames = QuickfixUtil.getMethodArgumentsNames(((GrCallExpression) method));
-        final List<MyPair<String, PsiType>> pairs = QuickfixUtil.swapArgumentsAndTypes(argumentNames, argumentTypes);
+        final List<MyPair> pairs = QuickfixUtil.swapArgumentsAndTypes(argumentNames, argumentTypes);
 
         final PsiClassType fqClassName = PsiManager.getInstance(myProject).getElementFactory().createTypeByFQClassName(className, myProject.getAllScope());
         final PsiClass psiClass = fqClassName.resolve();
         if (psiClass == null) return;
 
-        final Set<PsiClass> classes = GroovyUtils.findAllSupers(psiClass);
-        classes.add(psiClass);
+        final Iterable<PsiClass> classes = GroovyUtils.findAllSupers(psiClass, new HashSet<PsiClassType>());
+        //TODO:add psiClass
+//        classes.add(psiClass);
+
         for (PsiClass aClass : classes) {
-          final String returnType = DynamicManager.getInstance(myProject).getMethodReturnType(module.getName(), aClass.getQualifiedName(), ((GrReferenceExpression) myScope).getName(), argumentTypes);
-          if (returnType == null) continue;
+          DClassElement dClassElement = DynamicManager.getInstance(myProject).getOrCreateClassElement(module, aClass.getQualifiedName(), false);
 
-          final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DPClassNode(new DContainingClassElement(aClass.getQualifiedName())));
-          if (classNode == null) return;
+          final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, dClassElement);
+          if (classNode == null) continue;
 
-          desiredNode = TreeUtil.findNodeWithObject(classNode, new DMethodNode(new DMethodElement(
-              new DynamicVirtualMethod(refExpression.getName(), aClass.getQualifiedName(), module.getName(), returnType, pairs))));
+          final Object classElement = classNode.getUserObject();
+          if (classElement == null || !(classElement instanceof DClassElement)) continue;
+
+          final DMethodElement methodElement = ((DClassElement) classElement).getMethod(refExpression.getName(), QuickfixUtil.getArgumentsTypes(pairs));
+
+          desiredNode = TreeUtil.findNodeWithObject(classNode, methodElement);
         }
 
         if (desiredNode == null) return;
@@ -128,9 +134,8 @@ public class GrDynamicImplicitMethodImpl extends GrDynamicImplicitElement {
     return myScope.getProject().getAllScope();
   }
 
-
   @Nullable
   public Icon getIcon(boolean open) {
-    return GroovyIcons.PROPERTY;
+    return GroovyIcons.METHOD;
   }
 }

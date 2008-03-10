@@ -1,21 +1,24 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.util.MethodSignature;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualProperty;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 
-import java.util.Set;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 23.11.2007
  */
-public abstract class DynamicManager implements ProjectComponent {
+public abstract class DynamicManager implements ProjectComponent, PersistentStateComponent<Element> {
   public static final String DYNAMIC_PROPERTIES_DIR = "dynamicProperties";
   public static final String DYNAMIC_PROPERTIES_MODULE = "module";
   public static final String DYNAMIC_PROPERTIES_PROJECT = "project";
@@ -38,22 +41,18 @@ public abstract class DynamicManager implements ProjectComponent {
   * Returns root element
   */
 
-  public abstract Element getRootElement(String moduleName);
+  public abstract DRootElement getRootElement();
 
   /*
   * Returns all containing classes
   */
 
   @NotNull
-  public abstract Set<String> getAllContainingClasses(String moduleName);
+  public abstract Collection<DClassElement> getAllContainingClasses();
 
+  public abstract String replaceClassName(String oldClassName, String newClassName);
 
-  /*
-  * Changes dynamic property type
-  */
-  public abstract String replaceClassName(String moduleName, String oldClassName, String newClassName);
-
-  /*
+ /*
   * Adds dynamicPropertyChange listener
   */
   public abstract void addDynamicChangeListener(DynamicChangeListener listener);
@@ -63,102 +62,46 @@ public abstract class DynamicManager implements ProjectComponent {
    */
   public abstract void removeDynamicChangeListener(DynamicChangeListener listener);
 
-  /*
-  * Changes dynamic property
-  */
+  public abstract void addProperty(DClassElement classElement, DPropertyElement propertyElement);
 
-  /**
-   * ********** Dymanic properties **************
-   *
-   * @param virtualElement
-   */
+  public abstract void addMethod(DClassElement classElement, DMethodElement methodElement);
 
-  /*
-  * Return dynamic property with be added or null if not
-  */
-  @Nullable
-  public abstract DynamicVirtualElement addDynamicElement(DynamicVirtualElement virtualElement);
+  public abstract void removeClassElement(String className);
 
-  /*
-  * Return dynamic property with be removed or null if not
-  */
+  public abstract void removePropertyElement(DPropertyElement propertyElement);
 
   @Nullable
-  public abstract DynamicVirtualElement removeDynamicElement(DynamicVirtualElement virtualElement);
-
-  /*
-  * Return dynamic property with be removed or null if not
-  */
-
-  public abstract void removeDynamicPropertiesOfClass(String moduleName, String className);
-
-  /*
-  * Find dynamic property in class with name
-  */
-
-//  @Nullable
-//  public abstract Element findConcreteDynamicProperty(GrReferenceExpression referenceExpression, String moduleName, final String conatainingClassName, final String propertyName);
-
-  @Nullable
-  public abstract Element findConcreteDynamicProperty(String moduleName, final String conatainingClassName, final String propertyName);
-
-  /*
-   * Gets type of property
-   */
-//  @Nullable
-//  protected abstract String getTypeOfDynamicProperty(String moduleName, final String conatainingClassName, final String propertyName);
-
-  /*
-  * Finds dynamic properties of class
-  */
+  public abstract DPropertyElement findConcreteDynamicProperty(final String conatainingClassName, final String propertyName);
 
   @NotNull
-  public abstract String[] findDynamicPropertiesOfClass(String moduleName, final String conatainingClassName);
-
-  /*
-  * Finds dynamic property type
-  */
-
-  //  @NotNull
-  public abstract String getPropertyType(String moduleName, String className, String propertyName);
-
-  /*
-  * Returns all dynamic properties
-  */
+  public abstract Collection<DPropertyElement> findDynamicPropertiesOfClass(final String conatainingClassName);
 
   @NotNull
-  public abstract DynamicVirtualProperty[] getAllDynamicProperties(String moduleName);
+  public abstract String[] getPropertiesNamesOfClass(final String conatainingClassName);
 
-  /*
-   * Replaces dymanic property by another dynamic property
-   */
-
-  public abstract DynamicVirtualProperty replaceDynamicProperty(DynamicVirtualProperty oldProperty, DynamicVirtualProperty newProperty);
-
-  /*
-  * Changes dynamic property
-  */
-  public abstract String replaceDynamicProperty(String moduleName, String className, String oldPropertyName, String newPropertyName);
-
-  /**
-   * *********** Dynamic methods *********
-   */
-
-  /*
-  * Find dynamic property in class with name
-  */
-//  @Nullable
-//  public abstract Element[] findConcreteDynamicMethodsWithName(String moduleName, final String conatainingClassName, final String name);
-
-/*
-  * Find dynamic property in class with name
-  */
   @Nullable
-  public abstract Element findConcreteDynamicMethod(String moduleName, final String conatainingClassName, final String name, final PsiType[] types);
+  public abstract String getPropertyType(String className, String propertyName);
+
+  public abstract void replaceDynamicMethod(DMethodElement oldElement, DMethodElement newElement);
+
+  public abstract void replaceDynamicProperty(DPropertyElement oldElement, DPropertyElement newElement);
+
+  public abstract String replaceDynamicPropertyName(String className, String oldPropertyName, String newPropertyName);
+
+  public abstract String replaceDynamicPropertyType(String className, String propertyName, String oldPropertyType, String newPropertyType);
+
+  @Nullable
+  public abstract DMethodElement findConcreteDynamicMethod(final String conatainingClassName, final String name, final String[] types);
+
+  @Nullable
+  public abstract String getMethodReturnType(String className, String methodName, String[] paramTypes);
+
+  public abstract void removeMethodElement(DMethodElement element);
+
+  public abstract void replaceDynamicMethodType(String className, String name, List<MyPair> myPairList, String oldType, String newType);
 
   @NotNull
-  public abstract Set<MethodSignature> findMethodsSignaturesOfClass(final String moduleName, final String conatainingClassName);
+  public abstract DClassElement getOrCreateClassElement(Module module, String className, boolean binded);
 
-  @Nullable
-  public abstract String getMethodReturnType(String moduleName, String className, String methodName, PsiType[] paramTypes);
+  public abstract DClassElement getClassElementByItem(DItemElement itemElement);
 }

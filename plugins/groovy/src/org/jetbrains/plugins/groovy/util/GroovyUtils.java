@@ -96,22 +96,47 @@ public abstract class GroovyUtils {
 
     return result;
   }
-  
+
   /*
-   * Finds all super calss recursively
-   */
-  public static Set<PsiClass> findAllSupers (PsiClass psiClass){
-    final PsiClassType[] psiClassTypes = psiClass.getSuperTypes();
-    Set<PsiClass> result = new HashSet<PsiClass>();
+  * Finds all super classes recursively
+  */
+  public static Iterable<PsiClass> findAllSupers(final PsiClass psiClass, final HashSet<PsiClassType> visitedSupers) {
+    return new Iterable<PsiClass>() {
+      public Iterator<PsiClass> iterator() {
+        return new Iterator<PsiClass>() {
+          int i = 0;
+          final PsiClassType[] superTypes = psiClass.getSuperTypes();
 
-    for (PsiClassType superType : psiClassTypes) {
-      final PsiClass aClass = superType.resolve();
-      if (aClass == null) return new HashSet<PsiClass>();
+          public boolean hasNext() {
+            return i < superTypes.length;
+          }
 
-      result.add(aClass);
-      result.addAll(findAllSupers(aClass));
-    }
+          public PsiClass next() {
+            final PsiClassType classType = superTypes[i++];
 
-    return result;
+            final PsiClass aClass = classType.resolve();
+            if (aClass == null) return null;
+
+            if (visitedSupers.contains(classType)) {
+              i++;
+              final Iterator<PsiClass> iterator = findAllSupers(aClass, visitedSupers).iterator();
+              if (iterator.hasNext()) {
+                return iterator.next();
+              } else return null;
+            }
+
+            visitedSupers.add(classType);
+            final Iterator<PsiClass> iterator = findAllSupers(aClass, visitedSupers).iterator();
+            if (iterator.hasNext()) {
+              return iterator.next();
+            } else return aClass;
+          }
+
+          public void remove() {
+            throw new IllegalStateException("cannot.be.called");
+          }
+        };
+      }
+    };
   }
 }

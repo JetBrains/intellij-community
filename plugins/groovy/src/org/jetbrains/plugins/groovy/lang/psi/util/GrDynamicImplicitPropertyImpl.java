@@ -29,13 +29,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DContainingClassElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DPClassNode;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.tree.DPropertyNode;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 import javax.swing.*;
@@ -72,19 +69,17 @@ public class GrDynamicImplicitPropertyImpl extends GrDynamicImplicitElement {
 
         final GrReferenceExpression refExpression = (GrReferenceExpression) myScope;
         final PsiClass expression = QuickfixUtil.findTargetClass(refExpression);
+        final Module module = QuickfixUtil.getModuleByPsiFile(myScope.getContainingFile());
 
-        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DPClassNode(new DContainingClassElement(expression.getQualifiedName())));
+        if (expression == null) return;
+
+        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DClassElement(module, expression.getQualifiedName(), false));
         if (classNode == null) return;
-        final Module module = DynamicToolWindowWrapper.getModule(myProject);
-        if (module == null) return;
 
         final DefaultMutableTreeNode desiredNode;
-        final PsiElement method = myScope.getParent();
+        final DPropertyElement dynamicProperty = DynamicManager.getInstance(myProject).findConcreteDynamicProperty(expression.getQualifiedName(), ((GrReferenceExpression) myScope).getName());
 
-        final String type = DynamicManager.getInstance(myProject).getPropertyType(module.getName(), expression.getQualifiedName(), ((GrReferenceExpression) myScope).getName());
-        final DynamicVirtualProperty property = new DynamicVirtualProperty(myNameIdentifier.getText(), expression.getQualifiedName(), module.getName(), type);
-
-        desiredNode = TreeUtil.findNodeWithObject(classNode, new DPropertyNode(new DPropertyElement(property, false)));
+        desiredNode = TreeUtil.findNodeWithObject(classNode, dynamicProperty);
 
         if (desiredNode == null) return;
         final TreePath path = TreeUtil.getPathFromRoot(desiredNode);

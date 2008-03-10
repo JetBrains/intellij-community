@@ -1,13 +1,13 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualMethod;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
@@ -21,10 +21,10 @@ import java.util.List;
  * Date: 18.02.2008
  */
 public class DynamicMethodDialog extends DynamicDialog {
-  public DynamicMethodDialog(Project project, DynamicVirtualMethod virtualMethod, GrReferenceExpression referenceExpression) {
+  public DynamicMethodDialog(Module project, DMethodElement virtualMethod, GrReferenceExpression referenceExpression) {
     super(project, virtualMethod, referenceExpression);
 
-    setupParameterList(virtualMethod.getArguments());
+    setupParameterList(virtualMethod.getPairs());
     setTitle(GroovyBundle.message("add.dynamic.method"));
     setUpTypeLabel(GroovyBundle.message("dynamic.method.return.type"));
   }
@@ -33,34 +33,47 @@ public class DynamicMethodDialog extends DynamicDialog {
     return true;
   }
 
-  private void setupParameterList(List<MyPair<String, PsiType>> arguments) {
+  private void setupParameterList(List<MyPair> arguments) {
     final JTable table = getTable();
 
-    final ListTableModel<MyPair<String, PsiType>> dataModel = new ListTableModel<MyPair<String, PsiType>>(new NameColumnInfo(), new TypeColumnInfo());
-    dataModel.addTableModelListener(new TableModelListener(){
+    //TODO: add header
+//    DefaultTableColumnModel model = new DefaultTableColumnModel();
+//    final TableColumn tableColumn1 = new TableColumn();
+//    tableColumn1.setIdentifier("barrrrrrrr");
+//    model.addColumn(tableColumn1);
+//    model.addColumn(new TableColumn());
+//
+//    final JTableHeader tableHeader = new JTableHeader(model);
+//
+//    table.setTableHeader(tableHeader);
+
+    final ListTableModel<MyPair> dataModel = new ListTableModel<MyPair>(new NameColumnInfo(), new TypeColumnInfo());
+    dataModel.addTableModelListener(new TableModelListener() {
       public void tableChanged(TableModelEvent e) {
         fireDataChanged();
       }
     });
     dataModel.setItems(arguments);
     table.setModel(dataModel);
+
   }
 
-  private class TypeColumnInfo extends ColumnInfo<MyPair<String, PsiType>, String> {
+
+  private class TypeColumnInfo extends ColumnInfo<MyPair, String> {
     public TypeColumnInfo() {
       super(GroovyBundle.message("dynamic.name"));
     }
 
     //TODO: return PsiType
-    public String valueOf(MyPair<String, PsiType> MyPair) {
-      return MyPair.getSecond().getCanonicalText();
+    public String valueOf(MyPair pair) {
+      return pair.second;
     }
 
-    public boolean isCellEditable(MyPair<String, PsiType> stringPsiTypeMyPair) {
+    public boolean isCellEditable(MyPair stringPsiTypeMyPair) {
       return false;
     }
 
-    public void setValue(MyPair<String, PsiType> pair, String value) {
+    public void setValue(MyPair pair, String value) {
       PsiType type = null;
       try {
         type = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(value).getType();
@@ -68,17 +81,17 @@ public class DynamicMethodDialog extends DynamicDialog {
       }
 
       if (type == null) return;
-      pair.setSecond(type);
+      pair.setSecond(type.getCanonicalText());
     }
   }
 
-  private static class NameColumnInfo extends ColumnInfo<MyPair<String, PsiType>, String> {
+  private static class NameColumnInfo extends ColumnInfo<MyPair, String> {
     public NameColumnInfo() {
       super(GroovyBundle.message("dynamic.type"));
     }
 
-    public String valueOf(MyPair<String, PsiType> pair) {
-      return pair.getFirst();
+    public String valueOf(MyPair pair) {
+      return pair.first;
     }
   }
 
@@ -87,6 +100,4 @@ public class DynamicMethodDialog extends DynamicDialog {
 
     if (getTable().isEditing()) setOKActionEnabled(false);
   }
-
-
 }

@@ -1,49 +1,44 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import org.jdom.Document;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
-import static org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DElement.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualMethod;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.virtual.DynamicVirtualProperty;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.*;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 23.11.2007
  */
+@State(
+    name = "DynamicManagerImpl",
+    storages = {
+    @Storage(
+        id = "myDir",
+        file = "$WORKSPACE_FILE$"
+    )}
+)
+
 public class DynamicManagerImpl extends DynamicManager {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl");
 
   private final Project myProject;
-  private Map<Module, File> myPathsToXmls;
   private List<DynamicChangeListener> myListeners = new ArrayList<DynamicChangeListener>();
+  private DRootElement myRootElement = new DRootElement();
 
   public DynamicManagerImpl(Project project) {
     myProject = project;
@@ -53,312 +48,93 @@ public class DynamicManagerImpl extends DynamicManager {
     return myProject;
   }
 
+
   public void initComponent() {
-    myPathsToXmls = initDynamicProperties();
-
-    StartupManager startupManager = StartupManager.getInstance(getProject());
-    ((StartupManagerEx) startupManager).registerPreStartupActivity(new Runnable() {
-      public void run() {
-        myPathsToXmls = initDynamicProperties();
-      }
-    });
   }
 
-  private Map<Module, File> initDynamicProperties() {
-    ModuleManager manager = ModuleManager.getInstance(getProject());
+  public void addProperty(DClassElement classElement, DPropertyElement propertyElement) {
+    if (classElement == null) return;
 
-    Map<Module, File> xmls = new HashMap<Module, File>();
-    for (Module module : manager.getModules()) {
-      xmls.put(module, initializeDynamicProperties(module));
-    }
-
-    return xmls;
+    classElement.addProperty(propertyElement);
+//    addToClassesMap(propertyElement, classElement);
   }
 
-  private File initializeDynamicProperties(Module module) {
-    final String moduleDynPath = getOrCreateProjectDynamicDir() + File.separatorChar +
-        DYNAMIC_PROPERTIES_MODULE + "_" + module.getName() + "_" +
-        module.getModuleFilePath().hashCode() + ".xml";
+  public void addMethod(DClassElement classElement, DMethodElement methodElement) {
+    if (classElement == null) return;
 
-    return new File(getOrCreateFile(moduleDynPath));
+    classElement.addMethod(methodElement);
+//    addToClassesMap(methodElement, classElement);
+  }
+
+//  private void addToClassesMap(DItemElement methodElement, DClassElement classElement) {
+//    myItemsToClasses.put(methodElement, classElement);
+//  }
+
+  public void removeClassElement(String containingClassName) {
+
+    final DRootElement rootElement = getRootElement();
+    rootElement.removeClassElement(containingClassName);
+
+    fireChange();
+  }
+
+  public void removePropertyElement(DPropertyElement propertyElement) {
+    final DClassElement classElement = getClassElementByItem(propertyElement);
+    assert classElement != null;
+
+    classElement.removeProperty(propertyElement.getName());
+//    myItemsToClasses.remove(propertyElement);
+    fireChange();
   }
 
   @NotNull
-  private String getOrCreateProjectDynamicDir() {
-    final String url = getProject().getPresentableUrl();
-    final String projectDynPath = getOrCreateDynamicDirectory() + File.separatorChar +
-        DYNAMIC_PROPERTIES_PROJECT + "_" + getProject().getName() + "_" +
-        (url != null ? url : getProject().getName()).hashCode();
+  public Collection<DPropertyElement> findDynamicPropertiesOfClass(String className) {
+    final DClassElement classElement = findClassElement(getRootElement(), className);
 
-    return getOrCreateDir(projectDynPath);
-  }
-
-  private String getOrCreateDynamicDirectory() {
-    final String dynDirPath = PathManager.getSystemPath() + File.separatorChar + DYNAMIC_PROPERTIES_DIR;
-    return getOrCreateDir(dynDirPath);
-  }
-
-  private String getOrCreateFile(String dynDirPath) {
-    try {
-      final File dynDir = new File(dynDirPath);
-      if (!dynDir.exists()) {
-        dynDir.createNewFile();
-      }
-
-      return dynDir.getCanonicalPath();
-    } catch (IOException e) {
-      System.out.println("Error while save file" + dynDirPath);
-      return PathManager.getSystemPath();
+    if (classElement != null) {
+      return classElement.getProperties();
     }
+    return new ArrayList<DPropertyElement>();
   }
-
-  private String getOrCreateDir(String dynDirPath) {
-    try {
-      final File dynDir = new File(dynDirPath);
-      if (!dynDir.exists()) {
-        dynDir.mkdir();
-      }
-
-      return dynDir.getCanonicalPath();
-    } catch (IOException e) {
-      System.out.println("Error while save file" + dynDirPath);
-      return PathManager.getSystemPath();
-    }
-  }
-
-  @Nullable
-  public DynamicVirtualElement addDynamicElement(final DynamicVirtualElement virtualElement) {
-    final String moduleName = virtualElement.getModuleName();
-    Element rootElement = getRootElement(moduleName);
-
-    final String containingClassName = virtualElement.getContainingClassName();
-    final String elementName = virtualElement.getName();
-
-    final boolean isProperty = isVirtualProperty(virtualElement);
-    final boolean isMethod = isVirtualMethod(virtualElement);
-
-    assert !(isMethod && isProperty);
-
-    Element element = null;
-    if (isProperty) {
-      element = findConcreteDynamicProperty(rootElement, containingClassName, elementName);
-    } else if (isMethod) {
-      final List<MyPair<String, PsiType>> list = ((DynamicVirtualMethod) virtualElement).getArguments();
-      final PsiType[] psiTypes = QuickfixUtil.getArgumentsTypes(list);
-      element = findConcreteDynamicMethod(rootElement, containingClassName, elementName, psiTypes);
-    }
-
-    final Element classElement;
-    if (element == null) {
-      classElement = findDynamicClassElement(rootElement, virtualElement.getContainingClassName());
-
-      if (classElement == null) {
-        final DContainingClassElement containingClassElement = new DContainingClassElement(virtualElement.getContainingClassName());
-
-        addDynamicElementToClass(virtualElement, containingClassElement);
-        rootElement.addContent(containingClassElement);
-      } else {
-        addDynamicElementToClass(virtualElement, classElement);
-      }
-    }
-
-    writeXMLTree(moduleName, rootElement);
-
-    fireChange();
-
-    return virtualElement;
-  }
-
-  private void addDynamicElementToClass(DynamicVirtualElement virtualElement, Element classElement) {
-    if (virtualElement instanceof DynamicVirtualMethod) {
-      classElement.addContent(new DMethodElement(((DynamicVirtualMethod) virtualElement), true));
-    } else if (virtualElement instanceof DynamicVirtualProperty) {
-      classElement.addContent(new DPropertyElement(((DynamicVirtualProperty) virtualElement)));
-    }
-  }
-
-  private boolean isVirtualProperty(DynamicVirtualElement virtualElement) {
-    return virtualElement instanceof DynamicVirtualProperty;
-  }
-
-  private boolean isVirtualMethod(DynamicVirtualElement virtualElement) {
-    return virtualElement instanceof DynamicVirtualMethod;
-  }
-
-  private void writeXMLTree(String moduleName, Element rootElement) {
-    FileWriter writer = null;
-    final File filePath = myPathsToXmls.get(ModuleManager.getInstance(getProject()).findModuleByName(moduleName));
-    try {
-      writer = new FileWriter(filePath);
-      JDOMUtil.writeElement(rootElement, writer, "\n");
-    } catch (IOException e) {
-      LOG.error("File " + filePath + " cannot be written.");
-    } finally {
-      try {
-        if (writer != null) {
-          writer.flush();
-          writer.close();
-        }
-      } catch (IOException e) {
-        LOG.error("FileWriter for file " + filePath + " cannot be close.");
-      }
-    }
-  }
-
-  private Document loadModuleDynXML(String moduleName) {
-    Document document;
-    try {
-      final Module module = ModuleManager.getInstance(getProject()).findModuleByName(moduleName);
-
-      document = module == null ? new Document() : JDOMUtil.loadDocument(myPathsToXmls.get(module));
-    } catch (JDOMException e) {
-      document = new Document();
-    } catch (IOException e) {
-      document = new Document();
-    }
-
-    if (!document.hasRootElement()) {
-      document.setRootElement(new DRootElement());
-    }
-    return document;
-  }
-
-  @Nullable
-  public DynamicVirtualElement removeDynamicElement(DynamicVirtualElement virtualElement) {
-    final Document document = loadModuleDynXML(virtualElement.getModuleName());
-    final String containingClassName = virtualElement.getContainingClassName();
-    final String propertyName = virtualElement.getName();
-    final String moduleName = virtualElement.getModuleName();
-
-    final Element rootElement = document.getRootElement();
-    final Element foundDynamicProperty = findConcreteDynamicProperty(rootElement, containingClassName, propertyName);
-    if (foundDynamicProperty == null) return null;
-
-    foundDynamicProperty.getParent().removeContent(foundDynamicProperty);
-
-    writeXMLTree(moduleName, rootElement);
-
-    fireChange();
-    return virtualElement;
-  }
-
-  public void removeDynamicPropertiesOfClass(String moduleName, String containingClassName) {
-    final Document document = loadModuleDynXML(moduleName);
-
-    final Element rootElement = document.getRootElement();
-    final Element classElement = findDynamicClassElement(rootElement, containingClassName);
-    classElement.getParent().removeContent();
-
-    fireChange();
-  }
-
-//  @Nullable
-//  public Element findConcreteDynamicProperty(GrReferenceExpression referenceExpression, final String moduleName, final String containingClassName, final String propertyName) {
-//    final PsiClassType type = referenceExpression.getManager().getElementFactory().createTypeByFQClassName(containingClassName, referenceExpression.getResolveScope());
-//
-//    final PsiClass psiClass = type.resolve();
-//    if (psiClass == null) return null;
-//
-//    final Set<PsiClass> classes = new HashSet<PsiClass>();
-//    classes.addAll(Arrays.asList(psiClass.getSupers()));
-//
-//    Element result = findConcreteDynamicProperty(getRootElement(moduleName), psiClass.getQualifiedName(), propertyName);
-//    if (result != null) return result;
-//
-//    for (PsiClass aClass : classes) {
-//      result = findConcreteDynamicProperty(getRootElement(moduleName), aClass.getQualifiedName(), propertyName);
-//
-//      if (result != null) return result;
-//    }
-//    return null;
-//  }
-
-//  @Nullable
-//  public Element findConcreteDynamicElementWithSupers(String moduleName, final String conatainingClassName, final String propertyName) {
-//
-//    return findConcreteDynamicProperty(getRootElement(moduleName), conatainingClassName, propertyName);
-//  }
-
-//  @Nullable
-//  protected String getTypeOfDynamicProperty(String moduleName, String containingClassName, String propertyName) {
-//    if (containingClassName == null) return null;
-//    final Element dynamicProperty = findConcreteDynamicProperty(moduleName, containingClassName, propertyName);
-//    if (dynamicProperty == null) return null;
-//
-//    final List types = dynamicProperty.getContent(DynamicFiltersFactory.createPropertyTypeTagFilter());
-//    if (types == null || (types.size() != 1)) return null;
-//
-//    final Object type = types.get(0);
-//    if (!(type instanceof Element)) return null;
-//
-//    return ((Element) type).getText();
-//  }
 
   @NotNull
-  public String[] findDynamicPropertiesOfClass(String moduleName, String className) {
-    Document document = loadModuleDynXML(moduleName);
+  public String[] getPropertiesNamesOfClass(String conatainingClassName) {
+    final DClassElement classElement = findClassElement(getRootElement(), conatainingClassName);
 
-    final Element containingClassElement = findDynamicClassElement(document.getRootElement(), className);
-    if (containingClassElement == null) return new String[0];
-
-    final List propertiesTagsOfClass = containingClassElement.getContent(DynamicFiltersFactory.createPropertyTagFilter());
-
-    List<String> result = new ArrayList<String>();
-    for (Object o : propertiesTagsOfClass) {
-      result.add(((Element) o).getAttributeValue(NAME_ATTRIBUTE));
+    Set<String> result = new HashSet<String>();
+    if (classElement != null) {
+      for (DPropertyElement propertyElement : classElement.getProperties()) {
+        result.add(propertyElement.getName());
+      }
     }
-
     return result.toArray(new String[result.size()]);
   }
 
   @Nullable
-  public String getPropertyType(String moduleName, String className, String propertyName) {
-    final Element dynamicProperty = findConcreteDynamicProperty(getRootElement(moduleName), className, propertyName);
+  public String getPropertyType(String className, String propertyName) {
+    final DPropertyElement dynamicProperty = findConcreteDynamicProperty(getRootElement(), className, propertyName);
 
     if (dynamicProperty == null) return null;
-    return dynamicProperty.getAttributeValue(TYPE_ATTRIBUTE);
+    return dynamicProperty.getType();
+  }
+
+  public void replaceDynamicMethod(DMethodElement oldMethod, DMethodElement newElement) {
+//    final DClassElement className = oldMethod.getClassElement();
+//    assert className.getName().equals(newElement.getClassElement().getName());
+
+//    className.removeMethod(oldMethod);
   }
 
   @NotNull
-  public DynamicVirtualProperty[] getAllDynamicProperties(String moduleName) {
-    Set<DynamicVirtualProperty> result = new HashSet<DynamicVirtualProperty>();
-    Document document = loadModuleDynXML(moduleName);
+  public Collection<DClassElement> getAllContainingClasses() {
+    //TODO: use iterator
+    final DRootElement root = getRootElement();
 
-    final List definedContainingClasses = document.getRootElement().getContent(DynamicFiltersFactory.createContainingClassTagFilter());
-
-    for (Object definedContainingClass : definedContainingClasses) {
-      final Element containingClass = (Element) definedContainingClass;
-
-      final String qualifiedName = containingClass.getAttributeValue(CONTAINIG_CLASS_TYPE_ATTRIBUTE);
-      final List propertyTags = containingClass.getContent(DynamicFiltersFactory.createPropertyTagFilter());
-
-      for (Object propertyTag : propertyTags) {
-        final String propertyName = ((Element) propertyTag).getAttributeValue(NAME_ATTRIBUTE);
-        final String propertyType = getPropertyType(moduleName, qualifiedName, propertyName);
-        result.add(new DynamicVirtualProperty(propertyName, qualifiedName, moduleName, propertyType));
-      }
-    }
-
-    return result.toArray(DynamicVirtualProperty.EMPTY_ARRAY);
+    return root.getContainingClasses();
   }
 
-  @NotNull
-  public Set<String> getAllContainingClasses(String moduleName) {
-    final Element root = getRootElement(moduleName);
-    Set<String> result = new HashSet<String>();
-
-    final List definedContainingClasses = root.getContent(DynamicFiltersFactory.createContainingClassTagFilter());
-    for (Object definedContainingClass : definedContainingClasses) {
-      if (!(definedContainingClass instanceof Element)) continue;
-
-      result.add(((Element) definedContainingClass).getAttributeValue(CONTAINIG_CLASS_TYPE_ATTRIBUTE));
-    }
-
-    return result;
-  }
-
-  public Element getRootElement(String moduleName) {
-    return loadModuleDynXML(moduleName).getRootElement();
+  public DRootElement getRootElement() {
+    return myRootElement;
   }
 
   /*
@@ -375,125 +151,106 @@ public class DynamicManagerImpl extends DynamicManager {
     myListeners.remove(listener);
   }
 
-  public DynamicVirtualProperty replaceDynamicProperty(DynamicVirtualProperty oldProperty, DynamicVirtualProperty newProperty) {
-    if (!oldProperty.getModuleName().equals(newProperty.getModuleName())
-        || !oldProperty.getContainingClassName().equals(oldProperty.getContainingClassName()))
-      return null;
-
-    replaceDynamicProperty(oldProperty.getModuleName(),
-        oldProperty.getContainingClassName(),
-        oldProperty.getName(),
-        newProperty.getName());
-    return newProperty;
+  public void replaceDynamicProperty(DPropertyElement oldElement, DPropertyElement newElement) {
+    removePropertyElement(oldElement);
   }
 
   /*
   * Changes dynamic property
   */
-  public String replaceDynamicProperty(String moduleName, String className, String oldPropertyName, String newPropertyName) {
-    final Element rootElement = getRootElement(moduleName);
-    final Element oldDynamicProperty = findConcreteDynamicProperty(rootElement, className, oldPropertyName);
 
-    if (oldDynamicProperty == null) return oldPropertyName;
+  public String replaceDynamicPropertyName(String className, String oldPropertyName, String newPropertyName) {
+    final DClassElement classElement = findClassElement(getRootElement(), className);
+    if (classElement == null) return null;
 
-    oldDynamicProperty.setAttribute(NAME_ATTRIBUTE, newPropertyName);
-
-    writeXMLTree(moduleName, rootElement);
+    final DPropertyElement oldPropertyElement = classElement.getPropertyByName(oldPropertyName);
+    classElement.removeProperty(oldPropertyName);
+    classElement.addProperty(new DPropertyElement(newPropertyName, oldPropertyElement.getType()));
     fireChange();
 
     return newPropertyName;
   }
 
-  /*
-  * Find dynamic property in class with name
-  */
-  @Nullable
-  public Element findConcreteDynamicMethod(Element rootElement, String conatainingClassName, String methodName, PsiType[] parametersTypes) {
-    Element definedClass = findDynamicClassElement(rootElement, conatainingClassName);
-    if (definedClass == null) return null;
+  public String replaceDynamicPropertyType(String className, String propertyName, String oldPropertyType, String newPropertyType) {
+    final DPropertyElement property = findConcreteDynamicProperty(className, propertyName);
 
-    final List methodsresult = definedClass.getContent(DynamicFiltersFactory.createConcreteMethodWithParametersFilter(methodName, parametersTypes));
-    if (methodsresult == null || methodsresult.toArray().length != 1) return null;
+    if (property == null) return null;
 
-    return ((Element) methodsresult.get(0));
+    property.setType(newPropertyType);
+    return newPropertyType;
   }
+
 
   /*
   * Find dynamic property in class with name
   */
+
   @Nullable
-  public Element[] findConcreteDynamicMethodsWithName(String moduleName, String conatainingClassName, String name) {
-    final Element rootElement = getRootElement(moduleName);
-    Element definedClass = findDynamicClassElement(rootElement, conatainingClassName);
-    if (definedClass == null) return null;
+  public DMethodElement findConcreteDynamicMethod(DRootElement rootElement, String conatainingClassName, String methodName, String[] parametersTypes) {
+    DClassElement classElement = findClassElement(rootElement, conatainingClassName);
+    if (classElement == null) return null;
 
-    final List xmlMethods = definedClass.getContent(DynamicFiltersFactory.createConcreteMethodNameFilter(name));
-
-    if (!(xmlMethods.toArray() instanceof Element[])) return null;
-    return ((Element[]) xmlMethods.toArray());
+    return classElement.getMethod(methodName, parametersTypes);
   }
 
-  //  @Nullable
-  public Element findConcreteDynamicMethod(String moduleName, String conatainingClassName, String name, PsiType[] parameterTypes) {
-    return findConcreteDynamicMethod(getRootElement(moduleName), conatainingClassName, name, parameterTypes);
+   //  @Nullable
+
+  public DMethodElement findConcreteDynamicMethod(String conatainingClassName, String name, String[] parameterTypes) {
+    return findConcreteDynamicMethod(getRootElement(), conatainingClassName, name, parameterTypes);
+  }
+
+  @Nullable
+  public String getMethodReturnType(String className, String methodName, String[] paramTypes) {
+    final DMethodElement methodElement = findConcreteDynamicMethod(getRootElement(), className, methodName, paramTypes);
+
+    if (methodElement == null) return null;
+
+    return methodElement.getType();
+  }
+
+  public void removeMethodElement(DMethodElement methodElement) {
+    final DClassElement classElement = getClassElementByItem(methodElement);
+    assert classElement != null;
+
+    classElement.removeMethod(methodElement);
+//    myItemsToClasses.remove(methodElement);
+
+    fireChange();
+  }
+
+  public void replaceDynamicMethodType(String className, String name, List<MyPair> myPairList, String oldType, String newType) {
+    final DMethodElement method = findConcreteDynamicMethod(className, name, QuickfixUtil.getArgumentsTypes(myPairList));
+
+    if (method == null) return;
+    method.setType(newType);
   }
 
   @NotNull
-  public Set<MethodSignature> findMethodsSignaturesOfClass(String moduleName, String className) {
-    final Element rootElement = getRootElement(moduleName);
-    Set<MethodSignature> methodSignatures = new HashSet<MethodSignature>();
-
-    final Element containingClassElement = findDynamicClassElement(rootElement, className);
-    if (containingClassElement == null) return methodSignatures;
-
-    final List methods = containingClassElement.getContent(DynamicFiltersFactory.createMethodTagFilter());
-
-//    Set<String> result = new HashSet<String>();
-    for (Object o : methods) {
-      final Element method = (Element) o;
-      final String methodName = method.getAttributeValue(NAME_ATTRIBUTE);
-
-      final List parameters = method.getContent(DynamicFiltersFactory.createParameterTagFilter());
-
-      List<PsiType> types = new ArrayList<PsiType>();
-      for (Object parameterElement : parameters) {
-        final Element parameter = (Element) parameterElement;
-
-        final String name = parameter.getAttributeValue(NAME_ATTRIBUTE);
-        final String type = parameter.getAttributeValue(TYPE_ATTRIBUTE);
-
-        PsiType psiType = PsiManager.getInstance(myProject).getElementFactory().createTypeByFQClassName(type, myProject.getAllScope());
-        types.add(psiType);
-      }
-
-      final MethodSignature signature = MethodSignatureUtil.createMethodSignature(methodName, types.toArray(PsiType.EMPTY_ARRAY), PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.UNKNOWN);
-      methodSignatures.add(signature);
+  public DClassElement getOrCreateClassElement(Module module, String className, boolean binded) {
+    DClassElement classElement = DynamicManager.getInstance(myProject).getRootElement().getClassElement(className);
+    if (classElement == null) {
+      return new DClassElement(module, className, binded);
     }
 
-    return methodSignatures;
+    return classElement;
   }
 
   @Nullable
-  public String getMethodReturnType(String moduleName, String className, String methodName, PsiType[] paramTypes) {
-    final Element dynamicProperty = findConcreteDynamicMethod(getRootElement(moduleName), className, methodName, paramTypes);
-
-    if (dynamicProperty == null) return null;
-
-    return dynamicProperty.getAttributeValue(TYPE_ATTRIBUTE);
+  public DClassElement getClassElementByItem(DItemElement itemElement) {
+    final Collection<DClassElement> classes = getAllContainingClasses();
+    for (DClassElement aClass : classes) {
+      if (aClass.containsElement(itemElement)) return aClass;
+    }
+    return null;
   }
 
-  /*
-  * Changes dynamic property type
-  */
-
-  public String replaceClassName(String moduleName, String oldClassName, String newClassName) {
-    final Element rootElement = getRootElement(moduleName);
-    final Element oldClassElement = findDynamicClassElement(rootElement, oldClassName);
+  public String replaceClassName(String oldClassName, String newClassName) {
+    final DRootElement rootElement = getRootElement();
+    final DClassElement oldClassElement = findClassElement(rootElement, oldClassName);
     if (oldClassElement == null) return oldClassName;
 
-    oldClassElement.setAttribute(CONTAINIG_CLASS_TYPE_ATTRIBUTE, newClassName);
+    oldClassElement.setName(newClassName);
 
-    writeXMLTree(moduleName, rootElement);
     fireChange();
 
     return newClassName;
@@ -520,42 +277,22 @@ public class DynamicManagerImpl extends DynamicManager {
   }
 
   @Nullable
-  public Element findConcreteDynamicProperty(String moduleName, final String conatainingClassName, final String propertyName) {
-    return findConcreteDynamicProperty(getRootElement(moduleName), conatainingClassName, propertyName);
+  public DPropertyElement findConcreteDynamicProperty(final String conatainingClassName, final String propertyName) {
+    return findConcreteDynamicProperty(getRootElement(), conatainingClassName, propertyName);
   }
 
   @Nullable
-  public Element findConcreteDynamicProperty(Element rootElement, final String conatainingClassName, final String propertyName) {
-    Element definedClass = findDynamicClassElement(rootElement, conatainingClassName);
-    if (definedClass == null) return null;
+  public DPropertyElement findConcreteDynamicProperty(DRootElement rootElement, final String conatainingClassName, final String propertyName) {
+    final DClassElement classElement = rootElement.getClassElement(conatainingClassName);
 
-    final List definedPropertiesInTypeDef = definedClass.getContent(DynamicFiltersFactory.createConcretePropertyNameFilter(propertyName));
-    if (definedPropertiesInTypeDef == null || definedPropertiesInTypeDef.size() == 0) {
-      return null;
-    }
+    if (classElement == null) return null;
 
-    return ((Element) definedPropertiesInTypeDef.get(0));
+    return classElement.getPropertyByName(propertyName);
   }
 
   @Nullable
-  private Element findConcreteDynamicMethodWithName(Element rootElement, final String conatainingClassName, final String methodName) {
-    Element definedClass = findDynamicClassElement(rootElement, conatainingClassName);
-    if (definedClass == null) return null;
-
-    final List definedPropertiesInTypeDef = definedClass.getContent(DynamicFiltersFactory.createConcreteMethodNameFilter(methodName));
-    if (definedPropertiesInTypeDef == null || definedPropertiesInTypeDef.size() == 0) {
-      return null;
-    }
-
-    return ((Element) definedPropertiesInTypeDef.get(0));
-  }
-
-  @Nullable
-  private Element findDynamicClassElement(Element rootElement, final String conatainingClassName) {
-    final List definedProperties = rootElement.getContent(DynamicFiltersFactory.createConcreteContainingClassTagFilter(conatainingClassName));
-
-    if (definedProperties == null || definedProperties.size() == 0 || definedProperties.size() > 1) return null;
-    return ((Element) definedProperties.get(0));
+  private DClassElement findClassElement(DRootElement rootElement, final String conatainingClassName) {
+    return rootElement.getClassElement(conatainingClassName);
   }
 
   public void disposeComponent() {
@@ -570,5 +307,19 @@ public class DynamicManagerImpl extends DynamicManager {
   }
 
   public void projectClosed() {
+  }
+
+  /**
+   * On exit
+   */
+  public Element getState() {
+    return XmlSerializer.serialize(myRootElement);
+  }
+
+  /*
+   * On loading
+   */
+  public void loadState(Element element) {
+    myRootElement = XmlSerializer.deserialize(element, myRootElement.getClass());
   }
 }

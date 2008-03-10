@@ -6,29 +6,32 @@ import java.util.Arrays;
  * User: Dmitry.Krasilschikov
  * Date: 29.02.2008
  */
-public class MyPair<Item, Aspect> {
-  private Item first;
-  private Aspect second;
+public class MyPair  {
+  public String first = null;
+  public String second = null;
 
-  public MyPair(Item first, Aspect second) {
+  public MyPair() {
+  }
+
+  public MyPair(String first, String second) {
     this.first = first;
     this.second = second;
   }
 
-  public void setFirst(Item first) {
+//  public String getFirst() {
+//    return first;
+//  }
+
+  public void setFirst(String first) {
     this.first = first;
   }
 
-  public void setSecond(Aspect second) {
+//  public PsiType getSecond() {
+//    return second;
+//  }
+
+  public void setSecond(String second) {
     this.second = second;
-  }
-
-  public final Item getFirst() {
-    return first;
-  }
-
-  public final Aspect getSecond() {
-    return second;
   }
 
   public final int hashCode() {
