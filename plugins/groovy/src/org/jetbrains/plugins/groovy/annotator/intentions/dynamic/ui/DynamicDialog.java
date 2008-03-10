@@ -16,13 +16,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -37,6 +37,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.EventListener;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -117,15 +118,8 @@ public abstract class DynamicDialog extends DialogWrapper {
 
 
   private void setUpContainingClassComboBox() {
-    final DynamicManager dynamicManager = DynamicManager.getInstance(myProject);
-//    final Collection<DClassElement> classElements = dynamicManager.getAllContainingClasses();
-//    for (DClassElement classElement : classElements) {
-//      if(myDynamicElement instanceof DMethodElement) {
-//        final DMethodElement method = dynamicManager.findConcreteDynamicMethod(classElement.getName(), myDynamicElement.getName(), QuickfixUtil.getArgumentsTypes(((DMethodElement) myDynamicElement).getPairs()));
-//      }
-//    }
     final String typeDefinition;
-// .getClassElement().getName();
+
     final PsiClass targetClass = QuickfixUtil.findTargetClass(myReferenceExpression);
 
     if (targetClass == null) typeDefinition = "java.lang.Object";
@@ -138,7 +132,11 @@ public abstract class DynamicDialog extends DialogWrapper {
 
     myClassComboBox.addItem(new ContainingClassItem(psiClass));
     final Iterable<PsiClass> classes = GroovyUtils.findAllSupers(psiClass, new HashSet<PsiClassType>());
+    Set<PsiClass> classesSet = new HashSet<PsiClass>();
     for (PsiClass aClass : classes) {
+      classesSet.add(aClass);
+    }
+    for (PsiClass aClass : classesSet) {
       myClassComboBox.addItem(new ContainingClassItem(aClass));
     }
 

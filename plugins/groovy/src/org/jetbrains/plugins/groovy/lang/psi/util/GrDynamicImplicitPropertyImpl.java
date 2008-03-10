@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
@@ -38,6 +39,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import java.util.HashSet;
+import java.util.Iterator;
 
 /**
  * @author ilyas
@@ -68,16 +71,36 @@ public class GrDynamicImplicitPropertyImpl extends GrDynamicImplicitElement {
         if (!(myScope instanceof GrReferenceExpression)) return;
 
         final GrReferenceExpression refExpression = (GrReferenceExpression) myScope;
-        final PsiClass expression = QuickfixUtil.findTargetClass(refExpression);
+        final PsiClass psiClass = QuickfixUtil.findTargetClass(refExpression);
         final Module module = QuickfixUtil.getModuleByPsiFile(myScope.getContainingFile());
 
-        if (expression == null) return;
-
-        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DClassElement(module, expression.getQualifiedName(), false));
-        if (classNode == null) return;
+        if (psiClass == null) return;
 
         final DefaultMutableTreeNode desiredNode;
-        final DPropertyElement dynamicProperty = DynamicManager.getInstance(myProject).findConcreteDynamicProperty(expression.getQualifiedName(), ((GrReferenceExpression) myScope).getName());
+        final Iterable<PsiClass> allSupers = GroovyUtils.findAllSupers(psiClass, new HashSet<PsiClassType>());
+        Iterator<PsiClass> it = allSupers.iterator();
+        DPropertyElement dynamicProperty = null;
+        PsiClass trueSuper = null;
+
+        PsiClass aSuper = psiClass;
+
+        if (it.hasNext()) {
+          do {
+            dynamicProperty = DynamicManager.getInstance(myProject).findConcreteDynamicProperty(aSuper.getQualifiedName(), ((GrReferenceExpression) myScope).getName());
+
+            if(dynamicProperty != null) {
+              trueSuper = aSuper;
+              break;
+            }
+            
+            aSuper = it.next();
+          } while (it.hasNext());
+        }
+
+        if (trueSuper == null) return;
+
+        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DClassElement(module, trueSuper.getQualifiedName(), false));
+        if (classNode == null) return;
 
         desiredNode = TreeUtil.findNodeWithObject(classNode, dynamicProperty);
 

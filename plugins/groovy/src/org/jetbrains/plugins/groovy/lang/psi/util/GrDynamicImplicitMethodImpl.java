@@ -14,10 +14,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
@@ -27,6 +27,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -84,22 +85,29 @@ public class GrDynamicImplicitMethodImpl extends GrDynamicImplicitElement {
         if (psiClass == null) return;
 
         final Iterable<PsiClass> classes = GroovyUtils.findAllSupers(psiClass, new HashSet<PsiClassType>());
-        //TODO:add psiClass
-//        classes.add(psiClass);
+        PsiClass aClass = psiClass;
+        PsiClass trueClass = null;
+        DMethodElement methodElement = null;
 
-        for (PsiClass aClass : classes) {
-          DClassElement dClassElement = DynamicManager.getInstance(myProject).getOrCreateClassElement(module, aClass.getQualifiedName(), false);
+        Iterator<PsiClass> it = classes.iterator();
+        if (it.hasNext()) {
+          do {
+            methodElement = DynamicManager.getInstance(myProject).findConcreteDynamicMethod(aClass.getQualifiedName(), ((GrReferenceExpression) myScope).getName(), QuickfixUtil.getArgumentsTypes(pairs));
 
-          final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, dClassElement);
-          if (classNode == null) continue;
+            if (methodElement != null){
+              trueClass = aClass;
+              break;
+            }
 
-          final Object classElement = classNode.getUserObject();
-          if (classElement == null || !(classElement instanceof DClassElement)) continue;
-
-          final DMethodElement methodElement = ((DClassElement) classElement).getMethod(refExpression.getName(), QuickfixUtil.getArgumentsTypes(pairs));
-
-          desiredNode = TreeUtil.findNodeWithObject(classNode, methodElement);
+            aClass = it.next();
+          } while (it.hasNext());
         }
+
+        if (trueClass == null) return;
+        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DClassElement(module, trueClass.getQualifiedName(), false));
+
+        if (classNode == null) return;
+        desiredNode = TreeUtil.findNodeWithObject(classNode, methodElement);
 
         if (desiredNode == null) return;
         final TreePath path = TreeUtil.getPathFromRoot(desiredNode);
