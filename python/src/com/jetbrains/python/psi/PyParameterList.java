@@ -16,6 +16,9 @@
 
 package com.jetbrains.python.psi;
 
+import com.intellij.psi.StubBasedPsiElement;
+import com.jetbrains.python.psi.stubs.PyParameterListStub;
+
 /**
  * Created by IntelliJ IDEA.
  * User: yole
@@ -23,6 +26,6 @@ package com.jetbrains.python.psi;
  * Time: 23:03:11
  * To change this template use File | Settings | File Templates.
  */
-public interface PyParameterList extends PyElement {
+public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParameterListStub> {
   PyParameter[] getParameters();
 }

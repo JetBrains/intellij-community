@@ -3,7 +3,7 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.extapi.psi.StubBasedPsiElement;
+import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -20,7 +20,7 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElement<T> implements PyElement {
+public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElementBase<T> implements PyElement {
   public PyBaseElementImpl(final T stub, IStubElementType nodeType) {
     super(stub, nodeType);
   }
