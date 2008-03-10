@@ -77,6 +77,8 @@ public class GrDynamicImplicitMethodImpl extends GrDynamicImplicitElement {
         final String[] argumentNames = QuickfixUtil.getMethodArgumentsNames(((GrCallExpression) method));
         final List<MyPair> pairs = QuickfixUtil.swapArgumentsAndTypes(argumentNames, argumentTypes);
 
+        if (pairs == null) return;
+
         final PsiClassType fqClassName = PsiManager.getInstance(myProject).getElementFactory().createTypeByFQClassName(className, myProject.getAllScope());
         final PsiClass psiClass = fqClassName.resolve();
         if (psiClass == null) return;

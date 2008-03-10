@@ -98,38 +98,40 @@ public abstract class GroovyUtils {
   }
 
   /*
-  * Finds all super classes recursively
+  * Finds all super classes recursively; may return the same types twice
   */
   public static Iterable<PsiClass> findAllSupers(final PsiClass psiClass, final HashSet<PsiClassType> visitedSupers) {
     return new Iterable<PsiClass>() {
       public Iterator<PsiClass> iterator() {
         return new Iterator<PsiClass>() {
           int i = 0;
-          final PsiClassType[] superTypes = psiClass.getSuperTypes();
+
+          Set<PsiClass> set = new HashSet<PsiClass>();
+          PsiClass current = psiClass;
 
           public boolean hasNext() {
-            return i < superTypes.length;
+            if (i < current.getSuperTypes().length) return true;
+            if (set.contains(current)) set.remove(current);
+
+            final Iterator<PsiClass> classIterator = set.iterator();
+            if (classIterator.hasNext()) {
+              current = classIterator.next();
+            } else return false;
+            
+            i = 0;
+            return current.getSuperTypes().length != 0 || hasNext();
           }
 
           public PsiClass next() {
-            final PsiClassType classType = superTypes[i++];
+            final PsiClassType superType;
+            PsiClass superClass;
 
-            final PsiClass aClass = classType.resolve();
-            if (aClass == null) return null;
+            superType = current.getSuperTypes()[i++];
+            superClass = superType.resolve();
+            if (superClass == null) return null;
 
-            if (visitedSupers.contains(classType)) {
-              i++;
-              final Iterator<PsiClass> iterator = findAllSupers(aClass, visitedSupers).iterator();
-              if (iterator.hasNext()) {
-                return iterator.next();
-              } else return null;
-            }
-
-            visitedSupers.add(classType);
-            final Iterator<PsiClass> iterator = findAllSupers(aClass, visitedSupers).iterator();
-            if (iterator.hasNext()) {
-              return iterator.next();
-            } else return aClass;
+            if (!set.contains(superClass)) set.add(superClass);
+            return superClass;
           }
 
           public void remove() {

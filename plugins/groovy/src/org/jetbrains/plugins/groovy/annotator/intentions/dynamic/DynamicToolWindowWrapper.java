@@ -653,7 +653,8 @@ public class DynamicToolWindowWrapper {
       if (value instanceof DClassElement) {
         final String containingClassName = ((DClassElement) value).getName();
         final String className = QuickfixUtil.shortenType(containingClassName);
-        append(className, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+//        append(className, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        append(containingClassName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
 
       if (value instanceof DItemElement) {

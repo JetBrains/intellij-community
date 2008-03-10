@@ -854,11 +854,6 @@ public class GroovyAnnotator implements Annotator {
       if (file == null) return;
     } else return;
 
-//    Module module = ProjectRootManager.getInstance(referenceExpression.getProject()).getFileIndex().getModuleForFile(file);
-//    PsiClass targetClass = QuickfixUtil.findTargetClass(referenceExpression);
-//
-//    if (module == null) return;
-
     annotation.registerFix(new DynamicFix(itemElement, referenceExpression), referenceExpression.getTextRange());
   }
 
