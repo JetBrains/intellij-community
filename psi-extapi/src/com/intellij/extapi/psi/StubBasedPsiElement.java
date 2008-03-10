@@ -5,27 +5,24 @@ package com.intellij.extapi.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class StubBasedPsiElement<T extends StubElement> extends ASTDelegatePsiElement {
-  private PsiElement myParent;
   private volatile T myStub;
   private volatile ASTNode myNode;
-  private final List<StubBasedPsiElement> myChildStubs = new ArrayList<StubBasedPsiElement>();
   private final IElementType myElementType;
 
-  public StubBasedPsiElement(final PsiElement parent, final T stub, IElementType nodeType) {
-    myParent = parent;
+  public StubBasedPsiElement(final T stub, IStubElementType nodeType) {
     myStub = stub;
     myElementType = nodeType;
     myNode = null;
-    ((StubBasedPsiElement)parent).myChildStubs.add(this);
   }
 
   public StubBasedPsiElement(final ASTNode node) {
@@ -36,7 +33,7 @@ public class StubBasedPsiElement<T extends StubElement> extends ASTDelegatePsiEl
   @NotNull
   public ASTNode getNode() {
     if (myNode == null) {
-      ((StubBasedPsiElement)myParent).bindChildTrees();
+      ((StubBasedPsiElement)myStub.getParentStub().getPsi()).bindChildTrees();
       assert myNode != null;
     }
 
@@ -45,10 +42,11 @@ public class StubBasedPsiElement<T extends StubElement> extends ASTDelegatePsiEl
 
   private void bindChildTrees() {
     final ASTNode node = getNode();
-    final Iterator<StubBasedPsiElement> it = myChildStubs.iterator();
+    final List<StubElement> childStubs = myStub.getChildStubs();
+    final Iterator<StubElement> it = childStubs.iterator();
     ASTNode childNode = node.getFirstChildNode();
     while (it.hasNext()) {
-      StubBasedPsiElement stubChild = it.next();
+      StubBasedPsiElement stubChild = (StubBasedPsiElement)it.next().getPsi();
       while (stubChild.myElementType == childNode.getElementType()) {
         childNode = childNode.getTreeNext();
       }
@@ -58,21 +56,13 @@ public class StubBasedPsiElement<T extends StubElement> extends ASTDelegatePsiEl
 
       // TODO: need assertions we've bind that correctly.
     }
-
-    myChildStubs.clear();
   }
 
   public PsiElement getParent() {
-    if (myParent == null) {
-      final ASTNode treeParent = myNode.getTreeParent();
-      if (treeParent != null) {
-        myParent = treeParent.getPsi();
-      }
-    }
-    return myParent;
+    return SharedImplUtil.getParent(getNode());
   }
 
-  protected T getStub() {
+  public T getStub() {
     return myStub;
   }
 }

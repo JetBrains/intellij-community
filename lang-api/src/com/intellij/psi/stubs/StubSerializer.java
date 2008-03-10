@@ -9,6 +9,6 @@ import java.io.IOException;
 
 public interface StubSerializer<T extends StubElement> {
   void serialize(T stub, DataOutputStream dataStream) throws IOException;
-  T deserialize(DataInputStream dataStream) throws IOException;
+  T deserialize(DataInputStream dataStream, final StubElement parentStub) throws IOException;
   void indexStub(T stub, IndexSink sink);
 }
