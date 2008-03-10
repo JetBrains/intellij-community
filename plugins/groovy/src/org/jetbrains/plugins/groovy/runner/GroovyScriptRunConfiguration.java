@@ -100,7 +100,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new GroovyRunConfigurationEditor(getProject());
+    return new GroovyRunConfigurationEditor();
   }
 
   public RunProfileState getState(

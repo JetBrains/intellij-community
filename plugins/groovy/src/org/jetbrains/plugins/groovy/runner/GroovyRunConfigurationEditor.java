@@ -20,13 +20,11 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.refactoring.GroovyApplicationSettings;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,13 +38,10 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   private JPanel scriptPathPanel;
   private JPanel workDirPanel;
   private JCheckBox myDebugCB;
-  private JLabel myDebugPanel;
-  private Project myProject;
   private JTextField scriptPathField;
   private JTextField workDirField;
 
-  public GroovyRunConfigurationEditor(Project project) {
-    myProject = project;
+  public GroovyRunConfigurationEditor() {
 
     scriptPathField = new JTextField();
     final BrowseFilesListener scriptBrowseListener = new BrowseFilesListener(scriptPathField,
