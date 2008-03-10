@@ -14,18 +14,18 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Iterator;
 import java.util.List;
 
-public class StubBasedPsiElement<T extends StubElement> extends ASTDelegatePsiElement {
+public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegatePsiElement {
   private volatile T myStub;
   private volatile ASTNode myNode;
   private final IElementType myElementType;
 
-  public StubBasedPsiElement(final T stub, IStubElementType nodeType) {
+  public StubBasedPsiElementBase(final T stub, IStubElementType nodeType) {
     myStub = stub;
     myElementType = nodeType;
     myNode = null;
   }
 
-  public StubBasedPsiElement(final ASTNode node) {
+  public StubBasedPsiElementBase(final ASTNode node) {
     myNode = node;
     myElementType = node.getElementType();
   }
@@ -33,7 +33,7 @@ public class StubBasedPsiElement<T extends StubElement> extends ASTDelegatePsiEl
   @NotNull
   public ASTNode getNode() {
     if (myNode == null) {
-      ((StubBasedPsiElement)myStub.getParentStub().getPsi()).bindChildTrees();
+      ((StubBasedPsiElementBase)myStub.getParentStub().getPsi()).bindChildTrees();
       assert myNode != null;
     }
 
@@ -46,7 +46,7 @@ public class StubBasedPsiElement<T extends StubElement> extends ASTDelegatePsiEl
     final Iterator<StubElement> it = childStubs.iterator();
     ASTNode childNode = node.getFirstChildNode();
     while (it.hasNext()) {
-      StubBasedPsiElement stubChild = (StubBasedPsiElement)it.next().getPsi();
+      StubBasedPsiElementBase stubChild = (StubBasedPsiElementBase)it.next().getPsi();
       while (stubChild.myElementType == childNode.getElementType()) {
         childNode = childNode.getTreeNext();
       }
@@ -60,6 +60,10 @@ public class StubBasedPsiElement<T extends StubElement> extends ASTDelegatePsiEl
 
   public PsiElement getParent() {
     return SharedImplUtil.getParent(getNode());
+  }
+
+  public IStubElementType getElementType() {
+    return (IStubElementType)myElementType;
   }
 
   public T getStub() {

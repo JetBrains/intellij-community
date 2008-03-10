@@ -4,24 +4,28 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
-
-import java.lang.reflect.Method;
+import com.intellij.psi.StubBasedPsiElement;
 
 public class StubBuilder {
-  public void build(PsiElement root) {
-    final Class<? extends PsiElement> klass = root.getClass();
-    listStubbedMethods(klass);
+  public static StubElement buildStubElement(StubBasedPsiElement psi) {
+    return buildStubTreeFor(psi, null);
   }
 
-  public static void listStubbedMethods(final Class<? extends PsiElement> klass) {
-    final Method[] methods = klass.getMethods();
-    for (Method method : methods) {
-      if (method.isAnnotationPresent(Stubbed.class)) {
-        System.out.println("Stubbed: " + method.getName());
-      }
-      else if (method.isAnnotationPresent(MayHaveStubsInside.class)) {
-        System.out.println("May have stubs: " + method.getName());
-      }
+  private static StubElement buildStubTreeFor(PsiElement elt, StubElement parentStub) {
+    StubElement stub = parentStub;
+    if (elt instanceof StubBasedPsiElement) {
+      final IStubElementType type = ((StubBasedPsiElement)elt).getElementType();
+
+      //noinspection unchecked
+      stub = type.createStub(elt, parentStub);
     }
+
+    final PsiElement[] psiElements = elt.getChildren();
+    for (PsiElement child : psiElements) {
+      buildStubTreeFor(child, stub);
+    }
+
+    return stub;
   }
+
 }
