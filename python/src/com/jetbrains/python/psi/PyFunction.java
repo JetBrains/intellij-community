@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * Time: 23:01:03
  * To change this template use File | Settings | File Templates.
  */
-public interface PyFunction extends PsiNamedElement, PyElement, PyDocStringOwner, PyFunctionStub {
+public interface PyFunction extends PsiNamedElement, PyElement, PyDocStringOwner {
   /**
    * Returns the AST node for the function name identifier.
    *

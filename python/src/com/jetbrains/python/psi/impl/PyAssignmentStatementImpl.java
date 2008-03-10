@@ -49,7 +49,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     final ASTNode[] nodes = getNode().getChildren(PyElementTypes.EXPRESSIONS);
     ASTNode[] targets = new ASTNode[nodes.length - 1];
     System.arraycopy(nodes, 0, targets, 0, nodes.length - 1);
-    return nodesToPsi(targets, PyExpression.EMPTY_ARRAY);
+    return PyPsiUtils.nodesToPsi(targets, PyExpression.EMPTY_ARRAY);
   }
 
   @PsiCached

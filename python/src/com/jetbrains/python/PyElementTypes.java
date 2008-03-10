@@ -4,13 +4,17 @@ import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
+import com.jetbrains.python.psi.impl.stubs.PyFormalParameterElementType;
+import com.jetbrains.python.psi.impl.stubs.PyFunctionElementType;
+import com.jetbrains.python.psi.impl.stubs.PyParameterListElementType;
 
 public interface PyElementTypes {
 
-  PyElementType FUNCTION_DECLARATION = new PyStubElementType("FUNCTION_DECLARATION", PyFunctionImpl.class);
-  PyElementType CLASS_DECLARATION = new PyStubElementType("CLASS_DECLARATION", PyClassImpl.class);
-  PyElementType PARAMETER_LIST = new PyStubElementType("PARAMETER_LIST", PyParameterListImpl.class);
-  PyElementType FORMAL_PARAMETER = new PyStubElementType("FORMAL_PARAMETER", PyParameterImpl.class);
+  PyStubElementType FUNCTION_DECLARATION = new PyFunctionElementType();
+  PyStubElementType CLASS_DECLARATION = new PyClassElementType();
+  PyStubElementType PARAMETER_LIST = new PyParameterListElementType();
+  PyStubElementType FORMAL_PARAMETER = new PyFormalParameterElementType();
 
   PyElementType DECORATED_FUNCTION_DECLARATION = new PyElementType("DECORATED_FUNCTION_DECLARATION", PyDecoratedFunctionImpl.class);
   PyElementType ARGUMENT_LIST = new PyElementType("ARGUMENT_LIST", PyArgumentListImpl.class);

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * Time: 23:04:33
  * To change this template use File | Settings | File Templates.
  */
-public interface PyParameter extends PyElement, PsiNamedElement, PyParameterStub, PyExpression {
+public interface PyParameter extends PyElement, PsiNamedElement, PyExpression {
   boolean isPositionalContainer();
 
   boolean isKeywordContainer();

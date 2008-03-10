@@ -75,8 +75,8 @@ public class PyListLiteralExpressionImpl extends PyElementImpl implements PyList
       PyExpression expression = (PyExpression)element;
       ASTNode node = getNode();
       ASTNode exprNode = expression.getNode();
-      ASTNode next = getNextComma(exprNode);
-      ASTNode prev = getPrevComma(exprNode);
+      ASTNode next = PyPsiUtils.getNextComma(exprNode);
+      ASTNode prev = PyPsiUtils.getPrevComma(exprNode);
       node.removeChild(exprNode);
       if (next != null) {
         node.removeChild(next);

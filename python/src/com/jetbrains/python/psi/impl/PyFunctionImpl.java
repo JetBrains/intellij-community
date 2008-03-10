@@ -25,6 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.validation.DocStringAnnotator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,9 +44,18 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     super(astNode);
   }
 
+  public PyFunctionImpl(final PyFunctionStub stub) {
+    super(stub, PyElementTypes.FUNCTION_DECLARATION);
+  }
+
   @Nullable
   @Override
   public String getName() {
+    final PyFunctionStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
+    }
+
     ASTNode node = getNameNode();
     return node != null ? node.getText() : null;
   }
@@ -68,6 +78,11 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @NotNull
   public PyParameterList getParameterList() {
+    final PyFunctionStub stub = getStub();
+    if (stub != null) {
+      return stub.getParameterList().getPsi();
+    }
+
     return childToPsiNotNull(PyElementTypes.PARAMETER_LIST);
   }
 

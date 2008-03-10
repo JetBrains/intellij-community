@@ -29,10 +29,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.parsing.PyParser;
-import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyStubElementType;
+import com.jetbrains.python.psi.impl.PyFileImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -86,6 +87,9 @@ public class PythonParserDefinition implements ParserDefinition {
     if (type instanceof PyElementType) {
       PyElementType pyElType = (PyElementType)type;
       return pyElType.createElement(node);
+    }
+    else if (type instanceof PyStubElementType) {
+      return ((PyStubElementType)type).createElement(node);
     }
 
     return new ASTWrapperPsiElement(node);

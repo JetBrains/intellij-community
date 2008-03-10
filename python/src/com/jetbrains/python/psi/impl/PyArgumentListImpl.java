@@ -228,9 +228,9 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   protected void deletePyChild(PyBaseElementImpl element) throws IncorrectOperationException {
     if (Arrays.asList(getArguments()).contains(element)) {
       ASTNode node = element.getNode();
-      ASTNode next = getNextComma(node);
+      ASTNode next = PyPsiUtils.getNextComma(node);
       if (next == null) {
-        next = getPrevComma(node);
+        next = PyPsiUtils.getPrevComma(node);
       }
       ASTNode me = getNode();
       if (next != null) {

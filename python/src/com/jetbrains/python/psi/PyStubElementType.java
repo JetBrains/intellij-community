@@ -3,28 +3,22 @@
  */
 package com.jetbrains.python.psi;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
-public class PyStubElementType extends PyElementType {
-  private static final Class[] PARAMETER_TYPES = new Class[] {PsiElement.class, StubElement.class, IElementType.class};
-
-  public PyStubElementType(@NonNls final String debugName, final Class<? extends PsiElement> psiElementClass) {
-    super(debugName, psiElementClass);
+public abstract class PyStubElementType<StubT extends StubElement, PsiT extends PyElement> extends IStubElementType<StubT, PsiT> {
+  public PyStubElementType(@NonNls String debugName) {
+    super(debugName, PythonFileType.INSTANCE.getLanguage());
   }
 
-  public @NotNull PsiElement createElement(PsiElement parent, StubElement stubElement) {
-    assert _psiElementClass != null;
-
-    try {
-      return _psiElementClass.getConstructor(PARAMETER_TYPES).newInstance(parent, stubElement, this);
-    }
-    catch (Exception e) {
-      throw new IllegalStateException(e);
-    }
-
+  @Override
+  public String toString() {
+    return "Py:" + super.toString();
   }
+
+  public abstract PsiElement createElement(final ASTNode node);
 }

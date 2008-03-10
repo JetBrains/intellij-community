@@ -23,5 +23,6 @@ package com.jetbrains.python.psi;
  * Time: 23:03:11
  * To change this template use File | Settings | File Templates.
  */
-public interface PyParameterList extends PyElement, PyParameterListStub {
+public interface PyParameterList extends PyElement {
+  PyParameter[] getParameters();
 }

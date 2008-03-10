@@ -34,7 +34,7 @@ public class PyElementType extends IElementType {
       return _psiElementClass.getConstructor(PARAMETER_TYPES).newInstance(node);
     }
     catch (Exception e) {
-      throw new IllegalStateException(e);
+      throw new IllegalStateException("No necessary constructor for " + node.getElementType(), e);
     }
   }
 

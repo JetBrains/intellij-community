@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.stubs.PyParameterStub;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
@@ -37,16 +38,26 @@ import javax.swing.*;
  * Time: 23:04:59
  * To change this template use File | Settings | File Templates.
  */
-public class PyParameterImpl extends PyPresentableElementImpl implements PyParameter {
+public class PyParameterImpl extends PyPresentableElementImpl<PyParameterStub> implements PyParameter {
   public PyParameterImpl(ASTNode astNode) {
     super(astNode);
+  }
+
+  public PyParameterImpl(final PyParameterStub stub) {
+    super(stub, PyElementTypes.FORMAL_PARAMETER);
   }
 
   @Nullable
   @Override
   public String getName() {
-    ASTNode node = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
-    return node != null ? node.getText() : null;
+    final PyParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
+    }
+    else {
+      ASTNode node = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
+      return node != null ? node.getText() : null;
+    }
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
@@ -61,11 +72,23 @@ public class PyParameterImpl extends PyPresentableElementImpl implements PyParam
   }
 
   public boolean isPositionalContainer() {
-    return getNode().findChildByType(PyTokenTypes.MULT) != null;
+    final PyParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.isPositionalContainer();
+    }
+    else {
+      return getNode().findChildByType(PyTokenTypes.MULT) != null;
+    }
   }
 
   public boolean isKeywordContainer() {
-    return getNode().findChildByType(PyTokenTypes.EXP) != null;
+    final PyParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.isKeywordContainer();
+    }
+    else {
+      return getNode().findChildByType(PyTokenTypes.EXP) != null;
+    }
   }
 
   public
