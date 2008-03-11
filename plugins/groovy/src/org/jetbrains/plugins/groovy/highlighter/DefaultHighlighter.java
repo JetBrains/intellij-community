@@ -35,6 +35,10 @@ public class DefaultHighlighter {
   @NonNls
   static final String BLOCK_COMMENT_ID = "Block comment";
   @NonNls
+  static final String DOC_COMMENT_ID = "Groovydoc comment";
+  @NonNls
+  static final String DOC_COMMENT_TAG_ID = "Groovydoc tag";
+  @NonNls
   static final String KEYWORD_ID = "Keyword";
   @NonNls
   static final String NUMBER_ID = "Number";
@@ -89,6 +93,12 @@ public class DefaultHighlighter {
 
   public static TextAttributesKey BLOCK_COMMENT = TextAttributesKey.createTextAttributesKey(BLOCK_COMMENT_ID,
       HighlighterColors.JAVA_BLOCK_COMMENT.getDefaultAttributes());
+
+  public static TextAttributesKey DOC_COMMENT_CONTENT = TextAttributesKey.createTextAttributesKey(DOC_COMMENT_ID,
+      HighlighterColors.JAVA_DOC_COMMENT.getDefaultAttributes());
+
+  public static TextAttributesKey DOC_COMMENT_TAG = TextAttributesKey.createTextAttributesKey(DOC_COMMENT_TAG_ID,
+      HighlighterColors.JAVA_DOC_TAG.getDefaultAttributes());
 
   public static TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey(KEYWORD_ID,
       HighlighterColors.JAVA_KEYWORD.getDefaultAttributes());

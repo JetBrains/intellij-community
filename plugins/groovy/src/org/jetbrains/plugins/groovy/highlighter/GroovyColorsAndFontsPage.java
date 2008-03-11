@@ -53,6 +53,8 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     ATTRS = new AttributesDescriptor[]{
         new AttributesDescriptor(DefaultHighlighter.LINE_COMMENT_ID, DefaultHighlighter.LINE_COMMENT),
         new AttributesDescriptor(DefaultHighlighter.BLOCK_COMMENT_ID, DefaultHighlighter.BLOCK_COMMENT),
+        new AttributesDescriptor(DefaultHighlighter.DOC_COMMENT_ID, DefaultHighlighter.DOC_COMMENT_CONTENT),
+        new AttributesDescriptor(DefaultHighlighter.DOC_COMMENT_TAG_ID, DefaultHighlighter.DOC_COMMENT_TAG),
         new AttributesDescriptor(DefaultHighlighter.KEYWORD_ID, DefaultHighlighter.KEYWORD),
         new AttributesDescriptor(DefaultHighlighter.NUMBER_ID, DefaultHighlighter.NUMBER),
         new AttributesDescriptor(DefaultHighlighter.GSTRING_ID, DefaultHighlighter.GSTRING),
@@ -84,6 +86,10 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
   public String getDemoText() {
     return "import javax.swing.JPanel\n" +
         "  ### \n" +
+        "<gdoc>/**\n" +
+        " * This is Groovydoc comment\n" +
+        " * <doctag>@see</doctag> java.lang.String#equals\n" +
+        " */</gdoc>\n" +
         "<annotation>@SpecialBean</annotation> \n" +
         "class Demo {\n" +
         "//This is a line comment\n" +
@@ -105,6 +111,8 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     map.put("statmet", DefaultHighlighter.STATIC_METHOD_ACCESS);
     map.put("statfield", DefaultHighlighter.STATIC_FIELD);
     map.put("untyped", DefaultHighlighter.UNTYPED_ACCESS);
+    map.put("gdoc", DefaultHighlighter.DOC_COMMENT_CONTENT);
+    map.put("doctag", DefaultHighlighter.DOC_COMMENT_TAG);
 
     return map;
   }

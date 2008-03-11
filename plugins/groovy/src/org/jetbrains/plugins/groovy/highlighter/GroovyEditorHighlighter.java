@@ -15,7 +15,6 @@
 
 package org.jetbrains.plugins.groovy.highlighter;
 
-import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.LayerDescriptor;
 import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
@@ -33,14 +32,19 @@ public class GroovyEditorHighlighter extends LayeredLexerEditorHighlighter {
 
   public GroovyEditorHighlighter(EditorColorsScheme scheme, Project project, VirtualFile virtualFile) {
     super(GroovyFileType.GROOVY_FILE_TYPE.getHighlighter(project, virtualFile), scheme);
+    registerGroovydocHighlighter();
+  }
 
+  private void registerGroovydocHighlighter() {
     // Register GroovyDoc Highlighter
     SyntaxHighlighter groovyDocHighlighter = new GroovyDocSyntaxHighlighter();
-    final LayerDescriptor groovyDocLayer = new LayerDescriptor(groovyDocHighlighter, "\n", HighlighterColors.JSP_SCRIPTING_BACKGROUND);
+    final LayerDescriptor groovyDocLayer = new LayerDescriptor(groovyDocHighlighter, "\n", DefaultHighlighter.DOC_COMMENT_CONTENT);
     registerLayer(GroovyDocElementTypes.GROOVY_DOC_COMMENT, groovyDocLayer);
   }
 
   protected boolean updateLayers() {
+    unregisterLayer(GroovyDocElementTypes.GROOVY_DOC_COMMENT);
+    registerGroovydocHighlighter();
     return super.updateLayers();
   }
 

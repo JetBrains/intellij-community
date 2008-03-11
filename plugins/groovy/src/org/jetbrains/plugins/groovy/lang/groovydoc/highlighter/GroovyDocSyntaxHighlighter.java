@@ -16,30 +16,55 @@
 package org.jetbrains.plugins.groovy.lang.groovydoc.highlighter;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocLexer;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementTypeImpl;
+import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
+
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author ilyas
  */
-public class GroovyDocSyntaxHighlighter extends SyntaxHighlighterBase implements GroovyDocTokenTypes{
+public class GroovyDocSyntaxHighlighter extends SyntaxHighlighterBase implements GroovyDocTokenTypes {
+
+  private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
+  private static IElementType mGDOC_COMMENT_CONTENT = new GroovyDocElementTypeImpl("GDOC_COMMENT_CONTENT");
 
   @NotNull
   public Lexer getHighlightingLexer() {
-    return new GroovyDocLexer();
+    return new GroovyDocHighlightingLexer();
+  }
+
+  static final TokenSet tGDOC_COMMENT_TAGS = TokenSet.create(
+      mGDOC_TAG_NAME
+  );
+
+  static final TokenSet tGDOC_COMMENT_CONTENT = TokenSet.create(
+      mGDOC_COMMENT_CONTENT
+  );
+
+
+  static {
+    fillMap(ATTRIBUTES, tGDOC_COMMENT_CONTENT, DefaultHighlighter.DOC_COMMENT_CONTENT);
+    fillMap(ATTRIBUTES, tGDOC_COMMENT_TAGS, DefaultHighlighter.DOC_COMMENT_TAG);
   }
 
 
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType type) {
-    if (mGDOC_TAG_NAME == type){
-      return pack(HighlighterColors.JAVA_DOC_TAG, HighlighterColors.JAVA_DOC_COMMENT );
+    return pack(ATTRIBUTES.get(type));
+  }
+
+  private static class GroovyDocHighlightingLexer extends GroovyDocLexer {
+    public IElementType getTokenType() {
+      return super.getTokenType() == mGDOC_TAG_NAME ? mGDOC_TAG_NAME : super.getTokenType();
     }
-    return pack(HighlighterColors.JAVA_DOC_COMMENT);
   }
 }
