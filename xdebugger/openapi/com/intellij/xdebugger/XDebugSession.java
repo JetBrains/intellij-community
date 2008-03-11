@@ -16,11 +16,12 @@
 
 package com.intellij.xdebugger;
 
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.xdebugger.frame.XStackFrame;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,9 @@ public interface XDebugSession {
   boolean isPaused();
   boolean isSuspended();
 
+  @Nullable
+  XStackFrame getCurrentStackFrame();
+  
   XSuspendContext getSuspendContext();
 
   @Nullable
@@ -89,4 +93,5 @@ public interface XDebugSession {
 
   @NotNull
   RunContentDescriptor getRunContentDescriptor();
+
 }

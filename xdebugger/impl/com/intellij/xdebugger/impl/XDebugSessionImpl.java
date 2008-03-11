@@ -12,6 +12,8 @@ import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.impl.breakpoints.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +34,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private final XDebuggerManagerImpl myDebuggerManager;
   private MyBreakpointListener myBreakpointListener;
   private XSuspendContext mySuspendContext;
+  private XStackFrame myCurrentStackFrame;
   private XSourcePosition myCurrentPosition;
   private boolean myPaused;
   private MyDependentBreakpointListener myDependentBreakpointListener;
@@ -76,6 +79,11 @@ public class XDebugSessionImpl implements XDebugSession {
 
   public boolean isPaused() {
     return myPaused;
+  }
+
+  @Nullable
+  public XStackFrame getCurrentStackFrame() {
+    return myCurrentStackFrame;
   }
 
   public XSuspendContext getSuspendContext() {
@@ -249,6 +257,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private void doResume() {
     myDebuggerManager.updateExecutionPosition(this, null);
     mySuspendContext = null;
+    myCurrentStackFrame = null;
     myCurrentPosition = null;
     myPaused = false;
   }
@@ -272,7 +281,7 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public boolean breakpointReached(@NotNull final XBreakpoint<?> breakpoint, @NotNull final XSuspendContext suspendContext) {
-    XDebuggerEvaluator evaluator = suspendContext.getEvaluator();
+    XDebuggerEvaluator evaluator = XDebuggerUtilImpl.getEvaluator(suspendContext);
     String condition = breakpoint.getCondition();
     if (condition != null && evaluator != null) {
       LOG.debug("evaluating condition: " + condition);
@@ -334,6 +343,10 @@ public class XDebugSessionImpl implements XDebugSession {
   public void positionReached(@NotNull final XSourcePosition position, @NotNull final XSuspendContext suspendContext) {
     enableBreakpoints();
     mySuspendContext = suspendContext;
+    XExecutionStack executionStack = suspendContext.getActiveExecutionStack();
+    if (executionStack != null) {
+      myCurrentStackFrame = executionStack.getTopFrame();
+    }
     myCurrentPosition = position;
     myPaused = true;
     myDebuggerManager.updateExecutionPosition(this, position);

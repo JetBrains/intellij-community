@@ -16,9 +16,22 @@
 
 package com.intellij.xdebugger.frame;
 
+import org.jetbrains.annotations.Nullable;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.XSourcePosition;
+
 /**
  * @author nik
  */
 public abstract class XStackFrame extends XValueContainer {
 
+  @Nullable
+  public XDebuggerEvaluator getEvaluator() {
+    return null;
+  }
+
+  @Nullable 
+  public XSourcePosition getSourcePosition() {
+    return null;
+  }
 }

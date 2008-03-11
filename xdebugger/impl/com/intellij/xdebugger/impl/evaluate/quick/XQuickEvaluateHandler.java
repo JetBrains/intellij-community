@@ -7,7 +7,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
@@ -25,16 +25,17 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
     if (session == null || !session.isSuspended()) {
       return false;
     }
-    XSuspendContext context = session.getSuspendContext();
-    return context != null && context.getEvaluator() != null;
+    XStackFrame stackFrame = session.getCurrentStackFrame();
+    return stackFrame != null && stackFrame.getEvaluator() != null;
   }
 
   public AbstractValueHint createValueHint(@NotNull final Project project, @NotNull final Editor editor, @NotNull final Point point, final ValueHintType type) {
     XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     if (session == null) return null;
 
-    XSuspendContext suspendContext = session.getSuspendContext();
-    XDebuggerEvaluator evaluator = suspendContext.getEvaluator();
+    XStackFrame stackFrame = session.getCurrentStackFrame();
+    if (stackFrame == null) return null;
+    XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
     if (evaluator == null) return null;
 
     int offset = AbstractValueHint.calculateOffset(editor, point);
@@ -64,9 +65,9 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
   public int getValueLookupDelay(final Project project) {
     XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     if (session != null) {
-      XSuspendContext suspendContext = session.getSuspendContext();
-      if (suspendContext != null) {
-        XDebuggerEvaluator evaluator = suspendContext.getEvaluator();
+      XStackFrame stackFrame = session.getCurrentStackFrame();
+      if (stackFrame != null) {
+        XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
         if (evaluator != null) {
           return evaluator.getValuePopupDelay();
         }

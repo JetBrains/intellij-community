@@ -15,6 +15,10 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XExecutionStack;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
@@ -175,5 +179,17 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       return resolveVariable((TypeVariable)type, aClass);
     }
     return type;
+  }
+
+  @Nullable
+  public static XDebuggerEvaluator getEvaluator(final XSuspendContext suspendContext) {
+    XExecutionStack executionStack = suspendContext.getActiveExecutionStack();
+    if (executionStack != null) {
+      XStackFrame stackFrame = executionStack.getTopFrame();
+      if (stackFrame != null) {
+        return stackFrame.getEvaluator();
+      }
+    }
+    return null;
   }
 }
