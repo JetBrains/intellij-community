@@ -10,7 +10,7 @@ import java.util.List;
 public interface StubElement<T extends PsiElement> {
   IStubElementType getStubType();
   StubElement getParentStub();
-  List<StubElement> getChildStubs();
+  List<StubElement> getChildrenStubs();
 
   T getPsi();
 }

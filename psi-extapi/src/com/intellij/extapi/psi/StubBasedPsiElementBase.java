@@ -42,7 +42,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
   private void bindChildTrees() {
     final ASTNode node = getNode();
-    final List<StubElement> childStubs = myStub.getChildStubs();
+    final List<StubElement> childStubs = myStub.getChildrenStubs();
     final Iterator<StubElement> it = childStubs.iterator();
     ASTNode childNode = node.getFirstChildNode();
     while (it.hasNext()) {

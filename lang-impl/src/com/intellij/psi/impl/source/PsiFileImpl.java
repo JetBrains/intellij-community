@@ -1,10 +1,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.ide.startup.FileContent;
-import com.intellij.lang.ASTFactory;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageDialect;
+import com.intellij.lang.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -23,7 +20,10 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -46,6 +46,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   protected PsiFile myOriginalFile = null;
   private FileViewProvider myViewProvider;
   private static final Key<Document> HARD_REFERENCE_TO_DOCUMENT = new Key<Document>("HARD_REFERENCE_TO_DOCUMENT");
+  private StubElement myStub;
 
   protected PsiFileImpl(IElementType elementType, IElementType contentElementType, FileViewProvider provider) {
     this(provider);
@@ -463,5 +464,15 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
       ((PsiFileImpl)fileCopy).setOriginalFile(this);
       return fileCopy;
     }
+  }
+
+  public StubElement getStub() {
+    if (myStub == null) {
+      final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage()).getFileNodeType();
+      if (type instanceof IStubFileElementType) {
+        myStub = ((IStubFileElementType)type).getBuilder().buildStubTree(this);        
+      }
+    }
+    return myStub;
   }
 }

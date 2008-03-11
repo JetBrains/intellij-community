@@ -19,11 +19,11 @@ public class DataInputOutputUtil {
   public static String readNAME(DataInput record, PersistentStringEnumerator nameStore) throws IOException {
     final int low = record.readUnsignedByte();
     final int nameId = (readINT(record) << 8) | low;
-    return nameStore.valueOf(nameId);
+    return nameId == 0 ? null : nameStore.valueOf(nameId);
   }
 
   public static void writeNAME(DataOutput record, final String name, PersistentStringEnumerator nameStore) throws IOException {
-    final int nameId = nameStore.enumerate(name);
+    final int nameId = name != null ? nameStore.enumerate(name) : 0;
     record.writeByte(nameId & 0xFF);
     writeINT(record, (nameId >> 8));
   }

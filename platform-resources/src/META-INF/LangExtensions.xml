@@ -170,6 +170,7 @@
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex" />
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.id.IdIndex" />
   <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndex"/>
+  <fileBasedIndex implementation="com.intellij.psi.stubs.StubIndex"/>
 
   <syntaxHighlighter factoryClass="com.intellij.openapi.fileTypes.LanguageFileTypeHighlighterProvider"/>
   <structureViewBuilder factoryClass="com.intellij.ide.highlighter.LanguageFileTypeStructureViewBuilderProvider"/>

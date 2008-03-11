@@ -4,11 +4,17 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.StubBuilder;
 
-public class StubBuilder {
-  public static StubElement buildStubElement(StubBasedPsiElement psi) {
-    return buildStubTreeFor(psi, null);
+public class DefaultStubBuilder implements StubBuilder {
+  public StubElement buildStubTree(final PsiFile file) {
+    return buildStubTreeFor(file, createStubForFile(file));
+  }
+
+  protected StubElement createStubForFile(final PsiFile file) {
+    return new PsiFileStubImpl();
   }
 
   private static StubElement buildStubTreeFor(PsiElement elt, StubElement parentStub) {

@@ -25,7 +25,7 @@ public abstract class StubBase<T extends PsiElement> implements StubElement<T> {
     return myParent;
   }
 
-  public List<StubElement> getChildStubs() {
+  public List<StubElement> getChildrenStubs() {
     return myChildren;
   }
 
