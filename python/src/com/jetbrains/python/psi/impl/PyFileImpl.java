@@ -23,10 +23,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.stubs.PyClassStub;
+import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,5 +110,49 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
 
   public PythonLanguage getPyLanguage() {
     return (PythonLanguage)getLanguage();
+  }
+
+  public List<PyClass> getTopLevelClasses() {
+    List<PyClass> result = new ArrayList<PyClass>();
+    final StubElement stub = getStub();
+    if (stub != null) {
+      final List<StubElement> children = stub.getChildrenStubs();
+      for (StubElement child : children) {
+        if (child instanceof PyClassStub) {
+          result.add(((PyClassStub)child).getPsi());
+        }
+      }
+    }
+    else {
+      for (PsiElement child : getChildren()) {
+        if (child instanceof PyClass) {
+          result.add((PyClass)child);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  public List<PyFunction> getTopLevelFunctions() {
+    List<PyFunction> result = new ArrayList<PyFunction>();
+    final StubElement stub = getStub();
+    if (stub != null) {
+      final List<StubElement> children = stub.getChildrenStubs();
+      for (StubElement child : children) {
+        if (child instanceof PyFunctionStub) {
+          result.add(((PyFunctionStub)child).getPsi());
+        }
+      }
+    }
+    else {
+      for (PsiElement child : getChildren()) {
+        if (child instanceof PyFunction) {
+          result.add((PyFunction)child);
+        }
+      }
+    }
+    
+    return result;
   }
 }

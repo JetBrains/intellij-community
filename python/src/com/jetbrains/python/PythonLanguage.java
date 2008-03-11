@@ -4,9 +4,19 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.stubs.SerializationManager;
 import com.intellij.psi.tree.IFileElementType;
-import com.jetbrains.python.psi.impl.PyElementGeneratorImpl;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.impl.PyElementGeneratorImpl;
+import com.jetbrains.python.psi.impl.stubs.PyClassSerializer;
+import com.jetbrains.python.psi.impl.stubs.PyFunctionSerializer;
+import com.jetbrains.python.psi.impl.stubs.PyParameterListSerializer;
+import com.jetbrains.python.psi.impl.stubs.PyParameterSerializer;
+import com.jetbrains.python.psi.stubs.PyClassStub;
+import com.jetbrains.python.psi.stubs.PyFunctionStub;
+import com.jetbrains.python.psi.stubs.PyParameterListStub;
+import com.jetbrains.python.psi.stubs.PyParameterStub;
 import com.jetbrains.python.validation.*;
 
 import java.util.Set;
@@ -17,8 +27,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 public class PythonLanguage extends Language {
   private final PyElementGenerator elementGenerator = new PyElementGeneratorImpl(this);
-  public final IFileElementType ELTYPE_FILE = new IFileElementType(this);
-  protected Set<Class<? extends PyAnnotator>> _annotators = new CopyOnWriteArraySet<Class<? extends PyAnnotator>>();
+  private final IFileElementType ELTYPE_FILE = new IStubFileElementType(this);
+  private final Set<Class<? extends PyAnnotator>> _annotators = new CopyOnWriteArraySet<Class<? extends PyAnnotator>>();
 
   public static PythonLanguage getInstance() {
     return (PythonLanguage) PythonFileType.INSTANCE.getLanguage();
@@ -35,6 +45,13 @@ public class PythonLanguage extends Language {
     _annotators.add(DocStringAnnotator.class);
     _annotators.add(ImportAnnotator.class);
     _annotators.add(UnresolvedReferenceAnnotator.class);
+  }
+
+  {
+    SerializationManager.getInstance().registerSerializer(PyClassStub.class, new PyClassSerializer());
+    SerializationManager.getInstance().registerSerializer(PyFunctionStub.class, new PyFunctionSerializer());
+    SerializationManager.getInstance().registerSerializer(PyParameterStub.class, new PyParameterSerializer());
+    SerializationManager.getInstance().registerSerializer(PyParameterListStub.class, new PyParameterListSerializer());
   }
 
   protected PythonLanguage() {

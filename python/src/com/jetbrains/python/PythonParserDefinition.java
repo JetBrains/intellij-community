@@ -40,10 +40,10 @@ import org.jetbrains.annotations.NotNull;
  * @author Keith Lea
  */
 public class PythonParserDefinition implements ParserDefinition {
-  private PythonLanguage language;
+  private final PythonLanguage language;
 
-  private TokenSet myWhitespaceTokens;
-  private TokenSet myCommentTokens;
+  private final TokenSet myWhitespaceTokens;
+  private final TokenSet myCommentTokens;
 
   public PythonParserDefinition() {
     language = (PythonLanguage)PythonFileType.INSTANCE.getLanguage();

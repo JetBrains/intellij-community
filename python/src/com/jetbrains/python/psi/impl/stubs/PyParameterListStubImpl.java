@@ -23,7 +23,7 @@ public class PyParameterListStubImpl extends StubBase<PyParameterList> implement
   }
 
   public PyParameterStub[] getParameters() {
-    final List<StubElement> stubs = getChildStubs();
+    final List<StubElement> stubs = getChildrenStubs();
     PyParameterStub[] result = new PyParameterStub[stubs.size()];
 
     for (int i = 0; i < stubs.size(); i++) {

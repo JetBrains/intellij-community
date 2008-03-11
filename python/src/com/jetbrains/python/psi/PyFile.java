@@ -20,4 +20,7 @@ public interface PyFile extends PyElement, PsiFile {
     List<PyStatement> getStatements();
 
     PythonLanguage getPyLanguage();
+
+    List<PyClass> getTopLevelClasses();
+    List<PyFunction> getTopLevelFunctions();
 }

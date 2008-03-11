@@ -30,7 +30,7 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
 
   @NotNull
   public PyParameterListStub getParameterList() {
-    for (StubElement childStub : getChildStubs()) {
+    for (StubElement childStub : getChildrenStubs()) {
       if (childStub.getStubType() == PyElementTypes.PARAMETER_LIST) {
         return (PyParameterListStub)childStub;
       }
