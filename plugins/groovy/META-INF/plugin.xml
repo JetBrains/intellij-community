@@ -58,9 +58,6 @@
       <implementation-class>org.jetbrains.plugins.grails.GrailsConsole</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.GroovyConsole</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.plugins.grails.fileType.GroovyInjector</implementation-class>
     </component>
     <component>
