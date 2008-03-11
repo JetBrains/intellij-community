@@ -43,6 +43,10 @@ public class PyImportStatementImpl extends PyElementImpl implements PyImportStat
                                      @NotNull final ResolveState state,
                                      final PsiElement lastParent,
                                      @NotNull final PsiElement place) {
+    // import is per-file
+    if (place.getContainingFile() != getContainingFile()) {
+      return true;
+    }
     for (PyImportElement element : getImportElements()) {
       if (element == lastParent) continue;
       if (!element.processDeclarations(processor, state, null, place)) return false;

@@ -44,6 +44,10 @@ public class PyImportElementImpl extends PyElementImpl implements PyImportElemen
   @Override
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, final PsiElement lastParent,
                                      @NotNull final PsiElement place) {
+    // import is per-file
+    if (place.getContainingFile() != getContainingFile()) {
+      return true;
+    }
     final PyReferenceExpression importRef = getImportReference();
     final PsiElement element = importRef.resolve();
     if (element != null) {

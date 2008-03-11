@@ -74,6 +74,10 @@ public class PyFromImportStatementImpl extends PyElementImpl implements PyFromIm
 
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, final PsiElement lastParent,
                                      @NotNull final PsiElement place) {
+    // import is per-file
+    if (place.getContainingFile() != getContainingFile()) {
+      return true;
+    }
     if (isStarImport()) {
       PyReferenceExpression expr = getImportSource();
       if (expr != null) {
