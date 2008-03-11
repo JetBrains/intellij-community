@@ -18,9 +18,10 @@ package com.jetbrains.python.psi;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.psi.impl.PyScopeProcessor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -58,41 +59,49 @@ public class PyResolveUtil {
     return treeWalkUp(processor, elt.getContext(), elt, place);
   }
 
-  public static class ResolveProcessor implements PsiScopeProcessor {
-    private String _name;
-    private PsiElement _result = null;
+  public static class ResolveProcessor implements PyScopeProcessor {
+    private String myName;
+    private PsiElement myResult = null;
 
     public ResolveProcessor(final String name) {
-      _name = name;
+      myName = name;
     }
 
     public PsiElement getResult() {
-      return _result;
+      return myResult;
     }
 
     public boolean execute(PsiElement element, ResolveState substitutor) {
       if (element instanceof PyFile) {
         final VirtualFile file = ((PyFile)element).getVirtualFile();
-        if (file != null && _name.equals(file.getNameWithoutExtension())) {
-          _result = element;
+        if (file != null && myName.equals(file.getNameWithoutExtension())) {
+          myResult = element;
           return false;
         }
       }
       else if (element instanceof PsiNamedElement) {
-        if (_name.equals(((PsiNamedElement)element).getName())) {
-          _result = element;
+        if (myName.equals(((PsiNamedElement)element).getName())) {
+          myResult = element;
           return false;
         }
       }
       else if (element instanceof PyReferenceExpression) {
         PyReferenceExpression expr = (PyReferenceExpression)element;
         String referencedName = expr.getReferencedName();
-        if (referencedName != null && referencedName.equals(_name)) {
-          _result = element;
+        if (referencedName != null && referencedName.equals(myName)) {
+          myResult = element;
           return false;
         }
       }
 
+      return true;
+    }
+
+    public boolean execute(final PsiElement element, final String asName) {
+      if (asName.equals(myName)) {
+        myResult = element;
+        return false;
+      }
       return true;
     }
 

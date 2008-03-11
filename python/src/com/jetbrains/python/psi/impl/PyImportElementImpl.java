@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 
 /**
  * Created by IntelliJ IDEA.
@@ -45,6 +46,12 @@ public class PyImportElementImpl extends PyElementImpl implements PyImportElemen
     return (PyReferenceExpression)importRefNode.getPsi();
   }
 
+  public PyTargetExpression getAsName() {
+    final ASTNode asNameNode = getNode().findChildByType(PyElementTypes.TARGET_EXPRESSION);
+    if (asNameNode == null) return null;
+    return (PyTargetExpression)asNameNode.getPsi();
+  }
+
   @Override
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, final PsiElement lastParent,
                                      @NotNull final PsiElement place) {
@@ -56,6 +63,12 @@ public class PyImportElementImpl extends PyElementImpl implements PyImportElemen
     if (importRef != null) {
       final PsiElement element = importRef.resolve();
       if (element != null) {
+        if (processor instanceof PyScopeProcessor) {
+          PyTargetExpression asName = getAsName();
+          if (asName != null) {
+            return ((PyScopeProcessor) processor).execute(element, asName.getText());
+          }
+        }
         return processor.execute(element, state);
       }
     }

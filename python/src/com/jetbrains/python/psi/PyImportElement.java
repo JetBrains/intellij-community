@@ -30,5 +30,8 @@ public interface PyImportElement extends PyElement {
   @Nullable
   PyReferenceExpression getImportReference();
 
+  @Nullable
+  PyTargetExpression getAsName();
+
 
 }

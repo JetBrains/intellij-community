@@ -56,6 +56,12 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
     assertEquals("mypackage", ((PsiFile) element).getContainingDirectory().getName());
   }
 
+  public void testImportAs() throws Exception {
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PyFunction);
+    assertEquals("func", ((PyFunction) element).getName());
+  }
+
   private PsiElement doResolve() throws Exception {
     String testName = getTestName(true);
     String fileName = getTestName(false) + ".py";
