@@ -114,6 +114,6 @@ public class DClassElement implements DNamedElement {
 
   public boolean containsElement(DItemElement itemElement){
     return myNamesToProperties.keySet().contains(itemElement.getName()) ||
-        (itemElement instanceof DMethodElement && myMethods.contains(((DMethodElement) itemElement)));
+        (itemElement instanceof DMethodElement && myMethods.contains(itemElement));
   }
 }

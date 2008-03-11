@@ -127,4 +127,8 @@ public class GrDynamicImplicitPropertyImpl extends GrDynamicImplicitElement {
   public Icon getIcon(boolean open) {
     return GroovyIcons.PROPERTY;
   }
+
+  public PsiFile getContainingFile() {
+    return myScope.getContainingFile();
+  }
 }

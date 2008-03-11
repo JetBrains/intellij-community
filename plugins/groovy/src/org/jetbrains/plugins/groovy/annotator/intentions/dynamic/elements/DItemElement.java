@@ -38,10 +38,6 @@ public abstract class DItemElement implements DNamedElement, DTypedElement {
 
     DItemElement that = (DItemElement) o;
 
-//    if (myClassElement != null ? !myClassElement.equals(that.myClassElement) : that.myClassElement != null)
-//      return false;
-    if (myHightlightedText != null ? !myHightlightedText.equals(that.myHightlightedText) : that.myHightlightedText != null)
-      return false;
     if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;
     if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
 
@@ -51,9 +47,7 @@ public abstract class DItemElement implements DNamedElement, DTypedElement {
   public int hashCode() {
     int result;
     result = (myType != null ? myType.hashCode() : 0);
-//    result = 31 * result + (myClassElement != null ? myClassElement.getName().hashCode() : 0);
     result = 31 * result + (myName != null ? myName.hashCode() : 0);
-    result = 31 * result + (myHightlightedText != null ? myHightlightedText.hashCode() : 0);
     return result;
   }
 

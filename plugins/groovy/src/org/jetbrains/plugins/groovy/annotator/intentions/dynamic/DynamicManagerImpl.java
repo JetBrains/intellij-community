@@ -1,24 +1,31 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInsight.daemon.impl.ExternalToolPass;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
+import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
 
 /**
@@ -57,26 +64,78 @@ public class DynamicManagerImpl extends DynamicManager {
     if (classElement == null) return;
 
     classElement.addProperty(propertyElement);
-//    addToClassesMap(propertyElement, classElement);
+    addItemInTree(classElement, propertyElement);
+  }
+
+  private void addItemInTree(DClassElement classElement, DItemElement itemElement) {
+    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID);
+    final ListTreeTableModelOnColumns myTreeTableModel = DynamicToolWindowWrapper.getTreeTableModel(window, myProject);
+
+    final Object rootObject = myTreeTableModel.getRoot();
+    if (!(rootObject instanceof DefaultMutableTreeNode)) return;
+    final DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) rootObject;
+
+    DefaultMutableTreeNode node = new DefaultMutableTreeNode(itemElement);
+    if (rootNode.getChildCount() > 0) {
+      for (DefaultMutableTreeNode classNode = (DefaultMutableTreeNode) rootNode.getFirstChild();
+           classNode != null;
+           classNode = (DefaultMutableTreeNode) rootNode.getChildAfter(classNode)) {
+
+        final Object classRow = classNode.getUserObject();
+        if (!(classRow instanceof DClassElement)) return;
+
+        DClassElement otherClassName = (DClassElement) classRow;
+        if (otherClassName.equals(classElement)) {
+          int index = getIndexToInsert(classNode, itemElement);
+          classNode.insert(node, index);
+          myTreeTableModel.nodesWereInserted(classNode, new int[]{index});
+          DynamicToolWindowWrapper.setSelectedNode(node);
+          return;
+        }
+      }
+    }
+
+    // if there is no such class in tree
+    int index = getIndexToInsert(rootNode, classElement);
+    DefaultMutableTreeNode classNode = new DefaultMutableTreeNode(classElement);
+    rootNode.insert(classNode, index);
+    myTreeTableModel.nodesWereInserted(rootNode, new int[]{index});
+
+    classNode.add(node);
+    myTreeTableModel.nodesWereInserted(classNode, new int[]{0});
+
+    DynamicToolWindowWrapper.setSelectedNode(node);
+  }
+
+  private int getIndexToInsert(DefaultMutableTreeNode parent, DNamedElement namedElement) {
+    if (parent.getChildCount() == 0) return 0;
+
+    int res = 0;
+    for (DefaultMutableTreeNode child = (DefaultMutableTreeNode) parent.getFirstChild();
+         child != null;
+         child = (DefaultMutableTreeNode) parent.getChildAfter(child)) {
+      Object childObject = child.getUserObject();
+
+      if (!(childObject instanceof DNamedElement)) return 0;
+
+      String otherName = ((DNamedElement) childObject).getName();
+      if (otherName.compareTo(namedElement.getName()) > 0) return res;
+      res++;
+    }
+    return res;
   }
 
   public void addMethod(DClassElement classElement, DMethodElement methodElement) {
     if (classElement == null) return;
 
     classElement.addMethod(methodElement);
-//    addToClassesMap(methodElement, classElement);
+    addItemInTree(classElement, methodElement);
   }
-
-//  private void addToClassesMap(DItemElement methodElement, DClassElement classElement) {
-//    myItemsToClasses.put(methodElement, classElement);
-//  }
 
   public void removeClassElement(String containingClassName) {
 
     final DRootElement rootElement = getRootElement();
     rootElement.removeClassElement(containingClassName);
-
-    fireChange();
   }
 
   public void removePropertyElement(DPropertyElement propertyElement) {
@@ -84,10 +143,8 @@ public class DynamicManagerImpl extends DynamicManager {
     assert classElement != null;
 
     classElement.removeProperty(propertyElement.getName());
-//    myItemsToClasses.remove(propertyElement);
-    fireChange();
   }
-
+  
   @NotNull
   public Collection<DPropertyElement> findDynamicPropertiesOfClass(String className) {
     final DClassElement classElement = findClassElement(getRootElement(), className);
@@ -165,6 +222,7 @@ public class DynamicManagerImpl extends DynamicManager {
     if (classElement == null) return null;
 
     final DPropertyElement oldPropertyElement = classElement.getPropertyByName(oldPropertyName);
+    if (oldPropertyElement == null) return null;
     classElement.removeProperty(oldPropertyName);
     classElement.addProperty(new DPropertyElement(newPropertyName, oldPropertyElement.getType()));
     fireChange();
@@ -181,7 +239,6 @@ public class DynamicManagerImpl extends DynamicManager {
     return newPropertyType;
   }
 
-
   /*
   * Find dynamic property in class with name
   */
@@ -194,7 +251,7 @@ public class DynamicManagerImpl extends DynamicManager {
     return classElement.getMethod(methodName, parametersTypes);
   }
 
-   //  @Nullable
+  //  @Nullable
 
   public DMethodElement findConcreteDynamicMethod(String conatainingClassName, String name, String[] parameterTypes) {
     return findConcreteDynamicMethod(getRootElement(), conatainingClassName, name, parameterTypes);
@@ -214,9 +271,14 @@ public class DynamicManagerImpl extends DynamicManager {
     assert classElement != null;
 
     classElement.removeMethod(methodElement);
-//    myItemsToClasses.remove(methodElement);
+  }
 
-    fireChange();
+  public void removeItemElement(DItemElement element) {
+    if (element instanceof DPropertyElement) {
+      removePropertyElement(((DPropertyElement) element));
+    } else if (element instanceof DMethodElement) {
+      removeMethodElement(((DMethodElement) element));
+    }
   }
 
   public void replaceDynamicMethodType(String className, String name, List<MyPair> myPairList, String oldType, String newType) {
@@ -245,6 +307,13 @@ public class DynamicManagerImpl extends DynamicManager {
     return null;
   }
 
+  public void replaceDynamicMethodName(String className, String oldName, String newName, String[] types) {
+    final DMethodElement oldMethodElement = findConcreteDynamicMethod(className, oldName, types);
+    if (oldMethodElement != null) {
+      oldMethodElement.setName(newName);
+    }
+  }
+
   public String replaceClassName(String oldClassName, String newClassName) {
     final DRootElement rootElement = getRootElement();
     final DClassElement oldClassElement = findClassElement(rootElement, oldClassName);
@@ -268,12 +337,19 @@ public class DynamicManagerImpl extends DynamicManager {
 
   private void fireChangeToolWindow() {
     final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID);
+
     window.getComponent().revalidate();
     window.getComponent().repaint();
   }
 
   private void fireChangeCodeAnalyze() {
-    PsiManager.getInstance(myProject).dropResolveCaches();
+    final Editor textEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+    if (textEditor == null) return;
+    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(textEditor.getDocument());
+    if (file == null) return;
+
+    ExternalToolPass externalToolPass = new ExternalToolPass(file, textEditor, file.getTextRange().getStartOffset(), file.getTextRange().getStartOffset());
+    externalToolPass.doCollectInformation(new DaemonProgressIndicator());
     GroovyPsiManager.getInstance(myProject).dropTypesCache();
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }

@@ -33,12 +33,16 @@ import java.util.List;
  * Date: 21.02.2008
  */
 public class GrDynamicImplicitMethodImpl extends GrDynamicImplicitElement {
-  public GrDynamicImplicitMethodImpl(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, GrReferenceExpression referenceExpression) {
-    super(manager, nameIdentifier, type, writable, referenceExpression);
-  }
+  private final PsiElement myPsiElement;
 
-  public GrDynamicImplicitMethodImpl(PsiManager manager, @NonNls String name, @NonNls String type, PsiElement referenceExpression) {
-    super(manager, name, type, referenceExpression);
+//  public GrDynamicImplicitMethodImpl(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, GrReferenceExpression referenceExpression) {
+//    super(manager, nameIdentifier, type, writable, referenceExpression);
+//    myReferenceExpression = referenceExpression;
+//  }
+
+  public GrDynamicImplicitMethodImpl(PsiManager manager, @NonNls String name, @NonNls String type, PsiElement psiElement) {
+    super(manager, name, type, psiElement);
+    myPsiElement = psiElement;
   }
 
   public void navigate(boolean requestFocus) {
@@ -134,4 +138,6 @@ public class GrDynamicImplicitMethodImpl extends GrDynamicImplicitElement {
   public Icon getIcon(boolean open) {
     return GroovyIcons.METHOD;
   }
+
+
 }

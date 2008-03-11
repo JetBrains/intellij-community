@@ -311,7 +311,7 @@ public abstract class DynamicDialog extends DialogWrapper {
       dynamicManager.addProperty(classElement, ((DPropertyElement) myDynamicElement));
     }
 
-    myDynamicManager.fireChange();
+//    myDynamicManager.fireChange();
     super.doOKAction();
   }
 

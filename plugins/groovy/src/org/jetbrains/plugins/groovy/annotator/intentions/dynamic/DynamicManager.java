@@ -7,9 +7,9 @@ import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 
 import java.util.Collection;
 import java.util.List;
@@ -98,10 +98,14 @@ public abstract class DynamicManager implements ProjectComponent, PersistentStat
 
   public abstract void removeMethodElement(DMethodElement element);
 
+  public abstract void removeItemElement(DItemElement element);
+
   public abstract void replaceDynamicMethodType(String className, String name, List<MyPair> myPairList, String oldType, String newType);
 
   @NotNull
   public abstract DClassElement getOrCreateClassElement(Module module, String className, boolean binded);
 
   public abstract DClassElement getClassElementByItem(DItemElement itemElement);
+
+  public abstract void replaceDynamicMethodName(String className, String oldName, String newName, String[] types);
 }
