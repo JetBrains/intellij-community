@@ -7,8 +7,8 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.HashMap;
@@ -47,11 +48,8 @@ public class PythonRunConfiguration extends RunConfigurationBase implements Loca
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
-  public RunProfileState getState(DataContext dataContext,
-                                  Executor executor,
-                                  RunnerSettings runnerSettings,
-                                  ConfigurationPerRunnerSettings configurationPerRunnerSettings) throws ExecutionException {
-    CommandLineState state = new CommandLineState(runnerSettings, configurationPerRunnerSettings) {
+  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+    CommandLineState state = new CommandLineState(env) {
       protected OSProcessHandler startProcess() throws ExecutionException {
         GeneralCommandLine commandLine = new GeneralCommandLine();
         final Sdk projectJdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
