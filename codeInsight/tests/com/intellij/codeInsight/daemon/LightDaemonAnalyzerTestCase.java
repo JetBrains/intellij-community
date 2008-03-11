@@ -15,6 +15,7 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 
 public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCase {
@@ -62,9 +63,16 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     action1.applyInformationToEditor();
     Collection<HighlightInfo> highlights1 = action1.getHighlights();
 
-    PostHighlightingPass action2 = new PostHighlightingPass(getProject(), getFile(), getEditor(), 0, getFile().getTextLength());
-    action2.doCollectInformation(new MockProgressIndicator());
-    Collection<HighlightInfo> highlights2 = action2.getHighlights();
+    Collection<HighlightInfo> highlights2;
+    PostHighlightingPassFactory phpFactory = getProject().getComponent(PostHighlightingPassFactory.class);
+    if (phpFactory != null) {
+      PostHighlightingPass action2 = new PostHighlightingPass(getProject(), getFile(), getEditor(), 0, getFile().getTextLength());
+      action2.doCollectInformation(new MockProgressIndicator());
+       highlights2 = action2.getHighlights();
+    }
+    else {
+      highlights2 = Collections.emptyList();
+    }
 
     LocalInspectionsPass action3 = new LocalInspectionsPass(getFile(), document, 0, getFile().getTextLength());
     action3.doCollectInformation(new MockProgressIndicator());
