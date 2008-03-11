@@ -20,8 +20,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -33,6 +33,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
@@ -68,10 +69,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     return null;
   }
 
-  public RunProfileState getState(DataContext context,
-                                  Executor executor,
-                                  RunnerSettings runnerSettings,
-                                  ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
+  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     if (getModule() == null){
       throw new ExecutionException(DevKitBundle.message("run.configuration.no.module.specified"));
     }
@@ -102,7 +100,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     //copy license from running instance of idea
     IdeaLicenseHelper.copyIDEALicencse(sandboxHome, ideaJdk);
 
-    final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
+    final JavaCommandLineState state = new JavaCommandLineState(env) {
       protected JavaParameters createJavaParameters() throws ExecutionException {
 
         final JavaParameters params = new JavaParameters();

@@ -17,6 +17,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -72,12 +73,11 @@ public class TestNGRunnableState extends JavaCommandLineState
   private String debugPort;
   private CoverageSuite myCurrentCoverageSuite;
 
-  public TestNGRunnableState(RunnerSettings runnerSettings,
-                             ConfigurationPerRunnerSettings configurationPerRunnerSettings,
+  public TestNGRunnableState(ExecutionEnvironment environment,
                              TestNGConfiguration config) {
-    super(runnerSettings, configurationPerRunnerSettings);
-    this.runnerSettings = runnerSettings;
-    myConfigurationPerRunnerSettings = configurationPerRunnerSettings;
+    super(environment);
+    this.runnerSettings = environment.getRunnerSettings();
+    myConfigurationPerRunnerSettings = environment.getConfigurationSettings();
     this.config = config;
     //TODO need to narrow this down a bit
     //setModulesToCompile(ModuleManager.getInstance(config.getProject()).getModules());

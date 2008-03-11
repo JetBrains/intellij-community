@@ -4,8 +4,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -16,6 +16,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.runner.MavenRunner;
@@ -50,11 +51,8 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     return null;
   }
 
-  public RunProfileState getState(DataContext context,
-                                  Executor executor,
-                                  final RunnerSettings runnerSettings,
-                                  final ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
-    JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
+  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+    JavaCommandLineState state = new JavaCommandLineState(env) {
       protected JavaParameters createJavaParameters() throws ExecutionException {
         return MavenExternalParameters
           .createJavaParameters(mySettings.myRunnerParameters, mySettings.myCoreSettings, mySettings.myRunnerSettings);

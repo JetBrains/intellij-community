@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.JavaAwareFilter;
@@ -83,11 +84,8 @@ public class RerunFailedTestsAction extends AnAction {
     boolean isDebug = myConsoleProperties.isDebug();
     try {
       final RunProfile profile = new ModuleRunProfile() {
-        public RunProfileState getState(DataContext context,
-                                        Executor executor,
-                                        RunnerSettings runnerSettings,
-                                        ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
-          return new TestNGRunnableState(runnerSettings, configurationSettings, configuration) {
+        public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+          return new TestNGRunnableState(env, configuration) {
             protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes, final Project project)
               throws CantRunException {
               for (AbstractTestProxy proxy : failed) {
@@ -126,7 +124,7 @@ public class RerunFailedTestsAction extends AnAction {
       final Executor executor = isDebug ? DefaultDebugExecutor.getDebugExecutorInstance() : DefaultRunExecutor.getRunExecutorInstance();
       final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), profile);
       LOG.assertTrue(runner != null);
-      runner.execute(executor, profile, dataContext, myRunnerSettings, myConfigurationPerRunnerSettings);
+      runner.execute(executor, new ExecutionEnvironment(profile, myRunnerSettings, myConfigurationPerRunnerSettings, dataContext));
     }
     catch (ExecutionException e1) {
       LOG.error(e1);

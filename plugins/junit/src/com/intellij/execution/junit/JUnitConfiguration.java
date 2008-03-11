@@ -23,9 +23,9 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.junit.coverage.JUnitCoverageConfigurable;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -42,6 +42,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -71,11 +72,8 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
     myData = data;
   }
 
-  public RunProfileState getState(final DataContext context,
-                                  final Executor executor,
-                                  RunnerSettings runnerSettings,
-                                  ConfigurationPerRunnerSettings configurationSettings) {
-    return TestObject.fromString(myData.TEST_OBJECT, getProject(), this, runnerSettings, configurationSettings);
+  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+    return TestObject.fromString(myData.TEST_OBJECT, getProject(), this, env.getRunnerSettings(), env.getConfigurationSettings());
   }
 
   public void setUpCoverageFilters() {

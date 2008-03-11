@@ -26,6 +26,7 @@ import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.JavaAwareFilter;
@@ -102,7 +103,7 @@ public class RerunFailedTestsAction extends AnAction {
       final Executor executor = isDebug ? DefaultDebugExecutor.getDebugExecutorInstance() : DefaultRunExecutor.getRunExecutorInstance();
       final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), profile);
       assert runner != null;
-      runner.execute(executor, profile, dataContext, myRunnerSettings, myConfigurationPerRunnerSettings);
+      runner.execute(executor, new ExecutionEnvironment(profile, myRunnerSettings, myConfigurationPerRunnerSettings, dataContext));
     }
     catch (ExecutionException e1) {
       LOG.error(e1);
@@ -121,10 +122,7 @@ public class RerunFailedTestsAction extends AnAction {
       myConfiguration = configuration;
     }
 
-    public RunProfileState getState(DataContext context,
-                                    Executor executor,
-                                    RunnerSettings runnerSettings,
-                                    ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
+    public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
       myTestMethods.clear();
       return myTestMethods;
     }

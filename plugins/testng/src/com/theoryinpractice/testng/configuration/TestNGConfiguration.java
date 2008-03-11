@@ -12,8 +12,8 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.junit.RefactoringListeners;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.options.SettingsEditor;
@@ -28,6 +28,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.xml.Parser;
 
@@ -36,8 +37,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class TestNGConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration, RefactoringListenerProvider
-{
+public class TestNGConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration, RefactoringListenerProvider {
   //private TestNGResultsContainer resultsContainer;
   protected TestData data;
   protected transient Project project;
@@ -46,8 +46,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
 
   public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
   public static final String DEFAULT_PACKAGE_CONFIGURATION_NAME = ExecutionBundle.message("default.package.configuration.name");
-  private final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<PsiPackage>()
-  {
+  private final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<PsiPackage>() {
     public void setName(final String qualifiedName) {
       final boolean generatedName = isGeneratedName();
       data.PACKAGE_NAME = qualifiedName;
@@ -57,8 +56,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     @Nullable
     public PsiPackage getPsiElement() {
       final String qualifiedName = data.getPackageName();
-      return qualifiedName != null ? JavaPsiFacade.getInstance(getProject()).findPackage(qualifiedName)
-             : null;
+      return qualifiedName != null ? JavaPsiFacade.getInstance(getProject()).findPackage(qualifiedName) : null;
     }
 
     public void setPsiElement(final PsiPackage psiPackage) {
@@ -66,8 +64,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     }
   };
 
-  private final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<PsiClass>()
-  {
+  private final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<PsiClass>() {
     public void setName(final String qualifiedName) {
       final boolean generatedName = isGeneratedName();
       data.MAIN_CLASS_NAME = qualifiedName;
@@ -77,7 +74,9 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     @Nullable
     public PsiClass getPsiElement() {
       final String qualifiedName = data.getMainClassName();
-      return qualifiedName != null ? JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, GlobalSearchScope.allScope(project)) : null;
+      return qualifiedName != null
+             ? JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, GlobalSearchScope.allScope(project))
+             : null;
     }
 
     public void setPsiElement(final PsiClass psiClass) {
@@ -95,11 +94,8 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     this.project = project;
   }
 
-  public RunProfileState getState(DataContext dataContext, Executor executor, RunnerSettings runnerSettings, ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
-    return new TestNGRunnableState(
-        runnerSettings,
-        configurationPerRunnerSettings,
-        this);
+  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+    return new TestNGRunnableState(env, this);
   }
 
   public TestData getPersistantData() {
@@ -113,7 +109,8 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
   @Override
   protected ModuleBasedConfiguration createInstance() {
     try {
-      return new TestNGConfiguration(getName(), getProject(), (TestData) data.clone(), TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
+      return new TestNGConfiguration(getName(), getProject(), (TestData)data.clone(),
+                                     TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
     }
     catch (CloneNotSupportedException e) {
       //can't happen right?
@@ -141,12 +138,13 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     }
     if (TestType.PACKAGE.getType().equals(data.TEST_OBJECT)) {
       String s = getName();
-      if (!isGeneratedName())
-        return '\"' + s + '\"';
-      if (data.getPackageName().trim().length() > 0)
+      if (!isGeneratedName()) return '\"' + s + '\"';
+      if (data.getPackageName().trim().length() > 0) {
         return "Tests in \"" + data.getPackageName() + '\"';
-      else
+      }
+      else {
         return "All Tests";
+      }
     }
     if (TestType.METHOD.getType().equals(data.TEST_OBJECT)) {
       return data.getMethodName() + "()";
@@ -211,8 +209,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
         throw new RuntimeConfigurationException("Invalid scope specified");
       }
       PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(data.getMainClassName(), scope.getGlobalSearchScope());
-      if (psiClass == null)
-        throw new RuntimeConfigurationException("Invalid class '" + data.getMainClassName() + "'specified");
+      if (psiClass == null) throw new RuntimeConfigurationException("Invalid class '" + data.getMainClassName() + "'specified");
       if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
         PsiMethod[] methods = psiClass.findMethodsByName(data.getMethodName(), true);
         if (methods.length == 0) {
@@ -224,11 +221,12 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
           }
         }
       }
-    } else if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
+    }
+    else if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
       PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(data.getPackageName());
-      if (psiPackage == null)
-        throw new RuntimeConfigurationException("Invalid package '" + data.getMainClassName() + "'specified");
-    } else if (data.TEST_OBJECT.equals(TestType.SUITE.getType())) {
+      if (psiPackage == null) throw new RuntimeConfigurationException("Invalid package '" + data.getMainClassName() + "'specified");
+    }
+    else if (data.TEST_OBJECT.equals(TestType.SUITE.getType())) {
       try {
         new Parser(data.getSuiteName()).parse();//try to parse suite.xml
       }
@@ -240,8 +238,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
   }
 
   @Override
-  public void readExternal(Element element)
-      throws InvalidDataException {
+  public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -270,8 +267,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
   }
 
   @Override
-  public void writeExternal(Element element)
-      throws WriteExternalException {
+  public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
@@ -312,25 +308,26 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
     if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
       if (!(element instanceof PsiPackage)) return null;
-      return RefactoringListeners.getListener((PsiPackage) element, myPackage);
-    } else if (data.TEST_OBJECT.equals(TestType.CLASS.getType())) {
+      return RefactoringListeners.getListener((PsiPackage)element, myPackage);
+    }
+    else if (data.TEST_OBJECT.equals(TestType.CLASS.getType())) {
       if (!(element instanceof PsiClass)) return null;
       return RefactoringListeners.getClassOrPackageListener(element, myClass);
-    } else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
+    }
+    else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
       if (!(element instanceof PsiMethod)) {
         return RefactoringListeners.getClassOrPackageListener(element, myClass);
       }
-      final PsiMethod method = (PsiMethod) element;
+      final PsiMethod method = (PsiMethod)element;
       if (!method.getName().equals(data.getMethodName())) return null;
       if (!method.getContainingClass().equals(myClass.getPsiElement())) return null;
-      return new RefactoringElementListener()
-      {
+      return new RefactoringElementListener() {
         public void elementMoved(final PsiElement newElement) {
-          setMethod((PsiMethod) newElement);
+          setMethod((PsiMethod)newElement);
         }
 
         public void elementRenamed(final PsiElement newElement) {
-          setMethod((PsiMethod) newElement);
+          setMethod((PsiMethod)newElement);
         }
 
         private void setMethod(final PsiMethod psiMethod) {
