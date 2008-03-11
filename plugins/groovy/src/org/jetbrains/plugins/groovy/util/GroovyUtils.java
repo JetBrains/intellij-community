@@ -21,13 +21,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.*;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.*;
+import java.util.Stack;
 import java.util.regex.Pattern;
+
+import gnu.trove.TIntStack;
 
 /**
  * @author ilyas
@@ -100,42 +105,74 @@ public abstract class GroovyUtils {
   /*
   * Finds all super classes recursively; may return the same types twice
   */
-  public static Iterable<PsiClass> findAllSupers(final PsiClass psiClass, final HashSet<PsiClassType> visitedSupers) {
+  public static Iterable<PsiClass> iterateSupers(final PsiClass psiClass, final boolean includeSelf) {
     return new Iterable<PsiClass>() {
       public Iterator<PsiClass> iterator() {
         return new Iterator<PsiClass>() {
-          int i = 0;
+          TIntStack indices = new TIntStack();
+          Stack<PsiClassType[]> superTypesStack = new Stack<PsiClassType[]>();
+          PsiClass current;
+          boolean nextObtained;
+          Set<PsiClass> visited = new HashSet<PsiClass>();
 
-          Set<PsiClass> set = new HashSet<PsiClass>();
-          PsiClass current = psiClass;
+          {
+            if (includeSelf) {
+              current = psiClass;
+              nextObtained = true;
+            } else {
+              current = null;
+              nextObtained = false;
+            }
 
-          public boolean hasNext() {
-            if (i < current.getSuperTypes().length) return true;
-            if (set.contains(current)) set.remove(current);
-
-            final Iterator<PsiClass> classIterator = set.iterator();
-            if (classIterator.hasNext()) {
-              current = classIterator.next();
-            } else return false;
-            
-            i = 0;
-            return current.getSuperTypes().length != 0 || hasNext();
+            pushSuper(psiClass);
           }
 
+          public boolean hasNext() {
+            nextElement();
+            return current != null;
+          }
+
+          private void nextElement() {
+            if (nextObtained) return;
+
+            while (!superTypesStack.empty()) {
+              assert indices.size() > 0;
+
+              int i = indices.pop();
+              PsiClassType[] superTypes = superTypesStack.peek();
+              while (i < superTypes.length) {
+                PsiClass clazz = superTypes[i].resolve();
+                if (clazz != null && !visited.contains(clazz)) {
+                  current = clazz;
+                  visited.add(clazz);
+                  indices.push(i + 1);
+                  pushSuper(clazz);
+                  return;
+                }
+                i++;
+              }
+
+              superTypesStack.pop();
+            }
+
+            current = null;
+          }
+
+          private void pushSuper(PsiClass clazz) {
+            superTypesStack.push(clazz.getSuperTypes());
+            indices.push(0);
+          }
+
+          @NotNull
           public PsiClass next() {
-            final PsiClassType superType;
-            PsiClass superClass;
-
-            superType = current.getSuperTypes()[i++];
-            superClass = superType.resolve();
-            if (superClass == null) return null;
-
-            if (!set.contains(superClass)) set.add(superClass);
-            return superClass;
+            nextElement();
+            nextObtained = false;
+            if (current == null) throw new RuntimeException("No element");
+            return current;
           }
 
           public void remove() {
-            throw new IllegalStateException("cannot.be.called");
+            throw new IllegalStateException("should not be called");
           }
         };
       }

@@ -110,7 +110,7 @@ public class QuickfixUtil {
     return result;
   }
 
-  public static boolean isMethosCall(GrReferenceExpression referenceExpression) {
+  public static boolean isMethodCall(GrReferenceExpression referenceExpression) {
     return referenceExpression.getParent() instanceof GrMethodCallExpression;
   }
 

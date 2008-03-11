@@ -39,8 +39,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.util.HashSet;
-import java.util.Iterator;
 
 /**
  * @author ilyas
@@ -77,24 +75,15 @@ public class GrDynamicImplicitPropertyImpl extends GrDynamicImplicitElement {
         if (psiClass == null) return;
 
         final DefaultMutableTreeNode desiredNode;
-        final Iterable<PsiClass> allSupers = GroovyUtils.findAllSupers(psiClass, new HashSet<PsiClassType>());
-        Iterator<PsiClass> it = allSupers.iterator();
         DPropertyElement dynamicProperty = null;
         PsiClass trueSuper = null;
+        for (PsiClass aSuper : GroovyUtils.iterateSupers(psiClass, true)) {
+          dynamicProperty = DynamicManager.getInstance(myProject).findConcreteDynamicProperty(aSuper.getQualifiedName(), ((GrReferenceExpression) myScope).getName());
 
-        PsiClass aSuper = psiClass;
-
-        if (it.hasNext()) {
-          do {
-            dynamicProperty = DynamicManager.getInstance(myProject).findConcreteDynamicProperty(aSuper.getQualifiedName(), ((GrReferenceExpression) myScope).getName());
-
-            if(dynamicProperty != null) {
-              trueSuper = aSuper;
-              break;
-            }
-            
-            aSuper = it.next();
-          } while (it.hasNext());
+          if(dynamicProperty != null) {
+            trueSuper = aSuper;
+            break;
+          }
         }
 
         if (trueSuper == null) return;

@@ -812,16 +812,12 @@ public class GroovyAnnotator implements Annotator {
 
     final String[] types = QuickfixUtil.getArgumentsTypes(pairs);
     final Project project = referenceExpression.getProject();
-    final DElement methodElement = DynamicManager.getInstance(project).findConcreteDynamicMethod(qualifiedName, referenceExpression.getName(), types);
 
-    if (methodElement != null) return null;
-
-    final Iterable<PsiClass> iterable = GroovyUtils.findAllSupers(targetClass, new HashSet<PsiClassType>());
     //TODO:add targetClass
 //    classes.add(targetClass);
     DElement superDynamicMethod;
-    for (PsiClass aSuper : iterable) {
-      superDynamicMethod = DynamicManager.getInstance(project).findConcreteDynamicMethod(aSuper.getQualifiedName(), referenceExpression.getName(), types);
+    for (PsiClass clazz : GroovyUtils.iterateSupers(targetClass, true)) {
+      superDynamicMethod = DynamicManager.getInstance(project).findConcreteDynamicMethod(clazz.getQualifiedName(), referenceExpression.getName(), types);
 
       if (superDynamicMethod != null) return null;
     }
@@ -831,13 +827,9 @@ public class GroovyAnnotator implements Annotator {
 
   private DPropertyElement getDynamicPropertyElement(GrReferenceExpression referenceExpression, PsiClass targetClass, Module module, String qualifiedName) {
     final Project project = referenceExpression.getProject();
-    final DElement propertyElement = DynamicManager.getInstance(project).findConcreteDynamicProperty(qualifiedName, referenceExpression.getName());
-    if (propertyElement != null) return null;
 
-    final Iterable<PsiClass> supers = GroovyUtils.findAllSupers(targetClass, new HashSet<PsiClassType>());
     DElement superDynamicProperty;
-    for (Object aSuper1 : supers) {
-      PsiClass aSuper = (PsiClass) aSuper1;
+    for (PsiClass aSuper : GroovyUtils.iterateSupers(targetClass, true)) {
       superDynamicProperty = DynamicManager.getInstance(project).findConcreteDynamicProperty(aSuper.getQualifiedName(), referenceExpression.getName());
 
       if (superDynamicProperty != null) return null;

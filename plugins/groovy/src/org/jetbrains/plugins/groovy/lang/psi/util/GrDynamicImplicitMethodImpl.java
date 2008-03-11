@@ -14,10 +14,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
@@ -26,8 +26,6 @@ import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -71,7 +69,7 @@ public class GrDynamicImplicitMethodImpl extends GrDynamicImplicitElement {
         final Module module = DynamicToolWindowWrapper.getActiveModule(myProject);
         if (module == null) return;
 
-        DefaultMutableTreeNode desiredNode = null;
+        DefaultMutableTreeNode desiredNode;
         final PsiElement method = myScope.getParent();
 
         final String[] argumentTypes = QuickfixUtil.getMethodArgumentsTypes(((GrCallExpression) method));
@@ -84,23 +82,16 @@ public class GrDynamicImplicitMethodImpl extends GrDynamicImplicitElement {
         final PsiClass psiClass = fqClassName.resolve();
         if (psiClass == null) return;
 
-        final Iterable<PsiClass> classes = GroovyUtils.findAllSupers(psiClass, new HashSet<PsiClassType>());
-        PsiClass aClass = psiClass;
         PsiClass trueClass = null;
         DMethodElement methodElement = null;
 
-        Iterator<PsiClass> it = classes.iterator();
-        if (it.hasNext()) {
-          do {
-            methodElement = DynamicManager.getInstance(myProject).findConcreteDynamicMethod(aClass.getQualifiedName(), ((GrReferenceExpression) myScope).getName(), QuickfixUtil.getArgumentsTypes(pairs));
+        for (PsiClass aSuper : GroovyUtils.iterateSupers(psiClass, true)) {
+          methodElement = DynamicManager.getInstance(myProject).findConcreteDynamicMethod(aSuper.getQualifiedName(), ((GrReferenceExpression) myScope).getName(), QuickfixUtil.getArgumentsTypes(pairs));
 
-            if (methodElement != null){
-              trueClass = aClass;
-              break;
-            }
-
-            aClass = it.next();
-          } while (it.hasNext());
+          if (methodElement != null) {
+            trueClass = aSuper;
+            break;
+          }
         }
 
         if (trueClass == null) return;

@@ -36,8 +36,6 @@ import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.EventListener;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -130,13 +128,7 @@ public abstract class DynamicDialog extends DialogWrapper {
 
     if (psiClass == null) return;
 
-    myClassComboBox.addItem(new ContainingClassItem(psiClass));
-    final Iterable<PsiClass> classes = GroovyUtils.findAllSupers(psiClass, new HashSet<PsiClassType>());
-    Set<PsiClass> classesSet = new HashSet<PsiClass>();
-    for (PsiClass aClass : classes) {
-      classesSet.add(aClass);
-    }
-    for (PsiClass aClass : classesSet) {
+    for (PsiClass aClass : GroovyUtils.iterateSupers(psiClass, true)) {
       myClassComboBox.addItem(new ContainingClassItem(aClass));
     }
 
