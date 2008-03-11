@@ -105,7 +105,7 @@ public abstract class GroovyUtils {
   /*
   * Finds all super classes recursively; may return the same types twice
   */
-  public static Iterable<PsiClass> iterateSupers(final PsiClass psiClass, final boolean includeSelf) {
+  public static Iterable<PsiClass> iterateSupers(final @NotNull PsiClass psiClass, final boolean includeSelf) {
     return new Iterable<PsiClass>() {
       public Iterator<PsiClass> iterator() {
         return new Iterator<PsiClass>() {
@@ -135,6 +135,7 @@ public abstract class GroovyUtils {
           private void nextElement() {
             if (nextObtained) return;
 
+            nextObtained = true;
             while (!superTypesStack.empty()) {
               assert indices.size() > 0;
 
@@ -167,7 +168,7 @@ public abstract class GroovyUtils {
           public PsiClass next() {
             nextElement();
             nextObtained = false;
-            if (current == null) throw new RuntimeException("No element");
+            if (current == null) throw new NoSuchElementException();
             return current;
           }
 
