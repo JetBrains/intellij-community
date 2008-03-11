@@ -20,11 +20,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.validation.DocStringAnnotator;
 import org.jetbrains.annotations.NotNull;
@@ -92,6 +94,16 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   public PyClass getContainingClass() {
+    final PyFunctionStub stub = getStub();
+    if (stub != null) {
+      final StubElement parentStub = stub.getParentStub();
+      if (parentStub instanceof PyClassStub) {
+        return ((PyClassStub)parentStub).getPsi();
+      }
+
+      return null;
+    }
+
     final PsiElement parent = getParent();
     if (parent instanceof PyStatementList) {
       PsiElement pparent = parent.getParent();
