@@ -73,4 +73,9 @@ public abstract class XDebugProcess {
     final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(getSession().getProject());
     return consoleBuilder.getConsole();
   }
+
+  public String getCurrentStateMessage() {
+    return mySession.isStopped() ? XDebuggerBundle.message("debugger.state.message.disconnected")
+           : XDebuggerBundle.message("debugger.state.message.connected");
+  }
 }

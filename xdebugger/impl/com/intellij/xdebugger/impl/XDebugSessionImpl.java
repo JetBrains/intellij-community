@@ -15,6 +15,7 @@ import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.impl.breakpoints.*;
+import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,9 +41,11 @@ public class XDebugSessionImpl implements XDebugSession {
   private MyDependentBreakpointListener myDependentBreakpointListener;
   private String mySessionName;
   private XDebugSessionTab mySessionTab;
+  private EventDispatcher<XDebugSessionListener> myDispatcher = EventDispatcher.create(XDebugSessionListener.class);
   private Project myProject;
   private ExecutionEnvironment myEnvironment;
   private ProgramRunner myRunner;
+  private boolean myStopped;
 
   public XDebugSessionImpl(@NotNull final ExecutionEnvironment env, @NotNull final ProgramRunner runner, XDebuggerManagerImpl debuggerManager) {
     myEnvironment = env;
@@ -108,10 +111,11 @@ public class XDebugSessionImpl implements XDebugSession {
     breakpointManager.addBreakpointListener(myBreakpointListener);
     myDependentBreakpointListener = new MyDependentBreakpointListener();
     dependentBreakpointManager.addListener(myDependentBreakpointListener);
-    process.sessionInitialized();
 
     mySessionTab = initSessionTab(oldSession);
-    return mySessionTab; 
+    process.sessionInitialized();
+
+    return mySessionTab;
   }
 
   private XDebugSessionTab initSessionTab(@Nullable XDebugSessionImpl oldSession) {
@@ -202,6 +206,14 @@ public class XDebugSessionImpl implements XDebugSession {
     return myBreakpointsMuted;
   }
 
+  public void addSessionListener(@NotNull final XDebugSessionListener listener) {
+    myDispatcher.addListener(listener);
+  }
+
+  public void removeSessionListener(@NotNull final XDebugSessionListener listener) {
+    myDispatcher.removeListener(listener);
+  }
+
   public void setBreakpointMuted(boolean muted) {
     if (myBreakpointsMuted == muted) return;
     myBreakpointsMuted = muted;
@@ -260,6 +272,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myCurrentStackFrame = null;
     myCurrentPosition = null;
     myPaused = false;
+    myDispatcher.getMulticaster().sessionResumed();
   }
 
   public void showExecutionPoint() {
@@ -313,6 +326,9 @@ public class XDebugSessionImpl implements XDebugSession {
     if (position != null) {
       positionReached(position, suspendContext);
     }
+    else {
+      myDispatcher.getMulticaster().sessionPaused();
+    }
     return true;
   }
 
@@ -350,6 +366,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myCurrentPosition = position;
     myPaused = true;
     myDebuggerManager.updateExecutionPosition(this, position);
+    myDispatcher.getMulticaster().sessionPaused();
   }
 
   private void enableBreakpoints() {
@@ -363,12 +380,17 @@ public class XDebugSessionImpl implements XDebugSession {
     }
   }
 
+  public boolean isStopped() {
+    return myStopped;
+  }
+
   public void stop() {
     myDebugProcess.stop();
     myDebuggerManager.updateExecutionPosition(this, null);
     XBreakpointManagerImpl breakpointManager = myDebuggerManager.getBreakpointManager();
     breakpointManager.removeBreakpointListener(myBreakpointListener);
     breakpointManager.getDependentBreakpointManager().removeListener(myDependentBreakpointListener);
+    myStopped = true;
 
     // do not remove here, we will reuse it and clear all others in the manager's dispose
     //myDebuggerManager.removeSession(this);

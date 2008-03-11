@@ -1,13 +1,12 @@
 package com.intellij.xdebugger.impl.ui;
 
-import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.xdebugger.XDebuggerBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author nik
@@ -17,6 +16,7 @@ public class XDebuggerUIConstants {
   public static final String EVALUATING_EXPRESSION_MESSAGE = XDebuggerBundle.message("xdebugger.evaluating.expression.node.message");
   public static final String MODIFYING_VALUE_MESSAGE = XDebuggerBundle.message("xdebugger.modifiyng.value.node.message");
   public static final Icon ERROR_MESSAGE_ICON = IconLoader.getIcon("/debugger/db_error.png");
+  public static final Icon INFORMATION_MESSAGE_ICON = IconLoader.getIcon("/compiler/information.png");
   public static final SimpleTextAttributes COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);
   public static final SimpleTextAttributes EVALUATING_EXPRESSION_HIGHLIGHT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);
   public static final SimpleTextAttributes MODIFYING_VALUE_HIGHLIGHT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.blue);

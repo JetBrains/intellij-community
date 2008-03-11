@@ -27,7 +27,6 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   private static Icon myStaticIcon = IconLoader.getIcon("/nodes/static.png");
 
-  private static final Icon INFORMATION_MESSAGE_ICON = IconLoader.getIcon("/compiler/information.png");
   private static final SimpleTextAttributes DEFAULT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, null);
   private static final SimpleTextAttributes SPECIAL_NODE_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);
   private static final SimpleTextAttributes OBJECT_ID_HIGHLIGHT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);
@@ -81,7 +80,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
         nodeIcon = XDebuggerUIConstants.ERROR_MESSAGE_ICON;
       }
       else if (messageDescriptor.getKind() == MessageDescriptor.INFORMATION) {
-        nodeIcon = INFORMATION_MESSAGE_ICON;
+        nodeIcon = XDebuggerUIConstants.INFORMATION_MESSAGE_ICON;
       }
       else if (messageDescriptor.getKind() == MessageDescriptor.SPECIAL) {
         nodeIcon = null;

@@ -37,4 +37,8 @@ public class MessageTreeNode extends XDebuggerTreeNode {
   public static MessageTreeNode createErrorMessage(XDebuggerTree tree, final XDebuggerTreeNode parent, @NotNull String errorMessage) {
     return new MessageTreeNode(tree, parent, errorMessage, XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES, XDebuggerUIConstants.ERROR_MESSAGE_ICON);
   }
+
+  public static MessageTreeNode createInfoMessage(XDebuggerTree tree, final XDebuggerTreeNode parent, @NotNull String message) {
+    return new MessageTreeNode(tree, parent, message, SimpleTextAttributes.REGULAR_ATTRIBUTES, XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
+  }
 }

@@ -23,6 +23,7 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.frame.XDebugVariablesView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +53,6 @@ public class XDebugSessionTab implements Disposable {
 
     myUi.setTopToolbar(createTopToolbar(), ActionPlaces.DEBUGGER_TOOLBAR);
     myUi.addContent(createFramesContent(), 0, RunnerLayoutUi.PlaceInGrid.left, false);
-    myUi.addContent(createVariablesContent(), 0, RunnerLayoutUi.PlaceInGrid.center, false);
   }
   
   private Content createConsoleContent() {
@@ -61,10 +61,11 @@ public class XDebugSessionTab implements Disposable {
                             myConsole.getPreferredFocusableComponent());
   }
 
-  private Content createVariablesContent() {
-    final JPanel variablesPanel = new JPanel();
-        Content variablesContent = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, variablesPanel, XDebuggerBundle.message("debugger.session.tab.variables.title"),
-                                        IconLoader.getIcon("/debugger/value.png"), null);
+  private Content createVariablesContent(final XDebugSession session) {
+    final XDebugVariablesView variablesView = new XDebugVariablesView(session, this);
+    Content variablesContent = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, variablesView.getPanel(),
+                                                  XDebuggerBundle.message("debugger.session.tab.variables.title"),
+                                                  IconLoader.getIcon("/debugger/value.png"), null);
     return variablesContent;
   }
 
@@ -115,18 +116,20 @@ public class XDebugSessionTab implements Disposable {
   public RunContentDescriptor attachToSession(@NotNull final XDebugSession session, @NotNull final ProgramRunner runner, @NotNull ExecutionEnvironment env) {
     myEnvironment = env;
     myRunner = runner;
-    return initUI(getExecutionResult(session));
+    return initUI(session);
   }
 
   @NotNull
-  protected ExecutionResult getExecutionResult(@NotNull final XDebugSession session) {
+  protected static ExecutionResult getExecutionResult(@NotNull final XDebugSession session) {
     final XDebugProcess debugProcess = session.getDebugProcess();
     return new DefaultExecutionResult(debugProcess.createConsole(), debugProcess.getProcessHandler());
   }
 
-  private RunContentDescriptor initUI(@NotNull final ExecutionResult executionResult) {
+  private RunContentDescriptor initUI(@NotNull final XDebugSession session) {
+    ExecutionResult executionResult = getExecutionResult(session);
     myConsole = executionResult.getExecutionConsole();
 
+    myUi.addContent(createVariablesContent(session), 0, RunnerLayoutUi.PlaceInGrid.center, false);
     // attach console here
     myUi.addContent(createConsoleContent(), 1, RunnerLayoutUi.PlaceInGrid.bottom, false);
 
@@ -143,7 +146,7 @@ public class XDebugSessionTab implements Disposable {
     group.add(restarAction);
     restarAction.registerShortcut(myUi.getComponent());
 
-    //addActionToGroup(group, DebuggerActions.RESUME);
+    addActionToGroup(group, XDebuggerActions.RESUME);
     //addActionToGroup(group, DebuggerActions.PAUSE);
     addActionToGroup(group, IdeActions.ACTION_STOP_PROGRAM);
 

@@ -85,8 +85,15 @@ public interface XDebugSession {
 
   void stop();
 
+  boolean isStopped();
+
   void setBreakpointMuted(boolean muted);
   boolean areBreakpointsMuted();
+
+
+  void addSessionListener(@NotNull XDebugSessionListener listener);
+  void removeSessionListener(@NotNull XDebugSessionListener listener);
+
 
   @NotNull
   String getSessionName();

@@ -62,10 +62,14 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   public void setErrorMessage(final @NotNull String errorMessage) {
     DebuggerUIUtil.invokeLater(new Runnable() {
       public void run() {
-        myMessageChildren = Collections.singletonList(MessageTreeNode.createErrorMessage(myTree, XValueContainerNode.this, errorMessage));
-        fireNodeChildrenChanged();
+        setMessageNode(MessageTreeNode.createErrorMessage(myTree, XValueContainerNode.this, errorMessage));
       }
     });
+  }
+
+  protected void setMessageNode(final MessageTreeNode messageNode) {
+    myMessageChildren = Collections.singletonList(messageNode);
+    fireNodeChildrenChanged();
   }
 
   protected List<? extends TreeNode> getChildren() {

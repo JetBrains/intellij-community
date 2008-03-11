@@ -499,6 +499,12 @@
       <reference ref="XDebugger.CopyValue"/>
     </group>
 
+    <group id="XDebugger.Variables.Tree.Popup">
+      <reference ref="XDebugger.Inspect"/>
+      <reference ref="XDebugger.SetValue"/>
+      <reference ref="XDebugger.CopyValue"/>
+    </group>
+
     <group id="XDebugger.Inspect.Tree.Popup">
       <reference ref="XDebugger.Inspect"/>
       <reference ref="XDebugger.CopyValue"/>
