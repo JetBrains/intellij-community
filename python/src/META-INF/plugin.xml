@@ -44,6 +44,8 @@
     <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
     <configurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
 
+    <applicationService serviceInterface="com.jetbrains.python.JythonManager"
+                        serviceImplementation="com.jetbrains.python.JythonManager"/>
     <projectService serviceInterface="com.jetbrains.python.psi.impl.PyBuiltinCache"
                     serviceImplementation="com.jetbrains.python.psi.impl.PyBuiltinCache"/>
   </extensions>
