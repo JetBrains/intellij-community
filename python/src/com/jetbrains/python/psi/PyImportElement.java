@@ -16,6 +16,8 @@
 
 package com.jetbrains.python.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Created by IntelliJ IDEA.
  * User: yole
@@ -25,6 +27,7 @@ package com.jetbrains.python.psi;
  */
 public interface PyImportElement extends PyElement {
 
+  @Nullable
   PyReferenceExpression getImportReference();
 
 

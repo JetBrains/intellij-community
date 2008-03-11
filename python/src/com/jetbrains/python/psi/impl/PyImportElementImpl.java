@@ -22,6 +22,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.jetbrains.python.psi.PyImportElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyReferenceExpression;
 
@@ -37,8 +38,11 @@ public class PyImportElementImpl extends PyElementImpl implements PyImportElemen
     super(astNode);
   }
 
+  @Nullable
   public PyReferenceExpression getImportReference() {
-    return (PyReferenceExpression)getNode().findChildByType(PyElementTypes.REFERENCE_EXPRESSION).getPsi();
+    final ASTNode importRefNode = getNode().findChildByType(PyElementTypes.REFERENCE_EXPRESSION);
+    if (importRefNode == null) return null;
+    return (PyReferenceExpression)importRefNode.getPsi();
   }
 
   @Override
@@ -49,9 +53,11 @@ public class PyImportElementImpl extends PyElementImpl implements PyImportElemen
       return true;
     }
     final PyReferenceExpression importRef = getImportReference();
-    final PsiElement element = importRef.resolve();
-    if (element != null) {
-      return processor.execute(element, state);
+    if (importRef != null) {
+      final PsiElement element = importRef.resolve();
+      if (element != null) {
+        return processor.execute(element, state);
+      }
     }
     return true;
   }
