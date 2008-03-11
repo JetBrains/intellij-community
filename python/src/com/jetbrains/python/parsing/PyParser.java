@@ -39,7 +39,7 @@ public class PyParser implements PsiParser {
     builder.setDebugMode(false);
     long start = System.currentTimeMillis();
     final PsiBuilder.Marker rootMarker = builder.mark();
-    ParsingContext context = new ParsingContext();
+    ParsingContext context = new ParsingContext(builder);
     while (!builder.eof()) {
       context.getStatementParser().parseStatement(builder);
     }

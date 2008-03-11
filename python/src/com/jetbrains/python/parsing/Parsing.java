@@ -19,6 +19,8 @@ package com.jetbrains.python.parsing;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.openapi.diagnostic.Logger;
+import com.jetbrains.python.psi.PyElementType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,35 +30,49 @@ import com.intellij.psi.tree.TokenSet;
  * To change this template use File | Settings | File Templates.
  */
 public class Parsing {
-    private ParsingContext context;
+  protected ParsingContext myContext;
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.parsing.Parsing");
 
-    protected Parsing(ParsingContext context) {
-        this.context = context;
+  protected Parsing(ParsingContext context) {
+    myContext = context;
+  }
+
+  public ParsingContext getParsingContext() {
+    return myContext;
+  }
+
+  public ExpressionParsing getExpressionParser() {
+    return getParsingContext().getExpressionParser();
+  }
+
+  public StatementParsing getStatementParser() {
+    return getParsingContext().getStatementParser();
+  }
+
+  public FunctionParsing getFunctionParser() {
+    return getParsingContext().getFunctionParser();
+  }
+
+  protected void checkMatches(final IElementType token, final String message) {
+    PsiBuilder builder = myContext.getBuilder();
+    if (builder.getTokenType() == token) {
+      builder.advanceLexer();
     }
-
-    public ParsingContext getParsingContext() {
-        return context;
+    else {
+      builder.error(message);
     }
+  }
 
-    public ExpressionParsing getExpressionParser() { return getParsingContext().getExpressionParser(); }
-    public StatementParsing getStatementParser() { return getParsingContext().getStatementParser(); }
-    public FunctionParsing getFunctionParser() { return getParsingContext().getFunctionParser(); }
-
-    protected static void checkMatches(final PsiBuilder builder, final IElementType token, final String message) {
-        if (builder.getTokenType() == token) {
-            builder.advanceLexer();
-        }
-        else {
-            builder.error(message);
-        }
+  protected static void checkMatches(final PsiBuilder builder, final TokenSet tokenSet, final String message) {
+    if (tokenSet.contains(builder.getTokenType())) {
+      builder.advanceLexer();
     }
-
-    protected static void checkMatches(final PsiBuilder builder, final TokenSet tokenSet, final String message) {
-        if (tokenSet.contains(builder.getTokenType())) {
-            builder.advanceLexer();
-        }
-        else {
-            builder.error(message);
-        }
+    else {
+      builder.error(message);
     }
+  }
+
+  protected void assertCurrentToken(final PyElementType tokenType) {
+    LOG.assertTrue(myContext.getBuilder().getTokenType() == tokenType);
+  }
 }

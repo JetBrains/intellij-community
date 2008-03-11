@@ -15,12 +15,16 @@
  */
 package com.jetbrains.python.parsing;
 
+import com.intellij.lang.PsiBuilder;
+
 public class ParsingContext {
   private StatementParsing stmtParser;
   private ExpressionParsing expressionParser;
   private FunctionParsing functionParser;
+  private PsiBuilder myBuilder;
 
-  public ParsingContext() {
+  public ParsingContext(final PsiBuilder builder) {
+    myBuilder = builder;
     stmtParser = new StatementParsing(this);
     expressionParser = new ExpressionParsing(this);
     functionParser = new FunctionParsing(this);
@@ -36,5 +40,9 @@ public class ParsingContext {
 
   public FunctionParsing getFunctionParser() {
     return functionParser;
+  }
+
+  public PsiBuilder getBuilder() {
+    return myBuilder;
   }
 }

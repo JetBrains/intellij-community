@@ -111,7 +111,7 @@ public class ExpressionParsing extends Parsing {
           break;
         }
       }
-      checkMatches(builder, PyTokenTypes.RBRACKET, "] expected");
+      checkMatches(PyTokenTypes.RBRACKET, "] expected");
       expr.done(PyElementTypes.LIST_LITERAL_EXPRESSION);
     }
   }
@@ -124,7 +124,7 @@ public class ExpressionParsing extends Parsing {
     while (true) {
       builder.advanceLexer();
       parseExpression(builder, true, false);
-      checkMatches(builder, PyTokenTypes.IN_KEYWORD, "'in' expected");
+      checkMatches(PyTokenTypes.IN_KEYWORD, "'in' expected");
       if (!parseTupleExpression(builder, false, false, true)) {
         builder.error("expression expected");
       }
@@ -156,7 +156,7 @@ public class ExpressionParsing extends Parsing {
         break;
       }
       if (builder.getTokenType() != PyTokenTypes.RBRACE) {
-        checkMatches(builder, PyTokenTypes.COMMA, "comma expected");
+        checkMatches(PyTokenTypes.COMMA, "comma expected");
       }
     }
     builder.advanceLexer();
@@ -169,7 +169,7 @@ public class ExpressionParsing extends Parsing {
       marker.drop();
       return false;
     }
-    checkMatches(builder, PyTokenTypes.COLON, ": expected");
+    checkMatches(PyTokenTypes.COLON, ": expected");
     if (!parseSingleExpression(builder, false)) {
       marker.drop();
       return false;
@@ -192,7 +192,7 @@ public class ExpressionParsing extends Parsing {
         parseListCompExpression(builder, expr, PyTokenTypes.RPAR, PyElementTypes.GENERATOR_EXPRESSION);
       }
       else {
-        checkMatches(builder, PyTokenTypes.RPAR, ") expected");
+        checkMatches(PyTokenTypes.RPAR, ") expected");
         expr.done(PyElementTypes.PARENTHESIZED_EXPRESSION);
       }
     }
@@ -203,7 +203,7 @@ public class ExpressionParsing extends Parsing {
     final PsiBuilder.Marker expr = builder.mark();
     builder.advanceLexer();
     parseExpression(builder);
-    checkMatches(builder, PyTokenTypes.TICK, "` expected");
+    checkMatches(PyTokenTypes.TICK, "` expected");
     expr.done(PyElementTypes.REPR_EXPRESSION);
   }
 
@@ -218,7 +218,7 @@ public class ExpressionParsing extends Parsing {
       final IElementType tokenType = builder.getTokenType();
       if (tokenType == PyTokenTypes.DOT) {
         builder.advanceLexer();
-        checkMatches(builder, PyTokenTypes.IDENTIFIER, "name expected");
+        checkMatches(PyTokenTypes.IDENTIFIER, "name expected");
         if (isTargetExpression && builder.getTokenType() != PyTokenTypes.DOT) {
           expr.done(PyElementTypes.TARGET_EXPRESSION);
         }
@@ -245,7 +245,7 @@ public class ExpressionParsing extends Parsing {
             parseSliceEnd(builder, expr);
           }
           else {
-            checkMatches(builder, PyTokenTypes.RBRACKET, "] expected");
+            checkMatches(PyTokenTypes.RBRACKET, "] expected");
             expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
           }
         }
@@ -282,7 +282,7 @@ public class ExpressionParsing extends Parsing {
         builder.advanceLexer();
         parseExpressionOptional(builder);
       }
-      checkMatches(builder, PyTokenTypes.RBRACKET, "] expected");
+      checkMatches(PyTokenTypes.RBRACKET, "] expected");
     }
     expr.done(PyElementTypes.SLICE_EXPRESSION);
   }
@@ -343,7 +343,7 @@ public class ExpressionParsing extends Parsing {
 
     if (needBracket) {
       genexpr.drop();
-      checkMatches(builder, PyTokenTypes.RPAR, ") expected");
+      checkMatches(PyTokenTypes.RPAR, ") expected");
     }
     arglist.done(PyElementTypes.ARGUMENT_LIST);
   }
