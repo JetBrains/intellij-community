@@ -67,8 +67,8 @@ public class AddImportAction implements HintAction, QuestionAction {
           final ASTNode importNodeToInsert = PythonLanguage.getInstance().getElementGenerator()
               .createImportStatementFromText(myProject, "import " + referenceName).getNode();
           final PsiElement element = getFirstNonComment(file);
-          file.getNode().addChild(ws, element != null ? element.getNode() : file.getFirstChild().getNode());
-          file.getNode().addChild(importNodeToInsert, ws);
+          file.getNode().addChild(importNodeToInsert, element != null ? element.getNode() : file.getFirstChild().getNode());
+          file.getNode().addChild(ws, importNodeToInsert);
         }
       }
     });
