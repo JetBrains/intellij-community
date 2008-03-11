@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 import java.util.*;
 
@@ -273,6 +274,7 @@ public class DynamicManagerImpl extends DynamicManager {
 
   private void fireChangeCodeAnalyze() {
     PsiManager.getInstance(myProject).dropResolveCaches();
+    GroovyPsiManager.getInstance(myProject).dropTypesCache();
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 

@@ -86,7 +86,7 @@ public class GroovyPsiManager implements ProjectComponent {
   public void initComponent() {
     ((PsiManagerEx) PsiManager.getInstance(myProject)).registerRunnableToRunOnAnyChange(new Runnable() {
       public void run() {
-        myCalculatedTypes.clear();
+        dropTypesCache();
       }
     });
 
@@ -99,6 +99,10 @@ public class GroovyPsiManager implements ProjectComponent {
         myRebuildGdkPending = true;
       }
     });
+  }
+
+  public void dropTypesCache() {
+    myCalculatedTypes.clear();
   }
 
   public void buildGDK() {
