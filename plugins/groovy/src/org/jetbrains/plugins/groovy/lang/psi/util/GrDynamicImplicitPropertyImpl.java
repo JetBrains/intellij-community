@@ -122,13 +122,7 @@ public class GrDynamicImplicitPropertyImpl extends GrDynamicImplicitElement {
   public boolean isPhysical() {
     return true;
   }
-
-  @NotNull
-  public SearchScope getUseScope() {
-    return myScope.getProject().getAllScope();
-  }
-
-
+  
   @Nullable
   public Icon getIcon(boolean open) {
     return GroovyIcons.PROPERTY;

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -82,4 +83,8 @@ public abstract class GrDynamicImplicitElement extends GrImplicitVariableImpl im
     return null;
   }
 
+  @NotNull
+  public SearchScope getUseScope() {
+    return myScope.getProject().getProjectScope();
+  }
 }

@@ -130,11 +130,6 @@ public class GrDynamicImplicitMethodImpl extends GrDynamicImplicitElement {
     return true;
   }
 
-  @NotNull
-  public SearchScope getUseScope() {
-    return myScope.getProject().getAllScope();
-  }
-
   @Nullable
   public Icon getIcon(boolean open) {
     return GroovyIcons.METHOD;
