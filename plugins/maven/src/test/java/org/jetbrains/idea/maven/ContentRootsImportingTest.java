@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven;
 import java.io.IOException;
 
 public class ContentRootsImportingTest extends ImportingTestCase {
-  public void testSimpleProjectStructure() throws IOException {
+  public void testSimpleProjectStructure() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -15,7 +15,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
     assertTestSources("project", "src/test/java", "src/test/resources");
   }
 
-  public void testCustomSourceFolders() throws IOException {
+  public void testCustomSourceFolders() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -40,7 +40,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
     assertTestSources("project", "test", "testRes1", "testRes2");
   }
 
-  public void testCustomSourceFoldersWithRelativePaths() throws IOException {
+  public void testCustomSourceFoldersWithRelativePaths() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -335,7 +335,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
     assertSources("project", "src/main/java", "src/main/resources");
   }
 
-  public void testExcludingOutputDirectories() throws IOException {
+  public void testExcludingOutputDirectories() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -347,7 +347,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
                        getProjectPath() + "/target/test-classes");
   }
 
-  public void testExcludingOutputDirectoriesIfProjectOutputIsUsed() throws IOException {
+  public void testExcludingOutputDirectoriesIfProjectOutputIsUsed() throws Exception {
     myPrefs.setUseMavenOutput(false);
 
     importProject("<groupId>test</groupId>" +
@@ -359,7 +359,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
     assertProjectOutput("project");
   }
 
-  public void testExcludingCustomOutputDirectories() throws IOException {
+  public void testExcludingCustomOutputDirectories() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -378,7 +378,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
                        getProjectPath() + "/testCustom");
   }
 
-  public void testExcludingCustomOutputUnderTargetUsingStandardVariable() throws IOException {
+  public void testExcludingCustomOutputUnderTargetUsingStandardVariable() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -397,7 +397,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
                        getProjectPath() + "/${project.build.directory}/testCustom");
   }
 
-  public void testOutputDirsOutsideOfContentRoot() throws IOException {
+  public void testOutputDirsOutsideOfContentRoot() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -440,7 +440,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
                   "target/generated-sources/bar");
   }
   
-  public void testDoesNotExcludeSourcesUnderTargetDir() throws IOException {
+  public void testDoesNotExcludeSourcesUnderTargetDir() throws Exception {
     createProjectSubDir("target/src");
     createProjectSubDir("target/test");
     createProjectSubDir("target/xxx");

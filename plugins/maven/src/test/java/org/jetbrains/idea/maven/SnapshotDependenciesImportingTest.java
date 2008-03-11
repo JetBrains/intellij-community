@@ -37,7 +37,7 @@ public class SnapshotDependenciesImportingTest extends ImportingTestCase {
     performTestWithDependencyVersion("SNAPSHOT");
   }
 
-  private void performTestWithDependencyVersion(String version) throws IOException {
+  private void performTestWithDependencyVersion(String version) throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +

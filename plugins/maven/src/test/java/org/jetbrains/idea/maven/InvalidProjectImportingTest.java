@@ -4,14 +4,13 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenException;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class InvalidProjectImportingTest extends ImportingTestCase {
   public void testUnknownProblem() throws Exception {
     try {
-      importProjectUnsafe("");
+      importProject("");
       fail();
     }
     catch (MavenException e) {
@@ -21,7 +20,7 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
 
   public void testInvalidExtension() throws Exception {
     try {
-      importProjectUnsafe("<groupId>test</groupId>" +
+      importProject("<groupId>test</groupId>" +
                           "<artifactId>project</artifactId>" +
                           "<version>1</version>" +
 
@@ -46,7 +45,7 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
                              "<artifactId>foo</artifactId>" +
                              "<version>1</version>");
 
-      importProjectUnsafe("<groupId>test</groupId>" +
+      importProject("<groupId>test</groupId>" +
                           "<artifactId>project</artifactId>" +
                           "<version>1</version>" +
                           "<packaging>jar</packaging>" +
@@ -67,7 +66,7 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
                              "<artifactId>foo</artifactId>" +
                              "<version>1</version");
 
-      importProjectUnsafe("<groupId>test</groupId>" +
+      importProject("<groupId>test</groupId>" +
                           "<artifactId>project</artifactId>" +
                           "<version>project</version>" +
                           "<packaging>pom</packaging>" +
@@ -83,7 +82,7 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
     }
   }
   
-  public void testReportingUnresolvedLibrariesProblems() throws IOException {
+  public void testReportingUnresolvedLibrariesProblems() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -138,20 +137,19 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
 
     importProject();
 
-    List<MavenProject> projects = new ArrayList<MavenProject>(unresolvedArtifacts.keySet());
-    assertEquals(2, projects.size());
+    assertEquals(2, unresolvedArtifacts.size());
 
-    MavenProject p1 = projects.get(0);
-    MavenProject p2 = projects.get(1);
+    MavenProject p1 = unresolvedArtifacts.get(0).first;
+    MavenProject p2 = unresolvedArtifacts.get(1).first;
 
     assertEquals("m1", p1.getArtifactId());
     assertEquals("m2", p2.getArtifactId());
 
-    assertArtifactsAre(unresolvedArtifacts.get(p1), "xxx:xxx:1", "yyy:yyy:2");
-    assertArtifactsAre(unresolvedArtifacts.get(p2), "zzz:zzz:3");
+    assertArtifactsAre(unresolvedArtifacts.get(0).second, "xxx:xxx:1", "yyy:yyy:2");
+    assertArtifactsAre(unresolvedArtifacts.get(1).second, "zzz:zzz:3");
   }
   
-  public void testDoesNotReportInterModuleDependenciesAsUnresolved() throws IOException {
+  public void testDoesNotReportInterModuleDependenciesAsUnresolved() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -179,9 +177,7 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
                           "<version>1</version>");
 
     importProject();
-
-    List<MavenProject> projects = new ArrayList<MavenProject>(unresolvedArtifacts.keySet());
-    assertEquals(0, projects.size());
+    assertEquals(0, unresolvedArtifacts.size());
   }
 
   private void assertArtifactsAre(List<Artifact> actual, String... expectedNames) {

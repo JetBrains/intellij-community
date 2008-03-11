@@ -1,16 +1,16 @@
 package org.jetbrains.idea.maven;
 
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
+import org.jetbrains.idea.maven.project.MavenException;
 
-import java.io.IOException;
 import java.io.File;
 
 public class BasicImportingTest extends ImportingTestCase {
-  public void testUsingRelativePathForTheProject() throws IOException {
+  public void testUsingRelativePathForTheProject() throws Exception {
     assertFalse(((ProjectEx)myProject).isSavePathsRelative());
 
     importProject("<groupId>test</groupId>" +
@@ -20,7 +20,7 @@ public class BasicImportingTest extends ImportingTestCase {
     assertTrue(((ProjectEx)myProject).isSavePathsRelative());
   }
 
-  public void testUsingRelativePathForModules() throws IOException {
+  public void testUsingRelativePathForModules() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -28,7 +28,7 @@ public class BasicImportingTest extends ImportingTestCase {
     assertTrue(getModule("project").isSavePathsRelative());
   }
 
-  public void testLibraryDependency() throws IOException {
+  public void testLibraryDependency() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -48,7 +48,7 @@ public class BasicImportingTest extends ImportingTestCase {
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
   }
 
-  public void testPreservingDependenciesOrder() throws IOException {
+  public void testPreservingDependenciesOrder() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -70,7 +70,7 @@ public class BasicImportingTest extends ImportingTestCase {
     assertModuleLibDeps("project", "B:B:2", "A:A:1");
   }
 
-  public void testIntermoduleDependencies() throws IOException {
+  public void testIntermoduleDependencies() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -103,7 +103,7 @@ public class BasicImportingTest extends ImportingTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
-  public void testOptionalLibraryDependencyIsNotExportable() throws IOException {
+  public void testOptionalLibraryDependencyIsNotExportable() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -126,7 +126,7 @@ public class BasicImportingTest extends ImportingTestCase {
     assertExportedModuleDeps("project", "group:lib1:1");
   }
 
-  public void testOptionalModuleDependencyIsNotExportable() throws IOException {
+  public void testOptionalModuleDependencyIsNotExportable() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -211,7 +211,7 @@ public class BasicImportingTest extends ImportingTestCase {
     assertExportedModuleDeps("project", "test:compile:1", "test:runtime:1");
   }
 
-  public void testTransitiveDependencies() throws IOException {
+  public void testTransitiveDependencies() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -256,7 +256,7 @@ public class BasicImportingTest extends ImportingTestCase {
     // assertModuleLibDeps("m1", "group:id:1");
   }
 
-  public void testTransitiveLibraryDependencyVersionResolution() throws IOException {
+  public void testTransitiveLibraryDependencyVersionResolution() throws Exception {
     // this test hanles the case when the particular dependency list cause embedder set
     // the versionRange for the xml-apis:xml-apis:1.0.b2 artifact to null.
     // see http://jira.codehaus.org/browse/MNG-3386
@@ -283,7 +283,7 @@ public class BasicImportingTest extends ImportingTestCase {
     assertModuleLibDep("project", "xml-apis:xml-apis:1.0.b2");
   }
 
-  public void testProjectWithEnvironmentProperty() throws IOException {
+  public void testProjectWithEnvironmentProperty() throws Exception {
     String javaHome = FileUtil.toSystemIndependentName(System.getProperty("java.home"));
 
     importProject("<groupId>test</groupId>" +
@@ -306,7 +306,7 @@ public class BasicImportingTest extends ImportingTestCase {
                        "jar://" + javaHome + "/lib/tools.jar!/");
   }
 
-  public void testProjectWithEnvironmentENVProperty() throws IOException {
+  public void testProjectWithEnvironmentENVProperty() throws Exception {
     String envDir = FileUtil.toSystemIndependentName(System.getenv("TEMP"));
 
     importProject("<groupId>test</groupId>" +
@@ -329,7 +329,7 @@ public class BasicImportingTest extends ImportingTestCase {
                        "jar://" + envDir + "/lib/tools.jar!/");
   }
 
-  public void testModulesWithSlashesRegularAndBack() throws IOException {
+  public void testModulesWithSlashesRegularAndBack() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -435,7 +435,7 @@ public class BasicImportingTest extends ImportingTestCase {
     assertModules("project", "m (test.group1)", "m (test.group2)");
   }
 
-  public void testModuleWithRelativePath() throws IOException {
+  public void testModuleWithRelativePath() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -453,7 +453,7 @@ public class BasicImportingTest extends ImportingTestCase {
     assertModules("project", "m");
   }
 
-  public void testModuleWithRelativeParent() throws IOException {
+  public void testModuleWithRelativeParent() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -491,7 +491,7 @@ public class BasicImportingTest extends ImportingTestCase {
     assertModuleLibDeps("project", "group:artifact:1:tests");
   }
 
-  public void testDependencyWithClassifier() throws IOException {
+  public void testDependencyWithClassifier() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -547,6 +547,228 @@ public class BasicImportingTest extends ImportingTestCase {
     //assertModules("project", "m1", "m2");
     //assertModuleModuleDeps("m1", "m2");
     //assertModuleLibDeps("m1");
+  }
+
+  public void testPropertyInTheModuleDependency() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<properties>" +
+                     "  <dep-version>1.2.3</dep-version>" +
+                     "</properties>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>"
+    );
+
+    createModulePom("m", "<groupId>test</groupId>" +
+                         "<artifactId>m</artifactId>" +
+
+                         "<parent>" +
+                         "  <groupId>test</groupId>" +
+                         "  <artifactId>project</artifactId>" +
+                         "  <version>1</version>" +
+                         "</parent>" +
+
+                         "<dependencies>" +
+                         "  <dependency>" +
+                         "    <groupId>group</groupId>" +
+                         "    <artifactId>id</artifactId>" +
+                         "    <version>${dep-version}</version>" +
+                         "  </dependency>" +
+                         "</dependencies>");
+
+    importProject();
+
+    assertModules("project", "m");
+    assertModuleLibDeps("m", "group:id:1.2.3");
+  }
+
+  public void testManagedModuleDependency() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<dependencyManagement>" +
+                     "  <dependencies>" +
+                     "    <dependency>" +
+                     "      <groupId>group</groupId>" +
+                     "      <artifactId>id</artifactId>" +
+                     "      <version>1</version>" +
+                     "    </dependency>" +
+                     "  </dependencies>" +
+                     "</dependencyManagement>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    createModulePom("m", "<groupId>test</groupId>" +
+                         "<artifactId>m</artifactId>" +
+
+                         "<parent>" +
+                         "  <groupId>test</groupId>" +
+                         "  <artifactId>project</artifactId>" +
+                         "  <version>1</version>" +
+                         "</parent>" +
+
+                         "<dependencies>" +
+                         "  <dependency>" +
+                         "    <groupId>group</groupId>" +
+                         "    <artifactId>id</artifactId>" +
+                         "  </dependency>" +
+                         "</dependencies>");
+
+    importProject();
+    assertModuleLibDeps("m", "group:id:1");
+  }
+
+  public void testPropertyInTheManagedModuleDependencyVersion() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<properties>" +
+                     "  <dep-version>1</dep-version>" +
+                     "</properties>" +
+
+                     "<dependencyManagement>" +
+                     "  <dependencies>" +
+                     "    <dependency>" +
+                     "      <groupId>group</groupId>" +
+                     "      <artifactId>id</artifactId>" +
+                     "      <version>${dep-version}</version>" +
+                     "    </dependency>" +
+                     "  </dependencies>" +
+                     "</dependencyManagement>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    createModulePom("m", "<groupId>test</groupId>" +
+                         "<artifactId>m</artifactId>" +
+
+                         "<parent>" +
+                         "  <groupId>test</groupId>" +
+                         "  <artifactId>project</artifactId>" +
+                         "  <version>1</version>" +
+                         "</parent>" +
+
+                         "<dependencies>" +
+                         "  <dependency>" +
+                         "    <groupId>group</groupId>" +
+                         "    <artifactId>id</artifactId>" +
+                         "  </dependency>" +
+                         "</dependencies>");
+
+    importProject();
+
+    assertModules("project", "m");
+    assertModuleLibDeps("m", "group:id:1");
+  }
+
+  public void testPropertyInTheManagedModuleDependencyVersionOfPomType() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<properties>" +
+                     "  <version>1</version>" +
+                     "</properties>" +
+
+                     "<dependencyManagement>" +
+                     "  <dependencies>" +
+                     "    <dependency>" +
+                     "      <groupId>xxx</groupId>" +
+                     "      <artifactId>yyy</artifactId>" +
+                     "      <version>${version}</version>" +
+                     "      <type>pom</type>" +
+                     "    </dependency>" +
+                     "  </dependencies>" +
+                     "</dependencyManagement>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    createModulePom("m", "<groupId>test</groupId>" +
+                         "<artifactId>m</artifactId>" +
+
+                         "<parent>" +
+                         "  <groupId>test</groupId>" +
+                         "  <artifactId>project</artifactId>" +
+                         "  <version>1</version>" +
+                         "</parent>" +
+
+                         "<dependencies>" +
+                         "  <dependency>" +
+                         "    <groupId>xxx</groupId>" +
+                         "    <artifactId>yyy</artifactId>" +
+                         "    <type>pom</type>" +
+                         "  </dependency>" +
+                         "</dependencies>");
+
+    try {
+      importProject();
+      fail();
+    } catch(MavenException e) {
+      // until the bug in the embedder is fixed.
+    }
+    
+    //assertModules("project", "m");
+    //
+    //assertEquals(1, unresolvedArtifacts.size());
+    //assertEquals(1, unresolvedArtifacts.get(0).second.size());
+    //assertEquals("yyy", unresolvedArtifacts.get(0).second.get(0).getArtifactId());
+  }
+
+  public void ignoreTestPomTypeDependency() throws Exception {
+    // Not sure how to make maven to resolve the necessary artifact
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <version>4.0</version>" +
+                     "    <type>pom</type>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    importProject();
+    assertModuleLibDeps("project", "junit:junit:4.0");
+  }
+
+  public void testUnresolvedPomTypeDependency() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>xxx</groupId>" +
+                     "    <artifactId>yyy</artifactId>" +
+                     "    <version>4.0</version>" +
+                     "    <type>pom</type>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    importProject();
+
+    assertModuleLibDeps("project");
+    assertEquals(1, unresolvedArtifacts.size());
+
+    assertEquals(1, unresolvedArtifacts.get(0).second.size());
+    assertEquals("yyy", unresolvedArtifacts.get(0).second.get(0).getArtifactId());
   }
 
   public void testLanguageLevel() throws Exception {

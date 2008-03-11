@@ -7,6 +7,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.apache.maven.artifact.Artifact;
@@ -28,7 +29,6 @@ import java.util.*;
  * @author Vladislav.Kaznacheev
  */
 public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.Node> implements MavenImportProcessorContext {
-
   private final static Icon ICON = IconLoader.getIcon("/images/mavenEmblem.png");
 
   private Project projectToUpdate;
@@ -43,7 +43,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   private MavenImportProcessor myImportProcessor;
 
   private boolean openModulesConfigurator;
-  private LinkedHashMap<MavenProject, List<Artifact>> myResolutionErrors;
+  private ArrayList<Pair<MavenProject, List<Artifact>>> myResolutionErrors;
 
   public String getName() {
     return ProjectBundle.message("maven.name");
@@ -63,7 +63,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   @Override
   public boolean validate(Project current, Project dest) {
     try {
-      myResolutionErrors = new LinkedHashMap<MavenProject, List<Artifact>>();
+      myResolutionErrors = new ArrayList<Pair<MavenProject, List<Artifact>>>();
       myImportProcessor.resolve(dest, myProfiles, myResolutionErrors);
     }
     catch (MavenException e) {

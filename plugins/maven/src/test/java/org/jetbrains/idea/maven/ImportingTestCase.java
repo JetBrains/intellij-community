@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -29,7 +30,7 @@ import java.util.*;
 public abstract class ImportingTestCase extends MavenTestCase {
   protected MavenImporterSettings myPrefs;
   protected MavenProjectModel projectModel;
-  protected LinkedHashMap<MavenProject, List<Artifact>> unresolvedArtifacts;
+  protected List<Pair<MavenProject, List<Artifact>>> unresolvedArtifacts;
 
   @Override
   protected void setUpInWriteAction() throws Exception {
@@ -294,30 +295,16 @@ public abstract class ImportingTestCase extends MavenTestCase {
     return ModuleRootManager.getInstance(getModule(module));
   }
 
-  protected void importProject(String xml) throws IOException {
+  protected void importProject(String xml) throws IOException, MavenException {
     createProjectPom(xml);
     importProject();
   }
 
-  protected void importProjectUnsafe(String xml) throws IOException, MavenException {
-    createProjectPom(xml);
-    importProjectWithProfilesUnsafe();
-  }
-
-  protected void importProject() {
-    try {
-      importProjectWithProfiles();
-    }
-    catch (MavenException e) {
-      throw new RuntimeException(e);
-    }
+  protected void importProject() throws MavenException {
+    importProjectWithProfiles();
   }
 
   protected void importProjectWithProfiles(String... profiles) throws MavenException {
-    importProjectWithProfilesUnsafe(profiles);
-  }
-
-  private void importProjectWithProfilesUnsafe(String... profiles) throws MavenException {
     try {
       List<VirtualFile> files = Collections.singletonList(projectPom);
       List<String> profilesList = Arrays.asList(profiles);
@@ -326,7 +313,7 @@ public abstract class ImportingTestCase extends MavenTestCase {
       p.createMavenProjectModel(files, new HashMap<VirtualFile, Module>(), profilesList, new Progress());
       p.createMavenToIdeaMapping();
 
-      unresolvedArtifacts = new LinkedHashMap<MavenProject, List<Artifact>>();
+      unresolvedArtifacts = new ArrayList<Pair<MavenProject, List<Artifact>>>();
       p.resolve(myProject, profilesList, unresolvedArtifacts);
       
       p.commit(myProject, profilesList);

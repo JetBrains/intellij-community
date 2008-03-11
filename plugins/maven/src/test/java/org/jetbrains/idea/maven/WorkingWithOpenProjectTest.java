@@ -4,16 +4,17 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
-import org.jetbrains.idea.maven.project.MavenImportProcessor;
-import org.apache.maven.project.MavenProject;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenImportProcessor;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.LinkedHashMap;
 
 public class WorkingWithOpenProjectTest extends ImportingTestCase {
   @Override
@@ -65,7 +66,7 @@ public class WorkingWithOpenProjectTest extends ImportingTestCase {
                              "  </dependency>" +
                              "</dependencies>"));
     
-    new MavenImportProcessor(myProject).synchronize(new LinkedHashMap<MavenProject, List<Artifact>>());
+    new MavenImportProcessor(myProject).synchronize(new ArrayList<Pair<MavenProject, List<Artifact>>>());
 
     assertModuleLibDep("project", "junit:junit:4.0");
   }

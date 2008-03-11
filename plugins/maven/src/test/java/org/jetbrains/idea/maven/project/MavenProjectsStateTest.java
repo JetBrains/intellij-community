@@ -6,7 +6,7 @@ import org.jetbrains.idea.maven.state.MavenProjectsState;
 import java.io.IOException;
 
 public class MavenProjectsStateTest extends MavenTestCase {
-  public void testShouldReturnNullForUnprocessedFiles() throws IOException {
+  public void testShouldReturnNullForUnprocessedFiles() throws Exception {
     // this pom file doesn't belong to any of the modules, this is won't be processed
     // by MavenProjectStateComponent and won't occur in its projects list.
     createProjectPom("<groupId>test</groupId>" +
