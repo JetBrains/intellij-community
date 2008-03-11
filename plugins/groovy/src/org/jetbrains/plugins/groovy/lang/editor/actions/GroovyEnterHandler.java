@@ -131,6 +131,9 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
           type != mGDOC_COMMENT_START) {
         return false;
       }
+      if ((line.equals("/*") || line.equals("/")) && type == mGDOC_COMMENT_START) {
+        return false;
+      }
       iterator = highlighter.createIterator(caret - 1);
       if (line.startsWith(DOC_COMMENT_START)) {
         if (caret == text.length() || isNotCompleteComment(iterator)) {
