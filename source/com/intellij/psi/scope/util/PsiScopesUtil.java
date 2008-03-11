@@ -310,10 +310,9 @@ public class PsiScopesUtil {
       throw new MethodProcessorSetupFailedException("Cant determine qualifier class!");
 
     if (resolve instanceof PsiTypeParameter) {
-      final PsiType paramType = qualifierResult.getSubstitutor().substitute((PsiTypeParameter)resolve);
-      qualifierResult = PsiUtil.resolveGenericsClassInType(paramType);
-      resolve = qualifierResult.getElement();
-    } else if (resolve instanceof PsiClass) {
+      processor.setAccessClass((PsiClass)resolve);
+    }
+    else if (resolve instanceof PsiClass) {
       PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
       //if (qualifier instanceof PsiSuperExpression) {
         processor.setAccessClass((PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement());
