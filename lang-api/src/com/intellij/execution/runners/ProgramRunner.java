@@ -21,7 +21,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -41,6 +40,7 @@ public interface ProgramRunner<Settings extends JDOMExternalizable> {
 
   boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile);
 
+  @Nullable
   Settings createConfigurationData(ConfigurationInfoProvider settingsProvider);
 
   void checkConfiguration(RunnerSettings settings, ConfigurationPerRunnerSettings configurationPerRunnerSettings)
@@ -50,16 +50,9 @@ public interface ProgramRunner<Settings extends JDOMExternalizable> {
 
   AnAction[] createActions(ExecutionResult executionResult);
 
-  SettingsEditor<Settings> getSettingsEditor(final Executor executor, RunConfiguration configuration);
+  @Nullable
+  SettingsEditor<Settings> getSettingsEditor(Executor executor, RunConfiguration configuration);
 
-  void execute(@NotNull final Executor executor, @NotNull RunProfile profile,
-               @NotNull DataContext dataContext,
-               @Nullable RunnerSettings settings,
-               ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException;
-
-  void execute(@NotNull final Executor executor, @NotNull RunProfile profile,
-               @NotNull DataContext dataContext,
-               @Nullable RunnerSettings settings,
-               ConfigurationPerRunnerSettings configurationSettings,
-               @Nullable final Callback callback) throws ExecutionException;
+  void execute(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException;
+  void execute(@NotNull Executor executor, @NotNull ExecutionEnvironment environment, @Nullable Callback callback) throws ExecutionException;
 }

@@ -4,6 +4,7 @@ import com.intellij.execution.actions.RunContextAction;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
@@ -196,8 +197,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       }
 
       try {
-        runner.execute(myExecutor, configuration.getConfiguration(), dataContext, configuration.getRunnerSettings(runner),
-                       configuration.getConfigurationSettings(runner));
+        runner.execute(myExecutor, new ExecutionEnvironment(runner, configuration, dataContext));
       }
       catch (RunCanceledByUserException e) {
       }

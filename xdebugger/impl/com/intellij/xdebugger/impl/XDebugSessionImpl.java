@@ -1,9 +1,13 @@
 package com.intellij.xdebugger.impl;
 
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -31,9 +35,29 @@ public class XDebugSessionImpl implements XDebugSession {
   private XSourcePosition myCurrentPosition;
   private boolean myPaused;
   private MyDependentBreakpointListener myDependentBreakpointListener;
+  private String mySessionName;
+  private XDebugSessionTab mySessionTab;
+  private Project myProject;
+  private ExecutionEnvironment myEnvironment;
+  private ProgramRunner myRunner;
 
-  public XDebugSessionImpl(XDebuggerManagerImpl debuggerManager) {
+  public XDebugSessionImpl(@NotNull final ExecutionEnvironment env, @NotNull final ProgramRunner runner, XDebuggerManagerImpl debuggerManager) {
+    myEnvironment = env;
+    myRunner = runner;
+    mySessionName = env.getRunProfile().getName();
     myDebuggerManager = debuggerManager;
+    myProject = debuggerManager.getProject();
+  }
+
+  @NotNull
+  public String getSessionName() {
+    return mySessionName;
+  }
+
+  @NotNull
+  public RunContentDescriptor getRunContentDescriptor() {
+    LOG.assertTrue(mySessionTab != null, "Call init() first!");
+    return mySessionTab.getRunContentDescriptor();
   }
 
   @NotNull
@@ -63,7 +87,7 @@ public class XDebugSessionImpl implements XDebugSession {
     return myCurrentPosition;
   }
 
-  public void init(final XDebugProcess process) {
+  public XDebugSessionTab init(final XDebugProcess process, @Nullable final XDebugSessionImpl oldSession) {
     LOG.assertTrue(myDebugProcess == null);
     myDebugProcess = process;
 
@@ -77,6 +101,21 @@ public class XDebugSessionImpl implements XDebugSession {
     myDependentBreakpointListener = new MyDependentBreakpointListener();
     dependentBreakpointManager.addListener(myDependentBreakpointListener);
     process.sessionInitialized();
+
+    mySessionTab = initSessionTab(oldSession);
+    return mySessionTab; 
+  }
+
+  private XDebugSessionTab initSessionTab(@Nullable XDebugSessionImpl oldSession) {
+    final XDebugSessionTab sessionTab = new XDebugSessionTab(myProject, mySessionName);
+    Disposer.register(myProject, sessionTab);
+    sessionTab.attachToSession(this, myRunner, myEnvironment);
+
+    if (oldSession != null) {
+      sessionTab.reuse(oldSession);
+    }
+
+    return sessionTab;
   }
 
   private void disableSlaveBreakpoints(final XDependentBreakpointManager dependentBreakpointManager) {
@@ -317,11 +356,16 @@ public class XDebugSessionImpl implements XDebugSession {
     XBreakpointManagerImpl breakpointManager = myDebuggerManager.getBreakpointManager();
     breakpointManager.removeBreakpointListener(myBreakpointListener);
     breakpointManager.getDependentBreakpointManager().removeListener(myDependentBreakpointListener);
-    myDebuggerManager.removeSession(this);
+
+    // do not remove here, we will reuse it and clear all others in the manager's dispose
+    //myDebuggerManager.removeSession(this);
   }
 
   public boolean isDisabledSlaveBreakpoint(final XBreakpoint<?> breakpoint) {
     return myDisabledSlaveBreakpoints.contains(breakpoint);
+  }
+
+  public void dispose() {
   }
 
   private class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {

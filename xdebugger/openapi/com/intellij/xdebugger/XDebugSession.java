@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.execution.ui.RunContentDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,4 +84,9 @@ public interface XDebugSession {
   void setBreakpointMuted(boolean muted);
   boolean areBreakpointsMuted();
 
+  @NotNull
+  String getSessionName();
+
+  @NotNull
+  RunContentDescriptor getRunContentDescriptor();
 }

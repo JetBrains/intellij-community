@@ -8,9 +8,10 @@ import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
@@ -19,6 +20,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -48,15 +50,12 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return new RemoteConnection(USE_SOCKET_TRANSPORT, HOST, USE_SOCKET_TRANSPORT ? PORT : SHMEM_ADDRESS, SERVER_MODE);
   }
 
-  public RunProfileState getState(final DataContext context,
-                                  final Executor executor,
-                                  RunnerSettings runnerSettings,
-                                  ConfigurationPerRunnerSettings configurationSettings) {
-    GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)runnerSettings.getData());
+  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+    GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)env.getRunnerSettings().getData());
     debuggerSettings.LOCAL = false;
     debuggerSettings.setDebugPort(USE_SOCKET_TRANSPORT ? PORT : SHMEM_ADDRESS);
     debuggerSettings.setTransport(USE_SOCKET_TRANSPORT ? DebuggerSettings.SOCKET_TRANSPORT : DebuggerSettings.SHMEM_TRANSPORT);
-    return new RemoteStateState(getProject(), createRemoteConnection(), runnerSettings, configurationSettings);
+    return new RemoteStateState(getProject(), createRemoteConnection(), env.getRunnerSettings(), env.getConfigurationSettings());
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {

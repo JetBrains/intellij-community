@@ -214,7 +214,7 @@
   <usageGroupingRuleProvider implementation="com.intellij.usages.impl.UsageGroupingRuleProviderImpl"/>
 
   <!-- execution -->
-  <executor implementation="com.intellij.execution.executors.DefaultRunExecutor"/>
+  <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>
 
   <cutElementMarker implementation="com.intellij.ide.PsiCutElementMarker"/>
 

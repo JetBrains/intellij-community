@@ -16,6 +16,9 @@
 
 package com.intellij.xdebugger;
 
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +43,10 @@ public abstract class XDebuggerManager {
   @Nullable
   public abstract XDebugSession getCurrentSession();
 
-  @NotNull 
-  public abstract XDebugSession startSession(@NotNull XDebugProcessStarter processStarter);
+  @NotNull
+  public abstract XDebugSession startSession(@NotNull final ProgramRunner runner,
+                                             @NotNull ExecutionEnvironment env,
+                                             @Nullable RunContentDescriptor contentToReuse,
+                                             @NotNull XDebugProcessStarter processStarter);
 
 }

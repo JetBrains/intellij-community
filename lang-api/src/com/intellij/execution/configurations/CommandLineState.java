@@ -19,6 +19,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -34,20 +35,18 @@ public abstract class CommandLineState implements RunnableState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.CommandLineState");
   private TextConsoleBuilder myConsoleBuilder;  
 
-  private RunnerSettings myRunnerSettings;
-  private ConfigurationPerRunnerSettings myConfigurationSettings;
+  private ExecutionEnvironment myEnvironment;
 
-  protected CommandLineState(RunnerSettings runnerSettings, ConfigurationPerRunnerSettings configurationSettings) {
-    myRunnerSettings = runnerSettings;
-    myConfigurationSettings = configurationSettings;
+  protected CommandLineState(ExecutionEnvironment environment) {
+    myEnvironment = environment;
   }
 
   public RunnerSettings getRunnerSettings() {
-    return myRunnerSettings;
+    return myEnvironment.getRunnerSettings();
   }
 
   public ConfigurationPerRunnerSettings getConfigurationSettings() {
-    return myConfigurationSettings;
+    return myEnvironment.getConfigurationSettings();
   }
 
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {

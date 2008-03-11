@@ -3,6 +3,7 @@ package com.intellij.execution.actions;
 import com.intellij.execution.*;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +31,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
     final ProgramRunner runner = getRunner(myExecutor.getId(), configuration);
     if (runner != null) {
       try {
-      runner.execute(myExecutor, configuration.getConfiguration(), context.getDataContext(), configuration.getRunnerSettings(runner),
-                       configuration.getConfigurationSettings(runner));
+        runner.execute(myExecutor, new ExecutionEnvironment(runner, configuration, context.getDataContext()));
       }
       catch (ExecutionException e) {
         Messages.showErrorDialog(context.getProject(), e.getMessage(), ExecutionBundle.message("error.common.title"));

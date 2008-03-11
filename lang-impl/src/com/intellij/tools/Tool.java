@@ -6,6 +6,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
@@ -224,7 +225,8 @@ public class Tool {
         final ToolRunProfile profile = new ToolRunProfile(this, dataContext);
         final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
         assert runner != null;
-        runner.execute(new DefaultRunExecutor(), profile, dataContext, null, null);
+
+        runner.execute(new DefaultRunExecutor(), new ExecutionEnvironment(profile, dataContext));
       }
       else {
         GeneralCommandLine commandLine = createCommandLine(dataContext);

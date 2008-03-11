@@ -22,11 +22,10 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.*;
@@ -34,11 +33,11 @@ import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -74,11 +73,8 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
   private ExecutionConsole myConsole;
   private ProgramRunner myRunner;
-  private RunProfile myConfiguration;
   private volatile DebuggerSession myDebuggerSession;
 
-  private RunnerSettings myRunnerSettings;
-  private ConfigurationPerRunnerSettings myConfigurationSettings;
   private RunContentDescriptor myRunContentDescriptor;
 
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
@@ -90,6 +86,8 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   private final LogFilesManager myManager;
   private FramesPanel myFramesPanel;
   private RunnerLayoutUi myUi;
+  private ExecutionEnvironment myEnvironment;
+  private RunProfile myConfiguration;
 
   public DebuggerSessionTab(Project project, String sessionName) {
     myProject = project;
@@ -239,8 +237,8 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     DefaultActionGroup group = new DefaultActionGroup();
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
     RestartAction restarAction = new RestartAction(executor,
-                                                   myRunner, myConfiguration, myRunContentDescriptor.getProcessHandler(), DEBUG_AGAIN_ICON,
-                                                   myRunContentDescriptor, myRunnerSettings, myConfigurationSettings);
+                                                   myRunner, myRunContentDescriptor.getProcessHandler(), DEBUG_AGAIN_ICON,
+                                                   myRunContentDescriptor, myEnvironment);
     group.add(restarAction);
     restarAction.registerShortcut(myUi.getComponent());
 
@@ -415,16 +413,13 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
   public RunContentDescriptor attachToSession(final DebuggerSession session,
                                               final ProgramRunner runner,
-                                              final RunProfile runProfile,
-                                              final RunnerSettings runnerSettings,
-                                              final ConfigurationPerRunnerSettings configurationPerRunnerSettings)
+                                              final ExecutionEnvironment env)
     throws ExecutionException {
     disposeSession();
     myDebuggerSession = session;
     myRunner = runner;
-    myRunnerSettings = runnerSettings;
-    myConfigurationSettings = configurationPerRunnerSettings;
-    myConfiguration = runProfile;
+    myEnvironment = env;
+    myConfiguration = env.getRunProfile();
 
     if (myConfiguration instanceof RunConfigurationBase) {
       myManager.registerFileMatcher((RunConfigurationBase)myConfiguration);

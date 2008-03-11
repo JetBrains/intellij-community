@@ -16,6 +16,10 @@
 
 package com.intellij.xdebugger;
 
+import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import org.jetbrains.annotations.NotNull;
@@ -58,4 +62,15 @@ public abstract class XDebugProcess {
   public abstract void resume();
 
   public abstract void runToPosition(@NotNull XSourcePosition position);
+
+  @Nullable
+  public ProcessHandler getProcessHandler() {
+    return null;
+  }
+
+  @NotNull
+  public ExecutionConsole createConsole() {
+    final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(getSession().getProject());
+    return consoleBuilder.getConsole();
+  }
 }

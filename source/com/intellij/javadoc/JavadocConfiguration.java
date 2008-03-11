@@ -11,8 +11,8 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessTerminatedListener;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -31,6 +31,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -83,10 +84,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
     myProject = project;
   }
 
-  public RunProfileState getState(DataContext context,
-                                  Executor executor,
-                                  RunnerSettings runnerSettings,
-                                  ConfigurationPerRunnerSettings configurationSettings) {
+  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     return new MyJavaCommandLineState(myProject, myGenerationOptions);
   }
 
@@ -123,7 +121,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
     @NonNls private static final String INDEX_HTML = "index.html";
 
     public MyJavaCommandLineState(Project project, GenerationOptions generationOptions) {
-      super(null, null);
+      super(null);
       myGenerationOptions = generationOptions;
       myProject = project;
       TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);

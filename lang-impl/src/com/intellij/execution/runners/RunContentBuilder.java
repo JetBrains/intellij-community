@@ -10,10 +10,8 @@ import com.intellij.diagnostic.logging.LogConsoleManager;
 import com.intellij.diagnostic.logging.LogFilesManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.CloseAction;
 import com.intellij.execution.ui.ConsoleView;
@@ -22,10 +20,10 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.content.Content;
@@ -52,15 +50,13 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
   private Icon myRerunIcon = DEFAULT_RERUN_ICON;
   private boolean myReuseProhibited = false;
   private ExecutionResult myExecutionResult;
-  private RunProfile myRunProfile;
-  private RunnerSettings myRunnerSettings;
-  private ConfigurationPerRunnerSettings myConfigurationSettings;
 
   private final LogFilesManager myManager;
 
   private RunnerLayoutUi myUi;
   private Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
   private Executor myExecutor;
+  private ExecutionEnvironment myEnvironment;
 
   public RunContentBuilder(final Project project, final ProgramRunner runner, Executor executor) {
     myProject = project;
@@ -77,14 +73,11 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     myExecutionResult = executionResult;
   }
 
-  public void setRunProfile(final RunProfile runProfile,
-                            RunnerSettings runnerSettings,
-                            ConfigurationPerRunnerSettings configurationSettings) {
-    myRunProfile = runProfile;
-    myRunnerSettings = runnerSettings;
-    myConfigurationSettings = configurationSettings;
-    if (runProfile instanceof RunConfigurationBase) {
-      myManager.registerFileMatcher((RunConfigurationBase)runProfile);
+  public void setEnvironment(@NotNull final ExecutionEnvironment env) {
+    myEnvironment = env;
+    final RunProfile profile = env.getRunProfile();
+    if (profile instanceof RunConfigurationBase) {
+      myManager.registerFileMatcher((RunConfigurationBase)profile);
     }
   }
 
@@ -102,15 +95,18 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     if (myExecutionResult == null) {
       throw new IllegalStateException("Missing ExecutionResult");
     }
-    if (myRunProfile == null) {
-      throw new IllegalStateException("Missing RunProfile");
+
+    if (myEnvironment == null) {
+      throw new IllegalStateException("Missing ExecutionEnvironment");
     }
 
-    myUi = RunnerLayoutUi.Factory.getInstance(myProject).create("JavaRunner", myExecutor.getId(), myRunProfile.getName(), this);
+    final RunProfile profile = myEnvironment.getRunProfile();
+
+    myUi = RunnerLayoutUi.Factory.getInstance(myProject).create("JavaRunner", myExecutor.getId(), profile.getName(), this);
     myUi.setMoveToGridActionEnabled(false).setMinimizeActionEnabled(false);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited, myUi.getComponent(), this);
+      return new MyRunContentDescriptor(profile, myExecutionResult, myReuseProhibited, myUi.getComponent(), this);
     }
 
     final ExecutionConsole console = myExecutionResult.getExecutionConsole();
@@ -129,12 +125,12 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
 
       consoleContent.setActions(consoleActions, ActionPlaces.UNKNOWN, console.getComponent());
       myUi.addContent(consoleContent, 0, RunnerLayoutUi.PlaceInGrid.bottom, false);
-      if (myRunProfile instanceof RunConfigurationBase){
-        myManager.initLogConsoles((RunConfigurationBase)myRunProfile, myExecutionResult.getProcessHandler());
+      if (profile instanceof RunConfigurationBase){
+        myManager.initLogConsoles((RunConfigurationBase)profile, myExecutionResult.getProcessHandler());
       }
     }
 
-    MyRunContentDescriptor contentDescriptor = new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited, myUi.getComponent(), this);
+    MyRunContentDescriptor contentDescriptor = new MyRunContentDescriptor(profile, myExecutionResult, myReuseProhibited, myUi.getComponent(), this);
 
     myUi.setLeftToolbar(createActionToolbar(contentDescriptor, myUi.getComponent()), ActionPlaces.UNKNOWN);
 
@@ -169,7 +165,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
   }
 
   private ActionGroup createActionToolbar(final RunContentDescriptor contentDescriptor, final JComponent component) {
-    final RestartAction action = new RestartAction(myExecutor, myRunner, myRunProfile, getProcessHandler(), myRerunIcon, contentDescriptor, myRunnerSettings, myConfigurationSettings);
+    final RestartAction action = new RestartAction(myExecutor, myRunner, getProcessHandler(), myRerunIcon, contentDescriptor, myEnvironment);
     action.registerShortcut(component);
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(action);

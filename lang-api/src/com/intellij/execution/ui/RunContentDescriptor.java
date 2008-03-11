@@ -19,6 +19,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -51,6 +52,7 @@ public class RunContentDescriptor {
     myExecutionConsole.dispose();
   }
 
+  @Nullable
   public ProcessHandler getProcessHandler() {
     return myProcessHandler;
   }

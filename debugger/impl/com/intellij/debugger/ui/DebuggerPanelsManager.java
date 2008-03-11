@@ -19,6 +19,7 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentListener;
 import com.intellij.execution.ui.RunContentManager;
@@ -103,15 +104,15 @@ public class DebuggerPanelsManager implements ProjectComponent {
   public
   @Nullable
   RunContentDescriptor attachVirtualMachine(Executor executor,
-                                            ModuleRunProfile runProfile,
                                             ProgramRunner runner,
+                                            ExecutionEnvironment environment,
                                             RunProfileState state,
                                             RunContentDescriptor reuseContent,
                                             RemoteConnection remoteConnection,
                                             boolean pollConnection) throws ExecutionException {
 
     final DebuggerSession debuggerSession =
-      DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(executor, runner, runProfile, state, remoteConnection, pollConnection);
+      DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(executor, runner, (ModuleRunProfile) environment.getRunProfile(), state, remoteConnection, pollConnection);
     if (debuggerSession == null) {
       return null;
     }
@@ -129,7 +130,7 @@ public class DebuggerPanelsManager implements ProjectComponent {
     final DebuggerSessionTab sessionTab = new DebuggerSessionTab(myProject, debuggerSession.getSessionName());
     Disposer.register(myProject, sessionTab);
     RunContentDescriptor runContentDescriptor =
-      sessionTab.attachToSession(debuggerSession, runner, runProfile, state.getRunnerSettings(), state.getConfigurationSettings());
+      sessionTab.attachToSession(debuggerSession, runner, environment);
     if (reuseContent != null) {
       final ProcessHandler prevHandler = reuseContent.getProcessHandler();
       if (prevHandler != null) {

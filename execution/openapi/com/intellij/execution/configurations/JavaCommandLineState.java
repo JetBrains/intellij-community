@@ -16,14 +16,16 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.process.OSProcessHandler;
+import org.jetbrains.annotations.NotNull;
 
 
 public abstract class JavaCommandLineState extends CommandLineState implements JavaCommandLine{
   private JavaParameters myParams;
   
-  protected JavaCommandLineState(RunnerSettings runnerSettings, ConfigurationPerRunnerSettings configurationSettings) {
-    super(runnerSettings, configurationSettings);
+  protected JavaCommandLineState(@NotNull final ExecutionEnvironment environment) {
+    super(environment);
   }
 
   public JavaParameters getJavaParameters() throws ExecutionException {

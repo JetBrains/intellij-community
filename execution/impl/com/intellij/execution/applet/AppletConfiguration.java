@@ -7,8 +7,8 @@ import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -61,11 +62,8 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     setModule(JavaExecutionUtil.findModule(psiClass));
   }
 
-  public RunProfileState getState(final DataContext context,
-                                  final Executor executor,
-                                  RunnerSettings runnerSettings,
-                                  ConfigurationPerRunnerSettings configurationSettings) {
-    final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
+  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+    final JavaCommandLineState state = new JavaCommandLineState(env) {
       private AppletHtmlFile myHtmlURL = null;
 
       protected JavaParameters createJavaParameters() throws ExecutionException {

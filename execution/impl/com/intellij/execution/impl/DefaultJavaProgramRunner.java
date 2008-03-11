@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -61,14 +60,8 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     return AnAction.EMPTY_ARRAY;
   }
 
-  @Nullable
-  public RunContentDescriptor doExecute(final Executor executor,
-                                        final RunProfileState state,
-                                        final RunProfile runProfile,
-                                        final Project project,
-                                        final RunContentDescriptor contentToReuse,
-                                        RunnerSettings settings,
-                                        ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
+  protected RunContentDescriptor doExecute(final Project project, final Executor executor, final RunProfileState state, final RunContentDescriptor contentToReuse,
+                                           final ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     ExecutionResult executionResult;
@@ -88,11 +81,11 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       return null;
     }
 
-    onProcessStarted(settings, executionResult);
+    onProcessStarted(env.getRunnerSettings(), executionResult);
 
     final RunContentBuilder contentBuilder = new RunContentBuilder(project, this, executor);
     contentBuilder.setExecutionResult(executionResult);
-    contentBuilder.setRunProfile(runProfile, settings, configurationSettings);
+    contentBuilder.setEnvironment(env);
     customizeContent(contentBuilder);
 
     RunContentDescriptor runContent = contentBuilder.showRunContent(contentToReuse);

@@ -15,6 +15,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -52,14 +53,14 @@ public class ToolRunProfile implements ModuleRunProfile{
     return null;
   }
 
-  public RunProfileState getState(DataContext context, Executor executor, RunnerSettings runnerSettings, ConfigurationPerRunnerSettings configurationSettings) {
-    final Project project = PlatformDataKeys.PROJECT.getData(context);
+  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
+    final Project project = PlatformDataKeys.PROJECT.getData(env.getDataContext());
     if (project == null || myCommandLine == null) {
       // can return null if creation of cmd line has been cancelled
       return null;
     }
 
-    final CommandLineState commandLineState = new CommandLineState(runnerSettings, configurationSettings) {
+    final CommandLineState commandLineState = new CommandLineState(env) {
       GeneralCommandLine createCommandLine() {
         return myCommandLine;
       }

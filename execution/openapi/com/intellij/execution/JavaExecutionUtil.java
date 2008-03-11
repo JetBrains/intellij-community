@@ -6,6 +6,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,7 @@ public class JavaExecutionUtil {
     final DefaultRunProfile profile = new DefaultRunProfile(project, cmdLine, contentName, filters);
     final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
     if (runner != null) {
-      runner.execute(DefaultRunExecutor.getRunExecutorInstance(), profile, dataContext, null, null);
+      runner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(profile, dataContext));
       return true;
     }
 
@@ -55,11 +56,8 @@ public class JavaExecutionUtil {
       myFilters = filters;
     }
 
-    public RunProfileState getState(DataContext context,
-                                    Executor executor,
-                                    RunnerSettings runnerSettings,
-                                    ConfigurationPerRunnerSettings configurationSettings) {
-      final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
+    public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+      final JavaCommandLineState state = new JavaCommandLineState(env) {
         protected JavaParameters createJavaParameters() {
           return myParameters;
         }

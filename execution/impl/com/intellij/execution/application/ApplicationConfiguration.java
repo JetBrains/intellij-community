@@ -13,8 +13,8 @@ import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -31,6 +31,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -61,11 +62,8 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
     setModule(JavaExecutionUtil.findModule(psiClass));
   }
 
-  public RunProfileState getState(final DataContext context,
-                                  final Executor executor,
-                                  RunnerSettings runnerSettings,
-                                  ConfigurationPerRunnerSettings configurationSettings) {
-    final JavaCommandLineState state = new MyJavaCommandLineState(runnerSettings, configurationSettings);
+  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+    final JavaCommandLineState state = new MyJavaCommandLineState(env);
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
     return state;
   }
@@ -202,8 +200,8 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
   private class MyJavaCommandLineState extends JavaCommandLineState {
     private CoverageSuite myCurrentCoverageSuite;
 
-    public MyJavaCommandLineState(final RunnerSettings runnerSettings, final ConfigurationPerRunnerSettings configurationSettings) {
-      super(runnerSettings, configurationSettings);
+    public MyJavaCommandLineState(final ExecutionEnvironment environment) {
+      super(environment);
     }
 
     protected JavaParameters createJavaParameters() throws ExecutionException {

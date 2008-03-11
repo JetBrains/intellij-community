@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -277,14 +278,14 @@ public final class PreviewFormAction extends AnAction{
       final RunProfile profile = new MyRunProfile(module, parameters, UIDesignerBundle.message("progress.preview.started", formFile.getPresentableUrl()));
       ProgramRunner defaultRunner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
       LOG.assertTrue(defaultRunner != null);
-      defaultRunner.execute(DefaultRunExecutor.getRunExecutorInstance(), profile, new DataContext() {   // IDEADEV-3596
+      defaultRunner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(profile, new DataContext() {   // IDEADEV-3596
         public Object getData(String dataId) {
           if (dataId.equals(DataConstants.PROJECT)) {
             return module.getProject();
           }
           return dataContext.getData(dataId);
         }
-      }, null, null);
+      }));
     }
     catch (ExecutionException e) {
       Messages.showErrorDialog(
@@ -306,11 +307,8 @@ public final class PreviewFormAction extends AnAction{
       myStatusbarMessage = statusbarMessage;
     }
 
-    public RunProfileState getState(final DataContext context,
-                                    final Executor executor,
-                                    RunnerSettings runnerSettings,
-                                    ConfigurationPerRunnerSettings configurationSettings) {
-      final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
+    public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+      final JavaCommandLineState state = new JavaCommandLineState(env) {
         protected JavaParameters createJavaParameters() {
           return myParams;
         }

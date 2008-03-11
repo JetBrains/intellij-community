@@ -15,24 +15,16 @@
  */
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import org.jetbrains.annotations.NotNull;
 
 public interface RunProfile {
-  /**
-   * todo - javadoc
-   *
-   * @param context
-   * @param runnerInfo
-   * @param runnerSettings
-   * @param configurationSettings
-   * @return
-   */
-  RunProfileState getState(DataContext context,
-                           Executor executor,
-                           RunnerSettings runnerSettings,
-                           ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException;
+   /**
+    * todo - javadoc
+    */
+  RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException ;
 
   String getName();
 

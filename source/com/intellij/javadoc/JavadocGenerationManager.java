@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -97,7 +98,7 @@ public final class JavadocGenerationManager implements JDOMExternalizable, Proje
     try {
       final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, myConfiguration);
       assert runner != null;
-      runner.execute(DefaultRunExecutor.getRunExecutorInstance(), myConfiguration, dataContext, null, null);
+      runner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(myConfiguration, dataContext));
     }
     catch (ExecutionException e) {
       ExecutionErrorDialog.show(e, CommonBundle.getErrorTitle(), myProject);

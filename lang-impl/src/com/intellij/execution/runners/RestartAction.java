@@ -8,9 +8,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.*;
@@ -24,27 +21,21 @@ import javax.swing.*;
  * @author dyoma
  */
 public class RestartAction extends AnAction {
-  private final RunProfile myProfile;
   private ProcessHandler myProcessHandler;
   private final ProgramRunner myRunner;
   private final RunContentDescriptor myDescriptor;
-  private RunnerSettings myRunnerSettings;
-  private ConfigurationPerRunnerSettings myConfigurationSettings;
   private Executor myExecutor;
+  private ExecutionEnvironment myEnvironment;
 
   public RestartAction(final Executor executor,
                        final ProgramRunner runner,
-                       final RunProfile configuration,
                        final ProcessHandler processHandler,
                        final Icon icon,
                        final RunContentDescriptor descritor,
-                       RunnerSettings runnerSettings,
-                       ConfigurationPerRunnerSettings configurationSettings) {
+                       final ExecutionEnvironment env) {
     super(null, null, icon);
-    myRunnerSettings = runnerSettings;
-    myConfigurationSettings = configurationSettings;
+    myEnvironment = env;
     getTemplatePresentation().setEnabled(false);
-    myProfile = configuration;
     myProcessHandler = processHandler;
     myRunner = runner;
     myDescriptor = descritor;
@@ -56,12 +47,13 @@ public class RestartAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     try {
-      myRunner.execute(myExecutor, myProfile, new DataContext() {
+      final ExecutionEnvironment old = myEnvironment;
+      myRunner.execute(myExecutor, new ExecutionEnvironment(old.getRunProfile(), old.getRunnerSettings(), old.getConfigurationSettings(), new DataContext() {
         public Object getData(final String dataId) {
           if (GenericProgramRunner.CONTENT_TO_REUSE.equals(dataId)) return myDescriptor;
           return dataContext.getData(dataId);
         }
-      }, myRunnerSettings, myConfigurationSettings);
+      }));
     }
     catch (RunCanceledByUserException e1) {
     }
@@ -72,7 +64,7 @@ public class RestartAction extends AnAction {
 
   public void update(final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
-    presentation.setText(ExecutionBundle.message("rerun.configuration.action.name", myProfile.getName()));
+    presentation.setText(ExecutionBundle.message("rerun.configuration.action.name", myEnvironment.getRunProfile().getName()));
     final boolean isRunning = myProcessHandler != null && !myProcessHandler.isProcessTerminated();
     if (myProcessHandler != null && !isRunning) {
       myProcessHandler = null; // already terminated
