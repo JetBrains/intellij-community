@@ -19,7 +19,7 @@ public class MergeIfAndIntention extends Intention {
     return new MergeIfAndPredicate();
   }
 
-  public void processIntention(PsiElement element)
+  public void processIntention(@NotNull PsiElement element)
       throws IncorrectOperationException {
     final GrIfStatement parentStatement =
         (GrIfStatement) element;

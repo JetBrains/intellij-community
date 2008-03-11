@@ -21,7 +21,7 @@ public class ConvertClosureArgToItIntention extends Intention {
         return new SingleArgClosurePredicate();
     }
 
-    public void processIntention(PsiElement element)
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final GrClosableBlock closure =
                 (GrClosableBlock) element;

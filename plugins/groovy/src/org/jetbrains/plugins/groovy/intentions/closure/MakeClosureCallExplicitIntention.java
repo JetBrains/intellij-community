@@ -17,7 +17,7 @@ public class MakeClosureCallExplicitIntention extends Intention {
         return new ImplicitClosureCallPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final GrMethodCallExpression expression =
                 (GrMethodCallExpression) element;

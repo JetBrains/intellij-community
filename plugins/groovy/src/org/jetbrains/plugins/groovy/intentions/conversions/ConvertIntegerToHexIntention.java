@@ -17,7 +17,7 @@ public class ConvertIntegerToHexIntention extends Intention {
     return new ConvertIntegerToHexPredicate();
   }
 
-  public void processIntention(PsiElement element)
+  public void processIntention(@NotNull PsiElement element)
       throws IncorrectOperationException {
     final GrLiteral exp = (GrLiteral) element;
     String textString = exp.getText();

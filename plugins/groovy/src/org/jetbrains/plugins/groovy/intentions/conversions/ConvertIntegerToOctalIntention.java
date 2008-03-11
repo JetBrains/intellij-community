@@ -17,7 +17,7 @@ public class ConvertIntegerToOctalIntention extends Intention {
     return new ConvertIntegerToOctalPredicate();
   }
 
-  public void processIntention(PsiElement element)
+  public void processIntention(@NotNull PsiElement element)
       throws IncorrectOperationException {
     final GrLiteral exp = (GrLiteral) element;
     @NonNls String textString = exp.getText();

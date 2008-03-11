@@ -49,7 +49,6 @@ public abstract class Intention implements IntentionAction {
       @NotNull String newExpression,
       @NotNull GrExpression expression)
       throws IncorrectOperationException {
-    final PsiManager mgr = expression.getManager();
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
 
     GrExpression expressionToReplace = expression;
@@ -63,9 +62,7 @@ public abstract class Intention implements IntentionAction {
     final GrExpression newCall =
         factory.createExpressionFromText(expString);
     assert expressionToReplace != null;
-    final PsiElement insertedElement = expressionToReplace.replaceWithExpression(newCall, true);
-    //  final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
-    //  codeStyleManager.reformat(insertedElement);
+    expressionToReplace.replaceWithExpression(newCall, true);
   }
 
 

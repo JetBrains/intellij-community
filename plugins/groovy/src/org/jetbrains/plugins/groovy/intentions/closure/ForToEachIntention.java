@@ -21,7 +21,7 @@ public class ForToEachIntention extends Intention {
     return new ForToEachPredicate();
   }
 
-  public void processIntention(PsiElement element)
+  public void processIntention(@NotNull PsiElement element)
       throws IncorrectOperationException {
     final GrForStatement parentStatement =
         (GrForStatement) element;

@@ -14,7 +14,7 @@ public class SplitElseIfIntention extends Intention {
     return new SplitElseIfPredicate();
   }
 
-  public void processIntention(PsiElement element)
+  public void processIntention(@NotNull PsiElement element)
       throws IncorrectOperationException {
     final GrIfStatement parentStatement = (GrIfStatement) element;
     assert parentStatement != null;

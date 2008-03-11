@@ -13,7 +13,7 @@ public class ConvertStringToGStringIntention extends Intention {
         return new StringLiteralPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final GrLiteral exp = (GrLiteral) element;
         final String textString = exp.getText();

@@ -17,7 +17,7 @@ public class ChangeToEndOfLineCommentIntention extends Intention {
     return new CStyleCommentPredicate();
   }
 
-  public void processIntention(PsiElement element)
+  public void processIntention(@NotNull PsiElement element)
       throws IncorrectOperationException {
     final PsiComment comment = (PsiComment) element;
     final PsiManager manager = comment.getManager();
