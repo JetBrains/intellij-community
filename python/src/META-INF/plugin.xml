@@ -48,5 +48,7 @@
                         serviceImplementation="com.jetbrains.python.JythonManager"/>
     <projectService serviceInterface="com.jetbrains.python.psi.impl.PyBuiltinCache"
                     serviceImplementation="com.jetbrains.python.psi.impl.PyBuiltinCache"/>
+
+    <referenceImporter implementation="com.jetbrains.python.validation.PythonReferenceImporter"/>
   </extensions>
 </idea-plugin>

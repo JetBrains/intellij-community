@@ -24,6 +24,7 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="platform-impl" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
