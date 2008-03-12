@@ -90,10 +90,13 @@ public class ResolveImportUtil {
       final PsiDirectory dir = (PsiDirectory)parent;
       final PsiFile file = dir.findFile(referencedName + ".py");
       if (file != null) return file;
-      return dir.findSubdirectory(referencedName);
+      final PsiDirectory subdir = dir.findSubdirectory(referencedName);
+      if (subdir != null) return subdir;
+      final PsiFile initPy = dir.findFile("__init__.py");
+      if (initPy != null) {
+        return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), initPy, null, importRef);
+      }
     }
-    else {
-      return null;
-    }
+    return null;
   }
 }
