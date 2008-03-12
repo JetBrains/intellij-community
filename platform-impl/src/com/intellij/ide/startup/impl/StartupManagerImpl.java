@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.io.PagePool;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 
 import java.util.ArrayList;
@@ -104,7 +103,6 @@ public class StartupManagerImpl extends StartupManagerEx {
     runActivities(myPostStartupActivities);
 
     if (app.isUnitTestMode()) return;
-    PagePool.printStatistics();
     
     VirtualFileManager.getInstance().refresh(!app.isHeadlessEnvironment());
   }
