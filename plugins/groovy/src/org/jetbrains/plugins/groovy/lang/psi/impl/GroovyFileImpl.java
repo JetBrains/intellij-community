@@ -89,15 +89,11 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
-    PsiManager manager = getManager();
-    String currentPackageName = getPackageName();
-    PsiPackage currentPackage = manager.findPackage(currentPackageName);
-
     for (final GrTopLevelDefintion definition : getTopLevelDefinitions()) {
-      if (currentPackage != null && definition instanceof GrTypeDefinition) continue; //will be processed by current package
       if (!ResolveUtil.processElement(processor, definition)) return false;
     }
 
+    PsiManager manager = getManager();
 
     if (!(lastParent instanceof GrTypeDefinition)) {
       if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter())) return false;
@@ -121,6 +117,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
     }
 
+    String currentPackageName = getPackageName();
+    PsiPackage currentPackage = manager.findPackage(currentPackageName);
+    
     if (currentPackage != null && !currentPackage.processDeclarations(processor, substitutor, lastParent, place))
       return false;
 
