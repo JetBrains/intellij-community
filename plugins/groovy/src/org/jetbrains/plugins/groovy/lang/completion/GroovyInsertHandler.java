@@ -67,7 +67,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
           PsiDocumentManager docManager = PsiDocumentManager.getInstance(method.getProject());
           docManager.commitDocument(document);
           PsiFile psiFile = docManager.getPsiFile(document);
-          if (false/*isExpressionStatement(psiFile, startOffset)*/) {
+          if (isExpressionStatement(psiFile, startOffset) && PsiType.VOID.equals(method.getReturnType())) {
             document.insertString(offset, " ");
           } else {
             document.insertString(offset, "()");
