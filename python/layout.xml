@@ -12,6 +12,7 @@
         <dir name="lib">
           <jar name="python.jar">
             <module name="python"> <patternset refid="resources.excluded"/> </module>
+            <module name="python-py"/>
           </jar>
           <jar name="resources_en.jar">
             <module name="python">  <patternset refid="resources.included"/> </module>
