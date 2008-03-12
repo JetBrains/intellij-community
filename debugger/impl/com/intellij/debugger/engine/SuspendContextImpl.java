@@ -68,25 +68,28 @@ public abstract class SuspendContextImpl implements SuspendContext {
   protected void resume(){
     assertNotResumed();
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-      for (ObjectReference objectReference : myKeptReferences) {
-        try {
-          objectReference.enableCollection();
+    try {
+      if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
+        for (ObjectReference objectReference : myKeptReferences) {
+          try {
+            objectReference.enableCollection();
+          }
+          catch (UnsupportedOperationException e) {
+            // ignore: some J2ME implementations does not provide this operation
+          }
         }
-        catch (UnsupportedOperationException e) {
-          // ignore: some J2ME implementations does not provide this operation
-        }
+        myKeptReferences.clear();
       }
-      myKeptReferences.clear();
+
+      for(SuspendContextCommandImpl cmd = myPostponedCommands.poll(); cmd != null; cmd = myPostponedCommands.poll()) {
+        cmd.notifyCancelled();
+      }
+
+      resumeImpl();
     }
-
-    for(SuspendContextCommandImpl cmd = myPostponedCommands.poll(); cmd != null; cmd = myPostponedCommands.poll()) {
-      cmd.notifyCancelled();
+    finally {
+      myIsResumed = true;
     }
-
-    resumeImpl();
-
-    myIsResumed = true;
   }
 
   private void assertNotResumed() {

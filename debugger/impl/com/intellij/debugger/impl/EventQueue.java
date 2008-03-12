@@ -36,7 +36,7 @@ public class EventQueue<E> {
     myLock.lock();
     try {
       getEventsList(priority).offer(event);
-      myEventsAvailable.signal();
+      myEventsAvailable.signalAll();
     }
     finally {
       myLock.unlock();

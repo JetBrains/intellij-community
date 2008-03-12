@@ -8,7 +8,6 @@ import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationListener;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -211,7 +210,7 @@ public class DebuggerSession {
   }
 
   /* Stepping */
-  private void resumeAction(final SuspendContextCommandImpl command, int event) {
+  private void resumeAction(final DebugProcessImpl.ResumeCommand command, int event) {
     getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_WAIT_EVALUATION, event, null);
     myDebugProcess.getManagerThread().invokeLater(command, InvokeThread.Priority.HIGH);
   }
@@ -236,7 +235,7 @@ public class DebuggerSession {
 
   public void runToCursor(Document document, int line, final boolean ignoreBreakpoints) {
     try {
-      SuspendContextCommandImpl runToCursorCommand = myDebugProcess.createRunToCursorCommand(getSuspendContext(), document, line,
+      DebugProcessImpl.ResumeCommand runToCursorCommand = myDebugProcess.createRunToCursorCommand(getSuspendContext(), document, line,
                                                                                              ignoreBreakpoints);
       mySteppingThroughThreads.add(getSuspendContext().getThread());
       resumeAction(runToCursorCommand, EVENT_STEP);

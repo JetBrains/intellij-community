@@ -1409,7 +1409,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
   }
 
-  private class ResumeCommand extends SuspendContextCommandImpl {
+  public abstract class ResumeCommand extends SuspendContextCommandImpl {
 
     public ResumeCommand(SuspendContextImpl suspendContext) {
       super(suspendContext);
@@ -1732,7 +1732,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return new PauseCommand();
   }
 
-  public SuspendContextCommandImpl createResumeCommand(SuspendContextImpl suspendContext) {
+  public ResumeCommand createResumeCommand(SuspendContextImpl suspendContext) {
     final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
     return new ResumeCommand(suspendContext) {
       public void contextAction() {
@@ -1742,19 +1742,19 @@ public abstract class DebugProcessImpl implements DebugProcess {
     };
   }
 
-  public SuspendContextCommandImpl createStepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints) {
+  public ResumeCommand createStepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints) {
     return new StepOverCommand(suspendContext, ignoreBreakpoints);
   }
 
-  public SuspendContextCommandImpl createStepOutCommand(SuspendContextImpl suspendContext) {
+  public ResumeCommand createStepOutCommand(SuspendContextImpl suspendContext) {
     return new StepOutCommand(suspendContext);
   }
 
-  public SuspendContextCommandImpl createStepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, final RequestHint.SmartStepFilter smartStepFilter) {
+  public ResumeCommand createStepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, final RequestHint.SmartStepFilter smartStepFilter) {
     return new StepIntoCommand(suspendContext, ignoreFilters, smartStepFilter);
   }
 
-  public SuspendContextCommandImpl createRunToCursorCommand(SuspendContextImpl suspendContext, Document document, int lineIndex,
+  public ResumeCommand createRunToCursorCommand(SuspendContextImpl suspendContext, Document document, int lineIndex,
                                                             final boolean ignoreBreakpoints)
     throws EvaluateException {
     RunToCursorCommand runToCursorCommand = new RunToCursorCommand(suspendContext, document, lineIndex, ignoreBreakpoints);

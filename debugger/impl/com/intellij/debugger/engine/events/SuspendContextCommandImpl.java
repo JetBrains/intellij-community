@@ -1,6 +1,7 @@
 package com.intellij.debugger.engine.events;
 
 import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.impl.InvokeThread;
 import com.intellij.openapi.diagnostic.Logger;
 
 /**
@@ -52,7 +53,7 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
         suspendContext.myInProgress = false;
         final SuspendContextCommandImpl postponed = suspendContext.pollPostponedCommand();
         if(postponed != null) {
-          suspendContext.getDebugProcess().getManagerThread().invokeLater(postponed);
+          suspendContext.getDebugProcess().getManagerThread().invokeLater(postponed, InvokeThread.Priority.HIGH);
         }
       }
     }
