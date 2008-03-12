@@ -28,7 +28,10 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
 public abstract class GroovyFix implements LocalQuickFix {
 
@@ -86,5 +89,31 @@ public abstract class GroovyFix implements LocalQuickFix {
     final GrStatement newCall =
         (GrStatement) factory.createTopElementFromText(newStatement);
     statement.replaceWithStatement(newCall);
+  }
+
+  /**
+   * unwraps surrounding blocks from newStatement.
+   */
+  protected static void replaceStatement(GrStatement oldStatement, GrStatement newStatement)
+      throws IncorrectOperationException {
+    if (newStatement instanceof GrBlockStatement) {
+      GrBlockStatement blockStatement = (GrBlockStatement) newStatement;
+      final GrOpenBlock openBlock = blockStatement.getBlock();
+      final GrStatement[] statements = openBlock.getStatements();
+      if (statements.length == 0) {
+        oldStatement.removeStatement();
+      } else {
+        final PsiElement parent = oldStatement.getParent();
+        if (parent instanceof GrStatementOwner) {
+          GrStatementOwner statementOwner = (GrStatementOwner) parent;
+          for (GrStatement statement : statements) {
+            statementOwner.addStatementBefore(statement, oldStatement);
+          }
+          oldStatement.removeStatement();
+        }
+      }
+    } else {
+      oldStatement.replaceWithStatement(newStatement);
+    }
   }
 }

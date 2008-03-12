@@ -87,31 +87,6 @@ public class GroovyConstantIfStatementInspection extends BaseInspection {
         replaceStatement(ifStatement, thenBranch);
       }
     }
-
-    /**
-     * unwraps surrounding blocks from new statement.
-     */
-    private void replaceStatement(GrStatement oldStatement, GrStatement newStatement) throws IncorrectOperationException {
-      if (newStatement instanceof GrBlockStatement) {
-        GrBlockStatement blockStatement = (GrBlockStatement) newStatement;
-        final GrOpenBlock openBlock = blockStatement.getBlock();
-        final GrStatement[] statements = openBlock.getStatements();
-        if (statements.length == 0) {
-          oldStatement.removeStatement();
-        } else {
-          final PsiElement parent = oldStatement.getParent();
-          if (parent instanceof GrStatementOwner) {
-            GrStatementOwner statementOwner = (GrStatementOwner) parent;
-            for (GrStatement statement : statements) {
-              statementOwner.addStatementBefore(statement, oldStatement);
-            }
-            oldStatement.removeStatement();
-          }
-        }
-      } else {
-        replaceStatement(oldStatement, newStatement.getText());
-      }
-    }
   }
 
   private static class ConstantIfStatementVisitor

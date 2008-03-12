@@ -46,7 +46,7 @@ public class GroovyIfStatementWithIdenticalBranchesInspection extends BaseInspec
           (GrIfStatement) identifier.getParent();
       assert statement != null;
       final GrStatement thenBranch = statement.getThenBranch();
-      replaceStatement(statement, thenBranch.getText());
+      replaceStatement(statement, thenBranch);
     }
   }
 

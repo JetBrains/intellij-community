@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -48,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
     "OverlyComplexClass",
     "ClassWithTooManyMethods"})
 public class EquivalenceChecker {
+
   private EquivalenceChecker() {
     super();
   }
@@ -87,6 +89,7 @@ public class EquivalenceChecker {
   private static final int WHILE_STATEMENT = 18;
   private static final int SYNCHRONIZED_STATEMENT = 19;
   private static final int ASSERT_STATEMENT = 20;
+  private static final int APPLICATION_STATEMENT = 21;
 
   public static boolean statementsAreEquivalent(@Nullable GrStatement exp1,
                                                 @Nullable GrStatement exp2) {
@@ -103,56 +106,60 @@ public class EquivalenceChecker {
     }
     switch (type1) {
       case BLOCK_STATEMENT:
-        return blockStatementsAreEquivalent((GrBlockStatement) exp1,
-            (GrBlockStatement) exp2);
+        return blockStatementsAreEquivalent((GrBlockStatement) exp1, (GrBlockStatement) exp2);
       case BREAK_STATEMENT:
         return true;
       case CONTINUE_STATEMENT:
         return true;
       case VAR_STATEMENT:
-        return varStatementsAreEquivalent((GrVariableDeclaration) exp1,
-            (GrVariableDeclaration) exp2);
+        return varStatementsAreEquivalent((GrVariableDeclaration) exp1, (GrVariableDeclaration) exp2);
       case EMPTY_STATEMENT:
         return true;
+      case APPLICATION_STATEMENT:
+        return applicationStatementsAreEquivalent((GrApplicationStatement) exp1, (GrApplicationStatement) exp2);
       case EXPRESSION_STATEMENT:
         return expressionStatementsAreEquivalent((GrExpression) exp1, (GrExpression) exp2);
       case FOR_STATEMENT:
-        return forInStatementsAreEquivalent((GrForStatement) exp1,
-            (GrForStatement) exp2);
+        return forInStatementsAreEquivalent((GrForStatement) exp1, (GrForStatement) exp2);
       case IF_STATEMENT:
-        return ifStatementsAreEquivalent((GrIfStatement) exp1,
-            (GrIfStatement) exp2);
+        return ifStatementsAreEquivalent((GrIfStatement) exp1, (GrIfStatement) exp2);
       case RETURN_STATEMENT:
-        return returnStatementsAreEquivalent((GrReturnStatement) exp1,
-            (GrReturnStatement) exp2);
+        return returnStatementsAreEquivalent((GrReturnStatement) exp1, (GrReturnStatement) exp2);
       case SWITCH_STATEMENT:
-        return switchStatementsAreEquivalent((GrSwitchStatement) exp1,
-            (GrSwitchStatement) exp2);
+        return switchStatementsAreEquivalent((GrSwitchStatement) exp1, (GrSwitchStatement) exp2);
       case THROW_STATEMENT:
-        return throwStatementsAreEquivalent((GrThrowStatement) exp1,
-            (GrThrowStatement) exp2);
+        return throwStatementsAreEquivalent((GrThrowStatement) exp1, (GrThrowStatement) exp2);
       case TRY_STATEMENT:
-        return tryStatementsAreEquivalent((GrTryCatchStatement) exp1,
-            (GrTryCatchStatement) exp2);
+        return tryStatementsAreEquivalent((GrTryCatchStatement) exp1, (GrTryCatchStatement) exp2);
       case WHILE_STATEMENT:
-        return whileStatementsAreEquivalent((GrWhileStatement) exp1,
-            (GrWhileStatement) exp2);
+        return whileStatementsAreEquivalent((GrWhileStatement) exp1, (GrWhileStatement) exp2);
       case SYNCHRONIZED_STATEMENT:
-        return synchronizedStatementsAreEquivalent((GrSynchronizedStatement) exp1,
-            (GrSynchronizedStatement) exp2);
+        return synchronizedStatementsAreEquivalent((GrSynchronizedStatement) exp1, (GrSynchronizedStatement) exp2);
       case ASSERT_STATEMENT:
-        return assertStatementsAreEquivalent((GrAssertStatement) exp1,
-            (GrAssertStatement) exp2);
+        return assertStatementsAreEquivalent((GrAssertStatement) exp1, (GrAssertStatement) exp2);
       default:
         return false;
     }
+  }
+
+  private static boolean applicationStatementsAreEquivalent(GrApplicationStatement statement1,
+                                                            GrApplicationStatement statement2) {
+    final GrExpression funExpression1 = statement1.getFunExpression();
+    final GrExpression funExpression2 = statement2.getFunExpression();
+    if (!expressionsAreEquivalent(funExpression1, funExpression2)) {
+      return false;
+    }
+    final GrExpression[] arguments1 = statement1.getArguments();
+    final GrExpression[] arguments2 = statement2.getArguments();
+    return expressionListsAreEquivalent(arguments1, arguments2);
   }
 
   private static boolean assertStatementsAreEquivalent(GrAssertStatement statement1, GrAssertStatement statement2) {
     return expressionsAreEquivalent(statement1.getAssertion(), statement2.getAssertion());
   }
 
-  private static boolean synchronizedStatementsAreEquivalent(GrSynchronizedStatement statement1, GrSynchronizedStatement statement2) {
+  private static boolean synchronizedStatementsAreEquivalent(GrSynchronizedStatement statement1,
+                                                             GrSynchronizedStatement statement2) {
     return expressionsAreEquivalent(statement1.getMonitor(), statement2.getMonitor()) &&
         openBlocksAreEquivalent(statement1.getBody(), statement2.getBody());
   }
@@ -535,7 +542,6 @@ public class EquivalenceChecker {
                                                             @NotNull GrMethodCallExpression methodExp2) {
     final GrExpression methodExpression1 = methodExp1.getInvokedExpression();
     final GrExpression methodExpression2 = methodExp2.getInvokedExpression();
-
     if (!expressionsAreEquivalent(methodExpression1, methodExpression2)) {
       return false;
     }
@@ -786,7 +792,7 @@ public class EquivalenceChecker {
     if (exp instanceof GrNewExpression) {
       return NEW_EXPRESSION;
     }
-    if (exp instanceof GrMethodCallExpression) {
+    if (exp instanceof GrCallExpression) {
       return CALL_EXPRESSION;
     }
     if (exp instanceof GrPostfixExpression) {
@@ -816,11 +822,10 @@ public class EquivalenceChecker {
     if (exp instanceof GrListOrMap) {
       return LIST_OR_MAP_EXPRESSION;
     }
-    return -1;
+    throw new AssertionError("Expression has unknown type: " + exp.getClass());
   }
 
   private static int getStatementType(@Nullable GrStatement statement) {
-
     if (statement instanceof GrBlockStatement) {
       return BLOCK_STATEMENT;
     }
@@ -832,6 +837,9 @@ public class EquivalenceChecker {
     }
     if (statement instanceof GrVariableDeclaration) {
       return VAR_STATEMENT;
+    }
+    if (statement instanceof GrApplicationStatement) {
+      return APPLICATION_STATEMENT;
     }
     if (statement instanceof GrExpression) {
       return EXPRESSION_STATEMENT;
@@ -863,6 +871,6 @@ public class EquivalenceChecker {
     if (statement instanceof GrAssertStatement) {
       return ASSERT_STATEMENT;
     }
-    return -1;
+    throw new AssertionError("Statement has unknown type: " + statement.getClass());
   }
 }
