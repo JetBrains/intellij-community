@@ -5,12 +5,12 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.runner.MavenRunnerConfigurable;
-import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
-import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.core.MavenCoreConfigurable;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.action.CompositeConfigurable;
+import org.jetbrains.idea.maven.runner.MavenRunnerConfigurable;
+import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
+import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 
 import javax.swing.*;
 

@@ -7,9 +7,9 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.core.util.Strings;
 import org.jetbrains.idea.maven.runner.RunnerBundle;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
-import org.jetbrains.idea.maven.core.util.Strings;
 
 import javax.swing.*;
 

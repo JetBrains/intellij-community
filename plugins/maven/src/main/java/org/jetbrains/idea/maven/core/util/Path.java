@@ -1,8 +1,8 @@
 package org.jetbrains.idea.maven.core.util;
 
-import com.intellij.util.PathUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.util.PathUtil;
 
 public class Path {
   private String path;

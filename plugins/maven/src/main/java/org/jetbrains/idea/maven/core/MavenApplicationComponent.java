@@ -1,12 +1,12 @@
 package org.jetbrains.idea.maven.core;
 
 import com.intellij.ide.IconProvider;
+import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.javaee.ExternalResourceManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

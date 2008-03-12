@@ -21,10 +21,10 @@ package org.jetbrains.idea.maven.runner.executor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.idea.maven.runner.RunnerBundle;
-import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
-import org.jetbrains.idea.maven.runner.logger.MavenLogUtil;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
+import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
+import org.jetbrains.idea.maven.runner.RunnerBundle;
+import org.jetbrains.idea.maven.runner.logger.MavenLogUtil;
 
 import java.text.MessageFormat;
 

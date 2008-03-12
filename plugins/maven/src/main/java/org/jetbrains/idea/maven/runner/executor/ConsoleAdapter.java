@@ -5,8 +5,8 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.idea.maven.runner.logger.MavenLogUtil;
 import org.jetbrains.idea.maven.core.util.ErrorHandler;
+import org.jetbrains.idea.maven.runner.logger.MavenLogUtil;
 
 /**
  * @author Vladislav.Kaznacheev

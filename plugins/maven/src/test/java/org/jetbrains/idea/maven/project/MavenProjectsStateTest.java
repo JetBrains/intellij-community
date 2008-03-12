@@ -3,8 +3,6 @@ package org.jetbrains.idea.maven.project;
 import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
-import java.io.IOException;
-
 public class MavenProjectsStateTest extends MavenTestCase {
   public void testShouldReturnNullForUnprocessedFiles() throws Exception {
     // this pom file doesn't belong to any of the modules, this is won't be processed

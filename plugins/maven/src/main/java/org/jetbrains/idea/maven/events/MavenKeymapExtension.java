@@ -12,13 +12,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.runner.MavenRunner;
-import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.repo.MavenRepository;
 import org.jetbrains.idea.maven.repo.PluginDocument;
+import org.jetbrains.idea.maven.runner.MavenRunner;
+import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import javax.swing.*;

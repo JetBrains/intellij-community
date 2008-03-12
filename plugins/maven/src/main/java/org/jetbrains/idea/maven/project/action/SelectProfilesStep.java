@@ -2,8 +2,8 @@ package org.jetbrains.idea.maven.project.action;
 
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.projectImport.ProjectImportWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.projectImport.ProjectImportWizardStep;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;

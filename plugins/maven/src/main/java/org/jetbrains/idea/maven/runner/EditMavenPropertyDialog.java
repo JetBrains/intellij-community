@@ -6,7 +6,10 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.Map;
 
 public class EditMavenPropertyDialog extends DialogWrapper {

@@ -1,10 +1,10 @@
 package org.jetbrains.idea.maven.runner.execution;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 
 import java.util.List;
 
