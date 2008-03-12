@@ -106,8 +106,8 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
     protected TreeClassChooser.ClassFilterWithScope getFilter() throws NoFilterException {
       final Module module = myModuleSelector.getModule();
       final GlobalSearchScope scope;
-      if (module == null) scope = GlobalSearchScope.projectScope(myProject);
-      else scope = GlobalSearchScope.moduleWithDependenciesScope(module);
+      if (module == null) scope = GlobalSearchScope.allScope(myProject);
+      else scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
       final TreeClassChooser.ClassFilter filter = createFilter(module);
       return new TreeClassChooser.ClassFilterWithScope() {
         public GlobalSearchScope getScope() {

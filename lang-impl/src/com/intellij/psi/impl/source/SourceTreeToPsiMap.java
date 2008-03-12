@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.source;
 
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
+import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -21,6 +21,6 @@ public class SourceTreeToPsiMap {
   }
 
   public static boolean hasTreeElement(@Nullable PsiElement psiElement) {
-    return psiElement instanceof TreeElement || psiElement instanceof SrcRepositoryPsiElement || psiElement instanceof ASTWrapperPsiElement;
+    return psiElement instanceof TreeElement || psiElement instanceof SrcRepositoryPsiElement || psiElement instanceof ASTDelegatePsiElement;
   }
 }
