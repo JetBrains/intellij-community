@@ -460,6 +460,10 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       return originalUrls.toArray(new String[originalUrls.size()]);
     }
 
+    public VirtualFile[] getFiles(final OrderRootType rootType) {
+      return LibraryImpl.this.getFiles(rootType);
+    }
+
     public void fireRootSetChanged() {
       super.fireRootSetChanged();
     }

@@ -221,12 +221,16 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
 
   private class MyRootProvider extends RootProviderBaseImpl implements ProjectRootListener {
     public String[] getUrls(OrderRootType rootType) {
-      final VirtualFile[] rootFiles = myRootContainer.getRootFiles(rootType);
+      final ProjectRoot[] rootFiles = myRootContainer.getRoots(rootType);
       final ArrayList<String> result = new ArrayList<String>();
-      for (VirtualFile rootFile : rootFiles) {
-        result.add(rootFile.getUrl());
+      for (ProjectRoot rootFile : rootFiles) {
+        result.addAll(Arrays.asList(rootFile.getUrls()));
       }
       return result.toArray(new String[result.size()]);
+    }
+
+    public VirtualFile[] getFiles(final OrderRootType rootType) {
+      return myRootContainer.getRootFiles(rootType);
     }
 
     private Set<RootSetChangedListener> myListeners = new HashSet<RootSetChangedListener>();

@@ -8,6 +8,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 public interface ProjectRoot {
   boolean isValid();
   VirtualFile[] getVirtualFiles();
+
+  String[] getUrls();
+
   String getPresentableString();
+
   void update();
 }

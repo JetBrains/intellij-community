@@ -57,6 +57,10 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
     return myFileArrray;
   }
 
+  public String[] getUrls() {
+    return new String[]{myUrl};
+  }
+
   public boolean isValid() {
     if (!myInitialized) {
       initialize();

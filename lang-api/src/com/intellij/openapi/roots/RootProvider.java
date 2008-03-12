@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.EventListener;
 
@@ -25,6 +26,7 @@ import java.util.EventListener;
  */
 public interface RootProvider {
   String[] getUrls(OrderRootType rootType);
+  VirtualFile[] getFiles(OrderRootType rootType);
 
   interface RootSetChangedListener extends EventListener {
     void rootSetChanged(RootProvider wrapper);

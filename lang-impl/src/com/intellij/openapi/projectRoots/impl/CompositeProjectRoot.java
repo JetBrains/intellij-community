@@ -15,10 +15,10 @@ import java.util.List;
  * @author mike
  */
 class CompositeProjectRoot implements ProjectRoot {
-  private List myRoots = new ArrayList();
+  private List<ProjectRoot> myRoots = new ArrayList<ProjectRoot>();
 
   ProjectRoot[] getProjectRoots() {
-    return (ProjectRoot[])myRoots.toArray(new ProjectRoot[myRoots.size()]);
+    return myRoots.toArray(new ProjectRoot[myRoots.size()]);
   }
 
   public String getPresentableString() {
@@ -26,13 +26,21 @@ class CompositeProjectRoot implements ProjectRoot {
   }
 
   public VirtualFile[] getVirtualFiles() {
-    List result = new ArrayList();
-    for (Iterator iterator = myRoots.iterator(); iterator.hasNext();) {
-      ProjectRoot root = (ProjectRoot)iterator.next();
+    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (Iterator<ProjectRoot> iterator = myRoots.iterator(); iterator.hasNext();) {
+      ProjectRoot root = iterator.next();
       result.addAll(Arrays.asList(root.getVirtualFiles()));
     }
 
-    return (VirtualFile[])result.toArray(new VirtualFile[result.size()]);
+    return result.toArray(new VirtualFile[result.size()]);
+  }
+
+  public String[] getUrls() {
+    final List<String> result = new ArrayList<String>();
+    for (ProjectRoot root : myRoots) {
+      result.addAll(Arrays.asList(root.getUrls()));
+    }
+    return result.toArray(new String[result.size()]);
   }
 
   public boolean isValid() {
@@ -54,8 +62,8 @@ class CompositeProjectRoot implements ProjectRoot {
   }
 
   void remove(VirtualFile root) {
-    for (Iterator iterator = myRoots.iterator(); iterator.hasNext();) {
-      ProjectRoot projectRoot = (ProjectRoot)iterator.next();
+    for (Iterator<ProjectRoot> iterator = myRoots.iterator(); iterator.hasNext();) {
+      ProjectRoot projectRoot = iterator.next();
       if (projectRoot instanceof SimpleProjectRoot) {
         SimpleProjectRoot r = (SimpleProjectRoot)projectRoot;
         if (r.getFile() != null && r.getFile().equals(root)) {
@@ -78,8 +86,8 @@ class CompositeProjectRoot implements ProjectRoot {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (Iterator iterator = myRoots.iterator(); iterator.hasNext();) {
-      ProjectRoot root = (ProjectRoot)iterator.next();
+    for (Iterator<ProjectRoot> iterator = myRoots.iterator(); iterator.hasNext();) {
+      ProjectRoot root = iterator.next();
       final Element e = ProjectRootUtil.write(root);
       if (e != null) {
         element.addContent(e);
@@ -88,8 +96,8 @@ class CompositeProjectRoot implements ProjectRoot {
   }
 
   public void update() {
-    for (Iterator iterator = myRoots.iterator(); iterator.hasNext();) {
-      ProjectRoot root = (ProjectRoot)iterator.next();
+    for (Iterator<ProjectRoot> iterator = myRoots.iterator(); iterator.hasNext();) {
+      ProjectRoot root = iterator.next();
       root.update();
     }
   }
