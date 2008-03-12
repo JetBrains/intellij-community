@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
@@ -9,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -102,15 +100,7 @@ public class DynamicToolWindowWrapper {
 
     DynamicManager.getInstance(project).addDynamicChangeListener(new DynamicChangeListener() {
       public void dynamicPropertyChange() {
-        storeState(project);
         rebuildTreePanel(project);
-        restoreState(project);
-      }
-    });
-
-    Disposer.register(window.getContentManager(), new Disposable() {
-      public void dispose() {
-        storeState(project);
       }
     });
 
@@ -314,9 +304,7 @@ public class DynamicToolWindowWrapper {
     myTreeTable.registerKeyboardAction(
         new ActionListener() {
           public void actionPerformed(ActionEvent event) {
-            storeState(project);
             deleteRow(project);
-            restoreState(project);
           }
         },
         KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
@@ -326,10 +314,8 @@ public class DynamicToolWindowWrapper {
     myTreeTable.registerKeyboardAction(
         new ActionListener() {
           public void actionPerformed(ActionEvent event) {
-            storeState(project);
             final int selectionRow = myTreeTable.getTree().getLeadSelectionRow();
             myTreeTable.editCellAt(selectionRow, CLASS_OR_ELEMENT_NAME_COLUMN, event);
-            restoreState(project);
           }
         },
         KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0),
@@ -339,10 +325,8 @@ public class DynamicToolWindowWrapper {
     myTreeTable.registerKeyboardAction(
         new ActionListener() {
           public void actionPerformed(ActionEvent event) {
-            storeState(project);
             final int selectionRow = myTreeTable.getTree().getLeadSelectionRow();
             myTreeTable.editCellAt(selectionRow, TYPE_COLUMN, event);
-            restoreState(project);
           }
         },
         KeyStroke.getKeyStroke(KeyEvent.VK_F2, KeyEvent.CTRL_MASK),
@@ -616,33 +600,6 @@ public class DynamicToolWindowWrapper {
     }
 
     return ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(currentFile);
-  }
-
-  private static void storeState(Project project) {
-    if (doesTreeTableInit()) {
-//      final Module module = getActiveModule(project);
-
-//      myState = getState();
-//      project.putUserData(DYNAMIC_TOOLWINDOW_STATE_KEY, myState);
-
-    }
-  }
-
-  private static void restoreState(Project project) {
-    if (doesTreeTableInit()) {
-//      myState = project.getUserData(DYNAMIC_TOOLWINDOW_STATE_KEY);
-//
-//      TreeUtil.restoreExpandedPaths(myTreeTable.getTree(), myState.getExpandedElements());
-    }
-  }
-
-  private static DynamicTreeViewState getState() {
-    DynamicTreeViewState structureViewState = new DynamicTreeViewState();
-    if (myTreeTable.getTree() != null) {
-      structureViewState.setExpandedElements(getExpandedElements());
-      structureViewState.setSelectedElements(getSelectedElements());
-    }
-    return structureViewState;
   }
 
   private static List<TreePath> getExpandedElements() {
