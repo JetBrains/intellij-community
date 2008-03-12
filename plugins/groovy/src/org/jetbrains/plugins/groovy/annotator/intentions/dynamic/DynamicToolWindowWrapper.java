@@ -547,44 +547,58 @@ public class DynamicToolWindowWrapper {
       buildTree(myProject, rootNode);
 
       String filterText;
+      List<DefaultMutableTreeNode> classes = new ArrayList<DefaultMutableTreeNode>();
+      List<DefaultMutableTreeNode> dynamicNodes = new ArrayList<DefaultMutableTreeNode>();
 
       DefaultMutableTreeNode classNode = (DefaultMutableTreeNode) rootNode.getFirstChild();
       while (classNode != null) {
 
-        DefaultMutableTreeNode propertyNode = (DefaultMutableTreeNode) classNode.getFirstChild();
-        while (propertyNode != null) {
+        DefaultMutableTreeNode dynamicNode = (DefaultMutableTreeNode) classNode.getFirstChild();
+        while (dynamicNode != null) {
 
-          final Object childObject = propertyNode.getUserObject();
+          final Object childObject = dynamicNode.getUserObject();
           if (!(childObject instanceof DItemElement)) break;
 
           filterText = getFilter();
           if (filterText == null || "".equals(filterText)) {
             ((DItemElement) childObject).setHightlightedText("");
+
+            dynamicNodes.add(dynamicNode);
+            dynamicNode = (DefaultMutableTreeNode) classNode.getChildAfter(dynamicNode);
             continue;
           }
 
           final String name = (((DItemElement) childObject)).getName();
 
-          if (!name.contains(filterText)) {
-            final TreeNode parent = propertyNode.getParent();
-
-            if (!(parent instanceof DefaultMutableTreeNode)) break;
-
-            ((DefaultMutableTreeNode) parent).remove(propertyNode);
-          } else {
+          if (name.contains(filterText)) {
             ((DItemElement) childObject).setHightlightedText(filterText);
+            dynamicNodes.add(dynamicNode);
           }
-          propertyNode = (DefaultMutableTreeNode) classNode.getChildAfter(propertyNode);
+
+          dynamicNode = (DefaultMutableTreeNode) classNode.getChildAfter(dynamicNode);
         }
 
-        if (classNode.getChildCount() == 0) {
-          final TreeNode parent = classNode.getParent();
-
-          if (!(parent instanceof DefaultMutableTreeNode)) break;
-          ((DefaultMutableTreeNode) parent).remove(classNode);
+        if (!dynamicNodes.isEmpty()) {
+          classes.add(classNode);
         }
+
+        classNode.removeAllChildren();
+
+        for (DefaultMutableTreeNode node : dynamicNodes) {
+          classNode.add(node);
+        }
+        
+        dynamicNodes.clear();
+
         classNode = (DefaultMutableTreeNode) rootNode.getChildAfter(classNode);
       }
+      rootNode.removeAllChildren();
+
+      for (DefaultMutableTreeNode aClass : classes) {
+        rootNode.add(aClass);
+      }
+
+      classes.clear();
 
       rebuildTreeView(myProject, rootNode, true);
     }
