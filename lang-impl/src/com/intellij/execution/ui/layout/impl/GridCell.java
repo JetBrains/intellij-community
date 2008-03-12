@@ -5,7 +5,6 @@ import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -15,7 +14,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.JBTabsImpl;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.util.containers.HashSet;
@@ -38,7 +37,7 @@ public class GridCell implements Disposable {
   private MutualMap<Content, TabInfo> myContents = new MutualMap<Content, TabInfo>(true);
   private Set<Content> myMinimizedContents = new HashSet<Content>();
 
-  private JBTabs myTabs;
+  private JBTabsImpl myTabs;
   private Grid.Placeholder myPlaceholder;
   private RunnerLayoutUi.PlaceInGrid myPlaceInGrid;
 
@@ -55,10 +54,25 @@ public class GridCell implements Disposable {
 
     myPlaceInGrid = placeInGrid;
     myPlaceholder = placeholder;
-    myTabs = new MyTabs(context.getProject(), container);
-    myTabs.setUiDecorator(new JBTabs.UiDecorator() {
-      public JBTabs.UiDecoration getDecoration() {
-        return new JBTabs.UiDecoration(null, new Insets(0, -1, 0, -1));
+    myTabs = new JBTabsImpl(myContext.getProject(), myContext.getActionManager(), myContext.getFocusManager(), container).setDataProvider(new DataProvider() {
+      @Nullable
+      public Object getData(@NonNls final String dataId) {
+        if (ViewContext.CONTENT_KEY.getName().equals(dataId)) {
+          TabInfo target = myTabs.getTargetInfo();
+          if (target != null) {
+            return new Content[]{getContentFor(target)};
+          }
+        }
+        else if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
+          return myContext;
+        }
+
+        return null;
+      }
+    });
+    myTabs.setUiDecorator(new JBTabsImpl.UiDecorator() {
+      public JBTabsImpl.UiDecoration getDecoration() {
+        return new JBTabsImpl.UiDecoration(null, new Insets(0, -1, 0, -1));
       }
     });
     myTabs.setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal());
@@ -447,27 +461,6 @@ public class GridCell implements Disposable {
     add(content);
     updateSelection(myTabs.getRootPane() != null);
     return new ActionCallback.Done();
-  }
-
-  private class MyTabs extends JBTabs implements DataProvider {
-    public MyTabs(final Project project, final Grid container) {
-      super(project, myContext.getActionManager(), myContext.getFocusManager(), container);
-    }
-
-    @Nullable
-    public Object getData(@NonNls final String dataId) {
-      if (ViewContext.CONTENT_KEY.getName().equals(dataId)) {
-        TabInfo target = myTabs.getTargetInfo();
-        if (target != null) {
-          return new Content[]{getContentFor(target)};
-        }
-      }
-      else if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
-        return myContext;
-      }
-
-      return super.getData(dataId);
-    }
   }
 
   public void dispose() {

@@ -12,7 +12,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
-import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.JBTabsImpl;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -29,9 +29,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-public class RunnerContentUi
-  implements ContentUI, Disposable, CellTransform.Facade, ViewContext,
-             PropertyChangeListener {
+public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContext, PropertyChangeListener {
 
   @NonNls public static final String LAYOUT = "Runner.Layout";
   @NonNls public static final String VIEW_POPUP = "Runner.View.Popup";
@@ -46,7 +44,7 @@ public class RunnerContentUi
 
   private Wrapper myToolbar = new Wrapper();
 
-  JBTabs myTabs;
+  JBTabsImpl myTabs;
   private Comparator<TabInfo> myTabsComparator = new Comparator<TabInfo>() {
     public int compare(final TabInfo o1, final TabInfo o2) {
       return getTabFor(o1).getIndex() - getTabFor(o2).getIndex();
@@ -72,7 +70,11 @@ public class RunnerContentUi
   private boolean myMinimizeActionEnabled = true;
   private boolean myMoveToGridActionEnabled = true;
 
-  public RunnerContentUi(Project project, ActionManager actionManager, IdeFocusManager focusManager, RunnerLayout settings, String sessionName) {
+  public RunnerContentUi(Project project,
+                         ActionManager actionManager,
+                         IdeFocusManager focusManager,
+                         RunnerLayout settings,
+                         String sessionName) {
     myProject = project;
     myLayoutSettings = settings;
     myActionManager = actionManager;
@@ -99,20 +101,21 @@ public class RunnerContentUi
   public void initUi() {
     if (myTabs != null) return;
 
-    myTabs = new JBTabs(myProject, myActionManager, myFocusManager, this) {
-      @Nullable
-      public Object getData(@NonNls final String dataId) {
-        if (ViewContext.CONTENT_KEY.getName().equals(dataId)) {
-          TabInfo info = myTabs.getTargetInfo();
-          if (info != null) {
-            return getGridFor(info).getData(dataId);
+    myTabs = new JBTabsImpl(myProject, myActionManager, myFocusManager, this)
+        .setDataProvider(new DataProvider() {
+          public Object getData(@NonNls final String dataId) {
+            if (ViewContext.CONTENT_KEY.getName().equals(dataId)) {
+              TabInfo info = myTabs.getTargetInfo();
+              if (info != null) {
+                return getGridFor(info).getData(dataId);
+              }
+            }
+            else if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
+              return RunnerContentUi.this;
+            }
+            return null;
           }
-        } else if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
-          return RunnerContentUi.this;
-        }
-        return super.getData(dataId);
-      }
-    };
+        });
     final ActionGroup popup = (ActionGroup)myActionManager.getAction(VIEW_POPUP);
     myTabs.setPopupGroup(popup, TAB_POPUP_PLACE);
     myTabs.setPaintBorder(false);
@@ -145,7 +148,8 @@ public class RunnerContentUi
         if (myTabs.getSelectedInfo() != info) {
           info.fireAlert();
         }
-      } else {
+      }
+      else {
         grid.alert(content);
       }
     }
@@ -191,7 +195,8 @@ public class RunnerContentUi
 
           if (selected != null && toSelect != null && selected == toSelect) {
             select(event.getContent(), true);
-          } else {
+          }
+          else {
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
                 select(event.getContent(), true);
@@ -288,7 +293,8 @@ public class RunnerContentUi
           contextComponent = content.getActionsContextComponent();
         }
         groupToBuild.addAll(myTopActions);
-      } else {
+      }
+      else {
         final DefaultActionGroup group = new DefaultActionGroup();
         group.addAll(myTopActions);
         groupToBuild = group;
@@ -491,7 +497,8 @@ public class RunnerContentUi
     try {
       myManager.removeAllContents(false);
       myMinimizedViewActions.removeAll();
-    } finally {
+    }
+    finally {
       setStateIsBeingRestored(false, this);
     }
 
@@ -511,7 +518,8 @@ public class RunnerContentUi
   public void setStateIsBeingRestored(final boolean restoredNow, final Object requestor) {
     if (restoredNow) {
       myRestoreStateRequestors.add(requestor);
-    } else {
+    }
+    else {
       myRestoreStateRequestors.remove(requestor);
     }
   }
@@ -732,7 +740,6 @@ public class RunnerContentUi
   }
 
 
-
   public Project getProject() {
     return myProject;
   }
@@ -780,20 +787,20 @@ public class RunnerContentUi
   }
 
   public void validate(final Content content, final ActionCallback.Runnable toRestore) {
-      final TabInfo current = myTabs.getSelectedInfo();
-      myTabs.setPaintBlocked(true);
+    final TabInfo current = myTabs.getSelectedInfo();
+    myTabs.setPaintBlocked(true);
 
-      select(content, false).doWhenDone(new Runnable() {
-        public void run() {
-          myTabs.validate();
-          toRestore.run().doWhenDone(new Runnable() {
-            public void run() {
-              myTabs.select(current, true);
-              myTabs.setPaintBlocked(false);
-            }
-          });
-        }
-      });
+    select(content, false).doWhenDone(new Runnable() {
+      public void run() {
+        myTabs.validate();
+        toRestore.run().doWhenDone(new Runnable() {
+          public void run() {
+            myTabs.select(current, true);
+            myTabs.setPaintBlocked(false);
+          }
+        });
+      }
+    });
   }
 
   private class TwoSideComponent extends NonOpaquePanel {
@@ -832,7 +839,8 @@ public class RunnerContentUi
         myLeft.setBounds(0, 0, myLeft.getPreferredSize().width, parent.getHeight());
         Dimension rightSize = myRight.getPreferredSize();
         myRight.setBounds(parent.getWidth() - rightSize.width, 0, rightSize.width, parent.getHeight());
-      } else {
+      }
+      else {
         Dimension leftMinSize = myLeft.getMinimumSize();
         Dimension rightMinSize = myRight.getMinimumSize();
 
@@ -865,7 +873,7 @@ public class RunnerContentUi
       if (compHeight > parentHeight) {
         compHeight = parentHeight;
       }
-      
+
       int y = (int)Math.floor(parentHeight / 2.0 - compHeight / 2.0);
       comp.setBounds(compBounds.x, y, compBounds.width, compHeight);
 
