@@ -4,19 +4,10 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.stubs.SerializationManager;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.impl.PyElementGeneratorImpl;
-import com.jetbrains.python.psi.impl.stubs.PyClassSerializer;
-import com.jetbrains.python.psi.impl.stubs.PyFunctionSerializer;
-import com.jetbrains.python.psi.impl.stubs.PyParameterListSerializer;
-import com.jetbrains.python.psi.impl.stubs.PyParameterSerializer;
-import com.jetbrains.python.psi.stubs.PyClassStub;
-import com.jetbrains.python.psi.stubs.PyFunctionStub;
-import com.jetbrains.python.psi.stubs.PyParameterListStub;
-import com.jetbrains.python.psi.stubs.PyParameterStub;
 import com.jetbrains.python.validation.*;
 
 import java.util.Set;
@@ -47,12 +38,6 @@ public class PythonLanguage extends Language {
     _annotators.add(UnresolvedReferenceAnnotator.class);
   }
 
-  {
-    SerializationManager.getInstance().registerSerializer(PyClassStub.class, new PyClassSerializer());
-    SerializationManager.getInstance().registerSerializer(PyFunctionStub.class, new PyFunctionSerializer());
-    SerializationManager.getInstance().registerSerializer(PyParameterStub.class, new PyParameterSerializer());
-    SerializationManager.getInstance().registerSerializer(PyParameterListStub.class, new PyParameterListSerializer());
-  }
 
   protected PythonLanguage() {
     super("Python");

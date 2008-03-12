@@ -10,6 +10,9 @@
 
   <application-components>
     <component>
+      <implementation-class>com.jetbrains.python.psi.impl.PyAppLevelRegistrar</implementation-class>
+    </component>
+    <component>
       <implementation-class>com.jetbrains.python.PyInspectionToolProvider</implementation-class>
     </component>
     <component>
