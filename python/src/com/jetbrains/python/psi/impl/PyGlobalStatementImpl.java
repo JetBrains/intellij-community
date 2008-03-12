@@ -20,7 +20,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
@@ -36,29 +35,30 @@ import com.jetbrains.python.psi.PyReferenceExpression;
  * To change this template use File | Settings | File Templates.
  */
 public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStatement {
-    private TokenSet REFERENCES = TokenSet.create(PyElementTypes.REFERENCE_EXPRESSION);
+  public PyGlobalStatementImpl(ASTNode astNode) {
+    super(astNode);
+  }
 
-    public PyGlobalStatementImpl(ASTNode astNode) {
-        super(astNode);
-    }
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyGlobalStatement(this);
+  }
 
-    @Override protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-        pyVisitor.visitPyGlobalStatement(this);
-    }
+  @NotNull
+  public PyReferenceExpression[] getGlobals() {
+    return childrenToPsi(PyElementTypes.REFERENCE_EXPRESSION_SET, PyReferenceExpression.EMPTY_ARRAY);
+  }
 
-    @NotNull public PyReferenceExpression[] getGlobals() {
-        return childrenToPsi(REFERENCES, PyReferenceExpression.EMPTY_ARRAY);
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState substitutor,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    for (PyExpression expression : getGlobals()) {
+      if (expression == lastParent) continue;
+      if (!expression.processDeclarations(processor, substitutor, lastParent, place)) {
+        return false;
+      }
     }
-
-    public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                       @NotNull ResolveState substitutor,
-                                       PsiElement lastParent,
-                                       @NotNull PsiElement place) {
-        for (PyExpression expression: getGlobals()) {
-            if (!expression.processDeclarations(processor, substitutor, lastParent, place)) {
-                return false;
-            }
-        }
-        return true;
-    }
+    return true;
+  }
 }

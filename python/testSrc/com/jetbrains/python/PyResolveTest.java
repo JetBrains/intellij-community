@@ -11,6 +11,7 @@ import com.intellij.testFramework.ResolveTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyAssignmentStatement;
 
 public class PyResolveTest extends ResolveTestCase {
   private PsiElement resolve() throws Exception {
@@ -61,6 +62,12 @@ public class PyResolveTest extends ResolveTestCase {
   public void testTryExceptElse() throws Exception {
     PsiElement targetElement = resolve();
     assertTrue(targetElement instanceof PyTargetExpression);
+  }
+
+  public void testGlobal() throws Exception {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
   }
 
   @Override
