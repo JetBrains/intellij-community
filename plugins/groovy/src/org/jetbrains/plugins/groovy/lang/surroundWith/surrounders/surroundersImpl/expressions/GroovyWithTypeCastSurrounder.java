@@ -16,7 +16,7 @@ public class GroovyWithTypeCastSurrounder extends GroovyExpressionSurrounder {
     GrParenthesizedExpression parenthesized = (GrParenthesizedExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createTopElementFromText("((Type)a)");
     GrTypeCastExpression typeCast = (GrTypeCastExpression) parenthesized.getOperand();
     replaceToOldExpression(typeCast.getOperand(), expression);
-    expression.replaceWithStatement(typeCast);
+    expression.replaceWithExpression(parenthesized, true);
     GrTypeElement typeElement = typeCast.getCastTypeElement();
     int endOffset = typeElement.getTextRange().getStartOffset();
 
