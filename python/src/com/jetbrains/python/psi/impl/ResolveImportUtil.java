@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,7 +87,10 @@ public class ResolveImportUtil {
       return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), parent, null, importRef);
     }
     else if (parent instanceof PsiDirectory) {
-      return ((PsiDirectory)parent).findFile(referencedName + ".py");
+      final PsiDirectory dir = (PsiDirectory)parent;
+      final PsiFile file = dir.findFile(referencedName + ".py");
+      if (file != null) return file;
+      return dir.findSubdirectory(referencedName);
     }
     else {
       return null;

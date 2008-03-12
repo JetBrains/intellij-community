@@ -1,2 +1,2 @@
-from mypackage.myfile import myclass
-#               <ref>
+from mypackage.child import testfile
+#                             <ref>
