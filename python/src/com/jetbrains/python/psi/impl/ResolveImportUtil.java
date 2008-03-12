@@ -6,10 +6,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,9 +39,6 @@ public class ResolveImportUtil {
         return resolveChild(sourceFile, referencedName, importRef);
       }
     }
-    final PsiFile[] files = FilenameIndex.getFilesByName(importRef.getProject(), referencedName + ".py",
-                                                         GlobalSearchScope.allScope(importRef.getProject()));
-    if (files.length == 1) return files[0];
 
     final Module module = ModuleUtil.findModuleForPsiElement(importRef);
     if (module == null) return null;
@@ -57,7 +51,7 @@ public class ResolveImportUtil {
 
       public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
         if (value != null) return value;
-        return resolveInRoots(jdkOrderEntry.getRootFiles(OrderRootType.CLASSES), referencedName, importRef);
+        return resolveInRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), referencedName, importRef);
       }
     };
     return ModuleRootManager.getInstance(module).processOrder(resolvePolicy, null);
