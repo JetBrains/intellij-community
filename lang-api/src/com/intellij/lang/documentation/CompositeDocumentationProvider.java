@@ -16,6 +16,7 @@
 
 package com.intellij.lang.documentation;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -90,6 +91,10 @@ public class CompositeDocumentationProvider extends ExtensibleDocumentationProvi
   public boolean isExternalDocumentationEnabled(final PsiElement element) {
     for (DocumentationProvider provider : myProviders) {
       if (provider instanceof ExtensibleDocumentationProvider && ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element)) return true;
+      final String url = provider.getUrlFor(element, null);
+      if (url != null) {
+        return true;
+      }
     }
     return false;
   }
@@ -99,6 +104,12 @@ public class CompositeDocumentationProvider extends ExtensibleDocumentationProvi
     for (DocumentationProvider provider : myProviders) {
       if (provider instanceof ExtensibleDocumentationProvider && ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element)) {
         ((ExtensibleDocumentationProvider)provider).openExternalDocumentation(element);
+        return;
+      }
+      final String url = provider.getUrlFor(element, null);
+      if (url != null) {
+        BrowserUtil.launchBrowser(url);
+        return;
       }
     }
   }
