@@ -20,10 +20,10 @@ import java.util.List;
  * @author mike
  */
 public class StartupManagerImpl extends StartupManagerEx {
-  private List<Runnable> myActivities = new ArrayList<Runnable>();
-  private List<Runnable> myPostStartupActivities = Collections.synchronizedList(new ArrayList<Runnable>());
-  private List<Runnable> myProjectConfigurationActivities = Collections.synchronizedList(new ArrayList<Runnable>());
-  private List<Runnable> myPreStartupActivities = Collections.synchronizedList(new ArrayList<Runnable>());
+  private final List<Runnable> myActivities = new ArrayList<Runnable>();
+  private final List<Runnable> myPostStartupActivities = Collections.synchronizedList(new ArrayList<Runnable>());
+  private final List<Runnable> myProjectConfigurationActivities = Collections.synchronizedList(new ArrayList<Runnable>());
+  private final List<Runnable> myPreStartupActivities = Collections.synchronizedList(new ArrayList<Runnable>());
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
 
@@ -31,7 +31,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   private boolean myStartupActivityRunning = false;
   private boolean myStartupActivityPassed = false;
 
-  private Project myProject;
+  private final Project myProject;
 
   public StartupManagerImpl(Project project) {
     myProject = project;
