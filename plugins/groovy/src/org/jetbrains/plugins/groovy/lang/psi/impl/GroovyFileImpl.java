@@ -90,6 +90,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     for (final GrTopLevelDefintion definition : getTopLevelDefinitions()) {
+      if (definition instanceof GrTypeDefinition) continue; //will be processed by current package
       if (!ResolveUtil.processElement(processor, definition)) return false;
     }
 
