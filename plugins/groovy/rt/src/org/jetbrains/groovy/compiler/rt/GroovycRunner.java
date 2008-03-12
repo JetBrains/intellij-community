@@ -211,38 +211,27 @@ public class GroovycRunner {
     CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
     compilerConfiguration.setOutput(new PrintWriter(System.err));
     compilerConfiguration.setWarningLevel(WarningMessage.PARANOIA);
-
     compilerConfiguration.setClasspath(classpath);
-
     compilerConfiguration.setTargetDirectory(outputPath);
 
-    return new CompilationUnit(compilerConfiguration, null, buildClassLoaderFor(compilerConfiguration));
+    /**
+     * todo add here framework-specific Phase operations
+     * @see org.codehaus.groovy.control.CompilationUnit#addPhaseOperation(org.codehaus.groovy.control.CompilationUnit.PrimaryClassNodeOperation, int)
+     */
+    CompilationUnit compilationUnit = new CompilationUnit(compilerConfiguration, null, buildClassLoaderFor(compilerConfiguration));
+
+    // todo check Grails module
+//    PhaseOperationUtil.addGrailsAwareInjectionOperation(compilationUnit, compilerConfiguration);
+    return compilationUnit;
   }
 
   static GroovyClassLoader buildClassLoaderFor(final CompilerConfiguration compilerConfiguration) {
     return (GroovyClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
       public Object run() {
-        URLClassLoader urlClassLoader = new URLClassLoader(convertClasspathToUrls(compilerConfiguration));
+        URLClassLoader urlClassLoader = new URLClassLoader(GroovyCompilerUtil.convertClasspathToUrls(compilerConfiguration));
         return new GroovyClassLoader(urlClassLoader, compilerConfiguration);
       }
     });
   }
 
-  private static URL[] convertClasspathToUrls(CompilerConfiguration compilerConfiguration) {
-    try {
-      return classpathAsUrls(compilerConfiguration);
-    } catch (MalformedURLException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private static URL[] classpathAsUrls(CompilerConfiguration compilerConfiguration) throws MalformedURLException {
-    List classpath = compilerConfiguration.getClasspath();
-    URL[] classpathUrls = new URL[classpath.size()];
-    for (int i = 0; i < classpathUrls.length; i++) {
-      String classpathEntry = (String) classpath.get(i);
-      classpathUrls[i] = new File(classpathEntry).toURL();
-    }
-    return classpathUrls;
-  }
 }
