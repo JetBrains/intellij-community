@@ -84,6 +84,11 @@
       <interface-class>com.intellij.codeInsight.highlighting.HighlightManagerActions</interface-class>
       <implementation-class>com.intellij.codeInsight.highlighting.HighlightManagerActions</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.psi.stubs.SerializationManager</interface-class>
+      <implementation-class>com.intellij.psi.stubs.SerializationManagerImpl</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

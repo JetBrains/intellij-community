@@ -5,6 +5,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -27,7 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class StubIndex implements FileBasedIndexExtension<Integer, byte[]> {
-  private static final ID<Integer, byte[]> MY_ID = ID.create("StubIndex");
+  public static final ID<Integer, byte[]> INDEX_ID = ID.create("StubIndex");
   private static final DataExternalizer<byte[]> KEY_EXTERNALIZER = new DataExternalizer<byte[]>() {
     public void save(final DataOutput out, final byte[] value) throws IOException {
       out.writeInt(value.length);
@@ -71,36 +72,35 @@ public class StubIndex implements FileBasedIndexExtension<Integer, byte[]> {
   };
 
   public ID<Integer, byte[]> getName() {
-    return MY_ID;
+    return INDEX_ID;
   }
 
   public DataIndexer<Integer, byte[], FileBasedIndex.FileContent> getIndexer() {
     return new DataIndexer<Integer, byte[], FileBasedIndex.FileContent>() {
       public Map<Integer, byte[]> map(final FileBasedIndex.FileContent inputData) {
-        Map<Integer, byte[]> result = new HashMap<Integer, byte[]>();
+        final Map<Integer, byte[]> result = new HashMap<Integer, byte[]>();
         if (!(inputData.file instanceof NewVirtualFile)) return result;
-        final int key = ((NewVirtualFile)inputData.file).getId();
-        final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        DataOutputStream stream = new DataOutputStream(bytes);
-        final LanguageFileType filetype = (LanguageFileType)inputData.file.getFileType();
-        Language l = filetype.getLanguage();
-        final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
 
-        Project project = ProjectManager.getInstance().getDefaultProject(); // TODO
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            final int key = ((NewVirtualFile)inputData.file).getId();
+            final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            DataOutputStream stream = new DataOutputStream(bytes);
+            final LanguageFileType filetype = (LanguageFileType)inputData.file.getFileType();
+            Language l = filetype.getLanguage();
+            final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
 
-        PsiFile copy =
-          PsiFileFactory.getInstance(project).createFileFromText(inputData.fileName, filetype, inputData.content, 1, false, false);
+            Project project = ProjectManager.getInstance().getDefaultProject(); // TODO
 
-        final StubElement stub = ((IStubFileElementType)type).getBuilder().buildStubTree(copy);
+            PsiFile copy =
+              PsiFileFactory.getInstance(project).createFileFromText(inputData.fileName, filetype, inputData.content, 1, false, false);
 
-        try {
-          SerializationManager.getInstance().serialize(stub, stream);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+            final StubElement stub = ((IStubFileElementType)type).getBuilder().buildStubTree(copy);
 
-        result.put(key, bytes.toByteArray());
+            SerializationManager.getInstance().serialize(stub, stream);
+            result.put(key, bytes.toByteArray());
+          }
+        });
 
         return result;
       }

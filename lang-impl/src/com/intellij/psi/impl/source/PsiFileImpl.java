@@ -1,7 +1,10 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.ide.startup.FileContent;
-import com.intellij.lang.*;
+import com.intellij.lang.ASTFactory;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -20,18 +23,21 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.stubs.SerializationManager;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
@@ -468,9 +474,14 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   public StubElement getStub() {
     if (myStub == null) {
-      final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage()).getFileNodeType();
-      if (type instanceof IStubFileElementType) {
-        myStub = ((IStubFileElementType)type).getBuilder().buildStubTree(this);        
+      final VirtualFile vFile = getVirtualFile();
+      final int id = FileBasedIndex.getFileId(vFile);
+      if (id > 0) {
+        final List<byte[]> datas = FileBasedIndex.getInstance().getValues(StubIndex.INDEX_ID, id, getProject());
+        if (datas.size() == 1) {
+          final DataInputStream stream = new DataInputStream(new ByteArrayInputStream(datas.get(0)));
+          myStub = SerializationManager.getInstance().deserialize(stream);
+        }
       }
     }
     return myStub;
