@@ -49,7 +49,7 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
     assertEquals("mypackage", ((PsiDirectory) element).getName());
   }
 
-  public void testFromQualifiedPackageImportFile() throws Exception {
+  public void testFromQualifiedFileImportClass() throws Exception {
     PsiElement element = doResolve();
     assertTrue(element instanceof PsiFile);
     assertEquals("myfile.py", ((PsiFile) element).getName());
