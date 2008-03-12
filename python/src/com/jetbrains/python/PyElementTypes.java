@@ -14,6 +14,9 @@ public interface PyElementTypes {
   PyStubElementType FUNCTION_DECLARATION = new PyFunctionElementType();
   PyStubElementType CLASS_DECLARATION = new PyClassElementType();
   PyStubElementType PARAMETER_LIST = new PyParameterListElementType();
+
+  TokenSet PARAMETER_LIST_SET = TokenSet.create(PARAMETER_LIST);  
+
   PyStubElementType FORMAL_PARAMETER = new PyFormalParameterElementType();
 
   PyElementType DECORATED_FUNCTION_DECLARATION = new PyElementType("DECORATED_FUNCTION_DECLARATION", PyDecoratedFunctionImpl.class);

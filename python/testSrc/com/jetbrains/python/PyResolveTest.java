@@ -8,10 +8,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.ResolveTestCase;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.*;
 
 public class PyResolveTest extends ResolveTestCase {
   private PsiElement resolve() throws Exception {
@@ -68,6 +65,11 @@ public class PyResolveTest extends ResolveTestCase {
     PsiElement targetElement = resolve();
     assertTrue(targetElement instanceof PyTargetExpression);
     assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
+  }
+
+  public void testLambda() throws Exception {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyParameter);
   }
 
   @Override

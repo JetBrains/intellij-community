@@ -17,9 +17,16 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyLambdaExpression;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.types.PyType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,5 +46,19 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
 
   public PyType getType() {
     return null;
+  }
+
+  public PyParameterList getParameterList() {
+    return childToPsiNotNull(PyElementTypes.PARAMETER_LIST_SET, 0);
+  }
+
+  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, final PsiElement lastParent,
+                                     @NotNull final PsiElement place) {
+    PyParameter[] parameters = getParameterList().getParameters();
+    for(PyParameter param: parameters) {
+      if (param == lastParent) continue;
+      if (!processor.execute(param, state)) return false;
+    }
+    return true;
   }
 }
