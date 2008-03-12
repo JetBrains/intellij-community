@@ -14,28 +14,46 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
       fail();
     }
     catch (MavenException e) {
-      assertMessageContains(e, "java.lang.NullPointerException");
+      assertExceptionHasPomFileContains(e, "java.lang.NullPointerException");
+    }
+  }
+
+  public void testUnresolvedParent() throws Exception {
+    try {
+      importProject("<groupId>test</groupId>" +
+                    "<artifactId>project</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<parent>" +
+                    "  <groupId>test</groupId>" +
+                    "  <artifactId>parent</artifactId>" +
+                    "  <version>1</version>" +
+                    "</parent>");
+      fail();
+    }
+    catch (MavenException e) {
+      assertExceptionHasPomFileContains(e, "Cannot find artifact for parent POM: test:parent::1");
     }
   }
 
   public void testInvalidExtension() throws Exception {
     try {
       importProject("<groupId>test</groupId>" +
-                          "<artifactId>project</artifactId>" +
-                          "<version>1</version>" +
+                    "<artifactId>project</artifactId>" +
+                    "<version>1</version>" +
 
-                          "<build>" +
-                          " <extensions>" +
-                          "   <extension>" +
-                          "     <groupId>group</groupId>" +
-                          "     <artifactId>bla-bla-bla</artifactId>" +
-                          "    </extension>" +
-                          "  </extensions>" +
-                          "</build>");
+                    "<build>" +
+                    " <extensions>" +
+                    "   <extension>" +
+                    "     <groupId>group</groupId>" +
+                    "     <artifactId>bla-bla-bla</artifactId>" +
+                    "    </extension>" +
+                    "  </extensions>" +
+                    "</build>");
       fail();
     }
     catch (MavenException e) {
-      assertMessageContains(e, "group:bla-bla-bla");
+      assertExceptionHasPomFileContains(e, "group:bla-bla-bla");
     }
   }
 
@@ -46,17 +64,17 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
                              "<version>1</version>");
 
       importProject("<groupId>test</groupId>" +
-                          "<artifactId>project</artifactId>" +
-                          "<version>1</version>" +
-                          "<packaging>jar</packaging>" +
+                    "<artifactId>project</artifactId>" +
+                    "<version>1</version>" +
+                    "<packaging>jar</packaging>" +
 
-                          "<modules>" +
-                          "  <module>foo</module>" +
-                          "</modules>");
+                    "<modules>" +
+                    "  <module>foo</module>" +
+                    "</modules>");
       fail();
     }
     catch (MavenException e) {
-      assertMessageContains(e, "Packaging 'jar' is invalid");
+      assertExceptionHasPomFileContains(e, "Packaging 'jar' is invalid");
     }
   }
 
@@ -67,18 +85,17 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
                              "<version>1</version");
 
       importProject("<groupId>test</groupId>" +
-                          "<artifactId>project</artifactId>" +
-                          "<version>project</version>" +
-                          "<packaging>pom</packaging>" +
+                    "<artifactId>project</artifactId>" +
+                    "<version>project</version>" +
+                    "<packaging>pom</packaging>" +
 
-                          "<modules>" +
-                          "  <module>foo</module>" +
-                          "</modules>");
+                    "<modules>" +
+                    "  <module>foo</module>" +
+                    "</modules>");
       fail();
     }
     catch (MavenException e) {
-      assertMessageContains(e, "Failed to parse model",
-                               "foo\\pom.xml");
+      assertExceptionHasPomFileContains(e, "Failed to parse model", "foo\\pom.xml");
     }
   }
 
@@ -98,7 +115,7 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
       fail();
     }
     catch (MavenException e) {
-      assertMessageContains(e, "Cannot find ArtifactRepositoryLayout instance for: nothing");
+      assertExceptionHasPomFileContains(e, "Cannot find ArtifactRepositoryLayout instance for: nothing");
     }
   }
   
@@ -208,10 +225,15 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
     assertOrderedElementsAreEqual(actualNames, expectedNames);
   }
 
-  private void assertMessageContains(MavenException e, String... parts) {
+  private void assertExceptionContains(MavenException e, String... parts) {
     for (String part : parts) {
       assertTrue("Substring '" + part + "' not fund in '" + e.getMessage() + "'",
                  e.getMessage().contains(part));
     }
+  }
+
+  private void assertExceptionHasPomFileContains(MavenException e, String... parts) {
+    assertNotNull(e.getPomPath());
+    assertExceptionContains(e, parts);
   }
 }
