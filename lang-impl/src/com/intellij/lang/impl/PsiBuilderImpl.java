@@ -1065,15 +1065,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     private Object[] cachedElementData;
 
-    public void removeRange(final int fromIndex, final int toIndex) {
-      super.removeRange(fromIndex, toIndex);
-    }
-
     MyList() {
       super(256);
     }
     
     public int lastIndexOf(final Object o) {
+      if (cachedElementData == null) return super.lastIndexOf(o);
       for (int i = size()-1; i >= 0; i--)
         if (cachedElementData[i]==o) return i;
       return -1;
