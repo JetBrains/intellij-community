@@ -37,10 +37,9 @@ import java.util.Map;
 public class PyHighlighter extends SyntaxHighlighterBase {
   private static Map<IElementType, TextAttributesKey> keys1;
 
-  public
   @NotNull
-  Lexer getHighlightingLexer() {
-    return new PythonLexer();
+  public Lexer getHighlightingLexer() {
+    return new PythonFutureAwareLexer();
   }
 
   static final TextAttributesKey PY_KEYWORD =
