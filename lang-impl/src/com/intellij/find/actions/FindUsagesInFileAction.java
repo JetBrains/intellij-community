@@ -44,7 +44,7 @@ public class FindUsagesInFileAction extends AnAction {
       );
     }
     else {
-      HintManager.getInstance().showInformationHint(editor, FindBundle.message("find.no.usages.at.cursor.error"));
+      HintManager.getInstance().showErrorHint(editor, FindBundle.message("find.no.usages.at.cursor.error"));
     }
   }
 

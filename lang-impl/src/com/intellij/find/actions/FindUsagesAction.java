@@ -60,7 +60,7 @@ public class FindUsagesAction extends AnAction {
       int offset = editor.getCaretModel().getOffset();
       boolean chosen = GotoDeclarationAction.chooseAmbiguousTarget(editor, offset, processor, FindBundle.message("find.usages.ambiguous.title"));
       if (!chosen) {
-        HintManager.getInstance().showInformationHint(editor, FindBundle.message("find.no.usages.at.cursor.error"));
+        HintManager.getInstance().showErrorHint(editor, FindBundle.message("find.no.usages.at.cursor.error"));
       }
     }
   }
