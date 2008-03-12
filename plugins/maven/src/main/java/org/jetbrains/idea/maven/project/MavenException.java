@@ -63,11 +63,11 @@ public class MavenException extends Exception {
   private List<String> collectMessages(Exception e) {
     if (e instanceof InvalidProjectModelException) {
       ModelValidationResult r = ((InvalidProjectModelException)e).getValidationResult();
-      return r.getMessages();
-    } else {
-      String m = e.getMessage() == null ? e.getClass().getName() : e.getMessage();
-      return Collections.singletonList(m);
+      if (r != null) return r.getMessages();
     }
+
+    String m = e.getMessage() == null ? e.getClass().getName() : e.getMessage();
+    return Collections.singletonList(m);
   }
 
   @Override

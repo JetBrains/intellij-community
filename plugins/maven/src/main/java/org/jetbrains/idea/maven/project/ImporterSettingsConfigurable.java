@@ -13,7 +13,10 @@ import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author Vladislav.Kaznacheev

@@ -81,6 +81,26 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
                                "foo\\pom.xml");
     }
   }
+
+  public void testInvalidRepositoryLayout() throws Exception {
+    try {
+      importProject("<groupId>test</groupId>" +
+                    "<artifactId>project</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<distributionManagement>" +
+                    "  <repository>" +
+                    "    <id>test</id>" +
+                    "    <url>http://www.google.com</url>" +
+                    "    <layout>nothing</layout>" +
+                    "  </repository>" +
+                    "</distributionManagement>");
+      fail();
+    }
+    catch (MavenException e) {
+      assertMessageContains(e, "Cannot find ArtifactRepositoryLayout instance for: nothing");
+    }
+  }
   
   public void testReportingUnresolvedLibrariesProblems() throws Exception {
     createProjectPom("<groupId>test</groupId>" +

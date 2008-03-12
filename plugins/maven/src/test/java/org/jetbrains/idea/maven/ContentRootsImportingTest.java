@@ -1,7 +1,5 @@
 package org.jetbrains.idea.maven;
 
-import java.io.IOException;
-
 public class ContentRootsImportingTest extends ImportingTestCase {
   public void testSimpleProjectStructure() throws Exception {
     importProject("<groupId>test</groupId>" +
@@ -413,7 +411,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
                        getParentPath() + "/target/classes",
                        getParentPath() + "/target/test-classes");
   }
-  
+
   public void testExcludingAllDirectoriesUnderTargetDir() throws Exception {
     createProjectSubDir("target/foo");
     createProjectSubDir("target/bar");
@@ -439,7 +437,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
                   "src/main/resources",
                   "target/generated-sources/bar");
   }
-  
+
   public void testDoesNotExcludeSourcesUnderTargetDir() throws Exception {
     createProjectSubDir("target/src");
     createProjectSubDir("target/test");
