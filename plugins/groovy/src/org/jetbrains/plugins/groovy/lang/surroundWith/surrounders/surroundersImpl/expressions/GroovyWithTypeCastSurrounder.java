@@ -1,32 +1,26 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
 public class GroovyWithTypeCastSurrounder extends GroovyExpressionSurrounder {
-  protected String getExpressionTemplateAsString(ASTNode node) {
-    return isNeedsParentheses(node) ? "(" + "(" + "Type" + ") " + "(" + node.getText() + ")" + ")"
-        : "(" + "(" + "Type" + ") " + node.getText() + ")";
-  }
+  protected TextRange surroundExpression(GrExpression expression) {
+    GrParenthesizedExpression parenthesized = (GrParenthesizedExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createTopElementFromText("((Type)a)");
+    GrTypeCastExpression typeCast = (GrTypeCastExpression) parenthesized.getOperand();
+    replaceToOldExpression(typeCast.getOperand(), expression);
+    expression.replaceWithStatement(typeCast);
+    GrTypeElement typeElement = typeCast.getCastTypeElement();
+    int endOffset = typeElement.getTextRange().getStartOffset();
 
-  protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
-    assert element instanceof GrParenthesizedExpression;
-
-    GrParenthesizedExpression grParenthesizedExpression = (GrParenthesizedExpression) element;
-    GrTypeCastExpression typeCast = (GrTypeCastExpression) grParenthesizedExpression.getOperand();
-
-    GrTypeElement grTypeElement = typeCast.getCastTypeElement();
-    int endOffset = grTypeElement.getTextRange().getStartOffset();
-
-    typeCast.getNode().removeChild(grTypeElement.getNode());
+    typeCast.getNode().removeChild(typeElement.getNode());
 
     return new TextRange(endOffset, endOffset);
   }

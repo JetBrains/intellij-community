@@ -97,15 +97,11 @@ public class GroovyInlineVariableUtil {
         GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
         GrExpression newExpr = factory.createExpressionFromText(tempExpr.getText());
 
-        try {
-          newExpr = exprToBeReplaced.replaceWithExpression(newExpr, true);
-          FileEditorManager manager = FileEditorManager.getInstance(project);
-          Editor editor = manager.getSelectedTextEditor();
-          GroovyRefactoringUtil.highlightOccurrences(project, editor, new PsiElement[]{newExpr});
-          WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-        } catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+        newExpr = exprToBeReplaced.replaceWithExpression(newExpr, true);
+        FileEditorManager manager = FileEditorManager.getInstance(project);
+        Editor editor = manager.getSelectedTextEditor();
+        GroovyRefactoringUtil.highlightOccurrences(project, editor, new PsiElement[]{newExpr});
+        WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
       }
     };
   }

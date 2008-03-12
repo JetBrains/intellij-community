@@ -295,12 +295,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
             if (fieldName != null &&
                 varDef.getName().equals(fieldName)) {
                 GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(tempContainer.getProject());
-                try {
-                  ((GrReferenceExpression) child).replaceWithExpression(factory.createExpressionFromText("this." + child.getText()), true);
-                } catch (IncorrectOperationException e) {
-                  LOG.error(e);
-                }
-              }
+              ((GrReferenceExpression) child).replaceWithExpression(factory.createExpressionFromText("this." + child.getText()), true);
+            }
           }
         }
       } else {

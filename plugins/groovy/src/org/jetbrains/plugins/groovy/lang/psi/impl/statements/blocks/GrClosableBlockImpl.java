@@ -163,7 +163,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return myOwner;
   }
 
-  public GrExpression replaceWithExpression(@NotNull GrExpression newExpr, boolean removeUnnecessaryParentheses) throws IncorrectOperationException {
+  public GrExpression replaceWithExpression(@NotNull GrExpression newExpr, boolean removeUnnecessaryParentheses) {
     return PsiImplUtil.replaceExpression(this, newExpr, removeUnnecessaryParentheses);
   }
 

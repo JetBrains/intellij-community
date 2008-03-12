@@ -7,6 +7,7 @@ import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImp
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.*;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithIfExprSurrounder;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithWhileExprSurrounder;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithIfElseExprSurrounder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,7 +35,7 @@ public class GroovyStmtsSurroundDescriptor extends GroovySurroundDescriptor {
 
       /********** ***********/
   private static Surrounder[] exprSurrounders = new Surrounder[]{
-      new GroovyWithBracketsExprSurrounder(),
+      new GroovyWithParenthesisExprSurrounder(),
       new GroovyWithTypeCastSurrounder(),
 
       new GroovyWithWithExprSurrounder(),

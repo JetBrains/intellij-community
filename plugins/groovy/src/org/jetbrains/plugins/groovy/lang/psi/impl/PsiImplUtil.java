@@ -67,14 +67,11 @@ public class PsiImplUtil {
 
   public static GrExpression replaceExpression(GrExpression oldExpr,
                                                GrExpression newExpr,
-                                               boolean removeUnnecessaryParentheses)
-      throws IncorrectOperationException {
+                                               boolean removeUnnecessaryParentheses) {
     ASTNode oldNode = oldExpr.getNode();
+    if (oldExpr.getParent() == null) throw new PsiInvalidElementAccessException(oldExpr);
+
     ASTNode parentNode = oldExpr.getParent().getNode();
-    if (oldExpr.getParent() == null ||
-        parentNode == null) {
-      throw new IncorrectOperationException();
-    }
     // Remove unnecessary parentheses
     if (removeUnnecessaryParentheses) {
       if (oldExpr.getParent() instanceof GrParenthesizedExpression &&
@@ -104,9 +101,7 @@ public class PsiImplUtil {
 
     ASTNode newNode = newExpr.getNode();
     parentNode.replaceChild(oldNode, newNode);
-    if (!(newNode.getPsi() instanceof GrExpression)) {
-      throw new IncorrectOperationException();
-    }
+
     return ((GrExpression) newNode.getPsi());
   }
 

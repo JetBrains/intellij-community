@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -50,16 +51,14 @@ public abstract class GroovyPsiElementImpl extends ASTWrapperPsiElement implemen
     }
   }
 
-  public GrStatement replaceWithStatement(@NotNull GrStatement newStmt) throws IncorrectOperationException {
-    if (getParent() == null || getParent().getNode() == null) {
-      throw new IncorrectOperationException();
+  public GrStatement replaceWithStatement(@NotNull GrStatement newStmt) {
+    PsiElement parent = getParent();
+    if (parent == null) {
+      throw new PsiInvalidElementAccessException(this);
     }
-    ASTNode parentNode = getParent().getNode();
+    ASTNode parentNode = parent.getNode();
     ASTNode newNode = newStmt.getNode();
     parentNode.replaceChild(this.getNode(), newNode);
-    if (!(newNode.getPsi() instanceof GrStatement)) {
-      throw new IncorrectOperationException();
-    }
     return (GrStatement) newNode.getPsi();
   }
 

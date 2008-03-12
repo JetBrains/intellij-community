@@ -1,41 +1,32 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyConditionSurrounder;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
 public class GroovyWithWhileExprSurrounder extends GroovyConditionSurrounder {
-  protected String getExpressionTemplateAsString(ASTNode node) {
-    return "while " + "(" + node.getText() + ") { 4 \n }";
-  }
+  protected TextRange surroundExpression(GrExpression expression) {
+    GrWhileStatement whileStatement = (GrWhileStatement) GroovyPsiElementFactory.getInstance(expression.getProject()).createTopElementFromText("while(a){4\n}");
+    replaceToOldExpression((GrExpression)whileStatement.getCondition(), expression);
+    expression.replaceWithStatement(whileStatement);
+    GrStatement body = whileStatement.getBody();
 
-  protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
-    assert element instanceof GrWhileStatement;
+    assert body instanceof GrBlockStatement;
+    GrStatement[] statements = ((GrBlockStatement) body).getBlock().getStatements();
+    assert statements.length > 0;
 
-    GrWhileStatement grWhileStatement = (GrWhileStatement) element;
-    GrCondition grStatement = grWhileStatement.getBody();
+    GrStatement statement = statements[0];
+    int offset = statement.getTextRange().getStartOffset();
+    statement.getNode().getTreeParent().removeChild(statement.getNode());
 
-    int endOffset = grStatement.getTextRange().getEndOffset();
-
-    if (grStatement instanceof GrStatement &&
-        !(grStatement instanceof GrBlockStatement)) {
-      endOffset = grStatement.getTextRange().getEndOffset();
-      grStatement.getParent().getNode().removeChild(grStatement.getNode());
-    } else if (grStatement instanceof GrBlockStatement) {
-      GrStatement grStatementInBody = ((GrBlockStatement) grStatement).getBlock().getStatements()[0];
-      endOffset = grStatementInBody.getTextRange().getEndOffset();
-      grStatementInBody.getParent().getNode().removeChild(grStatementInBody.getNode());
-    }
-
-    return new TextRange(endOffset, endOffset);
+    return new TextRange(offset, offset);
   }
 
   public String getTemplateDescription() {

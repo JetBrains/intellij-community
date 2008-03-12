@@ -78,21 +78,13 @@ public abstract class GroovyFix implements LocalQuickFix {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
     final GrExpression newCall =
         factory.createExpressionFromText(newExpression);
-    try {
-      expression.replaceWithExpression(newCall, true);
-    } catch (IncorrectOperationException e) {
-      Logger.getInstance("replaceExpression").error(e);
-    }
+    expression.replaceWithExpression(newCall, true);
   }
 
   protected static void replaceStatement(GrStatement statement, String newStatement) {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(statement.getProject());
     final GrStatement newCall =
         (GrStatement) factory.createTopElementFromText(newStatement);
-    try {
-      statement.replaceWithStatement(newCall);
-    } catch (IncorrectOperationException e) {
-      Logger.getInstance("replaceStatement").error(e);
-    }
+    statement.replaceWithStatement(newCall);
   }
 }

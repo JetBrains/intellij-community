@@ -15,7 +15,6 @@ abstract class GroovyConditionSurrounder extends GroovyExpressionSurrounder {
     GrExpression expression = (GrExpression) element;
     PsiType type = expression.getType();
 
-    if (type == null) return false;
-    return type.equals(PsiType.BOOLEAN) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type));
+    return PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 }

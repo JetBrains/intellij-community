@@ -7,6 +7,7 @@ import org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSur
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.*;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithIfExprSurrounder;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithWhileExprSurrounder;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithIfElseExprSurrounder;
 
 import java.io.File;
 import java.util.HashMap;
@@ -27,7 +28,7 @@ public class SurroundExpressionTest extends TestSuite {
       surroundersOfExprToPathsMap.put(GroovyWithIfExprSurrounder.class.getCanonicalName(), exprPrefix + "if");
       surroundersOfExprToPathsMap.put(GroovyWithIfElseExprSurrounder.class.getCanonicalName(), exprPrefix + "if_else");
       surroundersOfExprToPathsMap.put(GroovyWithWhileExprSurrounder.class.getCanonicalName(), exprPrefix + "while");
-      surroundersOfExprToPathsMap.put(GroovyWithBracketsExprSurrounder.class.getCanonicalName(), exprPrefix + "brackets");
+      surroundersOfExprToPathsMap.put(GroovyWithParenthesisExprSurrounder.class.getCanonicalName(), exprPrefix + "brackets");
       surroundersOfExprToPathsMap.put(GroovyWithWithExprSurrounder.class.getCanonicalName(), exprPrefix + "with");
       surroundersOfExprToPathsMap.put(GroovyWithTypeCastSurrounder.class.getCanonicalName(), exprPrefix + "type_cast");
     }

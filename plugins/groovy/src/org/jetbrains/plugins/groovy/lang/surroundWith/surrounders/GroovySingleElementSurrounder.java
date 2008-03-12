@@ -24,24 +24,5 @@ abstract public class GroovySingleElementSurrounder implements Surrounder {
     return false;
   }
 
-  @Nullable
-  public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements) throws IncorrectOperationException {
-    if (elements.length != 1) return null;
-
-    PsiElement element = elements[0];
-
-    GroovyPsiElement expression = GroovyPsiElementFactory.getInstance(project).createTopElementFromText(getExpressionTemplateAsString(element.getNode()));
-
-    PsiElement psiElement = element.getParent();
-    assert psiElement != null;
-    psiElement.getNode().replaceChild(element.getNode(), expression.getNode());
-
-    return getSurroundSelectionRange(expression);
-  }
-
-  protected abstract String getExpressionTemplateAsString(ASTNode node);
-
-  protected abstract TextRange getSurroundSelectionRange(GroovyPsiElement element);
-
   protected abstract boolean isApplicable(PsiElement element);
 }
