@@ -34,6 +34,6 @@ public abstract class GroovyExpressionSurrounder extends GroovySingleElementSurr
   protected abstract TextRange surroundExpression(GrExpression expression);
 
   protected void replaceToOldExpression(GrExpression oldExpr, GrExpression replacement) {
-    oldExpr.replaceWithExpression((GrExpression) replacement.copy(), true);
+    oldExpr.replaceWithExpression((GrExpression) replacement.copy(), false);
   }
 }
