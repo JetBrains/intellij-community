@@ -179,7 +179,7 @@ public class GroovyCompletionData extends CompletionData {
   static {
     ourReferenceVariant = new CompletionVariant() {
       public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, CompletionContext prefix) {
-        addReferenceCompletions(reference, position, set, prefix, new CompletionVariantItem(TrueFilter.INSTANCE, TailType.SPACE));
+        addReferenceCompletions(reference, position, set, prefix, new CompletionVariantItem(TrueFilter.INSTANCE, TailType.NONE));
       }
     };
 
