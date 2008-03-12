@@ -31,11 +31,10 @@ public class JavaFilterLexer extends BaseFilterLexer {
       scanWordsInToken(UsageSearchContext.IN_COMMENTS, false, false);
       advanceTodoItemCountsInToken();
     }
-    else if (JavaTokenType.KEYWORD_BIT_SET.contains(tokenType)) {
-     // addOccurrenceInToken(UsageSearchContext.IN_PLAIN_TEXT);
+    else {
+      scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT, false, false);
     }
 
     myOriginalLexer.advance();
   }
-
 }

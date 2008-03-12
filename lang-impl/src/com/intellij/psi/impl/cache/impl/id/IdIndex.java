@@ -27,14 +27,14 @@ import java.util.Map;
 public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
   @NonNls public static final ID<IdIndexEntry, Integer> NAME = new ID<IdIndexEntry, Integer>("IdIndex");
   
-  private FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
-    private FileTypeManager myFtManager = FileTypeManager.getInstance();
+  private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
+    private final FileTypeManager myFtManager = FileTypeManager.getInstance();
     public boolean acceptInput(final VirtualFile file) {
       return isIndexable(myFtManager.getFileTypeByFile(file));
     }
   };
 
-  private DataExternalizer<Integer> myValueExternalizer = new DataExternalizer<Integer>() {
+  private final DataExternalizer<Integer> myValueExternalizer = new DataExternalizer<Integer>() {
     public void save(final DataOutput out, final Integer value) throws IOException {
       out.writeByte(value.intValue());
     }
@@ -44,7 +44,7 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
     }
   };
   
-  private PersistentEnumerator.DataDescriptor<IdIndexEntry> myKeyDescriptor = new PersistentEnumerator.DataDescriptor<IdIndexEntry>() {
+  private final PersistentEnumerator.DataDescriptor<IdIndexEntry> myKeyDescriptor = new PersistentEnumerator.DataDescriptor<IdIndexEntry>() {
     public int getHashCode(final IdIndexEntry value) {
       return value.hashCode();
     }
@@ -62,7 +62,7 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
     }
   };
   
-  private DataIndexer<IdIndexEntry, Integer, FileBasedIndex.FileContent> myIndexer = new DataIndexer<IdIndexEntry, Integer, FileBasedIndex.FileContent>() {
+  private final DataIndexer<IdIndexEntry, Integer, FileBasedIndex.FileContent> myIndexer = new DataIndexer<IdIndexEntry, Integer, FileBasedIndex.FileContent>() {
     public Map<IdIndexEntry, Integer> map(final FileBasedIndex.FileContent inputData) {
       final VirtualFile file = inputData.file;
       final FileTypeIdIndexer indexer = IdTableBuilding.getFileTypeIndexer(file.getFileType());
@@ -74,7 +74,7 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
   };
   
   public int getVersion() {
-    return 7;
+    return 8;
   }
 
   public boolean dependsOnFileContent() {

@@ -117,7 +117,8 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
   protected final void addOccurrenceInToken(final int occurrenceMask) {
     if (myBufferArray != null) {
       myOccurrenceConsumer.addOccurrence(myBufferArray, getTokenStart(), getTokenEnd(), occurrenceMask);
-    } else {
+    }
+    else {
       myOccurrenceConsumer.addOccurrence(myBuffer, getTokenStart(), getTokenEnd(), occurrenceMask);
     }
   }

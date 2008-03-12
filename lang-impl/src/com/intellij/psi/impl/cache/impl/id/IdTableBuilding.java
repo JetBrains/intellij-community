@@ -50,7 +50,6 @@ public class IdTableBuilding {
   }
 
   public static class PlainTextIndexer extends FileTypeIdIndexer {
-  
     public Map<IdIndexEntry, Integer> map(final FileBasedIndex.FileContent inputData) {
       final IdDataConsumer consumer = new IdDataConsumer();
       final CharSequence chars = inputData.content;
@@ -58,7 +57,8 @@ public class IdTableBuilding {
         public void run(final CharSequence chars11, final int start, final int end, char[] charsArray) {
           if (charsArray != null) {
             consumer.addOccurrence(charsArray, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
-          } else {
+          }
+          else {
             consumer.addOccurrence(chars11, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
           }
         }
@@ -187,7 +187,7 @@ public class IdTableBuilding {
   }
 
   private static class WordsScannerFileTypeIdIndexerAdapter extends FileTypeIdIndexer {
-    private WordsScanner myScanner;
+    private final WordsScanner myScanner;
 
     public WordsScannerFileTypeIdIndexerAdapter(@NotNull final WordsScanner scanner) {
       myScanner = scanner;
@@ -225,7 +225,7 @@ public class IdTableBuilding {
     @NotNull private final TokenSet myCommentTokens;
     private final VirtualFile myFile;
 
-    public TokenSetTodoIndexer(@Nullable final TokenSet commentTokens, @NotNull final VirtualFile file) {
+    public TokenSetTodoIndexer(@NotNull final TokenSet commentTokens, @NotNull final VirtualFile file) {
       myCommentTokens = commentTokens;
       myFile = file;
     }
@@ -261,7 +261,7 @@ public class IdTableBuilding {
     scanWords(processor, chars, CharArrayUtil.fromSequenceWithoutCopying(chars), startOffset, endOffset, false);
   }
 
-  public static void scanWords(final ScanWordProcessor processor, final CharSequence chars, final @Nullable char[] charArray, final int startOffset,
+  public static void scanWords(final ScanWordProcessor processor, final CharSequence chars, @Nullable final char[] charArray, final int startOffset,
                                final int endOffset,
                                final boolean mayHaveEscapes) {
     int index = startOffset;

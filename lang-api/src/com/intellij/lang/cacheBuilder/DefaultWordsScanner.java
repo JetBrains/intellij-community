@@ -27,10 +27,10 @@ import com.intellij.util.Processor;
  */
 
 public class DefaultWordsScanner implements WordsScanner {
-  private Lexer myLexer;
-  private TokenSet myIdentifierTokenSet;
-  private TokenSet myCommentTokenSet;
-  private TokenSet myLiteralTokenSet;
+  private final Lexer myLexer;
+  private final TokenSet myIdentifierTokenSet;
+  private final TokenSet myCommentTokenSet;
+  private final TokenSet myLiteralTokenSet;
   private boolean myMayHaveFileRefsInLiterals;
 
   /**
@@ -56,8 +56,12 @@ public class DefaultWordsScanner implements WordsScanner {
     while (myLexer.getTokenType() != null) {
       final IElementType type = myLexer.getTokenType();
       if (myIdentifierTokenSet.contains(type)) {
-        if (occurence == null) occurence = new WordOccurrence(fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
-        else occurence.init(fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
+        if (occurence == null) {
+          occurence = new WordOccurrence(fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
+        }
+        else {
+          occurence.init(fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
+        }
         if (!processor.process(occurence)) return;
       }
       else if (myCommentTokenSet.contains(type)) {
@@ -65,6 +69,11 @@ public class DefaultWordsScanner implements WordsScanner {
       }
       else if (myLiteralTokenSet.contains(type)) {
         if (!stripWords(processor, fileText, myLexer.getTokenStart(),myLexer.getTokenEnd(),WordOccurrence.Kind.LITERALS,occurence, myMayHaveFileRefsInLiterals)) return;
+      }
+      else {
+        // process all word-like characters as words
+        // Plugin writers may have (Maximka in JavaScript especially) some keyword token types omitted from the identifierTokenSet
+        if (!stripWords(processor, fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE, occurence, false)) return;
       }
       myLexer.advance();
     }
@@ -87,27 +96,31 @@ public class DefaultWordsScanner implements WordsScanner {
         if (index == to) break ScanWordsLoop;
         char c = tokenText.charAt(index);
         if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
-            (Character.isJavaIdentifierStart(c) && c != '$')) {
+            (c != '$' && Character.isJavaIdentifierStart(c))) {
           break;
         }
         index++;
       }
-      int index1 = index;
+      int wordStart = index;
       while (true) {
         index++;
         if (index == to) break;
         char c = tokenText.charAt(index);
         if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) continue;
-        if (!Character.isJavaIdentifierPart(c) || c == '$') break;
+        if (c == '$' || !Character.isJavaIdentifierPart(c)) break;
       }
-
-      if (occurence == null) occurence = new WordOccurrence(tokenText,index1, index, kind);
-      else occurence.init(tokenText,index1, index, kind);
+      int wordEnd = index;
+      if (occurence == null) {
+        occurence = new WordOccurrence(tokenText, wordStart, wordEnd, kind);
+      }
+      else {
+        occurence.init(tokenText, wordStart, wordEnd, kind);
+      }
 
       if (!processor.process(occurence)) return false;
 
       if (mayHaveFileRefs) {
-        occurence.init(tokenText,index1, index, WordOccurrence.Kind.FOREIGN_LANGUAGE);
+        occurence.init(tokenText,wordStart, wordEnd, WordOccurrence.Kind.FOREIGN_LANGUAGE);
         if (!processor.process(occurence)) return false;
       }
     }

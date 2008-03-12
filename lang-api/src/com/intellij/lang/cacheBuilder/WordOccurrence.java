@@ -98,7 +98,7 @@ public class WordOccurrence {
     /** Kind for words encountered in languages different from the main language of the file. */
     public static final Kind FOREIGN_LANGUAGE = new Kind("FOREIGN_LANGUAGE");
 
-    private String myName;
+    private final String myName;
 
     private Kind(@NonNls String name) {
       myName = name;

@@ -49,9 +49,5 @@ public abstract class LexerBasedIdIndexer extends FileTypeIdIndexer {
     public boolean canConsumeTodoOccurrences() {
       return false;
     }
-    
-    public int getOccurrenceCount(IndexPattern pattern) {
-      return 0; 
-    }
   }
 }
