@@ -97,7 +97,7 @@ public class FunctionParsing extends Parsing {
           builder.advanceLexer();
         }
         else if (builder.getTokenType() == PyTokenTypes.LPAR) {
-          parseParameterSubList(builder);
+          parseParameterSubList();
         }
         else {
           builder.error(", or ( or ) expected");
@@ -132,27 +132,27 @@ public class FunctionParsing extends Parsing {
     parameterList.done(PyElementTypes.PARAMETER_LIST);
   }
 
-  private void parseParameterSubList(PsiBuilder builder) {
-    LOG.assertTrue(builder.getTokenType() == PyTokenTypes.LPAR);
-    builder.advanceLexer();
+  private void parseParameterSubList() {
+    assertCurrentToken(PyTokenTypes.LPAR);
+    myBuilder.advanceLexer();
     while (true) {
-      if (builder.getTokenType() == PyTokenTypes.IDENTIFIER) {
-        final PsiBuilder.Marker parameter = builder.mark();
-        builder.advanceLexer();
+      if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
+        final PsiBuilder.Marker parameter = myBuilder.mark();
+        myBuilder.advanceLexer();
         parameter.done(PyElementTypes.FORMAL_PARAMETER);
       }
-      else if (builder.getTokenType() == PyTokenTypes.LPAR) {
-        parseParameterSubList(builder);
+      else if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
+        parseParameterSubList();
       }
-      if (builder.getTokenType() == PyTokenTypes.RPAR) {
-        builder.advanceLexer();
+      if (myBuilder.getTokenType() == PyTokenTypes.RPAR) {
+        myBuilder.advanceLexer();
         break;
       }
-      if (builder.getTokenType() != PyTokenTypes.COMMA) {
-        builder.error(", or ( or ) expected");
+      if (myBuilder.getTokenType() != PyTokenTypes.COMMA) {
+        myBuilder.error(", or ( or ) expected");
         break;
       }
-      builder.advanceLexer();
+      myBuilder.advanceLexer();
     }
   }
 }

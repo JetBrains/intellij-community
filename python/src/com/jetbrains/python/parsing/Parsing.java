@@ -31,10 +31,12 @@ import com.jetbrains.python.psi.PyElementType;
  */
 public class Parsing {
   protected ParsingContext myContext;
+  protected PsiBuilder myBuilder;
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.parsing.Parsing");
 
   protected Parsing(ParsingContext context) {
     myContext = context;
+    myBuilder = context.getBuilder();
   }
 
   public ParsingContext getParsingContext() {
@@ -54,12 +56,11 @@ public class Parsing {
   }
 
   protected void checkMatches(final IElementType token, final String message) {
-    PsiBuilder builder = myContext.getBuilder();
-    if (builder.getTokenType() == token) {
-      builder.advanceLexer();
+    if (myBuilder.getTokenType() == token) {
+      myBuilder.advanceLexer();
     }
     else {
-      builder.error(message);
+      myBuilder.error(message);
     }
   }
 
@@ -73,6 +74,6 @@ public class Parsing {
   }
 
   protected void assertCurrentToken(final PyElementType tokenType) {
-    LOG.assertTrue(myContext.getBuilder().getTokenType() == tokenType);
+    LOG.assertTrue(myBuilder.getTokenType() == tokenType);
   }
 }
