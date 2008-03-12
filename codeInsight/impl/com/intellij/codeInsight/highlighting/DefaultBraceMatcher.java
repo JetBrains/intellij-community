@@ -39,6 +39,7 @@ public class DefaultBraceMatcher implements BraceMatcher {
     PAIRING_TOKENS.put(JavaTokenType.LBRACE, JavaTokenType.RBRACE);
     PAIRING_TOKENS.put(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
     PAIRING_TOKENS.put(XmlTokenType.XML_TAG_END, XmlTokenType.XML_START_TAG_START);
+    PAIRING_TOKENS.put(XmlTokenType.XML_CDATA_START, XmlTokenType.XML_CDATA_END);
     PAIRING_TOKENS.put(XmlTokenType.XML_EMPTY_ELEMENT_END, XmlTokenType.XML_START_TAG_START);
     PAIRING_TOKENS.put(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER, XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER);
     PAIRING_TOKENS.put(JspTokenType.JSP_SCRIPTLET_START, JspTokenType.JSP_SCRIPTLET_END);
@@ -87,6 +88,7 @@ public class DefaultBraceMatcher implements BraceMatcher {
            tokenType == JavaTokenType.LBRACKET ||
            tokenType == XmlTokenType.XML_START_TAG_START ||
            tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER ||
+           tokenType == XmlTokenType.XML_CDATA_START ||
            tokenType == JspTokenType.JSP_SCRIPTLET_START ||
            tokenType == JspTokenType.JSP_EXPRESSION_START ||
            tokenType == JspTokenType.JSP_DECLARATION_START ||
@@ -111,6 +113,7 @@ public class DefaultBraceMatcher implements BraceMatcher {
         tokenType == JavaTokenType.RBRACKET ||
         tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END ||
         tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER ||
+        tokenType == XmlTokenType.XML_CDATA_END ||
         tokenType == JspTokenType.JSP_SCRIPTLET_END ||
         tokenType == JspTokenType.JSP_EXPRESSION_END ||
         tokenType == JspTokenType.JSP_DECLARATION_END ||
