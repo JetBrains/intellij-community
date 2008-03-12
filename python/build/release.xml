@@ -58,8 +58,9 @@
 
   <path id="sourcepath">
       <dirset dir="${basedir}/..">
-          <include name="resources"/>
-          <include name="src"/>
+        <include name="resources"/>
+        <include name="src"/>
+        <include name="ideSrc"/>
       </dirset>
   </path>
 

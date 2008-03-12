@@ -2,11 +2,17 @@
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
+    <content url="file://$MODULE_DIR$/ideSrc">
+      <sourceFolder url="file://$MODULE_DIR$/ideSrc" isTestSource="false" />
+    </content>
     <content url="file://$MODULE_DIR$/resources">
       <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="lang-api" />
+    <orderEntry type="module" module-name="python" />
     <orderEntryProperties />
   </component>
 </module>
