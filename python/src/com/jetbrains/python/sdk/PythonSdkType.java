@@ -139,7 +139,7 @@ public class PythonSdkType extends SdkType {
             break;
           }
         }
-        generateStubs(sdk.getHomePath() + "/bin", stubsPath);
+        generateStubs(sdk.getHomePath(), stubsPath);
       }
       else {
         sdkModificator.addRoot(libDir, OrderRootType.SOURCES);
@@ -174,7 +174,7 @@ public class PythonSdkType extends SdkType {
     return getPythonBinaryPath(sdkHome).getPath();
   }
 
-  public static void generateStubs(String binPath, final String stubsRoot) {
+  public static void generateStubs(String sdkPath, final String stubsRoot) {
     try {
       final String text = FileUtil.loadTextAndClose(new InputStreamReader(PythonSdkType.class.getResourceAsStream("generator.py")));
       final File tempFile = FileUtil.createTempFile("gen", "");
@@ -184,7 +184,7 @@ public class PythonSdkType extends SdkType {
       out.close();
 
       GeneralCommandLine commandLine = new GeneralCommandLine();
-      commandLine.setExePath(binPath + File.separator + "python");
+      commandLine.setExePath(getInterpreterPath(sdkPath));
 
       commandLine.addParameter(tempFile.getAbsolutePath());
       commandLine.addParameter(stubsRoot);
