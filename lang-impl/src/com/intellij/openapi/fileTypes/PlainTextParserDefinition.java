@@ -3,11 +3,17 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTFactory;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.PsiParser;
 import com.intellij.lexer.EmptyLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PlainTextTokenTypes;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.tree.CharTableBasedLeafElementImpl;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
@@ -17,6 +23,12 @@ import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 public class PlainTextParserDefinition implements ParserDefinition {
+  private static final IFileElementType PLAIN_FILE_ELEMENT_TYPE = new IFileElementType(FileTypes.PLAIN_TEXT.getLanguage()) {
+    public ASTNode parseContents(ASTNode chameleon) {
+      final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
+      return ASTFactory.leaf(PlainTextTokenTypes.PLAIN_TEXT, chars, 0, chars.length(), SharedImplUtil.findCharTableByTree(chameleon));
+    }
+  };
 
   @NotNull
   public Lexer createLexer(Project project) {
@@ -29,12 +41,7 @@ public class PlainTextParserDefinition implements ParserDefinition {
   }
 
   public IFileElementType getFileNodeType() {
-    return new IFileElementType(FileTypes.PLAIN_TEXT.getLanguage()) {
-      public ASTNode parseContents(ASTNode chameleon) {
-        final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
-        return ASTFactory.leaf(PlainTextTokenTypes.PLAIN_TEXT, chars, 0, chars.length(), SharedImplUtil.findCharTableByTree(chameleon));
-      }
-    };
+    return PLAIN_FILE_ELEMENT_TYPE;
   }
 
   @NotNull
