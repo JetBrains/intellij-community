@@ -153,7 +153,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     if (!dialog.isOK()) {
       return false;
     }
-    
+
     GroovyIntroduceVariableSettings settings = dialog.getSettings();
 
     final String varName = settings.getEnteredName();

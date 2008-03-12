@@ -72,6 +72,12 @@ public class PsiImplUtil {
     if (oldExpr.getParent() == null) throw new PsiInvalidElementAccessException(oldExpr);
 
     ASTNode parentNode = oldExpr.getParent().getNode();
+
+    if (newExpr instanceof GrApplicationStatement && getExprPriorityLevel(oldExpr) >= getExprPriorityLevel(newExpr)) {
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(oldExpr.getProject());
+      newExpr = factory.createMethodCallByAppCall(((GrApplicationStatement) newExpr));
+    }
+    
     // Remove unnecessary parentheses
     if (removeUnnecessaryParentheses) {
       if (oldExpr.getParent() instanceof GrParenthesizedExpression &&
@@ -232,7 +238,7 @@ public class PsiImplUtil {
     if (expr instanceof GrLogicalOrExpressionImpl) priority = 19;
     if (expr instanceof GrConditionalExpression) priority = 20;
     if (expr instanceof GrAssignmentExpression) priority = 21;
-    if (expr instanceof GrParenthesizedExpression) priority = 22;
+    if (expr instanceof GrApplicationStatement) priority = 22;
     return -priority;
   }
 
