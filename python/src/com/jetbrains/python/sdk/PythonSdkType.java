@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PythonFileType;
 import org.jdom.Element;
@@ -120,6 +121,21 @@ public class PythonSdkType extends SdkType {
   public void saveAdditionalData(final SdkAdditionalData additionalData, final Element additional) {
   }
 
+  @Override
+  public SdkAdditionalData loadAdditionalData(final Sdk currentSdk, final Element additional) {
+    final String[] urls = currentSdk.getRootProvider().getUrls(OrderRootType.SOURCES);
+    for (String url : urls) {
+      if (url.contains("python_stubs")) {
+        final String path = VfsUtil.urlToPath(url);
+        if (!new File(path).exists()) {
+          generateStubs(currentSdk.getHomePath(), path);
+        }
+        break;
+      }
+    }
+    return null;
+  }
+
   public String getPresentableName() {
     return "Python SDK";
   }
@@ -129,7 +145,6 @@ public class PythonSdkType extends SdkType {
     VirtualFile libDir = sdk.getHomeDirectory().findChild("Lib");
     final String stubsPath =
         PathManager.getSystemPath() + File.separator + "python_stubs" + File.separator + sdk.getHomePath().hashCode() + File.separator;
-    new File(stubsPath).mkdirs();
     if (libDir != null) {
       if (SystemInfo.isMac) {
         for (VirtualFile child : libDir.getChildren()) {
@@ -175,6 +190,7 @@ public class PythonSdkType extends SdkType {
   }
 
   public static void generateStubs(String sdkPath, final String stubsRoot) {
+    new File(stubsRoot).mkdirs();
     try {
       final String text = FileUtil.loadTextAndClose(new InputStreamReader(PythonSdkType.class.getResourceAsStream("generator.py")));
       final File tempFile = FileUtil.createTempFile("gen", "");
