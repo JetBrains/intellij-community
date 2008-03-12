@@ -1,4 +1,4 @@
-package com.intellij.ui.tabs;
+package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
@@ -16,6 +16,8 @@ import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.TabsListener;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.ComparableObjectCheck;
@@ -37,7 +39,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-public class JBTabsImpl extends JComponent implements PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable {
+public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable {
 
   private static DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
 
@@ -340,6 +342,7 @@ public class JBTabsImpl extends JComponent implements PropertyChangeListener, Ti
   }
 
 
+  @NotNull
   public TabInfo addTab(TabInfo info, int index) {
     info.getChangeSupport().addPropertyChangeListener(this);
     final TabLabel label = new TabLabel(info);
@@ -375,6 +378,7 @@ public class JBTabsImpl extends JComponent implements PropertyChangeListener, Ti
   }
 
 
+  @NotNull
   public TabInfo addTab(TabInfo info) {
     return addTab(info, -1);
   }
@@ -387,7 +391,7 @@ public class JBTabsImpl extends JComponent implements PropertyChangeListener, Ti
     return myPopupPlace;
   }
 
-  public void setPopupGroup(final ActionGroup popupGroup, String place) {
+  public void setPopupGroup(@NotNull final ActionGroup popupGroup, @NotNull String place) {
     myPopupGroup = popupGroup;
     myPopupPlace = place;
   }
@@ -410,7 +414,7 @@ public class JBTabsImpl extends JComponent implements PropertyChangeListener, Ti
     return (JComponent)(owner instanceof JComponent ? owner : null);
   }
 
-  public ActionCallback select(TabInfo info, boolean requestFocus) {
+  public ActionCallback select(@NotNull TabInfo info, boolean requestFocus) {
     return _setSelected(info, requestFocus);
   }
 
@@ -634,6 +638,7 @@ public class JBTabsImpl extends JComponent implements PropertyChangeListener, Ti
     return getTabs().get(tabIndex);
   }
 
+  @NotNull
   public List<TabInfo> getTabs() {
     if (myAllTabs != null) return myAllTabs;
 
@@ -1465,16 +1470,25 @@ public class JBTabsImpl extends JComponent implements PropertyChangeListener, Ti
     return myActionManager;
   }
 
-  public void addTabMouseListener(MouseListener listener) {
+  @NotNull
+  public JBTabs addTabMouseListener(@NotNull MouseListener listener) {
     removeListeners();
     myTabMouseListeners.add(listener);
     addListeners();
+    return this;
   }
 
-  public void removeTabMouseListener(MouseListener listener) {
+  @NotNull
+  public JComponent getComponent() {
+    return this;
+  }
+
+  @NotNull
+  public JBTabs removeTabMouseListener(@NotNull MouseListener listener) {
     removeListeners();
     myTabMouseListeners.remove(listener);
     addListeners();
+    return this;
   }
 
   private void addListeners() {
@@ -1500,8 +1514,9 @@ public class JBTabsImpl extends JComponent implements PropertyChangeListener, Ti
     addListeners();
   }
 
-  public void addListener(TabsListener listener) {
+  public JBTabs addListener(@NotNull TabsListener listener) {
     myTabListeners.add(listener);
+    return this;
   }
 
   private class TabLabel extends JPanel {
@@ -1906,11 +1921,6 @@ public class JBTabsImpl extends JComponent implements PropertyChangeListener, Ti
     myRequestFocusOnLastFocusedComponent = requestFocusOnLastFocusedComponent;
   }
 
-  public static interface UiDecorator {
-    @NotNull
-    UiDecoration getDecoration();
-  }
-
 
   private class ActionPanel extends NonOpaquePanel {
 
@@ -2039,7 +2049,7 @@ public class JBTabsImpl extends JComponent implements PropertyChangeListener, Ti
     return myDataProvider;
   }
 
-  public JBTabsImpl setDataProvider(final DataProvider dataProvider) {
+  public JBTabsImpl setDataProvider(@NotNull final DataProvider dataProvider) {
     myDataProvider = dataProvider;
     return this;
   }
@@ -2052,11 +2062,11 @@ public class JBTabsImpl extends JComponent implements PropertyChangeListener, Ti
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout());
     final int[] count = new int[1];
-    final JBTabsImpl tabs = new JBTabsImpl(null, null, null, new Disposable() {
+    final JBTabs tabs = new JBTabsImpl(null, null, null, new Disposable() {
       public void dispose() {
       }
     });
-    frame.getContentPane().add(tabs, BorderLayout.CENTER);
+    frame.getContentPane().add(tabs.getComponent(), BorderLayout.CENTER);
 
     JPanel south = new JPanel(new FlowLayout());
 
@@ -2177,7 +2187,7 @@ public class JBTabsImpl extends JComponent implements PropertyChangeListener, Ti
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
 
 
-    tabs.setBorder(new EmptyBorder(6, 6, 20, 6));
+    tabs.getComponent().setBorder(new EmptyBorder(6, 6, 20, 6));
 
     //tabs.setUiDecorator(new UiDecorator() {
     //  public UiDecoration getDecoration() {

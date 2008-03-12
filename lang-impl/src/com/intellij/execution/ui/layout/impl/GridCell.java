@@ -1,7 +1,7 @@
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.execution.ui.layout.actions.CloseViewAction;
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.actions.CloseViewAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -14,9 +14,10 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.tabs.JBTabsImpl;
-import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabsListener;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.TabInfo;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -37,7 +38,7 @@ public class GridCell implements Disposable {
   private MutualMap<Content, TabInfo> myContents = new MutualMap<Content, TabInfo>(true);
   private Set<Content> myMinimizedContents = new HashSet<Content>();
 
-  private JBTabsImpl myTabs;
+  private JBTabs myTabs;
   private Grid.Placeholder myPlaceholder;
   private RunnerLayoutUi.PlaceInGrid myPlaceInGrid;
 
@@ -71,6 +72,7 @@ public class GridCell implements Disposable {
       }
     });
     myTabs.setUiDecorator(new JBTabsImpl.UiDecorator() {
+      @NotNull
       public JBTabsImpl.UiDecoration getDecoration() {
         return new JBTabsImpl.UiDecoration(null, new Insets(0, -1, 0, -1));
       }
@@ -93,9 +95,9 @@ public class GridCell implements Disposable {
                          ViewContext.CELL_POPUP_PLACE);
     myTabs.addListener(new TabsListener() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
-        updateSelection(myTabs.isShowing());
+        updateSelection(myTabs.getComponent().isShowing());
 
-        if (!myTabs.isShowing()) return;
+        if (!myTabs.getComponent().isShowing()) return;
 
         if (newSelection != null) {
           newSelection.stopAlerting();
@@ -118,7 +120,7 @@ public class GridCell implements Disposable {
       }
     });
 
-    updateSelection(myTabs.getRootPane() != null);
+    updateSelection(myTabs.getComponent().getRootPane() != null);
   }
 
   void remove(Content content) {
@@ -133,7 +135,7 @@ public class GridCell implements Disposable {
       }
     });
 
-    updateSelection(myTabs.getRootPane() != null);
+    updateSelection(myTabs.getComponent().getRootPane() != null);
   }
 
   private void revalidateCell(Runnable contentAction) {
@@ -143,7 +145,7 @@ public class GridCell implements Disposable {
     }
     else {
       if (myPlaceholder.isNull() && !isDetached()) {
-        myPlaceholder.setContent(myTabs);
+        myPlaceholder.setContent(myTabs.getComponent());
       }
 
       contentAction.run();
@@ -151,8 +153,8 @@ public class GridCell implements Disposable {
 
     restoreProportions();
 
-    myTabs.revalidate();
-    myTabs.repaint();
+    myTabs.getComponent().revalidate();
+    myTabs.getComponent().repaint();
   }
 
   void setHideTabs(boolean hide) {
@@ -310,7 +312,7 @@ public class GridCell implements Disposable {
     for (final Content each : contents) {
       myMinimizedContents.add(each);
       remove(each);
-      boolean isShowing = myTabs.getRootPane() != null;
+      boolean isShowing = myTabs.getComponent().getRootPane() != null;
       updateSelection(isShowing);
       myContainer.minimize(each, new CellTransform.Restore() {
         public ActionCallback restoreInGrid() {
@@ -340,7 +342,7 @@ public class GridCell implements Disposable {
       if (myContents.size() > 0) {
         myContext.validate(myContents.getKeys().iterator().next(), new ActionCallback.Runnable() {
           public ActionCallback run() {
-            if (!myTabs.isShowing()) {
+            if (!myTabs.getComponent().isShowing()) {
               detachTo(targetBounds.getLocation(), targetBounds.getSize(), false);
             } else {
               detachForShowingTabs();
@@ -358,7 +360,7 @@ public class GridCell implements Disposable {
   }
 
   private void detachForShowingTabs() {
-    detachTo(myTabs.getLocationOnScreen(), myTabs.getSize(), false);
+    detachTo(myTabs.getComponent().getLocationOnScreen(), myTabs.getComponent().getSize(), false);
   }
 
   private void detachTo(Point screenPoint, Dimension size, boolean dragging) {
@@ -394,9 +396,9 @@ public class GridCell implements Disposable {
   }
 
   private JBPopup createPopup(boolean dragging) {
-    Wrapper wrapper = new Wrapper(myTabs);
+    Wrapper wrapper = new Wrapper(myTabs.getComponent());
     wrapper.setBorder(new EmptyBorder(1, 0, 0, 0));
-    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(wrapper, myTabs)
+    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(wrapper, myTabs.getComponent())
       .setTitle(myContainer.getSessionName())
       .setMovable(true)
       .setRequestFocus(true)
@@ -459,7 +461,7 @@ public class GridCell implements Disposable {
   private ActionCallback restore(Content content) {
     myMinimizedContents.remove(content);
     add(content);
-    updateSelection(myTabs.getRootPane() != null);
+    updateSelection(myTabs.getComponent().getRootPane() != null);
     return new ActionCallback.Done();
   }
 

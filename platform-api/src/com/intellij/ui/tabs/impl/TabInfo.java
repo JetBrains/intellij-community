@@ -1,4 +1,4 @@
-package com.intellij.ui.tabs;
+package com.intellij.ui.tabs.impl;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.util.IconLoader;

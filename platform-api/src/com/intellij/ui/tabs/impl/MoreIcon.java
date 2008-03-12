@@ -1,4 +1,4 @@
-package com.intellij.ui.tabs;
+package com.intellij.ui.tabs.impl;
 
 import com.intellij.openapi.ui.popup.ActiveIcon;
 import com.intellij.openapi.util.IconLoader;

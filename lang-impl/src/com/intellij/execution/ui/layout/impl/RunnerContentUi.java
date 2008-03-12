@@ -12,9 +12,10 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
-import com.intellij.ui.tabs.JBTabsImpl;
-import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabsListener;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.TabInfo;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AwtVisitor;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +45,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   private Wrapper myToolbar = new Wrapper();
 
-  JBTabsImpl myTabs;
+  JBTabs myTabs;
   private Comparator<TabInfo> myTabsComparator = new Comparator<TabInfo>() {
     public int compare(final TabInfo o1, final TabInfo o2) {
       return getTabFor(o1).getIndex() - getTabFor(o2).getIndex();
@@ -124,13 +125,13 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     final NonOpaquePanel wrappper = new NonOpaquePanel(new BorderLayout(0, 0));
     wrappper.add(myToolbar, BorderLayout.WEST);
-    wrappper.add(myTabs, BorderLayout.CENTER);
+    wrappper.add(myTabs.getComponent(), BorderLayout.CENTER);
 
     myComponent.setContent(wrappper);
 
     myTabs.addListener(new TabsListener() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
-        if (!myTabs.isShowing()) return;
+        if (!myTabs.getComponent().isShowing()) return;
 
         if (newSelection != null) {
           newSelection.stopAlerting();
@@ -215,7 +216,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   private void removeGridIfNeeded(Grid grid) {
     if (grid.isEmpty()) {
-      myTabs.removeTab(grid);
+      myTabs.removeTab(myTabs.findInfo(grid));
       myMinimizedButtonsPlaceholder.remove(grid);
       myCommonActionsPlaceholder.remove(grid);
       Disposer.dispose(grid);
@@ -325,8 +326,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       eachPlaceholder.setContent(minimized);
     }
 
-    myTabs.revalidate();
-    myTabs.repaint();
+    myTabs.getComponent().revalidate();
+    myTabs.getComponent().repaint();
 
     return myMinimizedViewActions.getChildrenCount() > 0;
   }
@@ -384,7 +385,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     try {
       setStateIsBeingRestored(true, this);
 
-      if (!RunnerContentUi.ensureValid(myTabs)) return;
+      if (!RunnerContentUi.ensureValid(myTabs.getComponent())) return;
 
 
       List<TabInfo> tabs = new ArrayList<TabInfo>();
@@ -404,13 +405,13 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     int index = myLayoutSettings.getDefaultSelectedTabIndex();
 
     if (myTabs.getTabCount() > 0) {
-      myTabs.setSelected(myTabs.getTabAt(0), false);
+      myTabs.select(myTabs.getTabAt(0), false);
     }
 
     for (TabInfo each : myTabs.getTabs()) {
       Tab tab = getTabFor(each);
       if (tab.getIndex() == index) {
-        myTabs.setSelected(each, true);
+        myTabs.select(each, true);
         break;
       }
     }
@@ -792,7 +793,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     select(content, false).doWhenDone(new Runnable() {
       public void run() {
-        myTabs.validate();
+        myTabs.getComponent().validate();
         toRestore.run().doWhenDone(new Runnable() {
           public void run() {
             myTabs.select(current, true);
