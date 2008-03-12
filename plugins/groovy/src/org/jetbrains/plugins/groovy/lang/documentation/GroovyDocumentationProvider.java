@@ -15,15 +15,21 @@
 package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.LangBundle;
 import com.intellij.psi.*;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
  * @author ven
@@ -93,11 +99,85 @@ public class GroovyDocumentationProvider implements DocumentationProvider {
       }
       buffer.append(")");
       return buffer.toString();
+    } else if (element instanceof GrTypeDefinition) {
+      return generateClassInfo((GrTypeDefinition)element);
     }
 
     //todo
     return null;
   }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private String generateClassInfo(PsiClass aClass) {
+    StringBuffer buffer = new StringBuffer();
+    GroovyFile file = (GroovyFile) aClass.getContainingFile();
+
+    String packageName = file.getPackageName();
+    if (packageName.length() > 0) {
+      buffer.append(packageName).append("\n");
+    }
+
+    final String classString =
+      aClass.isInterface() ? "interface" :
+      aClass instanceof PsiTypeParameter ? "type parameter" :
+      aClass.isEnum() ? "enum" : "class";
+    buffer.append(classString).append(" ");
+
+    buffer.append(aClass.getName());
+
+    if (aClass.hasTypeParameters()) {
+      PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
+
+      buffer.append("<");
+
+      for (int i = 0; i < typeParameters.length; i++) {
+        if (i > 0) buffer.append(", ");
+
+        PsiTypeParameter tp = typeParameters[i];
+
+        buffer.append(tp.getName());
+
+        PsiClassType[] refs = tp.getExtendsListTypes();
+
+        if (refs.length > 0) {
+          buffer.append(" extends ");
+
+          for (int j = 0; j < refs.length; j++) {
+            if (j > 0) buffer.append(" & ");
+            appendTypeString(buffer, refs[j]);
+          }
+        }
+      }
+
+      buffer.append(">");
+    }
+
+    PsiClassType[] refs = aClass.getExtendsListTypes();
+    if (refs.length > 0 || !aClass.isInterface() && !"java.lang.Object".equals(aClass.getQualifiedName())) {
+      buffer.append(" extends ");
+      if (refs.length == 0) {
+        buffer.append("Object");
+      } else {
+        for (int i = 0; i < refs.length; i++) {
+          if (i > 0) buffer.append(", ");
+          appendTypeString(buffer, refs[i]);
+        }
+      }
+    }
+
+    refs = aClass.getImplementsListTypes();
+    if (refs.length > 0) {
+      buffer.append("\nimplements ");
+      for (int i = 0; i < refs.length; i++) {
+        if (i > 0) buffer.append(", ");
+        appendTypeString(buffer, refs[i]);
+
+      }
+    }
+
+    return buffer.toString();
+  }
+
 
   private void appendTypeString(StringBuffer buffer, PsiType type) {
     if (type != null) {
