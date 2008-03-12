@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.ui.treetable.TreeTable;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
@@ -77,7 +75,7 @@ public class GrDynamicImplicitPropertyImpl extends GrDynamicImplicitElement {
         final DefaultMutableTreeNode desiredNode;
         DPropertyElement dynamicProperty = null;
         PsiClass trueSuper = null;
-        for (PsiClass aSuper : GroovyUtils.iterateSupers(psiClass, true)) {
+        for (PsiClass aSuper : PsiUtil.iterateSupers(psiClass, true)) {
           dynamicProperty = DynamicManager.getInstance(myProject).findConcreteDynamicProperty(aSuper.getQualifiedName(), ((GrReferenceExpression) myScope).getName());
 
           if(dynamicProperty != null) {

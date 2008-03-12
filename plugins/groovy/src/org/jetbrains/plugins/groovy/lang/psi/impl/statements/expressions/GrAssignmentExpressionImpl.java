@@ -43,9 +43,7 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
 
   @NotNull
   public GrExpression getLValue() {
-    GrExpression[] exprs = findChildrenByClass(GrExpression.class);
-    assert exprs.length > 0;
-    return exprs[0];
+    return findNotNullChildByClass(GrExpression.class);
   }
 
   @Nullable

@@ -87,7 +87,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
 import org.jetbrains.plugins.groovy.structure.GroovyElementPresentation;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import java.util.*;
 
@@ -816,7 +815,7 @@ public class GroovyAnnotator implements Annotator {
     //TODO:add targetClass
 //    classes.add(targetClass);
     DElement superDynamicMethod;
-    for (PsiClass clazz : GroovyUtils.iterateSupers(targetClass, true)) {
+    for (PsiClass clazz : PsiUtil.iterateSupers(targetClass, true)) {
       superDynamicMethod = DynamicManager.getInstance(project).findConcreteDynamicMethod(clazz.getQualifiedName(), referenceExpression.getName(), types);
 
       if (superDynamicMethod != null) return null;
@@ -829,7 +828,7 @@ public class GroovyAnnotator implements Annotator {
     final Project project = referenceExpression.getProject();
 
     DElement superDynamicProperty;
-    for (PsiClass aSuper : GroovyUtils.iterateSupers(targetClass, true)) {
+    for (PsiClass aSuper : PsiUtil.iterateSupers(targetClass, true)) {
       superDynamicProperty = DynamicManager.getInstance(project).findConcreteDynamicProperty(aSuper.getQualifiedName(), referenceExpression.getName());
 
       if (superDynamicProperty != null) return null;

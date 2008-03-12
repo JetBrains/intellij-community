@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.ui.treetable.TreeTable;
@@ -21,7 +20,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -89,7 +87,7 @@ public class GrDynamicImplicitMethodImpl extends GrDynamicImplicitElement {
         PsiClass trueClass = null;
         DMethodElement methodElement = null;
 
-        for (PsiClass aSuper : GroovyUtils.iterateSupers(psiClass, true)) {
+        for (PsiClass aSuper : PsiUtil.iterateSupers(psiClass, true)) {
           methodElement = DynamicManager.getInstance(myProject).findConcreteDynamicMethod(aSuper.getQualifiedName(), ((GrReferenceExpression) myScope).getName(), QuickfixUtil.getArgumentsTypes(pairs));
 
           if (methodElement != null) {

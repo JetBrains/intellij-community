@@ -12,7 +12,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -110,7 +109,7 @@ public class CompleteReferenceExpression {
         return propertyVariants;
       }
 
-      for (PsiClass aSuper : GroovyUtils.iterateSupers(psiClass, true)) {
+      for (PsiClass aSuper : PsiUtil.iterateSupers(psiClass, true)) {
         String[] dynamicPropertiesOfClass = DynamicManager.getInstance(refExpr.getProject()).getPropertiesNamesOfClass(aSuper.getQualifiedName());
         propertyVariants = ArrayUtil.mergeArrays(propertyVariants, dynamicPropertiesOfClass, Object.class);
       }

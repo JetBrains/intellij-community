@@ -27,6 +27,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,8 +54,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.Stack;
+
+import gnu.trove.TIntStack;
 
 /**
  * @author ven
@@ -468,5 +471,80 @@ public class PsiUtil {
     }
     return false;
 
+  }
+
+  public static Iterable<PsiClass> iterateSupers(final @NotNull PsiClass psiClass, final boolean includeSelf) {
+    return new Iterable<PsiClass>() {
+      public Iterator<PsiClass> iterator() {
+        return new Iterator<PsiClass>() {
+          TIntStack indices = new TIntStack();
+          Stack<PsiClassType[]> superTypesStack = new Stack<PsiClassType[]>();
+          PsiClass current;
+          boolean nextObtained;
+          Set<PsiClass> visited = new com.intellij.util.containers.HashSet<PsiClass>();
+
+          {
+            if (includeSelf) {
+              current = psiClass;
+              nextObtained = true;
+            } else {
+              current = null;
+              nextObtained = false;
+            }
+
+            pushSuper(psiClass);
+          }
+
+          public boolean hasNext() {
+            nextElement();
+            return current != null;
+          }
+
+          private void nextElement() {
+            if (nextObtained) return;
+
+            nextObtained = true;
+            while (!superTypesStack.empty()) {
+              assert indices.size() > 0;
+
+              int i = indices.pop();
+              PsiClassType[] superTypes = superTypesStack.peek();
+              while (i < superTypes.length) {
+                PsiClass clazz = superTypes[i].resolve();
+                if (clazz != null && !visited.contains(clazz)) {
+                  current = clazz;
+                  visited.add(clazz);
+                  indices.push(i + 1);
+                  pushSuper(clazz);
+                  return;
+                }
+                i++;
+              }
+
+              superTypesStack.pop();
+            }
+
+            current = null;
+          }
+
+          private void pushSuper(PsiClass clazz) {
+            superTypesStack.push(clazz.getSuperTypes());
+            indices.push(0);
+          }
+
+          @NotNull
+          public PsiClass next() {
+            nextElement();
+            nextObtained = false;
+            if (current == null) throw new NoSuchElementException();
+            return current;
+          }
+
+          public void remove() {
+            throw new IllegalStateException("should not be called");
+          }
+        };
+      }
+    };
   }
 }

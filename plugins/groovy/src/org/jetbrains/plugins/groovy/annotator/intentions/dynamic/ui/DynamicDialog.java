@@ -25,10 +25,10 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMetho
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -128,7 +128,7 @@ public abstract class DynamicDialog extends DialogWrapper {
 
     if (psiClass == null) return;
 
-    for (PsiClass aClass : GroovyUtils.iterateSupers(psiClass, true)) {
+    for (PsiClass aClass : PsiUtil.iterateSupers(psiClass, true)) {
       myClassComboBox.addItem(new ContainingClassItem(aClass));
     }
 
