@@ -69,9 +69,10 @@ public class PsiImplUtil {
                                                GrExpression newExpr,
                                                boolean removeUnnecessaryParentheses) {
     ASTNode oldNode = oldExpr.getNode();
-    if (oldExpr.getParent() == null) throw new PsiInvalidElementAccessException(oldExpr);
+    PsiElement oldParent = oldExpr.getParent();
+    if (oldParent == null) throw new PsiInvalidElementAccessException(oldExpr);
 
-    ASTNode parentNode = oldExpr.getParent().getNode();
+    ASTNode parentNode = oldParent.getNode();
 
     if (newExpr instanceof GrApplicationStatement && !(oldExpr instanceof GrApplicationStatement)) {
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(oldExpr.getProject());
@@ -79,14 +80,14 @@ public class PsiImplUtil {
     }
     
     // Remove unnecessary parentheses
-    if (removeUnnecessaryParentheses && oldExpr.getParent() instanceof GrParenthesizedExpression) {
-      return ((GrExpression) oldExpr.getParent()).replaceWithExpression(newExpr, removeUnnecessaryParentheses);
+    if (removeUnnecessaryParentheses && oldParent instanceof GrParenthesizedExpression) {
+      return ((GrExpression) oldParent).replaceWithExpression(newExpr, removeUnnecessaryParentheses);
     }
 
     // check priorities
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(oldExpr.getProject());
-    if (oldExpr.getParent() instanceof GrExpression) {
-      GrExpression parentExpr = (GrExpression) oldExpr.getParent();
+    if (oldParent instanceof GrExpression && !(oldParent instanceof GrParenthesizedExpression)) {
+      GrExpression parentExpr = (GrExpression) oldParent;
       int parentPriorityLevel = getExprPriorityLevel(parentExpr);
       int newPriorityLevel = getExprPriorityLevel(newExpr);
       if (parentPriorityLevel > newPriorityLevel) {
