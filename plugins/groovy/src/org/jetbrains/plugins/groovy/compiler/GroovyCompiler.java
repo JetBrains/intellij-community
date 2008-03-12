@@ -76,8 +76,10 @@ public class GroovyCompiler implements TranslatingCompiler {
       assert jdk != null; //verified before
       commandLine.setExePath(jdk.getVMExecutablePath());
 
+//      for debug
 //      commandLine.addParameter("-Xdebug");
 //      commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=127.0.0.1:5557");
+
       commandLine.addParameter("-cp");
 
       String rtJarPath = PathUtil.getJarPathForClass(GroovycRunner.class);
@@ -106,10 +108,6 @@ public class GroovyCompiler implements TranslatingCompiler {
 
       commandLine.addParameter(classPathBuilder.toString());
       commandLine.addParameter(XMX_COMPILER_PROPERTY);
-
-      //for debug needs
-//      commandLine.addParameter("-Xdebug");
-//      commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
 
       commandLine.addParameter(GroovycRunner.class.getName());
 
@@ -263,11 +261,16 @@ public class GroovyCompiler implements TranslatingCompiler {
     printer.println(GroovycRunner.CLASSPATH);
     printer.println(getCompilationClasspath(module).getPathsString());
 
-//production output
+    //Grails injections  support
+    printer.println(GroovycRunner.IS_GRAILS);
+    printer.println(GroovyGrailsConfiguration.getInstance().isGrailsConfigured(module) &&
+        module.getModuleType() instanceof GrailsModuleType);
+
+    //production output
     printer.println(GroovycRunner.OUTPUTPATH);
     printer.println(CompilerPaths.getModuleOutputPath(module, false));
 
-//test output
+    //test output
     printer.println(GroovycRunner.TEST_OUTPUTPATH);
     printer.println(CompilerPaths.getModuleOutputPath(module, true));
     printer.close();
