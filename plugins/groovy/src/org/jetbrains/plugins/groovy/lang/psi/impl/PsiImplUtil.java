@@ -232,6 +232,7 @@ public class PsiImplUtil {
     if (expr instanceof GrLogicalOrExpressionImpl) priority = 19;
     if (expr instanceof GrConditionalExpression) priority = 20;
     if (expr instanceof GrAssignmentExpression) priority = 21;
+    if (expr instanceof GrParenthesizedExpression) priority = 22;
     return -priority;
   }
 
