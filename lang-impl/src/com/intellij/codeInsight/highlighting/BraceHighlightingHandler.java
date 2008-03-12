@@ -29,9 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
@@ -105,9 +103,12 @@ public class BraceHighlightingHandler {
     Document document = editor.getDocument();
     // when document is committed, try to highlight braces in injected lang - it's fast
     if (!PsiDocumentManager.getInstance(project).isUncommited(document)) {
-      PsiFile injected = InjectedLanguageUtil.findInjectedPsiAt(psiFile, offset);
-      if (injected != null) {
-        return injected;
+      final PsiElement injectedElement = InjectedLanguageUtil.findInjectedElementAt(psiFile, offset);
+      if (injectedElement != null && !(injectedElement instanceof PsiWhiteSpace)) {
+        final PsiFile injected = injectedElement.getContainingFile();
+        if (injected != null) {
+          return injected;
+        }
       }
     }
     else if (alarm != null) {
