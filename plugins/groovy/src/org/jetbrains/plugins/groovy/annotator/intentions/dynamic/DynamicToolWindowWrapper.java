@@ -351,8 +351,6 @@ public class DynamicToolWindowWrapper {
     for (TreePath selectionPath : tree.getSelectionPaths()) {
       if (rowsCount > 1) isShowDialog = false;
       if (i++ == 0) isShowDialog = true;
-//
-//      final TreePath selectionPath = tree.getSelectionPath();
 
       //class
       final TreePath parent = selectionPath.getParentPath();
