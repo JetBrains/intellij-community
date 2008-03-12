@@ -21,8 +21,8 @@ import java.awt.event.MouseEvent;
 
 public class RelativePoint {
 
-  private Component myComponent;
-  private Point myPointOnComponent;
+  private final Component myComponent;
+  private final Point myPointOnComponent;
 
   public RelativePoint(MouseEvent event) {
     this(event.getComponent(), event.getPoint());

@@ -1,5 +1,7 @@
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 
 public interface Hint {
@@ -14,7 +16,7 @@ public interface Hint {
    * @param focusBackComponent component which should get focus when the hint will
    * be hidden. If <code>null</code> then the hint doesn't manage focus after closing.
    */
-  void show(JComponent parentComponent, int x, int y, JComponent focusBackComponent);
+  void show(@NotNull JComponent parentComponent, int x, int y, JComponent focusBackComponent);
 
   /**
    * @return whether the hint is showing or not

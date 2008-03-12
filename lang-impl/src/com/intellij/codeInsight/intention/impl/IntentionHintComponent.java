@@ -549,7 +549,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       super(component);
     }
 
-    public void show(final JComponent parentComponent, final int x, final int y, final JComponent focusBackComponent) {
+    public void show(@NotNull final JComponent parentComponent, final int x, final int y, final JComponent focusBackComponent) {
       myVisible = true;
       if (myShouldDelay) {
         myAlarm.cancelAllRequests();

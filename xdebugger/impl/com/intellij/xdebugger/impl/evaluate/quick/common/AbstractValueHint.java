@@ -238,8 +238,7 @@ public abstract class AbstractValueHint {
   }
 
   protected JComponent createExpandableHintComponent(final SimpleColoredText text, final Runnable expand) {
-    final JComponent component;
-    component = HintUtil.createInformationLabel(text, COLLAPSED_TREE_ICON);
+    final JComponent component = HintUtil.createInformationLabel(text, COLLAPSED_TREE_ICON);
     addMouseListenerToHierarchy(component, new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         if (myCurrentHint != null) {

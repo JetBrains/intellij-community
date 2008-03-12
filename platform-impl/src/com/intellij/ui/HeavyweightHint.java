@@ -31,7 +31,7 @@ public class HeavyweightHint implements Hint {
   /**
    * Shows the hint as the window
    */
-  public void show(JComponent parentComponent, int x, int y, JComponent focusBackComponent) {
+  public void show(@NotNull JComponent parentComponent, int x, int y, JComponent focusBackComponent) {
     Dimension preferredSize = myComponent.getPreferredSize();
 
     LOG.assertTrue(parentComponent.isShowing());

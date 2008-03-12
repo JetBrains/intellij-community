@@ -19,13 +19,14 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.ui.Hint;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListenerUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -77,7 +78,7 @@ public class HintManager implements ApplicationComponent {
   private static class HintInfo {
     final LightweightHint hint;
     final int flags;
-    private boolean reviveOnEditorChange;
+    private final boolean reviveOnEditorChange;
 
     public HintInfo(LightweightHint hint, int flags, boolean reviveOnEditorChange) {
       this.hint = hint;
@@ -185,17 +186,6 @@ public class HintManager implements ApplicationComponent {
       if (hintInfo.hint.isVisible() && (hintInfo.flags & HIDE_BY_OTHER_HINT) != 0) return true;
     }
     return false;
-  }
-
-  @Nullable
-  public Hint findHintByType(Class klass){
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-    for (HintInfo hintInfo : myHintsStack) {
-      if (klass.isInstance(hintInfo.hint.getComponent()) && hintInfo.hint.isVisible()){
-        return hintInfo.hint;
-      }
-    }
-    return null;
   }
 
   public void disposeComponent() {
@@ -310,6 +300,56 @@ public class HintManager implements ApplicationComponent {
     }
   }
 
+  public void showHint(@NotNull final JComponent component, @NotNull RelativePoint p, int flags, int timeout) {
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    myHideAlarm.cancelAllRequests();
+
+    hideHints(HIDE_BY_OTHER_HINT, false, false);
+
+    final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
+        .setRequestFocus(false)
+        .setResizable(false)
+        .setMovable(false)
+        .createPopup();
+    popup.show(p);
+
+    ListenerUtil.addMouseListener(
+      component,
+      new MouseAdapter() {
+        public void mousePressed(MouseEvent e) {
+          myHideAlarm.cancelAllRequests();
+        }
+      }
+    );
+    ListenerUtil.addFocusListener(
+      component,
+      new FocusAdapter() {
+        public void focusGained(FocusEvent e) {
+          myHideAlarm.cancelAllRequests();
+        }
+      }
+    );
+
+    final HintInfo info = new HintInfo(new LightweightHint(component){
+      public void hide() {
+        popup.cancel();
+      }
+    }, flags, false);
+    myHintsStack.add(info);
+    if (timeout > 0) {
+      Timer timer = new Timer(
+        timeout,
+        new ActionListener() {
+          public void actionPerformed(ActionEvent event) {
+            popup.dispose();
+          }
+        }
+      );
+      timer.setRepeats(false);
+      timer.start();
+    }
+  }
+
   private static void doShowInGivenLocation(final LightweightHint hint, final Editor editor, final Point p) {
     JLayeredPane layeredPane = editor.getComponent().getRootPane().getLayeredPane();
     Dimension size = hint.getComponent().getPreferredSize();
@@ -320,7 +360,7 @@ public class HintManager implements ApplicationComponent {
     else hint.setLocation(p.x, p.y);
   }
 
-  public void adjustEditorHintPosition(final LightweightHint hint, final Editor editor, final Point p) {
+  public static void adjustEditorHintPosition(final LightweightHint hint, final Editor editor, final Point p) {
     doShowInGivenLocation(hint, editor, p);
   }
 
@@ -488,7 +528,7 @@ public class HintManager implements ApplicationComponent {
     return location;
   }
 
-  public void showErrorHint(Editor editor, String text) {
+  public void showErrorHint(@NotNull Editor editor, String text) {
     JLabel label = HintUtil.createErrorLabel(text);
     LightweightHint hint = new LightweightHint(label);
     Point p = getHintPosition(hint, editor, ABOVE);

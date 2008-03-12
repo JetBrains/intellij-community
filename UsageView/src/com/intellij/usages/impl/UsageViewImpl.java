@@ -1292,4 +1292,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public GroupNode getRoot() {
     return myRoot;
   }
+
+  public boolean isVisible(Usage usage) {
+    return myBuilder != null && myBuilder.isVisible(usage);
+  }
 }

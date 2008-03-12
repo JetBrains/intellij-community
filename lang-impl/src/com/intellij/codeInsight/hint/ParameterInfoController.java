@@ -264,7 +264,7 @@ public class ParameterInfoController {
     if (elementForUpdating != null) {
       myHandler.updateParameterInfo(elementForUpdating, context);
       if (myHint.isVisible()) {
-        HintManager.getInstance().adjustEditorHintPosition(myHint, myEditor, myProvider.getBestPointPosition(myHint, (PsiElement)elementForUpdating,offset));
+        HintManager.adjustEditorHintPosition(myHint, myEditor, myProvider.getBestPointPosition(myHint, (PsiElement)elementForUpdating,offset));
       }
     }
     else context.removeHint();
@@ -393,12 +393,5 @@ public class ParameterInfoController {
       return myComponent.getObjects();
     }
 
-    public void setHighlightedParameter(final PsiElement parameter) {
-      setHighlightedParameter((Object)parameter);
-    }
-
-    public int getParameterStart() {
-      return getParameterListStart();
-    }
   }
 }

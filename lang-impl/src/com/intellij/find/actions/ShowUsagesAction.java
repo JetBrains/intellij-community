@@ -1,6 +1,7 @@
 package com.intellij.find.actions;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
@@ -17,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -28,17 +30,20 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.GroupNode;
 import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.CommonProcessors;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 public class ShowUsagesAction extends AnAction {
@@ -48,9 +53,8 @@ public class ShowUsagesAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null) {
-      return;
-    }
+    if (project == null) return;
+    final RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.usages");
 
@@ -59,18 +63,18 @@ public class ShowUsagesAction extends AnAction {
     if (usageTargets == null) {
       FindUsagesAction.chooseAmbiguousTargetAndPerform(project, editor, new PsiElementProcessor<PsiElement>() {
         public boolean execute(final PsiElement element) {
-          showElementUsages(project, element, editor);
+          showElementUsages(project, element, editor, popupPosition);
           return false;
         }
       });
     }
     else {
       PsiElement element = ((PsiElement2UsageTargetAdapter)usageTargets[0]).getElement();
-      showElementUsages(project, element, editor);
+      showElementUsages(project, element, editor, popupPosition);
     }
   }
 
-  private static void showElementUsages(@NotNull Project project, final PsiElement element, Editor editor) {
+  private static void showElementUsages(@NotNull Project project, final PsiElement element, Editor editor, final RelativePoint popupPosition) {
     ArrayList<Usage> usages = new ArrayList<Usage>();
     CommonProcessors.CollectProcessor<Usage> collect = new CommonProcessors.CollectProcessor<Usage>(usages);
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
@@ -78,17 +82,20 @@ public class ShowUsagesAction extends AnAction {
     UsageViewPresentation presentation = findUsagesManager.processUsages(element, collect, handler);
     if (presentation == null) return;
     if (usages.isEmpty()) {
-      HintManager.getInstance().showInformationHint(editor, FindBundle.message("no.usages.found.in", searchScopePresentableName(element, handler)));
-    }
-    else if (usages.size() == 1) {
-      Usage usage = usages.iterator().next();
-      navigateAndHint(usage, FindBundle.message("show.usages.only.usage", searchScopePresentableName(element, handler)));
+      String text = FindBundle.message("no.usages.found.in", searchScopePresentableName(element, handler));
+      if (editor != null) {
+        HintManager.getInstance().showInformationHint(editor, text);
+      }
+      else {
+        JLabel label = HintUtil.createInformationLabel(text);
+        HintManager.getInstance().showHint(label, popupPosition, HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0);
+      }
     }
     else {
       final String title = presentation.getTabText();
       JBPopup popup = getUsagePopup(usages, title, project, element, handler);
       if (popup != null) {
-        popup.showInBestPositionFor(editor);
+        popup.show(popupPosition);
       }
     }
   }
@@ -108,12 +115,18 @@ public class ShowUsagesAction extends AnAction {
 
     GroupNode root = usageView.getRoot();
     List<UsageNode> nodes = new ArrayList<UsageNode>();
+    Set<Usage> filteredUsages = new THashSet<Usage>();
 
-    addUsageNodes(root, nodes);
+    addUsageNodes(root, nodes, usageView, filteredUsages);
     if (nodes.size() == 1) {
       // usage view can filter usages down to one
       Usage usage = nodes.get(0).getUsage();
-      navigateAndHint(usage, FindBundle.message("all.usages.are.in.this.line", usages.size(), searchScopePresentableName(element, handler)));
+      if (filteredUsages.size() == 1) {
+        navigateAndHint(usage, FindBundle.message("show.usages.only.usage", searchScopePresentableName(element, handler)));
+      }
+      else {
+        navigateAndHint(usage, FindBundle.message("all.usages.are.in.this.line", filteredUsages.size(), searchScopePresentableName(element, handler)));
+      }
       usageView.dispose();
       return null;
     }
@@ -213,23 +226,23 @@ public class ShowUsagesAction extends AnAction {
     return builder.setItemChoosenCallback(runnable).createPopup();
   }
 
-  private static void addUsageNodes(GroupNode root, List<UsageNode> nodes) {
+  private static void addUsageNodes(GroupNode root, List<UsageNode> outNodes, final UsageViewImpl usageView, final Set<Usage> filteredUsages) {
     for (UsageNode node : root.getUsageNodes()) {
-      node.setParent(root);
-      nodes.add(node);
+      Usage usage = node.getUsage();
+      if (usageView.isVisible(usage)) {
+        node.setParent(root);
+        outNodes.add(node);
+        filteredUsages.add(usage);
+      }
     }
     for (GroupNode groupNode : root.getSubGroups()) {
       groupNode.setParent(root);
-      addUsageNodes(groupNode, nodes);
+      addUsageNodes(groupNode, outNodes, usageView, filteredUsages);
     }
   }
 
   public void update(AnActionEvent e){
     FindUsagesInFileAction.updateFindUsagesAction(e);
-    Editor editor = e.getData(PlatformDataKeys.EDITOR);
-    if (editor == null) {
-      e.getPresentation().setEnabled(false);
-    }
   }
 
   private static void navigateAndHint(Usage usage, final String hint) {

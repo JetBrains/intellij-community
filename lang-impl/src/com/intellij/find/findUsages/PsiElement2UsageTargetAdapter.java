@@ -29,8 +29,8 @@ import javax.swing.*;
  * @author max
  */
 public class PsiElement2UsageTargetAdapter implements UsageTarget, TypeSafeDataProvider {
-  private SmartPsiElementPointer myPointer;
-  private MyItemPresentation myPresentation;
+  private final SmartPsiElementPointer myPointer;
+  private final MyItemPresentation myPresentation;
 
   public PsiElement2UsageTargetAdapter(final PsiElement element) {
     myPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.JBPopupImpl;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -33,8 +34,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   private boolean myForceShowAsPopup = false;
   private String myTitle = null;
 
-  public LightweightHint(final JComponent component) {
-    LOG.assertTrue(component != null);
+  public LightweightHint(@NotNull final JComponent component) {
     myComponent = component;
   }
 
@@ -64,9 +64,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
    * are in <code>parentComponent</code> coordinate system. Note that the component
    * appears on 250 layer.
    */
-  public void show(final JComponent parentComponent, final int x, final int y, final JComponent focusBackComponent) {
+  public void show(@NotNull final JComponent parentComponent, final int x, final int y, final JComponent focusBackComponent) {
     myParentComponent = parentComponent;
-    LOG.assertTrue(myParentComponent != null);
 
     myFocusBackComponent = focusBackComponent;
 

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 class UsageNodeTreeBuilder {
-  private GroupNode myRoot;
+  private final GroupNode myRoot;
   private UsageGroupingRule[] myGroupingRules;
   private UsageFilteringRule[] myFilteringRules;
 
@@ -43,12 +43,17 @@ class UsageNodeTreeBuilder {
     myFilteringRules = rules;
   }
 
-  synchronized UsageNode appendUsage(Usage usage) {
+  public boolean isVisible(Usage usage) {
     for (final UsageFilteringRule rule : myFilteringRules) {
       if (!rule.isVisible(usage)) {
-        return null;
+        return false;
       }
     }
+    return true;
+  }
+
+  synchronized UsageNode appendUsage(Usage usage) {
+    if (!isVisible(usage)) return null;
     GroupNode lastGroupNode = myRoot;
     for (int i = 0; i < myGroupingRules.length; i++) {
       final UsageGroupingRule rule = myGroupingRules[i];

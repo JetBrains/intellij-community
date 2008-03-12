@@ -20,7 +20,7 @@ import java.util.List;
  * @author max
  */
 public class UsageTargetsRule implements GetDataRule {
-  ExtensionPointName<UsageTargetProvider> EP_NAME = ExtensionPointName.create("com.intellij.usageTargetProvider");
+  private final ExtensionPointName<UsageTargetProvider> EP_NAME = ExtensionPointName.create("com.intellij.usageTargetProvider");
 
   @Nullable
   public Object getData(DataProvider dataProvider) {
