@@ -13,6 +13,7 @@
   <tip file="OverrideImplementMethods.html"/> <!--covered-->
   <tip file="SmartTypeCompletion.html"/>    <!--covered-->
   <tip file="TabInLookups.html"/>           <!--covered-->
+  <tip file="TabInEditorClose.html"/>           
   <tip file="AltInsertInEditor.html"/>
   <tip file="ClosingTabsWithMiddleMouse.html"/>
   <tip file="SelectIn.html"/>               <!--covered-->
