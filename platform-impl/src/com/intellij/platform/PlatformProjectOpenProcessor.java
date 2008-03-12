@@ -59,6 +59,12 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     }
     if (project == null) return null;
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
+    if (baseDir != null) {
+      for(DirectoryProjectConfigurator configurator: Extensions.getExtensions(DirectoryProjectConfigurator.EP_NAME)) {
+        configurator.configureProject(project, baseDir);
+      }
+    }
+
     openFileFromCommandLine(project, virtualFile);
     projectManager.openProject(project);
 

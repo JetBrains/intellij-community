@@ -60,4 +60,7 @@
 
   <extensionPoint name="codeInsight.linkHandler"
                   interface="com.intellij.codeInsight.hint.TooltipLinkHandlerEP"/>
+
+  <extensionPoint name="directoryProjectConfigurator"
+                  interface="com.intellij.platform.DirectoryProjectConfigurator"/>
 </extensionPoints>

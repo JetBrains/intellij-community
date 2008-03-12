@@ -33,9 +33,6 @@
     <component>
       <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.platform.PlatformProjectConfigurator</implementation-class>
-    </component>
   </project-components>
 
   <xi:include href="/componentSets/Platform.xml" xpointer="xpointer(/components/*)"/>
