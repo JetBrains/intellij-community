@@ -54,7 +54,7 @@ public class MutableMarker {
   }
 
   public void finish() {
-    assert myMode == Mode.READY : myMode;
+    assert myMode == Mode.READY || myMode == Mode.DROPPED && myResultType == null: myMode;
     if (myResultType == null) {
       myMode = Mode.DROPPED;
       myStartMarker.drop();
