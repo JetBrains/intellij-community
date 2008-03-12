@@ -64,13 +64,11 @@ public class GroovyUnusedCatchParameterInspection extends BaseInspection {
       if ("ignore".equals(name) || "ignored".equals(name)) {
         return;
       }
-      final CatchParameterUsedVisitor visitor =
-          new CatchParameterUsedVisitor(parameter);
+      final CatchParameterUsedVisitor visitor = new CatchParameterUsedVisitor(parameter);
       block.accept(visitor);
       if (!visitor.isUsed()) {
         registerVariableError(parameter);
       }
-
     }
   }
 }
