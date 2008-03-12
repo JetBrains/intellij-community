@@ -1,5 +1,6 @@
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -7,7 +8,6 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.sun.jdi.request.EventRequest;
@@ -24,12 +24,11 @@ public class ResumeThreadAction extends DebuggerAction{
     final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
 
     //noinspection ConstantConditions
-    for (int i = 0; i < selectedNode.length; i++) {
-      final DebuggerTreeNodeImpl debuggerTreeNode = selectedNode[i];
-      ThreadDescriptorImpl threadDescriptor = ((ThreadDescriptorImpl)debuggerTreeNode.getDescriptor());
-      final ThreadReferenceProxyImpl thread = threadDescriptor.getThreadReference();
+    for (final DebuggerTreeNodeImpl debuggerTreeNode : selectedNode) {
+      final ThreadDescriptorImpl threadDescriptor = ((ThreadDescriptorImpl)debuggerTreeNode.getDescriptor());
 
-      if(threadDescriptor.isSuspended()) {
+      if (threadDescriptor.isSuspended()) {
+        final ThreadReferenceProxyImpl thread = threadDescriptor.getThreadReference();
         debugProcess.getManagerThread().invokeLater(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
           public void contextAction() throws Exception {
             debugProcess.createResumeThreadCommand(getSuspendContext(), thread).run();
