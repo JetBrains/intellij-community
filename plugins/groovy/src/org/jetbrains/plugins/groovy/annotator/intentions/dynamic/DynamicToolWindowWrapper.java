@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -61,9 +60,6 @@ public class DynamicToolWindowWrapper {
   public static final String QUALIFIED_IDENTIFIER_REGEXP = "[a-zA-Z0-9(.)]+";
   private static JPanel myTreeTablePanel;
   private static JPanel myBigPanel;
-
-  private static DynamicTreeViewState myState = new DynamicTreeViewState();
-
   private static ListTreeTableModelOnColumns myTreeTableModel;
 
   private static final int CLASS_OR_ELEMENT_NAME_COLUMN = 0;
@@ -75,8 +71,6 @@ public class DynamicToolWindowWrapper {
   };
 
   private static TreeTable myTreeTable;
-  private static final Key<DynamicTreeViewState> DYNAMIC_TOOLWINDOW_STATE_KEY = Key.create("DYNAMIC_TOOLWINDOW_STATE");
-
 
   private static boolean doesTreeTableInit() {
     return myBigPanel != null && myTreeTableModel != null && myTreeTablePanel != null;
@@ -259,11 +253,8 @@ public class DynamicToolWindowWrapper {
     });
 
     RefactoringListenerManager.getInstance(project).addListenerProvider(new RefactoringElementListenerProvider() {
-      private PsiElement myElement;
-
       @Nullable
       public RefactoringElementListener getListener(final PsiElement element) {
-        myElement = element;
         if (element instanceof GrDynamicImplicitElement) {
           return new RefactoringElementListener() {
             public void elementMoved(PsiElement newElement) {
@@ -600,20 +591,6 @@ public class DynamicToolWindowWrapper {
     }
 
     return ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(currentFile);
-  }
-
-  private static List<TreePath> getExpandedElements() {
-    final JTree tree = myTreeTable.getTree();
-    if (tree == null) return new ArrayList<TreePath>();
-    return TreeUtil.collectExpandedPaths(tree);
-  }
-
-  private static List<TreePath> getSelectedElements() {
-    final JTree tree = myTreeTable.getTree();
-    TreePath[] selectionPaths = tree.getSelectionPaths();
-    selectionPaths = selectionPaths != null ? selectionPaths : new TreePath[0];
-
-    return Arrays.asList(selectionPaths);
   }
 
   public static ListTreeTableModelOnColumns getTreeTableModel(ToolWindow window, Project project) {
