@@ -577,7 +577,7 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
   }
 
   @Override
-  public boolean isExternalDocumentationEnabled(final PsiElement element) {
+  public boolean isExternalDocumentationEnabled(final PsiElement element, final PsiElement originalElement) {
     boolean actionEnabled = element != null && getExternalJavaDocUrl(element) != null;
     if (element instanceof PsiVariable && !(element instanceof PsiField)) {
       actionEnabled = false;
@@ -597,7 +597,7 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
   }
 
   @Override
-  public void openExternalDocumentation(final PsiElement element) {
+  public void openExternalDocumentation(final PsiElement element, final PsiElement originalElement) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.javadoc.external");
     List<String> urls = getExternalJavaDocUrl(element);
     if (urls != null && !urls.isEmpty()) {

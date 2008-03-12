@@ -284,7 +284,7 @@ public class DocumentationManager implements ProjectComponent {
     return CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
   }
 
-  private static void storeOriginalElement(final Project project, final PsiElement originalElement, final PsiElement element) {
+  public static void storeOriginalElement(final Project project, final PsiElement originalElement, final PsiElement element) {
     if (element == null) return;
     try {
       element.putUserData(
@@ -500,8 +500,7 @@ public class DocumentationManager implements ProjectComponent {
 
   @Nullable
   public static DocumentationProvider getProviderFromElement(final PsiElement element) {
-    SmartPsiElementPointer originalElementPointer = element!=null ? element.getUserData(ORIGINAL_ELEMENT_KEY):null;
-    PsiElement originalElement = originalElementPointer != null ? originalElementPointer.getElement() : null;
+    PsiElement originalElement = getOriginalElement(element);
     PsiFile containingFile = originalElement != null ? originalElement.getContainingFile() : element != null ? element.getContainingFile() : null;
     Set<DocumentationProvider> result = new LinkedHashSet<DocumentationProvider>();
 
@@ -519,6 +518,12 @@ public class DocumentationManager implements ProjectComponent {
 
     if (result.isEmpty()) return null;
     return new CompositeDocumentationProvider(result);
+  }
+
+  @Nullable
+  public static PsiElement getOriginalElement(final PsiElement element) {
+    SmartPsiElementPointer originalElementPointer = element!=null ? element.getUserData(ORIGINAL_ELEMENT_KEY):null;
+    return originalElementPointer != null ? originalElementPointer.getElement() : null;
   }
 
   void navigateByLink(final DocumentationComponent component, String url) {
@@ -550,7 +555,7 @@ public class DocumentationManager implements ProjectComponent {
                 if (text != null) {
                   return text;
                 }
-                documentationProvider.openExternalDocumentation(psiElement);
+                documentationProvider.openExternalDocumentation(psiElement, getOriginalElement(psiElement));
               }
             }
             return "";

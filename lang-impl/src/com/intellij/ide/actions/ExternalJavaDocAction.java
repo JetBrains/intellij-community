@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
+import org.jetbrains.annotations.Nullable;
 
 public class ExternalJavaDocAction extends AnAction {
 
@@ -35,19 +35,16 @@ public class ExternalJavaDocAction extends AnAction {
 
     PsiFile context = LangDataKeys.PSI_FILE.getData(dataContext);
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    PsiElement originalElement = (context!=null && editor!=null)? context.findElementAt(editor.getCaretModel().getOffset()):null;
-    try {
-      element.putUserData(
-        DocumentationManager.ORIGINAL_ELEMENT_KEY,
-        SmartPointerManager.getInstance(originalElement.getProject()).createSmartPsiElementPointer(originalElement)
-      );
-    } catch(RuntimeException ex) {
-      // some UserDataHolder does not support putUserData, e.g. PsiPackage
-      // tolerate it
-    }
-
+    PsiElement originalElement = getOriginalElement(context, editor);
+    DocumentationManager.storeOriginalElement(project, element, originalElement);
     final ExtensibleDocumentationProvider provider = (ExtensibleDocumentationProvider)DocumentationManager.getProviderFromElement(element);
-    provider.openExternalDocumentation(element);
+    assert provider != null;
+    provider.openExternalDocumentation(element, originalElement);
+  }
+
+  @Nullable
+  private static PsiElement getOriginalElement(final PsiFile context, final Editor editor) {
+    return (context!=null && editor!=null)? context.findElementAt(editor.getCaretModel().getOffset()):null;
   }
 
   public void update(AnActionEvent event){
@@ -55,8 +52,10 @@ public class ExternalJavaDocAction extends AnAction {
     DataContext dataContext = event.getDataContext();
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    final PsiElement originalElement = getOriginalElement(LangDataKeys.PSI_FILE.getData(dataContext), editor);
+    DocumentationManager.storeOriginalElement(PlatformDataKeys.PROJECT.getData(dataContext), element, originalElement);
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-    boolean enabled = provider instanceof ExtensibleDocumentationProvider && ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element);
+    boolean enabled = provider instanceof ExtensibleDocumentationProvider && ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element, originalElement);
     if (editor != null) {
       presentation.setEnabled(enabled);
       presentation.setVisible(enabled);

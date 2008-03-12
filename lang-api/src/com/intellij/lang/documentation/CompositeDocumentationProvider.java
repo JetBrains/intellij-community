@@ -88,10 +88,11 @@ public class CompositeDocumentationProvider extends ExtensibleDocumentationProvi
   }
 
   @Override
-  public boolean isExternalDocumentationEnabled(final PsiElement element) {
+  public boolean isExternalDocumentationEnabled(final PsiElement element, final PsiElement originalElement) {
     for (DocumentationProvider provider : myProviders) {
-      if (provider instanceof ExtensibleDocumentationProvider && ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element)) return true;
-      final String url = provider.getUrlFor(element, null);
+      if (provider instanceof ExtensibleDocumentationProvider && ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element,
+                                                                                                                                            originalElement)) return true;
+      final String url = provider.getUrlFor(element, originalElement);
       if (url != null) {
         return true;
       }
@@ -100,13 +101,14 @@ public class CompositeDocumentationProvider extends ExtensibleDocumentationProvi
   }
 
   @Override
-  public void openExternalDocumentation(final PsiElement element) {
+  public void openExternalDocumentation(final PsiElement element, final PsiElement originalElement) {
     for (DocumentationProvider provider : myProviders) {
-      if (provider instanceof ExtensibleDocumentationProvider && ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element)) {
-        ((ExtensibleDocumentationProvider)provider).openExternalDocumentation(element);
+      if (provider instanceof ExtensibleDocumentationProvider && ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element,
+                                                                                                                                            originalElement)) {
+        ((ExtensibleDocumentationProvider)provider).openExternalDocumentation(element, originalElement);
         return;
       }
-      final String url = provider.getUrlFor(element, null);
+      final String url = provider.getUrlFor(element, originalElement);
       if (url != null) {
         BrowserUtil.launchBrowser(url);
         return;
