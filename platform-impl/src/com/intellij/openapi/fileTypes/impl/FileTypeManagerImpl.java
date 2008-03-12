@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
  */
 public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl");
-  private static final int VERSION = 2;
+  private static final int VERSION = 3;
 
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
   private SetWithArray myFileTypes = new SetWithArray(new THashSet<FileType>());
@@ -63,7 +63,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @NonNls private static final String ATTRIBUTE_PATTERN = "pattern";
   @NonNls private static final String ATTRIBUTE_TYPE = "type";
   @NonNls private static final String ELEMENT_REMOVED_MAPPING = "removed_mapping";
-  @NonNls private static final String IGNORE_DOT_SVN = ".svn";
   @NonNls private static final String ATTRIBUTE_VERSION = "version";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ATTRIBUTE_DESCRIPTION = "description";
@@ -428,13 +427,21 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
 
     if (savedVersion == 0) {
-      if (!myIgnoredFileMasksSet.contains(IGNORE_DOT_SVN)) {
-        myIgnorePatterns.add(PatternUtil.fromMask(IGNORE_DOT_SVN));
-        myIgnoredFileMasksSet.add(IGNORE_DOT_SVN);
-      }
+      addIgnore(".svn");
+    }
+    if (savedVersion < 2) {
+      restoreStandardFileExtensions();
     }
     if (savedVersion < VERSION) {
-      restoreStandardFileExtensions();
+      addIgnore(".pyc");
+      addIgnore(".pyo");
+    }
+  }
+
+  private void addIgnore(@NonNls final String ignoreMask) {
+    if (!myIgnoredFileMasksSet.contains(ignoreMask)) {
+      myIgnorePatterns.add(PatternUtil.fromMask(ignoreMask));
+      myIgnoredFileMasksSet.add(ignoreMask);
     }
   }
 
