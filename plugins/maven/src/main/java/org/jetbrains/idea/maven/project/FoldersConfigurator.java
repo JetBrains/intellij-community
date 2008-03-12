@@ -113,7 +113,7 @@ public class FoldersConfigurator {
         addAllSubDirsAsSources(f);
       }
       else {
-        if (mySourceFolders.contains(new Path(f.getPath()))) continue;
+        if (hasRegisteredSubfolder(f)) continue;
         myModel.excludeRoot(f.getPath());
       }
     }
@@ -122,8 +122,16 @@ public class FoldersConfigurator {
   private void addAllSubDirsAsSources(File dir) {
     for (File f : getChildren(dir)) {
       if (!f.isDirectory()) continue;
+      if (hasRegisteredSubfolder(f)) continue;
       myModel.addSourceDir(f.getPath(), false);
     }
+  }
+
+  private boolean hasRegisteredSubfolder(File f) {
+    for (Path existing : mySourceFolders) {
+      if (existing.getPath().startsWith(new Path(f.getPath()).getPath())) return true;
+    }
+    return false;
   }
 
   private File[] getChildren(File dir) {

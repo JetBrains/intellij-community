@@ -323,6 +323,42 @@ public class ContentRootsImportingTest extends ImportingTestCase {
                   "targetCustom/generated-sources/src2");
   }
 
+  public void testDoesNotAddAlreadyRegisteredSourcesUnderGeneratedDir() throws Exception {
+    createProjectSubDir("target/generated-sources/main");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.codehaus.mojo</groupId>" +
+                  "      <artifactId>build-helper-maven-plugin</artifactId>" +
+                  "      <executions>" +
+                  "        <execution>" +
+                  "          <id>id</id>" +
+                  "          <phase>generate-sources</phase>" +
+                  "          <goals>" +
+                  "            <goal>add-source</goal>" +
+                  "          </goals>" +
+                  "          <configuration>" +
+                  "            <sources>" +
+                  "              <source>target/generated-sources/main/src</source>" +
+                  "            </sources>" +
+                  "          </configuration>" +
+                  "        </execution>" +
+                  "      </executions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertSources("project",
+                  "src/main/java",
+                  "src/main/resources",
+                  "target/generated-sources/main/src");
+  }
+
   public void testIgnoringFilesRightUnderGeneratedSources() throws Exception {
     createProjectSubFile("target/generated-sources/f.txt");
 
@@ -455,5 +491,26 @@ public class ContentRootsImportingTest extends ImportingTestCase {
     assertModules("project");
 
     assertExcludes("project", "target/xxx");
+  }
+
+  public void testDoesNotExcludeFoldersWithSourcesUnderTargetDir() throws Exception {
+    createProjectSubDir("target/src/main");
+    createProjectSubDir("target/foo");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <sourceDirectory>target/src/main</sourceDirectory>" +
+                  "</build>");
+
+    assertModules("project");
+
+    assertSources("project",
+                  "target/src/main",
+                  "src/main/resources");
+                            
+    assertExcludes("project", "target/foo");
   }
 }
