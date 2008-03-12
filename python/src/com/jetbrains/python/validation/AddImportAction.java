@@ -8,24 +8,27 @@ import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInspection.HintAction;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.PyImportStatement;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
 public class AddImportAction implements HintAction, QuestionAction {
   private final PsiReference myReference;
   private Project myProject;
+  private static final Logger LOG = Logger.getInstance("#" + AddImportAction.class.getName());
 
   public AddImportAction(final PsiReference reference) {
     myReference = reference;
@@ -62,20 +65,23 @@ public class AddImportAction implements HintAction, QuestionAction {
         final String referenceName = ((PyReferenceExpression)myReference).getReferencedName();
         final PsiFile[] files = FilenameIndex.getFilesByName(myProject, referenceName + ".py", GlobalSearchScope.allScope(myProject));
         if (files.length == 1) {
-          String text = "\n";
-          LeafElement ws = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, text, 0, text.length(), null, file.getManager());
-          final ASTNode importNodeToInsert = PythonLanguage.getInstance().getElementGenerator()
-              .createImportStatementFromText(myProject, "import " + referenceName).getNode();
-          final PsiElement element = getFirstNonComment(file);
-          file.getNode().addChild(importNodeToInsert, element != null ? element.getNode() : file.getFirstChild().getNode());
-          file.getNode().addChild(ws, importNodeToInsert);
+          final PyImportStatement importNodeToInsert = PythonLanguage.getInstance().getElementGenerator().createImportStatementFromText(myProject, "import " + referenceName);
+          try {
+            file.addBefore(importNodeToInsert, getFirstNonComment(file));
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
         }
       }
     });
   }
 
   private static PsiElement getFirstNonComment(final PsiFile file) {
-    return PsiTreeUtil.skipSiblingsForward(file.getFirstChild(), PsiComment.class);
+    final PsiElement firstChild = file.getFirstChild();
+    LOG.assertTrue(firstChild != null);
+    final PsiElement element = PsiTreeUtil.skipSiblingsForward(firstChild, PsiComment.class);
+    return element != null ? element : firstChild;
   }
 
   public boolean startInWriteAction() {

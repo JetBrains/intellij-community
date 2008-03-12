@@ -100,6 +100,7 @@ public class PythonParserDefinition implements ParserDefinition {
   }
 
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    if(left.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) return SpaceRequirements.MUST_LINE_BREAK;
     final Lexer lexer = createLexer(left.getPsi().getProject());
     return LanguageUtil.canStickTokensTogetherByLexer(left, right, lexer, 0);
   }

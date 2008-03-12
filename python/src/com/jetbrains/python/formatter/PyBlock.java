@@ -24,11 +24,11 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -191,7 +191,9 @@ public class PyBlock implements Block {
         IElementType parentType = _node.getElementType();
         IElementType type1 = childNode1.getElementType();
         IElementType type2 = childNode2.getElementType();
-
+        if (PyElementTypes.STATEMENTS.contains(type1) && PyElementTypes.STATEMENTS.contains(type2)){
+          return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, false, 1);
+        }
 /*
         if (type1 == PyTokenTypes.COLON && type2 == PyElementTypes.STATEMENT_LIST) {
             return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, true, Integer.MAX_VALUE);
@@ -212,6 +214,7 @@ public class PyBlock implements Block {
             //return new PySpacingProcessor(getNode(), childNode1, childNode2,
             //        _settings).getResult();
             //return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, true, Integer.MAX_VALUE);
+
         return null;
     }
 
