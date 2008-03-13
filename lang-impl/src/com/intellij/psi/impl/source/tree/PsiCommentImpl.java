@@ -8,6 +8,7 @@ import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.CommentLiteralEscaper;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +44,11 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiLan
         setText(text);
       }
     });
+  }
+
+  @NotNull
+  public PsiReference[] getReferences() {
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiComment.class);
   }
 
   public void navigate(boolean requestFocus) {

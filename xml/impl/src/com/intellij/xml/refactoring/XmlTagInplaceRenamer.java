@@ -56,6 +56,7 @@ public class XmlTagInplaceRenamer {
 
   private void rename(@NotNull final XmlTag tag) {
     final Pair<ASTNode, ASTNode> pair = getNamePair(tag);
+    if (pair == null) return;
 
     final Project project = myEditor.getProject();
     if (project != null) {
@@ -119,7 +120,7 @@ public class XmlTagInplaceRenamer {
     assert node != null;
 
     final ASTNode startTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(node);
-    assert startTagName != null;
+    if (startTagName == null) return null;
 
     final ASTNode endTagName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(node);
 
