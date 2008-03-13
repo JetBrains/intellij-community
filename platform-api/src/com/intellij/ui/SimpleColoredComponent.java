@@ -74,6 +74,8 @@ public class SimpleColoredComponent extends JComponent {
   private int myAlignIndex;
   private int myAlignWidth;
 
+  private boolean myIconOpaque = true;
+
   public SimpleColoredComponent() {
     myFragments = new ArrayList<String>(3);
     myAttributes = new ArrayList<SimpleTextAttributes>(3);
@@ -200,6 +202,14 @@ public class SimpleColoredComponent extends JComponent {
     myFocusBorderAroundIcon = focusBorderAroundIcon;
   }
 
+  public boolean isIconOpaque() {
+    return myIconOpaque;
+  }
+
+  public void setIconOpaque(final boolean iconOpaque) {
+    myIconOpaque = iconOpaque;
+  }
+
   public Dimension getPreferredSize() {
     return computePreferredSize(false);
 
@@ -308,15 +318,20 @@ public class SimpleColoredComponent extends JComponent {
     final Icon icon = myIcon;   // guard against concurrent modification (IDEADEV-12635)
     if (icon != null) {
       final Container parent = getParent();
-      final Color iconBackgroundColor;
-      if (parent != null && !myFocusBorderAroundIcon && !UIUtil.isUnderQuaquaLookAndFeel()) {
-        iconBackgroundColor = parent.getBackground();
+      Color iconBackgroundColor = null;
+      if (isIconOpaque()) {
+        if (parent != null && !myFocusBorderAroundIcon && !UIUtil.isUnderQuaquaLookAndFeel()) {
+          iconBackgroundColor = parent.getBackground();
+        }
+        else {
+          iconBackgroundColor = getBackground();
+        }
       }
-      else {
-        iconBackgroundColor = getBackground();
+
+      if (iconBackgroundColor != null) {
+        g.setColor(iconBackgroundColor);
+        g.fillRect(0, 0, icon.getIconWidth() + myIpad.left + myIconTextGap, getHeight());
       }
-      g.setColor(iconBackgroundColor);
-      g.fillRect(0, 0, icon.getIconWidth() + myIpad.left + myIconTextGap, getHeight());
 
       icon.paintIcon(this, g, myIpad.left, (getHeight() - icon.getIconHeight()) / 2);
 

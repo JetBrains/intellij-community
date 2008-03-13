@@ -2,6 +2,8 @@ package com.intellij.ui.tabs;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,7 +28,6 @@ public final class TabInfo {
 
   private PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
 
-  private String myText;
   private Icon myIcon;
   private String myPlace;
   private Object myObject;
@@ -44,6 +45,8 @@ public final class TabInfo {
   private boolean myHidden;
   private JComponent myActionsContextComponent;
 
+  private SimpleColoredText myText = new SimpleColoredText();
+
   public TabInfo(final JComponent component) {
     myComponent = component;
     myPreferredFocusableComponent = component;
@@ -54,9 +57,22 @@ public final class TabInfo {
   }
 
   public TabInfo setText(String text) {
-    String old = myText;
-    myText = text;
-    myChangeSupport.firePropertyChange(TEXT, old, text);
+    clear();
+    append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    return this;
+  }
+
+  public TabInfo clear() {
+    final String old = myText.toString();
+    myText.clear();
+    myChangeSupport.firePropertyChange(TEXT, old, myText.toString());
+    return this;
+  }
+
+  public TabInfo append(String fragment, SimpleTextAttributes attributes) {
+    final String old = myText.toString();
+    myText.append(fragment, attributes);
+    myChangeSupport.firePropertyChange(TEXT, old, myText.toString());
     return this;
   }
 
@@ -78,6 +94,10 @@ public final class TabInfo {
   }
 
   public String getText() {
+    return myText.toString();
+  }
+
+  public SimpleColoredText getColoredText() {
     return myText;
   }
 
@@ -183,7 +203,7 @@ public final class TabInfo {
   }
 
   public String toString() {
-    return myText;
+    return getText();
   }
 
   public Icon getAlertIcon() {

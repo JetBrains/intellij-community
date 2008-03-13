@@ -12,13 +12,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
-import com.intellij.ui.CaptionPanel;
-import com.intellij.ui.InplaceButton;
-import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsListener;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.ComparableObjectCheck;
@@ -590,7 +588,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   }
 
   private void updateText(final TabInfo tabInfo) {
-    myInfo2Label.get(tabInfo).setText(tabInfo.getText());
+    myInfo2Label.get(tabInfo).setText(tabInfo.getColoredText());
   }
 
   private void updateSideComponent(final TabInfo tabInfo) {
@@ -699,7 +697,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       final ActionGroup group = info.getGroup();
       final JComponent side = info.getSideComponent();
 
-      if (group != null) {
+      if (group != null && myActionManager != null) {
         final String place = info.getPlace();
         ActionToolbar toolbar = myActionManager.createActionToolbar(place != null ? place : ActionPlaces.UNKNOWN, group, myHorizontalSide);
         toolbar.setTargetComponent(info.getActionsContextComponent());
@@ -1521,17 +1519,22 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   }
 
   private class TabLabel extends JPanel {
-    private JLabel myLabel = new JLabel();
+    private SimpleColoredComponent myLabel = new SimpleColoredComponent();
+    private LayeredIcon myIcon;
     private TabInfo myInfo;
     private ActionPanel myActionPanel;
 
     public TabLabel(final TabInfo info) {
       myInfo = info;
+      myLabel.setOpaque(false);
+      myLabel.setIconTextGap(new JLabel().getIconTextGap());
+      myLabel.setIconOpaque(false);
       setOpaque(false);
       setLayout(new BorderLayout(myLabel.getIconTextGap() * 2, 0));
       add(myLabel, BorderLayout.CENTER);
 
-      myLabel.setIcon(new LayeredIcon(2));
+      myIcon = new LayeredIcon(2);
+      myLabel.setIcon(myIcon);
 
       addMouseListener(new MouseAdapter() {
         public void mousePressed(final MouseEvent e) {
@@ -1595,8 +1598,16 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     }
 
 
-    public void setText(final String text) {
-      myLabel.setText(text);
+    public void setText(final SimpleColoredText text) {
+      clear();
+      if (text != null) {
+        text.appendToComponent(myLabel);
+      }
+    }
+
+    private void clear() {
+      myLabel.clear();
+      myLabel.setIcon(myIcon);
     }
 
     public void setIcon(final Icon icon) {
@@ -1604,7 +1615,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     }
 
     private LayeredIcon getLayeredIcon() {
-      return ((LayeredIcon)myLabel.getIcon());
+      return myIcon;
     }
 
     public void setAttraction(boolean enabled) {
@@ -2176,7 +2187,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     south.add(refire);
 
 
-    tabs.addTab(toAnimate1).setText("Tree2");
+    tabs.addTab(toAnimate1).append("Tree2", new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.black, Color.red));
     tabs.addTab(new TabInfo(new JTable())).setText("Table 1").setActions(new DefaultActionGroup(), null);
     tabs.addTab(new TabInfo(new JTable())).setText("Table 2").setActions(new DefaultActionGroup(), null);
     tabs.addTab(new TabInfo(new JTable())).setText("Table 3").setActions(new DefaultActionGroup(), null);
