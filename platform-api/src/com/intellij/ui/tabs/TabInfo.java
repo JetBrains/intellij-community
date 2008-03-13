@@ -1,4 +1,4 @@
-package com.intellij.ui.tabs.impl;
+package com.intellij.ui.tabs;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.util.IconLoader;
@@ -10,14 +10,14 @@ import java.lang.ref.WeakReference;
 
 public final class TabInfo {
 
-  static final String ACTION_GROUP = "actionGroup";
-  static final String ICON = "icon";
-  static final String TEXT = "text";
-  static final String TAB_ACTION_GROUP = "tabActionGroup";
-  static final String ALERT_ICON = "alertIcon";
+  public static final String ACTION_GROUP = "actionGroup";
+  public static final String ICON = "icon";
+  public static final String TEXT = "text";
+  public static final String TAB_ACTION_GROUP = "tabActionGroup";
+  public static final String ALERT_ICON = "alertIcon";
 
-  static final String ALERT_STATUS = "alertStatus";
-  static final String HIDDEN = "hidden";
+  public static final String ALERT_STATUS = "alertStatus";
+  public static final String HIDDEN = "hidden";
 
   private JComponent myComponent;
   private JComponent myPreferredFocusableComponent;
@@ -49,7 +49,7 @@ public final class TabInfo {
     myPreferredFocusableComponent = component;
   }
 
-  PropertyChangeSupport getChangeSupport() {
+  public PropertyChangeSupport getChangeSupport() {
     return myChangeSupport;
   }
 
@@ -69,7 +69,7 @@ public final class TabInfo {
 
 
 
-  ActionGroup getGroup() {
+  public ActionGroup getGroup() {
     return myGroup;
   }
 
@@ -81,11 +81,11 @@ public final class TabInfo {
     return myText;
   }
 
-  Icon getIcon() {
+  public Icon getIcon() {
     return myIcon;
   }
 
-  String getPlace() {
+  public String getPlace() {
     return myPlace;
   }
 
@@ -94,7 +94,7 @@ public final class TabInfo {
     return this;
   }
 
-  JComponent getSideComponent() {
+  public JComponent getSideComponent() {
     return mySideComponent;
   }
 
@@ -133,7 +133,7 @@ public final class TabInfo {
     return this;
   }
 
-  void setLastFocusOwner(final JComponent owner) {
+  public void setLastFocusOwner(final JComponent owner) {
     myLastFocusOwner = new WeakReference<JComponent>(owner);
   }
 
@@ -153,7 +153,7 @@ public final class TabInfo {
   }
 
   @Nullable
-  JComponent getLastFocusOwner() {
+  public JComponent getLastFocusOwner() {
     return myLastFocusOwner != null ? myLastFocusOwner.get() : null;
   }
 
@@ -174,11 +174,11 @@ public final class TabInfo {
     myChangeSupport.firePropertyChange(ALERT_STATUS, null, false);
   }
 
-  int getBlinkCount() {
+  public int getBlinkCount() {
     return myBlinkCount;
   }
 
-  void setBlinkCount(final int blinkCount) {
+  public void setBlinkCount(final int blinkCount) {
     myBlinkCount = blinkCount;
   }
 
@@ -190,11 +190,11 @@ public final class TabInfo {
     return myAlertIcon == null ? IconLoader.getIcon("/nodes/tabAlert.png") : myAlertIcon;
   }
 
-  void resetAlertRequest() {
+  public void resetAlertRequest() {
     myAlertRequested = false;
   }
 
-  boolean isAlertRequested() {
+  public boolean isAlertRequested() {
     return myAlertRequested;
   }
 

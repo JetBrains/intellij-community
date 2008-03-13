@@ -18,6 +18,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabsListener;
+import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.ComparableObjectCheck;
