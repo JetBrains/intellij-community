@@ -443,8 +443,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     if (attributes == null) {
       Map<String, String> attributesValueMap = new THashMap<String, String>();
       attributes = calculateAttributes(attributesValueMap);
-      myAttributes = attributes;
       myAttributeValueMap = attributesValueMap;
+      myAttributes = attributes;
     }
     return attributes;
   }
