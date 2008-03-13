@@ -164,6 +164,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
                || Content.PROP_ACTIONS.equals(property)
                || Content.PROP_DESCRIPTION.equals(property)) {
       cell.updateTabPresentation(content);
+      updateTabsUI(false);
     }
   }
 
