@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -43,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
@@ -61,6 +63,29 @@ import java.util.Map;
  * @author ilyas
  */
 public class ExtractMethodUtil {
+
+  static PsiElement calculateAnchorToInsertBefore(GrMemberOwner owner, PsiElement startElement) {
+    while (startElement != null && !isEnclosingDefinition(owner, startElement)) {
+      if (startElement.getParent() instanceof GroovyFile) {
+        return startElement.getNextSibling();
+      }
+      startElement = startElement.getParent();
+      PsiElement parent = startElement.getParent();
+      if (parent instanceof GroovyFile &&
+          ((GroovyFile) parent).getScriptClass() == owner) {
+        return startElement.getNextSibling();
+      }
+    }
+    return startElement == null ? null : startElement.getNextSibling();
+  }
+
+  private static boolean isEnclosingDefinition(GrMemberOwner owner, PsiElement startElement) {
+    if (owner instanceof GrTypeDefinition) {
+      GrTypeDefinition definition = (GrTypeDefinition) owner;
+      return startElement.getParent() == definition.getBody();
+    }
+    return false;
+  }
 
   public enum MethodAccessQualifier {
     PUBLIC, PRIVATE, PROTECTED

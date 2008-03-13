@@ -20,13 +20,15 @@ def gg = 7
 
 int yyy = <caret>testMethod(kkk, gg, vv)
 
-www = kkk + 3
-
-println(yyy)
-println(www)
-
 private int testMethod(int kkk, int gg, int vv) {
   println(kkk + iii + (vv + gg))
   yyy = kkk + 2
   return yyy
 }
+
+
+
+www = kkk + 3
+
+println(yyy)
+println(www)

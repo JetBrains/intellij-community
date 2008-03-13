@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
@@ -185,7 +186,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }
 
     assert methodName != null;
-    runRefactoring(methodName, helper, owner, declarationOwner, editor);
+    runRefactoring(methodName, helper, owner, declarationOwner, editor, statements[0]);
 
     return true;
   }
@@ -194,13 +195,15 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
                               @NotNull final ExtractMethodInfoHelper helper,
                               @NotNull final GrMemberOwner owner,
                               final GrVariableDeclarationOwner declarationOwner,
-                              final Editor editor) {
+                              final Editor editor,
+                              final PsiElement startElement) {
 
     final GrMethod method = ExtractMethodUtil.createMethodByHelper(methodName, helper);
     final Runnable runnable = new Runnable() {
       public void run() {
         try {
-          GrMethod newMethod = owner.addMemberDeclaration(method, null);
+          PsiElement anchor = ExtractMethodUtil.calculateAnchorToInsertBefore(owner, startElement);
+          GrMethod newMethod = owner.addMemberDeclaration(method, anchor);
           ExtractMethodUtil.renameParameterOccurrences(newMethod, helper);
           PsiUtil.shortenReferences(newMethod);
           GrStatement realStatement;

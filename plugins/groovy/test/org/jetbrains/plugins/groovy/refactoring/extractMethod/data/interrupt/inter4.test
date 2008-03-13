@@ -21,9 +21,11 @@ while (true) {
         <caret>testMethod()
     }
 }
-println i
 
 private def testMethod() {
   cl = {continue;}
   cl.call()
 }
+
+
+println i

@@ -13,7 +13,6 @@ println i
 -----
 def i = 6
 i = <caret>testMethod(i)
-println i
 
 private int testMethod(int i) {
   while (true) {
@@ -28,3 +27,6 @@ private int testMethod(int i) {
   }
   return i
 }
+
+
+println i

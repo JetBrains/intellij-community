@@ -10,11 +10,13 @@ def cond = true
 
 boolean result = <caret>testMethod(cond)
 
-println result
-
 private boolean testMethod(boolean cond) {
   boolean result
   if (cond) result = true
   else result = false
   return result
 }
+
+
+
+println result
