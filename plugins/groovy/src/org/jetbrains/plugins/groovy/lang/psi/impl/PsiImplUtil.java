@@ -54,7 +54,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalOrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExpressionImpl;
-import org.jetbrains.plugins.groovy.refactoring.GroovyVariableUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,7 +78,7 @@ public class PsiImplUtil {
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(oldExpr.getProject());
       newExpr = factory.createMethodCallByAppCall(((GrApplicationStatement) newExpr));
     }
-    
+
     // Remove unnecessary parentheses
     if (removeUnnecessaryParentheses && oldParent instanceof GrParenthesizedExpression) {
       return ((GrExpression) oldParent).replaceWithExpression(newExpr, removeUnnecessaryParentheses);
@@ -177,12 +176,10 @@ public class PsiImplUtil {
     final PsiElement parent = varDecl.getParent();
     final ASTNode owner = parent.getNode();
     if (variables.size() == 1 && owner != null) {
-      GroovyVariableUtil.cleanAroundDeclarationBeforeRemove(varDecl);
       owner.removeChild(varDeclNode);
       PsiUtil.reformatCode(parent);
       return;
     }
-    GroovyVariableUtil.cleanAroundVariableBeforeRemove(variable);
     final ASTNode varNode = variable.getNode();
     if (varNode != null) {
       varDeclNode.removeChild(varNode);
