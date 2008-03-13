@@ -73,6 +73,7 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
     if (typeParameterList == null) {
       final String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("changeClassSignature.no.type.parameters"));
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.CHANGE_CLASS_SIGNATURE, project);
+      return;
     }
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
 
