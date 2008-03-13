@@ -1,7 +1,5 @@
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin version="2" url="http://pythonid.dev.java.net">
-  <name>Pythonid</name>
-  <id>Pythonid</id>
   <description>Smart editing for Python scripts</description>
   <version>2.0</version>
   <vendor url="http://pythonid.dev.java.net" logo="/ru/yole/pythonid/python.png">Dmitry
