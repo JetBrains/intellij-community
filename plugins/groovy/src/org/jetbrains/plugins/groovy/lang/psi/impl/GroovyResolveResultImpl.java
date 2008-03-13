@@ -15,11 +15,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ven
@@ -75,15 +75,19 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
 
     GroovyResolveResultImpl that = (GroovyResolveResultImpl) o;
 
-    if (myIsAccessible != that.myIsAccessible) return false;
-    if (!myElement.equals(that.myElement)) return false;
+    return myIsAccessible == that.myIsAccessible &&
+           myElement.getManager().areElementsEquivalent(myElement, that.myElement);
 
-    return true;
   }
 
   public int hashCode() {
-    int result;
-    result = myElement.hashCode();
+    int result = 0;
+    if (myElement instanceof PsiNamedElement) {
+      String name = ((PsiNamedElement) myElement).getName();
+      if (name != null) {
+        result = name.hashCode();
+      }
+    }
     result = 31 * result + (myIsAccessible ? 1 : 0);
     return result;
   }
