@@ -101,5 +101,19 @@ public abstract class JavaUnwrapper implements Unwrapper {
     public void delete(PsiElement e) throws IncorrectOperationException {
       if (myIsEffective) e.delete();
     }
+
+    public void setElseBranch(PsiIfStatement ifStatement, PsiStatement elseBranch) throws IncorrectOperationException {
+      if (myIsEffective) ifStatement.setElseBranch(copyElement(elseBranch));
+      addElementToExtract(elseBranch);
+    }
+
+    private PsiStatement copyElement(PsiStatement e) throws IncorrectOperationException {
+      // we can not call el.copy() for 'else' since it sets context to parent 'if'. This cause copy to be invalidated
+      // after parent 'if' removal in setElseBranch method.
+
+      PsiManager manager = PsiManager.getInstance(e.getProject());
+      PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+      return factory.createStatementFromText(e.getText(), null);
+    }
   }
 }
