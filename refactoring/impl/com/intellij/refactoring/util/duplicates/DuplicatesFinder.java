@@ -193,14 +193,7 @@ public class DuplicatesFinder {
         if (PsiUtil.isAccessedForWriting(candidateExpression)) return null;
         final PsiType patternType = ((PsiExpression)myPattern[0]).getType();
         final PsiType candidateType = candidateExpression.getType();
-        if (patternType != null && candidateType != null && !candidateType.isAssignableFrom(patternType)) {
-          if (patternType instanceof PsiImmediateClassType && candidateType instanceof PsiImmediateClassType) {
-            if (!(((PsiImmediateClassType)patternType).resolve() instanceof PsiAnonymousClass &&
-                  ((PsiImmediateClassType)candidateType).resolve() instanceof PsiAnonymousClass)) return null;
-          } else {
-            return null;
-          }
-        }
+        if (!canTypesBeEquivalent(patternType, candidateType)) return null;
       }
       else {
         return null;
@@ -213,6 +206,26 @@ public class DuplicatesFinder {
     }
 
     return match;
+  }
+
+  private static boolean canTypesBeEquivalent(PsiType type1, PsiType type2) {
+    if (type1 == null || type2 == null) return false;
+    if (!type2.isAssignableFrom(type1)) {
+      if (type1 instanceof PsiImmediateClassType && type2 instanceof PsiImmediateClassType) {
+        final PsiClass psiClass1 = ((PsiImmediateClassType)type1).resolve();
+        final PsiClass psiClass2 = ((PsiImmediateClassType)type2).resolve();
+        if (!(psiClass1 instanceof PsiAnonymousClass &&
+              psiClass2 instanceof PsiAnonymousClass &&
+              psiClass1.getManager().areElementsEquivalent(((PsiAnonymousClass)psiClass1).getBaseClassType().resolve(),
+                                                           ((PsiAnonymousClass)psiClass2).getBaseClassType().resolve()))) {
+          return false;
+        }
+      }
+      else {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static boolean canBeEquivalent(final PsiElement pattern, PsiElement candidate) {
@@ -268,6 +281,9 @@ public class DuplicatesFinder {
         final PsiElement resolved1 = classReference1.resolve();
         final PsiElement resolved2 = classReference2.resolve();
         if (!pattern.getManager().areElementsEquivalent(resolved1, resolved2)) return false;
+      }
+      else {
+        if (!canTypesBeEquivalent(type1, type2)) return false;
       }
     } else if (pattern instanceof PsiClassObjectAccessExpression) {
       final PsiTypeElement operand1 = ((PsiClassObjectAccessExpression)pattern).getOperand();

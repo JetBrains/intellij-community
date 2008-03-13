@@ -28,14 +28,14 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     }
     catch (RuntimeException e) {
       if (shouldSucceed) {
-        assert false : "duplicates were not found";
+        fail("duplicates were not found");
       }
       return;
     }
     if (shouldSucceed) {
       checkResultByFile(filePath + ".after");
     } else {
-      assert false : "duplicates found";
+      fail("duplicates found");
     }
   }
 
@@ -45,6 +45,10 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
 
   public void testAnonymousTest1() throws Exception {
     doTest();
+  }
+
+  public void testAnonymousTest2() throws Exception {
+    doTest(false);
   }
 
   public void testReturnVoidTest() throws Exception {
@@ -76,6 +80,14 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
   }
 
   public void testReturnExpression() throws Exception {
+    doTest(false);
+  }
+
+  public void testTypeInheritance() throws Exception {
+    doTest();
+  }
+
+  public void testTypeInheritance1() throws Exception {
     doTest(false);
   }
 }
