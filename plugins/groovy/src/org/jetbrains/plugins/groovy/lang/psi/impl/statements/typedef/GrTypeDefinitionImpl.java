@@ -864,4 +864,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     bodyNode.addLeaf(GroovyTokenTypes.mWS, " ", anchorNode);
     return decl;
   }
+
+  public void removeMemberDeclaration(GrMembersDeclaration decl) {
+    GrTypeDefinitionBody body = getBody();
+    if (body == null) throw new PsiInvalidElementAccessException(decl);
+
+    body.getNode().removeChild(decl.getNode());
+  }
 }

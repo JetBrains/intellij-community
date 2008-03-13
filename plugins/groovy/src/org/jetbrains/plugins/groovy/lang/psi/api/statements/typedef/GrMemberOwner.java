@@ -28,4 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
  */
 public interface GrMemberOwner extends PsiClass {
   <T extends GrMembersDeclaration> T addMemberDeclaration(T decl, PsiElement anchorBefore) throws IncorrectOperationException ;
+
+  void removeMemberDeclaration (GrMembersDeclaration decl);
 }

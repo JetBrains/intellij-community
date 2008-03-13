@@ -36,4 +36,6 @@ public interface GroovyFile extends GroovyFileBase {
   void setPackageName(String packageName);
 
   <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, PsiElement anchorBefore) throws IncorrectOperationException;
+
+  void removeMemberDeclaration (GrMembersDeclaration decl);
 }

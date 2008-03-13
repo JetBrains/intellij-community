@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -280,6 +279,14 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     styleManager.reformatRange(parent, range.getStartOffset() - 1, range.getStartOffset() + 1);
 
     return result;
+  }
+
+  public void removeMemberDeclaration(GrMembersDeclaration decl) {
+    try {
+      deleteChildRange(decl, decl);
+    } catch (IncorrectOperationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void clearCaches() {
