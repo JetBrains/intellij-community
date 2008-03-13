@@ -38,10 +38,6 @@ public class GroovyWithIfSurrounder extends GroovyOpenBlockSurrounder {
     }
     return new TextRange(endOffset, endOffset);
   }
-//
-//  protected boolean isApplicable(PsiElement element) {
-//    return element instanceof GrStatement;
-//  }
 
   public String getTemplateDescription() {
     return "if () {...}";

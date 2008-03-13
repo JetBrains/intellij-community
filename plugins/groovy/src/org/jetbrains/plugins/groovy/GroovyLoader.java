@@ -25,7 +25,6 @@ import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.ide.IconProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -49,7 +48,6 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.GrailsLoader;
-import org.jetbrains.plugins.grails.completion.handlers.ControllerReferenceInsertHandler;
 import org.jetbrains.plugins.grails.lang.gsp.psi.GspElementFactory;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesReferenceProvider;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
@@ -57,9 +55,9 @@ import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPass
 import org.jetbrains.plugins.groovy.compiler.GroovyCompiler;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
+import org.jetbrains.plugins.groovy.editor.selection.GroovyDocParamsSelectioner;
 import org.jetbrains.plugins.groovy.editor.selection.GroovyLiteralSelectioner;
 import org.jetbrains.plugins.groovy.editor.selection.GroovyTypeCastSelectioner;
-import org.jetbrains.plugins.groovy.editor.selection.GroovyDocParamsSelectioner;
 import org.jetbrains.plugins.groovy.findUsages.*;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.completion.InsertHandlerRegistry;
@@ -173,6 +171,7 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
           public void run() {
             final ToolWindow dynamicToolWindow = ToolWindowManager.getInstance(project).registerToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID, true, ToolWindowAnchor.RIGHT);
             dynamicToolWindow.setIcon(IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/dynamicProperty.png"));
+            dynamicToolWindow.setTitle(GroovyBundle.message("dynamic.window"));
 
             DynamicToolWindowWrapper.configureWindow(project, dynamicToolWindow);
           }
