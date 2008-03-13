@@ -19,12 +19,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 
 /**
  * @author ilyas
@@ -73,4 +75,17 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
     assert node != null;
     return node.getElementType() == GroovyTokenTypes.mLBRACK;
   }
+
+  @Nullable
+  public PsiElement getLeftParen() {
+    ASTNode paren = getNode().findChildByType(GroovyTokenTypes.mLPAREN);
+    return paren != null ? paren.getPsi() : null;
+  }
+
+  @Nullable
+  public PsiElement getRightParen() {
+    ASTNode paren = getNode().findChildByType(GroovyTokenTypes.mRPAREN);
+    return paren != null ? paren.getPsi() : null;
+  }
+
 }

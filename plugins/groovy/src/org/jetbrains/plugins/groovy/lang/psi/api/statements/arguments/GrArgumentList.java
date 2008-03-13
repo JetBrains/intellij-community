@@ -17,7 +17,9 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.annotations.Nullable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiElement;
 
 /**
  * @author ilyas
@@ -30,4 +32,12 @@ public interface GrArgumentList extends GroovyPsiElement {
   GrArgumentList replaceWithArgumentList(GrArgumentList newArgList) throws IncorrectOperationException;
 
   boolean isIndexPropertiesList();
+
+  @Nullable
+  PsiElement getLeftParen();
+
+  @Nullable
+  PsiElement getRightParen();
+
+
 }

@@ -18,39 +18,41 @@ package org.jetbrains.plugins.groovy.editor.selection;
 import com.intellij.psi.PsiElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Editor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 
 import java.util.List;
 
 /**
  * @author ilyas
  */
-public class GroovyDocParamsSelectioner extends GroovyBasicSelectioner {
+public class GroovyArgListSelectioner extends GroovyBasicSelectioner {
   public boolean canSelect(PsiElement e) {
-    return e instanceof GrDocMethodParams;
+    return e instanceof GrArgumentList;
   }
 
   public List<TextRange> select(PsiElement element, CharSequence editorText, int cursorOffset, Editor editor) {
     List<TextRange> result = super.select(element, editorText, cursorOffset, editor);
 
-    if (element instanceof GrDocMethodParams) {
-      GrDocMethodParams params = ((GrDocMethodParams) element);
-      TextRange range = params.getTextRange();
+    if (element instanceof GrArgumentList) {
+      GrArgumentList args = ((GrArgumentList) element);
+      TextRange range = args.getTextRange();
       if (range.contains(cursorOffset)) {
-        PsiElement leftParen = params.getLeftParen();
-        PsiElement rightParen = params.getRightParen();
-        int leftOffset = leftParen.getTextOffset();
-        if (rightParen != null) {
-          if (leftOffset + 1 < rightParen.getTextOffset()) {
-            int rightOffset = rightParen.getTextRange().getEndOffset();
-            range = new TextRange(leftParen.getTextRange().getStartOffset() + 1, rightOffset - 1);
+        PsiElement leftParen = args.getLeftParen();
+        PsiElement rightParen = args.getRightParen();
+
+        if (leftParen != null) {
+          int leftOffset = leftParen.getTextOffset();
+          if (rightParen != null) {
+            if (leftOffset + 1 < rightParen.getTextOffset()) {
+              int rightOffset = rightParen.getTextRange().getEndOffset();
+              range = new TextRange(leftParen.getTextRange().getStartOffset() + 1, rightOffset - 1);
+              result.add(range);
+            }
+          } else {
+            range = new TextRange(leftParen.getTextRange().getStartOffset() + 1, element.getTextRange().getEndOffset());
             result.add(range);
           }
-        } else {
-          range = new TextRange(leftParen.getTextRange().getStartOffset() + 1, element.getTextRange().getEndOffset());
-          result.add(range);
         }
       }
     }

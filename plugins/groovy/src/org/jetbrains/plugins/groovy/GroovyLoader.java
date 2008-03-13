@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.editor.selection.GroovyDocParamsSelectioner;
 import org.jetbrains.plugins.groovy.editor.selection.GroovyLiteralSelectioner;
 import org.jetbrains.plugins.groovy.editor.selection.GroovyTypeCastSelectioner;
+import org.jetbrains.plugins.groovy.editor.selection.GroovyArgListSelectioner;
 import org.jetbrains.plugins.groovy.findUsages.*;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.completion.InsertHandlerRegistry;
@@ -185,6 +186,7 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
     SelectWordUtil.registerSelectioner(new GroovyLiteralSelectioner());
     SelectWordUtil.registerSelectioner(new GroovyTypeCastSelectioner());
     SelectWordUtil.registerSelectioner(new GroovyDocParamsSelectioner());
+    SelectWordUtil.registerSelectioner(new GroovyArgListSelectioner());
   }
 
   private static void setupCompletion() {
