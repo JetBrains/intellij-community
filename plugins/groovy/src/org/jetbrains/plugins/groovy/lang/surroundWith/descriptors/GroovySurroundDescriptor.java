@@ -38,7 +38,7 @@ public abstract class GroovySurroundDescriptor implements SurroundDescriptor {
     List<GrStatement> statements = new ArrayList<GrStatement>();
     do {
       PsiElement element1 = file.findElementAt(startOffsetLocal);
-      PsiElement element2 = file.findElementAt(endOffsetLocal);
+      PsiElement element2 = file.findElementAt(endOffsetLocal - 1);
 
       if (element1 == null) break;
       ASTNode node1 = element1.getNode();
@@ -64,7 +64,7 @@ public abstract class GroovySurroundDescriptor implements SurroundDescriptor {
       startOffsetLocal = statement.getTextRange().getEndOffset();
       final PsiElement endSemicolon = file.findElementAt(startOffsetLocal);
 
-      if (";".equals(endSemicolon.getText())) startOffsetLocal = startOffsetLocal + 1;
+      if (endSemicolon != null && ";".equals(endSemicolon.getText())) startOffsetLocal = startOffsetLocal + 1;
     } while (true);
 
     return statements.toArray(new GrStatement[0]);
