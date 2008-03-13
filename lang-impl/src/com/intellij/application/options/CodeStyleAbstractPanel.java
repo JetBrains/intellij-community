@@ -186,7 +186,7 @@ public abstract class CodeStyleAbstractPanel {
       public void run() {
         try {
           //important not mark as generated not to get the classes before setting language level
-          PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("a." + getFileType().getDefaultExtension(),
+          PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("a." + getFileTypeExtension(getFileType()),
                                                                                    getFileType(), myTextToReformat,
                                                                                    LocalTimeCounter.currentTime(), false, false);
 
@@ -288,5 +288,9 @@ public abstract class CodeStyleAbstractPanel {
   protected void installPreviewPanel(final JPanel previewPanel) {
     previewPanel.setLayout(new BorderLayout());
     previewPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
+  }
+
+  protected @NonNls String getFileTypeExtension(FileType fileType) {
+    return fileType.getDefaultExtension();
   }
 }
