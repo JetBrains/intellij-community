@@ -292,7 +292,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
   private void processStepEvent(SuspendContextImpl suspendContext, StepEvent event) {
     ThreadReference thread = event.thread();
-    LOG.assertTrue(thread.isSuspended());
+    //LOG.assertTrue(thread.isSuspended());
     preprocessEvent(suspendContext, thread);
 
     //noinspection HardCodedStringLiteral
