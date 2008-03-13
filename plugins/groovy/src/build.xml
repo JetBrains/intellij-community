@@ -198,10 +198,7 @@
 
     <copy todir="${project.dir}/tempzip/Groovy/lib">
       <fileset dir="${groovy.lib}">
-        <!-- do we need it? -->
-        <include name="asm*.jar"/>
-
-        <include name="groovy*.jar"/>
+        <include name="groovy-all*.jar"/>
       </fileset>
     </copy>
 
