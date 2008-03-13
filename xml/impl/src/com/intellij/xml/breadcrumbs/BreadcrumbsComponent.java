@@ -70,7 +70,10 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   @Nullable
   public Crumb getCrumb(@NotNull final Point p) {
     if (myCrumbs != null) {
-      if (!getBounds().contains(p)) {
+      final Rectangle r = getBounds();
+      p.translate(r.x, r.y);
+      
+      if (!r.contains(p)) {
         return null;
       }
 
@@ -402,7 +405,6 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
 
     public void mouseDragged(final MouseEvent e) {
       // nothing
-      System.out.println("BreadcrumbsComponent$CrumbLineMouseListener.mouseDragged");
     }
 
     public void mouseMoved(final MouseEvent e) {
