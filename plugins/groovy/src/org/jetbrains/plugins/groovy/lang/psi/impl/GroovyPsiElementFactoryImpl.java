@@ -18,14 +18,19 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -45,11 +50,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentImpl;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -170,7 +170,10 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
   public GrTopStatement createTopElementFromText(String text) {
     PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
         text);
-    return (GrTopStatement) dummyFile.getFirstChild();
+    final PsiElement firstChild = dummyFile.getFirstChild();
+    if (!(firstChild instanceof GrTopStatement)) return null;
+
+    return (GrTopStatement) firstChild;
   }
 
   public GrClosableBlock createClosureFromText(String closureText) throws IncorrectOperationException {
