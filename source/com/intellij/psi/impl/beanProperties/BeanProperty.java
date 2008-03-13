@@ -4,19 +4,10 @@
 
 package com.intellij.psi.impl.beanProperties;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.meta.PsiPresentableMetaData;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +15,7 @@ import javax.swing.*;
 
 public class BeanProperty {
 
-  private static final Icon ICON = IconLoader.getIcon("/nodes/property.png");
+  static final Icon ICON = IconLoader.getIcon("/nodes/property.png");
 
   private final PsiMethod myMethod;
 
@@ -32,8 +23,8 @@ public class BeanProperty {
     myMethod = method;
   }
 
-  public PsiElement getPsiElement() {
-    return new BeanPropertyElement();
+  public PsiNamedElement getPsiElement() {
+    return new BeanPropertyElement(myMethod, getName());
   }
 
   @NotNull
@@ -93,59 +84,4 @@ public class BeanProperty {
     return PropertyUtil.isSimplePropertyAccessor(method) ? new BeanProperty(method) : null;
   }
 
-  private class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner, PsiPresentableMetaData {
-
-    public PsiManager getManager() {
-      return myMethod.getManager();
-    }
-
-    public PsiElement getDeclaration() {
-      return this;
-    }
-
-    @NonNls
-    public String getName(PsiElement context) {
-      return getName();
-    }
-
-    @NotNull
-    public String getName() {
-      return BeanProperty.this.getName();
-    }
-
-    public void init(PsiElement element) {
-
-    }
-
-    public Object[] getDependences() {
-      return new Object[0];
-    }
-
-    @Nullable
-    public Icon getIcon(int flags) {
-      return BeanProperty.this.getIcon(flags);
-    }
-
-    public PsiElement getParent() {
-      return myMethod;
-    }
-
-    @Nullable
-    public PsiMetaData getMetaData() {
-      return this;
-    }
-
-    public String getTypeName() {
-      return IdeBundle.message("bean.property");
-    }
-
-    @Nullable
-    public Icon getIcon() {
-      return getIcon(0);
-    }
-
-    public TextRange getTextRange() {
-      return TextRange.from(0, 0);
-    }
-  }
 }
