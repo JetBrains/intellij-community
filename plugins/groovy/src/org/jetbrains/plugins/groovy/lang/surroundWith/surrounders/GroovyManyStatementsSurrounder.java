@@ -23,17 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
  * Date: 22.05.2007
  */
 public abstract class GroovyManyStatementsSurrounder implements Surrounder {
-
-//  public boolean isApplicable(@NotNull PsiElement[] elements) {
-////    for (PsiElement element : elements) {
-////      if (!isApplicable(element)) {
-////        return false;
-////      }
-////    }
-////    return true;
-//    return isStatements(elements);
-//  }
-
   public boolean isStatements(@NotNull PsiElement[] elements) {
     for (PsiElement element : elements) {
       if (!(element instanceof GrStatement)) {
