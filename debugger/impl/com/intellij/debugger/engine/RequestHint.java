@@ -152,7 +152,7 @@ public class RequestHint {
         });
 
         if(locationPosition == null) {
-          return myDepth;
+          return STOP;
         }
 
         if (myDepth == StepRequest.STEP_OVER || myDepth == StepRequest.STEP_INTO) {
