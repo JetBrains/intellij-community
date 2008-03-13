@@ -27,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -213,7 +214,13 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       methodCallExpression = (PsiMethodCallExpression)CodeStyleManager.getInstance(myMethod.getManager()).reformat(methodCallExpression);
       final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
       for (final PsiParameter parameter : parameters) {
-        methodCallExpression.getArgumentList().add(match.getParameterValue(parameter));
+        final PsiElement parameterValue = match.getParameterValue(parameter);
+        if (parameterValue != null) {
+          methodCallExpression.getArgumentList().add(parameterValue);
+        }
+        else {
+          methodCallExpression.getArgumentList().add(factory.createExpressionFromText(PsiTypesUtil.getDefaultValueOfType(parameter.getType()), parameter));
+        }
       }
       if (needQualifier || needStaticQualifier) {
         final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();

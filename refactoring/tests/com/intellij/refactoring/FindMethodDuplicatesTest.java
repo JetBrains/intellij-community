@@ -90,4 +90,12 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
   public void testTypeInheritance1() throws Exception {
     doTest(false);
   }
+
+  public void testUnusedParameter() throws Exception {
+    doTest();
+  }
+
+  public void testUnusedParameter1() throws Exception {
+    doTest();
+  }
 }
