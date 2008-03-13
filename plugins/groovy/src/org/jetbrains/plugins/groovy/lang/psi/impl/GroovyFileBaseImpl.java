@@ -120,6 +120,13 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     }
   }
 
+  public void removeElements(PsiElement[] elements) throws IncorrectOperationException {
+    for (PsiElement element : elements) {
+      if (element.getParent() != this) throw new IncorrectOperationException();
+      deleteChildRange(element, element);
+    }
+  }
+
   public GrStatement addStatementBefore(@NotNull GrStatement statement, @Nullable GrStatement anchor) throws IncorrectOperationException {
     final PsiElement result = addBefore(statement, anchor);
     if (anchor != null) {

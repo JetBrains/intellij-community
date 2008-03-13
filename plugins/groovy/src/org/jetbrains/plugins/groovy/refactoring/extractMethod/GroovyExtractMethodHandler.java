@@ -35,12 +35,12 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
@@ -217,7 +217,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
             realStatement = declarationOwner.addStatementBefore(newStatement, statements[0]);
             // remove old statements
             ExtractMethodUtil.removeOldStatements(declarationOwner, helper);
-            ExtractMethodUtil.removeNewLineAfter(realStatement);
+            PsiImplUtil.removeNewLineAfter(realStatement);
           } else {
             // Expression call replace
             GrExpression methodCall = ExtractMethodUtil.createMethodCallByHelper(methodName, helper);

@@ -15,7 +15,6 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -26,11 +25,10 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -148,14 +146,7 @@ public class ExtractMethodUtil {
 
 
   static void removeOldStatements(GrStatementOwner owner, ExtractMethodInfoHelper helper) throws IncorrectOperationException {
-    ASTNode parentNode = owner.getNode();
-    for (PsiElement element : helper.getInnerElements()) {
-      ASTNode node = element.getNode();
-      if (node == null || node.getTreeParent() != parentNode) {
-        throw new IncorrectOperationException();
-      }
-      parentNode.removeChild(node);
-    }
+    owner.removeElements(helper.getInnerElements());
   }
 
   /*
@@ -382,17 +373,6 @@ public class ExtractMethodUtil {
     GrExpression expr = factory.createExpressionFromText(callText);
     assert expr instanceof GrMethodCallExpression;
     return ((GrMethodCallExpression) expr);
-  }
-
-  /*
-  Some cosmetics
-   */
-  static void removeNewLineAfter(@NotNull GrStatement statement) {
-    ASTNode parentNode = statement.getParent().getNode();
-    ASTNode next = statement.getNode().getTreeNext();
-    if (parentNode != null && next != null && GroovyTokenTypes.mNLS == next.getElementType()) {
-      parentNode.removeChild(next);
-    }
   }
 
   static int getCaretOffset(@NotNull GrStatement statement) {

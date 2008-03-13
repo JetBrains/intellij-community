@@ -38,6 +38,17 @@ public abstract class GroovyPsiElementImpl extends ASTWrapperPsiElement implemen
     super(node);
   }
 
+  public void removeElements(PsiElement[] elements) throws IncorrectOperationException {
+    ASTNode parentNode = getNode();
+    for (PsiElement element : elements) {
+      ASTNode node = element.getNode();
+      if (node == null || node.getTreeParent() != parentNode) {
+        throw new IncorrectOperationException();
+      }
+      parentNode.removeChild(node);
+    }
+  }
+
   public void removeStatement() throws IncorrectOperationException {
     if (getParent() == null ||
         getParent().getNode() == null) {

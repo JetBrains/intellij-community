@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -347,6 +348,14 @@ public class PsiImplUtil {
         String text = nameElement.getText();
         return text.endsWith("\"") ? text.substring(1, text.length() - 1) : text.substring(1);
       }
+    }
+  }
+
+  public static void removeNewLineAfter(@NotNull GrStatement statement) {
+    ASTNode parentNode = statement.getParent().getNode();
+    ASTNode next = statement.getNode().getTreeNext();
+    if (parentNode != null && next != null && GroovyTokenTypes.mNLS == next.getElementType()) {
+      parentNode.removeChild(next);
     }
   }
 }
