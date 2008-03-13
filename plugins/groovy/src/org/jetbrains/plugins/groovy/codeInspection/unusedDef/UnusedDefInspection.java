@@ -161,7 +161,8 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
   private boolean isLocalVariable(GrVariable var, boolean parametersAllowed) {
     if (var instanceof GrField) return false;
     else if (var instanceof GrParameter && !parametersAllowed) return false;
-    return !(var.getParent().getParent() instanceof GroovyFileBase); //script binding variable
+
+    return true;
   }
 
   public boolean isEnabledByDefault() {
