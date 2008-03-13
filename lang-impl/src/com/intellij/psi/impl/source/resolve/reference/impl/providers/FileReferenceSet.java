@@ -1,8 +1,8 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -244,10 +244,25 @@ public class FileReferenceSet {
     }
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null) {
-      return FileReferenceHelperRegistrar.getNotNullHelper(file).getContexts(project, virtualFile);
+      final FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();
+      final ArrayList<PsiFileSystemItem> list = new ArrayList<PsiFileSystemItem>();
+      for (FileReferenceHelper helper : helpers) {
+        if (helper.isMine(project, virtualFile)) {
+          list.addAll(helper.getContexts(project, virtualFile));  
+        }
+      }
+      if (list.size() > 0) {
+        return list;
+      }
+      final VirtualFile parent = virtualFile.getParent();
+      if (parent != null) {
+        final PsiDirectory directory = file.getManager().findDirectory(parent);
+        if (directory != null) {
+          return Collections.<PsiFileSystemItem>singleton(directory);
+        }
+      }
     }
-    final PsiDirectory parent = file.getParent();
-    return parent == null ? Collections.<PsiFileSystemItem>emptyList() : Collections.<PsiFileSystemItem>singleton(parent);
+    return Collections.emptyList();
   }
 
   public String getPathString() {
@@ -270,17 +285,23 @@ public class FileReferenceSet {
   @NotNull
   private static Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(final @NotNull PsiFile file) {
 
-    final Module module = ModuleUtil.findModuleForPsiElement(file);
-    if (module == null) return Collections.emptyList();
-
-    for (final FileReferenceHelper<?> helper : FileReferenceHelperRegistrar.getHelpers()) {
-      final Collection<PsiFileSystemItem> roots = helper.getRoots(module);
-      if (roots.size() > 0) {
-        return roots;
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) {
+      return Collections.emptyList();
+    }
+    final Project project = file.getProject();
+    final Module module = ModuleUtil.findModuleForFile(virtualFile, project);
+    if (module == null) {
+      return Collections.emptyList();
+    }
+    final FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();
+    final ArrayList<PsiFileSystemItem> list = new ArrayList<PsiFileSystemItem>();
+    for (FileReferenceHelper helper : helpers) {
+      if (helper.isMine(project, virtualFile)) {
+        list.addAll(helper.getRoots(module));
       }
     }
-
-    return Collections.emptyList();
+    return list;
   }
 
   protected Condition<PsiElement> createCondition() {

@@ -6,6 +6,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -19,43 +20,32 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
  * @author peter
  */
 public class FileReferenceHelperRegistrar {
-  private static final LinkedList<FileReferenceHelper> ourHelpers = new LinkedList<FileReferenceHelper>();
 
   private FileReferenceHelperRegistrar() {
   }
 
-  static {
-    final PsiFileReferenceHelper helper = new PsiFileReferenceHelper();
-    registerHelper(helper);
-  }
-
-  public static void registerHelper(FileReferenceHelper helper) {
-    ourHelpers.addFirst(helper);
-  }
-
-  public static List<FileReferenceHelper> getHelpers() {
-    return ourHelpers;
+  public static FileReferenceHelper[] getHelpers() {
+    return Extensions.getExtensions(FileReferenceHelper.EP_NAME);
   }
 
   @NotNull
-  public static <T extends PsiFileSystemItem> FileReferenceHelper<T> getNotNullHelper(@NotNull T psiFileSystemItem) {
-    final FileReferenceHelper<T> helper = getHelper(psiFileSystemItem);
-    return helper == null ? new NullFileReferenceHelper<T>() : helper;
+  public static <T extends PsiFileSystemItem> FileReferenceHelper getNotNullHelper(@NotNull T psiFileSystemItem) {
+    final FileReferenceHelper helper = getHelper(psiFileSystemItem);
+    return helper == null ? new NullFileReferenceHelper() : helper;
   }
 
   @Nullable
-  public static <T extends PsiFileSystemItem> FileReferenceHelper<T> getHelper(@NotNull final T psiFileSystemItem) {
+  public static <T extends PsiFileSystemItem> FileReferenceHelper getHelper(@NotNull final T psiFileSystemItem) {
     final VirtualFile file = psiFileSystemItem.getVirtualFile();
     if (file == null) return null;
     final Project project = psiFileSystemItem.getProject();
-    return (FileReferenceHelper<T>)ContainerUtil.find(getHelpers(), new Condition<FileReferenceHelper>() {
+    return ContainerUtil.find(getHelpers(), new Condition<FileReferenceHelper>() {
       public boolean value(final FileReferenceHelper fileReferenceHelper) {
         return fileReferenceHelper.isMine(project, file);
       }
@@ -66,7 +56,7 @@ public class FileReferenceHelperRegistrar {
     return element2.getManager().areElementsEquivalent(element1, element2);
   }
 
-  private static class NullFileReferenceHelper<T extends PsiFileSystemItem> implements FileReferenceHelper<T> {
+  private static class NullFileReferenceHelper implements FileReferenceHelper {
 
     @NotNull
     public String getDirectoryTypeName() {

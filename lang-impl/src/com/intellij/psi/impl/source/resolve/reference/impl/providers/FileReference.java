@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
@@ -310,7 +309,7 @@ public class FileReference
     } else { // relative path
       PsiFileSystemItem curItem = null;
       PsiFileSystemItem dstItem = null;
-      helpers: for (final FileReferenceHelper<?> helper: FileReferenceHelperRegistrar.getHelpers()) {
+      helpers: for (final FileReferenceHelper helper: FileReferenceHelperRegistrar.getHelpers()) {
 
         final Collection<PsiFileSystemItem> contexts = helper.getContexts(project, curVFile);
         switch (contexts.size()) {
@@ -372,7 +371,7 @@ public class FileReference
     }
   }
 
-  protected List<FileReferenceHelper> getHelpers() {
+  protected static FileReferenceHelper[] getHelpers() {
     return FileReferenceHelperRegistrar.getHelpers();
   }
 
@@ -381,11 +380,11 @@ public class FileReference
   }
 
   public String getUnresolvedMessagePattern() {
-    final StringBuilder builder = new StringBuilder(JavaErrorMessages.message("error.cannot.resolve"));
+    final StringBuilder builder = new StringBuilder(LangBundle.message("error.cannot.resolve"));
     builder.append(" ").append(LangBundle.message("terms.file"));
     if (!isLast()) {
       for (final FileReferenceHelper helper : getHelpers()) {
-        builder.append(" ").append(JavaErrorMessages.message("error.cannot.resolve.infix")).append(" ")
+        builder.append(" ").append(LangBundle.message("error.cannot.resolve.infix")).append(" ")
           .append(helper.getDirectoryTypeName());
       }
     }
@@ -404,7 +403,7 @@ public class FileReference
 
   public LocalQuickFix[] getQuickFixes() {
     final List<LocalQuickFix> result = new ArrayList<LocalQuickFix>();
-    for (final FileReferenceHelper<?> helper : getHelpers()) {
+    for (final FileReferenceHelper helper : getHelpers()) {
       result.addAll(helper.registerFixes(null, this));
     }
     return result.toArray(new LocalQuickFix[result.size()]);

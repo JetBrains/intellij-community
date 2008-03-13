@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class PsiFileReferenceHelper implements FileReferenceHelper<PsiDirectory> {
+public class PsiFileReferenceHelper implements FileReferenceHelper {
 
   @NotNull
   public String getDirectoryTypeName() {
@@ -86,7 +86,8 @@ public class PsiFileReferenceHelper implements FileReferenceHelper<PsiDirectory>
   }
 
   public boolean isMine(final Project project, final @NotNull VirtualFile file) {
-    return getPsiFileSystemItem(project, file) != null;
+    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    return index.isInSourceContent(file);
   }
 
   @NotNull

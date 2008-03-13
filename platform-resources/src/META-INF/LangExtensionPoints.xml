@@ -199,6 +199,7 @@
 
   <extensionPoint name="lang.elementManipulator" interface="com.intellij.openapi.fileTypes.ClassExtensionPoint"/>
   <extensionPoint name="fileContextProvider" interface="com.intellij.psi.FileContextProvider" area="IDEA_PROJECT"/>
+  <extensionPoint name="psi.fileReferenceHelper" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper"/>
 
   <extensionPoint name="psi.referenceContributor" interface="com.intellij.psi.PsiReferenceContributor"/>
 

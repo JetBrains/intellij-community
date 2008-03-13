@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
@@ -21,7 +22,9 @@ import java.util.List;
 /**
  * @author peter
  */
-public interface FileReferenceHelper<T extends PsiFileSystemItem> {
+public interface FileReferenceHelper {
+
+  ExtensionPointName<FileReferenceHelper> EP_NAME = new ExtensionPointName<FileReferenceHelper>("com.intellij.psi.fileReferenceHelper");
 
   @NotNull String trimUrl(@NotNull String url);
 
