@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -394,7 +395,7 @@ class RecursionUtils {
         final GrExpression invoked = exp.getInvokedExpression();
         if (invoked instanceof GrReferenceExpression) {
             final GrReferenceExpression methodExpression = (GrReferenceExpression) invoked;
-            final GrMethod referencedMethod = (GrMethod) exp.resolveMethod();
+            final PsiMethod referencedMethod = exp.resolveMethod();
             if (referencedMethod == null) {
                 return false;
             }
