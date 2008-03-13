@@ -8,8 +8,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.JavaRefactoringListenerManagerImpl;
 import com.intellij.refactoring.util.JavaDocPolicy;
@@ -21,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 public class PushDownProcessor extends BaseRefactoringProcessor {
@@ -245,6 +249,18 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
         PsiMethod method = (PsiMethod)member;
 
         if (targetClass.findMethodBySignature(method, false) == null) {
+          final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(myClass, targetClass, PsiSubstitutor.EMPTY);
+          final ArrayList<ParameterInfo> newParameters = new ArrayList<ParameterInfo>();
+          final PsiParameter[] oldParameters = method.getParameterList().getParameters();
+          for (int i = 0; i < oldParameters.length; i++) {
+            final PsiParameter oldParameter = oldParameters[i];
+            newParameters.add(new ParameterInfo(i, oldParameter.getName(), substitutor.substitute(oldParameter.getType())));
+          }
+          final ChangeSignatureProcessor csp = new ChangeSignatureProcessor(method.getProject(), method, false, null, method.getName(),
+                                                                            substitutor.substitute(method.getReturnType()),
+                                                                            newParameters.toArray(new ParameterInfo[newParameters.size()]));
+
+          csp.run();
           newMember = (PsiMethod)targetClass.add(method);
           if (memberInfo.isToAbstract()) {
             if (newMember.hasModifierProperty(PsiModifier.PRIVATE)) {
