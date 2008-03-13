@@ -61,7 +61,6 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
     if (myResolveTargetKinds.contains(ResolveUtil.getResolveKind(element))) {
       PsiNamedElement namedElement = (PsiNamedElement) element;
-      if (namedElement instanceof PsiMethod && ((PsiMethod) namedElement).isConstructor()) return true; //constructors are not interesting
 
       if (myTypeArguments.length > 0 && namedElement instanceof PsiClass) {
         substitutor = substitutor.putAll((PsiClass)namedElement, myTypeArguments);
