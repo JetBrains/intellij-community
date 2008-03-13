@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 
 /**
  * @author yole
@@ -48,7 +49,6 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
   }
 
   public EditorHighlighter createEditorHighlighter(final EditorColorsScheme settings, final String fileName, final Project project) {
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-    return createEditorHighlighter(fileType, settings, project);
+    return createEditorHighlighter(new LightVirtualFile(fileName), settings, project);
   }
 }
