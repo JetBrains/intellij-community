@@ -166,10 +166,7 @@ public class GridCell implements Disposable {
 
     RunnerContentUi.removeScrollBorder(c);
 
-    final TabInfo tabInfo = new TabInfo(new ProviderWrapper(content, myContext))
-      .setIcon(content.getIcon())
-      .setText(content.getDisplayName())
-      .setActions(content.getActions(), content.getPlace())
+    final TabInfo tabInfo = updatePresentation(new TabInfo(new ProviderWrapper(content, myContext)), content)
       .setObject(content)
       .setPreferredFocusableComponent(content.getPreferredFocusableComponent())
       .setActionsContextComponent(content.getActionsContextComponent());
@@ -181,6 +178,12 @@ public class GridCell implements Disposable {
     tabInfo.setTabLabelActions(group, ViewContext.CELL_TOOLBAR_PLACE);
 
     return tabInfo;
+  }
+
+  @Nullable
+  private static TabInfo updatePresentation(TabInfo info, Content content) {
+    if (info == null) return info;
+    return info.setIcon(content.getIcon()).setText(content.getDisplayName()).setActions(content.getActions(), content.getPlace());
   }
 
   public ActionCallback select(final Content content, final boolean requestFocus) {
@@ -198,6 +201,9 @@ public class GridCell implements Disposable {
     }
   }
 
+  public void updateTabPresentation(Content content) {
+    updatePresentation(myTabs.findInfo(content), content);
+  }
 
   private static class ProviderWrapper extends NonOpaquePanel implements DataProvider {
 

@@ -30,6 +30,7 @@ public interface Content extends UserDataHolder, ComponentContainer {
   String PROP_DISPLAY_NAME = "displayName";
   @NonNls
   String PROP_ICON = "icon";
+  String PROP_ACTIONS = "actions";
   @NonNls String PROP_DESCRIPTION = "description";
   @NonNls 
   String PROP_COMPONENT = "component";

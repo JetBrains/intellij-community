@@ -142,8 +142,14 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   public void propertyChange(final PropertyChangeEvent evt) {
     Content content = (Content)evt.getSource();
-    if (Content.PROP_ALERT.equals(evt.getPropertyName())) {
-      Grid grid = getGridFor(content, false);
+    final Grid grid = getGridFor(content, false);
+    if (grid == null) return;
+
+    final GridCell cell = grid.findCell(content);
+    if (cell == null) return;
+
+    final String property = evt.getPropertyName();
+    if (Content.PROP_ALERT.equals(property)) {
       if (grid.getContents().size() == 1) {
         TabInfo info = myTabs.findInfo(grid);
         if (myTabs.getSelectedInfo() != info) {
@@ -153,6 +159,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       else {
         grid.alert(content);
       }
+    } else if (Content.PROP_DISPLAY_NAME.equals(property)
+               || Content.PROP_ICON.equals(property)
+               || Content.PROP_ACTIONS.equals(property)
+               || Content.PROP_DESCRIPTION.equals(property)) {
+      cell.updateTabPresentation(content);
     }
   }
 
@@ -223,6 +234,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
   }
 
+  @Nullable
   private Grid getGridFor(Content content, boolean createIfMissing) {
     Grid grid = findGridFor(content);
     if (grid != null || !createIfMissing) return grid;

@@ -246,6 +246,8 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     if (validateNow) {
       validate();
       paintImmediately(0, 0, getWidth(), getHeight());
+    } else {
+      revalidateAndRepaint();
     }
   }
 
@@ -566,6 +568,12 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
   private void updateIcon(final TabInfo tabInfo) {
     myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
+    revalidateAndRepaint();
+  }
+
+  private void revalidateAndRepaint() {
+    revalidate();
+    repaint();
   }
 
 
@@ -589,6 +597,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
   private void updateText(final TabInfo tabInfo) {
     myInfo2Label.get(tabInfo).setText(tabInfo.getColoredText());
+    revalidateAndRepaint();
   }
 
   private void updateSideComponent(final TabInfo tabInfo) {
@@ -633,6 +642,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     return new Toolbar(tabInfo);
   }
 
+  @NotNull
   public TabInfo getTabAt(final int tabIndex) {
     return getTabs().get(tabIndex);
   }
@@ -1372,6 +1382,15 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     return _findInfo(point, false);
   }
 
+  public TabInfo findInfo(final Object object) {
+    for (int i = 0; i < getTabCount(); i++) {
+      final TabInfo each = getTabAt(i);
+      final Object eachObject = each.getObject();
+      if (eachObject != null && eachObject.equals(object)) return each;
+    }
+    return null;
+  }
+
   public TabInfo findTabLabelBy(final Point point) {
     return _findInfo(point, true);
   }
@@ -1461,8 +1480,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     if (!myForcedRelayout) {
       myForcedRelayout = forced;
     }
-    revalidate();
-    repaint();
+    revalidateAndRepaint();
   }
 
   ActionManager getActionManager() {
@@ -1659,8 +1677,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
       add(wrapper, BorderLayout.EAST);
 
-      revalidate();
-      repaint();
+      revalidateAndRepaint();
     }
 
     private void removeOldActionPanel() {
@@ -2149,6 +2166,8 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     final JCheckBox attract1 = new JCheckBox("Attract 1");
     attract1.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
+        toAnimate1.setText("Should be animated");
+
         if (attract1.isSelected()) {
           toAnimate1.fireAlert();
         }

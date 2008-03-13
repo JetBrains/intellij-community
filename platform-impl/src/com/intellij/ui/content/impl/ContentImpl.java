@@ -184,9 +184,11 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   public void setActions(final ActionGroup actions, String place, @Nullable JComponent contextComponent) {
+    final ActionGroup oldActions = myActions;
     myActions = actions;
     myPlace = place;
     myActionsContextComponent = contextComponent;
+    myChangeSupport.firePropertyChange(PROP_ACTIONS, oldActions, myActions);
   }
 
   public JComponent getActionsContextComponent() {

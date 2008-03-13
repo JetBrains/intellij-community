@@ -175,6 +175,11 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
     cell.alert(content);
   }
 
+  @Nullable
+  public GridCell findCell(final Content content) {
+    return myContent2Cell.get(content);
+  }
+
   static class Placeholder extends Wrapper implements NullableComponent {
 
     private JComponent myContent;

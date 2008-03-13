@@ -41,7 +41,7 @@ public interface JBTabs {
   @Nullable
   TabInfo getSelectedInfo();
 
-  @Nullable
+  @NotNull
   TabInfo getTabAt(int tabIndex);
 
   @NotNull
@@ -101,6 +101,9 @@ public interface JBTabs {
 
   @Nullable
   TabInfo findInfo(MouseEvent event);
+
+  @Nullable
+  TabInfo findInfo(Object object);
 
   boolean isRequestFocusOnLastFocusedComponent();
 
