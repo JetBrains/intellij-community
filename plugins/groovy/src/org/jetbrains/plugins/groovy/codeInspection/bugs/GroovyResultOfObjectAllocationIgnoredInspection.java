@@ -24,7 +24,10 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 public class GroovyResultOfObjectAllocationIgnoredInspection extends BaseInspection {
 
@@ -66,6 +69,16 @@ public class GroovyResultOfObjectAllocationIgnoredInspection extends BaseInspect
         final GrOpenBlock openBlock = (GrOpenBlock) parent;
         if (ControlFlowUtils.openBlockCompletesWithStatement(openBlock, newExpression)) {
           return;
+        }
+      } else if (parent instanceof GrClosableBlock) {
+        final PsiElement grandParent = parent.getParent();
+        if (grandParent instanceof GrMethodCallExpression) {
+          return;
+        } else if (grandParent instanceof GrReferenceExpression) {
+          final PsiElement greatGrandParent = grandParent.getParent();
+          if (greatGrandParent instanceof GrMethodCallExpression) {
+            return;
+          }
         }
       }
       if (newExpression.getArrayCount() != 0) {
