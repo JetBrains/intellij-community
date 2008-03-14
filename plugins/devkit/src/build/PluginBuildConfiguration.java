@@ -147,7 +147,7 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
   public ConfigFile getPluginXML() {
     final ConfigFile descriptor = myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
     if (descriptor == null) {
-      return createDescriptor(getPluginXmlPointer().getUrl());
+      return createDescriptor(getPluginXmlUrl());
     }
     return descriptor;
   }
@@ -170,6 +170,13 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
       setPluginXmlPath(getDefaultLocation());
     }
     return myPluginXmlPointer;
+  }
+
+  public String getPluginXmlUrl() {
+    if (myPluginXmlPointer == null) {
+      return VfsUtil.pathToUrl(getDefaultLocation());
+    }
+    return myPluginXmlPointer.getUrl();
   }
 
   private String getDefaultLocation() {
