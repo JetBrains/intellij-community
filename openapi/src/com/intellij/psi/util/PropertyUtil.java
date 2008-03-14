@@ -26,11 +26,10 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.Introspector;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Mike
@@ -106,6 +105,22 @@ public class PropertyUtil {
   public static String getPropertyNameBySetter(PsiMethod setterMethod) {
     String methodName = setterMethod.getName();
     return Introspector.decapitalize(methodName.substring(3));
+  }
+
+  @NotNull
+  public static Map<String, PsiMethod> getAllProperties(@NotNull final PsiClass psiClass, final boolean acceptSetters, final boolean acceptGetters) {
+    final Map<String, PsiMethod> map = new HashMap<String, PsiMethod>();
+    for (PsiMethod method : psiClass.getAllMethods()) {
+      if(method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.PUBLIC)) continue;
+
+      final String className = method.getContainingClass().getQualifiedName();
+      if(className != null && className.equals(CommonClassNames.JAVA_LANG_OBJECT)) continue;
+      if (PropertyUtil.isSimplePropertySetter(method) && acceptSetters ||
+          PropertyUtil.isSimplePropertyGetter(method) && acceptGetters) {
+        map.put(PropertyUtil.getPropertyName(method), method);
+      }
+    }
+    return map;
   }
 
   @Nullable public static PsiMethod findPropertyGetter(PsiClass aClass,

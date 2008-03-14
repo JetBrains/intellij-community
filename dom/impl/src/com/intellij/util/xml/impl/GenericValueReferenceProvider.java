@@ -6,22 +6,20 @@ package com.intellij.util.xml.impl;
 import com.intellij.javaee.web.PsiReferenceConverter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.ReflectionCache;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,17 +33,31 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     myProviders.put(clazz, provider);
   }
 
+  private static boolean hasInjections(PsiLanguageInjectionHost host) {
+    final Ref<Boolean> result = Ref.create(false);
+    host.processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
+        result.set(true);
+      }
+    });
+    return result.get();
+  }
+
   @NotNull
   public final PsiReference[] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull final ProcessingContext context) {
-
-    if (psiElement == null) {
-      return PsiReference.EMPTY_ARRAY;
-    }
     final DomManager domManager = DomManager.getDomManager(psiElement.getProject());
+
     final DomElement domElement;
     if (psiElement instanceof XmlTag) {
-      domElement = domManager.getDomElement((XmlTag)psiElement);
+      final XmlTag tag = (XmlTag)psiElement;
+      for (XmlText text : tag.getValue().getTextElements()) {
+        if (hasInjections((PsiLanguageInjectionHost)text)) return PsiReference.EMPTY_ARRAY;
+      }
+
+      domElement = domManager.getDomElement(tag);
     } else if (psiElement instanceof XmlAttributeValue && psiElement.getParent() instanceof XmlAttribute) {
+      if (hasInjections((PsiLanguageInjectionHost)psiElement)) return PsiReference.EMPTY_ARRAY;
+
       domElement = domManager.getDomElement((XmlAttribute)psiElement.getParent());
     } else {
       return PsiReference.EMPTY_ARRAY;
@@ -54,7 +66,11 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     if (!(domElement instanceof GenericDomValue)) {
       return PsiReference.EMPTY_ARRAY;
     }
+
+
     final GenericDomValue domValue = (GenericDomValue)domElement;
+
+
 
     final Referencing referencing = domValue.getAnnotation(Referencing.class);
     final Object converter;
