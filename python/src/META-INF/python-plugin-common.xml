@@ -52,4 +52,9 @@
 
     <referenceImporter implementation="com.jetbrains.python.validation.PythonReferenceImporter"/>
   </extensions>
+
+  <extensionPoints>
+    <extensionPoint name="importResolver" interface="com.jetbrains.python.psi.impl.PyImportResolver"/>
+    <extensionPoint name="typeProvider" interface="com.jetbrains.python.psi.impl.PyTypeProvider"/>
+  </extensionPoints>
 </idea-plugin>

@@ -2,4 +2,9 @@
   <id>Pythonid</id>
   <name>Pythonid</name>
   <xi:include href="/META-INF/python-plugin-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <importResolver implementation="com.jetbrains.python.psi.impl.PyJavaImportResolver"/>
+    <typeProvider implementation="com.jetbrains.python.psi.impl.PyJavaTypeProvider"/>
+  </extensions>
 </idea-plugin>

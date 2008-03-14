@@ -17,6 +17,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -26,9 +27,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,13 +106,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyExpression qualifier = getQualifier();
     if (qualifier != null) {
       PyType qualifierType = qualifier.getType();
-      if (qualifierType instanceof PyClassType) {
-        final PyClassType classType = (PyClassType)qualifierType;
-        return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), classType.getPyClass(), null, this);
-      }
-      if (qualifierType instanceof PyModuleType) {
-        final PyModuleType moduleType = (PyModuleType)qualifierType;
-        return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(referencedName), moduleType.getModule(), null, this);
+      if (qualifierType != null) {
+        return qualifierType.resolveMember(referencedName);
       }
       return null;
     }
@@ -164,17 +159,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyExpression qualifier = getQualifier();
     if (qualifier != null) {
       PyType qualifierType = qualifier.getType();
-      PsiElement variantsOwner = null;
-      if (qualifierType instanceof PyClassType) {
-        variantsOwner = ((PyClassType) qualifierType).getPyClass();
-      }
-      else if (qualifierType instanceof PyModuleType) {
-        variantsOwner = ((PyModuleType) qualifierType).getModule();
-      }
-      if (variantsOwner != null) {
-        final PyResolveUtil.VariantsProcessor processor = new PyResolveUtil.VariantsProcessor();
-        variantsOwner.processDeclarations(processor, ResolveState.initial(), null, this);
-        return processor.getResult();
+      if (qualifierType != null) {
+        return qualifierType.getCompletionVariants(this);
       }
       return new Object[0];
     }
@@ -242,6 +228,16 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (target instanceof PyFile) {
       return new PyModuleType((PyFile) target);
     }
+    return getReferenceTypeFromProviders(target);
+  }
+
+  @Nullable
+  public static PyType getReferenceTypeFromProviders(final PsiElement target) {
+    for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+      final PyType result = provider.getReferenceType(target);
+      if (result != null) return result;
+    }
+
     return null;
   }
 }

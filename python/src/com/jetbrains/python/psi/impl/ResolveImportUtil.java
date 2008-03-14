@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -23,12 +24,7 @@ public class ResolveImportUtil {
     final String referencedName = importRef.getReferencedName();
     if (referencedName == null) return null;
 
-    final PyExpression qualifier = importRef.getQualifier();
-    if (qualifier instanceof PyReferenceExpression) {
-      PsiElement qualifierElement = ((PyReferenceExpression) qualifier).resolve();
-      if (qualifierElement == null) return null;
-      return resolveChild(qualifierElement, referencedName, importRef);
-    }
+    PsiElement importFrom = null;
 
     if (importRef.getParent() instanceof PyImportElement) {
       PyImportElement parent = (PyImportElement) importRef.getParent();
@@ -36,9 +32,26 @@ public class ResolveImportUtil {
         PyFromImportStatement stmt = (PyFromImportStatement) parent.getParent();
         final PyReferenceExpression source = stmt.getImportSource();
         if (source == null) return null;
-        PsiElement sourceFile = resolveImportReference(source);
-        return resolveChild(sourceFile, referencedName, importRef);
+        importFrom = resolveImportReference(source);
       }
+    }
+
+    for(PyImportResolver resolver: Extensions.getExtensions(PyImportResolver.EP_NAME)) {
+      PsiElement result = resolver.resolveImportReference(importRef, importFrom);
+      if (result != null) {
+        return result;
+      }
+    }
+
+    final PyExpression qualifier = importRef.getQualifier();
+    if (qualifier instanceof PyReferenceExpression) {
+      PsiElement qualifierElement = ((PyReferenceExpression) qualifier).resolve();
+      if (qualifierElement == null) return null;
+      return resolveChild(qualifierElement, referencedName, importRef);
+    }
+
+    if (importFrom != null) {
+      return resolveChild(importFrom, referencedName, importRef);
     }
 
     final Module module = ModuleUtil.findModuleForPsiElement(importRef);
