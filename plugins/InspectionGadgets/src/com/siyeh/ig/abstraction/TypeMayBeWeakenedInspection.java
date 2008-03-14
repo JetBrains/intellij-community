@@ -397,6 +397,11 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
             return false;
         }
         final PsiMethod method = (PsiMethod) target;
+        final PsiReferenceList throwsList = method.getThrowsList();
+        final PsiClassType[] classTypes =
+                        throwsList.getReferencedTypes();
+        final Collection<PsiClassType> thrownTypes =
+                        new HashSet(Arrays.asList(classTypes));
         final PsiMethod[] superMethods =
                 method.findDeepestSuperMethods();
         boolean checked = false;
@@ -410,6 +415,10 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                     !expectedType.isAssignableFrom(returnType)) {
                     continue;
                 }
+                if (throwsIncompatibleException(superMethod,
+                                thrownTypes)) {
+                            continue;
+                        }
                 final PsiClass containingClass =
                         superMethod.getContainingClass();
                 checkClass(containingClass, weakestTypeClasses);
@@ -524,6 +533,31 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
             }
         }
         return true;
+    }
+
+    private static boolean throwsIncompatibleException(
+            PsiMethod method, Collection<PsiClassType> exceptionTypes) {
+        final PsiReferenceList superThrowsList =
+                method.getThrowsList();
+        final PsiClassType[] superThrownTypes =
+                superThrowsList.getReferencedTypes();
+        for (PsiClassType superThrownType : superThrownTypes) {
+            if (exceptionTypes.contains(superThrownType)) {
+                return true;
+            }
+            final PsiClass aClass = superThrownType.resolve();
+            if (aClass == null) {
+                return true;
+            }
+            if (!ClassUtils.isSubclass(aClass,
+                    "java.lang.RuntimeException") &&
+                    !ClassUtils.isSubclass(aClass,
+                            "java.lang.Error")) {
+                return true;
+            }
+
+        }
+        return false;
     }
 
     private static boolean checkType(
@@ -676,7 +710,19 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 }
             }
 	        if (useRighthandTypeAsWeakestTypeInAssignments) {
-		        if (variable instanceof PsiLocalVariable) {
+                if (variable instanceof PsiParameter) {
+                    final PsiElement parent = variable.getParent();
+                    if (parent instanceof PsiForeachStatement) {
+                        PsiForeachStatement foreachStatement =
+                                (PsiForeachStatement) parent;
+                        final PsiExpression iteratedValue =
+                                foreachStatement.getIteratedValue();
+                        if (!(iteratedValue instanceof PsiNewExpression) &&
+                                !(iteratedValue instanceof PsiTypeCastExpression)) {
+                            return;
+                        }
+                    }
+                } else {
 			        final PsiExpression initializer = variable.getInitializer();
 			        if (!(initializer instanceof PsiNewExpression) &&
 					        !(initializer instanceof PsiTypeCastExpression)) {
