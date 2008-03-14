@@ -2,10 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,8 +11,14 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PyJavaImportResolver implements PyImportResolver {
   @Nullable
-  public PsiElement resolveImportReference(final PyReferenceExpression importRef, final PsiElement importFrom) {
+  public PsiElement resolveImportReference(final PyReferenceExpression importRef, PsiElement importFrom) {
     String fqn = importRef.getText();
+    if (importFrom instanceof PsiDirectory) {
+      PsiPackage fromPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory) importFrom);
+      if (fromPackage != null) {
+        importFrom = fromPackage;
+      }
+    }
     if (importFrom instanceof PsiPackage) {
       fqn = ((PsiPackage) importFrom).getQualifiedName() + "." + fqn;
     }

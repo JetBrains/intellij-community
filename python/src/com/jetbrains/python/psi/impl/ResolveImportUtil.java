@@ -1,14 +1,14 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,13 +36,16 @@ public class ResolveImportUtil {
       }
     }
 
-    for(PyImportResolver resolver: Extensions.getExtensions(PyImportResolver.EP_NAME)) {
-      PsiElement result = resolver.resolveImportReference(importRef, importFrom);
-      if (result != null) {
-        return result;
-      }
+    PsiElement result = resolvePythonImport(importRef, importFrom, referencedName);
+    if (result != null) {
+      return result;
     }
+    return resolveForeignImport(importRef, importFrom);
+  }
 
+  @Nullable
+  private static PsiElement resolvePythonImport(final PyReferenceExpression importRef, final PsiElement importFrom,
+                                                final String referencedName) {
     final PyExpression qualifier = importRef.getQualifier();
     if (qualifier instanceof PyReferenceExpression) {
       PsiElement qualifierElement = ((PyReferenceExpression) qualifier).resolve();
@@ -69,6 +72,17 @@ public class ResolveImportUtil {
       }
     };
     return ModuleRootManager.getInstance(module).processOrder(resolvePolicy, null);
+  }
+
+  @Nullable
+  private static PsiElement resolveForeignImport(final PyReferenceExpression importRef, final PsiElement importFrom) {
+    for(PyImportResolver resolver: Extensions.getExtensions(PyImportResolver.EP_NAME)) {
+      PsiElement result = resolver.resolveImportReference(importRef, importFrom);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
   }
 
   @Nullable
