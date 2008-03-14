@@ -1,9 +1,10 @@
 package com.intellij.psi.filters.getters;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.DefaultInsertHandler;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
@@ -18,21 +19,16 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -41,11 +37,9 @@ import java.util.*;
  * Time: 16:49:25
  * To change this template use Options | File Templates.
  */
-public class AllClassesGetter implements ContextGetter{
+public class AllClassesGetter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.filters.getters.AllClassesGetter");
 
-  @NonNls private static final String JAVA_PACKAGE_PREFIX = "java.";
-  @NonNls private static final String JAVAX_PACKAGE_PREFIX = "javax.";
   private final ElementFilter myFilter;
   private static final SimpleInsertHandler INSERT_HANDLER = new SimpleInsertHandler() {
     public int handleInsert(final Editor editor, final int startOffset, final LookupElement item, final LookupElement[] allItems, final TailType tailType) {
@@ -160,8 +154,8 @@ public class AllClassesGetter implements ContextGetter{
     myFilter = filter;
   }
 
-  public Object[] get(final PsiElement context, CompletionContext completionContext) {
-    if(context == null || !context.isValid()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  public void getClasses(final PsiElement context, CompletionContext completionContext, CompletionResultSet<LookupElement> set) {
+    if(context == null || !context.isValid()) return;
 
     String prefix = context.getText().substring(0, completionContext.getStartOffset() - context.getTextRange().getStartOffset());
     final int i = prefix.lastIndexOf('.');
@@ -171,22 +165,19 @@ public class AllClassesGetter implements ContextGetter{
     }
 
     final PsiManager manager = context.getManager();
-    final Set<PsiClass> classesSet = new THashSet<PsiClass>(new TObjectHashingStrategy<PsiClass>() {
-      public int computeHashCode(final PsiClass object) {
-        final String name = object.getQualifiedName();
-        return name != null ? name.hashCode() : 0;
-      }
-
-      public boolean equals(final PsiClass o1, final PsiClass o2) {
-        return manager.areElementsEquivalent(o1, o2);
-      }
-    });
+    final Set<String> qnames = new THashSet<String>();
 
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     final PsiShortNamesCache cache = facade.getShortNamesCache();
 
     final GlobalSearchScope scope = context.getContainingFile().getResolveScope();
     final String[] names = cache.getAllClassNames(true);
+
+    Arrays.sort(names, new Comparator<String>() {
+      public int compare(final String o1, final String o2) {
+        return o1.compareToIgnoreCase(o2);
+      }
+    });
 
     boolean lookingForAnnotations = false;
     final PsiElement prevSibling = context.getParent().getPrevSibling();
@@ -209,42 +200,17 @@ public class AllClassesGetter implements ContextGetter{
 
         if (!myFilter.isAcceptable(psiClass, context)) continue;
 
-        classesSet.add(psiClass);
+        if (qnames.add(qualifiedName)) {
+          set.addElement(createLookupItem(psiClass));
+        }
       }
     }
-
-    List<PsiClass> classesList = new ArrayList<PsiClass>(classesSet);
-
-    Collections.sort(classesList, new Comparator<PsiClass>() {
-      public int compare(PsiClass psiClass, PsiClass psiClass1) {
-        if(manager.areElementsEquivalent(psiClass, psiClass1)) return 0;
-
-        return getClassIndex(psiClass) - getClassIndex(psiClass1);
-      }
-
-      private int getClassIndex(PsiClass psiClass){
-        if(psiClass.getManager().isInProject(psiClass)) return 2;
-        final String qualifiedName = psiClass.getQualifiedName();
-        if(qualifiedName.startsWith(JAVA_PACKAGE_PREFIX) ||
-           qualifiedName.startsWith(JAVAX_PACKAGE_PREFIX)) return 1;
-        return 0;
-      }
-
-      public boolean equals(Object o) {
-        return o == this;
-      }
-    });
-
-    return ContainerUtil.map2Array(classesList, (Class<LookupItem<PsiClass>>)(Class)LookupItem.class, new NotNullFunction<PsiClass, LookupItem<PsiClass>>() {
-      @NotNull
-      public LookupItem<PsiClass> fun(final PsiClass psiClass) {
-        return createLookupItem(psiClass);
-      }
-    });
   }
 
   protected LookupItem<PsiClass> createLookupItem(final PsiClass psiClass) {
-    return LookupElementFactoryImpl.getInstance().createLookupElement(psiClass).setInsertHandler(INSERT_HANDLER);
+    final LookupItem<PsiClass> item = LookupElementFactoryImpl.getInstance().createLookupElement(psiClass).setInsertHandler(INSERT_HANDLER);
+    item.setAttribute(LookupItem.FORCE_SHOW_FQN_ATTR, "");
+    return item;
   }
 
 }

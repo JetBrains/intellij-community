@@ -46,8 +46,8 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
     return withElementType(PlatformPatterns.elementType().tokenSet(type));
   }
 
-  public Self afterLeaf(@NotNull final String withText) {
-    return afterLeaf(psiElement().withText(withText));
+  public Self afterLeaf(@NotNull final String... withText) {
+    return afterLeaf(psiElement().withText(PlatformPatterns.string().oneOf(withText)));
   }
   
   public Self afterLeaf(@NotNull final ElementPattern<? extends PsiElement> pattern) {

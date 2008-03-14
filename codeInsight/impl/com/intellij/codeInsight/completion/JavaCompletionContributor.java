@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.JavaReferenceImporter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -19,18 +20,16 @@ import com.intellij.patterns.PlatformPatterns;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiJavaPatterns;
 import static com.intellij.patterns.StandardPatterns.or;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
-import com.intellij.lang.StdLanguages;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +43,6 @@ public class JavaCompletionContributor extends CompletionContributor{
   @NonNls public static final String VARIABLE_NAME = "VARIABLE_NAME";
   @NonNls public static final String METHOD_NAME = "METHOD_NAME";
   @NonNls public static final String JAVA_LEGACY = "JAVA_LEGACY";
-  private static final CompletionData CLASS_NAME_DATA = new ClassNameCompletionData();
   private static final ElementPattern INSIDE_TYPE_PARAMS_PATTERN = psiElement().afterLeaf(psiElement().withText("?").afterLeaf(psiElement().withText("<")));
   @NonNls private static final String ANALYZE_ITEM = "Analyze item";
 
@@ -159,30 +157,6 @@ public class JavaCompletionContributor extends CompletionContributor{
             return true;
           }
         });
-      }
-    });
-
-    registrar.extend(CompletionType.CLASS_NAME, PlatformPatterns.psiElement()).withId(JAVA_LEGACY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
-      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
-        CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-        final PsiFile file = parameters.getOriginalFile();
-        PsiElement insertedElement = parameters.getPosition();
-        CompletionData completionData = CLASS_NAME_DATA;
-        context.setPrefix(insertedElement, context.getStartOffset(), completionData);
-        result.setPrefixMatcher(context.getPrefix());
-
-        final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
-        final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(context.getStartOffset());
-        final PrefixMatcher matcher = result.getPrefixMatcher();
-        if (ref != null) {
-          completionData.completeReference(ref, lookupSet, insertedElement, matcher, file, context.getStartOffset());
-        }
-        if (lookupSet.isEmpty() || !XmlUtil.isAntFile(file)) {
-          final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-          completionData.addKeywordVariants(keywordVariants, insertedElement, file);
-          completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, matcher, file);
-        }
-        result.addAllElements(lookupSet);
       }
     });
 
