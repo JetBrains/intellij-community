@@ -1,9 +1,7 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.testFramework.ResolveTestCase;
 
 /**
@@ -19,6 +17,18 @@ public class PyToJavaResolveTest extends ResolveTestCase {
     PsiElement target = resolve();
     assertTrue(target instanceof PsiClass);
     assertEquals("java.util.ArrayList", ((PsiClass) target).getQualifiedName());
+  }
+
+  public void testMethod() throws Exception {
+    PsiElement target = resolve();
+    assertTrue(target instanceof PsiMethod);
+    assertEquals("java.util.ArrayList", ((PsiMethod) target).getContainingClass().getQualifiedName());
+  }
+
+  public void testField() throws Exception {
+    PsiElement target = resolve();
+    assertTrue(target instanceof PsiField);
+    assertEquals("java.lang.System", ((PsiField) target).getContainingClass().getQualifiedName());
   }
 
   @Override

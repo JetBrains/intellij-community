@@ -1,9 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.ResolveState;
+import com.intellij.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyResolveUtil;
@@ -23,6 +20,8 @@ public class PyJavaClassType implements PyType {
     if (methods.length > 0) {
       return methods [0]; // TODO[yole]: correct resolve
     }
+    final PsiField field = myClass.findFieldByName(name, true);
+    if (field != null) return field;
     return null;
   }
 
