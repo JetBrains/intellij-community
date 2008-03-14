@@ -2,12 +2,6 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 20.12.2006
- * Time: 16:04:55
- */
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -35,6 +29,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.ArrayList;
 
+/**
+ * @author  yole
+ */
 public class IgnoreUnversionedDialog extends DialogWrapper {
   private JRadioButton myIgnoreSpecifiedFileRadioButton;
   private JRadioButton myIgnoreAllFilesUnderRadioButton;
@@ -160,8 +157,9 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
   }
 
   public void setIgnoredFile(final IgnoredFileBean bean) {
-    if (bean.getPath() != null) {
-      String path = bean.getPath().replace('/', File.separatorChar);
+    final String pathFromBean = bean.getPath();
+    if (pathFromBean != null) {
+      String path = pathFromBean.replace('/', File.separatorChar);
       if (path.endsWith(File.separator)) {
         myIgnoreAllFilesUnderRadioButton.setSelected(true);
         myIgnoreDirectoryTextField.setText(path);
@@ -175,6 +173,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
       myIgnoreAllFilesMatchingRadioButton.setSelected(true);
       myIgnoreMaskTextField.setText(bean.getMask());
     }
+    updateControls();
   }
 
   public IgnoredFileBean[] getSelectedIgnoredFiles() {
