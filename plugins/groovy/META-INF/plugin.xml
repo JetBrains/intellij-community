@@ -140,6 +140,11 @@
             text="Groovy Script" description="Create new Groovy script">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Groovy.NewClass"/>
     </action>
+    <action id="RenameJavaFileToGroovyFileAction"
+            class="org.jetbrains.plugins.groovy.refactoring.javaToGrovyRename.RenameJavaFileToGroovyFileAction"
+            text="Rename To Groovy" description="Rename Java File to Groovy">
+      <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+    </action>
 
     <group id="Grails" class="org.jetbrains.plugins.grails.actions.GrailsGroup"
            text="Grails">
