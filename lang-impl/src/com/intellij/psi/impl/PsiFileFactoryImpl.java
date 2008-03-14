@@ -35,7 +35,7 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
   }
 
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull String text) {
-    return createFileFromText(name, language, text, true, false);
+    return createFileFromText(name, language, text, true, true);
   }
 
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull String text, boolean physical,
