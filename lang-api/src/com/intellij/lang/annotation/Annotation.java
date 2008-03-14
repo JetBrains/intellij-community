@@ -57,14 +57,17 @@ public final class Annotation {
   public static class QuickFixInfo {
     public final IntentionAction quickFix;
     public final TextRange textRange;
-    public List<IntentionAction> options;
+    public final List<IntentionAction> options;
     @Deprecated
     public final String displayName;
-    public HighlightDisplayKey key;
+    public final HighlightDisplayKey key;
 
     @Deprecated
     public QuickFixInfo(final IntentionAction quickFix, final TextRange textRange, final List<IntentionAction> options, String displayName) {
-      this(quickFix, textRange, null);
+      this.key = null;
+      this.quickFix = quickFix;
+      this.textRange = textRange;
+      this.displayName = quickFix.getText();
       this.options = options;
     }
 
@@ -73,6 +76,7 @@ public final class Annotation {
       quickFix = fix;
       textRange = range;
       displayName = key != null ? HighlightDisplayKey.getDisplayNameByKey(key) : fix.getText();
+      options = null;
     }
   }
 
@@ -89,6 +93,7 @@ public final class Annotation {
    * @see AnnotationHolder#createInfoAnnotation
    */
   public Annotation(final int startOffset, final int endOffset, final HighlightSeverity severity, final String message, String tooltip) {
+    assert startOffset <= endOffset : startOffset + ":" + endOffset;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myMessage = message;

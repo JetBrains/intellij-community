@@ -23,8 +23,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public abstract class BaseAnalysisAction extends AnAction {
-  protected final String myTitle;
-  protected final String myAnalysisNoon;
+  private final String myTitle;
+  private final String myAnalysisNoon;
   private static final Logger LOG = Logger.getInstance("#com.intellij.analysis.BaseAnalysisAction");
 
   protected BaseAnalysisAction(String title, String analysisNoon) {

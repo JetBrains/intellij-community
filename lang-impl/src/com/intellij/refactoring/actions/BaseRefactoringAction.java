@@ -78,15 +78,7 @@ public abstract class BaseRefactoringAction extends AnAction {
           disableAction(e);
           return;
         }
-        final int offset = getElementAtCaret(editor);
-        element = file.findElementAt(offset);
-        if (element == null && offset == file.getTextLength()) {
-          element = file.findElementAt(offset - 1);
-        }
-
-        if (element instanceof PsiWhiteSpace) {
-          element = file.findElementAt(element.getTextRange().getStartOffset() - 1);
-        }
+        element = getElementAtCaret(editor, file);
       }
       final boolean isEnabled = element != null && !(element instanceof SyntheticElement) && isAvailableForLanguage(element.getLanguage()) &&
         isAvailableOnElementInEditor(element, editor);
@@ -101,14 +93,27 @@ public abstract class BaseRefactoringAction extends AnAction {
         return;
       }
       final PsiElement[] elements = getPsiElementArray(dataContext);
-      final boolean isEnabled = isEnabledOnDataContext(dataContext) || (elements.length != 0 && isEnabledOnElements(elements));
+      final boolean isEnabled = isEnabledOnDataContext(dataContext) || elements.length != 0 && isEnabledOnElements(elements);
       if (!isEnabled) {
         disableAction(e);
       }
     }
   }
 
-  private static int getElementAtCaret(final Editor editor) {
+  public static PsiElement getElementAtCaret(final Editor editor, final PsiFile file) {
+    final int offset = fixCaretOffset(editor);
+    PsiElement element = file.findElementAt(offset);
+    if (element == null && offset == file.getTextLength()) {
+      element = file.findElementAt(offset - 1);
+    }
+
+    if (element instanceof PsiWhiteSpace) {
+      element = file.findElementAt(element.getTextRange().getStartOffset() - 1);
+    }
+    return element;
+  }
+
+  private static int fixCaretOffset(final Editor editor) {
     final int caret = editor.getCaretModel().getOffset();
     if (editor.getSelectionModel().hasSelection() && !editor.getSelectionModel().hasBlockSelection()) {
       if (caret == editor.getSelectionModel().getSelectionEnd()) {
