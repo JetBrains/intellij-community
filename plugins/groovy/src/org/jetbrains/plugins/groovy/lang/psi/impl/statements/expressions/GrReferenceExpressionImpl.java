@@ -489,6 +489,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   Kind getKind() {
+    if (getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER) return Kind.METHOD_OR_PROPERTY;
+    
     PsiElement parent = getParent();
     if (parent instanceof GrMethodCallExpression || parent instanceof GrApplicationStatement) {
       return Kind.METHOD_OR_PROPERTY;
