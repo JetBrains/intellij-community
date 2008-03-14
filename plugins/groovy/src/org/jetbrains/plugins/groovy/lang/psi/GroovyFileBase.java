@@ -24,11 +24,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
 /**
  * @author ilyas
  */
-public interface GroovyFileBase extends PsiFile, GroovyPsiElement, GrVariableDeclarationOwner, PsiClassOwner, GrControlFlowOwner {
+public interface GroovyFileBase extends PsiFile, GroovyPsiElement, GrVariableDeclarationOwner, GrStatementOwner, PsiClassOwner, GrControlFlowOwner {
   String SCRIPT_BASE_CLASS_NAME = "groovy.lang.Script";
   String[] IMPLICITLY_IMPORTED_PACKAGES = {
       "java.lang",

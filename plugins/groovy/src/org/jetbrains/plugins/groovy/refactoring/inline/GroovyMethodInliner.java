@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -207,7 +208,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       if (hasReturnStatements && PsiType.VOID != methodType && !isTailMethodCall) {
         PsiType type = methodType != null && methodType.equalsToText("java.lang.Object") ? null : methodType;
         GrVariableDeclaration resultDecl = factory.createVariableDeclaration(new String[0], null, type, resultName);
-        GrStatement statement = owner.addStatementBefore(resultDecl, anchor);
+        GrStatement statement = ((GrStatementOwner) owner).addStatementBefore(resultDecl, anchor);
         PsiUtil.shortenReferences(statement);
 
         // Replace all return statements with assignments to 'result' variable
@@ -231,7 +232,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       statements = body.getStatements();
       for (GrStatement statement : statements) {
         if (!(statements.length > 0 && statement == statements[statements.length - 1] && hasTailExpr)) {
-          owner.addStatementBefore(statement, anchor);
+          ((GrStatementOwner) owner).addStatementBefore(statement, anchor);
         }
       }
       if (replaceCall && (!isTailMethodCall || hasTailExpr)) {

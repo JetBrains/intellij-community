@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 /**
  * @author ilyas
  */
-public interface GrVariableDeclarationOwner extends GroovyPsiElement, GrStatementOwner {
+public interface GrVariableDeclarationOwner extends GroovyPsiElement {
 
   /**
    * Removes variable from its declaration. In case of alone variablein declaration,
@@ -21,7 +21,7 @@ public interface GrVariableDeclarationOwner extends GroovyPsiElement, GrStatemen
    * @param variable to remove
    * @throws com.intellij.util.IncorrectOperationException in case the operation cannot be performed
    */
-  void removeVariable(GrVariable variable) throws IncorrectOperationException;
+  void removeVariable(GrVariable variable);
 
   /**
    * Adds new variable declaration after anchor spectified. If anchor == null, adds variable at owner's first position

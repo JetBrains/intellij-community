@@ -338,9 +338,9 @@ public class ExtractMethodUtil {
   }
 
   @Nullable
-  static GrVariableDeclarationOwner getDeclarationOwner(GrStatement statement) {
+  static GrStatementOwner getDeclarationOwner(GrStatement statement) {
     PsiElement parent = statement.getParent();
-    return parent instanceof GrVariableDeclarationOwner ? ((GrVariableDeclarationOwner) parent) : null;
+    return parent instanceof GrStatementOwner ? ((GrStatementOwner) parent) : null;
   }
 
   static boolean isSingleExpression(GrStatement[] statements) {

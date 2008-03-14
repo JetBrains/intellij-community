@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.NameValidator;
@@ -335,8 +336,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     assert GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(realContainer);
 
     if (!GroovyRefactoringUtil.isLoopOrForkStatement(realContainer)) {
-      if (realContainer instanceof GrVariableDeclarationOwner) {
-        GrVariableDeclarationOwner block = (GrVariableDeclarationOwner) realContainer;
+      if (realContainer instanceof GrStatementOwner) {
+        GrStatementOwner block = (GrStatementOwner) realContainer;
         varDecl = (GrVariableDeclaration) block.addStatementBefore(varDecl, (GrStatement) anchorElement);
       }
     } else {

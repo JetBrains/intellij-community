@@ -16,14 +16,13 @@
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.lang.refactoring.InlineHandler;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Application;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -57,14 +56,10 @@ public class GroovyInlineHandler implements InlineHandler {
   }
 
   public void removeDefinition(final PsiElement element) {
-    try {
-      final PsiElement owner = element.getParent().getParent();
-      if (element instanceof GrVariable &&
-          owner instanceof GrVariableDeclarationOwner) {
-        ((GrVariableDeclarationOwner) owner).removeVariable(((GrVariable) element));
-      }
-    } catch (IncorrectOperationException e) {
-      LOG.error(e);
+    final PsiElement owner = element.getParent().getParent();
+    if (element instanceof GrVariable &&
+        owner instanceof GrVariableDeclarationOwner) {
+      ((GrVariableDeclarationOwner) owner).removeVariable(((GrVariable) element));
     }
   }
 

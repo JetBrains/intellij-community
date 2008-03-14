@@ -135,7 +135,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return (GrStatement) result;
   }
 
-  public void removeVariable(GrVariable variable) throws IncorrectOperationException {
+  public void removeVariable(GrVariable variable) {
     PsiImplUtil.removeVariable(variable);
   }
 

@@ -58,7 +58,7 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
     super(node);
   }
 
-  public void removeVariable(GrVariable variable) throws IncorrectOperationException {
+  public void removeVariable(GrVariable variable) {
     PsiImplUtil.removeVariable(variable);
   }
 

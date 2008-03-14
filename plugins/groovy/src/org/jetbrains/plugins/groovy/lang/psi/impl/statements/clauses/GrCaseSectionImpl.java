@@ -53,7 +53,7 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
     return ResolveUtil.processChildren(this, processor, substitutor, lastParent, place);
   }
 
-  public void removeVariable(GrVariable variable) throws IncorrectOperationException {
+  public void removeVariable(GrVariable variable) {
     PsiImplUtil.removeVariable(variable);
   }
 

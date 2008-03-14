@@ -3,17 +3,16 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
@@ -106,4 +105,24 @@ public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements Gr
   }
 
 
+  public void removeVariable(GrVariable variable) {
+    PsiImplUtil.removeVariable(variable);
+  }
+
+  public GrVariableDeclaration addVariableDeclarationBefore(GrVariableDeclaration declaration, GrStatement anchor) throws IncorrectOperationException {
+    PsiElement rBrace = getRBrace();
+    if (anchor == null && rBrace == null) {
+      throw new IncorrectOperationException();
+    }
+
+    if (anchor != null && !this.equals(anchor.getParent())) {
+      throw new IncorrectOperationException();
+    }
+
+    ASTNode elemNode = declaration.getNode();
+    final ASTNode anchorNode = anchor != null ? anchor.getNode() : rBrace.getNode();
+    getNode().addChild(elemNode, anchorNode);
+    getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchorNode);
+    return (GrVariableDeclaration) elemNode.getPsi();
+  }
 }

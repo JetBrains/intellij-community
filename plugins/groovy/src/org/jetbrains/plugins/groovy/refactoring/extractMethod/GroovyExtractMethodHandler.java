@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
@@ -116,7 +117,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }
 
     GrMemberOwner owner = ExtractMethodUtil.getMemberOwner(statements[0]);
-    GrVariableDeclarationOwner declarationOwner = ExtractMethodUtil.getDeclarationOwner(statements[0]);
+    GrStatementOwner declarationOwner = ExtractMethodUtil.getDeclarationOwner(statements[0]);
     if (owner == null ||
         (declarationOwner == null && !ExtractMethodUtil.isSingleExpression(statements))) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
@@ -194,7 +195,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   private void runRefactoring(final String methodName,
                               @NotNull final ExtractMethodInfoHelper helper,
                               @NotNull final GrMemberOwner owner,
-                              final GrVariableDeclarationOwner declarationOwner,
+                              final GrStatementOwner declarationOwner,
                               final Editor editor,
                               final PsiElement startElement) {
 
