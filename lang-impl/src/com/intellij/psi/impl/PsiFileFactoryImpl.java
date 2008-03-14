@@ -12,7 +12,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -36,22 +35,12 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
   }
 
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull String text) {
-    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+    return createFileFromText(name, language, text, true, false);
+  }
 
-    final LightVirtualFile virtualFile = new LightVirtualFile(name, language, text);
-    final FileManager fileManager = ((PsiManagerEx)myManager).getFileManager();
-    final SingleRootFileViewProvider viewProvider = (SingleRootFileViewProvider)fileManager.createFileViewProvider(virtualFile, true);
-    assert parserDefinition != null;
-    final PsiFile psiFile = parserDefinition.createFile(viewProvider);
-    viewProvider.forceCachedPsi(psiFile);
-    if (language instanceof LanguageDialect) {
-      psiFile.putUserData(PsiManagerImpl.LANGUAGE_DIALECT, (LanguageDialect)language);
-    }
-    TreeElement node = (TreeElement)psiFile.getNode();
-    assert node != null;
-    node.acceptTree(new GeneratedMarkerVisitor());
-
-    return psiFile;
+  public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull String text, boolean physical,
+                                    final boolean markAsCopy) {
+    return trySetupPsiForFile(true, new LightVirtualFile(name, language, text), language, physical, markAsCopy);
   }
 
   @NotNull
@@ -62,33 +51,51 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
                                     final boolean physical,
                                     boolean markAsCopy) {
     final LightVirtualFile virtualFile = new LightVirtualFile(name, fileType, text, modificationStamp);
-
     if(fileType instanceof LanguageFileType){
-      final Language language = ((LanguageFileType)fileType).getLanguage();
-      final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-      final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
-      FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;
-      if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
-      if (parserDefinition != null){
-        final PsiFile psiFile = viewProvider.getPsi(language);
-        if (psiFile != null) {
-          if (language instanceof LanguageDialect) {
-            psiFile.putUserData(PsiManagerImpl.LANGUAGE_DIALECT, (LanguageDialect)language);
-          }
-          if(markAsCopy) {
-            final TreeElement node = (TreeElement)psiFile.getNode();
-            assert node != null;
-            node.acceptTree(new GeneratedMarkerVisitor());
-          }
-          return psiFile;
-        }
-      }
+      final PsiFile file = trySetupPsiForFile(false, virtualFile, ((LanguageFileType)fileType).getLanguage(), physical, markAsCopy);
+      if (file != null) return file;
     }
     final SingleRootFileViewProvider singleRootFileViewProvider =
       new SingleRootFileViewProvider(myManager, virtualFile, physical);
     final PsiPlainTextFileImpl plainTextFile = new PsiPlainTextFileImpl(singleRootFileViewProvider);
     if(markAsCopy) CodeEditUtil.setNodeGenerated(plainTextFile.getNode(), true);
     return plainTextFile;
+  }
+
+  private PsiFile trySetupPsiForFile(final boolean useLanguage, final LightVirtualFile virtualFile, final Language language,
+                                     final boolean physical, final boolean markAsCopy) {
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+    FileViewProvider viewProvider = null;
+    if (!useLanguage) {
+      final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
+      viewProvider = factory != null? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;
+    }
+    if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
+    if (parserDefinition != null) {
+      final PsiFile psiFile;
+      if (useLanguage) {
+        psiFile = parserDefinition.createFile(viewProvider);
+        ((SingleRootFileViewProvider)viewProvider).forceCachedPsi(psiFile);
+      }
+      else {
+        psiFile = viewProvider.getPsi(language);
+      }
+      if (psiFile != null) {
+        if (language instanceof LanguageDialect) {
+          psiFile.putUserData(PsiManagerImpl.LANGUAGE_DIALECT, (LanguageDialect)language);
+        }
+        if (markAsCopy) {
+          final TreeElement node = (TreeElement)psiFile.getNode();
+          assert node != null;
+          node.acceptTree(new GeneratedMarkerVisitor());
+        }
+        return psiFile;
+      }
+    }
+    else if (useLanguage) {
+      throw new AssertionError("parser definition not found for "+language);
+    }
+    return null;
   }
 
   @NotNull
