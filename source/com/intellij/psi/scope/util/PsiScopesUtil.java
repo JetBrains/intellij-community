@@ -11,15 +11,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.processor.MethodsProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.ArrayList;
 
 public class PsiScopesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.scope.util.PsiScopesUtil");
@@ -85,8 +88,8 @@ public class PsiScopesUtil {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(ref.getProject()).getElementFactory();
       PsiElement target = null;
       PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-      PsiType type = null;
       if (qualifier instanceof PsiExpression || qualifier instanceof PsiJavaCodeReferenceElement){
+        PsiType type = null;
         if(qualifier instanceof PsiExpression){
           type = ((PsiExpression)qualifier).getType();
           if (type instanceof PsiArrayType) {
@@ -187,15 +190,22 @@ public class PsiScopesUtil {
             if (superClass != null) {
               PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
               PsiClass runSuper = superClass;
+              List<PsiSubstitutor> contextSubstitutors = new ArrayList<PsiSubstitutor>();
               do {
                 if (runSuper != null) {
                   PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(runSuper, aClass, PsiSubstitutor.EMPTY);
-                  substitutor = substitutor.putAll(superSubstitutor);
+                  contextSubstitutors.add(superSubstitutor);
                 }
                 if (aClass.hasModifierProperty(PsiModifier.STATIC)) break;
                 aClass = JavaResolveUtil.getContextClass(aClass);
                 if (aClass != null) runSuper = aClass.getSuperClass();
-              } while (aClass != null);
+              }
+              while (aClass != null);
+              //apply substitutors in 'outer classes down to inner classes' order because inner class subst take precedence
+              for (int i = contextSubstitutors.size()-1; i>=0; i--) {
+                PsiSubstitutor contextSubstitutor = contextSubstitutors.get(i);
+                substitutor = substitutor.putAll(contextSubstitutor);
+              }
 
               processor.setIsConstructor(true);
               processor.setAccessClass(null);
