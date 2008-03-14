@@ -49,15 +49,8 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
 
     final DomElement domElement;
     if (psiElement instanceof XmlTag) {
-      final XmlTag tag = (XmlTag)psiElement;
-      for (XmlText text : tag.getValue().getTextElements()) {
-        if (hasInjections((PsiLanguageInjectionHost)text)) return PsiReference.EMPTY_ARRAY;
-      }
-
-      domElement = domManager.getDomElement(tag);
+      domElement = domManager.getDomElement((XmlTag)psiElement);
     } else if (psiElement instanceof XmlAttributeValue && psiElement.getParent() instanceof XmlAttribute) {
-      if (hasInjections((PsiLanguageInjectionHost)psiElement)) return PsiReference.EMPTY_ARRAY;
-
       domElement = domManager.getDomElement((XmlAttribute)psiElement.getParent());
     } else {
       return PsiReference.EMPTY_ARRAY;
@@ -67,10 +60,15 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
       return PsiReference.EMPTY_ARRAY;
     }
 
+    if (psiElement instanceof XmlTag) {
+      for (XmlText text : ((XmlTag)psiElement).getValue().getTextElements()) {
+        if (hasInjections((PsiLanguageInjectionHost)text)) return PsiReference.EMPTY_ARRAY;
+      }
+    } else {
+      if (hasInjections((PsiLanguageInjectionHost)psiElement)) return PsiReference.EMPTY_ARRAY;
+    }
 
     final GenericDomValue domValue = (GenericDomValue)domElement;
-
-
 
     final Referencing referencing = domValue.getAnnotation(Referencing.class);
     final Object converter;
