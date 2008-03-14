@@ -95,4 +95,9 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
     GrReferenceExpression ref = (GrReferenceExpression) configureByFile("closure2/A.groovy").getElement();
     assertTrue(ref.getType().equalsToText("java.lang.Integer"));
   }
+
+  public void testGrvy1209() throws Exception {
+    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("grvy1209/A.groovy").getElement();
+    assertTrue(ref.getType().equalsToText("java.lang.String"));
+  }
 }

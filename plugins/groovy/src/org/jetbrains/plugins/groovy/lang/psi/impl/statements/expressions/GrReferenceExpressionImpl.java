@@ -328,7 +328,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       final PsiType nominal = refExpr.getNominalTypeImpl();
       if (inferred == null || inferred == PsiType.NULL) return nominal;
       if (nominal == null) return inferred;
-      if (!nominal.isAssignableFrom(inferred)) {
+      if (!TypeConversionUtil.isAssignable(nominal, inferred, false)) {
         final PsiElement resolved = refExpr.resolve();
         if (resolved instanceof GrVariable && ((GrVariable) resolved).getTypeElementGroovy() != null) {
           return nominal; //see GRVY-487
