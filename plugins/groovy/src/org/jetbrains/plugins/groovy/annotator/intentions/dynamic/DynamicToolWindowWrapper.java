@@ -422,7 +422,7 @@ public class DynamicToolWindowWrapper {
 
     DefaultMutableTreeNode toSelect = (parent.getChildAfter(child) != null || parent.getChildCount() == 1 ?
         ((DefaultMutableTreeNode) selectionNode).getNextNode() :
-        ((DefaultMutableTreeNode) selectionNode).getPreviousNode() );
+        ((DefaultMutableTreeNode) selectionNode).getPreviousNode());
 
 //    DefaultMutableTreeNode toSelect = toSelect != null ? (DefaultMutableTreeNode) toSelect.getLastPathComponent() : null;
 
@@ -543,6 +543,7 @@ public class DynamicToolWindowWrapper {
       List<DefaultMutableTreeNode> classes = new ArrayList<DefaultMutableTreeNode>();
       List<DefaultMutableTreeNode> dynamicNodes = new ArrayList<DefaultMutableTreeNode>();
 
+      if (rootNode.isLeaf()) return;
       DefaultMutableTreeNode classNode = (DefaultMutableTreeNode) rootNode.getFirstChild();
       while (classNode != null) {
 
