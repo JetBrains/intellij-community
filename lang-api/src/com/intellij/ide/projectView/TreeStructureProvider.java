@@ -17,7 +17,6 @@ package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -55,7 +54,4 @@ public interface TreeStructureProvider {
    * @see com.intellij.openapi.actionSystem.DataProvider
    */
   @Nullable Object getData(Collection<AbstractTreeNode> selected, String dataName);
-
-  @Nullable
-  PsiElement getTopLevelElement(PsiElement element);
 }

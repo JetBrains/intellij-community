@@ -1,7 +1,7 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.TreeStructureProvider;
+import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class ClassesTreeStructureProvider implements TreeStructureProvider {
+public class ClassesTreeStructureProvider implements SelectableTreeStructureProvider {
   private final Project myProject;
 
   public ClassesTreeStructureProvider(Project project) {

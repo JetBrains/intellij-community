@@ -2,6 +2,7 @@ package com.intellij.ide.impl;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.TreeStructureProvider;
+import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -57,7 +58,9 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     PsiElement toSelect = null;
     final TreeStructureProvider[] providers = Extensions.getExtensions(TreeStructureProvider.EP_NAME, myProject);
     for (TreeStructureProvider provider : providers) {
-      toSelect = provider.getTopLevelElement(element);
+      if (provider instanceof SelectableTreeStructureProvider) {
+        toSelect = ((SelectableTreeStructureProvider) provider).getTopLevelElement(element);
+      }
       if (toSelect != null) break;
     }
     if (toSelect == null) {

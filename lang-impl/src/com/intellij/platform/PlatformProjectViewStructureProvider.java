@@ -5,7 +5,6 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.psi.PsiElement;
 
 import java.util.Collection;
 
@@ -25,10 +24,6 @@ public class PlatformProjectViewStructureProvider implements TreeStructureProvid
   }
 
   public Object getData(final Collection<AbstractTreeNode> selected, final String dataName) {
-    return null;
-  }
-
-  public PsiElement getTopLevelElement(final PsiElement element) {
     return null;
   }
 }

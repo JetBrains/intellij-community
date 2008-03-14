@@ -99,9 +99,4 @@ public class ResourceBundleGrouper implements TreeStructureProvider {
     }
     return null;
   }
-
-  public PsiElement getTopLevelElement(final PsiElement element) {
-    return null;
-  }
-
 }

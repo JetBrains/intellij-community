@@ -99,10 +99,6 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
     return null;
   }
 
-  public PsiElement getTopLevelElement(final PsiElement element) {
-    return null;
-  }
-
   private static Collection<PsiFile> convertToFiles(Collection<BasePsiNode<? extends PsiElement>> formNodes) {
     ArrayList<PsiFile> psiFiles = new ArrayList<PsiFile>();
     for (AbstractTreeNode treeNode : formNodes) {
