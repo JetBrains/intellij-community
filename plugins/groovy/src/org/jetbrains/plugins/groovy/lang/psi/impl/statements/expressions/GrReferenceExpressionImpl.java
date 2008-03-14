@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -184,6 +185,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   private PsiType getNominalTypeImpl() {
     IElementType dotType = getDotTokenType();
+    if (dotType == GroovyTokenTypes.mMEMBER_POINTER) return getManager().getElementFactory().createTypeByFQClassName(GrClosableBlock.GROOVY_LANG_CLOSURE);
+    
     final GroovyResolveResult resolveResult = advancedResolve();
     PsiElement resolved = resolveResult.getElement();
     PsiType result = null;
