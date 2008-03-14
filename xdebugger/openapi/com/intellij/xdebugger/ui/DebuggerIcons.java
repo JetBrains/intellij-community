@@ -34,4 +34,7 @@ public interface DebuggerIcons {
   Icon VALUE_ICON = IconLoader.getIcon("/debugger/value.png");
   Icon ARRAY_VALUE_ICON = IconLoader.getIcon("/debugger/db_array.png");
   Icon PRIMITIVE_VALUE_ICON = IconLoader.getIcon("/debugger/db_primitive.png");
+
+  Icon STACK_FRAME_ICON = IconLoader.getIcon("/debugger/stackFrame.png");
+  Icon SUSPENDED_THREAD_ICON = IconLoader.getIcon("/debugger/threadSuspended.png");
 }

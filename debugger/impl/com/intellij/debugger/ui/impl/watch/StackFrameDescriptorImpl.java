@@ -19,6 +19,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xdebugger.ui.DebuggerIcons;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,9 +38,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private boolean myIsInLibraryContent;
   private Long myObjectId;
 
-  private static final Icon myStackFrameIcon = IconLoader.getIcon("/debugger/stackFrame.png");
   private static final Icon myObsoleteFrameIcon = IconLoader.getIcon("/debugger/db_obsolete.png");
-  private Icon myIcon = myStackFrameIcon;
+  private Icon myIcon = DebuggerIcons.STACK_FRAME_ICON;
 
   public StackFrameDescriptorImpl(StackFrameProxyImpl frame, final MethodsTracker tracker) {
     myFrame = frame;
@@ -212,7 +212,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     }
     catch (EvaluateException e) {
     }
-    return myStackFrameIcon;
+    return DebuggerIcons.STACK_FRAME_ICON;
   }
 
   public Icon getIcon() {

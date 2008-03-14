@@ -24,15 +24,16 @@ public class ExecutionPointHighlighter {
   private Editor myEditor;
   private int myLine;
   private OpenFileDescriptor myOpenFileDescriptor;
+  private boolean myUseSelection;
 
   public ExecutionPointHighlighter(final Project project) {
     myProject = project;
   }
 
-  public void show(final XSourcePosition position) {
+  public void show(final XSourcePosition position, final boolean useSelection) {
     DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
       public void run() {
-        doShow(position);
+        doShow(position, useSelection);
       }
     });
   }
@@ -51,12 +52,13 @@ public class ExecutionPointHighlighter {
     }
   }
 
-  private void doShow(XSourcePosition position) {
+  private void doShow(XSourcePosition position, final boolean useSelection) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     removeHighlighter();
 
     myLine = position.getLine();
     myEditor = openEditor(position);
+    myUseSelection = useSelection;
     if (myEditor != null) {
       addHighlighter();
     }
@@ -82,13 +84,22 @@ public class ExecutionPointHighlighter {
   }
 
   private void removeHighlighter() {
-    if (myRangeHighlighter == null) return;
+    if (myUseSelection && myEditor != null) {
+      myEditor.getSelectionModel().removeSelection();
+    }
+    if (myRangeHighlighter == null || myEditor == null) return;
 
     myEditor.getMarkupModel().removeHighlighter(myRangeHighlighter);
     myRangeHighlighter = null;
   }
 
   private void addHighlighter() {
+    if (myUseSelection) {
+      Document document = myEditor.getDocument();
+      myEditor.getSelectionModel().setSelection(document.getLineStartOffset(myLine), document.getLineEndOffset(myLine) + document.getLineSeparatorLength(myLine));
+      return;
+    }
+
     if (myRangeHighlighter != null) return;
 
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();

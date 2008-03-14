@@ -33,5 +33,12 @@ public abstract class XDebugViewBase implements Disposable {
       rebuildView();
     }
 
+    public void sessionStopped() {
+      rebuildView();
+    }
+
+    public void stackFrameChanged() {
+      rebuildView();
+    }
   }
 }

@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class XDebugProcess {
   private final XDebugSession mySession;
+  private ProcessHandler myProcessHandler;
 
   protected XDebugProcess(@NotNull XDebugSession session) {
     mySession = session;
@@ -64,8 +65,19 @@ public abstract class XDebugProcess {
   public abstract void runToPosition(@NotNull XSourcePosition position);
 
   @Nullable
-  public ProcessHandler getProcessHandler() {
+  protected ProcessHandler doGetProcessHandler() {
     return null;
+  }
+
+  @NotNull
+  public final ProcessHandler getProcessHandler() {
+    if (myProcessHandler == null) {
+      myProcessHandler = doGetProcessHandler();
+      if (myProcessHandler == null) {
+        myProcessHandler = new DefaultDebugProcessHandler();
+      }
+    }
+    return myProcessHandler;
   }
 
   @NotNull

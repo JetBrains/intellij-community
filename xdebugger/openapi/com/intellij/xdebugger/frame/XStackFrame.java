@@ -16,9 +16,12 @@
 
 package com.intellij.xdebugger.frame;
 
-import org.jetbrains.annotations.Nullable;
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.ui.DebuggerIcons;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -33,5 +36,17 @@ public abstract class XStackFrame extends XValueContainer {
   @Nullable 
   public XSourcePosition getSourcePosition() {
     return null;
+  }
+
+  public void customizePresentation(final SimpleColoredComponent component) {
+    XSourcePosition position = getSourcePosition();
+    if (position != null) {
+      component.append(position.getFile().getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      component.append(":" + position.getLine(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      component.setIcon(DebuggerIcons.STACK_FRAME_ICON);
+    }
+    else {
+      //todo[nik]
+    }
   }
 }

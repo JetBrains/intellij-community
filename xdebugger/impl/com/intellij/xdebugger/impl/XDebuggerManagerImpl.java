@@ -135,11 +135,11 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     }
   }
 
-  public void updateExecutionPosition(@NotNull XDebugSessionImpl session, @Nullable XSourcePosition position) {
+  public void updateExecutionPosition(@NotNull XDebugSessionImpl session, @Nullable XSourcePosition position, boolean useSelection) {
     boolean sessionChanged = myLastActiveSession != session;
     myLastActiveSession = session;
     if (position != null) {
-      myExecutionPointHighlighter.show(position);
+      myExecutionPointHighlighter.show(position, useSelection);
     }
     else {
       myExecutionPointHighlighter.hide();

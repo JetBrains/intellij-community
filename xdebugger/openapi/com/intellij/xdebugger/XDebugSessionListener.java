@@ -11,4 +11,8 @@ public interface XDebugSessionListener extends EventListener {
 
   void sessionResumed();
 
+  void sessionStopped();
+
+  void stackFrameChanged();
+
 }

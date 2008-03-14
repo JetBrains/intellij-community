@@ -267,7 +267,7 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   private void doResume() {
-    myDebuggerManager.updateExecutionPosition(this, null);
+    myDebuggerManager.updateExecutionPosition(this, null, false);
     mySuspendContext = null;
     myCurrentStackFrame = null;
     myCurrentPosition = null;
@@ -276,7 +276,29 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public void showExecutionPoint() {
-    myDebuggerManager.showExecutionPosition();
+    if (mySuspendContext != null) {
+      XExecutionStack executionStack = mySuspendContext.getActiveExecutionStack();
+      if (executionStack != null) {
+        XStackFrame topFrame = executionStack.getTopFrame();
+        if (topFrame != null) {
+          setCurrentStackFrame(topFrame);
+          myDebuggerManager.showExecutionPosition();
+        }
+      }
+    }
+  }
+
+  public void setCurrentStackFrame(@NotNull final XStackFrame frame) {
+    if (mySuspendContext == null || myCurrentStackFrame == frame) return;
+
+    myCurrentStackFrame = frame;
+    XSourcePosition position = frame.getSourcePosition();
+    if (position != null) {
+      XExecutionStack activeExecutionStack = mySuspendContext.getActiveExecutionStack();
+      boolean isTopFrame = activeExecutionStack != null && activeExecutionStack.getTopFrame() == frame;
+      myDebuggerManager.updateExecutionPosition(this, position, !isTopFrame);
+    }
+    myDispatcher.getMulticaster().stackFrameChanged();
   }
 
   public void updateBreakpointPresentation(@NotNull final XLineBreakpoint<?> breakpoint, @Nullable final Icon icon, @Nullable final String errorMessage) {
@@ -365,7 +387,7 @@ public class XDebugSessionImpl implements XDebugSession {
     }
     myCurrentPosition = position;
     myPaused = true;
-    myDebuggerManager.updateExecutionPosition(this, position);
+    myDebuggerManager.updateExecutionPosition(this, position, false);
     myDispatcher.getMulticaster().sessionPaused();
   }
 
@@ -385,13 +407,15 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public void stop() {
+    if (myStopped) return;
+
     myDebugProcess.stop();
-    myDebuggerManager.updateExecutionPosition(this, null);
+    myDebuggerManager.updateExecutionPosition(this, null, false);
     XBreakpointManagerImpl breakpointManager = myDebuggerManager.getBreakpointManager();
     breakpointManager.removeBreakpointListener(myBreakpointListener);
     breakpointManager.getDependentBreakpointManager().removeListener(myDependentBreakpointListener);
     myStopped = true;
-
+    myDispatcher.getMulticaster().sessionStopped();
     // do not remove here, we will reuse it and clear all others in the manager's dispose
     //myDebuggerManager.removeSession(this);
   }

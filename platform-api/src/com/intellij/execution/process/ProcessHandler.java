@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
 import java.lang.reflect.InvocationHandler;
@@ -162,6 +163,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     myEventMulticaster.onTextAvailable(event, outputType);
   }
 
+  @Nullable
   public abstract OutputStream getProcessInput();
 
   private void fireProcessWillTerminate(final boolean willBeDestroyed) {

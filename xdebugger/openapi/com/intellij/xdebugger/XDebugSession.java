@@ -58,6 +58,8 @@ public interface XDebugSession {
 
   void showExecutionPoint();
 
+  void setCurrentStackFrame(@NotNull XStackFrame frame);
+
   /**
    * Call this method to setup custom icon and/or error message (it will be shown in tooltip) for breakpoint
    * @param breakpoint breakpoint
@@ -81,9 +83,6 @@ public interface XDebugSession {
    * @param suspendContext context
    */
   void positionReached(@NotNull XSourcePosition position, @NotNull XSuspendContext suspendContext);
-
-
-  void stop();
 
   boolean isStopped();
 
