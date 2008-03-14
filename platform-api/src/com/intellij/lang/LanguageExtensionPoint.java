@@ -20,7 +20,10 @@ public class LanguageExtensionPoint<T> extends AbstractExtensionPointBean implem
   private final LazyInstance<T> myHandler = new LazyInstance<T>() {
     protected Class<T> getInstanceClass() throws ClassNotFoundException {
       if (implementationClass == null) {
-        throw new RuntimeException("implementation class is not specified for unknown language extension point, language: " + language);
+        throw new RuntimeException("implementation class is not specified for unknown language extension point, " +
+                                   "language: " + language + ", plugin id: " +
+                                   (myPluginDescriptor == null ? "<not available>" : myPluginDescriptor.getPluginId()) + ". " +
+                                   "Check if 'implementationClass' attribute is specified");
       }
       return findClass(implementationClass);
     }

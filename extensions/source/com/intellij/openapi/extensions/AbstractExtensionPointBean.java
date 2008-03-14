@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class AbstractExtensionPointBean implements PluginAware {
-  private PluginDescriptor myPluginDescriptor;
+  protected PluginDescriptor myPluginDescriptor;
 
   public final void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
