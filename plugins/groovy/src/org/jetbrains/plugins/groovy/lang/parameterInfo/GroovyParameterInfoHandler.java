@@ -277,7 +277,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     } else if (element instanceof GrVariable) {
       final PsiType type = ((GrVariable) element).getTypeGroovy();
       if (type instanceof GrClosureType) {
-        for (GrParameter param : ((GrClosureType) type).getClosureParameters()) {
+        for (PsiParameter param : ((GrClosureType) type).getClosureParameters()) {
           appendParameterText(param, PsiSubstitutor.EMPTY, buffer);
         }
       }

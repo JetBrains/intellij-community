@@ -185,10 +185,17 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   private PsiType getNominalTypeImpl() {
     IElementType dotType = getDotTokenType();
-    if (dotType == GroovyTokenTypes.mMEMBER_POINTER) return getManager().getElementFactory().createTypeByFQClassName(GrClosableBlock.GROOVY_LANG_CLOSURE);
-    
+
     final GroovyResolveResult resolveResult = advancedResolve();
     PsiElement resolved = resolveResult.getElement();
+    if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
+      if (resolved instanceof PsiMethod) {
+        PsiMethod method = (PsiMethod) resolved;
+        PsiType returnType = resolveResult.getSubstitutor().substitute(method.getReturnType());
+        return GrClosureType.create(getResolveScope(), returnType, method.getParameterList().getParameters(), getManager());
+      }
+      return getManager().getElementFactory().createTypeByFQClassName(GrClosableBlock.GROOVY_LANG_CLOSURE);
+    }
     PsiType result = null;
     PsiManager manager = getManager();
     if (resolved == null && !"class".equals(getReferenceName())) {
