@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class MagicNumberInspection extends BaseInspection {
 
@@ -118,12 +118,15 @@ public class MagicNumberInspection extends BaseInspection {
 
         private boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {
             final PsiManager manager = expression.getManager();
-          final PsiConstantEvaluationHelper evaluationHelper = JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
+            final JavaPsiFacade facade =
+                    JavaPsiFacade.getInstance(manager.getProject());
+            final PsiConstantEvaluationHelper evaluationHelper =
+                  facade.getConstantEvaluationHelper();
             final Object object = evaluationHelper.computeConstantExpression(
                     expression);
             if (object instanceof Integer) {
                 final int i = ((Integer)object).intValue();
-                return i >= 0 && i <= 10;
+                return i >= 0 && i <= 10 || i == 100 || i == 1000;
             } else if (object instanceof Long) {
                 final long l = ((Long)object).longValue();
                 return l >= 0L && l <= 2L;
