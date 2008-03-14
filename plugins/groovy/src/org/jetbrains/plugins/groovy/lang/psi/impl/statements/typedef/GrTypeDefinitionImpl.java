@@ -611,6 +611,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     final MethodSignature patternSignature = patternMethod.getSignature(PsiSubstitutor.EMPTY);
     for (PsiMethod method : findMethodsByName(patternMethod.getName(), checkBases, includeSynthetic)) {
       final PsiClass clazz = method.getContainingClass();
+      if (clazz == null) continue;
       PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(clazz, this, PsiSubstitutor.EMPTY);
       assert superSubstitutor != null;
       final MethodSignature signature = method.getSignature(superSubstitutor);
