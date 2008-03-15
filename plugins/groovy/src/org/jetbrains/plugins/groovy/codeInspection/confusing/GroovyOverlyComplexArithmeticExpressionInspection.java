@@ -188,6 +188,9 @@ public class GroovyOverlyComplexArithmeticExpressionInspection extends BaseInspe
     }
 
     private boolean isString(GrExpression expression) {
+      if (expression == null) {
+        return false;
+      }
       final PsiType type = expression.getType();
       if (type == null) {
         return false;
