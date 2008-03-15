@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -41,20 +42,24 @@ public class RenameJavaFileToGroovyFileAction extends AnAction {
     String newExt = file.getLanguage() == StdLanguages.JAVA ? GroovyFileType.DEFAULT_EXTENSION : StdFileTypes.JAVA.getDefaultExtension();
 
     final String newName = virtualFile.getNameWithoutExtension() + "." + newExt;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    final Project project = e.getData(DataKeys.PROJECT);
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
-        try {
-          file.setName(newName);
-        } catch (final IncorrectOperationException e1) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              Project project = e.getData(DataKeys.PROJECT);
-              Messages.showErrorDialog(project, "Cannot rename java file" + e1.getMessage(), "Canot Rename");
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            try {
+              file.setName(newName);
+            } catch (final IncorrectOperationException e1) {
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                public void run() {
+                  Messages.showErrorDialog(project, "Cannot rename java file" + e1.getMessage(), "Canot Rename");
+                }
+              });
             }
-          });
-        }
+          }
+        });
       }
-    });
+    }, "Rename File", null);
   }
 
   public void update(AnActionEvent e) {
