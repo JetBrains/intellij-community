@@ -28,13 +28,13 @@ Groovy script
         Built in type
           PsiElement(int)('int')
         PsiWhiteSpace(' ')
+        PsiElement(identifier)('foo')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
         Default annotation value
-          PsiElement(identifier)('foo')
-          PsiElement(()('(')
-          Parameter list
-            <empty list>
-          PsiElement())(')')
-          PsiWhiteSpace(' ')
           PsiElement(default)('default')
           PsiWhiteSpace(' ')
           Annotation

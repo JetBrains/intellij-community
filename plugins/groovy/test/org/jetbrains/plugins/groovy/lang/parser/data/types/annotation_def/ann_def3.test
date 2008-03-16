@@ -1,34 +1,31 @@
-@interface S {
-  def @ann int foo() default 5
+public @interface SampleAnnotation {
+    int[] foo () default [8];
 }
 -----
 Groovy script
   Annotation definition
     Modifiers
-      <empty list>
+      PsiElement(public)('public')
+    PsiWhiteSpace(' ')
     PsiElement(@)('@')
     PsiElement(interface)('interface')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('S')
+    PsiElement(identifier)('SampleAnnotation')
     PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
-      PsiWhiteSpace('\n  ')
+      PsiWhiteSpace('\n    ')
       Default annotation member
         Modifiers
-          PsiElement(def)('def')
-          PsiWhiteSpace(' ')
-          Annotation
-            PsiElement(@)('@')
-            Reference element
-              PsiElement(identifier)('ann')
-            PsiWhiteSpace(' ')
-            Annotation arguments
-              <empty list>
-        Built in type
-          PsiElement(int)('int')
+          <empty list>
+        Array type
+          Built in type
+            PsiElement(int)('int')
+          PsiElement([)('[')
+          PsiElement(])(']')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('foo')
+        PsiWhiteSpace(' ')
         PsiElement(()('(')
         Parameter list
           <empty list>
@@ -37,7 +34,11 @@ Groovy script
         Default annotation value
           PsiElement(default)('default')
           PsiWhiteSpace(' ')
-          Literal
-            PsiElement(Integer)('5')
+          Annotation array initializer
+            PsiElement([)('[')
+            Literal
+              PsiElement(Integer)('8')
+            PsiElement(])(']')
+      PsiElement(;)(';')
       PsiElement(new line)('\n')
       PsiElement(})('}')

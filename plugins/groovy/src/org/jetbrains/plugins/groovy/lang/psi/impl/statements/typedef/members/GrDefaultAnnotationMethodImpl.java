@@ -1,20 +1,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrDefaultAnnotationMember;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrDefaultAnnotationMethod;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 04.06.2007
  */
-public class GrDefaultAnnotationMemberImpl extends GroovyPsiElementImpl implements GrDefaultAnnotationMember {
-  public GrDefaultAnnotationMemberImpl(@NotNull ASTNode node) {
+public class GrDefaultAnnotationMethodImpl extends GrMethodDefinitionImpl implements GrDefaultAnnotationMethod {
+  public GrDefaultAnnotationMethodImpl(@NotNull ASTNode node) {
     super(node);
   }
 

@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrDefaultAnnotationMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrDefaultAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -257,8 +257,8 @@ public abstract class GroovyElementVisitor {
     visitElement(wildcardTypeArgument);
   }
 
-  public void visitDefaultAnnotationMember(GrDefaultAnnotationMember defaultAnnotationMember) {
-    visitElement(defaultAnnotationMember);
+  public void visitDefaultAnnotationMember(GrDefaultAnnotationMethod defaultAnnotationMethod) {
+    visitElement(defaultAnnotationMethod);
   }
 
   public void visitDefaultAnnotationValue(GrDefaultAnnotationValue defaultAnnotationValue) {

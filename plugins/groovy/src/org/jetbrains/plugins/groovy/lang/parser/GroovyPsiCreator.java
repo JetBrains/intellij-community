@@ -71,7 +71,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrTy
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorDefinitionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrDefaultAnnotationMemberImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrDefaultAnnotationMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportStatementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging.GrPackageDefinitionImpl;
@@ -153,7 +153,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (elem.equals(ENUM_DEFINITION)) return new GrEnumTypeDefinitionImpl(node);
     if (elem.equals(ANNOTATION_DEFINITION))
       return new GrAnnotationTypeDefinitionImpl(node);
-    if (elem.equals(DEFAULT_ANNOTATION_MEMBER)) return new GrDefaultAnnotationMemberImpl(node);
+    if (elem.equals(DEFAULT_ANNOTATION_MEMBER)) return new GrDefaultAnnotationMethodImpl(node);
 
     if (elem.equals(REFERENCE_ELEMENT)) return new GrCodeReferenceElementImpl(node);
     if (elem.equals(CLASS_TYPE_ELEMENT)) return new GrClassTypeElementImpl(node);

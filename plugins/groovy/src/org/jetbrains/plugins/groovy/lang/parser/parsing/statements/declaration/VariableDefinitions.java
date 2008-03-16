@@ -94,19 +94,18 @@ public class VariableDefinitions implements GroovyElementTypes {
         return METHOD_DEFINITION;
       }
 
-      if (ParserUtils.lookAhead(builder, GroovyTokenTypes.kDEFAULT)) {
-
+      varMarker.drop();
+      if (builder.getTokenType() == kDEFAULT) {
+        PsiBuilder.Marker defaultValueMarker = builder.mark();
         ParserUtils.getToken(builder, GroovyTokenTypes.kDEFAULT);
         ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
-        boolean b = AnnotationArguments.parseAnnotationMemberValueInitializer(builder);
-        if (b) {
-          varMarker.done(DEFAULT_ANNOTATION_VALUE);
-          return DEFAULT_ANNOTATION_MEMBER;
+        if (AnnotationArguments.parseAnnotationMemberValueInitializer(builder)) {
+          defaultValueMarker.done(DEFAULT_ANNOTATION_VALUE);
         } else {
-          varMarker.rollbackTo();
-          return WRONGWAY;
+          defaultValueMarker.error(GroovyBundle.message("annotation.initializer.expected"));
         }
+        return DEFAULT_ANNOTATION_MEMBER;
       }
 
       ThrowClause.parse(builder);
@@ -120,7 +119,6 @@ public class VariableDefinitions implements GroovyElementTypes {
 //        builder.error(GroovyBundle.message("empty.parameter.list.expected"));
 //      }
 
-      varMarker.drop();
       return METHOD_DEFINITION;
     } else {
       varMarker.rollbackTo();
