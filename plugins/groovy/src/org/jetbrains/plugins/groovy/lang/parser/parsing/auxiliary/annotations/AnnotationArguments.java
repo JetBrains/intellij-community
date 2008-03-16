@@ -69,7 +69,11 @@ public class AnnotationArguments implements GroovyElementTypes {
     } else if(builder.getTokenType() == mLBRACK) {
       PsiBuilder.Marker marker = builder.mark();
       ParserUtils.getToken(builder, mLBRACK);
-      while (Annotation.parse(builder));
+      while (parseAnnotationMemberValueInitializer(builder)){
+        if (builder.eof() || builder.getTokenType() == mRBRACK) break;
+        ParserUtils.getToken(builder, mCOMMA, GroovyBundle.message("comma.expected"));
+      }
+      
       ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
       marker.done(ANNOTATION_ARRRAY_INITIALIZER);
       return true;
