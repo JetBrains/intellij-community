@@ -110,7 +110,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (elem.equals(MODIFIERS)) return new GrModifierListImpl(node);
     if (elem.equals(ANNOTATION)) return new GrAnnotationImpl(node);
     if (elem.equals(ANNOTATION_ARGUMENTS)) return new GrAnnotationArgumentListImpl(node);
-    if (elem.equals(ANNOTATION_ARRRAY_INITIALIZER)) return new GrAnnotationArrrayInitializerImpl(node);
+    if (elem.equals(ANNOTATION_ARRAY_INITIALIZER)) return new GrAnnotationArrrayInitializerImpl(node);
     if (elem.equals(ANNOTATION_MEMBER_VALUE_PAIR)) return new GrAnnotationNameValuePairImpl(node);
     if (elem.equals(ANNOTATION_MEMBER_VALUE_PAIRS)) return new GrAnnotationNameValuePairsImpl(node);
 

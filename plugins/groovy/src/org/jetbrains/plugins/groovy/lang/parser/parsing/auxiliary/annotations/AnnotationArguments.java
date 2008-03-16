@@ -75,7 +75,7 @@ public class AnnotationArguments implements GroovyElementTypes {
       }
       
       ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
-      marker.done(ANNOTATION_ARRRAY_INITIALIZER);
+      marker.done(ANNOTATION_ARRAY_INITIALIZER);
       return true;
     }
 
