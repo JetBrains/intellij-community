@@ -28,6 +28,9 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
@@ -103,7 +106,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
       public boolean execute(int num) {
         final ReadWriteVariableInstruction instruction = (ReadWriteVariableInstruction) flow[num];
         final PsiElement element = instruction.getElement();
-        if (isLocalAssignment(element) && isUsedInToplevelFlowOnly(element, owner)) {
+        if (isLocalAssignment(element) && isUsedInToplevelFlowOnly(element)) {
           if (element instanceof GrReferenceExpression) {
             PsiElement parent = element.getParent();
             PsiElement toHighlight = null;
@@ -123,7 +126,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     });
   }
 
-  private boolean isUsedInToplevelFlowOnly(PsiElement element, final GrControlFlowOwner owner) {
+  private boolean isUsedInToplevelFlowOnly(PsiElement element) {
     GrVariable var = null;
     if (element instanceof GrVariable) {
       var = (GrVariable) element;
@@ -133,18 +136,21 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     }
 
     if (var != null) {
-      final GrControlFlowOwner scope = PsiTreeUtil.getParentOfType(var, GrControlFlowOwner.class);
+      final GroovyPsiElement scope = getScope(var);
       assert scope != null;
 
       return ReferencesSearch.search(var, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
         public boolean process(PsiReference ref) {
-          GrControlFlowOwner hisOwner = PsiTreeUtil.getParentOfType(ref.getElement(), GrControlFlowOwner.class);
-          return hisOwner == scope;
+          return getScope(ref.getElement()) == scope;
         }
       });
     }
 
     return true;
+  }
+
+  private GroovyPsiElement getScope(PsiElement var) {
+    return PsiTreeUtil.getParentOfType(var, GrClosableBlock.class, GrMethod.class, GrClassInitializer.class);
   }
 
   private boolean isLocalAssignment(PsiElement element) {
