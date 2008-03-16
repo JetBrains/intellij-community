@@ -76,7 +76,8 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
     if (anchor == null || !this.equals(anchor.getParent())) {
       throw new IncorrectOperationException();
     }
-    ASTNode elemNode = element.getNode();
+    ASTNode elemNode = element.copy().getNode();
+    assert elemNode != null;
     final ASTNode anchorNode = anchor.getNode();
     getNode().addChild(elemNode, anchorNode);
     if (mayUseNewLinesAsSeparators()) {

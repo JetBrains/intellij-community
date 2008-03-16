@@ -96,7 +96,7 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
     for (int i = 0; i < elements.length; i++) {
       PsiElement element = elements[i];
       final GrStatement statement = (GrStatement) element;
-      block.addStatementBefore((GrStatement) statement.copy(), null);
+      block.addStatementBefore(statement, null);
     }
   }
 

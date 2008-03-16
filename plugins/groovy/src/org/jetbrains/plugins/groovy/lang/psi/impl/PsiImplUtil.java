@@ -101,7 +101,8 @@ public class PsiImplUtil {
       }
     }
 
-    ASTNode newNode = newExpr.getNode();
+    ASTNode newNode = newExpr.copy().getNode();
+    assert newNode != null && parentNode != null;
     parentNode.replaceChild(oldNode, newNode);
 
     return ((GrExpression) newNode.getPsi());
@@ -205,12 +206,6 @@ public class PsiImplUtil {
     return nextLeaf;
   }
 
-  /**
-   * Returns priiority level of expression
-   *
-   * @param expr
-   * @return
-   */
   private static int getExprPriorityLevel(GrExpression expr) {
     int priority = 0;
     //if (expr instanceof GrNewExpression) priority = 1;

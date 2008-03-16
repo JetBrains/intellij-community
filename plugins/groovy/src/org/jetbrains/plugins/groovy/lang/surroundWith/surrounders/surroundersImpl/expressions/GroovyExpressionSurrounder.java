@@ -1,17 +1,14 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions;
 
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySingleElementSurrounder;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.psi.PsiElement;
-import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySingleElementSurrounder;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -34,6 +31,6 @@ public abstract class GroovyExpressionSurrounder extends GroovySingleElementSurr
   protected abstract TextRange surroundExpression(GrExpression expression);
 
   protected void replaceToOldExpression(GrExpression oldExpr, GrExpression replacement) {
-    oldExpr.replaceWithExpression((GrExpression) replacement.copy(), false);
+    oldExpr.replaceWithExpression(replacement, false);
   }
 }

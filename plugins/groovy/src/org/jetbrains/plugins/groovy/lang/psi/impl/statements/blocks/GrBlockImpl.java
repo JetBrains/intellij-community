@@ -95,7 +95,8 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
       throw new IncorrectOperationException();
     }
 
-    ASTNode elemNode = element.getNode();
+    ASTNode elemNode = element.copy().getNode();
+    assert elemNode != null;
     final ASTNode anchorNode = anchor != null ? anchor.getNode() : getRBrace().getNode();
     getNode().addChild(elemNode, anchorNode);
     if (mayUseNewLinesAsSeparators()) {

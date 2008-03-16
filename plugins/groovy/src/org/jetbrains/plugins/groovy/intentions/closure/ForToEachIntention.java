@@ -25,7 +25,6 @@ public class ForToEachIntention extends Intention {
       throws IncorrectOperationException {
     final GrForStatement parentStatement =
         (GrForStatement) element;
-    assert parentStatement != null;
     final GrForInClause clause = (GrForInClause) parentStatement.getClause();
     final GrVariable var = clause.getDeclaredVariables()[0];
     final GrStatement body = parentStatement.getBody();
@@ -40,7 +39,6 @@ public class ForToEachIntention extends Intention {
 
     GrExpression collection = clause.getIteratedExpression();
     assert collection != null;
-    collection = (GrExpression) collection.copy();
     @NonNls final String statement = "x.each{" + var.getText() + " -> " + bodyText + " }";
     final PsiManager mgr = parentStatement.getManager();
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(parentStatement.getProject());
