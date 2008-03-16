@@ -100,11 +100,11 @@ public class VariableDefinitions implements GroovyElementTypes {
         ParserUtils.getToken(builder, GroovyTokenTypes.kDEFAULT);
         ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
-        if (AnnotationArguments.parseAnnotationMemberValueInitializer(builder)) {
-          defaultValueMarker.done(DEFAULT_ANNOTATION_VALUE);
-        } else {
-          defaultValueMarker.error(GroovyBundle.message("annotation.initializer.expected"));
+        if (!AnnotationArguments.parseAnnotationMemberValueInitializer(builder)) {
+          builder.error(GroovyBundle.message("annotation.initializer.expected"));
         }
+        
+        defaultValueMarker.done(DEFAULT_ANNOTATION_VALUE);
         return DEFAULT_ANNOTATION_MEMBER;
       }
 
