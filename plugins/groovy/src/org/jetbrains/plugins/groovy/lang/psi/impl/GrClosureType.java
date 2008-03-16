@@ -118,7 +118,7 @@ public class GrClosureType extends PsiClassType {
 
   public boolean isValid() {
     if (myParameters.length > 0 && !myParameters[0].isValid()) return false;
-    return myReturnType.isValid();
+    return myReturnType == null || myReturnType.isValid();
   }
 
   public boolean equalsToText(@NonNls String text) {
