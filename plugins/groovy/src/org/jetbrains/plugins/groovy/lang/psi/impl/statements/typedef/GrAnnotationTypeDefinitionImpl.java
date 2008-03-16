@@ -38,6 +38,10 @@ public class GrAnnotationTypeDefinitionImpl extends GrTypeDefinitionImpl impleme
     return true;
   }
 
+  public boolean isInterface() {
+    return true;
+  }
+
   protected String[] getExtendsNames() {
     return new String[] {"Annotation"};
   }
