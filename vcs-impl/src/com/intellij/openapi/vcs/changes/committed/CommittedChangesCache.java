@@ -63,7 +63,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private int myPendingUpdateCount = 0;
   private State myState = new State();
   private ScheduledFuture myFuture;
-  private Map<CommittedChangeList, Change[]> myCachedIncomingChangeLists;
+  private List<CommittedChangeList> myCachedIncomingChangeLists;
   private final Set<CommittedChangeList> myNewIncomingChanges = new LinkedHashSet<CommittedChangeList>();
   private final ProjectLevelVcsManager myVcsManager;
 
@@ -449,33 +449,33 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return changes;
   }
 
-  private Map<CommittedChangeList, Change[]> loadIncomingChanges() {
-    final Map<CommittedChangeList, Change[]> map = new HashMap<CommittedChangeList, Change[]>();
+  private List<CommittedChangeList> loadIncomingChanges() {
+    final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
     final Collection<ChangesCacheFile> caches = getAllCaches();
     for(ChangesCacheFile cache: caches) {
       try {
         if (!cache.isEmpty()) {
           LOG.info("Loading incoming changes for " + cache.getLocation());
-          cache.loadIncomingChanges(map);
+          result.addAll(cache.loadIncomingChanges());
         }
       }
       catch (IOException e) {
         LOG.error(e);
       }
     }
-    myCachedIncomingChangeLists = map;
+    myCachedIncomingChangeLists = result;
     LOG.info("Incoming changes loaded");
     notifyIncomingChangesUpdated(null);
-    return map;
+    return result;
   }
 
   public void loadIncomingChangesAsync(@Nullable final Consumer<List<CommittedChangeList>> consumer) {
     LOG.info("Loading incoming changes");
     final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("incoming.changes.loading.progress")) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        final Map<CommittedChangeList, Change[]> map = loadIncomingChanges();
+        final List<CommittedChangeList> list = loadIncomingChanges();
         if (consumer != null) {
-          consumer.consume(new ArrayList<CommittedChangeList>(map.keySet()));
+          consumer.consume(new ArrayList<CommittedChangeList>(list));
         }
       }
     };
@@ -484,11 +484,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   @Nullable
   public List<CommittedChangeList> getCachedIncomingChanges() {
-    final Map<CommittedChangeList, Change[]> incomingChangeLists = myCachedIncomingChangeLists;
-    if (incomingChangeLists == null) {
-      return null;
-    }
-    return new ArrayList<CommittedChangeList>(incomingChangeLists.keySet());
+    return myCachedIncomingChangeLists;
   }
 
   public void processUpdatedFiles(final UpdatedFiles updatedFiles) {
@@ -752,19 +748,10 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   public Pair<CommittedChangeList, Change> getIncomingChangeList(final VirtualFile file) {
     if (myCachedIncomingChangeLists != null) {
       File ioFile = new File(file.getPath());
-      for(Map.Entry<CommittedChangeList, Change[]> changeListEntry: myCachedIncomingChangeLists.entrySet()) {
-        if (changeListEntry.getValue() == ALL_CHANGES) {
-          for(Change change: changeListEntry.getKey().getChanges()) {
-            if (change.affectsFile(ioFile)) {
-              return Pair.create(changeListEntry.getKey(), change);
-            }
-          }
-        }
-        else {
-          for(Change change: changeListEntry.getValue()) {
-            if (change.affectsFile(ioFile)) {
-              return Pair.create(changeListEntry.getKey(), change);
-            }
+      for(CommittedChangeList changeList: myCachedIncomingChangeLists) {
+        for(Change change: changeList.getChanges()) {
+          if (change.affectsFile(ioFile)) {
+            return Pair.create(changeList, change);
           }
         }
       }
