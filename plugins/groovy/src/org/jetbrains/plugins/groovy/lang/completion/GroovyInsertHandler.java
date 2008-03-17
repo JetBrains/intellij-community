@@ -58,9 +58,10 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
       int offset = startOffset + method.getName().length();
       PsiFile file = PsiDocumentManager.getInstance(method.getProject()).getPsiFile(document);
       PsiElement elementAt = file.findElementAt(startOffset);
-      if (elementAt instanceof GrReferenceExpression && ((GrReferenceExpression) elementAt).getDotTokenType() == GroovyElementTypes.mMEMBER_POINTER) return;
+      PsiElement parent = elementAt != null ? elementAt.getParent() : null;
+      if (parent instanceof GrReferenceExpression && ((GrReferenceExpression) parent).getDotTokenType() == GroovyElementTypes.mMEMBER_POINTER) return;
 
-      if (elementAt.getParent() instanceof GrAnnotationNameValuePair || elementAt.getParent().getParent() instanceof GrAnnotationNameValuePair) {
+      if (parent instanceof GrAnnotationNameValuePair || parent.getParent() instanceof GrAnnotationNameValuePair) {
         document.insertString(offset, " = ");
         caretModel.moveToOffset(offset + 3);
         return;
