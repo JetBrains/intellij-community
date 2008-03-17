@@ -64,7 +64,7 @@ public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisito
 
 
   protected void registerVariableError(GrVariable variable) {
-    final PsiElement nameIdentifier = variable.getFirstChild();
+    final PsiElement nameIdentifier = variable.getNameIdentifierGroovy();
     registerError(nameIdentifier);
   }
 
