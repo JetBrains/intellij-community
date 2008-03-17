@@ -43,6 +43,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrAndExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrExclusiveOrExpressionImpl;
@@ -62,6 +65,7 @@ import java.util.List;
  */
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil");
+  private static final String MAIN_METHOD = "main";
 
   public static GrExpression replaceExpression(GrExpression oldExpr,
                                                GrExpression newExpr,
@@ -348,5 +352,11 @@ public class PsiImplUtil {
     if (parentNode != null && next != null && GroovyTokenTypes.mNLS == next.getElementType()) {
       parentNode.removeChild(next);
     }
+  }
+
+  public static boolean isMainMethod(GrMethod method) {
+    return method.getName().equals(MAIN_METHOD) &&
+        method.getParent() instanceof GrTypeDefinitionBody &&
+        method.hasModifierProperty(PsiModifier.STATIC);
   }
 }

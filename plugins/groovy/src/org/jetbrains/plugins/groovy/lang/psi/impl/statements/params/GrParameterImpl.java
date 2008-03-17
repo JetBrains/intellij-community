@@ -27,12 +27,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
@@ -107,9 +110,29 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
     PsiType type = super.getType();
     if (isVarArgs()) {
       return new PsiEllipsisType(type);
+    } else if (isMainMethodFirstUntypedParameter()) {
+      PsiManagerEx manager = getManager();
+      PsiClassType stringType = manager.getElementFactory().createTypeByFQClassName("java.lang.String", getResolveScope());
+      return stringType.createArrayType();
     } else {
       return type;
     }
+  }
+
+  private boolean isMainMethodFirstUntypedParameter() {
+    if (getTypeElementGroovy() != null) return false;
+
+    if (getParent() instanceof GrParameterList) {
+      GrParameterList parameterList = (GrParameterList) getParent();
+      GrParameter[] params = parameterList.getParameters();
+      if (params.length != 1 || this != params[0]) return false;
+
+      if (parameterList.getParent() instanceof GrMethod) {
+        GrMethod method = (GrMethod) parameterList.getParent();
+        return PsiImplUtil.isMainMethod(method);
+      }
+    }
+    return false;
   }
 
   public void setType(@Nullable PsiType type) {
