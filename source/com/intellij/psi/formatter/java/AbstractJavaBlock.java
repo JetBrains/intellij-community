@@ -856,6 +856,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       } else if (role == ChildRole.WHILE_KEYWORD) {
         return Wrap.createWrap(WrapType.NORMAL, true);
       }
+    } else if (nodeType == JavaElementType.ANNOTATION_ARRAY_INITIALIZER) {
+      if (role == ChildRole.ANNOTATION_VALUE) {
+        return Wrap.createWrap(WrapType.NORMAL, true);
+      }
     }
 
     return defaultWrap;
