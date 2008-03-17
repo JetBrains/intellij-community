@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2007 Bas Leijdekkers
+ * Copyright 2005-2008 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,12 @@ class StaticImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
             return;
         }
         for (PsiImportStaticStatement importStatement : importStatements) {
-            final String referenceName = importStatement.getReferenceName();
+            final PsiJavaCodeReferenceElement importReference =
+                    importStatement.getImportReference();
+            if (importReference == null) {
+                continue;
+            }
+            final String referenceName = importReference.getText();
             final PsiClass targetClass =
                     importStatement.resolveTargetClass();
             if (referenceName == null) {
