@@ -1,12 +1,11 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 
 import java.util.*;
 
@@ -23,9 +22,9 @@ public class DClassElement implements DNamedElement {
   public DClassElement() {
   }
 
-  public DClassElement(Module module, String name, boolean addToTree) {
+  public DClassElement(Project project, String name, boolean addToTree) {
+    myProject = project;
     myName = name;
-    myProject = module.getProject();
 
     if (addToTree) {
       DynamicManager.getInstance(myProject).getRootElement().mergeAddClass(this);
@@ -34,7 +33,6 @@ public class DClassElement implements DNamedElement {
 
   protected void addMethod(DMethodElement methodElement) {
     myMethods.add(methodElement);
-//    DynamicManager.getInstance(myProject).
   }
 
   protected void addMethods(Collection<DMethodElement> methods) {

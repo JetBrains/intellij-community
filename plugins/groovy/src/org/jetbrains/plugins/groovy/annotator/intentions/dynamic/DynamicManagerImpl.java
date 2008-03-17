@@ -8,22 +8,26 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitMethodImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitPropertyImpl;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
@@ -47,6 +51,12 @@ public class DynamicManagerImpl extends DynamicManager {
   private final Project myProject;
   private List<DynamicChangeListener> myListeners = new ArrayList<DynamicChangeListener>();
   private DRootElement myRootElement = new DRootElement();
+
+  //Pair: Pair<ClassName, Pair<MethodName, argumentsTypes>>
+  private final Map<Pair<String, Pair<String, Pair<String, String[]>>>, GrDynamicImplicitMethodImpl> myNamesToMethodsMap = new HashMap<Pair<String, Pair<String, Pair<String, String[]>>>, GrDynamicImplicitMethodImpl>();
+
+  //Pair: Pair<ClassName, Pair<PropretyName, Type>>
+  private final Map<Pair<String, Pair<String, String>>, GrDynamicImplicitPropertyImpl> myNamesToPropertiesMap = new HashMap<Pair<String, Pair<String, String>>, GrDynamicImplicitPropertyImpl>();
 
   public DynamicManagerImpl(Project project) {
     myProject = project;
@@ -144,7 +154,7 @@ public class DynamicManagerImpl extends DynamicManager {
 
     classElement.removeProperty(propertyElement.getName());
   }
-  
+
   @NotNull
   public Collection<DPropertyElement> findDynamicPropertiesOfClass(String className) {
     final DClassElement classElement = findClassElement(getRootElement(), className);
@@ -289,10 +299,10 @@ public class DynamicManagerImpl extends DynamicManager {
   }
 
   @NotNull
-  public DClassElement getOrCreateClassElement(Module module, String className, boolean binded) {
+  public DClassElement getOrCreateClassElement(Project project, String className, boolean binded) {
     DClassElement classElement = DynamicManager.getInstance(myProject).getRootElement().getClassElement(className);
     if (classElement == null) {
-      return new DClassElement(module, className, binded);
+      return new DClassElement(project, className, binded);
     }
 
     return classElement;
@@ -314,6 +324,48 @@ public class DynamicManagerImpl extends DynamicManager {
     }
   }
 
+  public GrDynamicImplicitMethodImpl getCashedOrCreateMethod(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName, List<MyPair> pairs, PsiFile containingFile) {
+    final String[] paramTypes = QuickfixUtil.getArgumentsTypes(pairs);
+    final Pair<String, String[]> typeAndPairs = new Pair<String, String[]>(type, paramTypes);
+
+    final Pair<String, Pair<String, String[]>> methodPair = new Pair<String, Pair<String, String[]>>(name, typeAndPairs);
+    final Pair<String, Pair<String, Pair<String, String[]>>> pair = new Pair<String, Pair<String, Pair<String, String[]>>>(containingClassName, methodPair);
+
+    final GrDynamicImplicitMethodImpl implicitMethod = myNamesToMethodsMap.get(pair);
+
+    if (implicitMethod != null) return implicitMethod;
+
+    final GrDynamicImplicitMethodImpl newMethod = new GrDynamicImplicitMethodImpl(manager, name, type, containingClassName, pairs, containingFile);
+    myNamesToMethodsMap.put(pair, newMethod);
+
+    return newMethod;
+  }
+
+  public GrDynamicImplicitPropertyImpl getCashedOrCreateProperty(PsiManager manager, String name, String type, String containingClassName, PsiFile containingFile) {
+    final Pair<String, String> property = new Pair<String, String>(name, type);
+    final Pair<String, Pair<String, String>> pair = new Pair<String, Pair<String, String>>(containingClassName, property);
+    final GrDynamicImplicitPropertyImpl implicitProperty = myNamesToPropertiesMap.get(pair);
+
+    if (implicitProperty != null) return implicitProperty;
+
+    final GrDynamicImplicitPropertyImpl newPropery = new GrDynamicImplicitPropertyImpl(manager, name, type, containingClassName, containingFile);
+    myNamesToPropertiesMap.put(pair, newPropery);
+
+    return newPropery;
+  }
+
+  public String[] getMethodsNamesOfClass(String qualifiedName) {
+    final DClassElement classElement = getOrCreateClassElement(myProject, qualifiedName, false);
+    final Set<DMethodElement> methods = classElement.getMethods();
+
+    List<String> result = new ArrayList<String>();
+    for (DMethodElement method : methods) {
+      result.add(method.getName());
+    }
+
+    return result.toArray(new String[result.size()]);
+  }
+
   public String replaceClassName(String oldClassName, String newClassName) {
     final DRootElement rootElement = getRootElement();
     final DClassElement oldClassElement = findClassElement(rootElement, oldClassName);
@@ -332,7 +384,7 @@ public class DynamicManagerImpl extends DynamicManager {
     }
 
     fireChangeCodeAnalyze();
-    fireChangeToolWindow();
+//    fireChangeToolWindow();
   }
 
   private void fireChangeToolWindow() {

@@ -17,29 +17,30 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-
-import javax.swing.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
  */
 public abstract class GrDynamicImplicitElement extends GrImplicitVariableImpl implements GrImplicitVariable, ItemPresentation, NavigationItem {
-  public GrDynamicImplicitElement(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
-    super(manager, nameIdentifier, type, writable, scope);
-  }
+  private String myContainingClassName;
+  private final PsiFile myContainingFile;
+  public final Project myProject;
 
-  public GrDynamicImplicitElement(PsiManager manager, @NonNls String name, @NonNls String type, PsiElement referenceExpression) {
-    super(manager, name, type, referenceExpression);
+  public GrDynamicImplicitElement(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName, PsiFile containingFile) {
+    super(manager, name, type, null);
+    myContainingClassName = containingClassName;
+    myContainingFile = containingFile;
+    myProject = myManager.getProject();
   }
 
   public ItemPresentation getPresentation() {
@@ -60,31 +61,23 @@ public abstract class GrDynamicImplicitElement extends GrImplicitVariableImpl im
     return null;
   }
 
-  public PsiClass getContextElement() {
-    if (myScope == null) return null;
-    if (myScope instanceof GroovyScriptClass) return ((GroovyScriptClass) myScope);
+  @Nullable
+  public PsiClass getContainingPsiClassElement() {
+    final PsiClassType containingClassType = myManager.getElementFactory().createTypeByFQClassName(myContainingClassName, myManager.getProject().getAllScope());
 
-    if (myScope instanceof GrReferenceExpression) {
-      final PsiType type = ((GrReferenceExpression) myScope).getType();
-
-      if (!(type instanceof PsiClassType)) return null;
-
-      return ((PsiClassType) type).resolve();
-    }
-
-    if (myScope instanceof GrMethodCallExpression) {
-      final PsiType type = ((GrMethodCallExpression) myScope).getType();
-
-      if (!(type instanceof PsiClassType)) return null;
-
-      return ((PsiClassType) type).resolve();
-    }
-
-    return null;
+    return containingClassType.resolve();
   }
 
   @NotNull
   public SearchScope getUseScope() {
-    return myScope.getProject().getProjectScope();
+    return myManager.getProject().getProjectScope();
+  }
+
+  public PsiFile getContainingFile() {
+    return myContainingFile;
+  }
+
+  public String getContainingClassName() {
+    return myContainingClassName;
   }
 }

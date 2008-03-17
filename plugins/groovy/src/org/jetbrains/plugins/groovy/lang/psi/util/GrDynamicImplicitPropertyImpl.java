@@ -15,24 +15,22 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.ui.treetable.TreeTable;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -42,12 +40,8 @@ import javax.swing.tree.TreePath;
  * @author ilyas
  */
 public class GrDynamicImplicitPropertyImpl extends GrDynamicImplicitElement {
-  public GrDynamicImplicitPropertyImpl(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
-    super(manager, nameIdentifier, type, writable, scope);
-  }
-
-  public GrDynamicImplicitPropertyImpl(PsiManager manager, @NonNls String name, @NonNls String type, PsiElement referenceExpression) {
-    super(manager, name, type, referenceExpression);
+  public GrDynamicImplicitPropertyImpl(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName, PsiFile containingFileName) {
+    super(manager, name, type, containingClassName, containingFileName);
   }
 
   public void navigate(boolean requestFocus) {
@@ -64,21 +58,16 @@ public class GrDynamicImplicitPropertyImpl extends GrDynamicImplicitElement {
         if (root == null || !(root instanceof DefaultMutableTreeNode)) return;
 
         DefaultMutableTreeNode treeRoot = ((DefaultMutableTreeNode) root);
-        if (!(myScope instanceof GrReferenceExpression)) return;
-
-        final GrReferenceExpression refExpression = (GrReferenceExpression) myScope;
-        final PsiClass psiClass = QuickfixUtil.findTargetClass(refExpression);
-        final Module module = QuickfixUtil.getModuleByPsiFile(myScope.getContainingFile());
-
+        final PsiClass psiClass = getContainingPsiClassElement();
         if (psiClass == null) return;
 
         final DefaultMutableTreeNode desiredNode;
         DPropertyElement dynamicProperty = null;
         PsiClass trueSuper = null;
         for (PsiClass aSuper : PsiUtil.iterateSupers(psiClass, true)) {
-          dynamicProperty = DynamicManager.getInstance(myProject).findConcreteDynamicProperty(aSuper.getQualifiedName(), ((GrReferenceExpression) myScope).getName());
+          dynamicProperty = DynamicManager.getInstance(myProject).findConcreteDynamicProperty(aSuper.getQualifiedName(), getName());
 
-          if(dynamicProperty != null) {
+          if (dynamicProperty != null) {
             trueSuper = aSuper;
             break;
           }
@@ -86,7 +75,7 @@ public class GrDynamicImplicitPropertyImpl extends GrDynamicImplicitElement {
 
         if (trueSuper == null) return;
 
-        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DClassElement(module, trueSuper.getQualifiedName(), false));
+        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DClassElement(myProject, trueSuper.getQualifiedName(), false));
         if (classNode == null) return;
 
         desiredNode = TreeUtil.findNodeWithObject(classNode, dynamicProperty);
@@ -120,13 +109,21 @@ public class GrDynamicImplicitPropertyImpl extends GrDynamicImplicitElement {
   public boolean isPhysical() {
     return true;
   }
-  
+
   @Nullable
   public Icon getIcon(boolean open) {
     return GroovyIcons.PROPERTY;
   }
 
-  public PsiFile getContainingFile() {
-    return myScope.getContainingFile();
+
+  public boolean isValid() {
+    final GrDynamicImplicitPropertyImpl property = DynamicManager.getInstance(myProject).getCashedOrCreateProperty(
+        myManager,
+        getName(),
+        getType().getCanonicalText(),
+        getContainingClassName(),
+        getContainingFile());
+
+    return property == this;
   }
 }

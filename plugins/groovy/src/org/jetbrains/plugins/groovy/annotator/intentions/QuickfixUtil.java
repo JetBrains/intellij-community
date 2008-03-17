@@ -71,10 +71,10 @@ public class QuickfixUtil {
   public static String[] getMethodArgumentsTypes(GrCallExpression methodCall) {
     final GrExpression[] argumentList = methodCall.getExpressionArguments();
     List<String> types = new ArrayList<String>();
-    if (argumentList != null) {
+    if (argumentList != null && argumentList.length != 0) {
       for (GrExpression expression : argumentList) {
         final PsiType type = expression.getType();
-        if (type == null) {          
+        if (type == null) {
           types.add(null);
           continue;
         }
@@ -88,7 +88,7 @@ public class QuickfixUtil {
   public static String[] getMethodArgumentsNames(GrCallExpression methodCall) {
     final GrExpression[] argumentList = methodCall.getExpressionArguments();
     List<String> names = new ArrayList<String>();
-    if (argumentList != null) {
+    if (argumentList != null && argumentList.length != 0) {
       for (GrExpression expression : argumentList) {
         names.add(expression.getText());
       }
@@ -141,7 +141,7 @@ public class QuickfixUtil {
     return typeText;
   }
 
-  public static Module getModuleByPsiFile(PsiFile containingFile){
+  public static Module getModuleByPsiFile(PsiFile containingFile) {
     VirtualFile file;
     if (containingFile != null) {
       file = containingFile.getVirtualFile();
@@ -151,5 +151,5 @@ public class QuickfixUtil {
     return ProjectRootManager.getInstance(containingFile.getProject()).getFileIndex().getModuleForFile(file);
   }
 
-   
+
 }

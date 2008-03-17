@@ -92,11 +92,11 @@ public class DynamicToolWindowWrapper {
     window.setTitle(GroovyBundle.message("toolwindow.dynamic.properties"));
     window.setToHideOnEmptyContent(true);
 
-    DynamicManager.getInstance(project).addDynamicChangeListener(new DynamicChangeListener() {
-      public void dynamicPropertyChange() {
-        rebuildTreePanel(project);
-      }
-    });
+//    DynamicManager.getInstance(project).addDynamicChangeListener(new DynamicChangeListener() {
+//      public void dynamicPropertyChange() {
+//        rebuildTreePanel(project);
+//      }
+//    });
 
     buildBigPanel(project);
     window.getComponent().add(getContentPane(project));
@@ -266,7 +266,7 @@ public class DynamicToolWindowWrapper {
             }
 
             private void renameElement(PsiElement newElement, Project project, PsiElement element) {
-              final PsiClass psiClass = ((GrDynamicImplicitElement) element).getContextElement();
+              final PsiClass psiClass = ((GrDynamicImplicitElement) element).getContainingPsiClassElement();
               String typeText = psiClass.getQualifiedName();
 
               if (element instanceof GrDynamicImplicitPropertyImpl) {
@@ -359,7 +359,6 @@ public class DynamicToolWindowWrapper {
         //selectionPath is class
 
         final Object classRow = selectionPath.getLastPathComponent();
-
         if (!(classRow instanceof DefaultMutableTreeNode)) return;
 
         if (!removeClass(project, selectionPath, ((DefaultMutableTreeNode) classRow), isShowDialog, rowsCount)) return;
@@ -385,6 +384,7 @@ public class DynamicToolWindowWrapper {
         }
       }
     }
+    DynamicManager.getInstance(project).fireChange();
   }
 
   private static boolean removeClass(Project project, TreePath selectionPath, DefaultMutableTreeNode classNode, boolean isShowDialog, int rowsCount) {

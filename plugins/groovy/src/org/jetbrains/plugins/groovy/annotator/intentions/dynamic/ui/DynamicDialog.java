@@ -56,12 +56,10 @@ public abstract class DynamicDialog extends DialogWrapper {
   private final DItemElement myDynamicElement;
   private EventListenerList myListenerList = new EventListenerList();
   private final GrReferenceExpression myReferenceExpression;
-  private final Module myModule;
 
   public DynamicDialog(Module module, DItemElement virtualElement, GrReferenceExpression referenceExpression) {
     super(module.getProject(), true);
     myProject = module.getProject();
-    myModule = module;
 
     if (!isTableVisible()) {
       myTable.setVisible(false);
@@ -303,7 +301,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     }
 
     final DynamicManager dynamicManager = DynamicManager.getInstance(myProject);
-    final DClassElement classElement = dynamicManager.getOrCreateClassElement(myModule, getEnteredContaningClass().getContainingClass().getQualifiedName(), true);
+    final DClassElement classElement = dynamicManager.getOrCreateClassElement(myProject, getEnteredContaningClass().getContainingClass().getQualifiedName(), true);
 
     if (myDynamicElement instanceof DMethodElement) {
       dynamicManager.addMethod(classElement, ((DMethodElement) myDynamicElement));
@@ -311,7 +309,7 @@ public abstract class DynamicDialog extends DialogWrapper {
       dynamicManager.addProperty(classElement, ((DPropertyElement) myDynamicElement));
     }
 
-//    myDynamicManager.fireChange();
+    myDynamicManager.fireChange();
     super.doOKAction();
   }
 
