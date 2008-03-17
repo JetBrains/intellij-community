@@ -32,7 +32,7 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
       myNameStorage = new PersistentStringEnumerator(new File(PathManager.getSystemPath() + "/rep.names"));
     }
     catch (IOException e) {
-      throw new RuntimeException();
+      throw new RuntimeException(e);
     }
 
     registerSerializer(PsiFileStub.class, new StubSerializer<PsiFileStub>() {
