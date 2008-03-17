@@ -85,6 +85,9 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
         return;
       }
       GrStatement thenBranch = statement.getThenBranch();
+      if (thenBranch == null) {
+        return;
+      }
       thenBranch = ControlFlowUtils.stripBraces(thenBranch);
       if (!(thenBranch instanceof GrSynchronizedStatement)) {
         return;
