@@ -42,10 +42,4 @@ public class GroovyEditorHighlighter extends LayeredLexerEditorHighlighter {
     registerLayer(GroovyDocElementTypes.GROOVY_DOC_COMMENT, groovyDocLayer);
   }
 
-  /*protected boolean updateLayers() {
-    unregisterLayer(GroovyDocElementTypes.GROOVY_DOC_COMMENT);
-    registerGroovydocHighlighter();
-    return super.updateLayers();
-  }*/
-
 }
