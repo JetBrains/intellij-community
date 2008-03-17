@@ -33,6 +33,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -114,10 +115,10 @@ public class PsiImplUtil {
 
   private static boolean isNotAssociative(GrBinaryExpression binaryExpression) {
     if (binaryExpression instanceof GrMultiplicativeExpressionImpl) {
-      return binaryExpression.getOperationTokenType() != GroovyTokenTypes.mSTAR;
+      return binaryExpression.getOperationTokenType() != mSTAR;
     }
     if (binaryExpression instanceof GrAdditiveExpressionImpl) {
-      return binaryExpression.getOperationTokenType() == GroovyTokenTypes.mMINUS;
+      return binaryExpression.getOperationTokenType() == mMINUS;
     }
     return binaryExpression instanceof GrEqualityExpressionImpl
         || binaryExpression instanceof GrRegexExpressionImpl
@@ -179,6 +180,15 @@ public class PsiImplUtil {
     final PsiElement parent = varDecl.getParent();
     final ASTNode owner = parent.getNode();
     if (variables.size() == 1 && owner != null) {
+      PsiElement next = varDecl.getNextSibling();
+
+      // remove redundant semicolons
+      while (next != null && next.getNode() != null && next.getNode().getElementType() == mSEMI){
+        PsiElement tmpNext = next.getNextSibling();
+        owner.removeChild(next.getNode());
+        next = tmpNext;
+      }
+
       removeNewLineAfter(varDecl);
       owner.removeChild(varDeclNode);
       PsiUtil.reformatCode(parent);
@@ -333,13 +343,13 @@ public class PsiImplUtil {
     PsiElement nameElement = namedElement.getNameIdentifierGroovy();
     ASTNode node = nameElement.getNode();
     LOG.assertTrue(node != null);
-    if (node.getElementType() == GroovyTokenTypes.mIDENT) return nameElement.getText();
+    if (node.getElementType() == mIDENT) return nameElement.getText();
     else {
-      if (node.getElementType() == GroovyTokenTypes.mSTRING_LITERAL) {
+      if (node.getElementType() == mSTRING_LITERAL) {
         String text = nameElement.getText();
         return text.endsWith("'") ? text.substring(1, text.length() - 1) : text.substring(1);
       } else {
-        LOG.assertTrue(node.getElementType() == GroovyTokenTypes.mGSTRING_LITERAL);
+        LOG.assertTrue(node.getElementType() == mGSTRING_LITERAL);
         String text = nameElement.getText();
         return text.endsWith("\"") ? text.substring(1, text.length() - 1) : text.substring(1);
       }
@@ -349,7 +359,7 @@ public class PsiImplUtil {
   public static void removeNewLineAfter(@NotNull GrStatement statement) {
     ASTNode parentNode = statement.getParent().getNode();
     ASTNode next = statement.getNode().getTreeNext();
-    if (parentNode != null && next != null && GroovyTokenTypes.mNLS == next.getElementType()) {
+    if (parentNode != null && next != null && mNLS == next.getElementType()) {
       parentNode.removeChild(next);
     }
   }
