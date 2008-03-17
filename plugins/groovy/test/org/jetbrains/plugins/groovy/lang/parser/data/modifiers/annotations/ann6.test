@@ -11,15 +11,16 @@ Groovy script
           PsiElement(identifier)('Retention')
         Annotation arguments
           PsiElement(()('(')
-          Annotation array initializer
-            PsiElement([)('[')
-            Annotation
-              PsiElement(@)('@')
-              Reference element
-                PsiElement(identifier)('EEE')
-              Annotation arguments
-                <empty list>
-            PsiElement(])(']')
+          Annotation member value pair
+            Annotation array initializer
+              PsiElement([)('[')
+              Annotation
+                PsiElement(@)('@')
+                Reference element
+                  PsiElement(identifier)('EEE')
+                Annotation arguments
+                  <empty list>
+              PsiElement(])(']')
           PsiElement())(')')
     PsiElement(new line)('\n')
     PsiElement(@)('@')

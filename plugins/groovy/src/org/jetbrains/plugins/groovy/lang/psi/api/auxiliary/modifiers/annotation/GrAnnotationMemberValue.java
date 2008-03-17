@@ -16,17 +16,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.annotations.Nullable;
-import com.intellij.psi.PsiNameValuePair;
-import com.intellij.psi.PsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 04.04.2007
  */
-public interface GrAnnotationNameValuePair extends GroovyPsiElement, PsiNameValuePair {
-  @Nullable
-  PsiElement getNameIdentifierGroovy();
-
-  GrAnnotationMemberValue getValue();
+public interface GrAnnotationMemberValue extends GroovyPsiElement, PsiAnnotationMemberValue {
 }

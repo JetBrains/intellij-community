@@ -40,16 +40,21 @@ public class AnnotationArguments implements GroovyElementTypes {
       return;
     }
 
-    final PsiBuilder.Marker marker = builder.mark();
-    if (!parseAnnotationMemberValueInitializer(builder)) {
-      marker.rollbackTo();
-
+    if (ParserUtils.lookAhead(builder, mIDENT, mASSIGN)) {
       if (!parseAnnotationMemberValuePairs(builder)) {
         annArgs.rollbackTo();
         return;
       }
-    } else marker.drop();
-
+    } else {
+      PsiBuilder.Marker pairMarker = builder.mark();
+      if (!parseAnnotationMemberValueInitializer(builder)) {
+        pairMarker.drop();
+        annArgs.rollbackTo();
+        return;
+      } else {
+        pairMarker.done(ANNOTATION_MEMBER_VALUE_PAIR);
+      }
+    }
 
     ParserUtils.getToken(builder, mNLS);
 
@@ -127,12 +132,11 @@ public class AnnotationArguments implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (parseAnnotationMemberValueInitializer(builder)) {
-      annmvp.done(ANNOTATION_MEMBER_VALUE_PAIR);
-      return true;
+    if (!parseAnnotationMemberValueInitializer(builder)) {
+      builder.error(GroovyBundle.message("annotation.member.value.initializer.expected"));
     }
 
-    annmvp.rollbackTo();
+    annmvp.done(ANNOTATION_MEMBER_VALUE_PAIR);
     return true;
   }
 }
