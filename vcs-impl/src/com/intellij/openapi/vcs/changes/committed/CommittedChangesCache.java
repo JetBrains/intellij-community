@@ -68,7 +68,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private final ProjectLevelVcsManager myVcsManager;
 
   public static final Change[] ALL_CHANGES = new Change[0];
-  private CommittedChangesCache.MyRefreshRunnable myRefresnRunnable;
+  private MyRefreshRunnable myRefresnRunnable;
 
   public static class State {
     private int myInitialCount = 500;
@@ -181,7 +181,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       private final LinkedHashSet<CommittedChangeList> myResult = new LinkedHashSet<CommittedChangeList>();
       private final List<VcsException> myExceptions = new ArrayList<VcsException>();
 
-      public void run(final ProgressIndicator indicator) {
+      public void run(@NotNull final ProgressIndicator indicator) {
         final VcsRoot[] vcsRoots = myVcsManager.getAllVcsRoots();
         for(VcsRoot root: vcsRoots) {
           try {
@@ -472,7 +472,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   public void loadIncomingChangesAsync(@Nullable final Consumer<List<CommittedChangeList>> consumer) {
     LOG.info("Loading incoming changes");
     final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("incoming.changes.loading.progress")) {
-      public void run(final ProgressIndicator indicator) {
+      public void run(@NotNull final ProgressIndicator indicator) {
         final Map<CommittedChangeList, Change[]> map = loadIncomingChanges();
         if (consumer != null) {
           consumer.consume(new ArrayList<CommittedChangeList>(map.keySet()));
@@ -497,7 +497,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     for(final ChangesCacheFile cache: caches) {
       myPendingUpdateCount++;
       final Task.Backgroundable task = new Task.Backgroundable(myProject, "Processing updated files") {
-        public void run(final ProgressIndicator indicator) {
+        public void run(@NotNull final ProgressIndicator indicator) {
           try {
             if (cache.isEmpty()) {
               pendingUpdateProcessed();
@@ -605,7 +605,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     LOG.info("Refreshing incoming changes in background");
     myRefreshingIncomingChanges = true;
     final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("incoming.changes.refresh.progress")) {
-      public void run(final ProgressIndicator indicator) {
+      public void run(@NotNull final ProgressIndicator indicator) {
         refreshIncomingChanges();
       }
 
@@ -665,7 +665,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       return;
     }
     final Task.Backgroundable task = new Task.Backgroundable(myProject, VcsBundle.message("committed.changes.refresh.progress")) {
-      public void run(final ProgressIndicator indicator) {
+      public void run(@NotNull final ProgressIndicator indicator) {
         try {
           final List<CommittedChangeList> list;
           if (initIfEmpty && cache.isEmpty()) {
