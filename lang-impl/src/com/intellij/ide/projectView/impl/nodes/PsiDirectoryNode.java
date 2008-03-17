@@ -47,6 +47,14 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
     final boolean isWritable = virtualFile.isWritable();
 
     data.setPresentableText(name);
+     if (ProjectRootsUtil.isModuleContentRoot(directoryFile, project) || ProjectRootsUtil.isLibraryRoot(directoryFile, project)) {
+      data.setLocationString(directoryFile.getPresentableUrl());
+    }
+    else {
+      if (!ProjectRootsUtil.isInTestSource(directoryFile, project)) {
+        data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory, false));
+      }
+    }
 
     for (final IconProvider provider : ApplicationManager.getApplication().getComponents(IconProvider.class)) {
       final Icon openIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_OPEN);
@@ -59,14 +67,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
         }
       }
     }
-    if (ProjectRootsUtil.isModuleContentRoot(directoryFile, project) || ProjectRootsUtil.isLibraryRoot(directoryFile, project)) {
-      data.setLocationString(directoryFile.getPresentableUrl());
-    }
-    else {
-      if (!ProjectRootsUtil.isInTestSource(directoryFile, project)) {
-        data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory, false));
-      }
-    }
+
   }
 
   public Collection<AbstractTreeNode> getChildrenImpl() {
