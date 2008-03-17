@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2008 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -37,10 +39,12 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
     public String buildErrorString(Object... infos) {
         final PsiType comparedType = (PsiType)infos[0];
         final PsiType comparisonType = (PsiType)infos[1];
+        final String comparedTypeText = comparedType.getPresentableText();
+        final String comparisonTypeText = comparisonType.getPresentableText();
         return InspectionGadgetsBundle.message(
                 "assertequals.between.inconvertible.types.problem.descriptor",
-                comparedType.getPresentableText(),
-                comparisonType.getPresentableText());
+                StringUtil.escapeXml(comparedTypeText),
+                StringUtil.escapeXml(comparisonTypeText));
     }
 
     public boolean isEnabledByDefault() {
@@ -78,8 +82,8 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
                     !ClassUtils.isSubclass(containingClass, "org.junit.Assert")) {
                 return;
             }
-            final PsiExpression expression1 = arguments[arguments.length - 1];
-            final PsiExpression expression2 = arguments[arguments.length - 2];
+            final PsiExpression expression1 = arguments[arguments.length - 2];
+            final PsiExpression expression2 = arguments[arguments.length - 1];
             final PsiType type1 = expression1.getType();
             if (type1 == null) {
                 return;
@@ -91,11 +95,25 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
             final PsiParameterList parameterList = method.getParameterList();
             final PsiParameter[] parameters = parameterList.getParameters();
             final PsiType parameterType1 =
-                    parameters[parameters.length - 1].getType();
-            final PsiType parameterType2 = 
                     parameters[parameters.length - 2].getType();
+            final PsiType parameterType2 = 
+                    parameters[parameters.length - 1].getType();
             if (!parameterType1.equals(parameterType2)) {
                 return;
+            }
+            final PsiManager manager =
+                    PsiManager.getInstance(expression.getProject());
+            final GlobalSearchScope scope = expression.getResolveScope();
+            if (type2 instanceof PsiPrimitiveType &&
+                    parameterType2.equals(PsiType.getJavaLangObject(manager,
+                            scope))) {
+                final PsiPrimitiveType primitiveType = (PsiPrimitiveType) type2;
+                final PsiClassType boxedType =
+                        primitiveType.getBoxedType(manager, scope);
+                if (boxedType != null &&
+                        TypeConversionUtil.areTypesConvertible(boxedType, type2)) {
+                    return;
+                }
             }
             if (TypeConversionUtil.areTypesConvertible(type1, type2)) {
                 return;
