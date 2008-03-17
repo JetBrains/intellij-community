@@ -31,5 +31,4 @@ public interface GrPackageDefinition extends UserDataHolderEx, Cloneable, Iconab
 
   GrCodeReferenceElement getPackageReference();
 
-  void replacePackageReference(GrReferenceElement newPackageReference);
 }

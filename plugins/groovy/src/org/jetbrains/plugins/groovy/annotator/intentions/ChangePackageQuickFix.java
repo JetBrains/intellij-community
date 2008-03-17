@@ -1,16 +1,14 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -19,11 +17,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
  public class ChangePackageQuickFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.intentions.ChangePackageQuickFix");
 
-  private final GrPackageDefinition myPackageDefinition;
+  private final GroovyFile myFile;
   private final String myNewPackageName;
 
-  public ChangePackageQuickFix(GrPackageDefinition packageDefinition, String newPackageName) {
-    myPackageDefinition = packageDefinition;
+  public ChangePackageQuickFix(GroovyFile file, String newPackageName) {
+    myFile = file;
     myNewPackageName = newPackageName;
   }
 
@@ -38,12 +36,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myPackageDefinition.getContainingFile().isValid() && myPackageDefinition.getManager().isInProject(file);
+    return myFile.isValid() && myFile.getManager().isInProject(file);
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
-    final GrReferenceElement newPackageReference = GroovyPsiElementFactory.getInstance(myPackageDefinition.getProject()).createPackegeReferenceElementFromText(myNewPackageName);
-    myPackageDefinition.replacePackageReference(newPackageReference);
+    myFile.setPackageName(myNewPackageName);
   }
 
   public boolean startInWriteAction() {

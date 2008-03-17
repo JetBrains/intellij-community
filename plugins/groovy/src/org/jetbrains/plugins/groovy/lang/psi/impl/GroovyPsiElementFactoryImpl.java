@@ -275,7 +275,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
     return (GrVariableDeclaration) body.getMemberDeclarations()[0];
   }
 
-  public GrReferenceElement createPackegeReferenceElementFromText(String newPackageName) {
+  public GrReferenceElement createPackageReferenceElementFromText(String newPackageName) {
     return ((GrPackageDefinition) createDummyFile("package " + newPackageName).getTopStatements()[0]).getPackageReference();
   }
 

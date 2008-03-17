@@ -113,7 +113,7 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract GrVariableDeclaration createSimpleVariableDeclaration(String name, String typeText);
 
-  public abstract GrReferenceElement createPackegeReferenceElementFromText(String newPackageName);
+  public abstract GrReferenceElement createPackageReferenceElementFromText(String newPackageName);
 
   public abstract PsiElement createDotToken(String newDot);
 

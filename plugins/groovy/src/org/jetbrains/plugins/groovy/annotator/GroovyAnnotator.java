@@ -198,7 +198,7 @@ public class GroovyAnnotator implements Annotator {
 
     if (!packageDefinition.getPackageName().equals(packageName)) {
       final Annotation annotation = holder.createWarningAnnotation(packageDefinition, "wrong package name");
-      annotation.registerFix(new ChangePackageQuickFix(packageDefinition, packageName));
+      annotation.registerFix(new ChangePackageQuickFix((GroovyFile)packageDefinition.getContainingFile(), packageName));
     }
   }
 

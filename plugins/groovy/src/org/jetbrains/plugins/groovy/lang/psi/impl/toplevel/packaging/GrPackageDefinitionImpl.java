@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -50,10 +49,5 @@ public class GrPackageDefinitionImpl extends GroovyPsiElementImpl implements GrP
 
   public GrCodeReferenceElement getPackageReference() {
     return (GrCodeReferenceElement) findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
-  }
-
-  public void replacePackageReference(final GrReferenceElement newPackageReference) {
-    final GrReferenceElement ref = getPackageReference();
-    getNode().replaceChild(ref.getNode(), newPackageReference.getNode());
   }
 }
