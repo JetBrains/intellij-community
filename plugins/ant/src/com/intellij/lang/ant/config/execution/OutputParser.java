@@ -7,6 +7,7 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -20,7 +21,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OutputParser implements BuildProgressWindow.BackgroundListener {
+public class OutputParser{
 
   @NonNls private static final String JAVAC = "javac";
   @NonNls private static final String ECHO = "echo";
@@ -28,7 +29,7 @@ public class OutputParser implements BuildProgressWindow.BackgroundListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.OutputParser");
   private final Project myProject;
   private final AntBuildMessageView myMessageView;
-  private final WeakReference<BuildProgressWindow> myProgress;
+  private final WeakReference<ProgressIndicator> myProgress;
   private final String myBuildName;
   private final OSProcessHandler myProcessHandler;
   private boolean isStopped;
@@ -40,22 +41,14 @@ public class OutputParser implements BuildProgressWindow.BackgroundListener {
   public OutputParser(Project project,
                       OSProcessHandler processHandler,
                       AntBuildMessageView errorsView,
-                      BuildProgressWindow progress,
+                      ProgressIndicator progress,
                       String buildName) {
     myProject = project;
     myProcessHandler = processHandler;
     myMessageView = errorsView;
-    myProgress = new WeakReference<BuildProgressWindow>(progress);
+    myProgress = new WeakReference<ProgressIndicator>(progress);
     myBuildName = buildName;
     myMessageView.setParsingThread(this);
-    if (progress != null) {
-      progress.setBackgroundListener(this);
-    }
-  }
-
-  public final void gotoBackground(String progressText, String progressStatistics) {
-    setProgressText(progressText);
-    setProgressStatistics(progressStatistics);
   }
 
   public final void stopProcess() {
@@ -83,22 +76,16 @@ public class OutputParser implements BuildProgressWindow.BackgroundListener {
   }
 
   private void setProgressStatistics(String s) {
-    final BuildProgressWindow progress = getProgress();
+    final ProgressIndicator progress = myProgress.get();
     if (progress != null) {
-      progress.setStatistics(s);
-    }
-    if (progress == null || progress.isSentToBackground()) {
-      myMessageView.setProgressStatistics(s);
+      progress.setText2(s);
     }
   }
 
   private void setProgressText(String s) {
-    final BuildProgressWindow progress = getProgress();
+    final ProgressIndicator progress = myProgress.get();
     if (progress != null) {
       progress.setText(s);
-    }
-    if (progress == null || progress.isSentToBackground()) {
-      myMessageView.setProgressText(s);
     }
   }
 
@@ -298,7 +285,4 @@ public class OutputParser implements BuildProgressWindow.BackgroundListener {
     return AntBuildMessageView.MessageType.MESSAGE;
   }
 
-  private BuildProgressWindow getProgress() {
-    return myProgress.get();
-  }
 }

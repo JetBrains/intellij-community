@@ -6,6 +6,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.rt.ant.execution.IdeaAntLogger2;
@@ -20,7 +21,7 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
   private OutputParser2(Project project,
                         OSProcessHandler processHandler,
                         AntBuildMessageView errorsView,
-                        BuildProgressWindow progress,
+                        ProgressIndicator progress,
                         String buildName) {
     super(project, processHandler, errorsView, progress, buildName);
   }
@@ -67,7 +68,7 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
   public static OutputParser attachParser(final Project myProject,
                                           JUnitProcessHandler handler,
                                           final AntBuildMessageView errorView,
-                                          final BuildProgressWindow progress,
+                                          final ProgressIndicator progress,
                                           final AntBuildFile buildFile) {
     OutputParser2 parser = new OutputParser2(myProject, handler, errorView, progress, buildFile.getName());
     DeferedActionsQueue queue = new DeferedActionsQueueImpl();

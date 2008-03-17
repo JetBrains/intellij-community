@@ -20,16 +20,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -52,12 +54,10 @@ public final class ExecutionHandler {
     FileDocumentManager.getInstance().saveAllDocuments();
     LOG.assertTrue(antBuildListener != null);
     final AntCommandLineBuilder builder = new AntCommandLineBuilder();
-    final BuildProgressWindow progress;
     final AntBuildMessageView messageView;
     final GeneralCommandLine commandLine;
     synchronized (builder) {
       Project project = buildFile.getProject();
-      progress = !buildFile.isRunInBackground() ? new BuildProgressWindow(project) : null;
 
       try {
         builder.setBuildFile(buildFile.getAllOptions(), VfsUtil.virtualToIoFile(buildFile.getVirtualFile()));
@@ -66,7 +66,6 @@ public final class ExecutionHandler {
         messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets);
         commandLine = CommandLineBuilder.createFromJavaParameters(builder.getCommandLine());
         messageView.setBuildCommandLine(commandLine.getCommandLineString());
-        if (progress != null) progress.start();
       }
       catch (RunCanceledException e) {
         e.showMessage(project, AntBundle.message("run.ant.erorr.dialog.title"));
@@ -89,22 +88,27 @@ public final class ExecutionHandler {
       }
     }
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        synchronized (builder) {
-          try {
-            runBuild(progress, messageView, buildFile, antBuildListener, commandLine);
-          }
-          catch (Throwable e) {
-            LOG.error(e);
-            antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
-          }
+    final boolean startInBackground = buildFile.isRunInBackground();
+    
+    new Task.Backgroundable(null, AntBundle.message("ant.build.progress.dialog.title"), true) {
+
+      public boolean shouldStartInBackground() {
+        return startInBackground;
+      }
+
+      public void run(@NotNull final ProgressIndicator indicator) {
+        try {
+          runBuild(indicator, messageView, buildFile, antBuildListener, commandLine);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+          antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
         }
       }
-    });
+    }.queue();
   }
 
-  private static void runBuild(final BuildProgressWindow progress,
+  private static void runBuild(final ProgressIndicator progress,
                                final AntBuildMessageView errorView,
                                final AntBuildFile buildFile,
                                final AntBuildListener antBuildListener,
@@ -114,15 +118,6 @@ public final class ExecutionHandler {
     LOG.assertTrue(commandLine != null);
     LOG.assertTrue(buildFile != null);
     final Project project = buildFile.getProject();
-    final File[] workingDirectory = new File[1];
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        VirtualFile vFile = buildFile.getVirtualFile();
-        if (vFile == null || !vFile.isValid()) return;
-        VirtualFile vDir = vFile.getParent();
-        workingDirectory[0] = VfsUtil.virtualToIoFile(vDir);
-      }
-    });
 
     final long startTime = new Date().getTime();
     JUnitProcessHandler handler;
@@ -140,10 +135,10 @@ public final class ExecutionHandler {
     }
 
     processRunningAnt(progress, handler, errorView, buildFile, startTime, antBuildListener);
-
+    handler.waitFor();
   }
 
-  private static void processRunningAnt(final BuildProgressWindow progress,
+  private static void processRunningAnt(final ProgressIndicator progress,
                                         JUnitProcessHandler handler,
                                         final AntBuildMessageView errorView,
                                         final AntBuildFile buildFile,
@@ -152,18 +147,15 @@ public final class ExecutionHandler {
     final Project project = buildFile.getProject();
     WindowManager.getInstance().getStatusBar(project).setInfo(AntBundle.message("ant.build.started.status.message"));
 
-    final CheckCancelThread checkThread = new CheckCancelThread(progress, handler);
-    checkThread.start(0);
+    final CheckCancelTask checkCancelTask = new CheckCancelTask(progress, handler);
+    checkCancelTask.start(0);
 
     final OutputParser parser = OutputParser2.attachParser(project, handler, errorView, progress, buildFile);
 
     handler.addProcessListener(new ProcessAdapter() {
       public void processTerminated(ProcessEvent event) {
-        checkThread.cancel();
+        checkCancelTask.cancel();
         parser.setStopped(true);
-        if (progress != null) {
-          progress.stop();
-        }
         errorView.stopScrollerThread();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
@@ -183,13 +175,13 @@ public final class ExecutionHandler {
     errorView.startScrollerThread();
   }
 
-  static final class CheckCancelThread implements Runnable {
-    private final BuildProgressWindow myProgressWindow;
+  static final class CheckCancelTask implements Runnable {
+    private final ProgressIndicator myProgressIndicator;
     private final OSProcessHandler myProcessHandler;
-    private boolean myCanceled;
+    private volatile boolean myCanceled;
 
-    public CheckCancelThread(BuildProgressWindow progressWindow, OSProcessHandler process) {
-      myProgressWindow = progressWindow;
+    public CheckCancelTask(ProgressIndicator progressIndicator, OSProcessHandler process) {
+      myProgressIndicator = progressIndicator;
       myProcessHandler = process;
     }
 
@@ -198,12 +190,15 @@ public final class ExecutionHandler {
     }
 
     public void run() {
-      if (myCanceled) return;
-      if (myProgressWindow != null && myProgressWindow.isCanceled()) {
-        myProcessHandler.destroyProcess();
-        return;
+      if (!myCanceled) {
+        try {
+          myProgressIndicator.checkCanceled();
+          start(50);
+        }
+        catch (ProcessCanceledException e) {
+          myProcessHandler.destroyProcess();
+        }
       }
-      start(50);
     }
 
     public void start(final long delay) {
@@ -221,7 +216,9 @@ public final class ExecutionHandler {
     }
     else {
       messageView = AntBuildMessageView.openBuildMessageView(buildFile.getProject(), buildFile, targets);
-      if (messageView == null) throw new RunCanceledException(AntBundle.message("canceled.by.user.error.message"));
+      if (messageView == null) {
+        throw new RunCanceledException(AntBundle.message("canceled.by.user.error.message"));
+      }
     }
     return messageView;
   }
