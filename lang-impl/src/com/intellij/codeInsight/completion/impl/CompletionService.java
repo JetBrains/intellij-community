@@ -11,11 +11,12 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.*;
+import com.intellij.util.PairProcessor;
+import com.intellij.util.ProcessingContext;
+import com.intellij.util.AsyncConsumer;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
 
 /**
  * @author peter
@@ -46,26 +47,52 @@ public class CompletionService implements CompletionRegistrar{
     return true;
   }
 
-  public PrioritizedQueryFactory<LookupElement, CompletionParameters> getQueryFactory(CompletionType type, final CompletionParameters queryParameters) {
+  public void performAsyncCompletion(CompletionType type, final CompletionParameters queryParameters, AsyncConsumer<LookupElement> consumer) {
     final CompletionContext context = queryParameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
     final PrefixMatcher matcher = new CamelHumpMatcher(CompletionData.findPrefixStatic(queryParameters.getPosition(), context.getStartOffset()));
 
-    final ArrayList<PrioritizedQueryExecutor<LookupElement, CompletionParameters>> list = new ArrayList<PrioritizedQueryExecutor<LookupElement, CompletionParameters>>();
+    final Stack<AsyncConsumer<LookupElement>> stack = new Stack<AsyncConsumer<LookupElement>>();
+    stack.push(consumer);
     executeForMatchingProviders(type, queryParameters, new PairProcessor<ProcessingContext, CompletionPlaceImpl<LookupElement, CompletionParameters>>() {
       public boolean process(final ProcessingContext processingContext, final CompletionPlaceImpl<LookupElement, CompletionParameters> place) {
-        list.add(new PrioritizedQueryExecutor<LookupElement, CompletionParameters>() {
-          public void execute(final CompletionParameters parameters, final QueryResultSet<LookupElement> resultSet) {
-            place.myProvider.addCompletions(parameters, processingContext, new CompletionResultSetImpl(matcher, resultSet, context));
+        final Ref<Boolean> toContinue = Ref.create(true);
+        final AsyncConsumer<LookupElement> consumer = stack.peek();
+        place.myProvider.addCompletions(queryParameters, processingContext, new CompletionResultSet<LookupElement>(matcher) {
+          public void addElement(@NotNull final LookupElement lookupElement) {
+            if (lookupElement.getUserData(CompletionUtil.PREFIX_MATCHER) == null) {
+              final PrefixMatcher matcher = getPrefixMatcher();
+              if (!matcher.prefixMatches(lookupElement)) return;
+
+              lookupElement.putUserData(CompletionUtil.PREFIX_MATCHER, matcher);
+            }
+            consumer.consume(lookupElement);
           }
 
-          public String toString() {
-            return place.myId != null ? place.myId : place.myProvider.toString();
+          public void setSuccessorFilter(final AsyncConsumer<LookupElement> consumer) {
+            stack.push(consumer);
+          }
+
+          public void stopHere() {
+            toContinue.set(false);
+          }
+
+          public void setPrefixMatcher(@NotNull final PrefixMatcher prefixMatcher) {
+            super.setPrefixMatcher(prefixMatcher);
+            context.setPrefix(prefixMatcher.getPrefix());
+          }
+
+
+          public void setPrefixMatcher(@NotNull final String prefix) {
+            setPrefixMatcher(new CamelHumpMatcher(prefix));
           }
         });
-        return true;
+
+        return toContinue.get();
       }
     });
-    return new PrioritizedQueryFactory<LookupElement, CompletionParameters>(list);
+    while (!stack.isEmpty()) {
+      stack.pop().finished();
+    }
   }
 
   public String getAdvertisementText(CompletionType type, final CompletionParameters queryParameters) {

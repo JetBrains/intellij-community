@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CompletionUtil {
   public static final Key<TailType> TAIL_TYPE_ATTR = LookupItem.TAIL_TYPE_ATTR;
+  public static final Key<PrefixMatcher> PREFIX_MATCHER = Key.create("PREFIX_MATCHER");
 
   private static final CompletionData ourGenericCompletionData = new CompletionData() {
     {

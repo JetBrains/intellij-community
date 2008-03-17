@@ -8,12 +8,12 @@ import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.impl.JavaReferenceImporter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
@@ -29,7 +29,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.Processor;
+import com.intellij.util.AsyncConsumer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +50,7 @@ public class JavaCompletionContributor extends CompletionContributor{
   public void registerCompletionProviders(final CompletionRegistrar registrar) {
     registrar.extend(CompletionType.BASIC, psiElement().inFile(PlatformPatterns.psiFile().withLanguage(StdLanguages.JAVA))).withId(JAVA_LEGACY).dependingOn(LegacyCompletionContributor.LEGACY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
-        result.clearResults();
+        result.stopHere();
 
         CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         final PsiFile file = parameters.getOriginalFile();
@@ -69,22 +69,24 @@ public class JavaCompletionContributor extends CompletionContributor{
         final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
         completionData.addKeywordVariants(keywordVariants, insertedElement, context.file);
         completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), context.file);
-        result.addAllElements(lookupSet);
+        for (final LookupItem item : lookupSet) {
+          result.addElement(item);
+        }
       }
 
       private CompletionData getCompletionDataByElementInner(PsiElement element) {
-          if (element != null && PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null) {
-            return JavaCompletionUtil.ourJavaDocCompletionData.getValue();
-          }
-          return element != null && PsiUtil.getLanguageLevel(element).equals(LanguageLevel.JDK_1_5)
-                 ? JavaCompletionUtil.ourJava15CompletionData.getValue()
-                 : JavaCompletionUtil.ourJavaCompletionData.getValue();
+        if (element != null && PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null) {
+          return JavaCompletionUtil.ourJavaDocCompletionData.getValue();
+        }
+        return element != null && PsiUtil.getLanguageLevel(element).equals(LanguageLevel.JDK_1_5)
+               ? JavaCompletionUtil.ourJava15CompletionData.getValue()
+               : JavaCompletionUtil.ourJavaCompletionData.getValue();
       }
     });
 
 
     registrar.extend(CompletionType.BASIC, psiElement(PsiIdentifier.class).andNot(INSIDE_TYPE_PARAMS_PATTERN).withParent(
-      or(psiElement(PsiLocalVariable.class), psiElement(PsiParameter.class)))).withId(VARIABLE_NAME).dependingOn(JAVA_LEGACY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
+        or(psiElement(PsiLocalVariable.class), psiElement(PsiParameter.class)))).withId(VARIABLE_NAME).dependingOn(JAVA_LEGACY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
         CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         final PsiFile file = parameters.getOriginalFile();
@@ -97,64 +99,69 @@ public class JavaCompletionContributor extends CompletionContributor{
         Set<LookupItem> lookupSet = new THashSet<LookupItem>();
         final PsiVariable variable = (PsiVariable)parameters.getPosition().getParent();
         JavaCompletionUtil.completeLocalVariableName(lookupSet, result.getPrefixMatcher(), variable);
-        result.addAllElements(lookupSet);
+        for (final LookupItem item : lookupSet) {
+          result.addElement(item);
+        }
       }
     });
     registrar.extend(CompletionType.BASIC, psiElement(PsiIdentifier.class).withParent(PsiField.class)).withId(VARIABLE_NAME).
-      withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
-        public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
-          CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-          final PsiFile file = parameters.getOriginalFile();
-          final PsiElement lastElement = file.findElementAt(context.getStartOffset() - 1);
-          PsiElement insertedElement = parameters.getPosition();
-          CompletionData completionData = CompletionUtil.getCompletionDataByElement(lastElement, file, context.getStartOffset());
-          context.setPrefix(insertedElement, context.getStartOffset(), completionData);
-          result.setPrefixMatcher(context.getPrefix());
+        withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
+          public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
+            CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
+            final PsiFile file = parameters.getOriginalFile();
+            final PsiElement lastElement = file.findElementAt(context.getStartOffset() - 1);
+            PsiElement insertedElement = parameters.getPosition();
+            CompletionData completionData = CompletionUtil.getCompletionDataByElement(lastElement, file, context.getStartOffset());
+            context.setPrefix(insertedElement, context.getStartOffset(), completionData);
+            result.setPrefixMatcher(context.getPrefix());
 
-          Set<LookupItem> lookupSet = new THashSet<LookupItem>();
-          final PsiVariable variable = (PsiVariable)parameters.getPosition().getParent();
-          JavaCompletionUtil.completeFieldName(lookupSet, variable, result.getPrefixMatcher());
-          JavaCompletionUtil.completeMethodName(lookupSet, variable, result.getPrefixMatcher());
-          result.addAllElements(lookupSet);
-        }
-      });
+            Set<LookupItem> lookupSet = new THashSet<LookupItem>();
+            final PsiVariable variable = (PsiVariable)parameters.getPosition().getParent();
+            JavaCompletionUtil.completeFieldName(lookupSet, variable, result.getPrefixMatcher());
+            JavaCompletionUtil.completeMethodName(lookupSet, variable, result.getPrefixMatcher());
+            for (final LookupItem item : lookupSet) {
+              result.addElement(item);
+            }
+          }
+        });
     registrar
-      .extend(CompletionType.BASIC, PsiJavaPatterns.psiElement().nameIdentifierOf(PsiJavaPatterns.psiMethod().withParent(PsiClass.class))).
-      withId(METHOD_NAME).dependingOn(JAVA_LEGACY).
-      withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
-        public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
-          CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-          final PsiFile file = parameters.getOriginalFile();
-          final PsiElement lastElement = file.findElementAt(context.getStartOffset() - 1);
-          PsiElement insertedElement = parameters.getPosition();
-          CompletionData completionData = CompletionUtil.getCompletionDataByElement(lastElement, file, context.getStartOffset());
-          context.setPrefix(insertedElement, context.getStartOffset(), completionData);
-          result.setPrefixMatcher(context.getPrefix());
+        .extend(CompletionType.BASIC, PsiJavaPatterns.psiElement().nameIdentifierOf(PsiJavaPatterns.psiMethod().withParent(PsiClass.class))).
+        withId(METHOD_NAME).dependingOn(JAVA_LEGACY).
+        withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
+          public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
+            CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
+            final PsiFile file = parameters.getOriginalFile();
+            final PsiElement lastElement = file.findElementAt(context.getStartOffset() - 1);
+            PsiElement insertedElement = parameters.getPosition();
+            CompletionData completionData = CompletionUtil.getCompletionDataByElement(lastElement, file, context.getStartOffset());
+            context.setPrefix(insertedElement, context.getStartOffset(), completionData);
+            result.setPrefixMatcher(context.getPrefix());
 
-          Set<LookupItem> lookupSet = new THashSet<LookupItem>();
-          JavaCompletionUtil.completeMethodName(lookupSet, parameters.getPosition().getParent(), result.getPrefixMatcher());
-          result.addAllElements(lookupSet);
-        }
-      });
+            Set<LookupItem> lookupSet = new THashSet<LookupItem>();
+            JavaCompletionUtil.completeMethodName(lookupSet, parameters.getPosition().getParent(), result.getPrefixMatcher());
+            for (final LookupItem item : lookupSet) {
+              result.addElement(item);
+            }
+          }
+        });
 
     registrar.extend(CompletionType.BASIC, psiElement()).withId(ANALYZE_ITEM).dependingOn(JAVA_LEGACY, VARIABLE_NAME, METHOD_NAME).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet<LookupElement> result) {
-        result.processResults(new Processor<LookupElement>() {
-          public boolean process(final LookupElement lookupElement) {
+        result.setSuccessorFilter(new AsyncConsumer<LookupElement>() {
+          public void consume(final LookupElement lookupElement) {
             LookupItem item = (LookupItem) lookupElement;
             JavaCompletionUtil.highlightMemberOfContainer(item);
 
-            if (item.getInsertHandler() != null) return true;
-
-            item.setInsertHandler(new InsertHandler() {
-              public void handleInsert(final CompletionContext context, final int startOffset, final LookupData data, final LookupItem item,
-                                       final boolean signatureSelected,
-                                       final char completionChar) {
-                analyzeItem(context, item, item.getObject(), parameters.getPosition());
-                new DefaultInsertHandler().handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
-              }
-            });
-            return true;
+            if (item.getInsertHandler() == null) {
+              item.setInsertHandler(new InsertHandler() {
+                public void handleInsert(final CompletionContext context, final int startOffset, final LookupData data,
+                                         final LookupItem item, final boolean signatureSelected, final char completionChar) {
+                  analyzeItem(context, item, item.getObject(), parameters.getPosition());
+                  new DefaultInsertHandler().handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
+                }
+              });
+            }
+            result.addElement(item);
           }
         });
       }
@@ -164,11 +171,11 @@ public class JavaCompletionContributor extends CompletionContributor{
       public String advertise(@NotNull final CompletionParameters parameters, final ProcessingContext context, final PrefixMatcher matcher) {
         if (shouldSuggestSmartCompletion(parameters.getPosition(), matcher.getPrefix())) {
           return CompletionBundle.message("completion.smart.hint", KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(
-            IdeActions.ACTION_SMART_TYPE_COMPLETION)));
+              IdeActions.ACTION_SMART_TYPE_COMPLETION)));
         }
         if (shouldSuggestClassNameCompletion(parameters.getPosition(), matcher.getPrefix())) {
           return CompletionBundle.message("completion.class.name.hint", KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(
-            IdeActions.ACTION_CLASS_NAME_COMPLETION)));
+              IdeActions.ACTION_CLASS_NAME_COMPLETION)));
         }
         return null;
       }
@@ -177,7 +184,7 @@ public class JavaCompletionContributor extends CompletionContributor{
       public String advertise(@NotNull final CompletionParameters parameters, final ProcessingContext context, final PrefixMatcher matcher) {
         if (shouldSuggestClassNameCompletion(parameters.getPosition(), matcher.getPrefix())) {
           return CompletionBundle.message("completion.class.name.hint", KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(
-            IdeActions.ACTION_CLASS_NAME_COMPLETION)));
+              IdeActions.ACTION_CLASS_NAME_COMPLETION)));
         }
         return null;
       }
@@ -186,28 +193,32 @@ public class JavaCompletionContributor extends CompletionContributor{
       public String advertise(@NotNull final CompletionParameters parameters, final ProcessingContext context, final PrefixMatcher matcher) {
         if (shouldSuggestSmartCompletion(parameters.getPosition(), matcher.getPrefix())) {
           return CompletionBundle.message("completion.smart.hint", KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(
-            IdeActions.ACTION_SMART_TYPE_COMPLETION)));
+              IdeActions.ACTION_SMART_TYPE_COMPLETION)));
         }
         return null;
       }
     });
 
     final CompletionProvider<LookupElement, CompletionParameters> methodMerger =
-      new CompletionProvider<LookupElement, CompletionParameters>() {
-        public void addCompletions(@NotNull final CompletionParameters parameters,
-                                   final ProcessingContext context,
-                                   @NotNull final CompletionResultSet<LookupElement> result) {
-          final List<LookupItem> nonGrouped = new ArrayList<LookupItem>();
-          final Map<String, LookupItem<PsiMethod>> methodNameToItem = new LinkedHashMap<String, LookupItem<PsiMethod>>();
-          result.processResults(new Processor<LookupElement>() {
-            public boolean process(final LookupElement element) {
-              LookupItem item = (LookupItem)element;
-              if (item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null) {
-                nonGrouped.add(item);
-                return true;
-              }
-              Object o = item.getObject();
-              if (o instanceof PsiMethod) {
+        new CompletionProvider<LookupElement, CompletionParameters>() {
+          public void addCompletions(@NotNull final CompletionParameters parameters,
+                                     final ProcessingContext context,
+                                     @NotNull final CompletionResultSet<LookupElement> result) {
+            final Ref<Boolean> wereNonGrouped = Ref.create(false);
+            final Map<String, LookupItem<PsiMethod>> methodNameToItem = new LinkedHashMap<String, LookupItem<PsiMethod>>();
+            final List<LookupItem<PsiMethod>> allMethodItems = new ArrayList<LookupItem<PsiMethod>>();
+            result.setSuccessorFilter(new AsyncConsumer<LookupElement>() {
+              public void consume(final LookupElement element) {
+                LookupItem item = (LookupItem)element;
+                item.setAttribute(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE, null);
+                Object o = item.getObject();
+                if (item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null || !(o instanceof PsiMethod)) {
+                  result.addElement(item);
+                  wereNonGrouped.set(true);
+                  return;
+                }
+
+                allMethodItems.add(item);
                 PsiMethod method = (PsiMethod)o;
                 String name = method.getName();
                 LookupItem<PsiMethod> existing = methodNameToItem.get(name);
@@ -217,42 +228,35 @@ public class JavaCompletionContributor extends CompletionContributor{
                       method.getParameterList().getParametersCount() > 0) {
                     methodNameToItem.put(name, item);
                   }
-                  allMethods = (ArrayList<PsiMethod>)existing.getAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE);
+                  allMethods = (ArrayList<PsiMethod>)existing.getAttribute(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE);
                 }
                 else {
                   methodNameToItem.put(name, item);
                   allMethods = new ArrayList<PsiMethod>();
                 }
                 allMethods.add(method);
-                item.setAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE, allMethods);
-                return true;
+                item.setAttribute(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE, allMethods);
               }
-              nonGrouped.add(item);
-              return true;
-            }
 
-
-          });
-
-          final boolean justOneMethodName = nonGrouped.isEmpty() && methodNameToItem.size() == 1;
-          if (!CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS || justOneMethodName) {
-            result.clearResults();
-            result.addAllElements(nonGrouped);
-            for (final LookupItem<PsiMethod> item : methodNameToItem.values()) {
-              result.addElement(item);
-              ArrayList<PsiMethod> list = (ArrayList<PsiMethod>)item.getAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE);
-              item.setAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE, list.toArray(new PsiMethod[list.size()]));
-            }
-          } else {
-            result.processResults(new Processor<LookupElement>() {
-              public boolean process(final LookupElement element) {
-                ((LookupItem)element).setAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE, null);
-                return true;
+              public void finished() {
+                final boolean justOneMethodName = !wereNonGrouped.get() && methodNameToItem.size() == 1;
+                if (!CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS || justOneMethodName) {
+                  for (final LookupItem<PsiMethod> item : methodNameToItem.values()) {
+                    result.addElement(item);
+                    ArrayList<PsiMethod> list = (ArrayList<PsiMethod>)item.getAttribute(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE);
+                    item.setAttribute(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE, list.toArray(new PsiMethod[list.size()]));
+                  }
+                } else {
+                  for (final LookupItem<PsiMethod> item : allMethodItems) {
+                    result.addElement(item);
+                  }
+                }
               }
             });
+
+
           }
-        }
-      };
+        };
     registrar.extend(CompletionType.BASIC, psiElement()).dependingOn(ANALYZE_ITEM).withProvider(methodMerger);
     registrar.extend(CompletionType.SMART, psiElement()).dependingOn(JAVA_LEGACY).withProvider(methodMerger);
     registrar.extend(CompletionType.CLASS_NAME, psiElement()).dependingOn(JAVA_LEGACY).withProvider(methodMerger);

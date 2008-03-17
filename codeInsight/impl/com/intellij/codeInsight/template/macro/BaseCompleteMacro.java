@@ -16,6 +16,8 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public abstract class BaseCompleteMacro implements Macro {
   private final String myName;
 
@@ -119,7 +121,7 @@ public abstract class BaseCompleteMacro implements Macro {
         return;
       }
 
-      final PsiElement[] elements = JavaCompletionUtil.getAllPsiElements(item);
+      final List<? extends PsiElement> elements = JavaCompletionUtil.getAllPsiElements(item);
 
       boolean goNextTab;
 
@@ -127,16 +129,16 @@ public abstract class BaseCompleteMacro implements Macro {
         goNextTab = true;
       }
       else {
-        if (elements.length != 1) {
+        if (elements.size() != 1) {
           goNextTab = false;
         }
         else {
-          if (elements[0] instanceof PsiMethod) {
-            PsiMethod method = (PsiMethod)elements[0];
+          if (elements.get(0) instanceof PsiMethod) {
+            PsiMethod method = (PsiMethod)elements.get(0);
             goNextTab = method.getParameterList().getParametersCount() == 0;
           }
           else {
-            goNextTab = !(elements[0] instanceof PsiFileSystemItem) || !((PsiFileSystemItem)elements[0]).isDirectory();
+            goNextTab = !(elements.get(0) instanceof PsiFileSystemItem) || !((PsiFileSystemItem)elements.get(0)).isDirectory();
           }
         }
       }

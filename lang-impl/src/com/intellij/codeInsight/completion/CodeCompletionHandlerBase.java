@@ -29,12 +29,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.AsyncConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.Set;
 
 abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
@@ -276,9 +276,13 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final CompletionContext context = insertedInfo.getFirst();
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, context);
     final CompletionParametersImpl parameters = new CompletionParametersImpl(insertedElement, context.file, myCompletionType);
-    final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>((Collection)CompletionService.getCompletionService().
-      getQueryFactory(myCompletionType, parameters).
-      createQuery(parameters).findAll());
+    final Collection<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
+
+    CompletionService.getCompletionService().performAsyncCompletion(myCompletionType, parameters, new AsyncConsumer<LookupElement>() {
+      public void consume(final LookupElement lookupElement) {
+        lookupSet.add(lookupElement);
+      }
+    });
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, null);
 
     final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);

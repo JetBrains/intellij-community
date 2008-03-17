@@ -29,7 +29,7 @@ public class XmlCompletionContributor extends CompletionContributor{
       dependingOn(JavaCompletionContributor.JAVA_LEGACY).
       withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
-        result.clearResults();
+        result.stopHere();
         CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         final PsiElement element = parameters.getPosition();
         final XmlTag parent = (XmlTag)element.getParent();
@@ -43,7 +43,9 @@ public class XmlCompletionContributor extends CompletionContributor{
         if (reference != null && namespace.length() > 0 && parentDescriptor != null && !(parentDescriptor instanceof AnyXmlElementDescriptor)) {
           final Set<LookupItem> set = new HashSet<LookupItem>();
           new XmlCompletionData().completeReference(reference, set, element, result.getPrefixMatcher(), context.file, context.getStartOffset());
-          result.addAllElements(set);
+          for (final LookupItem item : set) {
+            result.addElement(item);
+          }
         } else {
 
           result.setPrefixMatcher(pos >= 0 ? prefix.substring(pos + 1) : prefix);

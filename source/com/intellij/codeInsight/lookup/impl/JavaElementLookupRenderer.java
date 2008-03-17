@@ -1,13 +1,16 @@
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -182,8 +185,8 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
     return name;
   }
 
-  private static boolean isToStrikeout(LookupItem item) {
-    final PsiMethod[] allMethods = (PsiMethod[])item.getAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE);
+  private static boolean isToStrikeout(LookupItem<?> item) {
+    final List<PsiMethod> allMethods = item.getAttribute(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE);
     if (allMethods != null){
       for (PsiMethod method : allMethods) {
         if (!method.isValid()) { //?

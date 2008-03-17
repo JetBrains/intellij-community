@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -28,14 +29,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       Arrays.asList(PsiMethodCallExpression.class,PsiNewExpression.class, PsiAnonymousClass.class,PsiEnumConstant.class));
 
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-    final PsiElement[] allElements = JavaCompletionUtil.getAllPsiElements((LookupItem)item);
+    final List<? extends PsiElement> allElements = JavaCompletionUtil.getAllPsiElements((LookupItem)item);
 
     if (allElements != null &&
-        allElements.length > 0 &&
-        allElements[0] instanceof PsiMethod) {
-      PsiMethod[] allMethods = new PsiMethod[allElements.length];
-      System.arraycopy(allElements, 0, allMethods, 0, allElements.length);
-      return allMethods;
+        allElements.size() > 0 &&
+        allElements.get(0) instanceof PsiMethod) {
+      return allElements.toArray(new PsiMethod[allElements.size()]);
     }
     return null;
   }

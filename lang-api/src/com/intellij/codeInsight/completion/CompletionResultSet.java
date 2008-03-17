@@ -3,22 +3,38 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.util.QueryResultSet;
 import org.jetbrains.annotations.NotNull;
+import com.intellij.util.AsyncConsumer;
 
 /**
  * @author peter
  */
-public interface CompletionResultSet<Result> extends QueryResultSet<Result>{
+public abstract class CompletionResultSet<Result> {
+  private PrefixMatcher myPrefixMatcher;
 
-  void setPrefixMatcher(@NotNull PrefixMatcher matcher);
+  protected CompletionResultSet(final PrefixMatcher prefixMatcher) {
+    myPrefixMatcher = prefixMatcher;
+  }
+
+  public abstract void addElement(@NotNull final Result result);
+
+  public abstract void setSuccessorFilter(AsyncConsumer<Result> consumer);
+
+  public abstract void stopHere();
+
+  public void setPrefixMatcher(@NotNull PrefixMatcher matcher) {
+    myPrefixMatcher = matcher;
+  }
 
   /**
    * Creates a default camel-hump prefix matcher based on given prefix
    * @param prefix
    */
-  void setPrefixMatcher(@NotNull String prefix);
+  public abstract void setPrefixMatcher(@NotNull String prefix);
 
-  @NotNull PrefixMatcher getPrefixMatcher();
+  @NotNull
+  public PrefixMatcher getPrefixMatcher() {
+    return myPrefixMatcher;
+  }
 
 }

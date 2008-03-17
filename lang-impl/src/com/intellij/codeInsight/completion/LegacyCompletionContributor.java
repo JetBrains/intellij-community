@@ -52,7 +52,9 @@ public class LegacyCompletionContributor extends CompletionContributor{
         final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
         completionData.addKeywordVariants(keywordVariants, insertedElement, context.file);
         completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), context.file);
-        result.addAllElements(lookupSet);
+        for (final LookupItem item : lookupSet) {
+          result.addElement(item);
+        }
       }
     });
 

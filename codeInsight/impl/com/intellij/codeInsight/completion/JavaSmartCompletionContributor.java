@@ -73,7 +73,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
 
         }
 
-        result.addAllElements(set);
+        for (final LookupItem item : set) {
+          result.addElement(item);
+        }
       }
     });
   }

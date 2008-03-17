@@ -48,7 +48,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
   private static final int MAX_PREFERRED_COUNT = 5;
   static final Object EMPTY_ITEM_ATTRIBUTE = Key.create("emptyItem");
-  public static final Object ALL_METHODS_ATTRIBUTE = Key.create("allMethods");
 
   public static final Key<LookupImpl> LOOKUP_IN_EDITOR_KEY = Key.create("LOOKUP_IN_EDITOR_KEY");
 
