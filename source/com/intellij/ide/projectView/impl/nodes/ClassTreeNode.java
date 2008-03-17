@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.PsiClassChildrenSource;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 
@@ -133,5 +134,14 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
   @Override
   public boolean shouldDrillDownOnEmptyElement() {
     return true;
+  }
+
+  public boolean canRepresent(final Object element) {
+    if (super.canRepresent(element)) return true;
+    if (element instanceof VirtualFile && getValue().getParent() instanceof PsiFile) {
+      PsiFile parentFile = (PsiFile) getValue().getParent();
+      if (parentFile.getVirtualFile() == element) return true;
+    }
+    return false;
   }
 }

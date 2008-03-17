@@ -19,16 +19,6 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
   }
 
   public Collection<AbstractTreeNode> getChildrenImpl() {
-    /*if (getSettings().isStructureView() && getValue() instanceof PsiJavaFile){
-      PsiClass[] classes = ((PsiJavaFile)getValue()).getClasses();
-      ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-      for (PsiClass aClass : classes) {
-        result.add(new ClassTreeNode(getProject(), aClass, getSettings()));
-      }
-      return result;
-    } else {
-      return new ArrayList<AbstractTreeNode>();
-    }*/
     return new ArrayList<AbstractTreeNode>();
   }
 
@@ -87,5 +77,9 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
   public boolean shouldDrillDownOnEmptyElement() {
     final PsiFile file = getValue();
     return file != null && file.getFileType() == StdFileTypes.JAVA;
+  }
+
+  public boolean canRepresent(final Object element) {
+    return super.canRepresent(element) || getValue().getVirtualFile() == element;
   }
 }
