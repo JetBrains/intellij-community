@@ -49,8 +49,6 @@ public class AnnotationArguments implements GroovyElementTypes {
       PsiBuilder.Marker pairMarker = builder.mark();
       if (!parseAnnotationMemberValueInitializer(builder)) {
         pairMarker.drop();
-        annArgs.rollbackTo();
-        return;
       } else {
         pairMarker.done(ANNOTATION_MEMBER_VALUE_PAIR);
       }
