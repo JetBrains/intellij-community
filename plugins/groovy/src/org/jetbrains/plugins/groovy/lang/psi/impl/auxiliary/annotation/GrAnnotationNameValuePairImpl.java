@@ -85,9 +85,9 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
 
   @Nullable
   public PsiElement resolve() {
-    PsiElement pParent = getParent().getParent().getParent();
-    if (pParent instanceof GrAnnotation) {
-      GrCodeReferenceElement ref = ((GrAnnotation) pParent).getClassReference();
+    GrAnnotation anno = getAnnotation();
+    if (anno != null) {
+      GrCodeReferenceElement ref = anno.getClassReference();
       if (ref != null) {
         PsiElement resolved = ref.resolve();
         if (resolved instanceof PsiClass && ((PsiClass) resolved).isAnnotationType()) {
@@ -99,6 +99,13 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
       }
     }
     return null;
+  }
+
+  private GrAnnotation getAnnotation() {
+    PsiElement pParent = getParent().getParent();
+    if (pParent instanceof GrAnnotation) return (GrAnnotation) pParent;
+    PsiElement ppParent = pParent.getParent();
+    return ppParent instanceof GrAnnotation ? (GrAnnotation)ppParent : null;
   }
 
   public String getCanonicalText() {
@@ -132,9 +139,9 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
   }
 
   public Object[] getVariants() {
-    PsiElement pParent = getParent().getParent();
-    if (pParent instanceof GrAnnotation) {
-      GrCodeReferenceElement ref = ((GrAnnotation) pParent).getClassReference();
+    GrAnnotation anno = getAnnotation();
+    if (anno != null) {
+      GrCodeReferenceElement ref = anno.getClassReference();
       if (ref != null) {
         PsiElement resolved = ref.resolve();
         if (resolved instanceof PsiClass && ((PsiClass) resolved).isAnnotationType()) {
