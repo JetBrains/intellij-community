@@ -356,7 +356,6 @@ public class PsiImplUtil {
 
   public static boolean isMainMethod(GrMethod method) {
     return method.getName().equals(MAIN_METHOD) &&
-        method.getParent() instanceof GrTypeDefinitionBody &&
         method.hasModifierProperty(PsiModifier.STATIC);
   }
 }
