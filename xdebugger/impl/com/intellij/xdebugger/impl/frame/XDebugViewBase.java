@@ -2,6 +2,7 @@ package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionAdapter;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.openapi.Disposable;
 
 /**
@@ -17,28 +18,35 @@ public abstract class XDebugViewBase implements Disposable {
     mySession.addSessionListener(mySessionListener);
   }
 
-  protected abstract void rebuildView();
+  private void onSessionEvent(final boolean onlyFrameChanged) {
+    DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+      public void run() {
+        rebuildView(onlyFrameChanged);
+      }
+    });
+  }
+
+  protected abstract void rebuildView(final boolean onlyFrameChanged);
 
   public void dispose() {
     mySession.removeSessionListener(mySessionListener);
   }
 
   private class MyDebugSessionListener extends XDebugSessionAdapter {
-
     public void sessionPaused() {
-      rebuildView();
+      onSessionEvent(false);
     }
 
     public void sessionResumed() {
-      rebuildView();
+      onSessionEvent(false);
     }
 
     public void sessionStopped() {
-      rebuildView();
+      onSessionEvent(false);
     }
 
     public void stackFrameChanged() {
-      rebuildView();
+      onSessionEvent(true);
     }
   }
 }

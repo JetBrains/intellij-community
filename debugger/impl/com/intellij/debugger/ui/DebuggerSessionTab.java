@@ -44,9 +44,13 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
-import com.intellij.peer.PeerFactory;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,9 +64,6 @@ import java.util.Map;
 public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerSessionTab");
 
-  private static final Icon DEBUG_AGAIN_ICON = IconLoader.getIcon("/actions/startDebugger.png");
-
-  private static final Icon WATCHES_ICON = IconLoader.getIcon("/debugger/watches.png");
   private static final Icon WATCH_RETURN_VALUES_ICON = IconLoader.getIcon("/debugger/watchLastReturnValue.png");
   private static final Icon AUTO_VARS_ICONS = IconLoader.getIcon("/debugger/autoVariablesMode.png");
 
@@ -138,7 +139,8 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     myFramesPanel = new FramesPanel(getProject(), getContextManager());
 
 
-    Content watches = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchPanel, DebuggerBundle.message("debugger.session.tab.watches.title"), WATCHES_ICON, null);
+    Content watches = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchPanel, XDebuggerBundle.message("debugger.session.tab.watches.title"),
+                                         XDebuggerUIConstants.WATCHES_TAB_ICON, null);
     final DefaultActionGroup watchesGroup = new DefaultActionGroup();
     addAction(watchesGroup, DebuggerActions.NEW_WATCH);
     addAction(watchesGroup, DebuggerActions.ADD_TO_WATCH);
@@ -147,8 +149,8 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     myUi.addContent(watches, 0, RunnerLayoutUi.PlaceInGrid.right, false);
 
 
-    Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, myFramesPanel, DebuggerBundle.message("debugger.session.tab.frames.title"),
-                                    IconLoader.getIcon("/debugger/frame.png"), null);
+    Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, myFramesPanel, XDebuggerBundle.message("debugger.session.tab.frames.title"),
+                                               XDebuggerUIConstants.FRAMES_TAB_ICON, null);
     final DefaultActionGroup framesGroup = new DefaultActionGroup();
 
     addAction(framesGroup, DebuggerActions.POP_FRAME);
@@ -161,8 +163,8 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     myVariablesPanel = new VariablesPanel(myProject, myStateManager, this);
     myVariablesPanel.getFrameTree().setAutoVariablesMode(debuggerSettings.AUTO_VARIABLES_MODE);
-    Content vars = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, myVariablesPanel, DebuggerBundle.message("debugger.session.tab.variables.title"),
-                                  IconLoader.getIcon("/debugger/value.png"), null);
+    Content vars = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, myVariablesPanel, XDebuggerBundle.message("debugger.session.tab.variables.title"),
+                                      XDebuggerUIConstants.VARIABLES_TAB_ICON, null);
     final DefaultActionGroup varsGroup = new DefaultActionGroup();
     addAction(varsGroup, DebuggerActions.EVALUATE_EXPRESSION);
     varsGroup.add(new WatchLastMethodReturnValueAction());
@@ -212,9 +214,9 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     myUi.removeContent(myUi.findContent(DebuggerContentInfo.CONSOLE_CONTENT), true);
 
-    Content console = myUi.createContent(DebuggerContentInfo.CONSOLE_CONTENT, myConsole.getComponent(), DebuggerBundle.message("debugger.session.tab.console.content.name"),
-                            IconLoader.getIcon("/debugger/console.png"),
-                            myConsole.getPreferredFocusableComponent());
+    Content console = myUi.createContent(DebuggerContentInfo.CONSOLE_CONTENT, myConsole.getComponent(),
+                                         XDebuggerBundle.message("debugger.session.tab.console.content.name"),
+                                         XDebuggerUIConstants.CONSOLE_TAB_ICON, myConsole.getPreferredFocusableComponent());
 
     attachNotificationTo(console);
 
@@ -237,7 +239,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     DefaultActionGroup group = new DefaultActionGroup();
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
     RestartAction restarAction = new RestartAction(executor,
-                                                   myRunner, myRunContentDescriptor.getProcessHandler(), DEBUG_AGAIN_ICON,
+                                                   myRunner, myRunContentDescriptor.getProcessHandler(), XDebuggerUIConstants.DEBUG_AGAIN_ICON,
                                                    myRunContentDescriptor, myEnvironment);
     group.add(restarAction);
     restarAction.registerShortcut(myUi.getComponent());
@@ -271,11 +273,10 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   private void attachNotificationTo(final Content content) {
     if (myConsole instanceof ObservableConsoleView) {
       ObservableConsoleView observable = (ObservableConsoleView)myConsole;
-      final Content toNotify = content;
       observable.addChangeListener(new ObservableConsoleView.ChangeListener() {
         public void contentAdded(final Collection<ConsoleViewContentType> types) {
           if (types.contains(ConsoleViewContentType.ERROR_OUTPUT) || types.contains(ConsoleViewContentType.NORMAL_OUTPUT)) {
-            toNotify.fireAlert();
+            content.fireAlert();
           }
         }
       }, content);
@@ -557,7 +558,4 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     }
   }
 
-  private static ContentFactory getContentFactory() {
-    return PeerFactory.getInstance().getContentFactory();
-  }
 }

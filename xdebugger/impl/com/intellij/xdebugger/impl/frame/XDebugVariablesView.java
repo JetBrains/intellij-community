@@ -22,16 +22,19 @@ public class XDebugVariablesView extends XDebugViewBase {
   public XDebugVariablesView(@NotNull XDebugSession session, final Disposable parentDisposable) {
     super(session, parentDisposable);
     XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
-    myDebuggerTreePanel = new XDebuggerTreePanel(session.getProject(), editorsProvider, null, XDebuggerActions.VARIABLES_TREE_POPUP_GROUP);
+    myDebuggerTreePanel = new XDebuggerTreePanel(session, editorsProvider, null, XDebuggerActions.VARIABLES_TREE_POPUP_GROUP);
   }
 
-  protected void rebuildView() {
+  protected void rebuildView(final boolean onlyFrameChanged) {
     XStackFrame stackFrame = mySession.getCurrentStackFrame();
     XDebuggerTree tree = myDebuggerTreePanel.getTree();
+    tree.markNodesObsolete();
     if (stackFrame != null) {
+      tree.setSourcePosition(stackFrame.getSourcePosition());
       tree.setRoot(new XStackFrameNode(tree, stackFrame), false);
     }
     else {
+      tree.setSourcePosition(null);
       tree.setRoot(MessageTreeNode.createInfoMessage(tree, null, mySession.getDebugProcess().getCurrentStateMessage()), true);
     }
   }

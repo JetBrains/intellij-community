@@ -15,7 +15,7 @@ public class XInspectAction extends XDebuggerTreeActionBase {
   protected void perform(final XValueNodeImpl node, @NotNull final String nodeName, final AnActionEvent e) {
     XDebuggerTree tree = node.getTree();
     XValue value = node.getValueContainer();
-    XInspectDialog dialog = new XInspectDialog(tree.getProject(), tree.getEditorsProvider(), tree.getSourcePosition(), nodeName, value);
+    XInspectDialog dialog = new XInspectDialog(tree.getSession(), tree.getEditorsProvider(), tree.getSourcePosition(), nodeName, value);
     dialog.show();
   }
 }

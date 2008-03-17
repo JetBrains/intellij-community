@@ -58,6 +58,11 @@ public class XValueHint extends AbstractValueHint {
               }
             });
           }
+
+          public boolean isObsolete() {
+            //todo[nik]
+            return false;
+          }
         });
       }
 
@@ -90,7 +95,7 @@ public class XValueHint extends AbstractValueHint {
   }
 
   private void showTree(final XValue value, final String name) {
-    XDebuggerTree tree = new XDebuggerTree(getProject(), myDebugSession.getDebugProcess().getEditorsProvider(),
+    XDebuggerTree tree = new XDebuggerTree(myDebugSession, myDebugSession.getDebugProcess().getEditorsProvider(),
                                            myDebugSession.getCurrentPosition());
     tree.getModel().addTreeModelListener(createTreeListener(tree));
     XValueHintTreeComponent component = new XValueHintTreeComponent(this, tree, Pair.create(value, name));

@@ -17,7 +17,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
     XStackFrame stackFrame = session.getCurrentStackFrame();
     if (stackFrame == null) return;
     
-    new XExpressionEvaluationDialog(session.getProject(), editorsProvider, stackFrame).show();
+    new XExpressionEvaluationDialog(session, editorsProvider, stackFrame).show();
   }
 
   protected boolean isEnabled(final @NotNull XDebugSession session, final DataContext dataContext) {

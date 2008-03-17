@@ -1,10 +1,12 @@
 package com.intellij.xdebugger.frame;
 
+import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author nik
@@ -41,22 +43,24 @@ public abstract class XExecutionStack {
   public abstract XStackFrame getTopFrame();
 
   /**
-   * @return stack frames count
+   * Start computing stack frames top-down starting from <code>firstFrameIndex</code>   
+   * @param firstFrameIndex frame index to start from (<code>1</code> corresponds to the frame just under the top frame)
+   * @param container callback
    */
-  public abstract int getFramesCount();
+  public abstract void computeStackFrames(int firstFrameIndex, XStackFrameContainer container);
 
-  /**
-   * Start obtaining stack frame and call <code>callback.{@link com.intellij.xdebugger.frame.XExecutionStack.XStackFrameCallback#stackFrameObtained(XStackFrame)}</code>
-   * when stack frame is obtained or <code>callback.{@link com.intellij.xdebugger.frame.XExecutionStack.XStackFrameCallback#errorOccured(String)}</code> if an error occurs.  
-   * @param frameIndex frame index (from <code>1</code> to <code>{@link XExecutionStack#getFramesCount()}-1</code>)
-   * @param callback callback
-   */
-  public abstract void obtainStackFrame(int frameIndex, XStackFrameCallback callback);
+  public static interface XStackFrameContainer extends Obsolescent {
+    /**
+     * Add stack frames to the list
+     * @param stackFrames stack frames to add
+     * @param last <code>true</code> if all frames are added
+     */
+    void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, final boolean last);
 
-  public static interface XStackFrameCallback {
-
-    void stackFrameObtained(@NotNull XStackFrame stackFrame);
-
+    /**
+     * Indicate that an error occurs
+     * @param errorMessage message describing the error
+     */
     void errorOccured(String errorMessage);
 
   }

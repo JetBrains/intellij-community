@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.Tree;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -25,11 +26,13 @@ public class XDebuggerTree extends Tree implements DataProvider {
   private DefaultTreeModel myTreeModel;
   private final Project myProject;
   private final XDebuggerEditorsProvider myEditorsProvider;
-  private final XSourcePosition mySourcePosition;
+  private XSourcePosition mySourcePosition;
   private final List<XDebuggerTreeListener> myListeners = new CopyOnWriteArrayList<XDebuggerTreeListener>();
+  private final XDebugSession mySession;
 
-  public XDebuggerTree(final @NotNull Project project, final XDebuggerEditorsProvider editorsProvider, final XSourcePosition sourcePosition) {
-    myProject = project;
+  public XDebuggerTree(final @NotNull XDebugSession session, final XDebuggerEditorsProvider editorsProvider, final XSourcePosition sourcePosition) {
+    mySession = session;
+    myProject = session.getProject();
     myEditorsProvider = editorsProvider;
     mySourcePosition = sourcePosition;
     myTreeModel = new DefaultTreeModel(null);
@@ -57,6 +60,10 @@ public class XDebuggerTree extends Tree implements DataProvider {
     return mySourcePosition;
   }
 
+  public void setSourcePosition(final @Nullable XSourcePosition sourcePosition) {
+    mySourcePosition = sourcePosition;
+  }
+
   @NotNull
   public XDebuggerEditorsProvider getEditorsProvider() {
     return myEditorsProvider;
@@ -65,6 +72,11 @@ public class XDebuggerTree extends Tree implements DataProvider {
   @NotNull
   public Project getProject() {
     return myProject;
+  }
+
+  @NotNull
+  public XDebugSession getSession() {
+    return mySession;
   }
 
   public DefaultTreeModel getTreeModel() {
@@ -98,6 +110,23 @@ public class XDebuggerTree extends Tree implements DataProvider {
   public void nodeLoaded(final @NotNull XValueNodeImpl node, final @NotNull String name, final @NotNull String value) {
     for (XDebuggerTreeListener listener : myListeners) {
       listener.nodeLoaded(node, name, value);
+    }
+  }
+
+  public void markNodesObsolete() {
+    Object root = myTreeModel.getRoot();
+    if (root instanceof XValueContainerNode<?>) {
+      markNodesObsolete((XValueContainerNode<?>)root);
+    }
+  }
+
+  private static void markNodesObsolete(final XValueContainerNode<?> node) {
+    node.setObsolete();
+    List<XValueContainerNode<?>> loadedChildren = node.getLoadedChildren();
+    if (loadedChildren != null) {
+      for (XValueContainerNode<?> child : loadedChildren) {
+        markNodesObsolete(child);
+      }
     }
   }
 }

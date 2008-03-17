@@ -18,9 +18,11 @@ import java.util.List;
  * @author nik
  */
 public abstract class XValueContainerNode<ValueContainer extends XValueContainer> extends XDebuggerTreeNode implements XCompositeNode, TreeNode {
-  private List<XValueContainerNode<?>> myChildren;
+  private List<XValueContainerNode<?>> myValueChildren;
   private List<MessageTreeNode> myMessageChildren;
+  private List<TreeNode> myCachedAllChildren;
   protected final ValueContainer myValueContainer;
+  private volatile boolean myObsolete;
 
   protected XValueContainerNode(XDebuggerTree tree, final XDebuggerTreeNode parent, ValueContainer valueContainer) {
     super(tree, parent, true);
@@ -29,34 +31,48 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   private void loadChildren() {
-    if (myChildren != null || myMessageChildren != null) return;
+    if (myValueChildren != null || myMessageChildren != null) return;
 
+    myCachedAllChildren = null;
+    myMessageChildren = Collections.singletonList(createLoadingMessageNode());
     myValueContainer.computeChildren(this);
-    if (myChildren == null) {
-      myMessageChildren = Collections.singletonList(createLoadingMessageNode());
-    }
   }
 
   protected MessageTreeNode createLoadingMessageNode() {
     return MessageTreeNode.createLoadingMessage(myTree, this);
   }
 
-  public void setChildren(final List<XValue> children) {
+  public void addChildren(final List<XValue> children, final boolean last) {
     DebuggerUIUtil.invokeLater(new Runnable() {
       public void run() {
-        myChildren = new ArrayList<XValueContainerNode<?>>();
+        myCachedAllChildren = null;
+        if (myValueChildren == null) {
+          myValueChildren = new ArrayList<XValueContainerNode<?>>();
+        }
         for (XValue child : children) {
-          myChildren.add(new XValueNodeImpl(myTree, XValueContainerNode.this, child));
+          myValueChildren.add(createChildNode(child));
+        }
+        if (last) {
+          myMessageChildren = null;
         }
         fireNodeChildrenChanged();
-        myTree.childrenLoaded(XValueContainerNode.this, myChildren);
+        myTree.childrenLoaded(XValueContainerNode.this, myValueChildren);
       }
     });
   }
 
+  protected XValueContainerNode<?> createChildNode(final XValue child) {
+    return new XValueNodeImpl(myTree, this, child);
+  }
+
+  public boolean isObsolete() {
+    return myObsolete;
+  }
+
   public void clearChildren() {
+    myCachedAllChildren = null;
     myMessageChildren = null;
-    myChildren = null;
+    myValueChildren = null;
   }
 
   public void setErrorMessage(final @NotNull String errorMessage) {
@@ -68,6 +84,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   protected void setMessageNode(final MessageTreeNode messageNode) {
+    myCachedAllChildren = null;
     myMessageChildren = Collections.singletonList(messageNode);
     fireNodeChildrenChanged();
   }
@@ -75,10 +92,16 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   protected List<? extends TreeNode> getChildren() {
     loadChildren();
 
-    if (myChildren != null) {
-      return myChildren;
+    if (myCachedAllChildren == null) {
+      myCachedAllChildren = new ArrayList<TreeNode>();
+      if (myValueChildren != null) {
+        myCachedAllChildren.addAll(myValueChildren);
+      }
+      if (myMessageChildren != null) {
+        myCachedAllChildren.addAll(myMessageChildren);
+      }
     }
-    return myMessageChildren;
+    return myCachedAllChildren;
   }
 
   public ValueContainer getValueContainer() {
@@ -87,6 +110,10 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
 
   @Nullable
   public List<XValueContainerNode<?>> getLoadedChildren() {
-    return myChildren;
+    return myValueChildren;
+  }
+
+  public void setObsolete() {
+    myObsolete = true;
   }
 }

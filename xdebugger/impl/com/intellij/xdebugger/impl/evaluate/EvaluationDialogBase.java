@@ -1,7 +1,7 @@
 package com.intellij.xdebugger.impl.evaluate;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -26,14 +26,14 @@ public abstract class EvaluationDialogBase extends DialogWrapper {
   private XDebuggerTreePanel myTreePanel;
   private final XStackFrame myStackFrame;
 
-  protected EvaluationDialogBase(@NotNull Project project, String title, final XDebuggerEditorsProvider editorsProvider, final XStackFrame stackFrame) {
-    super(project, true);
+  protected EvaluationDialogBase(@NotNull XDebugSession session, String title, final XDebuggerEditorsProvider editorsProvider, final XStackFrame stackFrame) {
+    super(session.getProject(), true);
     myStackFrame = stackFrame;
     setModal(false);
     setTitle(title);
     setOKButtonText(XDebuggerBundle.message("xdebugger.button.evaluate"));
     setCancelButtonText(XDebuggerBundle.message("xdebugger.evaluate.dialog.close"));
-    myTreePanel = new XDebuggerTreePanel(project, editorsProvider, stackFrame.getSourcePosition(), XDebuggerActions.EVALUATE_DIALOG_TREE_POPUP_GROUP);
+    myTreePanel = new XDebuggerTreePanel(session, editorsProvider, stackFrame.getSourcePosition(), XDebuggerActions.EVALUATE_DIALOG_TREE_POPUP_GROUP);
     myResultPanel.add(myTreePanel.getMainPanel(), BorderLayout.CENTER);
     init();
   }

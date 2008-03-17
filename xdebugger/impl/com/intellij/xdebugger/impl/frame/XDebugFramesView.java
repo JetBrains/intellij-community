@@ -8,7 +8,6 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,7 +16,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author nik
@@ -43,7 +43,7 @@ public class XDebugFramesView extends XDebugViewBase {
     myFramesList = new XDebuggerFramesList();
     myFramesList.addListSelectionListener(new MyListSelectionListener());
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
-    rebuildView();
+    rebuildView(false);
   }
 
   private StackFramesListBuilder getOrCreateBuilder(XExecutionStack executionStack) {
@@ -55,8 +55,14 @@ public class XDebugFramesView extends XDebugViewBase {
     return builder;
   }
 
-  protected void rebuildView() {
+  protected void rebuildView(final boolean onlyFrameChanged) {
     myListenersEnabled = false;
+    if (!onlyFrameChanged) {
+      for (StackFramesListBuilder builder : myBuilders.values()) {
+        builder.dispose();
+      }
+      myBuilders.clear();
+    }
     XSuspendContext suspendContext = mySession.getSuspendContext();
     if (suspendContext == null) {
       myThreadComboBox.removeAllItems();
@@ -98,7 +104,7 @@ public class XDebugFramesView extends XDebugViewBase {
     return myFramesList;
   }
 
-  private void onFrameSelected(final XStackFrame stackFrame) {
+  private void onFrameSelected(final @NotNull XStackFrame stackFrame) {
     mySession.setCurrentStackFrame(stackFrame);
   }
 
@@ -112,7 +118,10 @@ public class XDebugFramesView extends XDebugViewBase {
       if (!myListenersEnabled) return;
 
       if (e.getStateChange() == ItemEvent.SELECTED) {
-        updateFrames((XExecutionStack)e.getItem());
+        Object item = e.getItem();
+        if (item instanceof XExecutionStack) {
+          updateFrames((XExecutionStack)item);
+        }
       }
     }
   }
@@ -121,68 +130,83 @@ public class XDebugFramesView extends XDebugViewBase {
     public void valueChanged(final ListSelectionEvent e) {
       if (!myListenersEnabled || e.getValueIsAdjusting()) return;
 
-      onFrameSelected((XStackFrame)myFramesList.getSelectedValue());
+      Object selected = myFramesList.getSelectedValue();
+      if (selected instanceof XStackFrame) {
+        onFrameSelected((XStackFrame)selected);
+      }
     }
   }
 
-  private class StackFramesListBuilder implements XExecutionStack.XStackFrameCallback {
+  private class StackFramesListBuilder implements XExecutionStack.XStackFrameContainer {
     private XExecutionStack myExecutionStack;
-    private XStackFrame[] myStackFrames;
-    private TIntObjectHashMap<String> myErrorMessages;
+    private List<XStackFrame> myStackFrames;
+    private String myErrorMessage;
     private int myNextFrameIndex;
     private boolean myRunning;
+    private boolean myAllFramesLoaded;
 
     private StackFramesListBuilder(final XExecutionStack executionStack) {
       myExecutionStack = executionStack;
-      myStackFrames = new XStackFrame[executionStack.getFramesCount()];
-      myStackFrames[0] = executionStack.getTopFrame();
+      myStackFrames = new ArrayList<XStackFrame>();
+      myStackFrames.add(executionStack.getTopFrame());
       myNextFrameIndex = 1;
     }
 
-    public void stackFrameObtained(@NotNull final XStackFrame stackFrame) {
+    public void addStackFrames(@NotNull final List<? extends XStackFrame> stackFrames, final boolean last) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          myStackFrames[myNextFrameIndex] = stackFrame;
-          setFrameListElement(stackFrame);
-          myNextFrameIndex++;
-          continueBuilding();
+          myStackFrames.addAll(stackFrames);
+          addFrameListElements(stackFrames, last);
+          myNextFrameIndex += stackFrames.size();
+          myAllFramesLoaded = last;
+          if (last) {
+            myRunning = false;
+          }
         }
       });
     }
 
-    private void setFrameListElement(final Object value) {
-      if (myExecutionStack == mySelectedStack) {
-        myFramesList.getModel().setElementAt(value, myNextFrameIndex);
+    private void addFrameListElements(final List<?> values, final boolean last) {
+      if (myExecutionStack != null && myExecutionStack == mySelectedStack) {
+        DefaultListModel model = myFramesList.getModel();
+        if (model.getElementAt(model.getSize() - 1) == null) {
+          model.removeElementAt(model.getSize() - 1);
+        }
+        for (Object value : values) {
+          model.addElement(value);
+        }
+        if (!last) {
+          model.addElement(null);
+        }
+        myFramesList.repaint();
       }
-      myFramesList.repaint();
     }
 
-    private void continueBuilding() {
-      if (myNextFrameIndex >= myStackFrames.length) {
-        myRunning = false;
-      }
-      if (!myRunning) return;
-
-      myExecutionStack.obtainStackFrame(myNextFrameIndex, this);
+    public boolean isObsolete() {
+      return !myRunning;
     }
 
     public void errorOccured(final String errorMessage) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          if (myErrorMessages == null) {
-            myErrorMessages = new TIntObjectHashMap<String>();
-          }
-          myErrorMessages.put(myNextFrameIndex, errorMessage);
-          setFrameListElement(errorMessage);
-          myNextFrameIndex++;
-          continueBuilding();
+          myErrorMessage = errorMessage;
+          addFrameListElements(Collections.singletonList(errorMessage), true);
+          myRunning = false;
         }
       });
     }
 
+    public void dispose() {
+      myRunning = false;
+      myExecutionStack = null;
+    }
+
     public void start() {
+      if (myExecutionStack == null) {
+        return;
+      }
       myRunning = true;
-      continueBuilding();
+      myExecutionStack.computeStackFrames(myNextFrameIndex, this);
     }
 
     public void stop() {
@@ -191,17 +215,14 @@ public class XDebugFramesView extends XDebugViewBase {
 
     public void initModel(final DefaultListModel model) {
       model.removeAllElements();
-      for (int i = 0; i < myStackFrames.length; i++) {
-        XStackFrame frame = myStackFrames[i];
-        if (frame != null) {
-          model.addElement(frame);
-        }
-        else if (myErrorMessages != null && myErrorMessages.containsKey(i)) {
-          model.addElement(myErrorMessages.get(i));
-        }
-        else {
-          model.addElement(null);
-        }
+      for (XStackFrame stackFrame : myStackFrames) {
+        model.addElement(stackFrame);
+      }
+      if (myErrorMessage != null) {
+        model.addElement(myErrorMessage);
+      }
+      else if (!myAllFramesLoaded) {
+        model.addElement(null);
       }
     }
   }

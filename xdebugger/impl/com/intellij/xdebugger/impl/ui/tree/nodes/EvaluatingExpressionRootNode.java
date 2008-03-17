@@ -33,7 +33,7 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
     public void computeChildren(@NotNull final XCompositeNode node) {
       myDialog.startEvaluation(new XDebuggerEvaluator.XEvaluationCallback() {
         public void evaluated(@NotNull final XValue result) {
-          node.setChildren(Collections.singletonList(result));
+          node.addChildren(Collections.singletonList(result), true);
         }
 
         public void errorOccured(@NotNull final String errorMessage) {

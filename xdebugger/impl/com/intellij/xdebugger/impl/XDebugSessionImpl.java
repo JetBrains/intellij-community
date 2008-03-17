@@ -118,6 +118,10 @@ public class XDebugSessionImpl implements XDebugSession {
     return mySessionTab;
   }
 
+  public XDebugSessionTab getSessionTab() {
+    return mySessionTab;
+  }
+
   private XDebugSessionTab initSessionTab(@Nullable XDebugSessionImpl oldSession) {
     final XDebugSessionTab sessionTab = new XDebugSessionTab(myProject, mySessionName);
     Disposer.register(myProject, sessionTab);

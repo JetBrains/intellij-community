@@ -1,10 +1,10 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import org.jetbrains.annotations.NonNls;
@@ -22,9 +22,9 @@ public class XDebuggerTreePanel {
   private JPanel myMainPanel;
   private PopupHandler myPopupHandler;
 
-  public XDebuggerTreePanel(final Project project, final XDebuggerEditorsProvider editorsProvider, final XSourcePosition sourcePosition,
+  public XDebuggerTreePanel(final XDebugSession session, final XDebuggerEditorsProvider editorsProvider, final XSourcePosition sourcePosition,
                             @NotNull @NonNls final String popupActionGroupId) {
-    myTree = new XDebuggerTree(project, editorsProvider, sourcePosition);
+    myTree = new XDebuggerTree(session, editorsProvider, sourcePosition);
     myMainPanel = new JPanel(new BorderLayout());
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
     final ActionManager actionManager = ActionManager.getInstance();

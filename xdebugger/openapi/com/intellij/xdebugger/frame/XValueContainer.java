@@ -9,11 +9,10 @@ import java.util.Collections;
  */
 public abstract class XValueContainer {
   /**
-   * Start computing children of the value and call {@link com.intellij.xdebugger.frame.XCompositeNode#setChildren(java.util.List)} if
-   * computation is finished successfully or call {@link com.intellij.xdebugger.frame.XCompositeNode#setErrorMessage(String)} if an error occurs
+   * Start computing children of the value. Call {@link XCompositeNode#addChildren(java.util.List, boolean)} to add child nodes
    * @param node node in the tree
    */
   public void computeChildren(@NotNull XCompositeNode node) {
-    node.setChildren(Collections.<XValue>emptyList());
+    node.addChildren(Collections.<XValue>emptyList(), true);
   }
 }
