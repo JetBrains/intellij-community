@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import com.intellij.psi.PsiAnnotation;
 
 /**
@@ -24,4 +25,5 @@ import com.intellij.psi.PsiAnnotation;
  * @date: 04.04.2007
  */
 public interface GrAnnotation extends GroovyPsiElement, GrCondition, PsiAnnotation {
+  GrCodeReferenceElement getClassReference();
 }

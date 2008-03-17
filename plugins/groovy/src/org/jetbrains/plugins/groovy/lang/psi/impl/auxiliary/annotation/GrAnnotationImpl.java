@@ -81,4 +81,8 @@ public class GrAnnotationImpl extends GroovyPsiElementImpl implements GrAnnotati
   public PsiMetaDataBase getMetaData() {
     return null;
   }
+
+  public GrCodeReferenceElement getClassReference() {
+    return findChildByClass(GrCodeReferenceElement.class);
+  }
 }
