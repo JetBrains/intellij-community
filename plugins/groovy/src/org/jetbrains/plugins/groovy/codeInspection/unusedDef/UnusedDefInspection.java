@@ -150,7 +150,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
   }
 
   private GroovyPsiElement getScope(PsiElement var) {
-    return PsiTreeUtil.getParentOfType(var, GrClosableBlock.class, GrMethod.class, GrClassInitializer.class);
+    return PsiTreeUtil.getParentOfType(var, GrClosableBlock.class, GrMethod.class, GrClassInitializer.class, GroovyFileBase.class);
   }
 
   private boolean isLocalAssignment(PsiElement element) {
