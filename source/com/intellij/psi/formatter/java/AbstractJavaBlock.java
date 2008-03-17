@@ -131,7 +131,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private static Indent getDefaultSubtreeIndent(final ASTNode child) {
     final ASTNode parent = child.getTreeParent();
     final IElementType childNodeType = child.getElementType();
-    if (childNodeType == JavaElementType.ANNOTATION) return Indent.getNoneIndent();
+    if (childNodeType == JavaElementType.ANNOTATION) {
+      if (parent.getPsi() instanceof PsiArrayInitializerMemberValue) {
+        return Indent.getNormalIndent();
+      } else {
+        return Indent.getNoneIndent();
+      }
+    }
 
     final ASTNode prevElement = getPrevElement(child);
     if (prevElement != null && prevElement.getElementType() == JavaElementType.MODIFIER_LIST) {
