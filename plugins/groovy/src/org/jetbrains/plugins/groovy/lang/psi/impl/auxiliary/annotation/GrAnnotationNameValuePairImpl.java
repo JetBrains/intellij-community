@@ -80,7 +80,7 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
     if (nameId != null) {
       return nameId.getTextRange().shiftRight(-getTextRange().getStartOffset());
     }
-    return new TextRange(0, 0);
+    return new TextRange(0, getTextLength());
   }
 
   @Nullable
