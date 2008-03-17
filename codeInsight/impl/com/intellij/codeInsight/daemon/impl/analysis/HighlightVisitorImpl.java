@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
@@ -94,9 +95,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       success = refCountHolder.startAnalyzing();
       if (success) {
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-        PsiElement dirtyScope = document == null ? file : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL);
+        TextRange fileRange = file.getTextRange();
+        TextRange dirtyScope = document == null ? fileRange : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL);
         if (dirtyScope != null) {
-          if (dirtyScope instanceof PsiFile) {
+          if (dirtyScope.equals(fileRange)) {
             refCountHolder.clear();
           }
           else {
@@ -651,7 +653,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override public void visitParameterList(PsiParameterList list) {
-    if (list.getParent() instanceof PsiAnnotationMethod && list.getParametersCount() > 0) {
+    PsiElement parent = list.getParent();
+    if (parent instanceof PsiAnnotationMethod && list.getParametersCount() > 0) {
       myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                      list,
                                                      JavaErrorMessages.message("annotation.interface.members.may.not.have.parameters")));
@@ -694,10 +697,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkAbstractInstantiation(ref));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkExtendsDuplicate(ref, resolved));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkExceptionAlreadyCaught(ref, resolved));
-    /*if (!myHolder.hasErrorResults()) {
-      myHolder.add(DeprecationInspection.checkDeprecated(resolved, ref.getReferenceNameElement(), DaemonCodeAnalyzerSettings.getInstance()));
-    }*/
-    //if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkExceptionsNeverThrown(ref));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkClassExtendsForeignInnerClass(ref, resolved));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkSelectStaticClassFromParameterizedType(resolved, ref));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, ref, result.getSubstitutor()));

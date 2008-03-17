@@ -96,7 +96,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
     // optimization
     if (whitespaceOptimizationAllowed && UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document)) {
       if (child instanceof PsiWhiteSpace || child instanceof PsiComment) {
-        fileStatusMap.markFileScopeDirty(document, child);
+        fileStatusMap.markFileScopeDirty(document, child.getTextRange());
         return;
       }
     }
@@ -110,7 +110,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
 
       final PsiElement scope = getChangeHighlightingScope(element);
       if (scope != null) {
-        fileStatusMap.markFileScopeDirty(document, scope);
+        fileStatusMap.markFileScopeDirty(document, scope.getTextRange());
         return;
       }
 

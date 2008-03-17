@@ -10,11 +10,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -36,21 +33,13 @@ public class FileStatusMap {
   @Nullable
   static TextRange getDirtyTextRange(Editor editor, int part) {
     Document document = editor.getDocument();
+    TextRange documentRange = TextRange.from(0, document.getTextLength());
 
-    PsiElement dirtyScope = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(editor.getProject())).getFileStatusMap().getFileDirtyScope(document, part);
-    if (dirtyScope == null || !dirtyScope.isValid()) {
+    TextRange dirtyScope = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(editor.getProject())).getFileStatusMap().getFileDirtyScope(document, part);
+    if (dirtyScope == null || !documentRange.contains(dirtyScope)) {
       return null;
     }
-    PsiFile file = dirtyScope.getContainingFile();
-    if (file.getTextLength() != document.getTextLength()) {
-      LOG.error("Length wrong! dirtyScope:" + dirtyScope,
-                "file length:" + file.getTextLength(),
-                "document length:" + document.getTextLength(),
-                "file stamp:" + file.getModificationStamp(),
-                "document stamp:" + document.getModificationStamp()
-                );
-    }
-    return dirtyScope.getTextRange();
+    return dirtyScope;
   }
 
   public void setErrorFoundFlag(Document document, boolean errorFound) {
@@ -75,21 +64,22 @@ public class FileStatusMap {
   }
 
   private static class FileStatus {
-    private PsiElement dirtyScope; //Q: use WeakReference?
-    private PsiElement localInspectionsDirtyScope;
-    public boolean defensivelyMarked; // file marked dirty without knowlesdge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
+    private TextRange dirtyScope;
+    private TextRange localInspectionsDirtyScope;
+    public boolean defensivelyMarked; // file marked dirty without knowledge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
     private boolean wolfPassFinfished;
-    private PsiElement externalDirtyScope;
-    private TIntObjectHashMap<PsiElement> customPassDirtyScopes = new TIntObjectHashMap<PsiElement>();
+    private TextRange externalDirtyScope;
+    private final TIntObjectHashMap<TextRange> customPassDirtyScopes = new TIntObjectHashMap<TextRange>();
     private boolean errorFound;
 
-    private FileStatus(PsiElement dirtyScope) {
-      this.dirtyScope = dirtyScope;
-      localInspectionsDirtyScope = dirtyScope;
-      externalDirtyScope = dirtyScope;
-      TextEditorHighlightingPassRegistrarImpl registrar = (TextEditorHighlightingPassRegistrarImpl) TextEditorHighlightingPassRegistrar.getInstance(dirtyScope.getProject());
+    private FileStatus(PsiFile file) {
+      TextRange range = file.getTextRange();
+      dirtyScope = range;
+      localInspectionsDirtyScope = range;
+      externalDirtyScope = range;
+      TextEditorHighlightingPassRegistrarImpl registrar = (TextEditorHighlightingPassRegistrarImpl) TextEditorHighlightingPassRegistrar.getInstance(file.getProject());
       for(DirtyScopeTrackingHighlightingPassFactory factory: registrar.getDirtyScopeTrackingFactories()) {
-        customPassDirtyScopes.put(factory.getPassId(), dirtyScope);
+        customPassDirtyScopes.put(factory.getPassId(), range);
       }
     }
 
@@ -148,17 +138,19 @@ public class FileStatusMap {
   /**
    * @param document
    * @param passId
-   * @return null for processed file, whole file for untouched or entirely dirty file, PsiElement(usually code block) for dirty region (optimization)
+   * @return null for processed file, whole file for untouched or entirely dirty file, range(usually code block) for dirty region (optimization)
    */
   @Nullable
-  public PsiElement getFileDirtyScope(@NotNull Document document, int passId) {
+  public TextRange getFileDirtyScope(@NotNull Document document, int passId) {
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
-        return PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        return file == null ? null : file.getTextRange();
       }
       if (status.defensivelyMarked) {
-        status.dirtyScope = status.localInspectionsDirtyScope = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        status.dirtyScope = status.localInspectionsDirtyScope = file == null ? null : file.getTextRange();
         status.defensivelyMarked = false;
       }
       switch (passId) {
@@ -193,7 +185,7 @@ public class FileStatusMap {
     }
   }
 
-  public void markFileScopeDirty(@NotNull Document document, @NotNull PsiElement scope) {
+  public void markFileScopeDirty(@NotNull Document document, @NotNull TextRange scope) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("********************************* Mark dirty: "+scope);
     }
@@ -209,14 +201,12 @@ public class FileStatusMap {
     }
   }
 
-  @Nullable
-  private static PsiElement combineScopes(PsiElement scope1, PsiElement scope2, Document document, Project project) {
+  private static TextRange combineScopes(TextRange scope1, TextRange scope2, Document document, Project project) {
     if (scope1 == null) return scope2;
     if (scope2 == null) return scope1;
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    if (!scope1.isValid() || !scope2.isValid()) return documentManager.getPsiFile(document);
-    final PsiElement commonParent = PsiTreeUtil.findCommonParent(scope1, scope2);
-    return commonParent == null || commonParent instanceof PsiDirectory ? documentManager.getPsiFile(document) : commonParent;
+    TextRange documentRange = TextRange.from(0, document.getTextLength());
+    if (!documentRange.contains(scope1) || !documentRange.contains(scope2)) return documentRange;
+    return scope1.union(scope2);
   }
 
   public boolean allDirtyScopesAreNull(final Document document) {

@@ -26,6 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -321,7 +322,8 @@ public class UpdateHighlightersUtil {
     int end = iterator.getEnd();
 
     List<HighlightInfo> array = new ArrayList<HighlightInfo>(highlights.length);
-    boolean changed = false;
+    boolean highlightersChanged = false;
+    boolean documentChangedInsideHighlighter = false;
     for (HighlightInfo info : highlights) {
       RangeHighlighter highlighter = info.highlighter;
       boolean toRemove = false;
@@ -344,6 +346,8 @@ public class UpdateHighlightersUtil {
         else if (start < highlighterEnd && highlighterStart < end) {
           LOG.assertTrue(0 <= highlighterStart);
           LOG.assertTrue(highlighterStart < document.getTextLength());
+          documentChangedInsideHighlighter = true;
+
           HighlighterIterator iterator1 = ((EditorEx)editor).getHighlighter().createIterator(highlighterStart);
           int start1 = iterator1.getStart();
           while (iterator1.getEnd() < highlighterEnd) {
@@ -351,52 +355,27 @@ public class UpdateHighlightersUtil {
           }
           int end1 = iterator1.getEnd();
           CharSequence chars = document.getCharsSequence();
-          String token = chars.subSequence(start1, end1).toString();
-          if (start1 != highlighterStart || end1 != highlighterEnd || !token.equals(info.text)) {
+          if (start1 != highlighterStart || end1 != highlighterEnd || !CharArrayUtil.regionMatches(chars, start1, end1, info.text)) {
             toRemove = true;
-            disableWhiteSpaceOptimization(document);
           }
         }
       }
 
       if (toRemove) {
         document.getMarkupModel(project).removeHighlighter(highlighter);
-        changed = true;
+        highlightersChanged = true;
       }
       else {
         array.add(info);
       }
     }
 
-    if (changed) {
+    if (highlightersChanged || documentChangedInsideHighlighter) {
+      disableWhiteSpaceOptimization(document);
+    }
+    if (highlightersChanged) {
       HighlightInfo[] newHighlights = array.toArray(new HighlightInfo[array.size()]);
       DaemonCodeAnalyzerImpl.setHighlights(document, newHighlights, project);
     }
   }
-
-  /*
-  // temp!!
-  public static void checkConsistency(DaemonCodeAnalyzerImpl codeAnalyzer, Document document){
-    LOG.assertTrue(ApplicationImpl.isDispatchThreadStatic());
-    HighlightInfo[] highlights = codeAnalyzer.getHighlights(document);
-    if (highlights == null){
-      highlights = new HighlightInfo[0];
-    }
-    ArrayList infos = new ArrayList();
-    for(int i = 0; i < highlights.length; i++){
-      infos.add(highlights[i]);
-    }
-
-    RangeHighlighter[] highlighters = document.getMarkupModel().getAllHighlighters for(int i = 0; i < highlighters.length; i++){
-      RangeHighlighter highlighter = highlighters[i];
-      Object userObject = ((RangeHighlighterEx)highlighter).getUserObject();
-      if (userObject instanceof HighlightInfo){
-        LOG.assertTrue(infos.contains(userObject));
-        infos.remove(userObject);
-      }
-    }
-    LOG.assertTrue(infos.isEmpty());
-  }
-  */
-
 }
