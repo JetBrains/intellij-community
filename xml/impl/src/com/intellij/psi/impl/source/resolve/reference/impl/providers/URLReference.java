@@ -69,9 +69,11 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
     if (canonicalText.length() == 0) {
       final XmlAttribute attr = PsiTreeUtil.getParentOfType(getElement(), XmlAttribute.class);
 
-      if (attr != null &&
-          attr.isNamespaceDeclaration() &&
-          attr.getNamespacePrefix().length() == 0
+      if (( attr != null &&
+            attr.isNamespaceDeclaration() &&
+            attr.getNamespacePrefix().length() == 0
+          ) ||
+          ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(canonicalText)
          ) {
         // Namespaces in XML 1.0 2nd edition, Section 6.2, last paragraph
         // The attribute value in a default namespace declaration MAY be empty. This has the same effect, within the scope of the declaration,
