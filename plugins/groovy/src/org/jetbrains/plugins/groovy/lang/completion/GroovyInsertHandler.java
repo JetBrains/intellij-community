@@ -30,9 +30,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 import java.util.Arrays;
 
@@ -51,9 +54,18 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
         handleOverwrite(editor.getCaretModel().getOffset(), document);
       }
 
-      if (startOffset > 0 && document.getCharsSequence().charAt(startOffset - 1) == '&') return;   //all creation
       CaretModel caretModel = editor.getCaretModel();
       int offset = startOffset + method.getName().length();
+      PsiFile file = PsiDocumentManager.getInstance(method.getProject()).getPsiFile(document);
+      PsiElement elementAt = file.findElementAt(startOffset);
+      if (elementAt instanceof GrReferenceExpression && ((GrReferenceExpression) elementAt).getDotTokenType() == GroovyElementTypes.mMEMBER_POINTER) return;
+
+      if (elementAt.getParent() instanceof GrAnnotationNameValuePair || elementAt.getParent().getParent() instanceof GrAnnotationNameValuePair) {
+        document.insertString(offset, " = ");
+        caretModel.moveToOffset(offset + 3);
+        return;
+      }
+
       if (parameters.length == 0) {
         if (offset == document.getTextLength() || document.getCharsSequence().charAt(offset) != '(') {
           document.insertString(offset, "()");
