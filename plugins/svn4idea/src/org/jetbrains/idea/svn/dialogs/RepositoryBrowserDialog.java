@@ -775,7 +775,6 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-
   protected void doCheckout(@Nullable final CheckoutProvider.Listener listener) {
     SVNURL url = getNotNullSelectedNode().getURL();
     File dir = selectFile("Destination directory", "Select checkout destination directory");
