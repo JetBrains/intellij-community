@@ -14,7 +14,7 @@ public class DefaultStubBuilder implements StubBuilder {
   }
 
   protected StubElement createStubForFile(final PsiFile file) {
-    return new PsiFileStubImpl();
+    return new PsiFileStubImpl(file);
   }
 
   private static StubElement buildStubTreeFor(PsiElement elt, StubElement parentStub) {

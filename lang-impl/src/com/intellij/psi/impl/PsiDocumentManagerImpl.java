@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -24,8 +25,8 @@ import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
@@ -40,7 +41,7 @@ import java.util.Set;
 
 //todo listen & notifyListeners readonly events?
 
-public class PsiDocumentManagerImpl extends PsiDocumentManager implements ProjectComponent, DocumentListener {
+public class PsiDocumentManagerImpl extends PsiDocumentManager implements ProjectComponent, DocumentListener, SettingsSavingComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<PsiFile> HARD_REF_TO_PSI = new Key<PsiFile>("HARD_REFERENCE_TO_PSI");
   private static final Key<Boolean> KEY_COMMITING = new Key<Boolean>("Commiting");
@@ -555,5 +556,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   public boolean isCommittingDocument(final Document doc) {
     return doc.getUserData(KEY_COMMITING) == Boolean.TRUE;
+  }
+
+  public void save() {
+    // Ensure all documents are commited on save so file content dependent indicies, that use PSI to build have consistent content.
+    commitAllDocuments();
   }
 }

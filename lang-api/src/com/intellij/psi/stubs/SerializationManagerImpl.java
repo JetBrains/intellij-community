@@ -46,7 +46,7 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
 
       public PsiFileStub deserialize(final DataInputStream dataStream,
                                      final StubElement parentStub, final PersistentStringEnumerator nameStorage) throws IOException {
-        return new PsiFileStubImpl();
+        return new PsiFileStubImpl(null);
       }
 
       public void indexStub(final PsiFileStub stub, final IndexSink sink) {

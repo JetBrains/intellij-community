@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
@@ -414,6 +415,10 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
           if (!vFile.isValid()) {
             continue; // since the corresponding file is invalid, the document should be ignored
           }
+
+          // Do not index content until document is committed. It will cause problems for indices, that depend on PSI otherwise.
+          if (isUncomitted(document)) continue;
+
           final long currentDocStamp = document.getModificationStamp();
           if (currentDocStamp != getLastIndexedStamp(document).getAndSet(currentDocStamp)) {
             CharSequence lastIndexed = myLastIndexedUnsavedContent.get(document);
@@ -873,5 +878,15 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   public void removeIndexableSet(IndexableFileSet set) {
     myIndexableSets.remove(set);
+  }
+
+  public static boolean isUncomitted(Document doc) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      if (PsiDocumentManager.getInstance(project).isUncommited(doc)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

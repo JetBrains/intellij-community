@@ -29,11 +29,17 @@ public abstract class StubBase<T extends PsiElement> implements StubElement<T> {
     return myChildren;
   }
 
+  public void setPsi(final T psi) {
+    myPsi = psi;
+  }
+
   public T getPsi() {
     if (myPsi != null) return myPsi;
 
     synchronized (PsiLock.LOCK) {
       if (myPsi != null) return myPsi;
+
+      //noinspection unchecked
       myPsi = (T)getStubType().createPsi(this);
     }
 

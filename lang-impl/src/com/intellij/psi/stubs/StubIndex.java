@@ -27,19 +27,20 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StubIndex implements FileBasedIndexExtension<Integer, byte[]> {
-  public static final ID<Integer, byte[]> INDEX_ID = ID.create("StubIndex");
-  private static final DataExternalizer<byte[]> KEY_EXTERNALIZER = new DataExternalizer<byte[]>() {
-    public void save(final DataOutput out, final byte[] value) throws IOException {
+public class StubIndex implements FileBasedIndexExtension<Integer, SerializedStubContent> {
+  public static final ID<Integer, SerializedStubContent> INDEX_ID = ID.create("StubIndex");
+  private static final DataExternalizer<SerializedStubContent> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubContent>() {
+    public void save(final DataOutput out, final SerializedStubContent v) throws IOException {
+      byte[] value = v.getBytes();
       out.writeInt(value.length);
       out.write(value);
     }
 
-    public byte[] read(final DataInput in) throws IOException {
+    public SerializedStubContent read(final DataInput in) throws IOException {
       int len = in.readInt();
       byte[] result = new byte[len];
       in.readFully(result);
-      return result;
+      return new SerializedStubContent(result);
     }
   };
   private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
@@ -71,19 +72,19 @@ public class StubIndex implements FileBasedIndexExtension<Integer, byte[]> {
     }
   };
 
-  public ID<Integer, byte[]> getName() {
+  public ID<Integer, SerializedStubContent> getName() {
     return INDEX_ID;
   }
 
-  public DataIndexer<Integer, byte[], FileBasedIndex.FileContent> getIndexer() {
-    return new DataIndexer<Integer, byte[], FileBasedIndex.FileContent>() {
-      public Map<Integer, byte[]> map(final FileBasedIndex.FileContent inputData) {
-        final Map<Integer, byte[]> result = new HashMap<Integer, byte[]>();
+  public DataIndexer<Integer, SerializedStubContent, FileBasedIndex.FileContent> getIndexer() {
+    return new DataIndexer<Integer, SerializedStubContent, FileBasedIndex.FileContent>() {
+      public Map<Integer, SerializedStubContent> map(final FileBasedIndex.FileContent inputData) {
+        final Map<Integer, SerializedStubContent> result = new HashMap<Integer, SerializedStubContent>();
         if (!(inputData.file instanceof NewVirtualFile)) return result;
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            final int key = ((NewVirtualFile)inputData.file).getId();
+            final int key = Math.abs(FileBasedIndex.getFileId(inputData.file));
             final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             DataOutputStream stream = new DataOutputStream(bytes);
             final LanguageFileType filetype = (LanguageFileType)inputData.file.getFileType();
@@ -98,7 +99,7 @@ public class StubIndex implements FileBasedIndexExtension<Integer, byte[]> {
             final StubElement stub = ((IStubFileElementType)type).getBuilder().buildStubTree(copy);
 
             SerializationManager.getInstance().serialize(stub, stream);
-            result.put(key, bytes.toByteArray());
+            result.put(key, new SerializedStubContent(bytes.toByteArray()));
           }
         });
 
@@ -111,7 +112,7 @@ public class StubIndex implements FileBasedIndexExtension<Integer, byte[]> {
     return DATA_DESCRIPTOR;
   }
 
-  public DataExternalizer<byte[]> getValueExternalizer() {
+  public DataExternalizer<SerializedStubContent> getValueExternalizer() {
     return KEY_EXTERNALIZER;
   }
 
@@ -124,6 +125,6 @@ public class StubIndex implements FileBasedIndexExtension<Integer, byte[]> {
   }
 
   public int getVersion() {
-    return 1;
+    return 2;
   }
 }

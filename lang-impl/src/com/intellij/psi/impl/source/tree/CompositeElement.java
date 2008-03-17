@@ -415,4 +415,8 @@ public class CompositeElement extends TreeElement implements Cloneable {
       return myWrapper;
     }
   }
+
+  public void setPsi(PsiElement psi) {
+    myWrapper = psi;
+  }
 }

@@ -6,8 +6,19 @@ package com.intellij.psi.stubs;
 import com.intellij.psi.PsiFile;
 
 public class PsiFileStubImpl extends StubBase<PsiFile> implements PsiFileStub {
-  public PsiFileStubImpl() {
+  private PsiFile myFile;
+
+  public PsiFileStubImpl(final PsiFile file) {
     super(null);
+    myFile = file;
+  }
+
+  public PsiFile getPsi() {
+    return myFile;
+  }
+
+  public void setPsi(final PsiFile psi) {
+    myFile = psi;
   }
 
   public IStubElementType getStubType() {
