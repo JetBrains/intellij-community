@@ -4,10 +4,8 @@
  */
 package com.intellij.ide.util.newProjectWizard.modes;
 
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.ProjectNameWithTypeStep;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
-import com.intellij.ide.util.newProjectWizard.SupportForFrameworksStep;
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -17,7 +15,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,9 +51,6 @@ public class CreateFromScratchMode extends WizardMode {
         final ModuleWizardStep[] steps = type.createWizardSteps(context, builder, modulesProvider);
         for (ModuleWizardStep step : steps) {
           sequence.addCommonStep(step);
-        }
-        if (FrameworkSupportUtil.hasProviders(type)) {
-          sequence.addCommonStep(new SupportForFrameworksStep(builder, LibrariesContainerFactory.createContainer(context.getProject())));
         }
       }
     myBuildersMap.put(ModuleType.EMPTY.getId(), new EmptyModuleBuilder());
