@@ -1,15 +1,19 @@
 package com.intellij.openapi.diff.impl.external;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.FrameWrapper;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -25,7 +29,7 @@ class FrameDiffTool implements DiffTool {
     Collection hints = request.getHints();
     boolean shouldOpenDialog = shouldOpenDialog(hints);
     if (shouldOpenDialog) {
-      DialogBuilder builder = new DialogBuilder(request.getProject());
+      final DialogBuilder builder = new DialogBuilder(request.getProject());
       DiffPanelImpl diffPanel = createDiffPanelIfShouldShow(request, builder.getWindow());
       if (diffPanel == null) return;
       builder.setCenterPanel(diffPanel.getComponent());
@@ -34,13 +38,28 @@ class FrameDiffTool implements DiffTool {
       builder.removeAllActions();
       builder.setTitle(request.getWindowTitle());
       builder.setDimensionServiceKey(request.getGroupKey());
+
+      new AnAction() {
+        public void actionPerformed(final AnActionEvent e) {
+          builder.getDialogWrapper().close(0);
+        }
+      }.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("CloseEditor")),
+                                  diffPanel.getComponent());
       showDiffDialog(builder, hints);
     } else {
-      FrameWrapper frameWrapper = new FrameWrapper(request.getGroupKey());
+      final FrameWrapper frameWrapper = new FrameWrapper(request.getGroupKey());
       DiffPanelImpl diffPanel = createDiffPanelIfShouldShow(request, frameWrapper.getFrame());
       if (diffPanel == null) return;
       frameWrapper.setTitle(request.getWindowTitle());
       DiffUtil.initDiffFrame(frameWrapper, diffPanel);
+
+      new AnAction() {
+        public void actionPerformed(final AnActionEvent e) {
+          frameWrapper.getFrame().dispose();
+        }
+      }.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("CloseEditor")),
+                                  diffPanel.getComponent());
+
       frameWrapper.show();
     }
   }
