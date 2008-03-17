@@ -1,0 +1,8 @@
+{
+  int a = 1
+  <begin>a<end> + b
+}
+-----
+{
+    1<caret> + b
+}

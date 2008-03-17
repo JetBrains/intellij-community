@@ -175,6 +175,7 @@ public class PsiImplUtil {
     final PsiElement parent = varDecl.getParent();
     final ASTNode owner = parent.getNode();
     if (variables.size() == 1 && owner != null) {
+      removeNewLineAfter(varDecl);
       owner.removeChild(varDeclNode);
       PsiUtil.reformatCode(parent);
       return;
