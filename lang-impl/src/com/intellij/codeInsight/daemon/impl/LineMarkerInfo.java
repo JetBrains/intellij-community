@@ -17,7 +17,6 @@ import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
 
 public class LineMarkerInfo {
-
   private Icon myIcon;
   public final WeakReference<PsiElement> elementRef;
   public final int startOffset;
@@ -27,17 +26,17 @@ public class LineMarkerInfo {
   public RangeHighlighter highlighter;
   public final int updatePass;
 
-  private final Function<PsiElement, String> myTooltipProvider;
+  @Nullable private final Function<PsiElement, String> myTooltipProvider;
   private final GutterIconRenderer.Alignment myIconAlignment;
-  private final GutterIconNavigationHandler myNavigationHandler;
+  @Nullable private final GutterIconNavigationHandler myNavigationHandler;
 
 
   public LineMarkerInfo(PsiElement element,
                         int startOffset,
                         Icon icon,
                         int updatePass,
-                        Function<PsiElement, String> tooltipProvider,
-                        GutterIconNavigationHandler navHandler,
+                        @Nullable Function<PsiElement, String> tooltipProvider,
+                        @Nullable GutterIconNavigationHandler navHandler,
                         GutterIconRenderer.Alignment alignment) {
     myIcon = icon;
     myTooltipProvider = tooltipProvider;
@@ -52,11 +51,12 @@ public class LineMarkerInfo {
                         int startOffset,
                         Icon icon,
                         int updatePass,
-                        Function<PsiElement, String> tooltipProvider,
-                        GutterIconNavigationHandler navHandler) {
+                        @Nullable Function<PsiElement, String> tooltipProvider,
+                        @Nullable GutterIconNavigationHandler navHandler) {
     this(element, startOffset, icon, updatePass, tooltipProvider, navHandler, GutterIconRenderer.Alignment.RIGHT);
   }
 
+  @Nullable
   public GutterIconRenderer createGutterRenderer() {
     if (myIcon == null) return null;
     return new GutterIconRenderer() {
@@ -77,7 +77,7 @@ public class LineMarkerInfo {
         return getLineMarkerTooltip();
       }
 
-      public GutterIconRenderer.Alignment getAlignment() {
+      public Alignment getAlignment() {
         return myIconAlignment;
       }
     };
