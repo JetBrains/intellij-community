@@ -42,8 +42,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     dialog.show();
   }
 
-  public static void doCheckout(final Project project, final File target, final String url, final boolean recursive,
-                                final boolean ignoreExternals, @Nullable final Listener listener) {
+  public static void doCheckout(final Project project, final File target, final String url, final SVNRevision revision,
+                                final boolean recursive, final boolean ignoreExternals, @Nullable final Listener listener) {
     final Ref<Boolean> checkoutSuccessful = new Ref<Boolean>();
     try {
       final SVNException[] exception = new SVNException[1];
@@ -56,7 +56,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
           client.setIgnoreExternals(ignoreExternals);
           try {
             progressIndicator.setText(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
-            client.doCheckout(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, SVNRevision.HEAD, recursive);
+            client.doCheckout(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, revision, recursive);
             progressIndicator.checkCanceled();
             checkoutSuccessful.set(Boolean.TRUE);
           }

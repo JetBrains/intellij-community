@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -786,7 +787,15 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     dialog.show();
     dir = dialog.getTarget();
     if (dialog.isOK()) {
-      SvnCheckoutProvider.doCheckout(myProject, dir, url.toString(), dialog.isRecursive(), dialog.isIgnoreExternals(), listener);
+      final SVNRevision revision;
+        try {
+          revision =  dialog.getRevision();
+        } catch (ConfigurationException e) {
+          Messages.showErrorDialog(SvnBundle.message("message.text.cannot.checkout", e.getMessage()), SvnBundle.message("message.title.check.out"));
+          return;
+        }
+
+      SvnCheckoutProvider.doCheckout(myProject, dir, url.toString(), revision, dialog.isRecursive(), dialog.isIgnoreExternals(), listener);
     }
   }
 

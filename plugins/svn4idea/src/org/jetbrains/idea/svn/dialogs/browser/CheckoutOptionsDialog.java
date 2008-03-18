@@ -6,10 +6,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.revision.SvnSelectRevisionPanel;
+import org.jetbrains.idea.svn.update.SvnRevisionPanel;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -22,12 +27,22 @@ public class CheckoutOptionsDialog extends DialogWrapper implements ActionListen
   private JCheckBox myExternalsCheckbox;
   private JLabel myUrlLabel;
   private JPanel myTopPanel;
+  private SvnSelectRevisionPanel svnSelectRevisionPanel;
 
   public CheckoutOptionsDialog(Project project, SVNURL url, File target) {
     super(project, true);
-    myUrlLabel.setText(url.toString());
+    final String urlText = url.toString();
+    myUrlLabel.setText(urlText);
     myPathField.setText(target.getAbsolutePath());
     myPathField.addActionListener(this);
+
+    svnSelectRevisionPanel.setProject(project);
+    svnSelectRevisionPanel.setUrlProvider(new SvnRevisionPanel.UrlProvider() {
+      public String getUrl() {
+        return urlText;
+      }
+    });
+
     setTitle(SvnBundle.message("checkout.options.dialog.title"));
     init();
   }
@@ -52,6 +67,11 @@ public class CheckoutOptionsDialog extends DialogWrapper implements ActionListen
   @Nullable
   protected JComponent createCenterPanel() {
     return myTopPanel;
+  }
+
+  @NotNull
+  public SVNRevision getRevision() throws ConfigurationException {
+      return svnSelectRevisionPanel.getRevision();
   }
 
   public void actionPerformed(ActionEvent e) {

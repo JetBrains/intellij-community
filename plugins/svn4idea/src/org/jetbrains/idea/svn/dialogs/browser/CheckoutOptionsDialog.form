@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.svn.dialogs.browser.CheckoutOptionsDialog">
   <grid id="c0dc8" binding="myTopPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
     <constraints>
-      <xy x="10" y="10" width="337" height="149"/>
+      <xy x="10" y="10" width="397" height="149"/>
     </constraints>
     <properties/>
     <border type="none">
@@ -46,13 +46,10 @@
               <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="3" indent="0" use-parent-layout="false"/>
               <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="0.0"/>
             </constraints>
-            <properties>
-              <editable value="false"/>
-            </properties>
           </component>
           <component id="4170f" class="javax.swing.JCheckBox" binding="myRecursiveCheckbox">
             <constraints>
-              <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
@@ -62,7 +59,7 @@
           </component>
           <component id="a1fdf" class="javax.swing.JCheckBox" binding="myExternalsCheckbox">
             <constraints>
-              <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="4" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
@@ -72,11 +69,17 @@
           </component>
           <component id="c374f" class="javax.swing.JSeparator">
             <constraints>
-              <grid row="4" column="0" row-span="1" col-span="3" vsize-policy="6" hsize-policy="6" anchor="2" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="5" column="0" row-span="1" col-span="3" vsize-policy="6" hsize-policy="6" anchor="2" fill="1" indent="0" use-parent-layout="false"/>
               <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="1.0"/>
             </constraints>
             <properties/>
           </component>
+          <nested-form id="20d59" form-file="org/jetbrains/idea/svn/revision/SvnSelectRevisionPanel.form" binding="svnSelectRevisionPanel">
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+            </constraints>
+          </nested-form>
         </children>
       </grid>
     </children>
