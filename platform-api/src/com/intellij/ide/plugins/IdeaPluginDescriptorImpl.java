@@ -202,7 +202,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return descriptionChildText;
     }
 
-    return CommonBundle.messageOrDefault(bundle, createDescriptionKey(id), descriptionChildText);
+    return CommonBundle.messageOrDefault(bundle, createDescriptionKey(id), descriptionChildText == null ? "" : descriptionChildText);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

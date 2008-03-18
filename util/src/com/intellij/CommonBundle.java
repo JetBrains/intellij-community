@@ -37,6 +37,7 @@ import java.util.ResourceBundle;
 public class CommonBundle {
   @NonNls private static final String BUNDLE = "messages.CommonBundle";
   private static Reference<ResourceBundle> ourBundle;
+  public static boolean assertKeyIsFound = false;
 
   private CommonBundle() {}
 
@@ -54,7 +55,7 @@ public class CommonBundle {
     return bundle;
   }
 
-  public static String messageOrDefault(@Nullable final ResourceBundle bundle, final String key, String defaultValue, final Object... params) {
+  public static String messageOrDefault(@Nullable final ResourceBundle bundle, final String key, final @Nullable String defaultValue, final Object... params) {
     if (bundle == null) return defaultValue;
 
     String value;
@@ -62,7 +63,14 @@ public class CommonBundle {
       value = bundle.getString(key);
     }
     catch (MissingResourceException e) {
-      return defaultValue;
+      if (defaultValue != null) {
+        value = defaultValue;
+      } else {
+        value = "!" + key + "!";
+        if (assertKeyIsFound) {
+          assert false: key + " is not found";
+        }
+      }
     }
 
     value = UIUtil.replaceMnemonicAmpersand(value);
@@ -73,8 +81,9 @@ public class CommonBundle {
 
     return value;
   }
+
   public static String message(final ResourceBundle bundle, final String key, final Object... params) {
-    return messageOrDefault(bundle, key, "!" + key + "!", params);
+    return messageOrDefault(bundle, key, null, params);
   }
 
   public static String getCancelButtonText() {

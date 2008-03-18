@@ -1,10 +1,8 @@
-package com.intellij.j2ee.openapi.impl;
+package com.intellij.javaee;
 
-import com.intellij.j2ee.extResources.ExternalResourceListener;
-import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import org.jetbrains.annotations.NotNull;
 
 /**

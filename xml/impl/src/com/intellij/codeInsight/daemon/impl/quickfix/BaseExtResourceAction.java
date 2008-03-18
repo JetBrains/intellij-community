@@ -1,17 +1,17 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlBundle;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +31,7 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
     XmlFile xmlFile = XmlUtil.findNamespace(file, uri);
     if (xmlFile != null) return false;
     if (!isAcceptableUri(uri)) return false;
-    setText(QuickFixBundle.message(getQuickFixKeyId()));
+    setText(XmlBundle.message(getQuickFixKeyId()));
     return true;
   }
 
@@ -43,7 +43,7 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
 
   @NotNull
   public String getFamilyName() {
-    return QuickFixBundle.message(getQuickFixKeyId());
+    return XmlBundle.message(getQuickFixKeyId());
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {

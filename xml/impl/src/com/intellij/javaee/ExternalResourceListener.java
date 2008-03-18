@@ -1,4 +1,4 @@
-package com.intellij.j2ee.extResources;
+package com.intellij.javaee;
 
 /**
  * @author mike

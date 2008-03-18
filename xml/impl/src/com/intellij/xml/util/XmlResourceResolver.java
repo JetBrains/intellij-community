@@ -1,6 +1,6 @@
 package com.intellij.xml.util;
 
-import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.UriUtil;
 import com.intellij.openapi.application.ApplicationManager;

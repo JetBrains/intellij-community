@@ -1,6 +1,6 @@
-package com.intellij.j2ee.openapi.ex;
+package com.intellij.javaee;
 
-import com.intellij.j2ee.extResources.ExternalResourceListener;
+import com.intellij.javaee.ExternalResourceListener;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.openapi.Disposable;

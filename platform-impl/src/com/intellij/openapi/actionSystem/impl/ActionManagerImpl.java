@@ -408,16 +408,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   private static String loadDescriptionForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
+    final String value = element.getAttributeValue(DESCRIPTION);
     if (bundle != null) {
       @NonNls final String key = elementType + "." + id + ".description";
-      return CommonBundle.messageOrDefault(bundle, key, element.getAttributeValue(DESCRIPTION));
+      return CommonBundle.messageOrDefault(bundle, key, value == null ? "" : value);
     } else {
-      return element.getAttributeValue(DESCRIPTION);
+      return value;
     }
   }
 
   private static String loadTextForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
-    return CommonBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, element.getAttributeValue(TEXT_ATTR_NAME));
+    final String value = element.getAttributeValue(TEXT_ATTR_NAME);
+    return CommonBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, value == null ? "" : value);
   }
 
   private AnAction processGroupElement(Element element, final ClassLoader loader, PluginId pluginId) {

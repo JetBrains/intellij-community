@@ -2,7 +2,7 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.Validator;
-import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;

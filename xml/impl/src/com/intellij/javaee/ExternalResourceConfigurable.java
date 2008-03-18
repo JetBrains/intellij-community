@@ -1,15 +1,14 @@
-package com.intellij.j2ee.extResources;
+package com.intellij.javaee;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.ui.AddEditRemovePanel;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -27,7 +26,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   private AddEditRemovePanel<String> myIgnorePanel;
 
   public String getDisplayName() {
-    return IdeBundle.message("display.name.edit.external.resource");
+    return XmlBundle.message("display.name.edit.external.resource");
   }
 
   public JComponent createComponent() {
@@ -37,7 +36,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
       }
     };
 
-    myExtPanel = new AddEditRemovePanel<EditLocationDialog.NameLocationPair>(new ExtUrlsTableModel(), myPairs, IdeBundle.message("label.edit.external.resource.configure.external.resources")) {
+    myExtPanel = new AddEditRemovePanel<EditLocationDialog.NameLocationPair>(new ExtUrlsTableModel(), myPairs, XmlBundle.message("label.edit.external.resource.configure.external.resources")) {
       protected EditLocationDialog.NameLocationPair addItem() {
         return addExtLocation();
       }
@@ -66,7 +65,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
 
     myExtPanel.setRenderer(1, new PathRenderer());
 
-    myIgnorePanel = new AddEditRemovePanel<String>(new IgnoredUrlsModel(), myIgnoredUrls, IdeBundle.message("label.edit.external.resource.configure.ignored.resources")) {
+    myIgnorePanel = new AddEditRemovePanel<String>(new IgnoredUrlsModel(), myIgnoredUrls, XmlBundle.message("label.edit.external.resource.configure.ignored.resources")) {
       protected String addItem() {
         return addIgnoreLocation();
       }
@@ -217,7 +216,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   }
 
   private class IgnoredUrlsModel implements AddEditRemovePanel.TableModel {
-    private final String[] myNames = {IdeBundle.message("column.name.edit.external.resource.uri")};
+    private final String[] myNames = {XmlBundle.message("column.name.edit.external.resource.uri")};
 
     public int getColumnCount() {
       return myNames.length;
@@ -234,7 +233,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
 
   private class ExtUrlsTableModel implements AddEditRemovePanel.TableModel {
     final String[] myNames =
-      {IdeBundle.message("column.name.edit.external.resource.uri"), IdeBundle.message("column.name.edit.external.resource.location")};
+      {XmlBundle.message("column.name.edit.external.resource.uri"), XmlBundle.message("column.name.edit.external.resource.location")};
 
     public int getColumnCount() {
       return myNames.length;

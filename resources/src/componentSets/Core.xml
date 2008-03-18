@@ -27,7 +27,7 @@
     </component>
     <component>
       <interface-class>com.intellij.javaee.ExternalResourceManager</interface-class>
-      <implementation-class>com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl</implementation-class>
+      <implementation-class>com.intellij.javaee.ExternalResourceManagerImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.psi.impl.PsiManagerConfiguration</interface-class>
@@ -116,7 +116,7 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.j2ee.openapi.impl.PsiExternalResourceNotifier</implementation-class>
+      <implementation-class>com.intellij.javaee.PsiExternalResourceNotifier</implementation-class>
     </component>
 
     <!--

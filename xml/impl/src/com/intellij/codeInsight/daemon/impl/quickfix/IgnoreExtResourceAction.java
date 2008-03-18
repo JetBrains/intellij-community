@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.psi.PsiFile;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.util.IncorrectOperationException;

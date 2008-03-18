@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
