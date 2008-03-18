@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.PomMemberOwner;
@@ -149,7 +150,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
       @Nullable
       public Icon getIcon(boolean open) {
-        return GroovyIcons.SMALLEST;
+        return GrTypeDefinitionImpl.this.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
       }
 
       @Nullable

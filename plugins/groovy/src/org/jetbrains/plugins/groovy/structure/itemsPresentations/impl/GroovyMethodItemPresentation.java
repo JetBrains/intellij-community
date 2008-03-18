@@ -33,7 +33,7 @@ public class GroovyMethodItemPresentation extends GroovyItemPresentation {
 
   @Nullable
   public Icon getIcon(boolean open) {
-       return myElement.isValid() ? myElement.getIcon(Iconable.ICON_FLAG_OPEN) : null;
+       return myElement.getIcon(Iconable.ICON_FLAG_OPEN);
      }
 
   @Nullable
