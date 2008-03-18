@@ -138,6 +138,10 @@ public abstract class ChooseByNameBase{
         if (element instanceof PsiElement) {
           return element;
         }
+
+        if (element instanceof DataProvider) {
+          return ((DataProvider)element).getData(dataId);
+        }
       }
       else if (dataId.equals(DataConstants.PSI_ELEMENT_ARRAY)) {
         final List<Object> chosenElements = getChosenElements();
@@ -401,8 +405,15 @@ public abstract class ChooseByNameBase{
   private void updateDocumentation() {
     final JBPopup hint = myTextFieldPanel.getHint();
     final Object element = getChosenElement();
-    if (hint != null && element instanceof PsiElement){
-      myTextFieldPanel.updateHint((PsiElement)element);      
+    if (hint != null) {
+      if (element instanceof PsiElement) {
+        myTextFieldPanel.updateHint((PsiElement)element);
+      } else if (element instanceof DataProvider) {
+        final Object o = ((DataProvider)element).getData(DataConstants.PSI_ELEMENT);
+        if (o instanceof PsiElement) {
+          myTextFieldPanel.updateHint((PsiElement)o);
+        }
+      }
     }
   }
 
