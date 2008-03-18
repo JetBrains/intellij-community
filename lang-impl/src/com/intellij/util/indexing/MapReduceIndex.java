@@ -125,6 +125,10 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     final Map<Key, Value> oldData = oldContent != null? myIndexer.map(oldContent) : Collections.<Key, Value>emptyMap();
     final Map<Key, Value> data    = content != null? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
 
+    update(inputId, oldData, data);
+  }
+
+  private void update(final int inputId, final Map<Key, Value> oldData, final Map<Key, Value> data) throws StorageException {
     final Set<Key> allKeys = new HashSet<Key>(oldData.size() + data.size());
     allKeys.addAll(oldData.keySet());
     allKeys.addAll(data.keySet());

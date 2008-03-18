@@ -18,4 +18,6 @@ public abstract class SerializationManager {
   public abstract void serialize(StubElement rootStub, DataOutputStream stream);
 
   public abstract StubElement deserialize(DataInputStream stream);
+
+  public abstract StubSerializer getSerializer(StubElement rootStub);
 }

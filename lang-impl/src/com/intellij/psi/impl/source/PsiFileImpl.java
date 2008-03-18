@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,10 +38,7 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implements PsiFileEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileImpl");
@@ -51,7 +49,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   protected PsiFile myOriginalFile = null;
   private FileViewProvider myViewProvider;
   private static final Key<Document> HARD_REFERENCE_TO_DOCUMENT = new Key<Document>("HARD_REFERENCE_TO_DOCUMENT");
-  private WeakReference<StubElement> myStub;
+  private WeakReference<StubHolder> myStub;
 
   protected PsiFileImpl(IElementType elementType, IElementType contentElementType, FileViewProvider provider) {
     this(provider);
@@ -198,9 +196,9 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
       treeElement.setPsiElement(this);
     //}
 
-    StubElement stub = myStub != null ? myStub.get() : null;
+    StubHolder stub = myStub != null ? myStub.get() : null;
     if (stub != null) {
-      final Iterator<StubElement> stubs = enumerateStubs(stub).iterator();
+      final Iterator<StubElement<?>> stubs = stub.getPlainList().iterator();
       stubs.next(); // Skip file stub;
       switchFromStubToAST(treeElement, stubs);
       
@@ -216,20 +214,70 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return treeElement;
   }
 
-  private static List<StubElement> enumerateStubs(StubElement<?> root) {
-    List<StubElement> result = new ArrayList<StubElement>();
-    enumerateStubs(root, result);
-    return result;
-  }
+  private static class StubHolder {
+    private final PsiFileStub myRoot;
+    private final List<StubElement<?>> myPlainList = new ArrayList<StubElement<?>>();
 
-  private static void enumerateStubs(final StubElement<?> root, final List<StubElement> result) {
-    result.add(root);
-    for (StubElement child : root.getChildrenStubs()) {
-      enumerateStubs(child, result);
+    public StubHolder(final PsiFileStub root) {
+      myRoot = root;
+      enumerateStubs(root, myPlainList);
+    }
+
+    private static void enumerateStubs(final StubElement<?> root, final List<StubElement<?>> result) {
+      result.add(root);
+      for (StubElement child : root.getChildrenStubs()) {
+        enumerateStubs(child, result);
+      }
+    }
+
+    public PsiFileStub getRoot() {
+      return myRoot;
+    }
+
+    public List<StubElement<?>> getPlainList() {
+      return myPlainList;
+    }
+
+    public Map<String, Map<Object, Integer>> indexStubTree() {
+      final Map<String, Map<Object, Integer>> result = new HashMap<String, Map<Object, Integer>>();
+
+      for (int i = 0; i < myPlainList.size(); i++) {
+        StubElement<?> stub = myPlainList.get(i);
+        final StubSerializer serializer = SerializationManager.getInstance().getSerializer(stub);
+        final int stubIdx = i;
+        serializer.indexStub(stub, new IndexSink() {
+          public void occurence(final String indexId, final Object value) {
+            Map<Object, Integer> map = result.get(indexId);
+            if (map == null) {
+              map = new HashMap<Object, Integer>();
+              result.put(indexId, map);
+            }
+            map.put(value, stubIdx);
+          }
+        });
+      }
+
+      return result;
+    }
+
+    @Nullable
+  private static StubHolder readFromVFile(final VirtualFile vFile, Project project) {
+      final int id = Math.abs(FileBasedIndex.getFileId(vFile));
+      if (id > 0) {
+        final List<SerializedStubContent> datas = FileBasedIndex.getInstance().getValues(StubIndex.INDEX_ID, id, project);
+        if (datas.size() == 1) {
+          final DataInputStream stream = new DataInputStream(new ByteArrayInputStream(datas.get(0).getBytes()));
+          StubElement stub = SerializationManager.getInstance().deserialize(stream);
+          return new StubHolder((PsiFileStub)stub);
+        }
+      }
+
+      return null;
     }
   }
 
-  private static void switchFromStubToAST(ASTNode tree, Iterator<StubElement> stubs) {
+
+  private static void switchFromStubToAST(ASTNode tree, Iterator<StubElement<?>> stubs) {
     if (tree instanceof ChameleonElement) {
       tree = ChameleonTransforming.transform((ChameleonElement)tree);
     }
@@ -516,22 +564,21 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   @Nullable
   public StubElement getStub() {
-    StubElement stub = myStub != null ? myStub.get() : null;
-    if (stub == null) {
+    StubHolder stubHolder = myStub != null ? myStub.get() : null;
+    if (stubHolder == null) {
       if (getTreeElement() != null) return null;
 
       final VirtualFile vFile = getVirtualFile();
-      final int id = Math.abs(FileBasedIndex.getFileId(vFile));
-      if (id > 0) {
-        final List<SerializedStubContent> datas = FileBasedIndex.getInstance().getValues(StubIndex.INDEX_ID, id, getProject());
-        if (datas.size() == 1) {
-          final DataInputStream stream = new DataInputStream(new ByteArrayInputStream(datas.get(0).getBytes()));
-          stub = SerializationManager.getInstance().deserialize(stream);
-          ((PsiFileStubImpl)stub).setPsi(this);
-          myStub = new WeakReference<StubElement>(stub);
-        }
+      stubHolder = StubHolder.readFromVFile(vFile, getProject());
+      if (stubHolder == null) {
+        return null;
+      }
+      else {
+        myStub = new WeakReference<StubHolder>(stubHolder);
+        ((PsiFileStubImpl)stubHolder.getRoot()).setPsi(this);
       }
     }
-    return stub;
+
+    return stubHolder.getRoot();
   }
 }

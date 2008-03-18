@@ -76,8 +76,7 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
 
   public void serialize(StubElement rootStub, DataOutputStream stream) {
     try {
-      final Class<? extends StubElement> stubClass = rootStub.getClass();
-      final StubSerializer serializer = getSerializer(stubClass);
+      final StubSerializer serializer = getSerializer(rootStub);
 
       DataInputOutputUtil.writeINT(stream, getClassId(serializer));
       serializer.serialize(rootStub, stream, myNameStorage);
@@ -91,6 +90,11 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public StubSerializer getSerializer(final StubElement rootStub) {
+    final Class<? extends StubElement> stubClass = rootStub.getClass();
+    return getSerializer(stubClass);
   }
 
   public StubElement deserialize(DataInputStream stream) {
