@@ -392,6 +392,9 @@ public class EnterHandler extends EditorWriteActionHandler {
       CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(getProject());
       comment = (PsiComment)codeStyleManager.reformat(comment);
       PsiElement next = comment.getNextSibling();
+      if (next == null && comment.getParent().getClass() == comment.getClass()) {
+        next = comment.getParent().getNextSibling(); // expanding chameleon comment produces comment under comment
+      }
       if (!(next instanceof PsiWhiteSpace) || !next.getText().contains(LINE_SEPARATOR)) {
         int lineBreakOffset = comment.getTextRange().getEndOffset();
         myDocument.insertString(lineBreakOffset, LINE_SEPARATOR);

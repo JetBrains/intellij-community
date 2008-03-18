@@ -1039,7 +1039,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return new PsiWhiteSpaceImpl(myText, start, end, myCharTable);
     }
 
-    if (myComments.contains(type)) {
+    if (myComments.contains(type) && !(type instanceof IChameleonElementType)) {
       return new PsiCommentImpl(type, myText, start, end, myCharTable);
     }
 
