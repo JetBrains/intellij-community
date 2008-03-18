@@ -21,13 +21,12 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 
 public class NewClassAction extends NewActionBase {
   public NewClassAction() {
     super(GroovyBundle.message("newclass.menu.action.text"),
         GroovyBundle.message("newclass.menu.action.description"),
-        GroovyIcons.CLAZZ);
+        GroovyIcons.CLASS);
   }
 
   protected String getActionName(PsiDirectory directory, String newName) {

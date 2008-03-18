@@ -27,10 +27,10 @@ public interface GroovyIcons {
   public static final Icon FILE_TYPE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_fileType.png");
   public static final Icon SMALLEST = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_16x16.png");
   public static final Icon BIG_ICON = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_32x32.png");
-  public static final Icon CLAZZ = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/class.png");
-  public static final Icon ABSTRACT = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/abstractClass.png");
+  public static final Icon CLASS = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/class.png");
+  public static final Icon ABSTRACT_CLASS = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/abstractClass.png");
   public static final Icon INTERFACE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/interface.png");
-  public static final Icon ANNOTAION = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/annotationtype.png");
+  public static final Icon ANNOTATION_TYPE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/annotationtype.png");
   public static final Icon ENUM = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/enum.png");
   public static final Icon PROPERTY = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/property.png");
   public static final Icon METHOD = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/method.png");
