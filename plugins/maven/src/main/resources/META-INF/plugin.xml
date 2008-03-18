@@ -26,6 +26,8 @@
     <keymapExtension implementation="org.jetbrains.idea.maven.events.MavenKeymapExtension"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <configurationType implementation="org.jetbrains.idea.maven.runner.execution.MavenRunConfigurationType"/>
+
+    <dom.fileDescription implementation="org.jetbrains.idea.maven.core.MavenDomDescription"/>
   </extensions>
 
   <application-components>
@@ -162,6 +164,11 @@
     </action>
 
     <group id="Maven.State">
+      <action id="Maven.AddDependency"
+              class="org.jetbrains.idea.maven.state.action.AddDependencyAction" text="Add Dependency"
+              description="Add Dependency"
+              icon="/modules/library.png">
+      </action>
       <action id="Maven.AttachPlugin"
               class="org.jetbrains.idea.maven.state.action.AttachPluginAction" text="Attach plugin"
               description="Attach plugin"
@@ -217,6 +224,8 @@
       <reference id="Maven.PomTreeView"/>
       <separator/>
       <reference id="Maven.Run"/>
+      <separator/>
+      <reference id="Maven.AddDependency"/>
       <reference id="Maven.AttachPlugin"/>
       <reference id="Maven.DetachPlugin"/>
       <separator/>
