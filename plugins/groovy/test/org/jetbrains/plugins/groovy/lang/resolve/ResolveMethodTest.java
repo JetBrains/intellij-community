@@ -425,9 +425,4 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof PsiMethod);
   }
-
-  public void testDelayedEval() throws Exception {
-    PsiReference ref = configureByFile("delayedEval/A.groovy");
-    assertTrue(ref.resolve() instanceof GrAccessorMethod);
-  }
 }

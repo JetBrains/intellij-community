@@ -33,6 +33,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -820,7 +821,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   private Icon getIconInner() {
     if (isAnnotationType())
-      return GroovyIcons.ANNOTATION_TYPE;
+      return GroovyIcons.ANNOTAION;
 
     if (isInterface())
       return GroovyIcons.INTERFACE;
@@ -829,9 +830,9 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       return GroovyIcons.ENUM;
 
     if (hasModifierProperty(PsiModifier.ABSTRACT))
-      return GroovyIcons.ABSTRACT_CLASS;
+      return GroovyIcons.ABSTRACT;
 
-    return GroovyIcons.CLASS;
+    return GroovyIcons.CLAZZ;
   }
 
   private boolean isRenameFileOnClassRenaming() {
