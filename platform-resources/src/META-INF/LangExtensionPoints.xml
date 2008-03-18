@@ -270,4 +270,5 @@
   <extensionPoint name="codeInsight.implementMethod" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="codeInsight.overrideMethod" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="codeInsight.gotoSuper" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="codeInsight.lineMarkerProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 </extensionPoints>

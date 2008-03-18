@@ -1,98 +1,28 @@
-/*
- * @author max
- */
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
-import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
 
-public class LineMarkersPass extends ProgressableTextEditorHighlightingPass {
-  private volatile Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
+public class JavaLineMarkerProvider implements LineMarkerProvider {
   private static final Icon OVERRIDING_METHOD_ICON = IconLoader.getIcon("/gutter/overridingMethod.png");
   private static final Icon IMPLEMENTING_METHOD_ICON = IconLoader.getIcon("/gutter/implementingMethod.png");
 
-  private final DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
-  private final PsiFile myFile;
-  private final int myStartOffset;
-  private final int myEndOffset;
-  private final boolean myUpdateAll;
-
-  public LineMarkersPass(@NotNull Project project,
-                         @NotNull PsiFile file,
-                         @NotNull Document document,
-                         int startOffset,
-                         int endOffset,
-                         boolean updateAll) {
-    super(project, document, GeneralHighlightingPass.IN_PROGRESS_ICON, GeneralHighlightingPass.PRESENTABLE_NAME);
-    myFile = file;
-    myStartOffset = startOffset;
-    myEndOffset = endOffset;
-    myUpdateAll = updateAll;
-  }
-
-  protected void applyInformationWithProgress() {
-    UpdateHighlightersUtil.setLineMarkersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myMarkers, Pass.UPDATE_ALL);
-  }
-
-  protected void collectInformationWithProgress(final ProgressIndicator progress) {
-    final List<LineMarkerInfo> lineMarkers = new ArrayList<LineMarkerInfo>();
-    final FileViewProvider viewProvider = myFile.getViewProvider();
-    final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
-    for (Language language : relevantLanguages) {
-      PsiElement psiRoot = viewProvider.getPsi(language);
-      if (!HighlightLevelUtil.shouldHighlight(psiRoot)) continue;
-      //long time = System.currentTimeMillis();
-      List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
-      if (elements.isEmpty()) {
-        elements = Collections.singletonList(psiRoot);
-      }
-
-      addLineMarkers(elements, lineMarkers);
-    }
-
-    myMarkers = lineMarkers;
-  }
-
-  private void addLineMarkers(List<PsiElement> elements, List<LineMarkerInfo> result) throws ProcessCanceledException {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
-    for (PsiElement element : elements) {
-      ProgressManager.getInstance().checkCanceled();
-
-      LineMarkerInfo info = getLineMarkerInfo(element);
-      if (info != null) {
-        result.add(info);
-      }
-    }
-  }
-
   @Nullable
-  private LineMarkerInfo getLineMarkerInfo(PsiElement element) {
+  public LineMarkerInfo getLineMarkerInfo(final PsiElement element) {
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element.getParent();
       int offset = element.getTextRange().getStartOffset();
@@ -108,7 +38,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass {
       }
     }
 
-    if (mySettings.SHOW_METHOD_SEPARATORS && element.getFirstChild() == null) {
+    if (DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS && element.getFirstChild() == null) {
       PsiElement element1 = element;
       boolean isMember = false;
       while (element1 != null && !(element1 instanceof PsiFile) && element1.getPrevSibling() == null) {
@@ -157,25 +87,5 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass {
       }
     }
     return 0;
-  }
-
-  public Collection<LineMarkerInfo> queryLineMarkers() {
-    try {
-      if (myFile.getNode() == null) {
-        // binary file? see IDEADEV-2809
-        return Collections.emptyList();
-      }
-      ArrayList<LineMarkerInfo> result = new ArrayList<LineMarkerInfo>();
-      addLineMarkers(CollectHighlightsUtil.getElementsInRange(myFile, myStartOffset, myEndOffset), result);
-      return result;
-    }
-    catch (ProcessCanceledException e) {
-      return null;
-    }
-  }
-
-  public double getProgress() {
-    // do not show progress of visible highlighters update
-    return myUpdateAll ? super.getProgress() : -1;
   }
 }

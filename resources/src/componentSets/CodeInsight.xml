@@ -11,12 +11,6 @@
 
   <project-components>
     <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.LineMarkersPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.VisibleLineMarkersPassFactory</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.PostHighlightingPassFactory</implementation-class>
     </component>
     <component>
