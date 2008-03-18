@@ -16,11 +16,11 @@
 
 package com.jetbrains.python.psi;
 
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Nullable;
 
-public interface PyElement extends PsiElement {
+public interface PyElement extends NavigatablePsiElement {
   @Nullable <T extends PyElement> T getContainingElement(Class<T> aClass);
 
   @Nullable PyElement getContainingElement(TokenSet tokenSet);

@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
@@ -31,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -81,10 +84,62 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     pyVisitor.visitPyClass(this);
   }
 
-  public
   @NotNull
-  PyStatementList getStatementList() {
+  public PyStatementList getStatementList() {
     return childToPsiNotNull(PyElementTypes.STATEMENT_LIST);
+  }
+
+  @Nullable
+  public PyExpression[] getSuperClassExpressions() {
+    final PyParenthesizedExpression superExpression = PsiTreeUtil.getChildOfType(this, PyParenthesizedExpression.class);
+    if (superExpression != null) {
+      PyExpression expr = superExpression.getContainedExpression();
+      if (expr instanceof PyTupleExpression) {
+        return ((PyTupleExpression) expr).getElements();
+      }
+      return new PyExpression[] { expr };
+    }
+    return null;
+  }
+
+  public PyClass[] getSuperClasses() {
+    final PyExpression[] superExpressions = getSuperClassExpressions();
+    if (superExpressions != null) {
+      List<PyClass> superClasses = new ArrayList<PyClass>();
+      for(PyExpression expr: superExpressions) {
+        if (expr instanceof PyReferenceExpression && !"object".equals(expr.getText())) {
+          PyReferenceExpression ref = (PyReferenceExpression) expr;
+          final PsiElement result = ref.resolve();
+          if (result instanceof PyClass) {
+            superClasses.add((PyClass) result);
+          }
+        }
+      }
+      return superClasses.toArray(new PyClass[superClasses.size()]);
+    }
+    return null;
+  }
+
+  @NotNull
+  public PyFunction[] getMethods() {
+    List<PyFunction> result = new ArrayList<PyFunction>();
+    final PyStatementList statementList = getStatementList();
+    for (PsiElement element : statementList.getChildren()) {
+      if (element instanceof PyFunction) {
+        result.add((PyFunction) element);
+      }
+    }
+    return result.toArray(new PyFunction[result.size()]);
+  }
+
+  public PyFunction findMethodByName(@NotNull final String name) {
+    PyFunction[] methods = getMethods();
+    for(PyFunction method: methods) {
+      if (name.equals(method.getName())) {
+        return method;
+      }
+    }
+    return null;
   }
 
   @Override

@@ -17,5 +17,5 @@
 package com.jetbrains.python.psi;
 
 public interface PyParenthesizedExpression extends PyExpression {
-    PyExpression getContainedExpression();
+  PyExpression getContainedExpression();
 }

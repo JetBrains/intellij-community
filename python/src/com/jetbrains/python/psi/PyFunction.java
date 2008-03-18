@@ -31,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use File | Settings | File Templates.
  */
 public interface PyFunction extends PsiNamedElement, PyElement, PyDocStringOwner, StubBasedPsiElement<PyFunctionStub> {
+  PyFunction[] EMPTY_ARRAY = new PyFunction[0];
+  
   /**
    * Returns the AST node for the function name identifier.
    *
@@ -48,4 +50,7 @@ public interface PyFunction extends PsiNamedElement, PyElement, PyDocStringOwner
 
   @Nullable
   PyClass getContainingClass();
+
+  @NotNull
+  PyFunction[] findSuperMethods();
 }

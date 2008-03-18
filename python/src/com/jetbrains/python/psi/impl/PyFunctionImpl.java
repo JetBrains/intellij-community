@@ -33,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -112,6 +114,27 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       }
     }
     return null;
+  }
+
+  @NotNull
+  public PyFunction[] findSuperMethods() {
+    // TODO[yole]: check superclasses recursively
+    String name = getName();
+    PyClass containingClass = getContainingClass();
+    if (name != null && containingClass != null) {
+      PyClass[] superClasses = containingClass.getSuperClasses();
+      if (superClasses != null) {
+        List<PyFunction> result = new ArrayList<PyFunction>();
+        for(PyClass superClass: superClasses) {
+          PyFunction superMethod = superClass.findMethodByName(name);
+          if (superMethod != null) {
+            result.add(superMethod);
+          }
+        }
+        return result.toArray(new PyFunction[result.size()]);
+      }
+    }
+    return PyFunction.EMPTY_ARRAY;
   }
 
   @Override

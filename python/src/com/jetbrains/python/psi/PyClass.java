@@ -21,6 +21,7 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.MayHaveStubsInside;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,4 +35,15 @@ public interface PyClass extends PsiNamedElement, PyElement, PyDocStringOwner, S
   @MayHaveStubsInside
   PyStatementList getStatementList();
 
+  @Nullable
+  PyExpression[] getSuperClassExpressions();
+
+  @Nullable
+  PyClass[] getSuperClasses();
+
+  @NotNull
+  PyFunction[] getMethods();
+
+  @Nullable
+  PyFunction findMethodByName(@NotNull final String name);
 }
