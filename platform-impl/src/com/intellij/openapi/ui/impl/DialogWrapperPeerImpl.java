@@ -294,6 +294,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       myWindowManager.doNotSuggestAsParent(myDialog);
     }
 
+    final CommandProcessorEx commandProcessor = ApplicationManager.getApplication() != null ? (CommandProcessorEx)CommandProcessor.getInstance() : null;
+    final boolean appStarted = commandProcessor != null;
     if (myDialog.isModal() && !isProgressDialog()) {
       /* TODO: Temporarily disable due to J2EE dialogs. Lots of code to rewrite there.
       if (ApplicationManager.getApplication() != null) { // [dsl] for license dialog
@@ -303,19 +305,25 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         }
       }
       */
-      ((CommandProcessorEx)CommandProcessor.getInstance()).enterModal();
-      LaterInvocator.enterModal(myDialog);
+      if (appStarted) {
+        commandProcessor.enterModal();
+        LaterInvocator.enterModal(myDialog);
+      }
     }
 
-    hidePopupsIfNeeded();
+    if (appStarted) {
+      hidePopupsIfNeeded();
+    }
 
     try {
       myDialog.show();
     }
     finally {
       if (myDialog.isModal() && !isProgressDialog()) {
-        ((CommandProcessorEx)CommandProcessor.getInstance()).leaveModal();
-        LaterInvocator.leaveModal(myDialog);
+        if (appStarted) {
+          commandProcessor.leaveModal();
+          LaterInvocator.leaveModal(myDialog);
+        }
       }
     }
   }

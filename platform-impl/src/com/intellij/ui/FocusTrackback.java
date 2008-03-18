@@ -3,6 +3,7 @@ package com.intellij.ui;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -48,7 +49,8 @@ public class FocusTrackback {
     myMustBeShown = mustBeShown;
 
 
-    if (ApplicationManager.getApplication().isUnitTestMode() || wrongOS()) return;
+    final Application app = ApplicationManager.getApplication();
+    if (app == null || app.isUnitTestMode() || wrongOS()) return;
 
     register(parent);
 
