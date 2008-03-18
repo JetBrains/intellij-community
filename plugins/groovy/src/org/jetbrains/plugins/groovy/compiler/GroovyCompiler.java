@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import com.intellij.compiler.impl.javaCompiler.OutputItemImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
@@ -150,19 +151,31 @@ public class GroovyCompiler implements TranslatingCompiler {
         if (unparsedBuffer.length() != 0)
           compileContext.addMessage(CompilerMessageCategory.ERROR, unparsedBuffer.toString(), null, -1, -1);
 
-        successfullyCompiled.addAll(processHandler.getSuccessfullyCompiled());
+        addSuccessfullyCompiled(successfullyCompiled, processHandler);
       } catch (ExecutionException e) {
         LOG.error(e);
       }
     }
 
-    refresh(successfullyCompiled); //make VFS know about our files
     return new GroovyCompileExitStatus(successfullyCompiled, toRecompile.toArray(new VirtualFile[toRecompile.size()]));
   }
 
-  private void refresh(Set<OutputItem> successfullyCompiled) {
-    for (OutputItem item : successfullyCompiled) {
-      LocalFileSystem.getInstance().refreshAndFindFileByPath(item.getOutputPath());
+  private void addSuccessfullyCompiled(Set<OutputItem> successfullyCompiled, GroovycOSProcessHandler processHandler) {
+    Set<OutputItem> toplevel = processHandler.getSuccessfullyCompiled();
+    for (OutputItem item : toplevel) { //add closure files
+      VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(item.getOutputPath());
+      if (vFile != null) {//defensive check
+        VirtualFile parent = vFile.getParent();
+        assert parent != null;
+        parent.refresh(false, false);
+        String prefix = vFile.getNameWithoutExtension() + "$_closure";
+        for (VirtualFile child : parent.getChildren()) {
+          if (child.getName().startsWith(prefix)) {
+            successfullyCompiled.add(new OutputItemImpl(item.getOutputRootDirectory(), child.getPath(), item.getSourceFile()));
+          }
+        }
+      }
+      successfullyCompiled.add(item);
     }
   }
 
