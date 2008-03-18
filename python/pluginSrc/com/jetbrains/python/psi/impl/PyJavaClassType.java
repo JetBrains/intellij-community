@@ -1,9 +1,9 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.*;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyResolveUtil;
+import com.jetbrains.python.psi.types.PyType;
 
 /**
  * @author yole

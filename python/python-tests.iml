@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="python" />
     <orderEntry type="module" module-name="codeInsight-tests" />
     <orderEntry type="library" name="JUnit3" level="project" />
+    <orderEntry type="module" module-name="idea" />
     <orderEntryProperties />
   </component>
 </module>
