@@ -52,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -300,7 +301,13 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   private boolean isSameDeclaration(PsiElement place, PsiElement element) {
     if (element instanceof GrAccessorMethod) element = ((GrAccessorMethod) element).getProperty();
 
-    return element instanceof GrField && PsiTreeUtil.isAncestor(element.getParent(), place, true);
+    if (!(element instanceof GrField)) return false;
+    while (place != null) {
+      place = place.getParent();
+      if (place == element) return true;
+      if (place instanceof GrClosableBlock) return false;
+    }
+    return false;
   }
 
   private boolean isPropertyReference(PsiElement place, PsiField aField, boolean isGetter) {
