@@ -130,7 +130,7 @@ public class ExpressionParsing extends Parsing {
       }
       while (builder.getTokenType() == PyTokenTypes.IF_KEYWORD) {
         builder.advanceLexer();
-        parseExpression(builder);
+        parseExpression();
       }
       if (builder.getTokenType() == endToken) {
         builder.advanceLexer();
@@ -202,7 +202,7 @@ public class ExpressionParsing extends Parsing {
     LOG.assertTrue(builder.getTokenType() == PyTokenTypes.TICK);
     final PsiBuilder.Marker expr = builder.mark();
     builder.advanceLexer();
-    parseExpression(builder);
+    parseExpression();
     checkMatches(PyTokenTypes.TICK, "` expected");
     expr.done(PyElementTypes.REPR_EXPRESSION);
   }
@@ -273,7 +273,7 @@ public class ExpressionParsing extends Parsing {
         sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
       }
       else {
-        parseExpression(builder);
+        parseExpression();
       }
       if (builder.getTokenType() != PyTokenTypes.RBRACKET && builder.getTokenType() != PyTokenTypes.COLON) {
         builder.error(": or ] expected");
@@ -356,9 +356,9 @@ public class ExpressionParsing extends Parsing {
     return parseTupleExpression(builder, false, isTargetExpression, false);
   }
 
-  public void parseExpression(PsiBuilder builder) {
-    if (!parseExpressionOptional(builder)) {
-      builder.error("expression expected");
+  public void parseExpression() {
+    if (!parseExpressionOptional(myBuilder)) {
+      myBuilder.error("expression expected");
     }
   }
 

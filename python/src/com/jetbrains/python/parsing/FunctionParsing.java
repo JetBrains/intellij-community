@@ -32,20 +32,20 @@ public class FunctionParsing extends Parsing {
     super(context);
   }
 
-  public void parseFunctionDeclaration(PsiBuilder builder) {
-    LOG.assertTrue(builder.getTokenType() == PyTokenTypes.DEF_KEYWORD);
-    final PsiBuilder.Marker functionMarker = builder.mark();
-    builder.advanceLexer();
-    if (builder.getTokenType() == PyTokenTypes.IDENTIFIER) {
-      builder.advanceLexer();
+  public void parseFunctionDeclaration() {
+    assertCurrentToken(PyTokenTypes.DEF_KEYWORD);
+    final PsiBuilder.Marker functionMarker = myBuilder.mark();
+    myBuilder.advanceLexer();
+    if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
+      myBuilder.advanceLexer();
     }
     else {
-      builder.error("function name expected");
+      myBuilder.error("function name expected");
     }
 
-    parseParameterList(builder);
+    parseParameterList(myBuilder);
     checkMatches(PyTokenTypes.COLON, "colon expected");
-    getStatementParser().parseSuite(builder, functionMarker, PyElementTypes.FUNCTION_DECLARATION);
+    getStatementParser().parseSuite(functionMarker, PyElementTypes.FUNCTION_DECLARATION);
   }
 
   public void parseDecoratedFunctionDeclaration(PsiBuilder builder) {
@@ -61,7 +61,7 @@ public class FunctionParsing extends Parsing {
       parseDecoratedFunctionDeclaration(builder);
     }
     else if (builder.getTokenType() == PyTokenTypes.DEF_KEYWORD) {
-      parseFunctionDeclaration(builder);
+      parseFunctionDeclaration();
     }
     else {
       builder.error("'def' or '@' expected");

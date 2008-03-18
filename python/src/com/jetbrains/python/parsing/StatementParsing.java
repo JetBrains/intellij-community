@@ -61,7 +61,7 @@ public class StatementParsing extends Parsing {
       return;
     }
     if (firstToken == PyTokenTypes.DEF_KEYWORD) {
-      getFunctionParser().parseFunctionDeclaration(builder);
+      getFunctionParser().parseFunctionDeclaration();
       return;
     }
     if (firstToken == PyTokenTypes.AT) {
@@ -69,11 +69,11 @@ public class StatementParsing extends Parsing {
       return;
     }
     if (firstToken == PyTokenTypes.CLASS_KEYWORD) {
-      parseClassDeclaration(builder);
+      parseClassDeclaration();
       return;
     }
     if (firstToken == PyTokenTypes.WITH_KEYWORD) {
-      parseWithStatement(builder);
+      parseWithStatement();
       return;
     }
 
@@ -247,7 +247,7 @@ public class StatementParsing extends Parsing {
     final PsiBuilder.Marker returnStatement = builder.mark();
     builder.advanceLexer();
     if (!PyTokenTypes.END_OF_STATEMENT.contains(builder.getTokenType())) {
-      getExpressionParser().parseExpression(builder);
+      getExpressionParser().parseExpression();
     }
     checkEndOfStatement(inSuite);
     returnStatement.done(PyElementTypes.RETURN_STATEMENT);
@@ -434,19 +434,19 @@ public class StatementParsing extends Parsing {
     LOG.assertTrue(builder.getTokenType() == PyTokenTypes.IF_KEYWORD);
     final PsiBuilder.Marker ifStatement = builder.mark();
     builder.advanceLexer();
-    getExpressionParser().parseExpression(builder);
+    getExpressionParser().parseExpression();
     checkMatches(PyTokenTypes.COLON, "colon expected");
-    parseSuite(builder);
+    parseSuite();
     while (builder.getTokenType() == PyTokenTypes.ELIF_KEYWORD) {
       builder.advanceLexer();
-      getExpressionParser().parseExpression(builder);
+      getExpressionParser().parseExpression();
       checkMatches(PyTokenTypes.COLON, "colon expected");
-      parseSuite(builder);
+      parseSuite();
     }
     if (builder.getTokenType() == PyTokenTypes.ELSE_KEYWORD) {
       builder.advanceLexer();
       checkMatches(PyTokenTypes.COLON, "colon expected");
-      parseSuite(builder);
+      parseSuite();
     }
     ifStatement.done(PyElementTypes.IF_STATEMENT);
   }
@@ -457,13 +457,13 @@ public class StatementParsing extends Parsing {
     builder.advanceLexer();
     getExpressionParser().parseExpression(builder, true, true);
     checkMatches(PyTokenTypes.IN_KEYWORD, "'in' expected");
-    getExpressionParser().parseExpression(builder);
+    getExpressionParser().parseExpression();
     checkMatches(PyTokenTypes.COLON, "colon expected");
-    parseSuite(builder);
+    parseSuite();
     if (builder.getTokenType() == PyTokenTypes.ELSE_KEYWORD) {
       builder.advanceLexer();
       checkMatches(PyTokenTypes.COLON, "colon expected");
-      parseSuite(builder);
+      parseSuite();
     }
     statement.done(PyElementTypes.FOR_STATEMENT);
   }
@@ -472,13 +472,13 @@ public class StatementParsing extends Parsing {
     LOG.assertTrue(builder.getTokenType() == PyTokenTypes.WHILE_KEYWORD);
     final PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
-    getExpressionParser().parseExpression(builder);
+    getExpressionParser().parseExpression();
     checkMatches(PyTokenTypes.COLON, "colon expected");
-    parseSuite(builder);
+    parseSuite();
     if (builder.getTokenType() == PyTokenTypes.ELSE_KEYWORD) {
       builder.advanceLexer();
       checkMatches(PyTokenTypes.COLON, "colon expected");
-      parseSuite(builder);
+      parseSuite();
     }
     statement.done(PyElementTypes.WHILE_STATEMENT);
   }
@@ -488,7 +488,7 @@ public class StatementParsing extends Parsing {
     final PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
     checkMatches(PyTokenTypes.COLON, "colon expected");
-    parseSuite(builder);
+    parseSuite();
     boolean haveExceptClause = false;
     if (builder.getTokenType() == PyTokenTypes.EXCEPT_KEYWORD) {
       haveExceptClause = true;
@@ -507,19 +507,19 @@ public class StatementParsing extends Parsing {
           }
         }
         checkMatches(PyTokenTypes.COLON, "colon expected");
-        parseSuite(builder);
+        parseSuite();
         exceptBlock.done(PyElementTypes.EXCEPT_BLOCK);
       }
       if (builder.getTokenType() == PyTokenTypes.ELSE_KEYWORD) {
         builder.advanceLexer();
         checkMatches(PyTokenTypes.COLON, "colon expected");
-        parseSuite(builder);
+        parseSuite();
       }
     }
     if (builder.getTokenType() == PyTokenTypes.FINALLY_KEYWORD) {
       builder.advanceLexer();
       checkMatches(PyTokenTypes.COLON, "colon expected");
-      parseSuite(builder);
+      parseSuite();
     }
     else if (!haveExceptClause) {
       builder.error("'except' or 'finally' expected");
@@ -529,53 +529,53 @@ public class StatementParsing extends Parsing {
     statement.done(PyElementTypes.TRY_EXCEPT_STATEMENT);
   }
 
-  private void parseWithStatement(PsiBuilder builder) {
-    LOG.assertTrue(builder.getTokenType() == PyTokenTypes.WITH_KEYWORD);
-    final PsiBuilder.Marker statement = builder.mark();
-    builder.advanceLexer();
-    getExpressionParser().parseExpression(builder);
-    if (builder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
-      builder.advanceLexer();
-      getExpressionParser().parseExpression(builder);
+  private void parseWithStatement() {
+    assertCurrentToken(PyTokenTypes.WITH_KEYWORD);
+    final PsiBuilder.Marker statement = myBuilder.mark();
+    myBuilder.advanceLexer();
+    getExpressionParser().parseExpression();
+    if (myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
+      myBuilder.advanceLexer();
+      getExpressionParser().parseExpression();
     }
     checkMatches(PyTokenTypes.COLON, "colon expected");
-    parseSuite(builder);
+    parseSuite();
     statement.done(PyElementTypes.WITH_STATEMENT);
   }
 
-  private void parseClassDeclaration(PsiBuilder builder) {
-    LOG.assertTrue(builder.getTokenType() == PyTokenTypes.CLASS_KEYWORD);
-    final PsiBuilder.Marker classMarker = builder.mark();
-    builder.advanceLexer();
+  private void parseClassDeclaration() {
+    assertCurrentToken(PyTokenTypes.CLASS_KEYWORD);
+    final PsiBuilder.Marker classMarker = myBuilder.mark();
+    myBuilder.advanceLexer();
     checkMatches(PyTokenTypes.IDENTIFIER, "identifier expected");
-    final PsiBuilder.Marker inheritMarker = builder.mark();
-    if (builder.getTokenType() == PyTokenTypes.LPAR) {
-      builder.advanceLexer();
-      getExpressionParser().parseExpression(builder);
+    final PsiBuilder.Marker inheritMarker = myBuilder.mark();
+    if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
+      myBuilder.advanceLexer();
+      getExpressionParser().parseExpression();
       checkMatches(PyTokenTypes.RPAR, ") expected");
     }
     inheritMarker.done(PyElementTypes.PARENTHESIZED_EXPRESSION);
     checkMatches(PyTokenTypes.COLON, "colon expected");
-    parseSuite(builder);
+    parseSuite();
     classMarker.done(PyElementTypes.CLASS_DECLARATION);
   }
 
-  public void parseSuite(PsiBuilder builder) {
-    parseSuite(builder, null, null);
+  public void parseSuite() {
+    parseSuite(null, null);
   }
 
-  public void parseSuite(PsiBuilder builder, PsiBuilder.Marker endMarker, IElementType elType) {
-    if (builder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
-      builder.advanceLexer();
+  public void parseSuite(PsiBuilder.Marker endMarker, IElementType elType) {
+    if (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
+      myBuilder.advanceLexer();
 
-      final PsiBuilder.Marker marker = builder.mark();
-      if (builder.getTokenType() != PyTokenTypes.INDENT) {
-        builder.error("indent expected");
+      final PsiBuilder.Marker marker = myBuilder.mark();
+      if (myBuilder.getTokenType() != PyTokenTypes.INDENT) {
+        myBuilder.error("indent expected");
       }
       else {
-        builder.advanceLexer();
-        while (!builder.eof() && builder.getTokenType() != PyTokenTypes.DEDENT) {
-          parseStatement(builder);
+        myBuilder.advanceLexer();
+        while (!myBuilder.eof() && myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
+          parseStatement(myBuilder);
         }
       }
 
@@ -583,19 +583,19 @@ public class StatementParsing extends Parsing {
       if (endMarker != null) {
         endMarker.done(elType);
       }
-      if (!builder.eof()) {
+      if (!myBuilder.eof()) {
         checkMatches(PyTokenTypes.DEDENT, "dedent expected");
       }
       // HACK: the following line advances the PsiBuilder lexer and thus
       // ensures that the whitespace following the statement list is included
       // in the block containing the statement list
-      builder.getTokenType();
+      myBuilder.getTokenType();
     }
     else {
-      final PsiBuilder.Marker marker = builder.mark();
+      final PsiBuilder.Marker marker = myBuilder.mark();
       parseSimpleStatement(true);
-      while (builder.getTokenType() == PyTokenTypes.SEMICOLON) {
-        builder.advanceLexer();
+      while (myBuilder.getTokenType() == PyTokenTypes.SEMICOLON) {
+        myBuilder.advanceLexer();
         parseSimpleStatement(true);
       }
       marker.done(PyElementTypes.STATEMENT_LIST);
