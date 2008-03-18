@@ -8,7 +8,6 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.tree.*;
@@ -54,7 +53,7 @@ public class ParseUtil implements Constants {
       TreeElement first = null;
       TreeElement last = null;
       while (isTokenValid(lexer.getTokenType())) {
-        TreeElement tokenElement = ParseUtil.createTokenElement(lexer, context.getCharTable());
+        TreeElement tokenElement = createTokenElement(lexer, context.getCharTable());
         IElementType type = lexer.getTokenType();
 
         if (!isInSet(type)) {
@@ -113,7 +112,7 @@ public class ParseUtil implements Constants {
     }
 
     protected TreeElement createToken(final Lexer lexer, final ParsingContext context) {
-      return ParseUtil.createTokenElement(lexer, context.getCharTable());
+      return createTokenElement(lexer, context.getCharTable());
     }
 
     public boolean isTokenValid(IElementType tokenType) {
@@ -259,7 +258,7 @@ public class ParseUtil implements Constants {
     }
   }
 
-  static void bindComments(ASTNode root) {
+  private static void bindComments(ASTNode root) {
     TreeElement child = (TreeElement)root.getFirstChildNode();
     while (child != null) {
       if (child.getElementType() == JavaDocElementType.DOC_COMMENT) {
@@ -381,7 +380,7 @@ public class ParseUtil implements Constants {
           if (count > 1) toStart = null;
         }
         else {
-          if (child.getTreePrev() != null && child.getTreePrev().getElementType() == TokenType.WHITE_SPACE) {
+          if (child.getTreePrev() != null && child.getTreePrev().getElementType() == WHITE_SPACE) {
             LeafElement prev = (LeafElement)child.getTreePrev();
             char lastC = prev.charAt(prev.getTextLength() - 1);
             if (lastC == '\n' || lastC == '\r') toStart = isBindingComment(child) ? child : null;
@@ -410,7 +409,7 @@ public class ParseUtil implements Constants {
   private static boolean isBindingComment(final ASTNode node) {
     ASTNode prev = node.getTreePrev();
     if (prev != null) {
-      if (prev.getElementType() != TokenType.WHITE_SPACE) {
+      if (prev.getElementType() != WHITE_SPACE) {
         return false;
       }
       else {

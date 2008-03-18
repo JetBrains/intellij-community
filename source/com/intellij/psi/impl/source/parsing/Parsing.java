@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class Parsing implements Constants{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.Parsing");
-  public static final boolean DEEP_PARSE_BLOCKS_IN_STATEMENTS = false;
+  protected static final boolean DEEP_PARSE_BLOCKS_IN_STATEMENTS = false;
   protected final JavaParsingContext myContext;
 
   public Parsing(JavaParsingContext context) {

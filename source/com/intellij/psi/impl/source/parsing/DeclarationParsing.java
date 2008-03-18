@@ -482,6 +482,10 @@ public class DeclarationParsing extends Parsing {
       boolean afterBad = false;
       while (true) {
         tokenType = lexer.getTokenType();
+        if (tokenType == null) {
+          TreeUtil.addChildren(parameterList, Factory.createErrorElement(JavaErrorMessages.message("expected.parameter")));
+          return parameterList;
+        }
         if (tokenType == RPARENTH) {
           TreeUtil.addChildren(parameterList, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
           lexer.advance();
