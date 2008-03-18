@@ -117,7 +117,7 @@ public class GrDynamicImplicitPropertyImpl extends GrDynamicImplicitElement {
 
 
   public boolean isValid() {
-    final GrDynamicImplicitPropertyImpl property = DynamicManager.getInstance(myProject).getCashedOrCreateProperty(
+    final GrDynamicImplicitPropertyImpl property = DynamicManager.getInstance(myProject).getProperty(
         myManager,
         getName(),
         getType().getCanonicalText(),

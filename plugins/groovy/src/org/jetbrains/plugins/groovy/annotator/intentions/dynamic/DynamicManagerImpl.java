@@ -324,7 +324,7 @@ public class DynamicManagerImpl extends DynamicManager {
     }
   }
 
-  public GrDynamicImplicitMethodImpl getCashedOrCreateMethod(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName, List<MyPair> pairs, PsiFile containingFile) {
+  public GrDynamicImplicitMethodImpl getMethod(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName, List<MyPair> pairs, PsiFile containingFile) {
     final String[] paramTypes = QuickfixUtil.getArgumentsTypes(pairs);
     final Pair<String, String[]> typeAndPairs = new Pair<String, String[]>(type, paramTypes);
 
@@ -341,7 +341,7 @@ public class DynamicManagerImpl extends DynamicManager {
     return newMethod;
   }
 
-  public GrDynamicImplicitPropertyImpl getCashedOrCreateProperty(PsiManager manager, String name, String type, String containingClassName, PsiFile containingFile) {
+  public GrDynamicImplicitPropertyImpl getProperty(PsiManager manager, String name, String type, String containingClassName, PsiFile containingFile) {
     final Pair<String, String> property = new Pair<String, String>(name, type);
     final Pair<String, Pair<String, String>> pair = new Pair<String, Pair<String, String>>(containingClassName, property);
     final GrDynamicImplicitPropertyImpl implicitProperty = myNamesToPropertiesMap.get(pair);

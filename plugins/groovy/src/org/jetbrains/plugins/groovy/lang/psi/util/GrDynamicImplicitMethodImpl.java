@@ -117,7 +117,7 @@ public class GrDynamicImplicitMethodImpl extends GrDynamicImplicitElement implem
   }
 
   public boolean isValid() {
-    final GrDynamicImplicitMethodImpl method = DynamicManager.getInstance(myManager.getProject()).getCashedOrCreateMethod(
+    final GrDynamicImplicitMethodImpl method = DynamicManager.getInstance(myManager.getProject()).getMethod(
         myManager,
         getName(),
         getType().getCanonicalText(),
