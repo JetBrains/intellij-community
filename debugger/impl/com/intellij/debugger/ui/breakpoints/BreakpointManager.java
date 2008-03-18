@@ -69,6 +69,7 @@ public class BreakpointManager implements JDOMExternalizable {
   private List<Breakpoint> myBreakpointsListForIteration = null; // another list for breakpoints iteration, unsynchronized access ok
   private Map<Document, List<BreakpointWithHighlighter>> myDocumentBreakpoints = new HashMap<Document, List<BreakpointWithHighlighter>>();
   private Map<String, String> myUIProperties = new java.util.HashMap<String, String>();
+  private Map<Key<? extends Breakpoint>, String> myDefaultSuspendPolicies = new HashMap<Key<? extends Breakpoint>, String>(); 
 
   private BreakpointsConfigurationDialogFactory myBreakpointsConfigurable;
   private EditorMouseListener myEditorMouseListener;
@@ -103,6 +104,7 @@ public class BreakpointManager implements JDOMExternalizable {
   };
   private static final @NonNls String MASTER_BREAKPOINT_TAGNAME = "master_breakpoint";
   private static final @NonNls String SLAVE_BREAKPOINT_TAGNAME = "slave_breakpoint";
+  @NonNls private static final String DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME = "default_suspend_policy";
 
   private void update(List<BreakpointWithHighlighter> breakpoints) {
     final TIntHashSet intHash = new TIntHashSet();
@@ -159,7 +161,6 @@ public class BreakpointManager implements JDOMExternalizable {
   public BreakpointManager(Project project, StartupManager startupManager, DebuggerManagerImpl debuggerManager) {
     myProject = project;
     myStartupManager = startupManager;
-    myAnyExceptionBreakpoint = new AnyExceptionBreakpoint(project);
     debuggerManager.getContextManager().addListener(new DebuggerContextListener() {
       private DebuggerSession myPreviousSession;
 
@@ -347,6 +348,20 @@ public class BreakpointManager implements JDOMExternalizable {
     return dialog;
   }
 
+  public String getDefaultSuspendPolicy(Key<? extends Breakpoint> category) {
+    final String policy = myDefaultSuspendPolicies.get(category);
+    if (DebuggerSettings.SUSPEND_NONE.equals(policy) || DebuggerSettings.SUSPEND_THREAD.equals(policy)) {
+      return policy;
+    }
+    return DebuggerSettings.SUSPEND_ALL;
+  }
+
+  public void setDefaultSuspendPolicy(Key<? extends Breakpoint> category, String value) {
+    if (DebuggerSettings.SUSPEND_NONE.equals(value) || DebuggerSettings.SUSPEND_THREAD.equals(value) || DebuggerSettings.SUSPEND_ALL.equals(value)) {
+      myDefaultSuspendPolicies.put(category, value);
+    }
+  }
+  
   @Nullable
   public RunToCursorBreakpoint addRunToCursorBreakpoint(Document document, int lineIndex, final boolean ignoreBreakpoints) {
     return RunToCursorBreakpoint.create(myProject, document, lineIndex, ignoreBreakpoints);
@@ -501,11 +516,13 @@ public class BreakpointManager implements JDOMExternalizable {
               for (final Object group1 : groups) {
                 final Element group = (Element)group1;
                 final String categoryName = group.getName();
+                final Key<Breakpoint> breakpointCategory = BreakpointCategory.lookup(categoryName);
+                setDefaultSuspendPolicy(breakpointCategory, group.getAttributeValue(DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME));
                 Element anyExceptionBreakpointGroup;
-                if (!AnyExceptionBreakpoint.ANY_EXCEPTION_BREAKPOINT.equals(BreakpointCategory.lookup(categoryName))) {
+                if (!AnyExceptionBreakpoint.ANY_EXCEPTION_BREAKPOINT.equals(breakpointCategory)) {
                   // for compatibility with previous format
                   anyExceptionBreakpointGroup = group.getChild(AnyExceptionBreakpoint.ANY_EXCEPTION_BREAKPOINT.toString());
-                  final BreakpointFactory factory = BreakpointFactory.getInstance(BreakpointCategory.lookup(categoryName));
+                  final BreakpointFactory factory = BreakpointFactory.getInstance(breakpointCategory);
                   if (factory != null) {
                     for (final Object o : group.getChildren("breakpoint")) {
                       Element breakpointNode = (Element)o;
@@ -523,7 +540,7 @@ public class BreakpointManager implements JDOMExternalizable {
                 if (anyExceptionBreakpointGroup != null) {
                   final Element breakpointElement = group.getChild("breakpoint");
                   if (breakpointElement != null) {
-                    myAnyExceptionBreakpoint.readExternal(breakpointElement);
+                    getAnyExceptionBreakpoint().readExternal(breakpointElement);
                   }
                 }
 
@@ -632,12 +649,17 @@ public class BreakpointManager implements JDOMExternalizable {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"}) public void writeExternal(final Element parentNode) throws WriteExternalException {
+  @SuppressWarnings({"HardCodedStringLiteral"}) 
+  public void writeExternal(final Element parentNode) throws WriteExternalException {
     WriteExternalException ex = PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Computable<WriteExternalException>() {
       public WriteExternalException compute() {
         try {
           removeInvalidBreakpoints();
           final Map<Key<? extends Breakpoint>, Element> categoryToElementMap = new java.util.HashMap<Key<? extends Breakpoint>, Element>();
+          for (Key<? extends Breakpoint> category : myDefaultSuspendPolicies.keySet()) {
+            final Element group = getCategoryGroupElement(categoryToElementMap, category, parentNode);
+            group.setAttribute(DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME, String.valueOf(getDefaultSuspendPolicy(category)));
+          }
           for (final Breakpoint breakpoint : getBreakpoints()) {
             final Key<? extends Breakpoint> category = breakpoint.getCategory();
             final Element group = getCategoryGroupElement(categoryToElementMap, category, parentNode);
@@ -645,8 +667,9 @@ public class BreakpointManager implements JDOMExternalizable {
               writeBreakpoint(group, breakpoint);
             }
           }
-          final Element group = getCategoryGroupElement(categoryToElementMap, myAnyExceptionBreakpoint.getCategory(), parentNode);
-          writeBreakpoint(group, myAnyExceptionBreakpoint);
+          final AnyExceptionBreakpoint anyExceptionBreakpoint = getAnyExceptionBreakpoint();
+          final Element group = getCategoryGroupElement(categoryToElementMap, anyExceptionBreakpoint.getCategory(), parentNode);
+          writeBreakpoint(group, anyExceptionBreakpoint);
           
           final Element rules = new Element(RULES_GROUP_NAME);
           parentNode.addContent(rules);
@@ -748,12 +771,15 @@ public class BreakpointManager implements JDOMExternalizable {
     if (myBreakpointsListForIteration == null) {
       myBreakpointsListForIteration = new ArrayList<Breakpoint>(myBreakpoints.size() + 1);
       myBreakpointsListForIteration.addAll(myBreakpoints);
-      myBreakpointsListForIteration.add(myAnyExceptionBreakpoint);
+      myBreakpointsListForIteration.add(getAnyExceptionBreakpoint());
     }
     return myBreakpointsListForIteration;
   }
 
   public AnyExceptionBreakpoint getAnyExceptionBreakpoint() {
+    if (myAnyExceptionBreakpoint == null) {
+      myAnyExceptionBreakpoint = new AnyExceptionBreakpoint(myProject);
+    }
     return myAnyExceptionBreakpoint;
   }
 

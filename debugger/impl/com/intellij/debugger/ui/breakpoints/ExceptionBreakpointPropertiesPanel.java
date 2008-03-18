@@ -7,7 +7,6 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,7 +19,7 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
   private ExceptionBreakpoint myExceptionBreakpoint;
 
   public ExceptionBreakpointPropertiesPanel(Project project) {
-    super(project);
+    super(project, ExceptionBreakpoint.CATEGORY);
   }
 
   protected TreeClassChooser.ClassFilter createClassConditionFilter() {
@@ -48,7 +47,7 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
     _panel.add(_panel0, BorderLayout.NORTH);
-    _panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.exception.breakpoint.properties.panel.group.notifications")));
+    _panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), DebuggerBundle.message("label.exception.breakpoint.properties.panel.group.notifications")));
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {

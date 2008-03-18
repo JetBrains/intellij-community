@@ -1,6 +1,7 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -8,7 +9,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -45,7 +45,6 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public boolean SKIP_CLASSLOADERS;
 
   public String EVALUATION_DIALOG_TYPE;
-  public String STEP_THREAD_SUSPEND_POLICY;
   public String RUN_HOTSWAP_AFTER_COMPILE;
   public boolean COMPILE_BEFORE_HOTSWAP;
 
@@ -151,14 +150,6 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
 
   public String getComponentName() {
     return "DebuggerSettings";
-  }
-
-  public boolean isSuspendAllThreads() {
-    return SUSPEND_ALL.equals(STEP_THREAD_SUSPEND_POLICY);
-  }
-
-  public void setSuspendPolicy(boolean suspendAll) {
-    STEP_THREAD_SUSPEND_POLICY = suspendAll ? SUSPEND_ALL : SUSPEND_THREAD;
   }
 
   public ContentState getContentState(String type) {

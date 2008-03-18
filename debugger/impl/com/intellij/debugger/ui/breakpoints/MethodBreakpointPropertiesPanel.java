@@ -6,7 +6,6 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,7 +17,7 @@ public class MethodBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
   private JCheckBox myWatchExitCheckBox;
 
   public MethodBreakpointPropertiesPanel(final Project project) {
-    super(project);
+    super(project, MethodBreakpoint.CATEGORY);
   }
 
   protected JComponent createSpecialBox() {
@@ -41,7 +40,7 @@ public class MethodBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
     _panel.add(_panel0, BorderLayout.NORTH);
-    _panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.group.watch.events")));
+    _panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), DebuggerBundle.message("label.group.watch.events")));
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {

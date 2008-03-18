@@ -8,38 +8,38 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.DebuggerStatementEditor;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public abstract class BreakpointPropertiesPanel {
   protected final Project myProject;
+  private final Key<? extends Breakpoint> myBreakpointCategory;
   private JPanel myPanel;
   private DebuggerExpressionComboBox myConditionCombo;
   private DebuggerExpressionComboBox myLogExpressionCombo;
@@ -71,6 +71,7 @@ public abstract class BreakpointPropertiesPanel {
   private JRadioButton mySuspendAllRadio;
   private JRadioButton myDisableAgainRadio;
   private JRadioButton myLeaveEnabledRadioButton;
+  private JButton myMakeDefaultButton;
 
   ButtonGroup mySuspendPolicyGroup;
   public static final @NonNls String CONTROL_LOG_MESSAGE = "logMessage";
@@ -125,13 +126,37 @@ public abstract class BreakpointPropertiesPanel {
     panel.add(component, BorderLayout.CENTER);
   }
 
-  public BreakpointPropertiesPanel(Project project) {
+  public BreakpointPropertiesPanel(Project project, final Key<? extends Breakpoint> breakpointCategory) {
     myProject = project;
+    myBreakpointCategory = breakpointCategory;
 
     mySuspendPolicyGroup = new ButtonGroup();
     mySuspendPolicyGroup.add(mySuspendAllRadio);
     mySuspendPolicyGroup.add(mySuspendThreadRadio);
     mySuspendPolicyGroup.add(mySuspendNoneRadio);
+    
+    updateSuspendPolicyRbFont();
+    final ItemListener suspendPolicyChangeListener = new ItemListener() {
+      public void itemStateChanged(final ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          final String defaultPolicy =
+              DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().getDefaultSuspendPolicy(breakpointCategory);
+          myMakeDefaultButton.setEnabled(!defaultPolicy.equals(getSelectedSuspendPolicy()));                 
+        }
+      }
+    };
+    mySuspendAllRadio.addItemListener(suspendPolicyChangeListener);
+    mySuspendNoneRadio.addItemListener(suspendPolicyChangeListener);
+    mySuspendThreadRadio.addItemListener(suspendPolicyChangeListener);
+    
+    myMakeDefaultButton.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
+        final String suspendPolicy = getSelectedSuspendPolicy();
+        breakpointManager.setDefaultSuspendPolicy(breakpointCategory, suspendPolicy);
+        updateSuspendPolicyRbFont();
+      }
+    });
 
     myConditionCombo = new DebuggerExpressionComboBox(project, "LineBreakpoint condition");
     myLogExpressionCombo = new DebuggerExpressionComboBox(project, "LineBreakpoint logMessage");
@@ -181,7 +206,8 @@ public abstract class BreakpointPropertiesPanel {
     JComponent specialBox = createSpecialBox();
     if(specialBox != null) {
       insert(mySpecialBoxPanel, specialBox);
-    } else {
+    } 
+    else {
       mySpecialBoxPanel.setVisible(false);
     }
 
@@ -213,6 +239,27 @@ public abstract class BreakpointPropertiesPanel {
     DebuggerUIUtil.focusEditorOnCheck(myLogExpressionCheckBox, myLogExpressionCombo);
     DebuggerUIUtil.focusEditorOnCheck(myInstanceFiltersCheckBox, myInstanceFiltersField.getTextField());
     DebuggerUIUtil.focusEditorOnCheck(myClassFiltersCheckBox, myClassFiltersField.getTextField());
+  }
+
+  private String getSelectedSuspendPolicy() {
+    if (mySuspendThreadRadio.isSelected()) {
+      return DebuggerSettings.SUSPEND_THREAD;
+    }
+    if (mySuspendNoneRadio.isSelected()) {
+      return DebuggerSettings.SUSPEND_NONE;
+    }
+    return DebuggerSettings.SUSPEND_ALL;
+  }
+
+  private void updateSuspendPolicyRbFont() {
+    final String defPolicy = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().getDefaultSuspendPolicy(myBreakpointCategory);
+    
+    final Font font = mySuspendAllRadio.getFont().deriveFont(Font.PLAIN);
+    final Font boldFont = font.deriveFont(Font.BOLD);
+    
+    mySuspendAllRadio.setFont(DebuggerSettings.SUSPEND_ALL.equals(defPolicy)? boldFont : font);
+    mySuspendThreadRadio.setFont(DebuggerSettings.SUSPEND_THREAD.equals(defPolicy)? boldFont : font);
+    mySuspendNoneRadio.setFont(DebuggerSettings.SUSPEND_NONE.equals(defPolicy)? boldFont : font);
   }
 
   protected TreeClassChooser.ClassFilter createClassConditionFilter() {
@@ -303,15 +350,7 @@ public abstract class BreakpointPropertiesPanel {
     breakpoint.setLogMessage(myLogExpressionCombo.getText());
     breakpoint.LOG_EXPRESSION_ENABLED = !breakpoint.getLogMessage().isEmpty()? myLogExpressionCheckBox.isSelected() : false;
     breakpoint.LOG_ENABLED = myLogMessageCheckBox.isSelected();
-    if(mySuspendAllRadio.isSelected()) {
-      breakpoint.SUSPEND_POLICY = DebuggerSettings.SUSPEND_ALL;
-    }
-    else if(mySuspendThreadRadio.isSelected()) {
-      breakpoint.SUSPEND_POLICY = DebuggerSettings.SUSPEND_THREAD;
-    }
-    else {
-      breakpoint.SUSPEND_POLICY = DebuggerSettings.SUSPEND_NONE;
-    }
+    breakpoint.SUSPEND_POLICY = getSelectedSuspendPolicy();
     reloadInstanceFilters();
     reloadClassFilters();
     updateInstanceFilterEditor(true);
