@@ -82,19 +82,19 @@ public class Alarm implements Disposable {
     }
   }
 
-  public void addRequest(final Runnable request, int delay) {
-    _addRequest(request, delay, myThreadToUse == ThreadToUse.SWING_THREAD ? ModalityState.current() : null);
+  public void addRequest(final Runnable request, int delayMillis) {
+    _addRequest(request, delayMillis, myThreadToUse == ThreadToUse.SWING_THREAD ? ModalityState.current() : null);
   }
 
-  public void addRequest(final Runnable request, int delay, ModalityState modalityState) {
+  public void addRequest(final Runnable request, int delayMillis, ModalityState modalityState) {
     LOG.assertTrue(myThreadToUse == ThreadToUse.SWING_THREAD);
-    _addRequest(request, delay, modalityState);
+    _addRequest(request, delayMillis, modalityState);
   }
 
-  private void _addRequest(final Runnable request, int delay, ModalityState modalityState) {
+  private void _addRequest(final Runnable request, int delayMillis, ModalityState modalityState) {
     synchronized (LOCK) {
       final Request requestToSchedule = new Request(request, modalityState);
-      final ScheduledFuture<?> future = JobScheduler.getScheduler().schedule(requestToSchedule, delay, TimeUnit.MILLISECONDS);
+      final ScheduledFuture<?> future = JobScheduler.getScheduler().schedule(requestToSchedule, delayMillis, TimeUnit.MILLISECONDS);
       requestToSchedule.setFuture(future);
       myRequests.add(requestToSchedule);
     }
