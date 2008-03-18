@@ -96,9 +96,9 @@ public class ClassGroupingRule implements UsageGroupingRule {
   }
 
   private static class ClassUsageGroup implements UsageGroup, TypeSafeDataProvider {
-    private SmartPsiElementPointer myClassPointer;
-    private String myText;
-    private String myQName;
+    private final SmartPsiElementPointer myClassPointer;
+    private final String myText;
+    private final String myQName;
     private Icon myIcon;
 
     public ClassUsageGroup(PsiClass aClass) {

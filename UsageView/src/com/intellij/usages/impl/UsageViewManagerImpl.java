@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
@@ -61,15 +62,15 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @NotNull
-  public UsageView createUsageView(UsageTarget[] targets, Usage[] usages, UsageViewPresentation presentation, Factory<UsageSearcher> usageSearcherFactory) {
-    UsageViewImpl usageView = new UsageViewImpl(presentation, targets, usageSearcherFactory, myProject);
+  public UsageView createUsageView(@NotNull UsageTarget[] targets, @NotNull Usage[] usages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> usageSearcherFactory) {
+    UsageViewImpl usageView = new UsageViewImpl(myProject, presentation, targets, usageSearcherFactory);
     appendUsages(usages, usageView);
     usageView.setSearchInProgress(false);
     return usageView;
   }
 
   @NotNull
-  public UsageView showUsages(UsageTarget[] searchedFor, Usage[] foundUsages, UsageViewPresentation presentation, Factory<UsageSearcher> factory) {
+  public UsageView showUsages(@NotNull UsageTarget[] searchedFor, @NotNull Usage[] foundUsages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> factory) {
     UsageView usageView = createUsageView(searchedFor, foundUsages, presentation, factory);
     addContent((UsageViewImpl)usageView, presentation);
     showToolWindow(true);
@@ -77,7 +78,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @NotNull
-  public UsageView showUsages(UsageTarget[] searchedFor, Usage[] foundUsages, UsageViewPresentation presentation) {
+  public UsageView showUsages(@NotNull UsageTarget[] searchedFor, @NotNull Usage[] foundUsages, @NotNull UsageViewPresentation presentation) {
     return showUsages(searchedFor, foundUsages, presentation, null);
   }
 
@@ -95,10 +96,10 @@ public class UsageViewManagerImpl extends UsageViewManager {
     content.putUserData(USAGE_VIEW_KEY, usageView);
   }
 
-  public UsageView searchAndShowUsages(final UsageTarget[] searchFor,
+  public UsageView searchAndShowUsages(@NotNull final UsageTarget[] searchFor,
                                        final Factory<UsageSearcher> searcherFactory,
                                        final boolean showPanelIfOnlyOneUsage,
-                                       final boolean showNotFoundMessage, final UsageViewPresentation presentation,
+                                       final boolean showNotFoundMessage, @NotNull final UsageViewPresentation presentation,
                                        final UsageViewStateListener listener) {
     final AtomicReference<UsageViewImpl> usageView = new AtomicReference<UsageViewImpl>();
 
@@ -107,41 +108,51 @@ public class UsageViewManagerImpl extends UsageViewManager {
     processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
 
     Task task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
-      public void run(final ProgressIndicator indicator) {
+      public void run(@NotNull final ProgressIndicator indicator) {
         new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener).run();
       }
 
       @Nullable
       public NotificationInfo getNotificationInfo() {
-        return new NotificationInfo("Find Usages",  "Find Usages Finished", usageView.get() != null ? (usageView.get().getUsagesCount() + " Usage(s) Found") : "No Usages Found");
+        String notification = usageView.get() != null ? usageView.get().getUsagesCount() + " Usage(s) Found" : "No Usages Found";
+        return new NotificationInfo("Find Usages",  "Find Usages Finished", notification);
       }
     };
     ProgressManager.getInstance().run(task);
     return usageView.get();
   }
 
-  public void searchAndShowUsages(UsageTarget[] searchFor,
-                                  Factory<UsageSearcher> searcherFactory,
-                                  FindUsagesProcessPresentation processPresentation,
-                                  UsageViewPresentation presentation,
+  public void searchAndShowUsages(@NotNull UsageTarget[] searchFor,
+                                  @NotNull Factory<UsageSearcher> searcherFactory,
+                                  @NotNull FindUsagesProcessPresentation processPresentation,
+                                  @NotNull UsageViewPresentation presentation,
                                   UsageViewStateListener listener
                                        ) {
     final AtomicReference<UsageViewImpl> usageView = new AtomicReference<UsageViewImpl>();
     final SearchForUsagesRunnable runnable = new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener);
     final Factory<ProgressIndicator> progressIndicatorFactory = processPresentation.getProgressIndicatorFactory();
 
-    UsageViewImplUtil.runProcessWithProgress(progressIndicatorFactory != null ? progressIndicatorFactory.create() : null,
-      new Runnable() {
-        public void run() {
-          runnable.searchUsages();
+    final ProgressIndicator progressIndicator = progressIndicatorFactory != null ? progressIndicatorFactory.create() : null;
+
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        try {
+          ProgressManager.getInstance().runProcess(new Runnable() {
+            public void run() {
+              runnable.searchUsages();
+            }
+          }, progressIndicator);
         }
-      },
-      new Runnable() {
-        public void run() {
-          runnable.endSearchForUsages();
+        catch (ProcessCanceledException e) {
+          //ignore
         }
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            runnable.endSearchForUsages();
+          }
+        }, ModalityState.NON_MODAL);
       }
-    );
+    });
   }
 
   public UsageView getSelectedUsageView() {
@@ -218,7 +229,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       if (usageView != null) return usageView;
       int usageCount = myUsageCount.get();
       if (usageCount >= 2 || usageCount == 1 && myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
-        usageView = new UsageViewImpl(myPresentation, mySearchFor, mySearcherFactory, myProject);
+        usageView = new UsageViewImpl(myProject, myPresentation, mySearchFor, mySearcherFactory);
         if (myUsageViewRef.compareAndSet(null, usageView)) {
           openView(usageView);
           Usage firstUsage = myFirstUsage.get();

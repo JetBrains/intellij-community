@@ -130,7 +130,7 @@ public class PsiFormatUtil {
     return formatMethod(method, substitutor, options, parameterOptions, MAX_PARAMS_TO_SHOW);
   }
 
-  public static String formatMethod(PsiMethod method, PsiSubstitutor substitutor, int options, int parameterOptions, int paramsToShow){
+  public static String formatMethod(PsiMethod method, PsiSubstitutor substitutor, int options, int parameterOptions, int maxParametersToShow){
     StringBuilder buffer = new StringBuilder();
     if ((options & SHOW_MODIFIERS) != 0 && (options & MODIFIERS_AFTER) == 0){
       buffer.append(formatModifiers(method, options));
@@ -182,14 +182,14 @@ public class PsiFormatUtil {
     if ((options & SHOW_PARAMETERS) != 0){
       buffer.append('(');
       PsiParameter[] parms = method.getParameterList().getParameters();
-      for(int i = 0; i < Math.min(parms.length, paramsToShow); i++) {
+      for(int i = 0; i < Math.min(parms.length, maxParametersToShow); i++) {
         PsiParameter parm = parms[i];
         if (i > 0){
           buffer.append(", ");
         }
         buffer.append(formatVariable(parm, parameterOptions, substitutor));
       }
-      if(parms.length > paramsToShow) {
+      if(parms.length > maxParametersToShow) {
         buffer.append (", ...");
       }
       buffer.append(')');

@@ -176,7 +176,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   private static boolean checkOverriding(final CandidateInfo one, final CandidateInfo two) {
     final PsiMethod method1 = (PsiMethod)one.getElement();
     final PsiMethod method2 = (PsiMethod)two.getElement();
-    if (method1 != method2 && method1.getContainingClass() == method2.getContainingClass()) return false;
+    PsiClass class1 = method1.getContainingClass();
+    PsiClass class2 = method2.getContainingClass();
+    if (method1 != method2 && class1 == class2) return false;
     final PsiParameter[] params1 = method1.getParameterList().getParameters();
     final PsiParameter[] params2 = method2.getParameterList().getParameters();
     if (params1.length != params2.length) return false;
@@ -189,11 +191,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         return false;
       }
     }
+    
     if (!Comparing.equal(method1.getReturnType(), method2.getReturnType())) return false;
     return true;
   }
 
-  private static Specifics checkSubtyping(PsiType type1, PsiType type2, final PsiType argType) {
+  private static Specifics checkSubtyping(PsiType type1, PsiType type2) {
     final boolean assignable2From1 = type2.isAssignableFrom(type1);
     final boolean assignable1From2 = type1.isAssignableFrom(type2);
     if (assignable1From2 || assignable2From1) {
@@ -294,7 +297,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         isLessBoxing = Specifics.FALSE;
       }
       else {
-        final Specifics specifics = checkSubtyping(type1, type2, argType);
+        final Specifics specifics = checkSubtyping(type1, type2);
         if (specifics == null) continue;
         switch (specifics) {
           case TRUE:

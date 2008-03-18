@@ -31,19 +31,20 @@ public abstract class UsageViewManager {
   }
 
   @NotNull
-  public abstract UsageView createUsageView(UsageTarget[] targets, Usage[] usages, UsageViewPresentation presentation, Factory<UsageSearcher> usageSearcherFactory);
+  public abstract UsageView createUsageView(@NotNull UsageTarget[] targets, @NotNull Usage[] usages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> usageSearcherFactory);
 
   @NotNull
-  public abstract UsageView showUsages(UsageTarget[] searchedFor, Usage[] foundUsages, UsageViewPresentation presentation, Factory<UsageSearcher> factory);
+  public abstract UsageView showUsages(@NotNull UsageTarget[] searchedFor, @NotNull Usage[] foundUsages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> factory);
 
   @NotNull
-  public abstract UsageView showUsages(UsageTarget[] searchedFor, Usage[] foundUsages, UsageViewPresentation presentation);
+  public abstract UsageView showUsages(@NotNull UsageTarget[] searchedFor, @NotNull Usage[] foundUsages, @NotNull UsageViewPresentation presentation);
 
   @Nullable ("in case no usages found or usage view not shown for one usage")
-  public abstract UsageView searchAndShowUsages(UsageTarget[] searchFor,
+  public abstract UsageView searchAndShowUsages(@NotNull UsageTarget[] searchFor,
                                 Factory<UsageSearcher> searcherFactory,
                                 boolean showPanelIfOnlyOneUsage,
-                                boolean showNotFoundMessage, UsageViewPresentation presentation,
+                                boolean showNotFoundMessage,
+                                @NotNull UsageViewPresentation presentation,
                                 UsageViewStateListener listener);
 
   public abstract void setCurrentSearchCancelled(boolean flag);
@@ -55,10 +56,10 @@ public abstract class UsageViewManager {
     void findingUsagesFinished(final UsageView usageView);
   }
 
-  public abstract void searchAndShowUsages(UsageTarget[] searchFor,
-                           Factory<UsageSearcher> searcherFactory,
-                           FindUsagesProcessPresentation processPresentation,
-                           UsageViewPresentation presentation,
+  public abstract void searchAndShowUsages(@NotNull UsageTarget[] searchFor,
+                           @NotNull Factory<UsageSearcher> searcherFactory,
+                           @NotNull FindUsagesProcessPresentation processPresentation,
+                           @NotNull UsageViewPresentation presentation,
                            UsageViewStateListener listener);
 
   @Nullable

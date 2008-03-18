@@ -27,7 +27,7 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     return ServiceManager.getService(project, DirectoryGroupingRule.class);
   }
 
-  protected Project myProject;
+  protected final Project myProject;
 
   public DirectoryGroupingRule(Project project) {
     myProject = project;
@@ -52,7 +52,7 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
   }
 
   private class DirectoryGroup implements UsageGroup, TypeSafeDataProvider {
-    private VirtualFile myDir;
+    private final VirtualFile myDir;
 
     public void update() {
     }

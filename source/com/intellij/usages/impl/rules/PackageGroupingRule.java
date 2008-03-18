@@ -52,7 +52,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
   }
 
   private class PackageGroup implements UsageGroup, TypeSafeDataProvider {
-    private PsiPackage myPackage;
+    private final PsiPackage myPackage;
     private Icon myOpenIcon;
     private Icon myClosedIcon;
 

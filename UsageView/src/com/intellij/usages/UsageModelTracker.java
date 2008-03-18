@@ -25,14 +25,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author max
  */
 public class UsageModelTracker {
-  private PsiTreeChangeListener myPsiListener;
+  private final PsiTreeChangeListener myPsiListener;
 
   public interface UsageModelTrackerListener {
     void modelChanged(boolean isPropertyChange);
   }
 
-  private Project myProject;
-  private List<UsageModelTrackerListener> myListeners = new CopyOnWriteArrayList<UsageModelTrackerListener>();
+  private final Project myProject;
+  private final List<UsageModelTrackerListener> myListeners = new CopyOnWriteArrayList<UsageModelTrackerListener>();
 
   public UsageModelTracker(Project project) {
     myProject = project;
@@ -66,7 +66,9 @@ public class UsageModelTracker {
 
   private void doFire(final PsiTreeChangeEvent event, boolean propertyChange) {
     if (!(event.getFile() instanceof PsiCodeFragment)) {
-      fireModelChanged(propertyChange);
+      for (UsageModelTrackerListener listener : myListeners) {
+        listener.modelChanged(propertyChange);
+      }
     }
   }
 
@@ -80,11 +82,5 @@ public class UsageModelTracker {
 
   public void removeListener(UsageModelTrackerListener listener) {
     myListeners.remove(listener);
-  }
-
-  private void fireModelChanged(final boolean isPropertyChange) {
-    for (UsageModelTrackerListener listener : myListeners) {
-      listener.modelChanged(isPropertyChange);
-    }
   }
 }

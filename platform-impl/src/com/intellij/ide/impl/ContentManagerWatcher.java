@@ -26,9 +26,6 @@ public class ContentManagerWatcher {
 
     contentManager.addContentManagerListener(
       new ContentManagerAdapter(){
-        public void selectionChanged(ContentManagerEvent e) {
-        }
-
         public void contentAdded(ContentManagerEvent e) {
           e.getContent().addPropertyChangeListener(myPropertyChangeListener);
           myToolWindow.setAvailable(true,null);

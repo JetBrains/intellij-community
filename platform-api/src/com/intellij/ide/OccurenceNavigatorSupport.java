@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 
 public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
-  private JTree myTree;
+  private final JTree myTree;
 
   public OccurenceNavigatorSupport(JTree tree) {
     myTree = tree;
@@ -36,7 +36,7 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
   @Nullable
   protected abstract Navigatable createDescriptorForNode(DefaultMutableTreeNode node);
 
-  public OccurenceNavigator.OccurenceInfo goNextOccurence() {
+  public OccurenceInfo goNextOccurence() {
     Counters counters = new Counters();
     DefaultMutableTreeNode node = findNode(myTree, true, counters);
     if (node == null) return null;
@@ -47,7 +47,7 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
     return new OccurenceInfo(editSourceDescriptor, counters.myFoundOccurenceNumber, counters.myOccurencesCount);
   }
 
-  public OccurenceNavigator.OccurenceInfo goPreviousOccurence() {
+  public OccurenceInfo goPreviousOccurence() {
     Counters counters = new Counters();
     DefaultMutableTreeNode node = findNode(myTree, false, counters);
     if (node == null) return null;
@@ -60,14 +60,12 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
 
   public boolean hasNextOccurence() {
     DefaultMutableTreeNode node = findNode(myTree, true, null);
-    if (node == null) return false;
-    return true;
+    return node != null;
   }
 
   public boolean hasPreviousOccurence() {
     DefaultMutableTreeNode node = findNode(myTree, false, null);
-    if (node == null) return false;
-    return true;
+    return node != null;
   }
 
   protected static class Counters {
@@ -93,7 +91,7 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)tree.getModel().getRoot();
 
     Enumeration enumeration = root.preorderEnumeration();
-    ArrayList nodes = new ArrayList();
+    ArrayList<TreeNode> nodes = new ArrayList<TreeNode>();
     while (enumeration.hasMoreElements()) {
       TreeNode node = (TreeNode)enumeration.nextElement();
       nodes.add(node);
@@ -102,8 +100,7 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
     DefaultMutableTreeNode result = null;
 
     if (forward) {
-      for (int i=0; i < nodes.size(); i++) {
-        TreeNode node = (TreeNode)nodes.get(i);
+      for (TreeNode node : nodes) {
         DefaultMutableTreeNode nextNode = getNode(node, selectedNode, ready);
         if (nextNode != null) {
           result = nextNode;
@@ -113,7 +110,7 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
     }
     else {
       for (int i=nodes.size() - 1; i >= 0; i--) {
-        TreeNode node = (TreeNode)nodes.get(i);
+        TreeNode node = nodes.get(i);
         DefaultMutableTreeNode nextNode = getNode(node, selectedNode, ready);
         if (nextNode != null) {
           result = nextNode;
@@ -129,8 +126,7 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
     if (counters != null) {
       counters.myFoundOccurenceNumber = 0;
       counters.myOccurencesCount = 0;
-      for (int i=0; i < nodes.size(); i++) {
-        TreeNode node = (TreeNode)nodes.get(i);
+      for (TreeNode node : nodes) {
         if (!(node instanceof DefaultMutableTreeNode)) continue;
 
         Navigatable descriptor = createDescriptorForNode((DefaultMutableTreeNode)node);

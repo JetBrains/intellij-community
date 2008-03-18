@@ -39,7 +39,7 @@ import javax.swing.*;
  * @author max
  */
 public class FileGroupingRule implements UsageGroupingRule {
-  private Project myProject;
+  private final Project myProject;
 
   public FileGroupingRule(Project project) {
     myProject = project;

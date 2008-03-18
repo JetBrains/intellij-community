@@ -19,7 +19,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
   private final Key<Boolean> REUSABLE_CONTENT_KEY = Key.create("UsageTreeManager.REUSABLE_CONTENT_KEY");
   private final Key<Boolean> NOT_REUSABLE_CONTENT_KEY = Key.create("UsageTreeManager.NOT_REUSABLE_CONTENT_KEY");        //todo[myakovlev] dont use it
   private final Key<UsageView> NEW_USAGE_VIEW_KEY = Key.create("NEW_USAGE_VIEW_KEY");
-  private ToolWindowManager myToolWindowManager;
+  private final ToolWindowManager myToolWindowManager;
   private ContentManager myFindContentManager;
 
   public UsageViewManagerImpl(final ToolWindowManager toolWindowManager) {

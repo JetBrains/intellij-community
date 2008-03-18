@@ -93,7 +93,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private static final UsageNode NULL_NODE = new UsageNode(new NullUsage(), new UsageViewTreeModelBuilder(new UsageViewPresentation(), new UsageTarget[0]));
   private final ButtonPanel myButtonPanel = new ButtonPanel();
   private volatile boolean isDisposed;
-  private boolean myChangesDetected = false;
+  private volatile boolean myChangesDetected = false;
   private final Queue<Usage> myUsagesToFlush = new ConcurrentLinkedQueue<Usage>();
   private final List<Disposable> myDisposables = new ArrayList<Disposable>();
   static final Comparator<Usage> USAGE_COMPARATOR = new Comparator<Usage>() {
@@ -126,10 +126,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private static final Icon PREVIEW_ICON = IconLoader.getIcon("/actions/preview.png");
   private final GroupNode myRoot;
 
-  public UsageViewImpl(UsageViewPresentation presentation,
-                       UsageTarget[] targets,
-                       Factory<UsageSearcher> usageSearcherFactory,
-                       Project project) {
+  public UsageViewImpl(@NotNull Project project,
+                       @NotNull UsageViewPresentation presentation,
+                       @NotNull UsageTarget[] targets,
+                       Factory<UsageSearcher> usageSearcherFactory) {
 
     myPresentation = presentation;
     myTargets = targets;
@@ -234,7 +234,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private static UsageFilteringRule[] getActiveFilteringRules(final Project project) {
     final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME);
-    List<UsageFilteringRule> list = new ArrayList<UsageFilteringRule>();
+    List<UsageFilteringRule> list = new ArrayList<UsageFilteringRule>(providers.length);
     for (UsageFilteringRuleProvider provider : providers) {
       list.addAll(Arrays.asList(provider.getActiveRules(project)));
     }
@@ -243,7 +243,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private static UsageGroupingRule[] getActiveGroupingRules(final Project project) {
     final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
-    List<UsageGroupingRule> list = new ArrayList<UsageGroupingRule>();
+    List<UsageGroupingRule> list = new ArrayList<UsageGroupingRule>(providers.length);
     for (UsageGroupingRuleProvider provider : providers) {
       list.addAll(Arrays.asList(provider.getActiveRules(project)));
     }
@@ -424,7 +424,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private AnAction[] createGroupingActions() {
     final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
-    List<AnAction> list = new ArrayList<AnAction>();
+    List<AnAction> list = new ArrayList<AnAction>(providers.length);
     for (UsageGroupingRuleProvider provider : providers) {
       list.addAll(Arrays.asList(provider.createGroupingActions(this)));
     }
@@ -433,7 +433,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private AnAction[] createFilteringActions() {
     final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME); 
-    List<AnAction> list = new ArrayList<AnAction>();
+    List<AnAction> list = new ArrayList<AnAction>(providers.length);
     for (UsageFilteringRuleProvider provider : providers) {
       list.addAll(Arrays.asList(provider.createFilteringActions(this)));
     }
