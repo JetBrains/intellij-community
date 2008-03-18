@@ -1,70 +1,102 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.frame.XValueContainer;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
+import javax.swing.tree.TreeNode;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
  * @author nik
  */
-public class WatchesRootNode extends XValueContainerNode<WatchesRootNode.WatchItemContainer> {
+public class WatchesRootNode extends XDebuggerTreeNode {
+  private List<XDebuggerTreeNode> myChildren;
+
   public WatchesRootNode(final XDebuggerTree tree, List<String> expressions, XDebuggerEvaluator evaluator) {
-    super(tree, null, new WatchItemContainer(expressions, evaluator));
-    setLeaf(false);
-  }
-
-  protected MessageTreeNode createLoadingMessageNode() {
-    return MessageTreeNode.createEvaluatingMessage(myTree, this);
-  }
-
-  protected XValueContainerNode<?> createChildNode(final XValue child) {
-    return new WatchNode(myTree, this, child);
-  }
-
-  public List<String> getExpressions() {
-    return myValueContainer.getExpressions();
-  }
-
-  public static class WatchItemContainer extends XValueContainer {
-    private final List<String> myExpressions;
-    private final XDebuggerEvaluator myEvaluator;
-    private int myCurrentExpression;
-
-    public WatchItemContainer(final List<String> expressions, final XDebuggerEvaluator evaluator) {
-      myExpressions = expressions;
-      myEvaluator = evaluator;
-      myCurrentExpression = 0;
+    super(tree, null, false);
+    myChildren = new ArrayList<XDebuggerTreeNode>();
+    for (String expression : expressions) {
+      myChildren.add(MessageTreeNode.createEvaluatingMessage(tree, this, expression + " = ..."));
     }
+    for (int i = 0; i < expressions.size(); i++) {
+      String expression = expressions.get(i);
+      evaluator.evaluate(expression, new MyEvaluationCallback(expression, myChildren.get(i)));
+    }
+  }
 
-    //todo[nik] synchronize?
-    public void computeChildren(@NotNull final XCompositeNode node) {
-      if (myCurrentExpression >= myExpressions.size()) {
-        node.addChildren(Collections.<XValue>emptyList(), true);
+  protected List<? extends TreeNode> getChildren() {
+    return myChildren;
+  }
+
+  private void replaceNode(final XDebuggerTreeNode oldNode, final XDebuggerTreeNode newNode) {
+    for (int i = 0; i < myChildren.size(); i++) {
+      XDebuggerTreeNode child = myChildren.get(i);
+      if (child == oldNode) {
+        myChildren.set(i, newNode);
+        fireNodeChildrenChanged();
         return;
       }
-      String expression = myExpressions.get(myCurrentExpression);
-      myCurrentExpression++;
-      myEvaluator.evaluate(expression, new XDebuggerEvaluator.XEvaluationCallback() {
-        public void evaluated(@NotNull final XValue result) {
-          node.addChildren(Collections.singletonList(result), false);
-          computeChildren(node);
-        }
+    }
+  }
 
-        public void errorOccured(@NotNull final String errorMessage) {
-          node.setErrorMessage(errorMessage);
+  public void addWatchExpression(final XDebuggerEvaluator evaluator, final String expression) {
+    MessageTreeNode message = MessageTreeNode.createEvaluatingMessage(myTree, this, expression + "...");
+    myChildren.add(message);
+    evaluator.evaluate(expression, new MyEvaluationCallback(expression, message));
+    fireNodeChildrenChanged();
+  }
+
+  public int findWatchNode(WatchNode node) {
+    return myChildren.indexOf(node);
+  }
+
+  public void removeChildNode(XDebuggerTreeNode node) {
+    myChildren.remove(node);
+    fireNodeChildrenChanged();
+  }
+
+  public void removeChildren(Collection<? extends XDebuggerTreeNode> nodes) {
+    myChildren.removeAll(nodes);
+    fireNodeChildrenChanged();
+  }
+
+  public void addNewWatch() {
+    MessageTreeNode node = MessageTreeNode.createMessageNode(myTree, this, "", null);
+    myChildren.add(node);
+    fireNodeChildrenChanged();
+    WatchInplaceEditor editor = new WatchInplaceEditor(this, node, "watch");
+    editor.show();
+  }
+
+  private class MyEvaluationCallback implements XDebuggerEvaluator.XEvaluationCallback {
+    private final String myExpression;
+    private final XDebuggerTreeNode myResultPlace;
+
+    public MyEvaluationCallback(final String expression, final XDebuggerTreeNode resultPlace) {
+      myExpression = expression;
+      myResultPlace = resultPlace;
+    }
+
+    public void evaluated(@NotNull final XValue result) {
+      DebuggerUIUtil.invokeLater(new Runnable() {
+        public void run() {
+          replaceNode(myResultPlace, new WatchNode(myTree, WatchesRootNode.this, result, myExpression));
         }
       });
     }
 
-    public List<String> getExpressions() {
-      return myExpressions;
+    public void errorOccured(@NotNull final String errorMessage) {
+      DebuggerUIUtil.invokeLater(new Runnable() {
+        public void run() {
+          replaceNode(myResultPlace, MessageTreeNode.createErrorMessage(myTree, WatchesRootNode.this, errorMessage));
+        }
+      });
     }
-
   }
 }

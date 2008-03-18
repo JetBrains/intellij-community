@@ -2,12 +2,15 @@ package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
-import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,7 +32,14 @@ public class XDebugWatchesView extends XDebugViewBase {
 
   public void addWatchExpression(@NotNull String expression) {
     myWatchExpressions.add(expression);
-    rebuildView(false);
+    XStackFrame stackFrame = mySession.getCurrentStackFrame();
+    if (stackFrame != null) {
+      XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
+      XDebuggerTreeNode root = myTreePanel.getTree().getRoot();
+      if (evaluator != null && root instanceof WatchesRootNode) {
+        ((WatchesRootNode)root).addWatchExpression(evaluator, expression);
+      }
+    }
   }
 
   protected void rebuildView(final boolean onlyFrameChanged) {
@@ -51,5 +61,17 @@ public class XDebugWatchesView extends XDebugViewBase {
 
   public JPanel getMainPanel() {
     return myTreePanel.getMainPanel();
+  }
+
+  public void removeWatches(final List<WatchNode> watchNodes) {
+    XDebuggerTreeNode root = getTree().getRoot();
+    if (!(root instanceof WatchesRootNode)) return;
+    final WatchesRootNode watchesRoot = (WatchesRootNode)root;
+
+    for (WatchNode watchNode : watchNodes) {
+      myWatchExpressions.remove(watchNode.getExpression());
+    }
+
+    watchesRoot.removeChildren(watchNodes);
   }
 }

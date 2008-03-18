@@ -492,6 +492,8 @@
       <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction"/>
       <action id="XDebugger.Inspect" class="com.intellij.xdebugger.impl.ui.tree.actions.XInspectAction"/>
       <action id="XDebugger.AddToWatches" class="com.intellij.xdebugger.impl.ui.tree.actions.XAddToWatchesAction"/>
+      <action id="XDebugger.NewWatch" class="com.intellij.xdebugger.impl.frame.actions.XNewWatchAction" icon="/debugger/newWatch.png"/>
+      <action id="XDebugger.RemoveWatch" class="com.intellij.xdebugger.impl.frame.actions.XRemoveWatchAction" icon="/actions/delete.png"/>
     </group>
 
     <group id="XDebugger.Evaluation.Dialog.Tree.Popup">
@@ -511,6 +513,11 @@
       <reference ref="XDebugger.Inspect"/>
       <reference ref="XDebugger.SetValue"/>
       <reference ref="XDebugger.CopyValue"/>
+    </group>
+
+    <group id="XDebugger.Watches.Tree.Toolbar">
+      <reference ref="XDebugger.NewWatch"/>
+      <reference ref="XDebugger.RemoveWatch"/>
     </group>
 
     <group id="XDebugger.Inspect.Tree.Popup">

@@ -16,15 +16,17 @@ import javax.swing.*;
 public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
   private JPanel myEditorPanel;
   private XValueModifier myModifier;
+  private final XValueNodeImpl myValueNode;
 
   public SetValueInplaceEditor(final XValueNodeImpl node, @NotNull final String nodeName) {
     super(node, "setValue");
-    myModifier = myNode.getValueContainer().getModifier();
+    myValueNode = node;
+    myModifier = myValueNode.getValueContainer().getModifier();
 
     myEditorPanel = new JPanel();
     myEditorPanel.setLayout(new BoxLayout(myEditorPanel, BoxLayout.X_AXIS));
     SimpleColoredComponent nameLabel = new SimpleColoredComponent();
-    nameLabel.setIcon(myNode.getIcon());
+    nameLabel.setIcon(getNode().getIcon());
     nameLabel.append(nodeName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
 
     myEditorPanel.add(nameLabel);
@@ -40,7 +42,7 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
   public void doOKAction() {
     myExpressionEditor.saveTextInHistory();
     final DebuggerTreeState treeState = new DebuggerTreeState(myTree);
-    myNode.setValueModificationStarted();
+    myValueNode.setValueModificationStarted();
     myModifier.setValue(myExpressionEditor.getText(), new XValueModifier.XModificationCallback() {
       public void valueModified() {
         DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {

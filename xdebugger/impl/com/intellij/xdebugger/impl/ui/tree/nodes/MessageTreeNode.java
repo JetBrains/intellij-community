@@ -26,8 +26,16 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     return Collections.emptyList();
   }
 
+  public static MessageTreeNode createMessageNode(XDebuggerTree tree, XDebuggerTreeNode parent, String message, @Nullable Icon icon) {
+    return new MessageTreeNode(tree, parent, message, SimpleTextAttributes.REGULAR_ATTRIBUTES, icon);
+  }
+
   public static MessageTreeNode createLoadingMessage(XDebuggerTree tree, final XDebuggerTreeNode parent) {
     return new MessageTreeNode(tree, parent, XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES, null);
+  }
+
+  public static MessageTreeNode createEvaluatingMessage(XDebuggerTree tree, final XDebuggerTreeNode parent, final String message) {
+    return new MessageTreeNode(tree, parent, message, XDebuggerUIConstants.EVALUATING_EXPRESSION_HIGHLIGHT_ATTRIBUTES, null);
   }
 
   public static MessageTreeNode createEvaluatingMessage(XDebuggerTree tree, final XDebuggerTreeNode parent) {

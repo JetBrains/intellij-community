@@ -7,7 +7,14 @@ import com.intellij.xdebugger.frame.XValue;
  * @author nik
  */
 public class WatchNode extends XValueNodeImpl {
-  public WatchNode(final XDebuggerTree tree, final XDebuggerTreeNode parent, final XValue value) {
-    super(tree, parent, value);
+  private final String myExpression;
+
+  public WatchNode(final XDebuggerTree tree, final WatchesRootNode parent, final XValue result, final String expression) {
+    super(tree, parent, result);
+    myExpression = expression;
+  }
+
+  public String getExpression() {
+    return myExpression;
   }
 }

@@ -3,7 +3,7 @@ package com.intellij.xdebugger.impl.ui.tree;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -13,11 +13,11 @@ import javax.swing.tree.TreePath;
  * @author nik
  */
 public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
-  protected final XValueNodeImpl myNode;
+  private final XDebuggerTreeNode myNode;
   protected final XDebuggerExpressionComboBox myExpressionEditor;
   protected XDebuggerTree myTree;
 
-  public XDebuggerTreeInplaceEditor(final XValueNodeImpl node, @NonNls final String historyId) {
+  public XDebuggerTreeInplaceEditor(final XDebuggerTreeNode node, @NonNls final String historyId) {
     myNode = node;
     myTree = myNode.getTree();
     myExpressionEditor = new XDebuggerExpressionComboBox(myTree.getProject(), myTree.getEditorsProvider(), historyId, myTree.getSourcePosition());
@@ -25,6 +25,10 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
 
   protected JComponent getPreferredFocusedComponent() {
     return myExpressionEditor.getPreferredFocusedComponent();
+  }
+
+  public XDebuggerTreeNode getNode() {
+    return myNode;
   }
 
   public Editor getEditor() {

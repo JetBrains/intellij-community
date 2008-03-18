@@ -2,6 +2,7 @@ package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.Tree;
 import com.intellij.xdebugger.XSourcePosition;
@@ -55,7 +56,11 @@ public class XDebuggerTree extends Tree implements DataProvider {
     myTreeModel.setRoot(root);
   }
 
-  @Nullable 
+  public XDebuggerTreeNode getRoot() {
+    return (XDebuggerTreeNode)myTreeModel.getRoot();
+  }
+
+  @Nullable
   public XSourcePosition getSourcePosition() {
     return mySourcePosition;
   }
@@ -128,5 +133,10 @@ public class XDebuggerTree extends Tree implements DataProvider {
         markNodesObsolete(child);
       }
     }
+  }
+
+  @Nullable
+  public static XDebuggerTree getTree(final AnActionEvent e) {
+    return e.getData(XDEBUGGER_TREE_KEY);
   }
 }

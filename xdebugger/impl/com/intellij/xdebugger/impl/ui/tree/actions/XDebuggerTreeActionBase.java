@@ -37,7 +37,7 @@ public abstract class XDebuggerTreeActionBase extends AnAction {
 
   @Nullable
   private static XValueNodeImpl getSelectedNode(AnActionEvent e) {
-    XDebuggerTree tree = getTree(e);
+    XDebuggerTree tree = XDebuggerTree.getTree(e);
     if (tree == null) return null;
 
     TreePath path = tree.getSelectionPath();
@@ -50,8 +50,4 @@ public abstract class XDebuggerTreeActionBase extends AnAction {
     return null;
   }
 
-  @Nullable
-  private static XDebuggerTree getTree(final AnActionEvent e) {
-    return e.getData(XDebuggerTree.XDEBUGGER_TREE_KEY);
-  }
 }

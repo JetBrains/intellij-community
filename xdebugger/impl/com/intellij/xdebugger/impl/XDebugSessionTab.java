@@ -70,8 +70,13 @@ public class XDebugSessionTab implements Disposable {
 
   private Content createWatchesContent(final XDebugSession session) {
     myWatchesView = new XDebugWatchesView(session, this);
-    return myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getMainPanel(),
-                              XDebuggerBundle.message("debugger.session.tab.watches.title"), XDebuggerUIConstants.WATCHES_TAB_ICON, null);
+    Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getMainPanel(),
+                                         XDebuggerBundle.message("debugger.session.tab.watches.title"),
+                                         XDebuggerUIConstants.WATCHES_TAB_ICON, null);
+
+    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP);
+    watchesContent.setActions(group, ActionPlaces.DEBUGGER_TOOLBAR, myWatchesView.getTree());
+    return watchesContent;
   }
 
   private Content createFramesContent(final XDebugSession session) {

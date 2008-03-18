@@ -56,13 +56,13 @@ public class XDebugFramesView extends XDebugViewBase {
   }
 
   protected void rebuildView(final boolean onlyFrameChanged) {
+    if (onlyFrameChanged) return;
+
     myListenersEnabled = false;
-    if (!onlyFrameChanged) {
-      for (StackFramesListBuilder builder : myBuilders.values()) {
-        builder.dispose();
-      }
-      myBuilders.clear();
+    for (StackFramesListBuilder builder : myBuilders.values()) {
+      builder.dispose();
     }
+    myBuilders.clear();
     XSuspendContext suspendContext = mySession.getSuspendContext();
     if (suspendContext == null) {
       myThreadComboBox.removeAllItems();
