@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.idea.Bombed;
 
 public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
   private void doTest() throws Exception {
@@ -37,6 +38,28 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     } else {
       fail("duplicates found");
     }
+  }
+
+  public void testIdentityComplete() throws Exception {
+    doTest();
+  }
+
+  public void testIdentityComment() throws Exception {
+    doTest();
+  }
+
+  public void testIdentityName() throws Exception {
+    doTest();
+  }
+
+  // Known failures: IDEADEV-25292. 
+  @Bombed(description = "Identity / name tests, failed for now due to bugs", user = "Anna Kozlova", month = 4, day = 18)
+  public void testIdentityNameFailures() throws Exception {
+    doTest();
+  }
+
+  public void testIdentityWhitespace() throws Exception {
+    doTest();
   }
 
   public void testAnonymousTest() throws Exception {
