@@ -1,11 +1,10 @@
-package com.intellij.ide.util.gotoByName;
+package com.intellij.ide.util;
 
-import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 
-public class GotoSymbolCellRenderer extends PsiElementListCellRenderer {
+public class DefaultPsiElementCellRenderer extends PsiElementListCellRenderer {
   protected int getIconFlags() {
     return Iconable.ICON_FLAG_VISIBILITY;
   }

@@ -7,7 +7,7 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.ide.util.gotoByName.GotoSymbolCellRenderer;
+import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -95,7 +95,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       final TextRange range = reference.getRangeInElement();
       final String refText = reference.getElement().getText().substring(range.getStartOffset(), range.getEndOffset());
       String title = MessageFormat.format(titlePattern, refText);
-      NavigationUtil.getPsiElementPopup(elements, new GotoSymbolCellRenderer(), title, processor).showInBestPositionFor(editor);
+      NavigationUtil.getPsiElementPopup(elements, new DefaultPsiElementCellRenderer(), title, processor).showInBestPositionFor(editor);
       return true;
     }
     return false;

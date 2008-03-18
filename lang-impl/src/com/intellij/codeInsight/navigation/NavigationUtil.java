@@ -2,7 +2,7 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
-import com.intellij.ide.util.gotoByName.GotoSymbolCellRenderer;
+import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.pom.Navigatable;
@@ -22,7 +22,7 @@ public final class NavigationUtil {
   }
 
   public static JBPopup getPsiElementPopup(PsiElement[] elements, String title) {
-    return getPsiElementPopup(elements, new GotoSymbolCellRenderer(), title);
+    return getPsiElementPopup(elements, new DefaultPsiElementCellRenderer(), title);
   }
 
   public static JBPopup getPsiElementPopup(final PsiElement[] elements, final PsiElementListCellRenderer renderer, final String title) {

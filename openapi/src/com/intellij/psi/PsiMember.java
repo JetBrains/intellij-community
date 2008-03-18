@@ -15,12 +15,10 @@
  */
 package com.intellij.psi;
 
-import com.intellij.navigation.NavigationItem;
-
 /**
  * Represents a member of a Java class (for example, a field or a method).
  */
-public interface PsiMember extends PsiModifierListOwner, NavigationItem {
+public interface PsiMember extends PsiModifierListOwner, NavigatablePsiElement {
   /**
    * The empty array of PSI members which can be reused to avoid unnecessary allocations.
    */

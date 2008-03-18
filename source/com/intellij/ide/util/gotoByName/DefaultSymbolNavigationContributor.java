@@ -40,6 +40,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 
 import java.util.*;
 
@@ -104,7 +105,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
   private static class MyComparator implements Comparator<PsiModifierListOwner>{
     public static final MyComparator INSTANCE = new MyComparator();
 
-    private final GotoSymbolCellRenderer myRenderer = new GotoSymbolCellRenderer();
+    private final DefaultPsiElementCellRenderer myRenderer = new DefaultPsiElementCellRenderer();
 
     public int compare(PsiModifierListOwner element1, PsiModifierListOwner element2) {
       if (element1 == element2) return 0;
