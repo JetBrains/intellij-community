@@ -38,6 +38,10 @@ public class IntentionPowerPackBundle {
     return CommonBundle.message(getBundle(), key, params);
   }
 
+  public static String defaultableMessage(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
+    return CommonBundle.messageOrDefault(getBundle(), key, "default", true, (Object[])params);
+  }
+
   private static ResourceBundle getBundle() {
     ResourceBundle bundle = null;
     if (ourBundle != null) bundle = ourBundle.get();

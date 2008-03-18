@@ -236,6 +236,6 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
     @NotNull
     public String getFamilyName() {
         //noinspection UnresolvedPropertyKey
-        return IntentionPowerPackBundle.message(getPrefix() + ".family.name");
+        return IntentionPowerPackBundle.defaultableMessage(getPrefix() + ".family.name");
     }
 }
