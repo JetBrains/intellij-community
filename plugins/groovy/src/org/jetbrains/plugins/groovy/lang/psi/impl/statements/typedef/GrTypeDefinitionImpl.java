@@ -821,7 +821,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   private Icon getIconInner() {
     if (isAnnotationType())
-      return GroovyIcons.ANNOTAION;
+      return GroovyIcons.ANNOTATION_TYPE;
 
     if (isInterface())
       return GroovyIcons.INTERFACE;
@@ -830,9 +830,9 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       return GroovyIcons.ENUM;
 
     if (hasModifierProperty(PsiModifier.ABSTRACT))
-      return GroovyIcons.ABSTRACT;
+      return GroovyIcons.ABSTRACT_CLASS;
 
-    return GroovyIcons.CLAZZ;
+    return GroovyIcons.CLASS;
   }
 
   private boolean isRenameFileOnClassRenaming() {
