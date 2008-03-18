@@ -2,14 +2,15 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -17,13 +18,16 @@ import java.util.List;
  */
 public class WatchesRootNode extends XDebuggerTreeNode {
   private List<XDebuggerTreeNode> myChildren;
+  private List<XDebuggerTreeNode> myLoadedChildren;
 
   public WatchesRootNode(final XDebuggerTree tree, List<String> expressions, XDebuggerEvaluator evaluator) {
     super(tree, null, false);
+
     myChildren = new ArrayList<XDebuggerTreeNode>();
     for (String expression : expressions) {
       myChildren.add(MessageTreeNode.createEvaluatingMessage(tree, this, expression + " = ..."));
     }
+
     for (int i = 0; i < expressions.size(); i++) {
       String expression = expressions.get(i);
       evaluator.evaluate(expression, new MyEvaluationCallback(expression, myChildren.get(i)));
@@ -34,11 +38,27 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     return myChildren;
   }
 
+  public List<? extends XDebuggerTreeNode> getLoadedChildren() {
+    if (myLoadedChildren == null) {
+      myLoadedChildren = new ArrayList<XDebuggerTreeNode>();
+      for (XDebuggerTreeNode child : myChildren) {
+        if (child instanceof WatchNode) {
+          myLoadedChildren.add(child);
+        }
+      }
+    }
+    return myLoadedChildren;
+  }
+
   private void replaceNode(final XDebuggerTreeNode oldNode, final XDebuggerTreeNode newNode) {
     for (int i = 0; i < myChildren.size(); i++) {
       XDebuggerTreeNode child = myChildren.get(i);
       if (child == oldNode) {
         myChildren.set(i, newNode);
+        if (newNode instanceof XValueContainerNode<?>) {
+          myLoadedChildren = null;
+          myTree.childrenLoaded(this, Collections.<XValueContainerNode<?>>singletonList((XValueContainerNode<?>)newNode), false);
+        }
         fireNodeChildrenChanged();
         return;
       }
@@ -52,17 +72,15 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     fireNodeChildrenChanged();
   }
 
-  public int findWatchNode(WatchNode node) {
-    return myChildren.indexOf(node);
-  }
-
   public void removeChildNode(XDebuggerTreeNode node) {
     myChildren.remove(node);
+    myLoadedChildren = null;
     fireNodeChildrenChanged();
   }
 
   public void removeChildren(Collection<? extends XDebuggerTreeNode> nodes) {
     myChildren.removeAll(nodes);
+    myLoadedChildren = null;
     fireNodeChildrenChanged();
   }
 

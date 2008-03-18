@@ -28,16 +28,35 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class XStackFrame extends XValueContainer {
 
+  /**
+   * @return an object which will be used to determine if stack frame changed after step
+   */
+  @Nullable
+  public Object getEqualityObject() {
+    return null;
+  }
+
+  /**
+   * Implement to support evaluation in debugger (conditional breakpoints, logging message on breakpoint, "Evaluate" action, watches)
+   * @return evaluator instance
+   */
   @Nullable
   public XDebuggerEvaluator getEvaluator() {
     return null;
   }
 
+  /**
+   * @return source position corresponding to stack frame
+   */
   @Nullable 
   public XSourcePosition getSourcePosition() {
     return null;
   }
 
+  /**
+   * Customize presentation of the stack frame in frames list
+   * @param component component
+   */
   public void customizePresentation(final SimpleColoredComponent component) {
     XSourcePosition position = getSourcePosition();
     if (position != null) {

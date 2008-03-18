@@ -12,33 +12,30 @@ import java.util.Map;
 /**
  * @author nik
  */
-public class DebuggerTreeRestorer implements XDebuggerTreeListener {
+class XDebuggerTreeRestorer implements XDebuggerTreeListener {
   private final XDebuggerTree myTree;
-  private Map<XValueContainerNode<?>, DebuggerTreeState.NodeInfo> myNode2State = new HashMap<XValueContainerNode<?>, DebuggerTreeState.NodeInfo>();
-  private Map<XValueNodeImpl, DebuggerTreeState.NodeInfo> myNode2ParentState = new HashMap<XValueNodeImpl, DebuggerTreeState.NodeInfo>();
+  private Map<XDebuggerTreeNode, XDebuggerTreeState.NodeInfo> myNode2State = new HashMap<XDebuggerTreeNode, XDebuggerTreeState.NodeInfo>();
+  private Map<XValueNodeImpl, XDebuggerTreeState.NodeInfo> myNode2ParentState = new HashMap<XValueNodeImpl, XDebuggerTreeState.NodeInfo>();
 
-  public DebuggerTreeRestorer(final XDebuggerTree tree) {
+  public XDebuggerTreeRestorer(final XDebuggerTree tree) {
     myTree = tree;
     tree.addTreeListener(this);
   }
 
-  public void restoreChildren(final XDebuggerTreeNode treeNode, final DebuggerTreeState.NodeInfo nodeInfo) {
-    if (treeNode instanceof XValueContainerNode<?> && nodeInfo.isExpanded()) {
+  public void restoreChildren(final XDebuggerTreeNode treeNode, final XDebuggerTreeState.NodeInfo nodeInfo) {
+    if (nodeInfo.isExpanded()) {
       myTree.expandPath(treeNode.getPath());
-      XValueContainerNode<?> node = (XValueContainerNode<?>)treeNode;
-      List<XValueContainerNode<?>> children = node.getLoadedChildren();
+      List<? extends XDebuggerTreeNode> children = treeNode.getLoadedChildren();
       if (children != null) {
-        for (XValueContainerNode<?> child : children) {
+        for (XDebuggerTreeNode child : children) {
           restoreNode(child, nodeInfo);
         }
       }
-      else {
-        myNode2State.put(node, nodeInfo);
-      }
+      myNode2State.put(treeNode, nodeInfo);
     }
   }
 
-  private void restoreNode(final XValueContainerNode<?> treeNode, final DebuggerTreeState.NodeInfo parentInfo) {
+  private void restoreNode(final XDebuggerTreeNode treeNode, final XDebuggerTreeState.NodeInfo parentInfo) {
     if (treeNode instanceof XValueNodeImpl) {
       XValueNodeImpl node = (XValueNodeImpl)treeNode;
       String nodeName = node.getName();
@@ -52,9 +49,9 @@ public class DebuggerTreeRestorer implements XDebuggerTreeListener {
     }
   }
 
-  private void doRestoreNode(final XValueNodeImpl treeNode, final DebuggerTreeState.NodeInfo parentInfo, final String nodeName,
+  private void doRestoreNode(final XValueNodeImpl treeNode, final XDebuggerTreeState.NodeInfo parentInfo, final String nodeName,
                              final String nodeValue) {
-    DebuggerTreeState.NodeInfo childInfo = parentInfo.getChild(nodeName);
+    XDebuggerTreeState.NodeInfo childInfo = parentInfo.removeChild(nodeName);
     if (childInfo != null) {
       if (!childInfo.getValue().equals(nodeValue)) {
         treeNode.markChanged();
@@ -64,7 +61,7 @@ public class DebuggerTreeRestorer implements XDebuggerTreeListener {
   }
 
   public void nodeLoaded(@NotNull final XValueNodeImpl node, final String name, final String value) {
-    DebuggerTreeState.NodeInfo parentInfo = myNode2ParentState.remove(node);
+    XDebuggerTreeState.NodeInfo parentInfo = myNode2ParentState.remove(node);
     if (parentInfo != null) {
       doRestoreNode(node, parentInfo, name, value);
     }
@@ -77,14 +74,17 @@ public class DebuggerTreeRestorer implements XDebuggerTreeListener {
     }
   }
 
-  public void childrenLoaded(@NotNull final XValueContainerNode<?> node, @NotNull final List<XValueContainerNode<?>> children) {
-    DebuggerTreeState.NodeInfo nodeInfo = myNode2State.remove(node);
+  public void childrenLoaded(@NotNull final XDebuggerTreeNode node, @NotNull final List<XValueContainerNode<?>> children, final boolean last) {
+    XDebuggerTreeState.NodeInfo nodeInfo = myNode2State.get(node);
     if (nodeInfo != null) {
-      for (XValueContainerNode<?> child : children) {
+      for (XDebuggerTreeNode child : children) {
         restoreNode(child, nodeInfo);
       }
     }
-    disposeIfFinished();
+    if (last) {
+      myNode2State.remove(node);
+      disposeIfFinished();
+    }
   }
 
   private void dispose() {

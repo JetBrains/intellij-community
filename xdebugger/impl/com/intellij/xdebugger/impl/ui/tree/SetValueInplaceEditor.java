@@ -41,7 +41,7 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
 
   public void doOKAction() {
     myExpressionEditor.saveTextInHistory();
-    final DebuggerTreeState treeState = new DebuggerTreeState(myTree);
+    final XDebuggerTreeState treeState = XDebuggerTreeState.saveState(myTree);
     myValueNode.setValueModificationStarted();
     myModifier.setValue(myExpressionEditor.getText(), new XValueModifier.XModificationCallback() {
       public void valueModified() {

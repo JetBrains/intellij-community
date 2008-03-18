@@ -8,7 +8,7 @@ import javax.swing.*;
 /**
  * @author nik
  */
-public class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
+class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   public void customizeCellRenderer(final JTree tree,
                                     final Object value,
                                     final boolean selected,

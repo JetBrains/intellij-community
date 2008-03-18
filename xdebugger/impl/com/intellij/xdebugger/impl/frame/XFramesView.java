@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class XDebugFramesView extends XDebugViewBase {
+public class XFramesView extends XDebugViewBase {
   private JPanel myMainPanel;
   private XDebuggerFramesList myFramesList;
   private JComboBox myThreadComboBox;
@@ -30,7 +30,7 @@ public class XDebugFramesView extends XDebugViewBase {
   private boolean myListenersEnabled;
   private Map<XExecutionStack, StackFramesListBuilder> myBuilders = new HashMap<XExecutionStack, StackFramesListBuilder>();
 
-  public XDebugFramesView(final XDebugSession session, final Disposable parentDisposable) {
+  public XFramesView(final XDebugSession session, final Disposable parentDisposable) {
     super(session, parentDisposable);
 
     myMainPanel = new JPanel(new BorderLayout());
@@ -43,7 +43,7 @@ public class XDebugFramesView extends XDebugViewBase {
     myFramesList = new XDebuggerFramesList();
     myFramesList.addListSelectionListener(new MyListSelectionListener());
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
-    rebuildView(false);
+    rebuildView(SessionEvent.RESUMED);
   }
 
   private StackFramesListBuilder getOrCreateBuilder(XExecutionStack executionStack) {
@@ -55,8 +55,8 @@ public class XDebugFramesView extends XDebugViewBase {
     return builder;
   }
 
-  protected void rebuildView(final boolean onlyFrameChanged) {
-    if (onlyFrameChanged) return;
+  protected void rebuildView(final SessionEvent event) {
+    if (event == SessionEvent.FRAME_CHANGED || event == SessionEvent.BEFORE_RESUME) return;
 
     myListenersEnabled = false;
     for (StackFramesListBuilder builder : myBuilders.values()) {

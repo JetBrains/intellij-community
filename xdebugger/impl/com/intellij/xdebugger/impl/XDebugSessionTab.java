@@ -26,9 +26,9 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.frame.XDebugVariablesView;
-import com.intellij.xdebugger.impl.frame.XDebugFramesView;
-import com.intellij.xdebugger.impl.frame.XDebugWatchesView;
+import com.intellij.xdebugger.impl.frame.XVariablesView;
+import com.intellij.xdebugger.impl.frame.XFramesView;
+import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +44,7 @@ public class XDebugSessionTab implements Disposable {
   private ExecutionConsole myConsole;
   private ExecutionEnvironment myEnvironment;
   private ProgramRunner myRunner;
-  private XDebugWatchesView myWatchesView;
+  private XWatchesView myWatchesView;
 
   public XDebugSessionTab(@NotNull final Project project, @NotNull final String sessionName) {
     myProject = project;
@@ -63,13 +63,13 @@ public class XDebugSessionTab implements Disposable {
   }
 
   private Content createVariablesContent(final XDebugSession session) {
-    final XDebugVariablesView variablesView = new XDebugVariablesView(session, this);
+    final XVariablesView variablesView = new XVariablesView(session, this);
     return myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, variablesView.getPanel(),
                               XDebuggerBundle.message("debugger.session.tab.variables.title"), XDebuggerUIConstants.VARIABLES_TAB_ICON, null);
   }
 
   private Content createWatchesContent(final XDebugSession session) {
-    myWatchesView = new XDebugWatchesView(session, this);
+    myWatchesView = new XWatchesView(session, this);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getMainPanel(),
                                          XDebuggerBundle.message("debugger.session.tab.watches.title"),
                                          XDebuggerUIConstants.WATCHES_TAB_ICON, null);
@@ -80,7 +80,7 @@ public class XDebugSessionTab implements Disposable {
   }
 
   private Content createFramesContent(final XDebugSession session) {
-    final XDebugFramesView framesView = new XDebugFramesView(session, this);
+    final XFramesView framesView = new XFramesView(session, this);
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
                                                XDebuggerBundle.message("debugger.session.tab.frames.title"), XDebuggerUIConstants.FRAMES_TAB_ICON, null);
     final DefaultActionGroup framesGroup = new DefaultActionGroup();
@@ -136,7 +136,7 @@ public class XDebugSessionTab implements Disposable {
     return new DefaultExecutionResult(debugProcess.createConsole(), processHandler);
   }
 
-  public XDebugWatchesView getWatchesView() {
+  public XWatchesView getWatchesView() {
     return myWatchesView;
   }
 

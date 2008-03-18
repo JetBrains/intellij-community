@@ -15,4 +15,7 @@ public abstract class XDebugSessionAdapter implements XDebugSessionListener {
 
   public void stackFrameChanged() {
   }
+
+  public void beforeSessionResume() {
+  }
 }

@@ -96,7 +96,7 @@ public class XDebuggerTree extends Tree implements DataProvider {
     return null;
   }
 
-  public void rebuildAndRestore(final DebuggerTreeState treeState) {
+  public void rebuildAndRestore(final XDebuggerTreeState treeState) {
     Object rootNode = myTreeModel.getRoot();
     if (rootNode instanceof XValueContainerNode<?>) {
       XValueContainerNode<?> root = (XValueContainerNode<?>)rootNode;
@@ -106,9 +106,9 @@ public class XDebuggerTree extends Tree implements DataProvider {
     }
   }
 
-  public void childrenLoaded(final @NotNull XValueContainerNode<?> node, final @NotNull List<XValueContainerNode<?>> children) {
+  public void childrenLoaded(final @NotNull XDebuggerTreeNode node, final @NotNull List<XValueContainerNode<?>> children, final boolean last) {
     for (XDebuggerTreeListener listener : myListeners) {
-      listener.childrenLoaded(node, children);
+      listener.childrenLoaded(node, children, last);
     }
   }
 

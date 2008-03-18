@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
  * @author nik
  */
 public abstract class XDebugViewBase implements Disposable {
+  protected enum SessionEvent {PAUSED, BEFORE_RESUME, RESUMED, STOPPED, FRAME_CHANGED}
   protected final XDebugSession mySession;
   private MyDebugSessionListener mySessionListener;
 
@@ -18,15 +19,15 @@ public abstract class XDebugViewBase implements Disposable {
     mySession.addSessionListener(mySessionListener);
   }
 
-  private void onSessionEvent(final boolean onlyFrameChanged) {
+  private void onSessionEvent(final SessionEvent event) {
     DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
       public void run() {
-        rebuildView(onlyFrameChanged);
+        rebuildView(event);
       }
     });
   }
 
-  protected abstract void rebuildView(final boolean onlyFrameChanged);
+  protected abstract void rebuildView(final SessionEvent event);
 
   public void dispose() {
     mySession.removeSessionListener(mySessionListener);
@@ -34,19 +35,23 @@ public abstract class XDebugViewBase implements Disposable {
 
   private class MyDebugSessionListener extends XDebugSessionAdapter {
     public void sessionPaused() {
-      onSessionEvent(false);
+      onSessionEvent(SessionEvent.PAUSED);
     }
 
     public void sessionResumed() {
-      onSessionEvent(false);
+      onSessionEvent(SessionEvent.RESUMED);
     }
 
     public void sessionStopped() {
-      onSessionEvent(false);
+      onSessionEvent(SessionEvent.STOPPED);
     }
 
     public void stackFrameChanged() {
-      onSessionEvent(true);
+      onSessionEvent(SessionEvent.FRAME_CHANGED);
+    }
+
+    public void beforeSessionResume() {
+      onSessionEvent(SessionEvent.BEFORE_RESUME);
     }
   }
 }

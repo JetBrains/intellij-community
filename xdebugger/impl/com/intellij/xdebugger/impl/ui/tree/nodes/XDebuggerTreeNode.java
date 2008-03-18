@@ -108,4 +108,7 @@ public abstract class XDebuggerTreeNode implements TreeNode {
     }
     return myPath;
   }
+
+  @Nullable
+  public abstract List<? extends XDebuggerTreeNode> getLoadedChildren();
 }

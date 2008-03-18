@@ -56,7 +56,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
           myMessageChildren = null;
         }
         fireNodeChildrenChanged();
-        myTree.childrenLoaded(XValueContainerNode.this, myValueChildren);
+        myTree.childrenLoaded(XValueContainerNode.this, myValueChildren, last);
       }
     });
   }

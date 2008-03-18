@@ -26,6 +26,10 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     return Collections.emptyList();
   }
 
+  public List<? extends XDebuggerTreeNode> getLoadedChildren() {
+    return null;
+  }
+
   public static MessageTreeNode createMessageNode(XDebuggerTree tree, XDebuggerTreeNode parent, String message, @Nullable Icon icon) {
     return new MessageTreeNode(tree, parent, message, SimpleTextAttributes.REGULAR_ATTRIBUTES, icon);
   }

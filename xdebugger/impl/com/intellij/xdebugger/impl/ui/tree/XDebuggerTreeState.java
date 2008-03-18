@@ -2,7 +2,6 @@ package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,10 +13,10 @@ import java.util.Map;
 /**
  * @author nik
  */
-public class DebuggerTreeState {
+public class XDebuggerTreeState {
   private NodeInfo myRootInfo;
 
-  public DebuggerTreeState(@NotNull XDebuggerTree tree) {
+  private XDebuggerTreeState(@NotNull XDebuggerTree tree) {
     myRootInfo = new NodeInfo("", "");
     ApplicationManager.getApplication().assertIsDispatchThread();
     addChildren(tree, myRootInfo, ((XDebuggerTreeNode)tree.getTreeModel().getRoot()));
@@ -25,17 +24,20 @@ public class DebuggerTreeState {
 
   public void restoreState(@NotNull XDebuggerTree tree) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    DebuggerTreeRestorer restorer = new DebuggerTreeRestorer(tree);
+    XDebuggerTreeRestorer restorer = new XDebuggerTreeRestorer(tree);
     restorer.restoreChildren(((XDebuggerTreeNode)tree.getTreeModel().getRoot()), myRootInfo);
   }
 
+  public static XDebuggerTreeState saveState(@NotNull XDebuggerTree tree) {
+    return new XDebuggerTreeState(tree);
+  }
 
   private static void addChildren(final XDebuggerTree tree, final NodeInfo nodeInfo, final XDebuggerTreeNode treeNode) {
-    if (treeNode instanceof XValueContainerNode<?> && tree.isExpanded(treeNode.getPath())) {
-      List<XValueContainerNode<?>> children = ((XValueContainerNode<?>)treeNode).getLoadedChildren();
+    if (tree.isExpanded(treeNode.getPath())) {
+      List<? extends XDebuggerTreeNode> children = treeNode.getLoadedChildren();
       if (children != null) {
         nodeInfo.myExpanded = true;
-        for (XValueContainerNode child : children) {
+        for (XDebuggerTreeNode child : children) {
           NodeInfo childInfo = createNode(child);
           if (childInfo != null) {
             nodeInfo.addChild(childInfo);
@@ -47,7 +49,7 @@ public class DebuggerTreeState {
   }
 
   @Nullable
-  private static NodeInfo createNode(final XValueContainerNode node) {
+  private static NodeInfo createNode(final XDebuggerTreeNode node) {
     if (node instanceof XValueNodeImpl) {
       XValueNodeImpl valueNode = (XValueNodeImpl)node;
       String name = valueNode.getName();
@@ -92,6 +94,11 @@ public class DebuggerTreeState {
     @Nullable
     public NodeInfo getChild(@NotNull String name) {
       return myChidlren != null ? myChidlren.get(name) : null;
+    }
+
+    @Nullable
+    public NodeInfo removeChild(@NotNull String name) {
+      return myChidlren != null ? myChidlren.remove(name) : null;
     }
   }
 }

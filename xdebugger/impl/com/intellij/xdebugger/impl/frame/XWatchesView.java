@@ -7,6 +7,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
@@ -20,11 +21,12 @@ import java.util.List;
 /**
  * @author nik
  */
-public class XDebugWatchesView extends XDebugViewBase {
+public class XWatchesView extends XDebugViewBase {
   private XDebuggerTreePanel myTreePanel;
   private List<String> myWatchExpressions = new ArrayList<String>();
+  private XDebuggerTreeState myTreeState;
 
-  public XDebugWatchesView(final XDebugSession session, final Disposable parentDisposable) {
+  public XWatchesView(final XDebugSession session, final Disposable parentDisposable) {
     super(session, parentDisposable);
     myTreePanel = new XDebuggerTreePanel(session, session.getDebugProcess().getEditorsProvider(), null,
                                          XDebuggerActions.WATCHES_TREE_POPUP_GROUP);
@@ -42,12 +44,21 @@ public class XDebugWatchesView extends XDebugViewBase {
     }
   }
 
-  protected void rebuildView(final boolean onlyFrameChanged) {
+  protected void rebuildView(final SessionEvent event) {
     XStackFrame stackFrame = mySession.getCurrentStackFrame();
     XDebuggerTree tree = myTreePanel.getTree();
+
+    if (event == SessionEvent.BEFORE_RESUME) {
+      myTreeState = XDebuggerTreeState.saveState(tree);
+      return;
+    }
+
     if (stackFrame != null) {
       tree.setSourcePosition(stackFrame.getSourcePosition());
       tree.setRoot(new WatchesRootNode(tree, myWatchExpressions, stackFrame.getEvaluator()), false);
+      if (myTreeState != null) {
+        myTreeState.restoreState(tree);
+      }
     }
     else {
       tree.setSourcePosition(null);

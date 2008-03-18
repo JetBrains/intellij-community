@@ -271,6 +271,7 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   private void doResume() {
+    myDispatcher.getMulticaster().beforeSessionResume();
     myDebuggerManager.updateExecutionPosition(this, null, false);
     mySuspendContext = null;
     myCurrentStackFrame = null;
