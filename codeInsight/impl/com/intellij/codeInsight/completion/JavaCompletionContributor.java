@@ -243,8 +243,6 @@ public class JavaCompletionContributor extends CompletionContributor{
                 if (!CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS || justOneMethodName) {
                   for (final LookupItem<PsiMethod> item : methodNameToItem.values()) {
                     result.addElement(item);
-                    ArrayList<PsiMethod> list = (ArrayList<PsiMethod>)item.getAttribute(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE);
-                    item.setAttribute(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE, list.toArray(new PsiMethod[list.size()]));
                   }
                 } else {
                   for (final LookupItem<PsiMethod> item : allMethodItems) {
