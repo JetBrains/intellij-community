@@ -320,6 +320,6 @@ public class CompleteReferenceExpression {
       return;
     }
 
-    ResolveUtil.processDefaultMethods(qualifierType, processor, project);
+    ResolveUtil.processNonCodeMethods(qualifierType, processor, project);
   }
 }

@@ -21,7 +21,6 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
@@ -36,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 
 import java.util.*;
 
@@ -85,23 +85,22 @@ public class ResolveUtil {
     else return CLASS_OR_PACKAGE;
   }
 
-  public static boolean processDefaultMethods(PsiType type, PsiScopeProcessor processor, Project project) {
-    return processDefaultMethods(type, processor, project, new HashSet<String>());
+  public static boolean processNonCodeMethods(PsiType type, PsiScopeProcessor processor, Project project) {
+    return processNonCodeMethods(type, processor, project, new HashSet<String>());
   }
 
-  private static boolean processDefaultMethods(PsiType type, PsiScopeProcessor processor, Project project, Set<String> visited) {
+  private static boolean processNonCodeMethods(PsiType type, PsiScopeProcessor processor, Project project, Set<String> visited) {
     String qName = rawCanonicalText(type);
 
     if (qName != null) {
       if (visited.contains(qName)) return true;
       visited.add(qName);
-      List<PsiMethod> defaultMethods = GroovyPsiManager.getInstance(project).getDefaultMethods(qName);
-      for (PsiMethod defaultMethod : defaultMethods) {
+      for (PsiMethod defaultMethod : GroovyPsiManager.getInstance(project).getDefaultMethods(qName)) {
         if (!processElement(processor, defaultMethod)) return false;
       }
 
       for (PsiType superType : type.getSuperTypes()) {
-        if (!processDefaultMethods(TypeConversionUtil.erasure(superType), processor, project, visited)) return false;
+        if (!processNonCodeMethods(TypeConversionUtil.erasure(superType), processor, project, visited)) return false;
       }
     }
 

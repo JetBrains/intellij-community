@@ -32,7 +32,6 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -337,7 +336,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner {
     if (scriptClass != null && !scriptClass.processDeclarations(processor, substitutor, lastParent, place)) return false;
 
     PsiClassType scriptType = getManager().getElementFactory().createType(this);
-    return ResolveUtil.processDefaultMethods(scriptType, processor, getProject());
+    return ResolveUtil.processNonCodeMethods(scriptType, processor, getProject());
   }
 
   //default implementations of methods from NavigationItem

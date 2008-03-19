@@ -473,7 +473,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         return;
       }
 
-      ResolveUtil.processDefaultMethods(qualifierType, processor, project);
+      ResolveUtil.processNonCodeMethods(qualifierType, processor, project);
     }
   }
 
