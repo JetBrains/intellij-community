@@ -22,12 +22,13 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyType;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import com.jetbrains.python.psi.types.PyType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -36,9 +37,13 @@ import com.jetbrains.python.PyElementTypes;
  * Time: 22:53:14
  * To change this template use File | Settings | File Templates.
  */
-public class PyTargetExpressionImpl extends PyElementImpl implements PyTargetExpression {
+public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpressionStub> implements PyTargetExpression {
   public PyTargetExpressionImpl(ASTNode astNode) {
     super(astNode);
+  }
+
+  public PyTargetExpressionImpl(final PyTargetExpressionStub stub) {
+    super(stub, PyElementTypes.TARGET_EXPRESSION);
   }
 
   @Override

@@ -3,7 +3,6 @@
  */
 package com.jetbrains.python.psi.impl.stubs;
 
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyElementTypes;
@@ -15,11 +14,7 @@ import java.util.List;
 
 public class PyParameterListStubImpl extends StubBase<PyParameterList> implements PyParameterListStub {
   public PyParameterListStubImpl(final StubElement parent) {
-    super(parent);
-  }
-
-  public IStubElementType getStubType() {
-    return PyElementTypes.PARAMETER_LIST;
+    super(parent, PyElementTypes.PARAMETER_LIST);
   }
 
   public PyParameterStub[] getParameters() {

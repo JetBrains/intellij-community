@@ -3,7 +3,6 @@
  */
 package com.jetbrains.python.psi.impl.stubs;
 
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyElementTypes;
@@ -16,15 +15,11 @@ public class PyParameterStubImpl extends StubBase<PyParameter> implements PyPara
   private final boolean myKeywordContainer;
 
   public PyParameterStubImpl(String name, boolean isPositionalContainer, boolean isKeywordContainer, StubElement parent) {
-    super(parent);
+    super(parent, PyElementTypes.FORMAL_PARAMETER);
 
     myName = name;
     myPositionalContainer = isPositionalContainer;
     myKeywordContainer = isKeywordContainer;
-  }
-
-  public IStubElementType getStubType() {
-    return PyElementTypes.FORMAL_PARAMETER;
   }
 
   public boolean isPositionalContainer() {

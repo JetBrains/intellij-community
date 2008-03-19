@@ -17,6 +17,8 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.StubBasedPsiElement;
+import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -26,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * Time: 22:52:10
  * To change this template use File | Settings | File Templates.
  */
-public interface PyTargetExpression extends PyExpression, PsiNamedElement {
+public interface PyTargetExpression extends PyExpression, PsiNamedElement, StubBasedPsiElement<PyTargetExpressionStub> {
   @Nullable
   PyExpression getQualifier();
 }

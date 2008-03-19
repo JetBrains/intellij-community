@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.PyElementType;
 
 /**
  * @author yole
@@ -369,31 +368,29 @@ public class StatementParsing extends Parsing {
     }
   }
 
-  private void parseIdentifier(final PyElementType elementType) {
-    PsiBuilder builder = myContext.getBuilder();
-    final PsiBuilder.Marker idMarker = builder.mark();
-    if (builder.getTokenType() == PyTokenTypes.IDENTIFIER) {
-      builder.advanceLexer();
+  private void parseIdentifier(final IElementType elementType) {
+    final PsiBuilder.Marker idMarker = myBuilder.mark();
+    if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
+      myBuilder.advanceLexer();
       idMarker.done(elementType);
     }
     else {
-      builder.error("identifier expected");
+      myBuilder.error("identifier expected");
       idMarker.drop();
     }
   }
 
   public boolean parseDottedName() {
-    PsiBuilder builder = myContext.getBuilder();
-    if (builder.getTokenType() != PyTokenTypes.IDENTIFIER) {
-      builder.error("identifier expected");
+    if (myBuilder.getTokenType() != PyTokenTypes.IDENTIFIER) {
+      myBuilder.error("identifier expected");
       return false;
     }
-    PsiBuilder.Marker marker = builder.mark();
-    builder.advanceLexer();
+    PsiBuilder.Marker marker = myBuilder.mark();
+    myBuilder.advanceLexer();
     marker.done(PyElementTypes.REFERENCE_EXPRESSION);
-    while (builder.getTokenType() == PyTokenTypes.DOT) {
+    while (myBuilder.getTokenType() == PyTokenTypes.DOT) {
       marker = marker.precede();
-      builder.advanceLexer();
+      myBuilder.advanceLexer();
       checkMatches(PyTokenTypes.IDENTIFIER, "identifier expected");
       marker.done(PyElementTypes.REFERENCE_EXPRESSION);
     }

@@ -4,10 +4,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.*;
-import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
-import com.jetbrains.python.psi.impl.stubs.PyFormalParameterElementType;
-import com.jetbrains.python.psi.impl.stubs.PyFunctionElementType;
-import com.jetbrains.python.psi.impl.stubs.PyParameterListElementType;
+import com.jetbrains.python.psi.impl.stubs.*;
 
 public interface PyElementTypes {
 
@@ -62,7 +59,7 @@ public interface PyElementTypes {
 
   TokenSet REFERENCE_EXPRESSION_SET = TokenSet.create(REFERENCE_EXPRESSION);
 
-  PyElementType TARGET_EXPRESSION = new PyElementType("TARGET_EXPRESSION", PyTargetExpressionImpl.class);
+  PyStubElementType TARGET_EXPRESSION = new PyTargetExpressionElementType();
   PyElementType INTEGER_LITERAL_EXPRESSION = new PyElementType("INTEGER_LITERAL_EXPRESSION", PyNumericLiteralExpressionImpl.class);
   PyElementType FLOAT_LITERAL_EXPRESSION = new PyElementType("FLOAT_LITERAL_EXPRESSION", PyNumericLiteralExpressionImpl.class);
   PyElementType IMAGINARY_LITERAL_EXPRESSION = new PyElementType("IMAGINARY_LITERAL_EXPRESSION", PyNumericLiteralExpressionImpl.class);

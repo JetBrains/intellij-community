@@ -3,7 +3,6 @@
  */
 package com.jetbrains.python.psi.impl.stubs;
 
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyElementTypes;
@@ -16,12 +15,8 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
   private final String myName;
 
   public PyFunctionStubImpl(final String name, final StubElement parent) {
-    super(parent);
+    super(parent, PyElementTypes.FUNCTION_DECLARATION);
     myName = name;
-  }
-
-  public IStubElementType getStubType() {
-    return PyElementTypes.FUNCTION_DECLARATION;
   }
 
   public String getName() {
