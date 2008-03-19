@@ -66,12 +66,6 @@ public class CompleteReferenceExpression {
       }
     }
 
-    final Object[] dynamicPropertyVarients = getDynamicPropertiesVariants(refExpr, type);
-
-    if (dynamicPropertyVarients != null) {
-      propertyVariants = ArrayUtil.mergeArrays(propertyVariants, dynamicPropertyVarients, Object.class);
-    }
-
     if (refExpr.getKind() == GrReferenceExpressionImpl.Kind.TYPE_OR_PROPERTY) {
       ResolverProcessor classVariantsCollector = new ClassResolverProcessor(null, refExpr, true);
       final Object[] classVariants = getVariantsImpl(refExpr, classVariantsCollector);
@@ -79,61 +73,6 @@ public class CompleteReferenceExpression {
     } else {
       return propertyVariants;
     }
-  }
-
-  private static Object[] getDynamicPropertiesVariants(GrReferenceExpressionImpl refExpr, PsiType type) {
-//    final PsiFile containingFile = refExpr.getContainingFile();
-//    final PsiFile originalFile = containingFile.getOriginalFile();
-//    if (originalFile == null) return null;
-//
-//    final VirtualFile virtualFile = originalFile.getVirtualFile();
-//    if (virtualFile == null) return null;
-//
-//    if (type == null) return null;
-//
-//    if (type instanceof PsiClassType) {
-//      final PsiClass psiClass = ((PsiClassType) type).resolve();
-//      if (psiClass == null) return null;
-//
-//      Object[] dynamicVariants = new String[0];
-//      for (PsiClass aSuper : PsiUtil.iterateSupers(psiClass, true)) {
-//        final Project project = refExpr.getProject();
-//
-//        final DynamicManager dynamicManager = DynamicManager.getInstance(refExpr.getProject());
-//        String[] dynamicPropertiesOfClass = dynamicManager.getPropertiesNamesOfClass(aSuper.getQualifiedName());
-//
-//        final Set<GrDynamicImplicitPropertyImpl> propertyElements = new HashSet<GrDynamicImplicitPropertyImpl>();
-//        final PsiManagerEx manager = refExpr.getManager();
-//        for (String propertyName : dynamicPropertiesOfClass) {
-//          final String typeText = dynamicManager.getPropertyType(aSuper.getQualifiedName(), propertyName);
-//          final GrDynamicImplicitPropertyImpl property = DynamicManager.getInstance(project).getCashedOrCreateProperty(manager, propertyName, typeText, aSuper.getQualifiedName(), null);
-//          propertyElements.add(property);
-//        }
-//
-//        dynamicVariants = ArrayUtil.mergeArrays(dynamicVariants, propertyElements.toArray(), Object.class);
-//
-//        String[] dynamicMethodsOfClass = dynamicManager.getMethodsNamesOfClass(aSuper.getQualifiedName());
-//
-//        final Set<GrDynamicImplicitMethodImpl> methodsElements = new HashSet<GrDynamicImplicitMethodImpl>();
-//        for (String methodName : dynamicMethodsOfClass) {
-//          final DClassElement classElement = dynamicManager.getOrCreateClassElement(project, aSuper.getQualifiedName(), false);
-//          final Set<DMethodElement> methods = classElement.getMethods();
-//
-//          GrDynamicImplicitMethodImpl method;
-//          for (DMethodElement methodElement : methods) {
-//            if (methodName.equals(methodElement.getName())) {
-//              method = dynamicManager.getCashedOrCreateMethod(manager, methodName, methodElement.getType(), aSuper.getQualifiedName(), null, QuickfixUtil.getArgumentsTypes(methodElement.getPairs()));
-//              methodsElements.add(method);
-//            }
-//          }
-//        }
-//
-//        dynamicVariants = ArrayUtil.mergeArrays(dynamicVariants, methodsElements.toArray(), Object.class);
-//      }
-//      return dynamicVariants;
-//    }
-
-    return null;
   }
 
   private static List<LookupElement> getPropertyVariants(GrReferenceExpression refExpr, PsiClass clazz) {
