@@ -32,9 +32,14 @@ public abstract class StandardVcsGroup extends DefaultActionGroup {
     Presentation presentation = e.getPresentation();
 
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    final String vcsName = getVcsName(project);
-    presentation.setVisible(project != null && vcsName != null &&
-                            ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(vcsName));
+    if (project != null) {
+      final String vcsName = getVcsName(project);
+      presentation.setVisible(vcsName != null &&
+                              ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(vcsName));
+    }
+    else {
+      presentation.setVisible(false);
+    }
     presentation.setEnabled(presentation.isVisible());
   }
 
