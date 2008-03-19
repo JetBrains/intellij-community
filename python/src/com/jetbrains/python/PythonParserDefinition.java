@@ -33,6 +33,7 @@ import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyFileImpl;
+import com.jetbrains.python.lexer.PythonIndentingLexer;
 import org.jetbrains.annotations.NotNull;
 
 /**

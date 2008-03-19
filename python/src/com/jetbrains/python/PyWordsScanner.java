@@ -18,6 +18,7 @@ package com.jetbrains.python;
 
 import com.intellij.lang.cacheBuilder.DefaultWordsScanner;
 import com.intellij.psi.tree.TokenSet;
+import com.jetbrains.python.lexer.PythonLexer;
 
 /**
  * Created by IntelliJ IDEA.

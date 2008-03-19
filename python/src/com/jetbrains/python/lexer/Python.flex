@@ -1,5 +1,5 @@
 /* It's an automatically generated code. Do not modify it. */
-package ru.yole.pythonid;
+package com.jetbrains.python.lexer;
 
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;

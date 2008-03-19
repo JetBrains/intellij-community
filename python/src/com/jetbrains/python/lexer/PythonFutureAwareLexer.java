@@ -1,7 +1,8 @@
-package com.jetbrains.python;
+package com.jetbrains.python.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
+import com.jetbrains.python.PyTokenTypes;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -10,7 +11,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PythonFutureAwareLexer extends PythonLexer {// Limited size list of previously processed tokens used for 'from __future__ import ...' processing
+public class PythonFutureAwareLexer extends PythonLexer {
   protected static class PendingToken {
     private IElementType _type;
     private int _start;
@@ -40,7 +41,10 @@ public class PythonFutureAwareLexer extends PythonLexer {// Limited size list of
   }
 
   protected List<PendingToken> myTokenQueue = new ArrayList<PendingToken>();
+
+  // Limited size list of previously processed tokens used for 'from __future__ import ...' processing
   protected List<PendingToken> myTokenHistory = new ArrayList<PendingToken>();
+
   protected boolean myFutureWithStatement;
   @NonNls private static final String FUTURE_IMPORT = "__future__";
   @NonNls private static final String FUTURE_WITH_STATEMENT = "with_statement";

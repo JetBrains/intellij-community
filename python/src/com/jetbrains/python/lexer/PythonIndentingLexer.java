@@ -14,9 +14,10 @@
  *  limitations under the License.
  */
 
-package com.jetbrains.python;
+package com.jetbrains.python.lexer;
 
 import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.PyTokenTypes;
 
 import java.util.Stack;
 

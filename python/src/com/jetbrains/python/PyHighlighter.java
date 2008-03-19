@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.lexer.PythonFutureAwareLexer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
