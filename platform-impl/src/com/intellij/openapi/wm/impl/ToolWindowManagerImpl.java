@@ -15,7 +15,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.*;
 import com.intellij.openapi.wm.impl.commands.*;
@@ -594,7 +593,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public ToolWindow registerToolWindow(@NotNull final String id,
-                                       @Nullable JComponent component,
+                                       @NotNull JComponent component,
                                        @NotNull ToolWindowAnchor anchor,
                                        Disposable parentDisposable) {
     return registerDisposable(id, parentDisposable, registerToolWindow(id, component, anchor));

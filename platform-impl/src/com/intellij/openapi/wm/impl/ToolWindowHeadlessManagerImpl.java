@@ -178,11 +178,11 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
   };
 
-  public ToolWindow registerToolWindow(String id, JComponent component, ToolWindowAnchor anchor) {
+  public ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor) {
     return HEADLESS_WINDOW;
   }
 
-  public ToolWindow registerToolWindow(String id, JComponent component, ToolWindowAnchor anchor, Disposable parentDisposable) {
+  public ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor, Disposable parentDisposable) {
     return HEADLESS_WINDOW;
   }
 
@@ -195,7 +195,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return HEADLESS_WINDOW;
   }
 
-  public void unregisterToolWindow(String id) {
+  public void unregisterToolWindow(@NotNull String id) {
   }
 
   public void activateEditorComponent() {

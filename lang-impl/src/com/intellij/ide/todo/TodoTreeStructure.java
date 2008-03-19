@@ -4,16 +4,14 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoPattern;
-import com.intellij.util.containers.HashMap;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -21,38 +19,27 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public abstract class TodoTreeStructure extends AbstractTreeStructureBase implements ToDoSettings{
-  private static final Logger LOG=Logger.getInstance("#com.intellij.ide.todo.TodoTreeStructure");
-
   protected TodoTreeBuilder myBuilder;
   protected AbstractTreeNode myRootElement;
   protected final ToDoSummary mySummaryElement;
 
-  protected boolean myFlattenPackages;
+  private boolean myFlattenPackages;
   protected boolean myArePackagesShown;
-  protected boolean myAreModulesShown;
+  private boolean myAreModulesShown;
 
-  /**
-   * Don't use this maps directly!
-   */
-  private final HashMap myElement2Children;
-  private final HashMap myElement2Parent;
 
-  protected final PsiManager myPsiManager;
   protected final PsiSearchHelper mySearchHelper;
   /**
    * Current <code>TodoFilter</code>. If no filter is set then this field is <code>null</code>.
    */
   protected TodoFilter myTodoFilter;
-  private static final ArrayList<TreeStructureProvider> EMPTY_TREE_STRUCTURE_PROVIDERS = new ArrayList<TreeStructureProvider>();
 
   public TodoTreeStructure(Project project){
     super(project);
     myArePackagesShown=true;
     mySummaryElement=new ToDoSummary();
-    myElement2Children=new HashMap();
-    myElement2Parent=new HashMap();
-    myPsiManager=PsiManager.getInstance(project);
-    mySearchHelper=myPsiManager.getSearchHelper();
+    PsiManager psiManager = PsiManager.getInstance(project);
+    mySearchHelper= psiManager.getSearchHelper();
   }
 
   final void setTreeBuilder(TodoTreeBuilder builder){
@@ -68,8 +55,6 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
    * Validate whole the cache
    */
   protected void validateCache(){
-    myElement2Children.clear();
-    myElement2Parent.clear();
   }
 
   public final boolean isPackagesShown(){
@@ -121,13 +106,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
 
   boolean isAutoExpandNode(NodeDescriptor descriptor){
     Object element=descriptor.getElement();
-    if(element==getRootElement()){
-      return true;
-    }else if(element==mySummaryElement){
-      return true;
-    }else{
-      return false;
-    }
+    return element == getRootElement() || element == mySummaryElement;
   }
 
   public final void commit() {
@@ -155,7 +134,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
   }
 
   public List<TreeStructureProvider> getProviders() {
-    return EMPTY_TREE_STRUCTURE_PROVIDERS;
+    return Collections.emptyList();
   }
 
   void setShownModules(boolean state) {

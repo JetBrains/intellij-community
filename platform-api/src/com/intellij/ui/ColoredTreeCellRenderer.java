@@ -29,7 +29,7 @@ import java.awt.*;
  */
 public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent implements TreeCellRenderer{
 
-  private static Icon LOADING_NODE_ICON = new EmptyIcon(8, 16);
+  private static final Icon LOADING_NODE_ICON = new EmptyIcon(8, 16);
 
   /**
    * Defines whether the tree is selected or not

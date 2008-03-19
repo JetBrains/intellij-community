@@ -15,6 +15,7 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedPaneContentUI;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
@@ -64,6 +65,7 @@ public final class HierarchyBrowserManager implements JDOMExternalizable, Projec
     }
   }
   
+  @NotNull
   public final String getComponentName() {
     return "HierarchyBrowserManager";
   }

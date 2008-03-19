@@ -19,21 +19,13 @@ import com.intellij.psi.PsiTreeChangeListener;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeExpansionListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Comparator;
 
 public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
   private final Project myProject;
 
-  private final MyTreeSelectionListener mySelectionListener;
-  private final MyTreeExpansionListener myTreeExpansionListener;
   private final PsiTreeChangeListener myPsiTreeChangeListener;
   private final MyFileStatusListener myFileStatusListener;
 
@@ -46,14 +38,10 @@ public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
     super(tree, treeModel, treeStructure, comparator);
     myProject = project;
 
-    mySelectionListener = new MyTreeSelectionListener();
-    myTreeExpansionListener = new MyTreeExpansionListener();
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
     myFileStatusListener = new MyFileStatusListener();
 
     initRootNode();
-    tree.addTreeSelectionListener(mySelectionListener);
-    tree.addTreeExpansionListener(myTreeExpansionListener);
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
 
@@ -61,10 +49,10 @@ public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
   }
 
   public final Object storeExpandedAndSelectedInfo() {
-    final ArrayList pathsToExpand = new ArrayList();
-    final ArrayList selectionPaths = new ArrayList();
+    final ArrayList<Object> pathsToExpand = new ArrayList<Object>();
+    final ArrayList<Object> selectionPaths = new ArrayList<Object>();
     TreeBuilderUtil.storePaths(this, myRootNode, pathsToExpand, selectionPaths, true);
-    return new Pair(pathsToExpand, selectionPaths);
+    return new Pair<ArrayList<Object>, ArrayList<Object>>(pathsToExpand, selectionPaths);
   }
 
   public final void restoreExpandedAndSelectedInfo(final Object info) {
@@ -94,8 +82,6 @@ public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
   public final void dispose() {
     if (!isDisposed()) { // because can be called both externally and via my ProjectManagerListener, don't know what will happen earlier
       super.dispose();
-      myTree.removeTreeSelectionListener(mySelectionListener);
-      myTree.removeTreeExpansionListener(myTreeExpansionListener);
       PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
       FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
     }
@@ -104,30 +90,6 @@ public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
   @NotNull
   protected ProgressIndicator createProgressIndicator() {
     return new StatusBarProgress();
-  }
-
-  private final class MyTreeSelectionListener implements TreeSelectionListener {
-    public final void valueChanged(final TreeSelectionEvent e) {
-      updateSelected();
-    }
-  };
-
-  private final class MyTreeExpansionListener implements TreeExpansionListener {
-    public final void treeCollapsed(final TreeExpansionEvent event) {
-      updateSelected();
-    }
-
-    public final void treeExpanded(final TreeExpansionEvent event) {
-      updateSelected();
-    }
-  };
-
-  private void updateSelected() {
-    final TreePath path = myTree.getSelectionPath();
-    if (path == null) return;
-    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-    final Object object = node.getUserObject();
-    if (!(object instanceof HierarchyNodeDescriptor)) return;
   }
 
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
@@ -161,7 +123,7 @@ public final class HierarchyTreeBuilder extends AbstractTreeBuilder {
       myUpdater.addSubtreeToUpdate(myRootNode);
     }
 
-    public final void fileStatusChanged(final VirtualFile virtualFile) {
+    public final void fileStatusChanged(@NotNull final VirtualFile virtualFile) {
       myUpdater.addSubtreeToUpdate(myRootNode);
     }
   }

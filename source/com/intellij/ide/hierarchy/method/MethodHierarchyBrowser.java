@@ -62,7 +62,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
 
   @NonNls static final String METHOD_HIERARCHY_BROWSER_DATA_CONSTANT = "com.intellij.ide.hierarchy.type.MethodHierarchyBrowser";
-  private List<Runnable> myRunOnDisposeList = new ArrayList<Runnable>();
+  private final List<Runnable> myRunOnDisposeList = new ArrayList<Runnable>();
   private final HashMap<String, OccurenceNavigator> myOccurrenceNavigators = new HashMap<String, OccurenceNavigator>();
   private static final OccurenceNavigator EMPTY_NAVIGATOR = new OccurenceNavigator() {
     public boolean hasNextOccurence() {
@@ -257,15 +257,12 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
       final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(""));
       tree.setModel(model);
 
-      final HierarchyTreeStructure structure;
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      if (MethodHierarchyTreeStructure.TYPE.equals(typeName)) {
-        structure = new MethodHierarchyTreeStructure(myProject, method);
-      }
-      else {
+      if (!MethodHierarchyTreeStructure.TYPE.equals(typeName)) {
         LOG.error("unexpected type: " + typeName);
         return;
       }
+      final HierarchyTreeStructure structure = new MethodHierarchyTreeStructure(myProject, method);
       final Comparator<NodeDescriptor> comparator = HierarchyBrowserManager.getInstance(myProject).getComparator();
       final HierarchyTreeBuilder builder = new HierarchyTreeBuilder(myProject, tree, model, structure, comparator);
 
