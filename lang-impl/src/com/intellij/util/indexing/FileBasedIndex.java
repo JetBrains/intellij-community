@@ -67,14 +67,14 @@ import java.util.concurrent.locks.Lock;
 public class FileBasedIndex implements ApplicationComponent, PersistentStateComponent<FileBasedIndexState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndex");
   
-  public static final int VERSION = 3;
+  private static final int VERSION = 3;
 
   private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>> myIndices = new HashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
   private final Set<ID<?, ?>> myNeedContentLoading = new HashSet<ID<?, ?>>();
   private FileBasedIndexState myPreviouslyRegistered;
 
-  private TObjectLongHashMap<ID<?, ?>> myIndexIdToCreationStamp = new TObjectLongHashMap<ID<?, ?>>();
+  private final TObjectLongHashMap<ID<?, ?>> myIndexIdToCreationStamp = new TObjectLongHashMap<ID<?, ?>>();
 
   private final Map<Document, AtomicLong> myLastIndexedDocStamps = new HashMap<Document, AtomicLong>();
   private final Map<Document, CharSequence> myLastIndexedUnsavedContent = new HashMap<Document, CharSequence>();
@@ -83,12 +83,13 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   private ChangedFilesUpdater myChangedFilesUpdater;
 
-  private List<IndexableFileSet> myIndexableSets = new CopyOnWriteArrayList<IndexableFileSet>();
-  private Set<ID<?, ?>> myRequiresRebuild = Collections.synchronizedSet(new HashSet<ID<?, ?>>());
+  private final List<IndexableFileSet> myIndexableSets = new CopyOnWriteArrayList<IndexableFileSet>();
+  private final Set<ID<?, ?>> myRequiresRebuild = Collections.synchronizedSet(new HashSet<ID<?, ?>>());
 
-  private ExecutorService myInvalidationService = ConcurrencyUtil.newSingleThreadExecutor("FileBasedIndex.InvalidationQueue");
+  private final ExecutorService myInvalidationService = ConcurrencyUtil.newSingleThreadExecutor("FileBasedIndex.InvalidationQueue");
   private final VirtualFileManagerEx myVfManager;
-  
+  private final Semaphore myUnsavedDataIndexingSemaphore = new Semaphore();
+
   private final FileContentStorage myFileContentAttic;
   
   public static interface InputFilter {
@@ -148,7 +149,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       try {
         final MapIndexStorage<K, V> storage = new MapIndexStorage<K, V>(getStorageFile(name), extension.getKeyDescriptor(), extension.getValueExternalizer());
         final MemoryIndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
-        final MapReduceIndex<?, ?, FileContent> index = new MapReduceIndex<K, V, FileContent>(extension.getIndexer(), memStorage);
+        final UpdatableIndex<K, V, FileContent> index = createIndex(extension, memStorage);
         myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, extension.getInputFilter()));
         break;
       }
@@ -159,7 +160,16 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
   }
 
-  private boolean versionDiffers(final File versionFile, final int currentIndexVersion) {
+  private static <K, V> UpdatableIndex<K, V, FileContent> createIndex(final FileBasedIndexExtension<K, V> extension, final MemoryIndexStorage<K, V> memStorage) {
+    if (extension instanceof CustomImplementationFileBasedIndexExtension) {
+      return ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(memStorage);
+    }
+    else {
+      return new MapReduceIndex<K, V, FileContent>(extension.getIndexer(), memStorage);
+    }
+  }
+
+  private static boolean versionDiffers(final File versionFile, final int currentIndexVersion) {
     try {
       final DataInputStream in = new DataInputStream(new FileInputStream(versionFile));
       try {
@@ -398,8 +408,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     return ourUnitTestMode ? DummyFileSystem.getInstance().findById(id) : null;
   }
 
-  private Semaphore myUnsavedDataIndexingSemaphore = new Semaphore();
-  
   private void indexUnsavedDocuments() throws StorageException {
     myChangedFilesUpdater.forceUpdate();
     
@@ -478,12 +486,14 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     myRequiresRebuild.add(indexId);
   }
   
+  @Nullable
   private <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
     final Pair<UpdatableIndex<?, ?, FileContent>, InputFilter> pair = myIndices.get(indexId);
     //noinspection unchecked
     return pair != null? (UpdatableIndex<K,V, FileContent>)pair.getFirst() : null;
   }
 
+  @Nullable
   private InputFilter getInputFilter(ID<?, ?> indexId) {
     final Pair<UpdatableIndex<?, ?, FileContent>, InputFilter> pair = myIndices.get(indexId);
     return pair != null? pair.getSecond() : null;
@@ -498,21 +508,21 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     return stamp;
   }
   
-  public static File getVersionFile(final ID<?, ?> indexName) {
+  private static File getVersionFile(final ID<?, ?> indexName) {
     return new File(getIndexRootDir(indexName), indexName + ".ver");
   }
 
-  public static File getStorageFile(final ID<?, ?> indexName) {
+  private static File getStorageFile(final ID<?, ?> indexName) {
     return new File(getIndexRootDir(indexName), indexName.toString());
   }
 
-  public static File getIndexRootDir(final ID<?, ?> indexName) {
+  private static File getIndexRootDir(final ID<?, ?> indexName) {
     final File indexDir = new File(getPersistenceRoot(), indexName.toString().toLowerCase(Locale.US));
     indexDir.mkdirs();
     return indexDir;
   }
 
-  public static File getPersistenceRoot() {
+  private static File getPersistenceRoot() {
     File file = new File(PathManager.getSystemPath(), "index");
     try {
       file = file.getCanonicalFile();
@@ -604,7 +614,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   private final class ChangedFilesUpdater extends VirtualFileAdapter implements CacheUpdater{
     private final Set<VirtualFile> myFilesToUpdate = Collections.synchronizedSet(new HashSet<VirtualFile>());
-    private BlockingQueue<FutureTask<?>> myFutureInvalidations = new LinkedBlockingQueue<FutureTask<?>>();
+    private final BlockingQueue<FutureTask<?>> myFutureInvalidations = new LinkedBlockingQueue<FutureTask<?>>();
     // No need to react on movement events since files stay valid, their ids don't change and all associated attributes remain intact.
 
     public void fileCreated(final VirtualFileEvent event) {
@@ -779,7 +789,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       processFileImpl(fileContent);
     }
 
-    private Semaphore myForceUpdateSemaphore = new Semaphore();
+    private final Semaphore myForceUpdateSemaphore = new Semaphore();
     
     public void forceUpdate() {
       ensureAllInvalidateTasksCompleted();
@@ -880,7 +890,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     myIndexableSets.remove(set);
   }
 
-  public static boolean isUncomitted(Document doc) {
+  private static boolean isUncomitted(Document doc) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       if (PsiDocumentManager.getInstance(project).isUncommited(doc)) {
         return true;

@@ -4,5 +4,5 @@
 package com.intellij.psi.stubs;
 
 public interface IndexSink {
-  void occurence(String indexId, Object value);
+  void occurence(StubIndexKey indexKey, Object value);
 }
