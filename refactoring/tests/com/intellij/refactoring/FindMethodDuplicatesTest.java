@@ -78,6 +78,42 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest(false);
   }
 
+  public void testMappingLocalVar2Field() throws Exception {
+    doTest(false);
+  }
+
+  public void testMappingLocalVar2LocalVar() throws Exception {
+    doTest();
+  }
+
+  public void testMappingLocalVar2Parameter() throws Exception {
+    doTest();
+  }
+
+  public void testMappingLocalVar2This() throws Exception {
+    doTest(false);
+  }
+
+  public void testMappingMember2MemberDifferent() throws Exception {
+    doTest();
+  }
+
+  public void testMappingParameter2Field() throws Exception {
+    doTest(false);
+  }
+
+  public void testMappingParameter2LocalVar() throws Exception {
+    doTest(false);
+  }
+
+  public void testMappingParameter2Parameter() throws Exception {
+    doTest();
+  }
+
+  public void testMappingParameter2This() throws Exception {
+    doTest(false);
+  }
+
   public void testMappingThis2Field() throws Exception {
     doTest(false);
   }
