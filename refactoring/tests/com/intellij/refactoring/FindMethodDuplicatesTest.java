@@ -52,13 +52,51 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest();
   }
 
-  // Known failures: IDEADEV-25292. 
-  @Bombed(description = "Identity / name tests, failed for now due to bugs", user = "Anna Kozlova", month = 4, day = 18)
+  @Bombed(description = "Check issues: IDEADEV-25292.", user = "Anna Kozlova", month = 4, day = 18)
   public void testIdentityNameFailures() throws Exception {
     doTest();
   }
 
   public void testIdentityWhitespace() throws Exception {
+    doTest();
+  }
+
+  public void testMappingField2Field() throws Exception {
+    doTest();
+  }
+
+  public void testMappingField2LocalVar() throws Exception {
+    doTest(false);
+  }
+
+  public void testMappingField2Parameter() throws Exception {
+    doTest();
+  }
+
+  @Bombed(description = "Check issues: IDEADEV-25363.", user = "Anna Kozlova", month = 5, day = 24)
+  public void testMappingField2This() throws Exception {
+    doTest(false);
+  }
+
+  public void testMappingThis2Field() throws Exception {
+    doTest(false);
+  }
+
+  public void testMappingThis2LocalVar() throws Exception {
+    doTest(false);
+  }
+
+  public void testMappingThis2Parameter() throws Exception {
+    doTest();
+  }
+
+  @Bombed(description = "Check issues: IDEADEV-25355.", user = "Anna Kozlova", month = 5, day = 15)
+  public void testMappingThis2ThisDifferent() throws Exception {
+    doTest();
+  }
+
+  @Bombed(description = "Check issues: IDEADEV-25310.", user = "Anna Kozlova", month = 4, day = 27)
+  public void testMappingThis2ThisQualified() throws Exception {
     doTest();
   }
 
