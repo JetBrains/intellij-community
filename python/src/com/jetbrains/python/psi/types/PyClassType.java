@@ -1,10 +1,11 @@
 package com.jetbrains.python.psi.types;
 
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyResolveUtil;
-import com.jetbrains.python.psi.PyReferenceExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyResolveUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -23,7 +24,23 @@ public class PyClassType implements PyType {
 
   @Nullable
   public PsiElement resolveMember(final String name) {
-    return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myClass, null, null);
+    final PsiElement resolveResult = PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myClass, null, null);
+    if (resolveResult != null) {
+      return resolveResult;
+    }
+    final PyExpression[] superClassExpressions = myClass.getSuperClassExpressions();
+    if (superClassExpressions != null) {
+      for(PyExpression expr: superClassExpressions) {
+        PyType superType = expr.getType();
+        if (superType != null) {
+          PsiElement superMember = superType.resolveMember(name);
+          if (superMember != null) {
+            return superMember;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression) {
