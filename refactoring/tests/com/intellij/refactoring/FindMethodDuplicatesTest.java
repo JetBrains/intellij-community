@@ -11,8 +11,14 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.idea.Bombed;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 
 public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
+  protected Sdk getProjectJDK() {
+    return JavaSdkImpl.getMockJdk("java 1.5");
+  }
+
   private void doTest() throws Exception {
     doTest(true);
   }
@@ -188,6 +194,40 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
 
   public void testReturnThis() throws Exception {
     doTest();
+  }
+
+  public void testTypesExtends() throws Exception {
+    doTest();
+  }
+
+  public void testTypesGenericsConcrete2Concrete() throws Exception {
+    doTest();
+  }
+
+  @Bombed(description = "Fails in sources, not in build.", user = "Anna Kozlova", month = 3, day = 25)
+  public void testTypesGenericsConcrete2ConcreteDifferent() throws Exception {
+    doTest(false);
+  }
+
+  public void testTypesGenericsConcrete2Raw() throws Exception {
+    doTest();
+  }
+
+  public void testTypesGenericsRaw2Concrete() throws Exception {
+    doTest();
+  }
+
+  public void testTypesGenericsRaw2Raw() throws Exception {
+    doTest();
+  }
+
+  @Bombed(description = "Fails in sources, not in build.", user = "Anna Kozlova", month = 3, day = 25)
+  public void testTypesImplements() throws Exception {
+    doTest();
+  }
+
+  public void testTypesNoRelationship() throws Exception {
+    doTest(false);
   }
 
   public void testAnonymousTest() throws Exception {
