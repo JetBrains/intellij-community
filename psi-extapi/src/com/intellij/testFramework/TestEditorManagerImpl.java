@@ -215,7 +215,9 @@ import java.util.Map;
 
   @NotNull
   public FileEditor[] getEditors(@NotNull VirtualFile file) {
-    return new FileEditor[] {getSelectedEditor(file)};
+    FileEditor e = getSelectedEditor(file);
+    if (e == null) return new FileEditor[0];
+    return new FileEditor[] {e};
   }
 
   public TestEditorManagerImpl(Project project) {
