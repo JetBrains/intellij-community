@@ -35,8 +35,14 @@ import java.util.List;
  * @author yole
  */
 public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Result, Parameters> {
-  private final NotNullLazyValue<SimpleSmartExtensionPoint<QueryExecutor<Result,Parameters>>> myPoint =
-    new NotNullLazyValue<SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>>>() {
+  private final NotNullLazyValue<SimpleSmartExtensionPoint<QueryExecutor<Result,Parameters>>> myPoint;
+
+  protected ExtensibleQueryFactory() {
+    this("com.intellij");
+  }
+
+  protected ExtensibleQueryFactory(@NonNls final String epNamespace) {
+    myPoint = new NotNullLazyValue<SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>>>() {
       @NotNull
       protected SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>> compute() {
         return new SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>>(new SmartList<QueryExecutor<Result, Parameters>>()){
@@ -47,12 +53,13 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
             if (pos >= 0) {
               epName = epName.substring(pos+1);
             }
-            epName = "com.intellij." + StringUtil.decapitalize(epName);
+            epName = epNamespace + "." + StringUtil.decapitalize(epName);
             return Extensions.getRootArea().getExtensionPoint(epName);
           }
         };
       }
     };
+  }
 
   public void registerExecutor(final QueryExecutor<Result, Parameters> queryExecutor, Disposable parentDisposable) {
     registerExecutor(queryExecutor);
