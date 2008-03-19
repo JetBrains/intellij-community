@@ -155,6 +155,16 @@ public abstract class BreakpointPropertiesPanel {
         final String suspendPolicy = getSelectedSuspendPolicy();
         breakpointManager.setDefaultSuspendPolicy(breakpointCategory, suspendPolicy);
         updateSuspendPolicyRbFont();
+        if (DebuggerSettings.SUSPEND_THREAD.equals(suspendPolicy)) {
+          mySuspendThreadRadio.requestFocus();
+        }
+        else if (DebuggerSettings.SUSPEND_NONE.equals(suspendPolicy)) {
+          mySuspendNoneRadio.requestFocus();
+        }
+        else {
+          mySuspendAllRadio.requestFocus();
+        }
+        myMakeDefaultButton.setEnabled(false);
       }
     });
 
