@@ -19,12 +19,23 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 class RemoveParenthesesFromMethodPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof GrMethodCallExpression)) {
+      return false;
+    }
+    final GrMethodCallExpression methodCallExpression = (GrMethodCallExpression) element;
+    final GrArgumentList argumentList = methodCallExpression.getArgumentList();
+    if (argumentList ==  null) {
+      return false;
+    }
+    final GrExpression[] arguments = argumentList.getExpressionArguments();
+    if (arguments.length == 0) {
       return false;
     }
     final PsiElement parent = element.getParent();
