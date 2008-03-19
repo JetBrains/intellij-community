@@ -17,6 +17,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -196,21 +197,26 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   private static boolean processFields(final PsiScopeProcessor processor, final PyFunction function, final ResolveState substitutor) {
     final PyParameter[] params = function.getParameterList().getParameters();
     if (params.length == 0) return true;
-    final PyStatement[] statements = function.getStatementList().getStatements();
-    for(PyStatement stmt: statements) {
-      if (stmt instanceof PyAssignmentStatement) {
-        final PyExpression[] targets = ((PyAssignmentStatement)stmt).getTargets();
+    final Ref<Boolean> result = new Ref<Boolean>();
+    function.getStatementList().accept(new PyRecursiveElementVisitor() {
+      public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
+        if (!result.isNull()) return;
+        super.visitPyAssignmentStatement(node);
+        final PyExpression[] targets = node.getTargets();
         for(PyExpression target: targets) {
           if (target instanceof PyTargetExpression) {
             PyExpression qualifier = ((PyTargetExpression) target).getQualifier();
             if (qualifier != null && qualifier.getText().equals(params [0].getName())) {
-              if (!processor.execute(target, substitutor)) return false;
+              if (!processor.execute(target, substitutor)) {
+                result.set(Boolean.FALSE);
+              }
             }
           }
         }
       }
-    }
-    return true;
+    });
+
+    return result.isNull();
   }
 
   public int getTextOffset() {
