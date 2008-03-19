@@ -96,7 +96,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
     return null;
   }
 
-  @PsiCached
   public List<PyStatement> getStatements() {
     List<PyStatement> stmts = new ArrayList<PyStatement>();
     for (PsiElement child : getChildren()) {
@@ -106,10 +105,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
       }
     }
     return stmts;
-  }
-
-  public PythonLanguage getPyLanguage() {
-    return (PythonLanguage)getLanguage();
   }
 
   public List<PyClass> getTopLevelClasses() {
