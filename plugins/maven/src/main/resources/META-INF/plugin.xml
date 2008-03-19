@@ -190,7 +190,7 @@
     </group>
 
     <group id="Maven.Project">
-      <action id="Maven.Synchronize" class="org.jetbrains.idea.maven.project.action.SynchronizeWithMavenAction"
+      <action id="Maven.Synchronize" class="org.jetbrains.idea.maven.project.action.SynchronizeAction"
               text="Synchronize with Maven projects" description="Synchronize project structure with Maven projects"
               icon="/actions/sync.png">
       </action>

@@ -123,7 +123,7 @@ public class MavenProjectModel {
     if (parentDir != null) {
       VirtualFile moduleDir = parentDir.findFileByRelativePath(moduleRelPath);
       if (moduleDir != null) {
-        return moduleDir.findChild(MavenEnv.POM_FILE);
+        return moduleDir.findChild(Constants.POM_XML);
       }
     }
     return null;

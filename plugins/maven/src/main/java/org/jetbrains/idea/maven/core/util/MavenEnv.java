@@ -20,8 +20,6 @@ import java.util.List;
 public class MavenEnv {
   private static final Logger LOG = Logger.getInstance("#" + MavenEnv.class.getName());
 
-  @NonNls public static final String POM_FILE = "pom.xml";
-
   @NonNls private static final String PROP_MAVEN_HOME = "maven.home";
   @NonNls private static final String PROP_USER_HOME = "user.home";
   @NonNls private static final String ENV_M2_HOME = "M2_HOME";

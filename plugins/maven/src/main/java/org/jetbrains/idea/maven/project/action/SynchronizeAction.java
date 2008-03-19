@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.idea.maven.project.MavenImporter;
 
-public class SynchronizeWithMavenAction extends AnAction {
+public class SynchronizeAction extends AnAction {
   public void update(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null);

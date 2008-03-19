@@ -10,7 +10,7 @@ import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.util.MavenEnv;
+import org.jetbrains.idea.maven.project.Constants;
 
 import javax.swing.*;
 
@@ -28,6 +28,7 @@ public class MavenApplicationComponent implements ApplicationComponent, IconProv
 
   public void initComponent() {
     ExternalResourceManager.getInstance().addStdResource("http://maven.apache.org/maven-v4_0_0.xsd","maven-v4_0_0.xsd",getClass());
+    ExternalResourceManager.getInstance().addStdResource("http://maven.apache.org/xsd/maven-4.0.0.xsd","maven-v4_0_0.xsd",getClass());
   }
 
   public void disposeComponent() {
@@ -35,7 +36,7 @@ public class MavenApplicationComponent implements ApplicationComponent, IconProv
 
   @Nullable
   public Icon getIcon(@NotNull final PsiElement element, final int flags) {
-    if (element instanceof XmlFile && Comparing.strEqual(((XmlFile)element).getName(), MavenEnv.POM_FILE)) {
+    if (element instanceof XmlFile && Comparing.strEqual(((XmlFile)element).getName(), Constants.POM_XML)) {
       return mavenIcon;
     }
     return null;

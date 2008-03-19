@@ -10,8 +10,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.util.MavenEnv;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.Constants;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,7 +28,7 @@ public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase {
 
   @Nullable
   public String[] getSupportedExtensions() {
-    return new String[]{MavenEnv.POM_FILE};
+    return new String[]{Constants.POM_XML};
   }
 
   public boolean doQuickImport(VirtualFile file, final WizardContext wizardContext) {

@@ -128,8 +128,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new Progress.Process() {
       public void run(Progress p) throws MavenException, CanceledException {
         p.setText(ProjectBundle.message("maven.locating.files"));
-        myFiles = FileFinder.findFilesByName(getImportRoot().getChildren(),
-                                             MavenEnv.POM_FILE,
+        myFiles = FileFinder.findFilesByName(getImportRoot().getChildren(), Constants.POM_XML,
                                              new ArrayList<VirtualFile>(), null,
                                              p.getIndicator(),
                                              getImporterPreferences().isLookForNested());

@@ -47,24 +47,13 @@ public class ModuleConfigurator {
     myModel = new RootModelAdapter(myModule);
     myModel.init(myMavenProject);
 
-    configModule();
-    configFacets();
-  }
-
-  private void configModule() {
     configFolders();
     configDependencies();
     configLanguageLevel();
 
     myModel.commit();
-  }
 
-  private void configFacets() {
-    for (FacetImporter importer : Extensions.getExtensions(FacetImporter.EXTENSION_POINT_NAME)) {
-      if (importer.isApplicable(myMavenProject, myProfiles)) {
-        importer.process(myModule, myMavenProject, myProfiles, myMapping, myModuleModel);
-      }
-    }
+    configFacets();
   }
 
   private void configFolders() {
@@ -133,5 +122,13 @@ public class ModuleConfigurator {
     if ("1.6".equals(level)) return LanguageLevel.JDK_1_5;
 
     return null;
+  }
+
+  private void configFacets() {
+    for (FacetImporter importer : Extensions.getExtensions(FacetImporter.EXTENSION_POINT_NAME)) {
+      if (importer.isApplicable(myMavenProject, myProfiles)) {
+        importer.process(myModule, myMavenProject, myProfiles, myMapping, myModuleModel);
+      }
+    }
   }
 }
