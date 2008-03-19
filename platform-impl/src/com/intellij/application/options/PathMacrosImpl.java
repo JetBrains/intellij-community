@@ -11,6 +11,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -23,12 +24,16 @@ import java.util.Set;
 public class PathMacrosImpl extends PathMacros implements ApplicationComponent, NamedJDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.PathMacrosImpl");
   private final Map<String,String> myMacros = new HashMap<String, String>();
+  private final Map<String,String> myMacrosDescriptions = new HashMap<String, String>();
+
   @NonNls
   public static final String MACRO_ELEMENT = "macro";
   @NonNls
   public static final String NAME_ATTR = "name";
   @NonNls
   public static final String VALUE_ATTR = "value";
+  @NonNls
+  public static final String DESCRIPTION_ATTR = "description";
   // predefined macros
   @NonNls
   public static final String APPLICATION_HOME_MACRO_NAME = "APPLICATION_HOME_DIR";
@@ -87,21 +92,29 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     return myMacros.get(name);
   }
 
+  @Nullable
+  public String getDescription(String name) {
+    return myMacrosDescriptions.get(name);
+  }
+
   public void removeAllMacros() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myMacros.clear();
+    myMacrosDescriptions.clear();
   }
 
-  public void setMacro(String name, String value) {
+  public void setMacro(String name, String value, @Nullable String description) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LOG.assertTrue(name != null);
     LOG.assertTrue(value != null);
     myMacros.put(name, value);
+    myMacrosDescriptions.put(name, description);
   }
 
   public void removeMacro(String name) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     final String value = myMacros.remove(name);
+    myMacrosDescriptions.remove(name);
     LOG.assertTrue(value != null);
   }
 
@@ -114,7 +127,13 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       if (name == null || value == null) {
         throw new InvalidDataException();
       }
+
       myMacros.put(name, value);
+
+      final String description = macro.getAttributeValue(DESCRIPTION_ATTR);
+      if (description != null) {
+        myMacrosDescriptions.put(name, description);
+      }
     }
   }
 
@@ -124,6 +143,12 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       final Element macro = new Element(MACRO_ELEMENT);
       macro.setAttribute(NAME_ATTR, entry.getKey());
       macro.setAttribute(VALUE_ATTR, entry.getValue());
+
+      final String description = myMacrosDescriptions.get(entry.getKey());
+      if (description != null) {
+        macro.setAttribute(DESCRIPTION_ATTR, description);
+      }
+
       element.addContent(macro);
     }
   }

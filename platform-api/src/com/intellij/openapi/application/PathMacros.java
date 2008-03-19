@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.application;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Set;
 
 public abstract class PathMacros {
@@ -27,7 +29,9 @@ public abstract class PathMacros {
 
   public abstract String getValue(String name);
 
-  public abstract void setMacro(String name, String value);
+  public abstract String getDescription(String name);
+
+  public abstract void setMacro(String name, String value, @Nullable String description);
 
   public abstract void removeMacro(String name);
 

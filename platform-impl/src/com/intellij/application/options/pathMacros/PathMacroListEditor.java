@@ -1,17 +1,19 @@
 package com.intellij.application.options.pathMacros;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.ProjectBundle;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.*;
 
 /**
- *  @author dsl
+ * @author dsl
  */
 public class PathMacroListEditor {
   JPanel myPanel;
@@ -19,6 +21,7 @@ public class PathMacroListEditor {
   JButton myRemoveButton;
   JButton myEditButton;
   JScrollPane myScrollPane;
+  private JTextArea myDescriptionArea;
   private PathMacroTable myPathMacroTable;
 
   public PathMacroListEditor() {
@@ -26,7 +29,7 @@ public class PathMacroListEditor {
   }
 
   public PathMacroListEditor(String[] undefinedMacroNames, boolean editOnlyPathsMode) {
-    myPathMacroTable = undefinedMacroNames != null? new PathMacroTable(undefinedMacroNames, editOnlyPathsMode) : new PathMacroTable();
+    myPathMacroTable = undefinedMacroNames != null ? new PathMacroTable(undefinedMacroNames, editOnlyPathsMode) : new PathMacroTable();
     myScrollPane.setViewportView(myPathMacroTable);
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -56,14 +59,25 @@ public class PathMacroListEditor {
     myAddButton.setEnabled(myPathMacroTable.isAddEnabled());
     myRemoveButton.setEnabled(myPathMacroTable.isRemoveEnabled());
     myEditButton.setEnabled(myPathMacroTable.isEditEnabled());
+
+    final int row = myPathMacroTable.getSelectedRow();
+    if (row != -1) {
+      final String description = myPathMacroTable.getMacroDescriptionAt(row);
+      myDescriptionArea
+          .setText((description == null || description.length() == 0)
+                   ? ProjectBundle.message("project.configure.path.variables.no.description.text") : description);
+    } else {
+      myDescriptionArea.setText("");
+    }
   }
 
-  public void commit() throws ConfigurationException{
+  public void commit() throws ConfigurationException {
     final int count = myPathMacroTable.getRowCount();
     for (int idx = 0; idx < count; idx++) {
       String value = myPathMacroTable.getMacroValueAt(idx);
       if (value == null || value.length() == 0) {
-        throw new ConfigurationException(ApplicationBundle.message("error.path.variable.is.undefined", myPathMacroTable.getMacroNameAt(idx)));
+        throw new ConfigurationException(
+            ApplicationBundle.message("error.path.variable.is.undefined", myPathMacroTable.getMacroNameAt(idx)));
       }
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -83,5 +97,12 @@ public class PathMacroListEditor {
 
   public boolean isModified() {
     return myPathMacroTable.isModified();
+  }
+
+  private void createUIComponents() {
+    myDescriptionArea = new JTextArea();
+    myDescriptionArea.setEditable(false);
+    myDescriptionArea.setPreferredSize(new Dimension(300, 100));
+    myDescriptionArea.setOpaque(false);
   }
 }
