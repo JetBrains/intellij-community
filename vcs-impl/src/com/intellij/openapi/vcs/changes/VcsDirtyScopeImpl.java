@@ -2,12 +2,6 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 12.07.2006
- * Time: 14:34:37
- */
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,9 +19,13 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
+/**
+ * @author max
+ * @author yole
+ */
 public class VcsDirtyScopeImpl extends VcsDirtyScope {
   private final Set<FilePath> myDirtyFiles = new THashSet<FilePath>();
-  private final Set<FilePath> myDirtyDirectoriesRecursively = new THashSet<FilePath>();
+  private final Map<VirtualFile, THashSet<FilePath>> myDirtyDirectoriesRecursively = new HashMap<VirtualFile, THashSet<FilePath>>();
   private final Set<VirtualFile> myAffectedContentRoots = new THashSet<VirtualFile>();
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
@@ -69,14 +67,20 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
   }
 
   public synchronized Set<FilePath> getRecursivelyDirtyDirectories() {
-    return new THashSet<FilePath>(myDirtyDirectoriesRecursively);
+    THashSet<FilePath> result = new THashSet<FilePath>();
+    for(THashSet<FilePath> dirsByRoot: myDirtyDirectoriesRecursively.values()) {
+      result.addAll(dirsByRoot);
+    }
+    return result;
   }
 
   public void addDirtyDirRecursively(final FilePath newcomer) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         synchronized (VcsDirtyScopeImpl.this) {
-          myAffectedContentRoots.add(myVcsManager.getVcsRootFor(newcomer));
+          final VirtualFile vcsRoot = myVcsManager.getVcsRootFor(newcomer);
+          if (vcsRoot == null) return;
+          myAffectedContentRoots.add(vcsRoot);
 
           for (Iterator<FilePath> it = myDirtyFiles.iterator(); it.hasNext();) {
             FilePath oldBoy = it.next();
@@ -85,17 +89,25 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
             }
           }
 
-          for (Iterator<FilePath> it = myDirtyDirectoriesRecursively.iterator(); it.hasNext();) {
-            FilePath oldBoy = it.next();
-            if (newcomer.isUnder(oldBoy, false)) {
-              return;
-            }
+          THashSet<FilePath> dirsByRoot = myDirtyDirectoriesRecursively.get(vcsRoot);
+          if (dirsByRoot == null) {
+            dirsByRoot = new THashSet<FilePath>();
+            myDirtyDirectoriesRecursively.put(vcsRoot, dirsByRoot);
+          }
+          else {
+            for (Iterator<FilePath> it = dirsByRoot.iterator(); it.hasNext();) {
+              FilePath oldBoy = it.next();
+              if (newcomer.isUnder(oldBoy, false)) {
+                return;
+              }
 
-            if (oldBoy.isUnder(newcomer, false)) {
-              it.remove();
+              if (oldBoy.isUnder(newcomer, false)) {
+                it.remove();
+              }
             }
           }
-          myDirtyDirectoriesRecursively.add(newcomer);
+
+          dirsByRoot.add(newcomer);
         }
       }
     });
@@ -105,11 +117,15 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         synchronized (VcsDirtyScopeImpl.this) {
-          myAffectedContentRoots.add(myVcsManager.getVcsRootFor(newcomer));
+          final VirtualFile vcsRoot = myVcsManager.getVcsRootFor(newcomer);
+          myAffectedContentRoots.add(vcsRoot);
 
-          for (FilePath oldBoy : myDirtyDirectoriesRecursively) {
-            if (newcomer.isUnder(oldBoy, false)) {
-              return;
+          THashSet<FilePath> dirsByRoot = myDirtyDirectoriesRecursively.get(vcsRoot);
+          if (dirsByRoot != null) {
+            for (FilePath oldBoy : dirsByRoot) {
+              if (newcomer.isUnder(oldBoy, false)) {
+                return;
+              }
             }
           }
 
@@ -139,14 +155,12 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
     if (myProject.isDisposed()) return;
 
     for (VirtualFile root : myAffectedContentRoots) {
-      for (FilePath dir : myDirtyDirectoriesRecursively) {
-        final VirtualFile vFile = dir.getVirtualFile();
-        if (vFile != null && vFile.isValid()) {
-          if (VfsUtil.isAncestor(root, vFile, false)) {
+      THashSet<FilePath> dirsByRoot = myDirtyDirectoriesRecursively.get(root);
+      if (dirsByRoot != null) {
+        for (FilePath dir : dirsByRoot) {
+          final VirtualFile vFile = dir.getVirtualFile();
+          if (vFile != null && vFile.isValid()) {
             myVcsManager.iterateVcsRoot(vFile, iterator);
-          }
-          else if (VfsUtil.isAncestor(vFile, root, false)) {
-            myVcsManager.iterateVcsRoot(root, iterator);
           }
         }
       }
@@ -168,23 +182,23 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
       public Boolean compute() {
         synchronized (VcsDirtyScopeImpl.this) {
           if (myProject.isDisposed()) return Boolean.FALSE;
-          boolean isAffectedContentRoot = false;
           if (myVcsManager.getVcsFor(path) != myVcs) {
             return Boolean.FALSE;
           }
+
           final VirtualFile vcsRoot = myVcsManager.getVcsRootFor(path);
           if (vcsRoot != null) {
             for(VirtualFile contentRoot: myAffectedContentRoots) {
               if (VfsUtil.isAncestor(contentRoot, vcsRoot, false)) {
-                isAffectedContentRoot = true;
+                THashSet<FilePath> dirsByRoot = myDirtyDirectoriesRecursively.get(contentRoot);
+                if (dirsByRoot != null) {
+                  for (FilePath filePath : dirsByRoot) {
+                    if (path.isUnder(filePath, false)) return Boolean.TRUE;
+                  }
+                }
                 break;
               }
             }
-          }
-          if (!isAffectedContentRoot) return Boolean.FALSE;
-
-          for (FilePath filePath : myDirtyDirectoriesRecursively) {
-            if (path.isUnder(filePath, false)) return Boolean.TRUE;
           }
 
           if (myDirtyFiles.size() > 0) {
@@ -216,8 +230,10 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
     }
     if (myDirtyDirectoriesRecursively.size() > 0) {
       result.append(" dirs=");
-      for(FilePath file: myDirtyDirectoriesRecursively) {
-        result.append(file).append(" ");
+      for(THashSet<FilePath> dirsByRoot: myDirtyDirectoriesRecursively.values()) {
+        for(FilePath file: dirsByRoot) {
+          result.append(file).append(" ");
+        }
       }
     }
     result.append("]");

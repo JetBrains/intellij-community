@@ -66,7 +66,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
 
   @Nullable
   public VirtualFile getVcsRootFor(final VirtualFile file) {
-    if (myBaseDir != null && VfsUtil.isAncestor(myBaseDir, file, false)) {
+    if (myBaseDir != null && ExcludedFileIndex.getInstance(myProject).isValidAncestor(myBaseDir, file)) {
       return myBaseDir;
     }
     final VirtualFile contentRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(file);

@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -8,9 +9,11 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public class ProjectExcludedFileIndex extends ExcludedFileIndex {
   private ProjectRootManager myRootManager;
+  private DirectoryIndex myDirectoryIndex;
 
-  public ProjectExcludedFileIndex(final ProjectRootManager rootManager) {
+  public ProjectExcludedFileIndex(final ProjectRootManager rootManager, final DirectoryIndex directoryIndex) {
     myRootManager = rootManager;
+    myDirectoryIndex = directoryIndex;
   }
 
   public boolean isInContent(final VirtualFile file) {
@@ -19,5 +22,14 @@ public class ProjectExcludedFileIndex extends ExcludedFileIndex {
 
   public boolean isExcludedFile(final VirtualFile file) {
     return myRootManager.getFileIndex().isIgnored(file);
+  }
+
+  public boolean isValidAncestor(final VirtualFile baseDir, VirtualFile childDir) {
+    while (true) {
+      if (childDir == null) return false;
+      if (myDirectoryIndex.getInfoForDirectory(childDir) == null) return false;
+      if (childDir.equals(baseDir)) return true;
+      childDir = childDir.getParent();
+    }
   }
 }

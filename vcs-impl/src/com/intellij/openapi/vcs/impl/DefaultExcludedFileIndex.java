@@ -25,6 +25,10 @@ public class DefaultExcludedFileIndex extends ExcludedFileIndex {
     return false;
   }
 
+  public boolean isValidAncestor(final VirtualFile baseDir, final VirtualFile childDir) {
+    return VfsUtil.isAncestor(baseDir, childDir, false);
+  }
+
   private VirtualFile getBaseDir() {
     return ProjectBaseDirectory.getInstance(myProject).getBaseDir(myBaseDir);
   }
