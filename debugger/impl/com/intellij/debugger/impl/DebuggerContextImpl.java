@@ -166,19 +166,6 @@ public final class DebuggerContextImpl implements DebuggerContext {
   }
 
   public boolean isEvaluationPossible() {
-    final SuspendContextImpl suspendContext = getSuspendContext();
-    if (suspendContext != null) {
-      ThreadReferenceProxyImpl contextThread = suspendContext.getThread();
-      if (contextThread == null) {
-        SuspendContextImpl oldContext = getDebugProcess().getSuspendManager().getPausedContext();
-        if (oldContext != null) {
-          contextThread = oldContext.getThread();
-        }
-      }
-      if (contextThread != null) {
-        return contextThread.getThreadReference().isAtBreakpoint();
-      }
-    }
-    return !myDebugProcess.getVirtualMachineProxy().isPausePressed();
+    return getDebugProcess().getSuspendManager().getPausedContext() != null;
   }
 }
