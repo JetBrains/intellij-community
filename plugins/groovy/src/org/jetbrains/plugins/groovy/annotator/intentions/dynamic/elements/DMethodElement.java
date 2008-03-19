@@ -9,7 +9,7 @@ import java.util.List;
  * User: Dmitry.Krasilschikov
  * Date: 12.02.2008
  */
-public class DMethodElement extends DItemElement implements Comparable{
+public class DMethodElement extends DItemElement {
   public List<MyPair> myPairs = new ArrayList<MyPair>();
 
   public DMethodElement() {
@@ -24,12 +24,5 @@ public class DMethodElement extends DItemElement implements Comparable{
 
   public List<MyPair> getPairs() {
     return myPairs;
-  }
-
-  public int compareTo(Object o) {
-    if (!(o instanceof DMethodElement)) return 0;
-    final DMethodElement otherMethod = (DMethodElement) o;
-
-    return getName().compareTo(otherMethod.getName()) + getType().compareTo(otherMethod.getType());
   }
 }
