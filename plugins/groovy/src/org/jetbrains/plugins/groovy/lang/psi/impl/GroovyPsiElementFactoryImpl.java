@@ -408,4 +408,20 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
   }
 
 
+  public GrMethod createMethodFromText(String name, String type, String[] paramTypes) {
+    String parameters = "";
+    for (int i = 0; i < paramTypes.length; i++) {
+      String paramType = paramTypes[i];
+
+      if (i != 0) {
+        parameters += ", ";
+      }
+
+      parameters += paramType;
+      parameters += " ";
+      parameters += paramType.toLowerCase() + i;
+    }
+
+    return createMethodFromText(type + " " + name + "(" + parameters + ")" + "{}");
+  }
 }
