@@ -23,8 +23,6 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
@@ -43,13 +41,7 @@ import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicFix;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
@@ -88,7 +80,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
-import org.jetbrains.plugins.groovy.structure.GroovyElementPresentation;
 
 import java.util.*;
 
@@ -762,79 +753,6 @@ public class GroovyAnnotator implements Annotator {
         annotation.registerFix(new CreateLocalVariableFromUsageFix(refExpr, owner));
       }
     }
-  }
-
-  private DItemElement getDynamicAnnotation(@NotNull GrReferenceExpression referenceExpression, final @NotNull PsiClass targetClass) {
-    if (targetClass instanceof GrTypeDefinition &&
-        PsiUtil.isInStaticContext(referenceExpression, (GrMemberOwner) targetClass)) return null;
-
-    final PsiFile containingFile = referenceExpression.getContainingFile();
-
-    VirtualFile file;
-    if (containingFile != null) {
-      file = containingFile.getVirtualFile();
-      if (file == null) return null;
-    } else return null;
-
-    Module module = ProjectRootManager.getInstance(referenceExpression.getProject()).getFileIndex().getModuleForFile(file);
-
-    if (module == null) return null;
-
-    final String qualifiedName = targetClass.getQualifiedName();
-    if (qualifiedName == null) return null;
-
-    if (referenceExpression.getParent() instanceof GrMethodCallExpression) {
-      final DMethodElement methodVirtualElement = getDynamicMethodElement(referenceExpression, targetClass, qualifiedName);
-      if (methodVirtualElement != null) return methodVirtualElement;
-
-    } else {
-      final DPropertyElement propertyVirtualElement = getDynamicPropertyElement(referenceExpression, targetClass, module, qualifiedName);
-      if (propertyVirtualElement != null) return propertyVirtualElement;
-    }
-
-    return null;
-  }
-
-  private DMethodElement getDynamicMethodElement(GrReferenceExpression referenceExpression, PsiClass targetClass, String qualifiedName) {
-    final PsiElement parent = referenceExpression.getParent();
-    if (!(parent instanceof GrMethodCallExpression)) return null;
-
-    GrExpression[] expressionArgument = ((GrMethodCallExpression) parent).getExpressionArguments();
-    List<MyPair> pairs = new ArrayList<MyPair>();
-
-    for (GrExpression expression : expressionArgument) {
-      final PsiType type = expression.getType();
-      if (type == null) return null;
-
-      pairs.add(new MyPair(GroovyElementPresentation.getExpressionPresentableText(expression), type.getCanonicalText()));
-    }
-
-    final String[] types = QuickfixUtil.getArgumentsTypes(pairs);
-    final Project project = referenceExpression.getProject();
-
-    //TODO:add targetClass
-//    classes.add(targetClass);
-    DElement superDynamicMethod;
-    for (PsiClass clazz : PsiUtil.iterateSupers(targetClass, true)) {
-      superDynamicMethod = DynamicManager.getInstance(project).findConcreteDynamicMethod(clazz.getQualifiedName(), referenceExpression.getName(), types);
-
-      if (superDynamicMethod != null) return null;
-    }
-//    DynamicManager.getInstance(project).findConcreteDynamicMethod(targetClass.getQualifiedName(), referenceExpression.getName(), QuickfixUtil.getArgumentsTypes(pairs));
-    return new DMethodElement(referenceExpression.getName(), null, pairs);
-  }
-
-  private DPropertyElement getDynamicPropertyElement(GrReferenceExpression referenceExpression, PsiClass targetClass, Module module, String qualifiedName) {
-    final Project project = referenceExpression.getProject();
-
-    DElement superDynamicProperty;
-    for (PsiClass aSuper : PsiUtil.iterateSupers(targetClass, true)) {
-      superDynamicProperty = DynamicManager.getInstance(project).findConcreteDynamicProperty(aSuper.getQualifiedName(), referenceExpression.getName());
-
-      if (superDynamicProperty != null) return null;
-    }
-
-    return new DPropertyElement(referenceExpression.getName(),  null);
   }
 
   private void addDynamicAnnotation(Annotation annotation, GrReferenceExpression referenceExpression) {
