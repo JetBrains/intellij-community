@@ -75,7 +75,7 @@ public class QuickfixUtil {
       for (GrExpression expression : argumentList) {
         final PsiType type = expression.getType();
         if (type == null) {
-          types.add(null);
+          types.add("");
           continue;
         }
         types.add(type.getCanonicalText());
@@ -90,7 +90,8 @@ public class QuickfixUtil {
     List<String> names = new ArrayList<String>();
     if (argumentList != null && argumentList.length != 0) {
       for (GrExpression expression : argumentList) {
-        names.add(expression.getText());
+        final String expressionText = expression.getText();
+        names.add(expressionText);
       }
     }
 
@@ -116,6 +117,8 @@ public class QuickfixUtil {
 
   public static String[] getArgumentsTypes(List<MyPair> listOfPairs) {
     final List<String> result = new ArrayList<String>();
+
+    if (listOfPairs == null) return new String[0];
     for (MyPair listOfPair : listOfPairs) {
       result.add(listOfPair.second);
     }
