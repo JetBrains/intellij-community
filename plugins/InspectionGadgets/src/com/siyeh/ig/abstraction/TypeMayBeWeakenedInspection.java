@@ -27,15 +27,18 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +51,10 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
 	@SuppressWarnings({"PublicField"})
 	public boolean useRighthandTypeAsWeakestTypeInAssignments = true;
 
-	@NotNull
+    @SuppressWarnings({"PublicField"})
+    public boolean useParameterizedTypeForCollectionMethods = true;
+
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "type.may.be.weakened.display.name");
@@ -89,10 +95,15 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
 
     @Nullable
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-		        InspectionGadgetsBundle.message(
-                        "type.may.be.weakened.ignore.option"), this,
-		        "useRighthandTypeAsWeakestTypeInAssignments");
+        final MultipleCheckboxOptionsPanel optionsPanel =
+                new MultipleCheckboxOptionsPanel(this);
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                        "type.may.be.weakened.ignore.option"),
+                "useRighthandTypeAsWeakestTypeInAssignments");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "type.may.be.weakened.collection.method.option"),
+                "useParameterizedTypeForCollectionMethods");
+        return optionsPanel;
     }
 
     @NotNull
@@ -183,7 +194,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     @NotNull
     public static Collection<PsiClass> calculateWeakestClassesNecessary(
 		    @NotNull PsiElement variableOrMethod,
-		    boolean useRighthandTypeAsWeakestTypeInAssignments) {
+		    boolean useRighthandTypeAsWeakestTypeInAssignments,
+            boolean useParameterizedTypeForCollectionMethods) {
         final PsiType variableOrMethodType;
         if (variableOrMethod instanceof PsiVariable) {
             final PsiVariable variable = (PsiVariable) variableOrMethod;
@@ -244,39 +256,11 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 }
                 final PsiMethodCallExpression methodCallExpression =
                         (PsiMethodCallExpression) referenceGrandParent;
-                final PsiReferenceExpression methodExpression =
-                        methodCallExpression.getMethodExpression();
-                final PsiElement methodElement = methodExpression.resolve();
-                if (!(methodElement instanceof PsiMethod)) {
+                if (!findWeakestType(referenceElement, methodCallExpression,
+                        useParameterizedTypeForCollectionMethods,
+                        weakestTypeClasses)) {
                     return Collections.EMPTY_LIST;
                 }
-                final PsiMethod method = (PsiMethod) methodElement;
-                if (!(referenceElement instanceof PsiExpression)) {
-                    return Collections.EMPTY_LIST;
-                }
-                final PsiExpression expression =
-                        (PsiExpression) referenceElement;
-                final PsiExpressionList expressionList =
-                        (PsiExpressionList)referenceParent;
-                final int index =
-                        getExpressionIndex(expression, expressionList);
-                final PsiParameterList parameterList =
-                        method.getParameterList();
-                if (parameterList.getParametersCount() == 0) {
-                    return Collections.EMPTY_LIST;
-                }
-                final PsiParameter[] parameters =
-                        parameterList.getParameters();
-                final PsiParameter parameter;
-                if (index < parameters.length) {
-                    parameter = parameters[index];
-                } else {
-                    parameter = parameters[parameters.length - 1];
-                }
-                final PsiType type = parameter.getType();
-	            if (!checkType(type, weakestTypeClasses)) {
-		            return Collections.EMPTY_LIST;
-	            }
             } else if (referenceGrandParent
                     instanceof PsiMethodCallExpression) {
                 final PsiMethodCallExpression methodCallExpression =
@@ -287,7 +271,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
             } else if (referenceParent instanceof PsiAssignmentExpression) {
                 final PsiAssignmentExpression assignmentExpression =
                         (PsiAssignmentExpression) referenceParent;
-                if (!findWeakestType(assignmentExpression, referenceElement,
+                if (!findWeakestType(referenceElement, assignmentExpression,
                         useRighthandTypeAsWeakestTypeInAssignments,
                         weakestTypeClasses)) {
                     return Collections.EMPTY_LIST;
@@ -388,6 +372,88 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     }
 
     private static boolean findWeakestType(
+            PsiElement referenceElement,
+            PsiMethodCallExpression methodCallExpression,
+            boolean useParameterizedTypeForCollectionMethods,
+            Set<PsiClass> weakestTypeClasses) {
+        if (!(referenceElement instanceof PsiExpression)) {
+            return false;
+        }
+        final PsiMethod method = methodCallExpression.resolveMethod();
+        if (method == null) {
+            return false;
+        }
+        final PsiExpressionList expressionList =
+                methodCallExpression.getArgumentList();
+        final PsiExpression[] expressions = expressionList.getExpressions();
+        final int index =
+                findElementIndexInExpressionList(referenceElement,
+                        expressions);
+        if (index < 0) {
+            return false;
+        }
+        final PsiParameterList parameterList = method.getParameterList();
+        if (parameterList.getParametersCount() == 0) {
+            return false;
+        }
+        final PsiParameter[] parameters = parameterList.getParameters();
+        final PsiParameter parameter;
+        final PsiType type;
+        if (index < parameters.length) {
+            parameter = parameters[index];
+            type = parameter.getType();
+        } else {
+            parameter = parameters[parameters.length - 1];
+            type = parameter.getType();
+            if (!(type instanceof PsiEllipsisType)) {
+                return false;
+            }
+        }
+        if (!useParameterizedTypeForCollectionMethods) {
+            return checkType(type, weakestTypeClasses);
+        }
+        final String methodName = method.getName();
+        if (HardcodedMethodConstants.REMOVE.equals(methodName) ||
+                HardcodedMethodConstants.GET.equals(methodName) ||
+                "containsKey".equals(methodName) ||
+                "containsValue".equals(methodName) ||
+                "contains".equals(methodName) ||
+                HardcodedMethodConstants.INDEX_OF.equals(methodName) ||
+                "lastIndexOf".equals(methodName)) {
+            final PsiClass containingClass = method.getContainingClass();
+            if (ClassUtils.isSubclass(containingClass,
+                    "java.util.Map") || ClassUtils.isSubclass(containingClass,
+                    "java.util.Collection")) {
+                final PsiReferenceExpression methodExpression =
+                        methodCallExpression.getMethodExpression();
+                final PsiExpression qualifier =
+                        methodExpression.getQualifierExpression();
+                if (qualifier != null) {
+                    final PsiType qualifierType = qualifier.getType();
+                    if (qualifierType instanceof PsiClassType) {
+                        PsiClassType classType = (PsiClassType) qualifierType;
+                        final PsiType[] parameterTypes =
+                                classType.getParameters();
+                        if (parameterTypes.length > 0) {
+                            final PsiType parameterType =
+                                    parameterTypes[0];
+                            final PsiExpression expression = expressions[index];
+                            final PsiType expressionType = expression.getType();
+                            if (expressionType == null ||
+                                    !parameterType.isAssignableFrom(
+                                            expressionType)) {
+                                return false;
+                            }
+                            return checkType(parameterType, weakestTypeClasses);
+                        }
+                    }
+                }
+            }
+        }
+        return checkType(type, weakestTypeClasses);
+    }
+
+    private static boolean findWeakestType(
             PsiMethodCallExpression methodCallExpression,
             Set<PsiClass> weakestTypeClasses) {
         final PsiReferenceExpression methodExpression =
@@ -442,8 +508,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     }
 
     private static boolean findWeakestType(
-            PsiAssignmentExpression assignmentExpression,
-            PsiElement referenceElement,
+            PsiElement referenceElement, PsiAssignmentExpression assignmentExpression,
             boolean useRighthandTypeAsWeakestTypeInAssignments,
             Set<PsiClass> weakestTypeClasses) {
         final IElementType tokenType =
@@ -484,10 +549,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         }
         final PsiArrayType arrayType = (PsiArrayType)type;
         final PsiType componentType = arrayType.getComponentType();
-        if (!checkType(componentType, weakestTypeClasses)) {
-            return false;
-        }
-        return true;
+        return checkType(componentType, weakestTypeClasses);
     }
 
     private static boolean findWeakestType(PsiThrowStatement throwStatement,
@@ -654,13 +716,12 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         return ClassUtils.inSamePackage(aClass, referencingClass);
     }
 
-    private static int getExpressionIndex(
-            @NotNull PsiExpression expression,
-            @NotNull PsiExpressionList expressionList) {
-        final PsiExpression[] expressions = expressionList.getExpressions();
+    private static int findElementIndexInExpressionList(
+            @NotNull PsiElement element,
+            @NotNull PsiExpression[] expressions) {
         for (int i = 0; i < expressions.length; i++) {
             final PsiExpression anExpression = expressions[i];
-            if (expression.equals(anExpression)) {
+            if (element.equals(anExpression)) {
                 return i;
             }
         }
@@ -732,7 +793,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
 	        }
             final Collection<PsiClass> weakestClasses =
                     calculateWeakestClassesNecessary(variable,
-		                    useRighthandTypeAsWeakestTypeInAssignments);
+		                    useRighthandTypeAsWeakestTypeInAssignments,
+                            useParameterizedTypeForCollectionMethods);
 	        if (weakestClasses.isEmpty()) {
                 return;
             }
@@ -761,7 +823,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
             }
             final Collection<PsiClass> weakestClasses =
                     calculateWeakestClassesNecessary(method,
-		                    useRighthandTypeAsWeakestTypeInAssignments);
+		                    useRighthandTypeAsWeakestTypeInAssignments,
+                            useParameterizedTypeForCollectionMethods);
             if (weakestClasses.isEmpty()) {
                 return;
             }
