@@ -2,6 +2,8 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,4 +15,7 @@ public interface PyTypeProvider {
   
   @Nullable
   PyType getReferenceType(PsiElement referenceTarget);
+
+  @Nullable
+  PyType getParameterType(PyParameter param, final PyFunction func);
 }

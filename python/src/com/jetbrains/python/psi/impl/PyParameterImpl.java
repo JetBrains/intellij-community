@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.extensions.Extensions;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -109,11 +110,17 @@ public class PyParameterImpl extends PyPresentableElementImpl<PyParameterStub> i
     if (getParent() instanceof PyParameterList) {
       PyParameterList parameterList = (PyParameterList) getParent();
       final PyParameter[] params = parameterList.getParameters();
-      if (params [0] == this && parameterList.getParent() instanceof PyFunction) {
+      if (parameterList.getParent() instanceof PyFunction) {
         PyFunction func = (PyFunction) parameterList.getParent();
-        final PyClass containingClass = func.getContainingClass();
-        if (containingClass != null) {
-          return new PyClassType(containingClass);
+        if (params [0] == this) {
+          final PyClass containingClass = func.getContainingClass();
+          if (containingClass != null) {
+            return new PyClassType(containingClass);
+          }
+        }
+        for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+          PyType result = provider.getParameterType(this, func);
+          if (result != null) return result;
         }
       }
     }
