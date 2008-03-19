@@ -164,6 +164,23 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest();
   }
 
+  @Bombed(description = "Check issues: IDEADEV-25352.", user = "Anna Kozlova", month = 6, day = 2)
+  public void testReturnField() throws Exception {
+    doTest();
+  }
+
+  public void testReturnLocalVar() throws Exception {
+    doTest();
+  }
+
+  public void testReturnParameter() throws Exception {
+    doTest();
+  }
+
+  public void testReturnThis() throws Exception {
+    doTest();
+  }
+
   public void testAnonymousTest() throws Exception {
     doTest();
   }
@@ -204,7 +221,7 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest();
   }
 
-  public void testReturnExpression() throws Exception {
+  public void testReturnExpressionDifferent() throws Exception {
     doTest(false);
   }
 

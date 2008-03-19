@@ -1,0 +1,28 @@
+class Return {
+  private Return myReturn;
+  private int myInt;
+
+  public Return method() {
+    myReturn = new Return();
+    myReturn.myInt++;
+    return myReturn;
+  }
+
+  public void contextLValue() {
+    myReturn = new Return();
+    myReturn.myInt++;
+    myReturn = null;
+  }
+
+  public void contextNoUsage() {
+      method();
+  }
+
+  public void contextRValue() {
+      Return r = method();
+  }
+
+  public void contextRValueQualified() {
+      Return r = this.method();
+  }
+}
