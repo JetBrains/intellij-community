@@ -7,7 +7,6 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
@@ -21,10 +20,10 @@ import java.util.List;
  * Date: 18.02.2008
  */
 public class DynamicMethodDialog extends DynamicDialog {
-  public DynamicMethodDialog(Module project, DMethodElement virtualMethod, GrReferenceExpression referenceExpression) {
-    super(project, virtualMethod, referenceExpression);
+  public DynamicMethodDialog(Module project, GrReferenceExpression referenceExpression) {
+    super(project, referenceExpression);
 
-    setupParameterList(virtualMethod.getPairs());
+//    setupParameterList(QuickfixUtil.getMethodArgumentsNames(referenceExpression.getParent()), QuickfixUtil.getMethodArgumentsTypes(((GrCall) referenceExpression.getParent())));
     setTitle(GroovyBundle.message("add.dynamic.method"));
     setUpTypeLabel(GroovyBundle.message("dynamic.method.return.type"));
   }
@@ -37,16 +36,6 @@ public class DynamicMethodDialog extends DynamicDialog {
     final JTable table = getTable();
 
     //TODO: add header
-//    DefaultTableColumnModel model = new DefaultTableColumnModel();
-//    final TableColumn tableColumn1 = new TableColumn();
-//    tableColumn1.setIdentifier("barrrrrrrr");
-//    model.addColumn(tableColumn1);
-//    model.addColumn(new TableColumn());
-//
-//    final JTableHeader tableHeader = new JTableHeader(model);
-//
-//    table.setTableHeader(tableHeader);
-
     final ListTableModel<MyPair> dataModel = new ListTableModel<MyPair>(new NameColumnInfo(), new TypeColumnInfo());
     dataModel.addTableModelListener(new TableModelListener() {
       public void tableChanged(TableModelEvent e) {

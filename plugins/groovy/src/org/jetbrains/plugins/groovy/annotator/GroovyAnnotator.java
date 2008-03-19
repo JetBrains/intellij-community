@@ -743,10 +743,8 @@ public class GroovyAnnotator implements Annotator {
     PsiClass targetClass = QuickfixUtil.findTargetClass(refExpr);
     if (targetClass == null) return;
 
-    final DItemElement virtualElement = getDynamicAnnotation(refExpr, targetClass);
-
-    if (virtualElement != null && refExpr.resolve() == null) {
-      addDynamicAnnotation(annotation, refExpr, virtualElement);
+    if (refExpr.resolve() == null) {
+      addDynamicAnnotation(annotation, refExpr);
     }
     if (targetClass instanceof GrMemberOwner) {
       if (!(targetClass instanceof GroovyScriptClass)) {
@@ -839,7 +837,7 @@ public class GroovyAnnotator implements Annotator {
     return new DPropertyElement(referenceExpression.getName(),  null);
   }
 
-  private void addDynamicAnnotation(Annotation annotation, GrReferenceExpression referenceExpression, final DItemElement itemElement) {
+  private void addDynamicAnnotation(Annotation annotation, GrReferenceExpression referenceExpression) {
     final PsiFile containingFile = referenceExpression.getContainingFile();
     VirtualFile file;
     if (containingFile != null) {
@@ -847,7 +845,7 @@ public class GroovyAnnotator implements Annotator {
       if (file == null) return;
     } else return;
 
-    annotation.registerFix(new DynamicFix(itemElement, referenceExpression), referenceExpression.getTextRange());
+    annotation.registerFix(new DynamicFix(QuickfixUtil.isCall(referenceExpression), referenceExpression), referenceExpression.getTextRange());
   }
 
   private void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {

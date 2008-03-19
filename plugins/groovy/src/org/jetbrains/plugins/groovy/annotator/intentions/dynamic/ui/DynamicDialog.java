@@ -20,22 +20,25 @@ import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.EventListener;
+import java.util.*;
+import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -53,11 +56,11 @@ public abstract class DynamicDialog extends DialogWrapper {
   private JLabel myTableLabel;
   private final DynamicManager myDynamicManager;
   private final Project myProject;
-  private final DItemElement myDynamicElement;
+  //  private final DItemElement myDynamicElement;
   private EventListenerList myListenerList = new EventListenerList();
   private final GrReferenceExpression myReferenceExpression;
 
-  public DynamicDialog(Module module, DItemElement virtualElement, GrReferenceExpression referenceExpression) {
+  public DynamicDialog(Module module, GrReferenceExpression referenceExpression) {
     super(module.getProject(), true);
     myProject = module.getProject();
 
@@ -67,8 +70,6 @@ public abstract class DynamicDialog extends DialogWrapper {
     }
     myReferenceExpression = referenceExpression;
     setTitle(GroovyInspectionBundle.message("dynamic.element"));
-
-    myDynamicElement = virtualElement;
     myDynamicManager = DynamicManager.getInstance(myProject);
 
     init();
@@ -283,6 +284,17 @@ public abstract class DynamicDialog extends DialogWrapper {
   protected void doOKAction() {
     GrTypeElement typeElement = getEnteredTypeName();
 
+    DItemElement myDynamicElement;
+    if (QuickfixUtil.isCall(myReferenceExpression)) {
+      final String[] methodArgumentsNames = QuickfixUtil.getMethodArgumentsNames(((GrCallExpression) myReferenceExpression.getParent()));
+      final String[] methodArgumentsTypes = QuickfixUtil.getMethodArgumentsTypes(((GrCallExpression) myReferenceExpression.getParent()));
+      final List<MyPair> pairs = QuickfixUtil.swapArgumentsAndTypes(methodArgumentsNames, methodArgumentsTypes);
+
+      myDynamicElement = new DMethodElement(myReferenceExpression.getName(), null, pairs);
+    } else {
+      myDynamicElement = new DPropertyElement(myReferenceExpression.getName(), null);
+    }
+
     if (typeElement == null) {
       myDynamicElement.setType("java.lang.Object");
     } else {
@@ -305,7 +317,7 @@ public abstract class DynamicDialog extends DialogWrapper {
 
     if (myDynamicElement instanceof DMethodElement) {
       dynamicManager.addMethod(classElement, ((DMethodElement) myDynamicElement));
-    } else if (myDynamicElement instanceof DPropertyElement) {
+    } else {
       dynamicManager.addProperty(classElement, ((DPropertyElement) myDynamicElement));
     }
 

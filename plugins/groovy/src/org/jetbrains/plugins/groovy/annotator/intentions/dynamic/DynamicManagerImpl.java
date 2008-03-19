@@ -236,6 +236,7 @@ public class DynamicManagerImpl extends DynamicManager {
     if (property == null) return null;
 
     property.setType(newPropertyType);
+    fireChange();
     return newPropertyType;
   }
 
@@ -277,6 +278,7 @@ public class DynamicManagerImpl extends DynamicManager {
 
     if (method == null) return;
     method.setType(newType);
+    fireChange();
   }
 
   @NotNull

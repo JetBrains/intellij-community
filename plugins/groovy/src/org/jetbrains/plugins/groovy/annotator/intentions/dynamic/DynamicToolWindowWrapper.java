@@ -725,13 +725,25 @@ public class DynamicToolWindowWrapper {
 //        final Object selectedObject = getValueAt(getSelectedRow(), getSelectedColumn());
 //        if (!(selectedObject instanceof DefaultMutableTreeNode)) return null;
 //
-//        final Object userObject = ((DefaultMutableTreeNode) selectedObject).getUserObject();
+//        final DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) selectedObject;
+//        final Object userObject = selectedNode.getUserObject();
 //        if (!(userObject instanceof DNamedElement)) return null;
 //
-//        if (userObject instanceof DClassElement) return ((DClassElement) userObject);
+//        if (userObject instanceof DClassElement) {
+//          final DClassElement classElement = (DClassElement) userObject;
+//          final Project project = classElement.getProject();
+//          return PsiManager.getInstance(project).findClass(classElement.getName(), project.getAllScope());
+//        } else if (userObject instanceof DPropertyElement) {
+//          final DPropertyElement propertyElement = (DPropertyElement) userObject;
 //
-//        DynamicManager.getInstance(((DClassElement) userObject).get)
+//          final TreeNode parentNode = selectedNode.getParent();
+//          if (!(parentNode instanceof DefaultMutableTreeNode)) return null;
 //
+//          final Object classObject = ((DefaultMutableTreeNode) parentNode).getUserObject();
+//          if (!(classObject instanceof DClassElement)) return null;
+//
+//          final String className = ((DClassElement) classObject).getName();
+//        }
 //      }
 //    }
 //  }

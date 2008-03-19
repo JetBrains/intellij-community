@@ -572,6 +572,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   @NotNull
   public GroovyResolveResult[] getSameNameVariants() {
+    PsiReference[] otherReferences = com.intellij.psi.impl.source.resolve.ResolveUtil.getReferencesFromProviders(this, GrReferenceExpression.class);
+//    for (PsiReference reference : otherReferences) {
+//      if (reference instanceof XXX) {
+//        XXX xxx = (XXX) reference;
+//        xxx.getSameNameVariants();
+//      }
+//    }
+
     return RESOLVER.resolve(this, true);
   }
 
