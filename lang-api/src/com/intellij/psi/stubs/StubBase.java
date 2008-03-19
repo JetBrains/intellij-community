@@ -12,10 +12,12 @@ import java.util.List;
 public abstract class StubBase<T extends PsiElement> implements StubElement<T> {
   private final StubElement myParent;
   private final List<StubElement> myChildren = new ArrayList<StubElement>();
+  private final IStubElementType myElementType;
   private volatile T myPsi;
 
-  protected StubBase(final StubElement parent) {
+  protected StubBase(final StubElement parent, final IStubElementType elementType) {
     myParent = parent;
+    myElementType = elementType;
     if (parent != null) {
       ((StubBase)parent).myChildren.add(this);
     }
@@ -44,5 +46,9 @@ public abstract class StubBase<T extends PsiElement> implements StubElement<T> {
     }
 
     return myPsi;
+  }
+
+  public IStubElementType getStubType() {
+    return myElementType;
   }
 }

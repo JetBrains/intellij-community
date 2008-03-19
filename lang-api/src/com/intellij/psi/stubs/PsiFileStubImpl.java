@@ -9,7 +9,7 @@ public class PsiFileStubImpl extends StubBase<PsiFile> implements PsiFileStub {
   private PsiFile myFile;
 
   public PsiFileStubImpl(final PsiFile file) {
-    super(null);
+    super(null, null);
     myFile = file;
   }
 

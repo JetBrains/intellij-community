@@ -17,13 +17,10 @@ public class DefaultStubBuilder implements StubBuilder {
     return new PsiFileStubImpl(file);
   }
 
-  private static StubElement buildStubTreeFor(PsiElement elt, StubElement parentStub) {
+  protected StubElement buildStubTreeFor(PsiElement elt, StubElement parentStub) {
     StubElement stub = parentStub;
     if (elt instanceof StubBasedPsiElement) {
-      final IStubElementType type = ((StubBasedPsiElement)elt).getElementType();
-
-      //noinspection unchecked
-      stub = type.createStub(elt, parentStub);
+      stub = createStubForElement(elt, parentStub);
     }
 
     final PsiElement[] psiElements = elt.getChildren();
@@ -32,6 +29,13 @@ public class DefaultStubBuilder implements StubBuilder {
     }
 
     return stub;
+  }
+
+  protected StubElement createStubForElement(final PsiElement elt, final StubElement parentStub) {
+    final IStubElementType type = ((StubBasedPsiElement)elt).getElementType();
+
+    //noinspection unchecked
+    return type.createStub(elt, parentStub);
   }
 
 }
