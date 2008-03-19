@@ -33,8 +33,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitPropertyImpl;
@@ -123,22 +121,15 @@ public class DynamicToolWindowWrapper {
   }
 
   public static void rebuildTreePanel(Project project) {
-//    storeState(project);
-//    if (!isDynamicToolWindowShowing()) return;
-
     DefaultMutableTreeNode myRootNode = new DefaultMutableTreeNode();
     buildTree(project, myRootNode);
 
     rebuildTreeView(project, myRootNode, false);
-
-//    restoreState(project);
   }
 
   private static void rebuildTreeView(Project project, DefaultMutableTreeNode root, boolean expandAll) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-//    if (!isDynamicToolWindowShowing()) return;
 
-//    storeState();
     myTreeTablePanel.removeAll();
 
     final JScrollPane treeTable = createTable(project, root);
@@ -266,22 +257,16 @@ public class DynamicToolWindowWrapper {
             }
 
             private void renameElement(PsiElement newElement, Project project, PsiElement element) {
-              final PsiClass psiClass = ((GrDynamicImplicitElement) element).getContainingPsiClassElement();
+              final PsiClass psiClass = ((GrDynamicImplicitElement) element).getContainingClassElement();
               String typeText = psiClass.getQualifiedName();
 
               if (element instanceof GrDynamicImplicitPropertyImpl) {
                 DynamicManager.getInstance(project).replaceDynamicPropertyName(typeText, ((GrDynamicImplicitElement) element).getName(), newElement.getText());
+
               } else if (element instanceof GrDynamicImplicitMethodImpl) {
-                final PsiElement declarationScope = ((GrDynamicImplicitMethodImpl) element).getDeclarationScope();
-                if (!(declarationScope instanceof GrReferenceExpression)) return;
-
-                final PsiElement method = declarationScope.getParent();
-                if (!(method instanceof GrMethodCallExpression)) return;
-
-                final String[] types = QuickfixUtil.getMethodArgumentsTypes((GrMethodCallExpression) method);
+                final String[] types = ((GrDynamicImplicitMethodImpl) element).getParameterTypes();
                 DynamicManager.getInstance(project).replaceDynamicMethodName(typeText, ((GrDynamicImplicitElement) element).getName(), newElement.getText(), types);
               }
-
             }
           };
         }
