@@ -15,10 +15,9 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 
 public class BackspaceHandler extends EditorWriteActionHandler {
-  private EditorActionHandler myOriginalHandler;
+  private final EditorActionHandler myOriginalHandler;
 
   public BackspaceHandler(EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;
@@ -45,14 +44,12 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     CharSequence chars = editor.getDocument().getCharsSequence();
     char c = chars.charAt(offset);
 
-    if (TypedHandler.charTypedWeWantToShowSmartnessInInjectedLanguageWithoutPerformanceLoss(c)) {
-      final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, file);
-      if (injectedEditor != editor) {
-        file = PsiDocumentManager.getInstance(project).getPsiFile(injectedEditor.getDocument());
-        editor = injectedEditor;
-        offset = editor.getCaretModel().getOffset() - 1;
-        chars = editor.getDocument().getCharsSequence();
-      }
+    final Editor injectedEditor = TypedHandler.injectedEditorIfCharTypedIsSignificant(c, editor, file);
+    if (injectedEditor != editor) {
+      file = PsiDocumentManager.getInstance(project).getPsiFile(injectedEditor.getDocument());
+      editor = injectedEditor;
+      offset = editor.getCaretModel().getOffset() - 1;
+      chars = editor.getDocument().getCharsSequence();
     }
 
     FileType fileType = file.getFileType();

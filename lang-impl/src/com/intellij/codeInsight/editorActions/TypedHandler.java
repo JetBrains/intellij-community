@@ -110,13 +110,10 @@ public class TypedHandler implements TypedActionHandler {
       }
     }
 
-    if (charTypedWeWantToShowSmartnessInInjectedLanguageWithoutPerformanceLoss(charTyped)) {
-      Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, file);
-
-      if (injectedEditor != editor) {
-        file = PsiDocumentManager.getInstance(project).getPsiFile(injectedEditor.getDocument());
-        editor = injectedEditor;
-      }
+    Editor injectedEditor = injectedEditorIfCharTypedIsSignificant(charTyped, editor, file);
+    if (injectedEditor != editor) {
+      file = PsiDocumentManager.getInstance(project).getPsiFile(injectedEditor.getDocument());
+      editor = injectedEditor;
     }
 
     final TypedHandlerDelegate[] delegates = Extensions.getExtensions(TypedHandlerDelegate.EP_NAME);
@@ -196,9 +193,23 @@ public class TypedHandler implements TypedActionHandler {
     }
   }
 
-  static boolean charTypedWeWantToShowSmartnessInInjectedLanguageWithoutPerformanceLoss(final char charTyped) {
-    return charTyped == '"' || charTyped == '\'' || charTyped == '[' || charTyped == '(' || charTyped == ']' || charTyped == ')' ||
-           charTyped == '{' || charTyped == '}' || charTyped == '.';
+  static Editor injectedEditorIfCharTypedIsSignificant(final char charTyped, Editor editor, PsiFile oldFile) {
+    boolean significant = charTyped == '"' ||
+                          charTyped == '\'' ||
+                          charTyped == '[' ||
+                          charTyped == '(' ||
+                          charTyped == ']' ||
+                          charTyped == ')' ||
+                          charTyped == '{' ||
+                          charTyped == '}' ||
+                          charTyped == '.';
+    if (!significant) {
+      return editor;
+    }
+    if (PsiDocumentManager.getInstance(oldFile.getProject()).isUncommited(editor.getDocument())) {
+      return editor;
+    }
+    return InjectedLanguageUtil.getEditorForInjectedLanguage(editor, oldFile);
   }
 
   private static void handleAfterLParen(Editor editor, FileType fileType, char lparenChar){
