@@ -7,12 +7,12 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.idea.maven.MavenTestCase;
 
-public class ModelEditingTest extends MavenTestCase {
+public abstract class ModelReadingAndWritingTest extends MavenTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
