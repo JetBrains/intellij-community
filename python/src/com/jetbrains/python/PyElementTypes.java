@@ -1,20 +1,20 @@
 package com.jetbrains.python;
 
 import com.intellij.psi.tree.TokenSet;
-import com.jetbrains.python.psi.PyElementType;
-import com.jetbrains.python.psi.PyStubElementType;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.impl.stubs.*;
+import com.jetbrains.python.psi.stubs.*;
 
 public interface PyElementTypes {
 
-  PyStubElementType FUNCTION_DECLARATION = new PyFunctionElementType();
-  PyStubElementType CLASS_DECLARATION = new PyClassElementType();
-  PyStubElementType PARAMETER_LIST = new PyParameterListElementType();
+  PyStubElementType<PyFunctionStub, PyFunction> FUNCTION_DECLARATION = new PyFunctionElementType();
+  PyStubElementType<PyClassStub, PyClass> CLASS_DECLARATION = new PyClassElementType();
+  PyStubElementType<PyParameterListStub, PyParameterList> PARAMETER_LIST = new PyParameterListElementType();
 
   TokenSet PARAMETER_LIST_SET = TokenSet.create(PARAMETER_LIST);  
 
-  PyStubElementType FORMAL_PARAMETER = new PyFormalParameterElementType();
+  PyStubElementType<PyParameterStub, PyParameter> FORMAL_PARAMETER = new PyFormalParameterElementType();
 
   PyElementType DECORATED_FUNCTION_DECLARATION = new PyElementType("DECORATED_FUNCTION_DECLARATION", PyDecoratedFunctionImpl.class);
   PyElementType ARGUMENT_LIST = new PyElementType("ARGUMENT_LIST", PyArgumentListImpl.class);
@@ -59,7 +59,7 @@ public interface PyElementTypes {
 
   TokenSet REFERENCE_EXPRESSION_SET = TokenSet.create(REFERENCE_EXPRESSION);
 
-  PyStubElementType TARGET_EXPRESSION = new PyTargetExpressionElementType();
+  PyStubElementType<PyTargetExpressionStub, PyTargetExpression> TARGET_EXPRESSION = new PyTargetExpressionElementType();
   PyElementType INTEGER_LITERAL_EXPRESSION = new PyElementType("INTEGER_LITERAL_EXPRESSION", PyNumericLiteralExpressionImpl.class);
   PyElementType FLOAT_LITERAL_EXPRESSION = new PyElementType("FLOAT_LITERAL_EXPRESSION", PyNumericLiteralExpressionImpl.class);
   PyElementType IMAGINARY_LITERAL_EXPRESSION = new PyElementType("IMAGINARY_LITERAL_EXPRESSION", PyNumericLiteralExpressionImpl.class);

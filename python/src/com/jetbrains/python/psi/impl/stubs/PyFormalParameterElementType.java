@@ -6,10 +6,16 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.PersistentStringEnumerator;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyParameterImpl;
 import com.jetbrains.python.psi.stubs.PyParameterStub;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
 public class PyFormalParameterElementType extends PyStubElementType<PyParameterStub, PyParameter> {
   public PyFormalParameterElementType() {
@@ -26,5 +32,20 @@ public class PyFormalParameterElementType extends PyStubElementType<PyParameterS
 
   public PsiElement createElement(final ASTNode node) {
     return new PyParameterImpl(node);
+  }
+
+  public void serialize(final PyParameterStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)
+      throws IOException {
+    DataInputOutputUtil.writeNAME(dataStream, stub.getName(), nameStorage);
+    dataStream.writeBoolean(stub.isKeywordContainer());
+    dataStream.writeBoolean(stub.isPositionalContainer());
+  }
+
+  public PyParameterStub deserialize(final DataInputStream dataStream, final StubElement parentStub,
+                                    final PersistentStringEnumerator nameStorage) throws IOException {
+    String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+    boolean keyword = dataStream.readBoolean();
+    boolean positional = dataStream.readBoolean();
+    return new PyParameterStubImpl(name, positional, keyword, parentStub);
   }
 }

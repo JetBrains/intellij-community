@@ -6,10 +6,18 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.IndexSink;
+import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.DataInputOutputUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.stubs.PyClassStub;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.DataInputStream;
 
 public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> {
   public PyClassElementType() {
@@ -26,5 +34,20 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
 
   public PyClassStub createStub(final PyClass psi, final StubElement parentStub) {
     return new PyClassStubImpl(psi.getName(), parentStub);
+  }
+
+  public void serialize(final PyClassStub pyClassStub, final DataOutputStream dataStream,
+                        final PersistentStringEnumerator nameStorage) throws IOException {
+    DataInputOutputUtil.writeNAME(dataStream, pyClassStub.getName(), nameStorage);
+  }
+
+  public PyClassStub deserialize(final DataInputStream dataStream, final StubElement parentStub,
+                                 final PersistentStringEnumerator nameStorage) throws IOException {
+    String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+    return new PyClassStubImpl(name, parentStub);
+  }
+
+  public void indexStub(final PyClassStub stub, final IndexSink sink) {
+    sink.occurence(PyClassNameIndex.KEY, stub.getName());
   }
 }
