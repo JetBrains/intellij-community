@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,10 +47,10 @@ public class SafeLockInspection extends BaseInspection {
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new LockResourceVisitor();
+        return new SafeLockVisitor();
     }
 
-    private static class LockResourceVisitor extends BaseInspectionVisitor {
+    private static class SafeLockVisitor extends BaseInspectionVisitor {
 
         @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
@@ -64,34 +64,35 @@ public class SafeLockInspection extends BaseInspection {
             if (!(lhs instanceof PsiReferenceExpression)) {
                 return;
             }
-            final PsiElement referent =
-                    ((PsiReference)lhs).resolve();
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) lhs;
+            final PsiElement referent = referenceExpression.resolve();
             if (referent == null || !(referent instanceof PsiVariable)) {
                 return;
             }
             final PsiVariable boundVariable = (PsiVariable)referent;
-
-            PsiElement currentContext = expression;
-            while (true) {
-                final PsiTryStatement tryStatement =
-                        PsiTreeUtil.getParentOfType(currentContext,
-                                PsiTryStatement.class);
-                if (tryStatement == null) {
-                    registerError(lhs, lhs);
-                    return;
-                }
-                if (resourceIsOpenedInTryAndClosedInFinally(tryStatement,
-                        expression,
-                        boundVariable)) {
-                    return;
-                }
-                currentContext = tryStatement;
+            final PsiStatement statement =
+                    PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
+            if (statement == null) {
+                return;
             }
+            final PsiStatement nextStatement =
+                    PsiTreeUtil.getNextSiblingOfType(statement,
+                            PsiStatement.class);
+            if (!(nextStatement instanceof PsiTryStatement)) {
+                registerError(expression, referenceExpression);
+                return;
+            }
+            PsiTryStatement tryStatement = (PsiTryStatement) nextStatement;
+            if (lockIsUnlockedInFinally(tryStatement,
+                    boundVariable)) {
+                return;
+            }
+            registerError(expression, referenceExpression);
         }
 
-        private static boolean resourceIsOpenedInTryAndClosedInFinally(
-                PsiTryStatement tryStatement, PsiExpression lhs,
-                PsiVariable boundVariable) {
+        private static boolean lockIsUnlockedInFinally(
+                PsiTryStatement tryStatement, PsiVariable boundVariable) {
             final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
             if (finallyBlock == null) {
                 return false;
@@ -100,16 +101,7 @@ public class SafeLockInspection extends BaseInspection {
             if (tryBlock == null) {
                 return false;
             }
-            if (!PsiTreeUtil.isAncestor(tryBlock, lhs, true)) {
-                return false;
-            }
-            return containsResourceClose(finallyBlock, boundVariable);
-        }
-
-        private static boolean containsResourceClose(
-                PsiCodeBlock finallyBlock, PsiVariable boundVariable) {
-            final CloseVisitor visitor =
-                    new CloseVisitor(boundVariable);
+            final UnlockVisitor visitor = new UnlockVisitor(boundVariable);
             finallyBlock.accept(visitor);
             return visitor.containsStreamClose();
         }
@@ -134,12 +126,12 @@ public class SafeLockInspection extends BaseInspection {
         }
     }
 
-    private static class CloseVisitor extends JavaRecursiveElementVisitor {
+    private static class UnlockVisitor extends JavaRecursiveElementVisitor {
 
         private boolean containsClose = false;
         private PsiVariable objectToClose;
 
-        private CloseVisitor(PsiVariable objectToClose) {
+        private UnlockVisitor(PsiVariable objectToClose) {
             super();
             this.objectToClose = objectToClose;
         }
