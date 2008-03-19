@@ -32,8 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -104,20 +104,34 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return null;
   }
 
-  public PyClass[] getSuperClasses() {
+  public PsiElement[] getSuperClassElements() {
     final PyExpression[] superExpressions = getSuperClassExpressions();
     if (superExpressions != null) {
-      List<PyClass> superClasses = new ArrayList<PyClass>();
+      List<PsiElement> superClasses = new ArrayList<PsiElement>();
       for(PyExpression expr: superExpressions) {
         if (expr instanceof PyReferenceExpression && !"object".equals(expr.getText())) {
           PyReferenceExpression ref = (PyReferenceExpression) expr;
           final PsiElement result = ref.resolve();
-          if (result instanceof PyClass) {
-            superClasses.add((PyClass) result);
+          if (result != null) {
+            superClasses.add(result);
           }
         }
       }
-      return superClasses.toArray(new PyClass[superClasses.size()]);
+      return superClasses.toArray(new PsiElement[superClasses.size()]);
+    }
+    return null;
+  }
+
+  public PyClass[] getSuperClasses() {
+    PsiElement[] superClassElements = getSuperClassElements();
+    if (superClassElements != null) {
+      List<PyClass> result = new ArrayList<PyClass>();
+      for(PsiElement element: superClassElements) {
+        if (element instanceof PyClass) {
+          result.add((PyClass) element);
+        }
+      }
+      return result.toArray(new PyClass[result.size()]);
     }
     return null;
   }

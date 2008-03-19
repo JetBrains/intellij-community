@@ -16,6 +16,7 @@
 
 package com.jetbrains.python.psi;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.MayHaveStubsInside;
@@ -37,6 +38,9 @@ public interface PyClass extends PsiNamedElement, PyElement, PyDocStringOwner, S
 
   @Nullable
   PyExpression[] getSuperClassExpressions();
+
+  @Nullable
+  PsiElement[] getSuperClassElements();
 
   @Nullable
   PyClass[] getSuperClasses();

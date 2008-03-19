@@ -30,6 +30,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider {
   @Nullable
   private static LineMarkerInfo getMethodMarker(final PsiElement element, final PyFunction function) {
     if (PySuperMethodsSearch.search(function).findFirst() != null) {
+      // TODO: show "implementing" instead of "overriding" icon for Python implementations of Java interface methods
       LineMarkerInfo info = new LineMarkerInfo(element, element.getTextRange().getStartOffset(),
                                                OVERRIDING_METHOD_ICON, Pass.UPDATE_ALL, null, new PyLineMarkerNavigator());
       return info;

@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.search;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.jetbrains.python.psi.PyClass;
@@ -8,8 +9,8 @@ import com.jetbrains.python.psi.PyFunction;
 /**
  * @author yole
  */
-public class PySuperMethodsSearchExecutor implements QueryExecutor<PyFunction, PySuperMethodsSearch.SearchParameters> {
-  public boolean execute(final PySuperMethodsSearch.SearchParameters queryParameters, final Processor<PyFunction> consumer) {
+public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, PySuperMethodsSearch.SearchParameters> {
+  public boolean execute(final PySuperMethodsSearch.SearchParameters queryParameters, final Processor<PsiElement> consumer) {
     PyFunction func = queryParameters.getDerivedMethod();
     String name = func.getName();
     PyClass containingClass = func.getContainingClass();
