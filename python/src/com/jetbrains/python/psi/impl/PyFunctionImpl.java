@@ -116,27 +116,6 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return null;
   }
 
-  @NotNull
-  public PyFunction[] findSuperMethods() {
-    // TODO[yole]: check superclasses recursively
-    String name = getName();
-    PyClass containingClass = getContainingClass();
-    if (name != null && containingClass != null) {
-      PyClass[] superClasses = containingClass.getSuperClasses();
-      if (superClasses != null) {
-        List<PyFunction> result = new ArrayList<PyFunction>();
-        for(PyClass superClass: superClasses) {
-          PyFunction superMethod = superClass.findMethodByName(name);
-          if (superMethod != null) {
-            result.add(superMethod);
-          }
-        }
-        return result.toArray(new PyFunction[result.size()]);
-      }
-    }
-    return PyFunction.EMPTY_ARRAY;
-  }
-
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyFunction(this);

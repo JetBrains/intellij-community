@@ -6,5 +6,6 @@
   <extensions defaultExtensionNs="Pythonid">
     <importResolver implementation="com.jetbrains.python.psi.impl.PyJavaImportResolver"/>
     <typeProvider implementation="com.jetbrains.python.psi.impl.PyJavaTypeProvider"/>
+    <pySuperMethodsSearch implementation="com.jetbrains.python.psi.search.PySuperMethodsSearchExecutor"/>
   </extensions>
 </idea-plugin>

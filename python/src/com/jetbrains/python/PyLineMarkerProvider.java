@@ -7,6 +7,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -28,8 +29,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider {
 
   @Nullable
   private static LineMarkerInfo getMethodMarker(final PsiElement element, final PyFunction function) {
-    PyFunction[] superMethods = function.findSuperMethods();
-    if (superMethods.length > 0) {
+    if (PySuperMethodsSearch.search(function).findFirst() != null) {
       LineMarkerInfo info = new LineMarkerInfo(element, element.getTextRange().getStartOffset(),
                                                OVERRIDING_METHOD_ICON, Pass.UPDATE_ALL, null, new PyLineMarkerNavigator());
       return info;

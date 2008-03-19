@@ -50,7 +50,4 @@ public interface PyFunction extends PsiNamedElement, PyElement, PyDocStringOwner
 
   @Nullable
   PyClass getContainingClass();
-
-  @NotNull
-  PyFunction[] findSuperMethods();
 }
