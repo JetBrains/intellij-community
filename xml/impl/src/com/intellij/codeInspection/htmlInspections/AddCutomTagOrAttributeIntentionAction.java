@@ -4,19 +4,20 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.CommonBundle;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ModifiableModel;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.CommonBundle;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -38,15 +39,15 @@ public class AddCutomTagOrAttributeIntentionAction implements LocalQuickFix {
   @NotNull
   public String getName() {
     if (myType == XmlEntitiesInspection.UNKNOWN_TAG) {
-      return QuickFixBundle.message("add.custom.html.tag", myName);
+      return XmlBundle.message("add.custom.html.tag", myName);
     }
 
     if (myType == XmlEntitiesInspection.UNKNOWN_ATTRIBUTE) {
-      return QuickFixBundle.message("add.custom.html.attribute", myName);
+      return XmlBundle.message("add.custom.html.attribute", myName);
     }
 
     if (myType == XmlEntitiesInspection.NOT_REQUIRED_ATTRIBUTE) {
-      return QuickFixBundle.message("add.optional.html.attribute", myName);
+      return XmlBundle.message("add.optional.html.attribute", myName);
     }
 
     return getFamilyName();
@@ -54,7 +55,7 @@ public class AddCutomTagOrAttributeIntentionAction implements LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return QuickFixBundle.message("fix.html.family");
+    return XmlBundle.message("fix.html.family");
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {

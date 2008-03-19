@@ -8,7 +8,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TextStartFilter;
 import com.intellij.psi.filters.getters.HtmlAttributeValueGetter;
 import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
-import com.intellij.psi.filters.position.TokenTypeFilter;
+import com.intellij.psi.filters.position.XmlTokenTypeFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
@@ -43,7 +43,7 @@ public class HtmlCompletionData extends XmlCompletionData {
   protected ElementFilter createXmlEntityCompletionFilter() {
     if (isCaseInsensitive()) {
       return new AndFilter(
-        new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
+        new XmlTokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
         new TextStartFilter("&")
       );
     }

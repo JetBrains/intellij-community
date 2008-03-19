@@ -1,11 +1,6 @@
 package com.intellij.psi.filters;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.tree.ChameleonElement;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,38 +67,17 @@ public class FilterUtil{
   }
 
   @Nullable
-  public static PsiElement searchNonSpaceNonCommentBack(PsiElement element) {
-    if(element == null || element.getNode() == null) return null;
-    ASTNode leftNeibour = prevLeaf(element.getNode());
-    while (leftNeibour != null && (leftNeibour.getElementType() == TokenType.WHITE_SPACE || leftNeibour.getPsi() instanceof PsiComment)){
-      leftNeibour = prevLeaf(leftNeibour);
-    }
-    return leftNeibour != null ? leftNeibour.getPsi() : null;
-
-  }
-
-  @Nullable
-  public static ASTNode prevLeaf(final ASTNode leaf) {
-    LeafElement leftNeibour = (LeafElement)TreeUtil.prevLeaf(leaf);
-    if(leftNeibour instanceof ChameleonElement){
-      ChameleonTransforming.transform(leftNeibour);
-      return prevLeaf(leftNeibour);
-    }
-    return leftNeibour;
-  }
-
-  @Nullable
   public static PsiElement getPreviousElement(final PsiElement element, boolean skipReference){
     PsiElement prev = element;
     if(element != null){
       if(skipReference){
-        prev = searchNonSpaceNonCommentBack(element);
+        prev = FilterPositionUtil.searchNonSpaceNonCommentBack(element);
         while(prev != null && prev.getParent() instanceof PsiJavaCodeReferenceElement){
-          prev = searchNonSpaceNonCommentBack(prev.getParent());
+          prev = FilterPositionUtil.searchNonSpaceNonCommentBack(prev.getParent());
         }
       }
       else{
-        prev = searchNonSpaceNonCommentBack(prev);
+        prev = FilterPositionUtil.searchNonSpaceNonCommentBack(prev);
       }
     }
     return prev;

@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Computable;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterUtil;
+import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -195,7 +196,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
           psiClass = ((PsiClassType)completion).resolve();
         }
 
-        PsiElement prevElement = FilterUtil.searchNonSpaceNonCommentBack(position);
+        PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(position);
         boolean overwriteTypeCast = position instanceof PsiParenthesizedExpression ||
                                     prevElement != null
                                     && prevElement.getText().equals("(")

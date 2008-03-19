@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -15,15 +16,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -116,7 +117,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction {
               ApplicationManager.getApplication().invokeAndWait(new Runnable() {
                 public void run() {
                   final ProgressWindow progressWindow = new ProgressWindow(true, project);
-                  progressWindow.setTitle(QuickFixBundle.message("fetching.resource.title"));
+                  progressWindow.setTitle(XmlBundle.message("fetching.resource.title"));
                   result[0] = progressWindow;
                 }
               }, ModalityState.defaultModalityState());
@@ -144,17 +145,17 @@ public class FetchExtResourceAction extends BaseExtResourceAction {
                 }, result[0]);
             }
             catch (FetchingResourceProblemRuntimeWrapper e) {
-              String message = QuickFixBundle.message("error.fetching.title");
+              String message = XmlBundle.message("error.fetching.title");
               FetchingResourceIOException ioproblem = (FetchingResourceIOException)e.getCause();
 
               if (!url.equals(ioproblem.url)) {
-                message = QuickFixBundle.message("error.fetching.dependent.resource.title");
+                message = XmlBundle.message("error.fetching.dependent.resource.title");
               }
 
               final IOException cause = (IOException)ioproblem.getCause();
               LOG.info(cause);
               if (!IOExceptionDialog.showErrorDialog(message,
-                QuickFixBundle.message("error.fetching.resource", ioproblem.url))
+                XmlBundle.message("error.fetching.resource", ioproblem.url))
               ) {
                 break; // cancel fetching
               }
@@ -320,7 +321,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction {
     SwingUtilities.invokeLater(
       new Runnable() {
         public void run() {
-          indicator.setText(QuickFixBundle.message("fetching.progress.indicator", resourceUrl));
+          indicator.setText(XmlBundle.message("fetching.progress.indicator", resourceUrl));
         }
       }
     );

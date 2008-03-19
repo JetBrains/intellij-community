@@ -12,7 +12,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.psi.xml.*;
 import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.position.TokenTypeFilter;
+import com.intellij.psi.filters.position.XmlTokenTypeFilter;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiDocumentManager;
@@ -34,7 +34,7 @@ import java.util.*;
  */
 public class DtdCompletionData extends CompletionData {
   public DtdCompletionData() {
-    final LeftNeighbour entityFilter = new LeftNeighbour(new TextFilter("%"));
+    final LeftNeighbour entityFilter = new LeftNeighbour(new XmlTextFilter("%"));
 
     declareFinalScope(XmlToken.class);
 
@@ -43,8 +43,8 @@ public class DtdCompletionData extends CompletionData {
         new AndFilter(
           new LeftNeighbour(
             new OrFilter(
-              new TextFilter(new String[] {"#", "!", "(", ",", "|", "["}),
-              new TokenTypeFilter(XmlTokenType.XML_NAME)
+              new XmlTextFilter(new String[] {"#", "!", "(", ",", "|", "["}),
+              new XmlTokenTypeFilter(XmlTokenType.XML_NAME)
             )
           ),
           new NotFilter(entityFilter)

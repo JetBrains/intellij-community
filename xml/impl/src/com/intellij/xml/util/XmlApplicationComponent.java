@@ -77,7 +77,7 @@ public class XmlApplicationComponent implements ApplicationComponent, IconProvid
       MetaRegistry.addMetadataBinding(new AndFilter(
           new ClassFilter(XmlTag.class),
           new NamespaceFilter(XmlUtil.SCHEMA_URIS),
-          new TextFilter("element")
+          new XmlTextFilter("element")
       ),
                          XmlElementDescriptorImpl.class);
     }
@@ -87,7 +87,7 @@ public class XmlApplicationComponent implements ApplicationComponent, IconProvid
           new AndFilter(
               new ClassFilter(XmlTag.class),
               new NamespaceFilter(XmlUtil.SCHEMA_URIS),
-              new TextFilter("attribute")
+              new XmlTextFilter("attribute")
           ),
           XmlAttributeDescriptorImpl.class
       );
@@ -121,7 +121,7 @@ public class XmlApplicationComponent implements ApplicationComponent, IconProvid
       MetaRegistry.addMetadataBinding(new AndFilter(
           new ClassFilter(XmlTag.class),
           new NamespaceFilter(XmlUtil.SCHEMA_URIS),
-          new TextFilter("complexType","simpleType", "group","attributeGroup")
+          new XmlTextFilter("complexType","simpleType", "group","attributeGroup")
       ),
                          NamedObjectDescriptor.class);
     }

@@ -22,7 +22,7 @@ import com.intellij.patterns.PsiJavaPatterns;
 import static com.intellij.patterns.StandardPatterns.or;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.FilterUtil;
+import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -330,7 +330,7 @@ public class JavaCompletionContributor extends CompletionContributor{
       }
     }
     if (completion instanceof PsiClass) {
-      final PsiElement prevElement = FilterUtil.searchNonSpaceNonCommentBack(position);
+      final PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(position);
       if (prevElement != null && prevElement.getParent() instanceof PsiNewExpression) {
         ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(context.project).getExpectedTypes((PsiExpression) prevElement.getParent(), true);
         boolean flag = true;

@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.psi.filters.position.TokenTypeFilter;
+import com.intellij.psi.filters.position.XmlTokenTypeFilter;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlElementType;
@@ -20,7 +20,7 @@ public class XmlEnumeratedTypeImpl extends XmlElementImpl implements XmlEnumerat
 
   public XmlElement[] getEnumeratedValues() {
     final List<XmlElement> result = new ArrayList<XmlElement>();
-    processElements(new FilterElementProcessor(new TokenTypeFilter(XmlTokenType.XML_NAME), result), this);
+    processElements(new FilterElementProcessor(new XmlTokenTypeFilter(XmlTokenType.XML_NAME), result), this);
     return result.toArray(new XmlElement[result.size()]);
   }
 }

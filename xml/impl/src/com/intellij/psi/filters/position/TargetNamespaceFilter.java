@@ -1,9 +1,9 @@
 package com.intellij.psi.filters.position;
 
-import com.intellij.psi.filters.TextFilter;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.filters.XmlTextFilter;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionCache;
 
 /**
@@ -13,7 +13,7 @@ import com.intellij.util.ReflectionCache;
  * Time: 4:13:57
  * To change this template use Options | File Templates.
  */
-public class TargetNamespaceFilter extends TextFilter{
+public class TargetNamespaceFilter extends XmlTextFilter {
   public TargetNamespaceFilter(String str){
     super(str);
   }

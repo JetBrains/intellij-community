@@ -94,7 +94,7 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
       new ParentElementFilter(
         new AndFilter(
           new ClassFilter(XmlTag.class),
-          new TextFilter("meta")
+          new XmlTextFilter("meta")
         ), 2
       )
     ), true, new HtmlHttpEquivEncodingReferenceProvider());

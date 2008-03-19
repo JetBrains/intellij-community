@@ -114,7 +114,7 @@ scopes:
     if(element.getParent() instanceof PsiModifierList)
       return (PsiModifierList)element.getParent();
 
-    final PsiElement prev = FilterUtil.searchNonSpaceNonCommentBack(element);
+    final PsiElement prev = FilterPositionUtil.searchNonSpaceNonCommentBack(element);
 
     if(prev != null) {
       final PsiModifierList modifierList = PsiTreeUtil.getParentOfType(prev, PsiModifierList.class);

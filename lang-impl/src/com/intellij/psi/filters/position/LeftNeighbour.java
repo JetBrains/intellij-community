@@ -2,7 +2,7 @@ package com.intellij.psi.filters.position;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.FilterUtil;
+import com.intellij.psi.filters.FilterPositionUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,7 +20,7 @@ public class LeftNeighbour extends PositionElementFilter{
 
   public boolean isAcceptable(Object element, PsiElement context){
     if (!(element instanceof PsiElement)) return false;
-    final PsiElement previous = FilterUtil.getPreviousElement((PsiElement) element, false);
+    final PsiElement previous = FilterPositionUtil.searchNonSpaceNonCommentBack((PsiElement) element);
     if(previous != null){
       return getFilter().isAcceptable(previous, context);
     }

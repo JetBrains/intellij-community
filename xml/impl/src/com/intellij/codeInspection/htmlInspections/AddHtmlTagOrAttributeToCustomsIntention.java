@@ -17,6 +17,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.CommonBundle;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -42,15 +43,15 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
   @NotNull
   public String getText() {
     if (myType == XmlEntitiesInspection.UNKNOWN_TAG) {
-      return QuickFixBundle.message("add.custom.html.tag", myName);
+      return XmlBundle.message("add.custom.html.tag", myName);
     }
 
     if (myType == XmlEntitiesInspection.UNKNOWN_ATTRIBUTE) {
-      return QuickFixBundle.message("add.custom.html.attribute", myName);
+      return XmlBundle.message("add.custom.html.attribute", myName);
     }
 
     if (myType == XmlEntitiesInspection.NOT_REQUIRED_ATTRIBUTE) {
-      return QuickFixBundle.message("add.optional.html.attribute", myName);
+      return XmlBundle.message("add.optional.html.attribute", myName);
     }
 
     return getFamilyName();
@@ -58,7 +59,7 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
 
   @NotNull
   public String getFamilyName() {
-    return QuickFixBundle.message("fix.html.family");
+    return XmlBundle.message("fix.html.family");
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

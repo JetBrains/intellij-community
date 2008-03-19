@@ -15,7 +15,7 @@ import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.getters.AllWordsGetter;
 import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.filters.position.LeftNeighbour;
-import com.intellij.psi.filters.position.TokenTypeFilter;
+import com.intellij.psi.filters.position.XmlTokenTypeFilter;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -71,7 +71,7 @@ public class XmlCompletionData extends CompletionData {
 
     {
       final CompletionVariant variant =
-        new CompletionVariant(new AndFilter(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), new NotFilter(entityCompletionFilter)));
+        new CompletionVariant(new AndFilter(new XmlTokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), new NotFilter(entityCompletionFilter)));
       variant.includeScopeClass(XmlToken.class, true);
       variant.addCompletion(new SimpleTagContentEnumerationValuesGetter(), TailType.NONE);
 
@@ -88,8 +88,8 @@ public class XmlCompletionData extends CompletionData {
   }
 
   protected ElementFilter createXmlEntityCompletionFilter() {
-    return new AndFilter(new LeftNeighbour(new TextFilter("&")), new OrFilter(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
-                                                                              new TokenTypeFilter(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN)));
+    return new AndFilter(new LeftNeighbour(new XmlTextFilter("&")), new OrFilter(new XmlTokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
+                                                                              new XmlTokenTypeFilter(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN)));
   }
 
   protected XmlAttributeValueGetter getAttributeValueGetter() {

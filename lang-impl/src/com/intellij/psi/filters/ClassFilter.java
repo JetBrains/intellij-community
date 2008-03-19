@@ -1,8 +1,6 @@
 package com.intellij.psi.filters;
 
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NonNls;
 
@@ -32,9 +30,6 @@ public class ClassFilter implements ElementFilter{
 
   private boolean filterMatches(final Class hintClass) {
     if (ReflectionCache.isAssignable(myFilter,hintClass)) return true;
-    if (hintClass == PsiClass.class) { // hack for JSP completion
-      return ReflectionCache.isAssignable(myFilter,JspClassLevelDeclarationStatement.class);
-    }
     return false;
   }
 
