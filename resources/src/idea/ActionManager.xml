@@ -204,6 +204,7 @@
 
     <group id="RefactoringMenu1">
       <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction"/>
+      <action id="ChangeTypeSignature" class="com.intellij.refactoring.actions.ChangeTypeSignatureAction" internal="true"/>
       <action id="MakeStatic" class="com.intellij.refactoring.actions.MakeStaticAction"/>
       <action id="ConvertToInstanceMethod" class="com.intellij.refactoring.actions.ConvertToInstanceMethodAction"/>
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="RenameElement"/>

@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureUtil;
@@ -49,7 +48,6 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    PsiSearchHelper searchHelper = myClass.getManager().getSearchHelper();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
     PsiReference[] references = ReferencesSearch.search(myClass, projectScope, false).toArray(new PsiReference[0]);
     List<UsageInfo> result = new ArrayList<UsageInfo>();

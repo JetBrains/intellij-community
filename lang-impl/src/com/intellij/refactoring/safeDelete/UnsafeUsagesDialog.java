@@ -16,7 +16,7 @@ import java.awt.event.ActionEvent;
 public class UnsafeUsagesDialog extends DialogWrapper {
   private JEditorPane myMessagePane;
   private String[] myConflictDescriptions;
-  static final int VIEW_USAGES_EXIT_CODE = NEXT_USER_EXIT_CODE;
+  public static final int VIEW_USAGES_EXIT_CODE = NEXT_USER_EXIT_CODE;
 
   public UnsafeUsagesDialog(String[] conflictDescriptions, Project project) {
     super(project, true);

@@ -28,9 +28,9 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.JavaUnresolvableLocalCollisionDetector;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
-import com.intellij.refactoring.rename.JavaUnresolvableLocalCollisionDetector;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
@@ -137,8 +137,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                                         boolean isToModifyArgs,
                                                         boolean isToThrowExceptions,
                                                         boolean isOriginal) {
-    PsiManager manager = method.getManager();
-    PsiSearchHelper helper = manager.getSearchHelper();
 
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
     PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
