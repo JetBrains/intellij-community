@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,11 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JDBCResourceInspection extends BaseInspection {
+public class JDBCResourceInspection extends BaseInspection{
 
     private static final String[] creationMethodClassName =
             new String[]{
@@ -39,28 +40,29 @@ public class JDBCResourceInspection extends BaseInspection {
                 "java.sql.Connection",
                 "java.sql.Statement",
                 "java.sql.Statement",
+                "java.sql.Statement",
             };
     @NonNls private static final String[] creationMethodName =
             new String[]{
                 "connect",
+                "getConnection",
                 "getConnection",
                 "createStatement",
                 "prepareStatement",
                 "prepareCall",
                 "executeQuery",
                 "getResultSet",
+                "getGeneratedKeys"
             };
 
     /**
      * @noinspection StaticCollection
      */
     private static final Set<String> creationMethodNameSet =
-            new HashSet<String>(8);
+            new HashSet<String>(9);
 
-    static {
-        for(String aCreationMethodName : creationMethodName){
-            creationMethodNameSet.add(aCreationMethodName);
-        }
+    static{
+        creationMethodNameSet.addAll(Arrays.asList(creationMethodName));
     }
 
     @NotNull
@@ -97,12 +99,21 @@ public class JDBCResourceInspection extends BaseInspection {
                 return;
             }
             final PsiElement parent = expression.getParent();
+            final PsiAssignmentExpression assignment;
             if(!(parent instanceof PsiAssignmentExpression)){
-                registerError(expression, expression);
-                return;
+                if(!(parent instanceof PsiTypeCastExpression)){
+                    registerError(expression, expression);
+                    return;
+                }
+                final PsiElement grandParent = parent.getParent();
+                if(!(grandParent instanceof PsiAssignmentExpression)){
+                    registerError(expression, expression);
+                    return;
+                }
+                assignment = (PsiAssignmentExpression) grandParent;
+            }else{
+                assignment = (PsiAssignmentExpression) parent;
             }
-            final PsiAssignmentExpression assignment =
-                    (PsiAssignmentExpression) parent;
             final PsiExpression lhs = assignment.getLExpression();
             if(!(lhs instanceof PsiReferenceExpression)){
                 return;
@@ -112,7 +123,6 @@ public class JDBCResourceInspection extends BaseInspection {
                 return;
             }
             final PsiVariable boundVariable = (PsiVariable) referent;
-
             PsiElement currentContext = expression;
             while(true){
                 final PsiTryStatement tryStatement =
@@ -123,7 +133,7 @@ public class JDBCResourceInspection extends BaseInspection {
                     return;
                 }
                 if(resourceIsOpenedInTryAndClosedInFinally(
-                        tryStatement, expression, boundVariable)) {
+                        tryStatement, expression, boundVariable)){
                     return;
                 }
                 currentContext = tryStatement;
@@ -172,18 +182,19 @@ public class JDBCResourceInspection extends BaseInspection {
                 return false;
             }
             for(int i = 0; i < creationMethodName.length; i++){
-                if(name.equals(creationMethodName[i])){
-                    final PsiClass containingClass = method.getContainingClass();
-                    if(containingClass == null){
-                        return false;
-                    }
-                    final String className = containingClass.getQualifiedName();
-                    if(className == null){
-                        return false;
-                    }
-                    if(className.equals(creationMethodClassName[i])){
-                        return true;
-                    }
+                if(!name.equals(creationMethodName[i])){
+                    continue;
+                }
+                final PsiClass containingClass = method.getContainingClass();
+                if(containingClass == null){
+                    return false;
+                }
+                final String className = containingClass.getQualifiedName();
+                if(className == null){
+                    return false;
+                }
+                if(className.equals(creationMethodClassName[i])){
+                    return true;
                 }
             }
             return false;
@@ -215,7 +226,7 @@ public class JDBCResourceInspection extends BaseInspection {
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
-            if(!HardcodedMethodConstants.CLOSE.equals(methodName)) {
+            if(!HardcodedMethodConstants.CLOSE.equals(methodName)){
               return;
             }
             final PsiExpression qualifier =
