@@ -24,8 +24,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.jetbrains.python.psi.impl.PyScopeProcessor;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -152,21 +151,26 @@ public class PyResolveUtil {
   }
 
   public static class VariantsProcessor implements PsiScopeProcessor {
-    private List<LookupElement> _names = new ArrayList<LookupElement>();
+    private Map<String, LookupElement> myVariants = new HashMap<String, LookupElement>();
 
     public LookupElement[] getResult() {
-      return _names.toArray(new LookupElement[_names.size()]);
+      final Collection<LookupElement> variants = myVariants.values();
+      return variants.toArray(new LookupElement[variants.size()]);
     }
 
     public boolean execute(PsiElement element, ResolveState substitutor) {
       if (element instanceof PsiNamedElement) {
-        _names.add(LookupElementFactory.getInstance().createLookupElement((PsiNamedElement) element));
+        final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
+        final String name = psiNamedElement.getName();
+        if (!myVariants.containsKey(name)) {
+          myVariants.put(name, LookupElementFactory.getInstance().createLookupElement(psiNamedElement));
+        }
       }
       else if (element instanceof PyReferenceExpression) {
         PyReferenceExpression expr = (PyReferenceExpression)element;
         String referencedName = expr.getReferencedName();
-        if (referencedName != null) {
-          _names.add(LookupElementFactory.getInstance().createLookupElement(element, referencedName));
+        if (referencedName != null && !myVariants.containsKey(referencedName)) {
+          myVariants.put(referencedName, LookupElementFactory.getInstance().createLookupElement(element, referencedName));
         }
       }
 
