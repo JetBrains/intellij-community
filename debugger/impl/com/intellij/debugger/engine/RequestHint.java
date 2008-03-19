@@ -151,27 +151,25 @@ public class RequestHint {
           }
         });
 
-        if(locationPosition == null) {
-          return STOP;
-        }
-
-        if (myDepth == StepRequest.STEP_OVER || myDepth == StepRequest.STEP_INTO) {
-          int frameCount = -1;
-          if (context.getFrameProxy() != null) {
-            try {
-              frameCount = context.getFrameProxy().threadProxy().frameCount();
+        if (locationPosition != null) {
+          if (myDepth == StepRequest.STEP_OVER || myDepth == StepRequest.STEP_INTO) {
+            int frameCount = -1;
+            if (context.getFrameProxy() != null) {
+              try {
+                frameCount = context.getFrameProxy().threadProxy().frameCount();
+              }
+              catch (EvaluateException e) {
+              }
             }
-            catch (EvaluateException e) {
+            final boolean filesEqual = myPosition.getFile().equals(locationPosition.getFile());
+            if (filesEqual && myPosition.getLine() == locationPosition.getLine() && myFrameCount == frameCount) {
+              return myDepth;
             }
-          }
-          final boolean filesEqual = myPosition.getFile().equals(locationPosition.getFile());
-          if (filesEqual && myPosition.getLine() == locationPosition.getLine() && myFrameCount == frameCount) {
-            return myDepth;
-          }
-          if (myDepth == StepRequest.STEP_INTO) {
-            // check if we are still at the line from which the stepping begun
-            if (filesEqual && myFrameCount == frameCount && myPosition.getLine() != locationPosition.getLine()) {
-              return STOP;
+            if (myDepth == StepRequest.STEP_INTO) {
+              // check if we are still at the line from which the stepping begun
+              if (filesEqual && myFrameCount == frameCount && myPosition.getLine() != locationPosition.getLine()) {
+                return STOP;
+              }
             }
           }
         }
