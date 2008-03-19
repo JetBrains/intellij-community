@@ -254,8 +254,8 @@ public class DynamicToolWindowWrapper {
 //              if (element instanceof GrDynamicImplicitPropertyImpl) {
 //                DynamicManager.getInstance(project).replaceDynamicPropertyName(typeText, ((GrDynamicImplicitElement) element).getName(), newElement.getText());
 //
-//              } else if (element instanceof GrDynamicImplicitMethodImpl) {
-//                final String[] types = ((GrDynamicImplicitMethodImpl) element).getParameterTypes();
+//              } else if (element instanceof GrDynamicImplicitMethod) {
+//                final String[] types = ((GrDynamicImplicitMethod) element).getParameterTypes();
 //                DynamicManager.getInstance(project).replaceDynamicMethodName(typeText, ((GrDynamicImplicitElement) element).getName(), newElement.getText(), types);
 //              }
             }

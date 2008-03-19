@@ -301,7 +301,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     }
 
     final DynamicManager dynamicManager = DynamicManager.getInstance(myProject);
-    final DClassElement classElement = dynamicManager.getOrCreateClassElement(myProject, getEnteredContaningClass().getContainingClass().getQualifiedName(), true);
+    final DClassElement classElement = dynamicManager.getOrCreateClassElement(myProject, getEnteredContaningClass().getContainingClass().getQualifiedName());
 
     if (myDynamicElement instanceof DMethodElement) {
       dynamicManager.addMethod(classElement, ((DMethodElement) myDynamicElement));

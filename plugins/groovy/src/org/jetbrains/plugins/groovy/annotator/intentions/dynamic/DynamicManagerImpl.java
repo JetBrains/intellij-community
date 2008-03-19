@@ -9,29 +9,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitMethodImpl;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitPropertyImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
@@ -55,10 +47,6 @@ public class DynamicManagerImpl extends DynamicManager {
   private final Project myProject;
   private List<DynamicChangeListener> myListeners = new ArrayList<DynamicChangeListener>();
   private DRootElement myRootElement = new DRootElement();
-
-  private final Map<Pair<String, Pair<String, Pair<String, String[]>>>, GrDynamicImplicitMethodImpl> myNamesToMethodsMap = new HashMap<Pair<String, Pair<String, Pair<String, String[]>>>, GrDynamicImplicitMethodImpl>();
-
-  private final Map<Pair<String, Pair<String, String>>, GrDynamicImplicitPropertyImpl> myNamesToPropertiesMap = new HashMap<Pair<String, Pair<String, String>>, GrDynamicImplicitPropertyImpl>();
 
   public DynamicManagerImpl(Project project) {
     myProject = project;
@@ -269,15 +257,6 @@ public class DynamicManagerImpl extends DynamicManager {
     return findConcreteDynamicMethod(getRootElement(), conatainingClassName, name, parameterTypes);
   }
 
-  @Nullable
-  public String getMethodReturnType(String className, String methodName, String[] paramTypes) {
-    final DMethodElement methodElement = findConcreteDynamicMethod(getRootElement(), className, methodName, paramTypes);
-
-    if (methodElement == null) return null;
-
-    return methodElement.getType();
-  }
-
   public void removeMethodElement(DMethodElement methodElement) {
     final DClassElement classElement = getClassElementByItem(methodElement);
     assert classElement != null;
@@ -301,10 +280,10 @@ public class DynamicManagerImpl extends DynamicManager {
   }
 
   @NotNull
-  public DClassElement getOrCreateClassElement(Project project, String className, boolean binded) {
+  public DClassElement getOrCreateClassElement(Project project, String className) {
     DClassElement classElement = DynamicManager.getInstance(myProject).getRootElement().getClassElement(className);
     if (classElement == null) {
-      return new DClassElement(project, className, binded);
+      return new DClassElement(project, className);
     }
 
     return classElement;
@@ -326,51 +305,24 @@ public class DynamicManagerImpl extends DynamicManager {
     }
   }
 
-  public GrDynamicImplicitMethodImpl getCashedOrCreateMethod(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName, PsiFile containingFile, final String[] paramTypes) {
-    final Pair<String, String[]> typeAndPairs = new Pair<String, String[]>(type, paramTypes);
-
-    final Pair<String, Pair<String, String[]>> methodPair = new Pair<String, Pair<String, String[]>>(name, typeAndPairs);
-    final Pair<String, Pair<String, Pair<String, String[]>>> pair = new Pair<String, Pair<String, Pair<String, String[]>>>(containingClassName, methodPair);
-
-    final GrDynamicImplicitMethodImpl implicitMethod = myNamesToMethodsMap.get(pair);
-
-    if (implicitMethod != null) return implicitMethod;
-
-    final GrMethod method = GroovyPsiElementFactory.getInstance(myProject).createMethodFromText(name, type, paramTypes);
-
-    final GrDynamicImplicitMethodImpl newMethod = new GrDynamicImplicitMethodImpl(manager, method, containingClassName, containingFile);
-    myNamesToMethodsMap.put(pair, newMethod);
-
-    return newMethod;
+  public Iterable<PsiMethod> getMethods(final String classQname) {
+    DClassElement classElement = getRootElement().getClassElement(classQname);
+    if (classElement == null) return Collections.emptyList();
+    return ContainerUtil.map(classElement.getMethods(), new Function<DMethodElement, PsiMethod>() {
+      public PsiMethod fun(DMethodElement methodElement) {
+        return methodElement.getPsi(PsiManager.getInstance(myProject), classQname);
+      }
+    });
   }
 
-  public GrDynamicImplicitPropertyImpl getCashedOrCreateProperty(PsiManager manager, String name, String type, String containingClassName, PsiFile containingFile) {
-    final Pair<String, String> property = new Pair<String, String>(name, type);
-    final Pair<String, Pair<String, String>> pair = new Pair<String, Pair<String, String>>(containingClassName, property);
-    final GrDynamicImplicitPropertyImpl implicitProperty = myNamesToPropertiesMap.get(pair);
-
-    if (implicitProperty != null) return implicitProperty;
-
-    final GrDynamicImplicitPropertyImpl newPropery = new GrDynamicImplicitPropertyImpl(manager, name, type, containingClassName, containingFile);
-    myNamesToPropertiesMap.put(pair, newPropery);
-
-    return newPropery;
-  }
-
-  public String[] getMethodsNamesOfClass(String qualifiedName) {
-    final DClassElement classElement = getOrCreateClassElement(myProject, qualifiedName, false);
-    final Set<DMethodElement> methods = classElement.getMethods();
-
-    List<String> result = new ArrayList<String>();
-    for (DMethodElement method : methods) {
-      result.add(method.getName());
-    }
-
-    return result.toArray(new String[result.size()]);
-  }
-
-  public Iterable<PsiMethod> getMethods(String classQname) {
-    return Collections.emptyList();
+  public Iterable<PsiVariable> getProperties(final String classQname) {
+    DClassElement classElement = getRootElement().getClassElement(classQname);
+    if (classElement == null) return Collections.emptyList();
+    return ContainerUtil.map(classElement.getProperties(), new Function<DPropertyElement, PsiVariable>() {
+      public PsiVariable fun(DPropertyElement propertyElement) {
+        return propertyElement.getPsi(PsiManager.getInstance(myProject), classQname);
+      }
+    });
   }
 
   public String replaceClassName(String oldClassName, String newClassName) {
@@ -391,14 +343,6 @@ public class DynamicManagerImpl extends DynamicManager {
     }
 
     fireChangeCodeAnalyze();
-//    fireChangeToolWindow();
-  }
-
-  private void fireChangeToolWindow() {
-    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID);
-
-    window.getComponent().revalidate();
-    window.getComponent().repaint();
   }
 
   private void fireChangeCodeAnalyze() {

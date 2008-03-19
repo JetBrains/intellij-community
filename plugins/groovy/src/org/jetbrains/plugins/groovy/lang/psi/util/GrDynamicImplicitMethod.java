@@ -34,22 +34,20 @@ import java.util.List;
  * User: Dmitry.Krasilschikov
  * Date: 21.02.2008
  */
-public class GrDynamicImplicitMethodImpl extends LightElement implements PsiMethod, GrDynamicImplicitElement {
+public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, GrDynamicImplicitElement {
   private final PsiManager myManager;
 
   private GrMethod myMethod;
   private String myContainingClassName;
-  private PsiFile myContainingFile;
   private Project myProject;
 
-  public GrDynamicImplicitMethodImpl(PsiManager manager, GrMethod method, String containingClassName, PsiFile containingFile) {
+  public GrDynamicImplicitMethod(PsiManager manager, GrMethod method, String containingClassName) {
     super(manager);
     myManager = manager;
 
     myMethod = method;
     myProject = myManager.getProject();
     myContainingClassName = containingClassName;
-    myContainingFile = containingFile;
   }
 
   public String[] getParameterTypes() {
@@ -64,10 +62,6 @@ public class GrDynamicImplicitMethodImpl extends LightElement implements PsiMeth
 
   public String getContainingClassName() {
     return myContainingClassName;
-  }
-
-  public PsiFile getContainingFile() {
-    return myContainingFile;
   }
 
   @Nullable
@@ -200,7 +194,7 @@ public class GrDynamicImplicitMethodImpl extends LightElement implements PsiMeth
   }
 
   public PsiElement copy() {
-    return new GrDynamicImplicitMethodImpl(myManager, (GrMethod) myMethod.copy(), myContainingClassName, myContainingFile);
+    return new GrDynamicImplicitMethod(myManager, (GrMethod) myMethod.copy(), myContainingClassName);
   }
 
   public boolean isValid() {
@@ -257,7 +251,7 @@ public class GrDynamicImplicitMethodImpl extends LightElement implements PsiMeth
         }
 
         if (trueClass == null) return;
-        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DClassElement(myProject, trueClass.getQualifiedName(), false));
+        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DClassElement(myProject, trueClass.getQualifiedName()));
 
         if (classNode == null) return;
         desiredNode = TreeUtil.findNodeWithObject(classNode, methodElement);

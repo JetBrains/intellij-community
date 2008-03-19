@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiVariable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitMethodImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitPropertyImpl;
 
 import java.util.Collection;
@@ -98,9 +99,6 @@ public abstract class DynamicManager implements ProjectComponent, PersistentStat
   @Nullable
   public abstract DMethodElement findConcreteDynamicMethod(final String conatainingClassName, final String name, final String[] types);
 
-  @Nullable
-  public abstract String getMethodReturnType(String className, String methodName, String[] paramTypes);
-
   public abstract void removeMethodElement(DMethodElement element);
 
   public abstract void removeItemElement(DItemElement element);
@@ -108,17 +106,13 @@ public abstract class DynamicManager implements ProjectComponent, PersistentStat
   public abstract void replaceDynamicMethodType(String className, String name, List<MyPair> myPairList, String oldType, String newType);
 
   @NotNull
-  public abstract DClassElement getOrCreateClassElement(Project project, String className, boolean binded);
+  public abstract DClassElement getOrCreateClassElement(Project project, String className);
 
   public abstract DClassElement getClassElementByItem(DItemElement itemElement);
 
   public abstract void replaceDynamicMethodName(String className, String oldName, String newName, String[] types);
 
-  public abstract GrDynamicImplicitMethodImpl getCashedOrCreateMethod(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName, PsiFile containingFile, final String[] paramTypes);
-
-  public abstract GrDynamicImplicitPropertyImpl getCashedOrCreateProperty(PsiManager manager, String name, String type, String containingClassQualifiedName, PsiFile containingFile);
-
-  public abstract String[] getMethodsNamesOfClass(String qualifiedName);
-
   public abstract Iterable<PsiMethod> getMethods(String classQname);
+
+  public abstract Iterable<PsiVariable> getProperties(String classQname);
 }

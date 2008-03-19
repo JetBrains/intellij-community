@@ -20,11 +20,11 @@ public class DRootElement implements DElement {
   }
 
   public DClassElement mergeAddClass(DClassElement classElement) {
-    final DClassElement existedClassElement = containingClasses.get(classElement.getName());
+    final DClassElement existingClassElement = containingClasses.get(classElement.getName());
 
-    if (existedClassElement != null) {
-      final Collection<DPropertyElement> properties = existedClassElement.getProperties();
-      final Set<DMethodElement> methods = existedClassElement.getMethods();
+    if (existingClassElement != null) {
+      final Collection<DPropertyElement> properties = existingClassElement.getProperties();
+      final Set<DMethodElement> methods = existingClassElement.getMethods();
 
       classElement.addProperties(properties);
       classElement.addMethods(methods);

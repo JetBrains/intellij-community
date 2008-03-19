@@ -21,7 +21,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
@@ -43,13 +42,11 @@ import javax.swing.tree.TreePath;
  */
 public class GrDynamicImplicitPropertyImpl extends GrImplicitVariableImpl implements GrDynamicImplicitElement {
   private final String myContainingClassName;
-  private final PsiFile myContainingFileName;
   private final Project myProject;
 
-  public GrDynamicImplicitPropertyImpl(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName, PsiFile containingFileName) {
+  public GrDynamicImplicitPropertyImpl(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName) {
     super(manager, name, type, null);
     myContainingClassName = containingClassName;
-    myContainingFileName = containingFileName;
     myProject = manager.getProject();
   }
 
@@ -62,10 +59,6 @@ public class GrDynamicImplicitPropertyImpl extends GrImplicitVariableImpl implem
 
   public String getContainingClassName() {
     return myContainingClassName;
-  }
-
-  public PsiFile getContainingFileName() {
-    return myContainingFileName;
   }
 
   public String getPresentableText() {
@@ -113,7 +106,7 @@ public class GrDynamicImplicitPropertyImpl extends GrImplicitVariableImpl implem
 
         if (trueSuper == null) return;
 
-        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DClassElement(myProject, trueSuper.getQualifiedName(), false));
+        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DClassElement(myProject, trueSuper.getQualifiedName()));
         if (classNode == null) return;
 
         desiredNode = TreeUtil.findNodeWithObject(classNode, dynamicProperty);

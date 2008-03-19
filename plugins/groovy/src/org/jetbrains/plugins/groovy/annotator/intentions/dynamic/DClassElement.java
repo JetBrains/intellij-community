@@ -22,13 +22,11 @@ public class DClassElement implements DNamedElement {
   public DClassElement() {
   }
 
-  public DClassElement(Project project, String name, boolean addToTree) {
+  public DClassElement(Project project, String name) {
     myProject = project;
     myName = name;
 
-    if (addToTree) {
-      DynamicManager.getInstance(myProject).getRootElement().mergeAddClass(this);
-    }
+    DynamicManager.getInstance(myProject).getRootElement().mergeAddClass(this);
   }
 
   protected void addMethod(DMethodElement methodElement) {
