@@ -202,8 +202,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     final Document document = myEditor.getDocument();
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    assert psiFile != null;
-    final PsiElement element = psiFile.findElementAt(myEditor.getCaretModel().getOffset());
+    final PsiElement element = psiFile == null ? null : psiFile.findElementAt(myEditor.getCaretModel().getOffset());
 
     for (final LookupItem item : myItems) {
       final Comparable[] weight = getWeight(myItemPreferencePolicy, element, item);
