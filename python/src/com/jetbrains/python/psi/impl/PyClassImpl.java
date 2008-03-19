@@ -97,7 +97,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       if (expr instanceof PyTupleExpression) {
         return ((PyTupleExpression) expr).getElements();
       }
-      return new PyExpression[] { expr };
+      if (expr != null) {
+        return new PyExpression[] { expr };
+      }
     }
     return null;
   }
