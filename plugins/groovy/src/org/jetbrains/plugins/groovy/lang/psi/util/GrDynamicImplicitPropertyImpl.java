@@ -15,10 +15,12 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -39,9 +41,45 @@ import javax.swing.tree.TreePath;
 /**
  * @author ilyas
  */
-public class GrDynamicImplicitPropertyImpl extends GrDynamicImplicitElement {
+public class GrDynamicImplicitPropertyImpl extends GrImplicitVariableImpl implements GrDynamicImplicitElement {
+  private final String myContainingClassName;
+  private final PsiFile myContainingFileName;
+  private final Project myProject;
+
   public GrDynamicImplicitPropertyImpl(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName, PsiFile containingFileName) {
-    super(manager, name, type, containingClassName, containingFileName);
+    super(manager, name, type, null);
+    myContainingClassName = containingClassName;
+    myContainingFileName = containingFileName;
+    myProject = manager.getProject();
+  }
+
+  @Nullable
+  public PsiClass getContainingClassElement() {
+    final PsiClassType containingClassType = myManager.getElementFactory().createTypeByFQClassName(myContainingClassName, myManager.getProject().getAllScope());
+
+    return containingClassType.resolve();
+  }
+
+  public String getContainingClassName() {
+    return myContainingClassName;
+  }
+
+  public PsiFile getContainingFileName() {
+    return myContainingFileName;
+  }
+
+  public String getPresentableText() {
+    return null;
+  }
+
+  @Nullable
+  public String getLocationString() {
+    return null;
+  }
+
+  @Nullable
+  public TextAttributesKey getTextAttributesKey() {
+    return null;
   }
 
   public void navigate(boolean requestFocus) {
@@ -58,7 +96,7 @@ public class GrDynamicImplicitPropertyImpl extends GrDynamicImplicitElement {
         if (root == null || !(root instanceof DefaultMutableTreeNode)) return;
 
         DefaultMutableTreeNode treeRoot = ((DefaultMutableTreeNode) root);
-        final PsiClass psiClass = getContainingPsiClassElement();
+        final PsiClass psiClass = getContainingClassElement();
         if (psiClass == null) return;
 
         final DefaultMutableTreeNode desiredNode;
@@ -115,15 +153,9 @@ public class GrDynamicImplicitPropertyImpl extends GrDynamicImplicitElement {
     return GroovyIcons.PROPERTY;
   }
 
-
   public boolean isValid() {
-    final GrDynamicImplicitPropertyImpl property = DynamicManager.getInstance(myProject).getProperty(
-        myManager,
-        getName(),
-        getType().getCanonicalText(),
-        getContainingClassName(),
-        getContainingFile());
+    final PsiClass psiClass = myManager.findClass(myContainingClassName, myProject.getAllScope());
 
-    return property == this;
+    return psiClass != null && psiClass.isValid();
   }
 }

@@ -17,67 +17,23 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.SearchScope;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
  */
-public abstract class GrDynamicImplicitElement extends GrImplicitVariableImpl implements GrImplicitVariable, ItemPresentation, NavigationItem {
-  private String myContainingClassName;
-  private final PsiFile myContainingFile;
-  public final Project myProject;
-
-  public GrDynamicImplicitElement(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName, PsiFile containingFile) {
-    super(manager, name, type, null);
-    myContainingClassName = containingClassName;
-    myContainingFile = containingFile;
-    myProject = myManager.getProject();
-  }
-
-  public ItemPresentation getPresentation() {
-    return this;
-  }
-
-  public String getPresentableText() {
-    return null;
-  }
-
+public interface GrDynamicImplicitElement extends ItemPresentation, NavigationItem {
   @Nullable
-  public String getLocationString() {
-    return null;
-  }
-
-  @Nullable
-  public TextAttributesKey getTextAttributesKey() {
-    return null;
-  }
-
-  @Nullable
-  public PsiClass getContainingPsiClassElement() {
-    final PsiClassType containingClassType = myManager.getElementFactory().createTypeByFQClassName(myContainingClassName, myManager.getProject().getAllScope());
-
-    return containingClassType.resolve();
-  }
+  public PsiClass getContainingClassElement();
 
   @NotNull
-  public SearchScope getUseScope() {
-    return myManager.getProject().getProjectScope();
-  }
+  public SearchScope getUseScope();
 
-  public PsiFile getContainingFile() {
-    return myContainingFile;
-  }
+  public PsiFile getContainingFile();
 
-  public String getContainingClassName() {
-    return myContainingClassName;
-  }
+  public String getContainingClassName();
 }
