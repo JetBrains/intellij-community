@@ -41,7 +41,7 @@ public class PyParser implements PsiParser {
     final PsiBuilder.Marker rootMarker = builder.mark();
     ParsingContext context = new ParsingContext(builder);
     while (!builder.eof()) {
-      context.getStatementParser().parseStatement(builder);
+      context.getStatementParser().parseStatement();
     }
     rootMarker.done(root);
     ASTNode ast = builder.getTreeBuilt();

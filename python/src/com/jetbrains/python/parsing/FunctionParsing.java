@@ -43,90 +43,90 @@ public class FunctionParsing extends Parsing {
       myBuilder.error("function name expected");
     }
 
-    parseParameterList(myBuilder);
+    parseParameterList();
     checkMatches(PyTokenTypes.COLON, "colon expected");
     getStatementParser().parseSuite(functionMarker, PyElementTypes.FUNCTION_DECLARATION);
   }
 
-  public void parseDecoratedFunctionDeclaration(PsiBuilder builder) {
-    LOG.assertTrue(builder.getTokenType() == PyTokenTypes.AT);
-    final PsiBuilder.Marker functionMarker = builder.mark();
-    builder.advanceLexer();
+  public void parseDecoratedFunctionDeclaration() {
+    assertCurrentToken(PyTokenTypes.AT);
+    final PsiBuilder.Marker functionMarker = myBuilder.mark();
+    myBuilder.advanceLexer();
     getStatementParser().parseDottedName();
-    if (builder.getTokenType() == PyTokenTypes.LPAR) {
-      getExpressionParser().parseArgumentList(builder);
+    if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
+      getExpressionParser().parseArgumentList(myBuilder);
     }
     checkMatches(PyTokenTypes.STATEMENT_BREAK, "statement break expected");
-    if (builder.getTokenType() == PyTokenTypes.AT) {
-      parseDecoratedFunctionDeclaration(builder);
+    if (myBuilder.getTokenType() == PyTokenTypes.AT) {
+      parseDecoratedFunctionDeclaration();
     }
-    else if (builder.getTokenType() == PyTokenTypes.DEF_KEYWORD) {
+    else if (myBuilder.getTokenType() == PyTokenTypes.DEF_KEYWORD) {
       parseFunctionDeclaration();
     }
     else {
-      builder.error("'def' or '@' expected");
+      myBuilder.error("'def' or '@' expected");
     }
     functionMarker.done(PyElementTypes.DECORATED_FUNCTION_DECLARATION);
   }
 
-  private void parseParameterList(PsiBuilder builder) {
+  private void parseParameterList() {
     final PsiBuilder.Marker parameterList;
-    if (builder.getTokenType() != PyTokenTypes.LPAR) {
-      builder.error("( expected");
-      parameterList = builder.mark(); // To have non-empty parameters list at all the time.
+    if (myBuilder.getTokenType() != PyTokenTypes.LPAR) {
+      myBuilder.error("( expected");
+      parameterList = myBuilder.mark(); // To have non-empty parameters list at all the time.
       parameterList.done(PyElementTypes.PARAMETER_LIST);
       return;
     }
-    parseParameterListContents(builder, PyTokenTypes.RPAR, true);
+    parseParameterListContents(PyTokenTypes.RPAR, true);
   }
 
-  public void parseParameterListContents(PsiBuilder builder, IElementType endToken, boolean advanceLexer) {
+  public void parseParameterListContents(IElementType endToken, boolean advanceLexer) {
     PsiBuilder.Marker parameterList;
-    parameterList = builder.mark();
+    parameterList = myBuilder.mark();
     if (advanceLexer) {
-      builder.advanceLexer();
+      myBuilder.advanceLexer();
     }
 
     boolean first = true;
-    while (builder.getTokenType() != endToken) {
+    while (myBuilder.getTokenType() != endToken) {
       if (first) {
         first = false;
       }
       else {
-        if (builder.getTokenType() == PyTokenTypes.COMMA) {
-          builder.advanceLexer();
+        if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
+          myBuilder.advanceLexer();
         }
-        else if (builder.getTokenType() == PyTokenTypes.LPAR) {
+        else if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
           parseParameterSubList();
         }
         else {
-          builder.error(", or ( or ) expected");
+          myBuilder.error(", or ( or ) expected");
           break;
         }
       }
 
-      final PsiBuilder.Marker parameter = builder.mark();
+      final PsiBuilder.Marker parameter = myBuilder.mark();
       boolean isStarParameter = false;
-      if (builder.getTokenType() == PyTokenTypes.MULT || builder.getTokenType() == PyTokenTypes.EXP) {
-        builder.advanceLexer();
+      if (myBuilder.getTokenType() == PyTokenTypes.MULT || myBuilder.getTokenType() == PyTokenTypes.EXP) {
+        myBuilder.advanceLexer();
         isStarParameter = true;
       }
-      if (builder.getTokenType() == PyTokenTypes.IDENTIFIER) {
-        builder.advanceLexer();
-        if (builder.getTokenType() == PyTokenTypes.EQ && !isStarParameter) {
-          builder.advanceLexer();
-          getExpressionParser().parseSingleExpression(builder, false);
+      if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
+        myBuilder.advanceLexer();
+        if (myBuilder.getTokenType() == PyTokenTypes.EQ && !isStarParameter) {
+          myBuilder.advanceLexer();
+          getExpressionParser().parseSingleExpression(false);
         }
         parameter.done(PyElementTypes.FORMAL_PARAMETER);
       }
       else {
-        builder.error("formal parameter name expected");
+        myBuilder.error("formal parameter name expected");
         parameter.rollbackTo();
       }
     }
 
-    if (builder.getTokenType() == endToken) {
-      builder.advanceLexer();
+    if (myBuilder.getTokenType() == endToken) {
+      myBuilder.advanceLexer();
     }
 
     parameterList.done(PyElementTypes.PARAMETER_LIST);

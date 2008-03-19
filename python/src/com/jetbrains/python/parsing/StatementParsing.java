@@ -34,30 +34,30 @@ public class StatementParsing extends Parsing {
   }
 
 
-  public void parseStatement(PsiBuilder builder) {
-    while (builder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
-      builder.advanceLexer();
+  public void parseStatement() {
+    while (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
+      myBuilder.advanceLexer();
     }
 
     final IElementType firstToken;
-    firstToken = builder.getTokenType();
+    firstToken = myBuilder.getTokenType();
 
     if (firstToken == null) return;
 
     if (firstToken == PyTokenTypes.WHILE_KEYWORD) {
-      parseWhileStatement(builder);
+      parseWhileStatement(myBuilder);
       return;
     }
     if (firstToken == PyTokenTypes.IF_KEYWORD) {
-      parseIfStatement(builder);
+      parseIfStatement(myBuilder);
       return;
     }
     if (firstToken == PyTokenTypes.FOR_KEYWORD) {
-      parseForStatement(builder);
+      parseForStatement(myBuilder);
       return;
     }
     if (firstToken == PyTokenTypes.TRY_KEYWORD) {
-      parseTryStatement(builder);
+      parseTryStatement(myBuilder);
       return;
     }
     if (firstToken == PyTokenTypes.DEF_KEYWORD) {
@@ -65,7 +65,7 @@ public class StatementParsing extends Parsing {
       return;
     }
     if (firstToken == PyTokenTypes.AT) {
-      getFunctionParser().parseDecoratedFunctionDeclaration(builder);
+      getFunctionParser().parseDecoratedFunctionDeclaration();
       return;
     }
     if (firstToken == PyTokenTypes.CLASS_KEYWORD) {
@@ -218,18 +218,18 @@ public class StatementParsing extends Parsing {
     if (builder.getTokenType() == PyTokenTypes.GTGT) {
       final PsiBuilder.Marker target = builder.mark();
       builder.advanceLexer();
-      getExpressionParser().parseSingleExpression(builder, false);
+      getExpressionParser().parseSingleExpression(false);
       target.done(PyElementTypes.PRINT_TARGET);
     }
     else {
-      getExpressionParser().parseSingleExpression(builder, false);
+      getExpressionParser().parseSingleExpression(false);
     }
     while (builder.getTokenType() == PyTokenTypes.COMMA) {
       builder.advanceLexer();
       if (PyTokenTypes.END_OF_STATEMENT.contains(builder.getTokenType())) {
         break;
       }
-      getExpressionParser().parseSingleExpression(builder, false);
+      getExpressionParser().parseSingleExpression(false);
     }
     checkEndOfStatement(inSuite);
     statement.done(PyElementTypes.PRINT_STATEMENT);
@@ -257,13 +257,13 @@ public class StatementParsing extends Parsing {
     LOG.assertTrue(builder.getTokenType() == PyTokenTypes.DEL_KEYWORD);
     final PsiBuilder.Marker delStatement = builder.mark();
     builder.advanceLexer();
-    if (!getExpressionParser().parseSingleExpression(builder, false)) {
+    if (!getExpressionParser().parseSingleExpression(false)) {
       builder.error("expression expected");
     }
     while (builder.getTokenType() == PyTokenTypes.COMMA) {
       builder.advanceLexer();
       if (!PyTokenTypes.END_OF_STATEMENT.contains(builder.getTokenType())) {
-        if (!getExpressionParser().parseSingleExpression(builder, false)) {
+        if (!getExpressionParser().parseSingleExpression(false)) {
           builder.error("expression expected");
         }
       }
@@ -278,13 +278,13 @@ public class StatementParsing extends Parsing {
     final PsiBuilder.Marker raiseStatement = builder.mark();
     builder.advanceLexer();
     if (!PyTokenTypes.END_OF_STATEMENT.contains(builder.getTokenType())) {
-      getExpressionParser().parseSingleExpression(builder, false);
+      getExpressionParser().parseSingleExpression(false);
       if (builder.getTokenType() == PyTokenTypes.COMMA) {
         builder.advanceLexer();
-        getExpressionParser().parseSingleExpression(builder, false);
+        getExpressionParser().parseSingleExpression(false);
         if (builder.getTokenType() == PyTokenTypes.COMMA) {
           builder.advanceLexer();
-          getExpressionParser().parseSingleExpression(builder, false);
+          getExpressionParser().parseSingleExpression(false);
         }
       }
     }
@@ -296,10 +296,10 @@ public class StatementParsing extends Parsing {
     LOG.assertTrue(builder.getTokenType() == PyTokenTypes.ASSERT_KEYWORD);
     final PsiBuilder.Marker assertStatement = builder.mark();
     builder.advanceLexer();
-    getExpressionParser().parseSingleExpression(builder, false);
+    getExpressionParser().parseSingleExpression(false);
     if (builder.getTokenType() == PyTokenTypes.COMMA) {
       builder.advanceLexer();
-      getExpressionParser().parseSingleExpression(builder, false);
+      getExpressionParser().parseSingleExpression(false);
     }
     checkEndOfStatement(inSuite);
     assertStatement.done(PyElementTypes.ASSERT_STATEMENT);
@@ -420,10 +420,10 @@ public class StatementParsing extends Parsing {
     getExpressionParser().parseExpression(builder, true, false);
     if (builder.getTokenType() == PyTokenTypes.IN_KEYWORD) {
       builder.advanceLexer();
-      getExpressionParser().parseSingleExpression(builder, false);
+      getExpressionParser().parseSingleExpression(false);
       if (builder.getTokenType() == PyTokenTypes.COMMA) {
         builder.advanceLexer();
-        getExpressionParser().parseSingleExpression(builder, false);
+        getExpressionParser().parseSingleExpression(false);
       }
     }
     checkEndOfStatement(inSuite);
@@ -496,12 +496,12 @@ public class StatementParsing extends Parsing {
         final PsiBuilder.Marker exceptBlock = builder.mark();
         builder.advanceLexer();
         if (builder.getTokenType() != PyTokenTypes.COLON) {
-          if (!getExpressionParser().parseSingleExpression(builder, false)) {
+          if (!getExpressionParser().parseSingleExpression(false)) {
             builder.error("expression expected");
           }
           if (builder.getTokenType() == PyTokenTypes.COMMA) {
             builder.advanceLexer();
-            if (!getExpressionParser().parseSingleExpression(builder, true)) {
+            if (!getExpressionParser().parseSingleExpression(true)) {
               builder.error("expression expected");
             }
           }
@@ -575,7 +575,7 @@ public class StatementParsing extends Parsing {
       else {
         myBuilder.advanceLexer();
         while (!myBuilder.eof() && myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
-          parseStatement(myBuilder);
+          parseStatement();
         }
       }
 
