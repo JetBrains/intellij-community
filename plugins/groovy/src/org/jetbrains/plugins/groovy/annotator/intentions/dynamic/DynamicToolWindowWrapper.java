@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -34,8 +33,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemE
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitElement;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitMethodImpl;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitPropertyImpl;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -89,12 +86,6 @@ public class DynamicToolWindowWrapper {
   private static void reconfigureWindow(final Project project, ToolWindow window) {
     window.setTitle(GroovyBundle.message("toolwindow.dynamic.properties"));
     window.setToHideOnEmptyContent(true);
-
-//    DynamicManager.getInstance(project).addDynamicChangeListener(new DynamicChangeListener() {
-//      public void dynamicPropertyChange() {
-//        rebuildTreePanel(project);
-//      }
-//    });
 
     buildBigPanel(project);
     window.getComponent().add(getContentPane(project));
@@ -257,16 +248,16 @@ public class DynamicToolWindowWrapper {
             }
 
             private void renameElement(PsiElement newElement, Project project, PsiElement element) {
-              final PsiClass psiClass = ((GrDynamicImplicitElement) element).getContainingClassElement();
-              String typeText = psiClass.getQualifiedName();
-
-              if (element instanceof GrDynamicImplicitPropertyImpl) {
-                DynamicManager.getInstance(project).replaceDynamicPropertyName(typeText, ((GrDynamicImplicitElement) element).getName(), newElement.getText());
-
-              } else if (element instanceof GrDynamicImplicitMethodImpl) {
-                final String[] types = ((GrDynamicImplicitMethodImpl) element).getParameterTypes();
-                DynamicManager.getInstance(project).replaceDynamicMethodName(typeText, ((GrDynamicImplicitElement) element).getName(), newElement.getText(), types);
-              }
+//              final PsiClass psiClass = ((GrDynamicImplicitElement) element).getContainingClassElement();
+//              String typeText = psiClass.getQualifiedName();
+//
+//              if (element instanceof GrDynamicImplicitPropertyImpl) {
+//                DynamicManager.getInstance(project).replaceDynamicPropertyName(typeText, ((GrDynamicImplicitElement) element).getName(), newElement.getText());
+//
+//              } else if (element instanceof GrDynamicImplicitMethodImpl) {
+//                final String[] types = ((GrDynamicImplicitMethodImpl) element).getParameterTypes();
+//                DynamicManager.getInstance(project).replaceDynamicMethodName(typeText, ((GrDynamicImplicitElement) element).getName(), newElement.getText(), types);
+//              }
             }
           };
         }
@@ -721,4 +712,27 @@ public class DynamicToolWindowWrapper {
   private static TreeTableTree getTree() {
     return myTreeTable != null ? myTreeTable.getTree() : null;
   }
+
+
+//  class MyTreeTable extends TreeTable implements DataProvider {
+//    public MyTreeTable(TreeTableModel treeTableModel) {
+//      super(treeTableModel);
+//    }
+//
+//    @Nullable
+//    public Object getData(@NonNls String dataId) {
+//      if (DataConstantsEx.PSI_ELEMENT.equals(dataId)) {
+//        final Object selectedObject = getValueAt(getSelectedRow(), getSelectedColumn());
+//        if (!(selectedObject instanceof DefaultMutableTreeNode)) return null;
+//
+//        final Object userObject = ((DefaultMutableTreeNode) selectedObject).getUserObject();
+//        if (!(userObject instanceof DNamedElement)) return null;
+//
+//        if (userObject instanceof DClassElement) return ((DClassElement) userObject);
+//
+//        DynamicManager.getInstance(((DClassElement) userObject).get)
+//
+//      }
+//    }
+//  }
 }
