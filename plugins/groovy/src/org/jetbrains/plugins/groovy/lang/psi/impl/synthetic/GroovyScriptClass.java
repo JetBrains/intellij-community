@@ -100,6 +100,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner {
     return myFile.isValid() && myFile.getTopStatements().length > 0;
   }
 
+  @NotNull
   public String getQualifiedName() {
     return myQualifiedName;
   }
@@ -328,7 +329,11 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner {
       if (!ResolveUtil.processElement(processor, variable)) return false;
     }
 
-    return true;
+    PsiClass scriptClass = getSuperClass();
+    if (scriptClass != null && !scriptClass.processDeclarations(processor, substitutor, lastParent, place)) return false;
+
+    PsiClassType scriptType = getManager().getElementFactory().createType(this);
+    return ResolveUtil.processDefaultMethods(scriptType, processor, getProject());
   }
 
   //default implementations of methods from NavigationItem
