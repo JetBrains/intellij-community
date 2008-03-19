@@ -50,64 +50,67 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   public static void doCheckout(final Project project, final File target, final String url, final SVNRevision revision,
                                 final boolean recursive, final boolean ignoreExternals, @Nullable final Listener listener) {
     final Ref<Boolean> checkoutSuccessful = new Ref<Boolean>();
-    try {
-      final SVNException[] exception = new SVNException[1];
-      final SVNUpdateClient client = SvnVcs.getInstance(project).createUpdateClient();
 
-      final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
-                  SvnBundle.message("message.title.check.out"), true, VcsConfiguration.getInstance(project).getCheckoutOption()) {
-        public void run(@NotNull final ProgressIndicator indicator) {
-          final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-          client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), false, progressIndicator));
-          client.setIgnoreExternals(ignoreExternals);
-          try {
-            progressIndicator.setText(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
-            client.doCheckout(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, revision, recursive);
-            progressIndicator.checkCanceled();
-            checkoutSuccessful.set(Boolean.TRUE);
-          }
-          catch (SVNException e) {
-            exception[0] = e;
-          }
-          finally {
-            client.setIgnoreExternals(false);
-            client.setEventHandler(null);
-          }
+    final SVNException[] exception = new SVNException[1];
+    @NonNls String fileURL = "file://" + target.getAbsolutePath().replace(File.separatorChar, '/');
+    final VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl(fileURL);
+
+    final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
+                                                                               SvnBundle.message("message.title.check.out"), true, VcsConfiguration.getInstance(project).getCheckoutOption()) {
+      public void run(@NotNull final ProgressIndicator indicator) {
+        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+        final SVNUpdateClient client = SvnVcs.getInstance(project).createUpdateClient();
+        client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), false, progressIndicator));
+        client.setIgnoreExternals(ignoreExternals);
+        try {
+          progressIndicator.setText(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
+          client.doCheckout(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, revision, recursive);
+          progressIndicator.checkCanceled();
+          checkoutSuccessful.set(Boolean.TRUE);
         }
-      };
-      
-      ProgressManager.getInstance().run(checkoutBackgroundTask);
-
-      if (exception[0] != null) {
-        throw exception[0];
+        catch (SVNCancelException ignore) {
+        }
+        catch (SVNException e) {
+          exception[0] = e;
+        }
+        finally {
+          client.setIgnoreExternals(false);
+          client.setEventHandler(null);
+        }
       }
-    }
-    catch(SVNCancelException ignore) {
-    }
-    catch (SVNException e1) {
-      Messages.showErrorDialog(SvnBundle.message("message.text.cannot.checkout", e1.getMessage()), SvnBundle.message("message.title.check.out"));
-    } finally {
-      @NonNls String fileURL = "file://" + target.getAbsolutePath().replace(File.separatorChar, '/');
-      VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl(fileURL);
-      if (vf != null) {
-        vf.refresh(true, true, new Runnable() {
-          public void run() {
-            if (listener != null) {
-              if (!checkoutSuccessful.isNull()) {
-                listener.directoryCheckedOut(target);
-              }
-              listener.checkoutCompleted();
+
+      public void onCancel() {
+        onSuccess();
+      }
+
+      public void onSuccess() {
+        if (exception[0] != null) {
+          Messages.showErrorDialog(SvnBundle.message("message.text.cannot.checkout", exception[0].getMessage()), SvnBundle.message("message.title.check.out"));
+        }
+
+        if (vf != null) {
+          vf.refresh(true, true, new Runnable() {
+            public void run() {
+              notifyListener();
             }
-          }
-        });
-      }
-      else if (listener != null) {
-        if (!checkoutSuccessful.isNull()) {
-          listener.directoryCheckedOut(target);
+          });
         }
-        listener.checkoutCompleted();
+        else {
+          notifyListener();
+        }
       }
-    }
+
+      private void notifyListener() {
+        if (listener != null) {
+          if (!checkoutSuccessful.isNull()) {
+            listener.directoryCheckedOut(target);
+          }
+          listener.checkoutCompleted();
+        }
+      }
+    };
+
+    ProgressManager.getInstance().run(checkoutBackgroundTask);
   }
 
   public static void doExport(final Project project, final File target, final String url, final boolean recursive,
