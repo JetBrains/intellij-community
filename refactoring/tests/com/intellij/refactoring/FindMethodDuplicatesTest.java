@@ -61,6 +61,30 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest();
   }
 
+  public void testMappingExpression2Field() throws Exception {
+    doTest(false);
+  }
+
+  public void testMappingExpression2LocalVar() throws Exception {
+    doTest(false);
+  }
+
+  public void testMappingExpression2ParameterLiterals() throws Exception {
+    doTest();
+  }
+
+  public void testMappingExpression2ParameterLValues() throws Exception {
+    doTest();
+  }
+
+  public void testMappingExpression2ParameterMultiple() throws Exception {
+    doTest();
+  }
+
+  public void testMappingExpression2This() throws Exception {
+    doTest(false);
+  }
+
   public void testMappingField2Field() throws Exception {
     doTest();
   }
@@ -75,6 +99,10 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
 
   @Bombed(description = "Check issues: IDEADEV-25363.", user = "Anna Kozlova", month = 5, day = 24)
   public void testMappingField2This() throws Exception {
+    doTest(false);
+  }
+
+  public void testMappingLocalVar2Expression() throws Exception {
     doTest(false);
   }
 
