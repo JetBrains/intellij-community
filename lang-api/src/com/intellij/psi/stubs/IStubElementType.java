@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class IStubElementType<StubT extends StubElement, PsiT extends PsiElement> extends IElementType {
+public abstract class IStubElementType<StubT extends StubElement, PsiT extends PsiElement> extends IElementType implements StubSerializer<StubT> {
   public IStubElementType(@NotNull @NonNls final String debugName, @Nullable final Language language) {
     super(debugName, language);
   }
