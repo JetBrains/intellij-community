@@ -12,12 +12,11 @@ import org.jetbrains.annotations.Nullable;
 public class ImplementationSearcher {
   public PsiElement[] searchImplementations(final Editor editor, final PsiElement element, final int offset) {
     boolean onRef = TargetElementUtilBase.getInstance().findTargetElement(editor, getFlags() & ~TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED, offset) == null;
-    return searchImplementations(editor, element, offset, onRef, onRef);
+    return searchImplementations(element, offset, onRef, onRef);
   }
 
   @NotNull
-  public PsiElement[] searchImplementations(@Nullable Editor editor,
-                                            final PsiElement element,
+  public PsiElement[] searchImplementations(final PsiElement element,
                                             int offset,
                                             final boolean includeSelfAlways,
                                             final boolean includeSelfIfNoOthers) {
@@ -25,11 +24,11 @@ public class ImplementationSearcher {
     final PsiElement[] elements = searchDefinitions(element);
     if (elements == null) return PsiElement.EMPTY_ARRAY; //the search has been cancelled
     if (elements.length > 0) {
-      if (!includeSelfAlways) return filterElements(editor, element, elements, offset);
+      if (!includeSelfAlways) return filterElements(element, elements, offset);
       PsiElement[] all = new PsiElement[elements.length + 1];
       all[0] = element;
       System.arraycopy(elements, 0, all, 1, elements.length);
-      return filterElements(editor, element, all, offset);
+      return filterElements(element, all, offset);
     }
     return includeSelfAlways || includeSelfIfNoOthers ?
            new PsiElement[] {element} :
@@ -49,7 +48,7 @@ public class ImplementationSearcher {
     return result[0];
   }
 
-  protected PsiElement[] filterElements(@Nullable Editor editor, PsiElement element, PsiElement[] targetElements, final int offset) {
+  protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, final int offset) {
     return targetElements;
   }
 
