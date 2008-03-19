@@ -345,7 +345,7 @@ public class BuildFilePropertiesPanel {
     public ExecutionTab(final GlobalAntConfiguration antConfiguration) {
       myAntGlobalConfiguration = antConfiguration;
       myAntCommandLine.attachLabel(myAntCmdLineLabel);
-      myAntCommandLine.setDialodCaption(AntBundle.message("run.execution.tab.ant.command.line.dialog.title"));
+      myAntCommandLine.setDialogCaption(AntBundle.message("run.execution.tab.ant.command.line.dialog.title"));
       setLabelFor(myJDKLabel, myJDKs);
 
       myJDKsController = new ChooseAndEditComboBoxController<Sdk, String>(myJDKs, new Convertor<Sdk, String>() {

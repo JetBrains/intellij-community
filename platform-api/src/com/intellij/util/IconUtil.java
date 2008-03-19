@@ -20,6 +20,7 @@ import com.intellij.ide.FileIconProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
@@ -55,15 +56,20 @@ public class IconUtil {
 
   public static Icon getEmptyIcon(boolean showVisibility) {
     RowIcon baseIcon = new RowIcon(2);
-    Icon emptyIcon = Icons.CLASS_ICON != null
-                          ? new EmptyIcon(Icons.CLASS_ICON.getIconWidth(), Icons.CLASS_ICON.getIconHeight())
-                          : null;
-    baseIcon.setIcon(emptyIcon, 0);
+    baseIcon.setIcon(createEmptyIconLike(Icons.CLASS_ICON_PATH), 0);
     if (showVisibility) {
-      emptyIcon = Icons.PUBLIC_ICON != null ? new EmptyIcon(Icons.PUBLIC_ICON.getIconWidth(), Icons.PUBLIC_ICON.getIconHeight()) : null;
-      baseIcon.setIcon(emptyIcon, 1);
+      baseIcon.setIcon(createEmptyIconLike(Icons.PUBLIC_ICON_PATH), 1);
     }
     return baseIcon;
+  }
+
+  @Nullable
+  private static Icon createEmptyIconLike(final String baseIconPath) {
+    Icon baseIcon = IconLoader.findIcon(baseIconPath);
+    if (baseIcon == null) {
+      return new EmptyIcon(16, 16);
+    }
+    return new EmptyIcon(baseIcon.getIconWidth(), baseIcon.getIconHeight());
   }
 
   private static FileIconProvider[] getProviders() {

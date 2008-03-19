@@ -58,7 +58,7 @@ public class CommonJavaParameters extends JPanel {
 
   private static void copyDialogCaption(final LabeledComponent<RawCommandLineEditor> component) {
     final RawCommandLineEditor rawCommandLineEditor = component.getComponent();
-    rawCommandLineEditor.setDialodCaption(component.getRawText());
+    rawCommandLineEditor.setDialogCaption(component.getRawText());
     component.getLabel().setLabelFor(rawCommandLineEditor.getTextField());
   }
 

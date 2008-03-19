@@ -17,6 +17,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -53,7 +54,9 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
     myBrowseButton.setToolTipText(UIBundle.message("component.with.browse.button.browse.button.tooltip.text"));
 
     // FixedSizeButton isn't focusable but it should be selectable via keyboard.
-    new MyDoClickAction(myBrowseButton).registerShortcut(myComponent);
+    if (ApplicationManager.getApplication() != null) {  // avoid crash at design time
+      new MyDoClickAction(myBrowseButton).registerShortcut(myComponent);
+    }
   }
 
   public final Comp getChildComponent() {

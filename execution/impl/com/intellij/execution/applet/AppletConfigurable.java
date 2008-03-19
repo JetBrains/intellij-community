@@ -102,7 +102,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     myTablePlace.add(ScrollPaneFactory.createScrollPane(myTable), BorderLayout.CENTER);
     myAppletRadioButtonGroup.add(myMainClass);
     myAppletRadioButtonGroup.add(myURL);
-    getVMParametersComponent().setDialodCaption(myVMParameters.getRawText());
+    getVMParametersComponent().setDialogCaption(myVMParameters.getRawText());
 
     myMainClass.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {

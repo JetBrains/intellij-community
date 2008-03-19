@@ -1,14 +1,13 @@
 package com.intellij.compiler.impl.javaCompiler.jikes;
 
-import com.intellij.compiler.impl.javaCompiler.jikes.JikesSettings;
 import com.intellij.compiler.options.ComparingUtils;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.ui.RawCommandLineEditor;
 
 import javax.swing.*;
@@ -41,7 +40,7 @@ public class JikesConfigurable implements Configurable{
         }
       }
     });
-    myAdditionalOptionsField.setDialodCaption(CompilerBundle.message("java.compiler.option.additional.command.line.parameters"));
+    myAdditionalOptionsField.setDialogCaption(CompilerBundle.message("java.compiler.option.additional.command.line.parameters"));
   }
 
   public String getDisplayName() {

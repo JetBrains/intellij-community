@@ -16,11 +16,13 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
 public abstract class Icons {
-  public static final Icon PUBLIC_ICON = IconLoader.getIcon("/nodes/c_public.png");
+  @NonNls public static final String PUBLIC_ICON_PATH = "/nodes/c_public.png";
+  public static final Icon PUBLIC_ICON = IconLoader.getIcon(PUBLIC_ICON_PATH);
   public static final Icon LOCKED_ICON = IconLoader.getIcon("/nodes/locked.png");
   public static final Icon PRIVATE_ICON = IconLoader.getIcon("/nodes/c_private.png");
   public static final Icon PROTECTED_ICON = IconLoader.getIcon("/nodes/c_protected.png");
@@ -29,7 +31,8 @@ public abstract class Icons {
   public static final Icon PACKAGE_OPEN_ICON = IconLoader.getIcon("/nodes/packageOpen.png");
   public static final Icon DIRECTORY_CLOSED_ICON = IconLoader.getIcon("/nodes/TreeClosed.png");
   public static final Icon DIRECTORY_OPEN_ICON = IconLoader.getIcon("/nodes/TreeOpen.png");
-  public static final Icon CLASS_ICON = IconLoader.getIcon("/nodes/class.png");
+  @NonNls public static final String CLASS_ICON_PATH = "/nodes/class.png";
+  public static final Icon CLASS_ICON = IconLoader.getIcon(CLASS_ICON_PATH);
   public static final Icon EXCEPTION_CLASS_ICON = IconLoader.getIcon("/nodes/exceptionClass.png");
   public static final Icon ANONYMOUS_CLASS_ICON = IconLoader.getIcon("/nodes/anonymousClass.png");
   public static final Icon ABSTRACT_CLASS_ICON = IconLoader.getIcon("/nodes/abstractClass.png");

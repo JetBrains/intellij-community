@@ -16,9 +16,9 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.util.Icons;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 import javax.swing.text.Document;
@@ -28,16 +28,19 @@ import java.awt.event.ActionListener;
 
 public class RawCommandLineEditor extends JPanel {
   private final TextFieldWithBrowseButton myTextField;
-  private String myDialodCaption = "";
+  private String myDialogCaption = "";
 
   public RawCommandLineEditor() {
     super(new BorderLayout());
     myTextField = new TextFieldWithBrowseButton(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Messages.showTextAreaDialog(myTextField.getTextField(), myDialodCaption, "EditParametersPopupWindow");
+        Messages.showTextAreaDialog(myTextField.getTextField(), myDialogCaption, "EditParametersPopupWindow");
       }
     });
-    myTextField.setButtonIcon(Icons.OPEN_EDIT_DIALOG_ICON);
+    final Icon icon = IconLoader.findIcon("/actions/showViewer.png");
+    if (icon != null) {
+      myTextField.setButtonIcon(icon);
+    }
     add(myTextField, BorderLayout.CENTER);
     setDescriptor(null);
   }
@@ -46,12 +49,12 @@ public class RawCommandLineEditor extends JPanel {
     InsertPathAction.addTo(myTextField.getTextField(), descriptor);
   }
 
-  public String getDialodCaption() {
-    return myDialodCaption;
+  public String getDialogCaption() {
+    return myDialogCaption;
   }
 
-  public void setDialodCaption(String dialodCaption) {
-    myDialodCaption = dialodCaption != null ? dialodCaption : "";
+  public void setDialogCaption(String dialogCaption) {
+    myDialogCaption = dialogCaption != null ? dialogCaption : "";
   }
 
   public void setText(String text) {

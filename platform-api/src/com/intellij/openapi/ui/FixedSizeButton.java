@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,8 +34,15 @@ public class FixedSizeButton extends JButton {
     this(-1, null);
   }
 
-  private FixedSizeButton(int size,JComponent component){
-    super(IconLoader.getIcon("/general/ellipsis.png"));
+  private FixedSizeButton(int size, JComponent component) {
+    Icon icon = IconLoader.findIcon("/general/ellipsis.png");
+    if (icon != null) {
+      // loading may fail at design time
+      setIcon(icon);
+    }
+    else {
+      setText(".");
+    }
     mySize=size;
     myComponent=component;
     setMargin(new Insets(0, 0, 0, 0));

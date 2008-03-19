@@ -24,7 +24,7 @@ public class EclipseCompilerConfigurable implements Configurable {
 
   public EclipseCompilerConfigurable(EclipseCompilerSettings compilerSettings) {
     myCompilerSettings = compilerSettings;
-    myAdditionalOptionsField.setDialodCaption(CompilerBundle.message("java.compiler.option.additional.command.line.parameters"));
+    myAdditionalOptionsField.setDialogCaption(CompilerBundle.message("java.compiler.option.additional.command.line.parameters"));
   }
 
   public String getDisplayName() {
