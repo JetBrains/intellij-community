@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,70 +27,83 @@ import org.jetbrains.annotations.NotNull;
 public class ConnectionResourceInspection extends BaseInspection {
 
     @NotNull
-    public String getID(){
+    public String getID() {
         return "ConnectionOpenedButNotSafelyClosed";
     }
 
     @NotNull
-    public String getDisplayName(){
+    public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "connection.opened.not.safely.closed.display.name");
     }
 
     @NotNull
-    public String buildErrorString(Object... infos){
+    public String buildErrorString(Object... infos) {
         final PsiType type = (PsiType)infos[0];
         final String text = type.getPresentableText();
         return InspectionGadgetsBundle.message(
                 "resource.opened.not.closed.problem.descriptor", text);
     }
 
-    public BaseInspectionVisitor buildVisitor(){
+    public BaseInspectionVisitor buildVisitor() {
         return new RecordStoreResourceVisitor();
     }
 
     private static class RecordStoreResourceVisitor
-            extends BaseInspectionVisitor{
+            extends BaseInspectionVisitor {
 
         @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression){
+                @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            if(!isConnectionFactoryMethod(expression)) {
+            if (!isConnectionFactoryMethod(expression)) {
                 return;
             }
             final PsiElement parent = expression.getParent();
-            if(!(parent instanceof PsiAssignmentExpression)) {
-                final PsiType type = expression.getType();
-                if (type != null) {
-                    registerError(expression, type);
-                }
-                return;
-            }
-            final PsiAssignmentExpression assignment =
-                    (PsiAssignmentExpression) parent;
-            final PsiExpression lhs = assignment.getLExpression();
-            if(!(lhs instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final PsiElement referent =
-                    ((PsiReference) lhs).resolve();
-            if(referent == null || !(referent instanceof PsiVariable)) {
-                return;
-            }
-            final PsiVariable boundVariable = (PsiVariable) referent;
-            PsiElement currentContext = expression;
-            while(true){
-                final PsiTryStatement tryStatement =
-                        PsiTreeUtil.getParentOfType(currentContext,
-                                PsiTryStatement.class);
-                if(tryStatement == null){
+            final PsiAssignmentExpression assignment;
+            if (!(parent instanceof PsiAssignmentExpression)) {
+                if (!(parent instanceof PsiTypeCastExpression)) {
                     final PsiType type = expression.getType();
                     if (type != null) {
                         registerError(expression, type);
                     }
                     return;
                 }
-                if(resourceIsOpenedInTryAndClosedInFinally(
+                final PsiElement grandParent = parent.getParent();
+                if (!(grandParent instanceof PsiAssignmentExpression)) {
+                    final PsiType type = expression.getType();
+                    if (type != null) {
+                        registerError(expression, type);
+                    }
+                    return;
+                }
+                assignment = (PsiAssignmentExpression) grandParent;
+            } else {
+                assignment = (PsiAssignmentExpression) parent;
+            }
+            final PsiExpression lhs = assignment.getLExpression();
+            if (!(lhs instanceof PsiReferenceExpression)) {
+                return;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) lhs;
+            final PsiElement referent = referenceExpression.resolve();
+            if (referent == null || !(referent instanceof PsiVariable)) {
+                return;
+            }
+            final PsiVariable boundVariable = (PsiVariable) referent;
+            PsiElement currentContext = expression;
+            while (true) {
+                final PsiTryStatement tryStatement =
+                        PsiTreeUtil.getParentOfType(currentContext,
+                                PsiTryStatement.class);
+                if (tryStatement == null) {
+                    final PsiType type = expression.getType();
+                    if (type != null) {
+                        registerError(expression, type);
+                    }
+                    return;
+                }
+                if (resourceIsOpenedInTryAndClosedInFinally(
                         tryStatement, expression, boundVariable)) {
                     return;
                 }
@@ -101,23 +114,23 @@ public class ConnectionResourceInspection extends BaseInspection {
 
         private static boolean resourceIsOpenedInTryAndClosedInFinally(
                 PsiTryStatement tryStatement, PsiExpression lhs,
-                PsiVariable boundVariable){
+                PsiVariable boundVariable) {
             final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-            if(finallyBlock == null){
+            if (finallyBlock == null) {
                 return false;
             }
             final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-            if(tryBlock == null){
+            if (tryBlock == null) {
                 return false;
             }
-            if(!PsiTreeUtil.isAncestor(tryBlock, lhs, true)){
+            if (!PsiTreeUtil.isAncestor(tryBlock, lhs, true)) {
                 return false;
             }
             return containsResourceClose(finallyBlock, boundVariable);
         }
 
-        private static boolean containsResourceClose(PsiCodeBlock finallyBlock,
-                                                     PsiVariable boundVariable){
+        private static boolean containsResourceClose(
+                PsiCodeBlock finallyBlock, PsiVariable boundVariable) {
             final CloseVisitor visitor =
                     new CloseVisitor(boundVariable);
             finallyBlock.accept(visitor);
@@ -125,21 +138,19 @@ public class ConnectionResourceInspection extends BaseInspection {
         }
 
         private static boolean isConnectionFactoryMethod(
-                @NotNull PsiMethodCallExpression expression){
+                @NotNull PsiMethodCallExpression expression) {
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
-            if(!HardcodedMethodConstants.OPEN.equals(methodName)) {
+            if (!HardcodedMethodConstants.OPEN.equals(methodName)) {
                 return false;
             }
             final PsiMethod method = expression.resolveMethod();
-            if(method == null)
-            {
+            if (method == null) {
                 return false;
             }
             final PsiClass containingClass = method.getContainingClass();
-            if(containingClass == null)
-            {
+            if (containingClass == null) {
                 return false;
             }
             final String className = containingClass.getQualifiedName();
@@ -149,52 +160,52 @@ public class ConnectionResourceInspection extends BaseInspection {
         }
     }
 
-    private static class CloseVisitor extends JavaRecursiveElementVisitor{
+    private static class CloseVisitor extends JavaRecursiveElementVisitor {
 
         private boolean containsClose = false;
         private PsiVariable objectToClose;
 
-        private CloseVisitor(PsiVariable objectToClose){
+        private CloseVisitor(PsiVariable objectToClose) {
             super();
             this.objectToClose = objectToClose;
         }
 
-        @Override public void visitElement(@NotNull PsiElement element){
-            if(!containsClose){
-                super.visitElement(element);
+        @Override public void visitElement(@NotNull PsiElement element) {
+            if (containsClose) {
+                return;
             }
+            super.visitElement(element);
         }
 
         @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression call){
-            if(containsClose){
+                @NotNull PsiMethodCallExpression call) {
+            if (containsClose) {
                 return;
             }
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
-            @NonNls final String closeStore = "closeRecordStore";
-            if(!closeStore.equals(methodName)){
+            if (!HardcodedMethodConstants.CLOSE.equals(methodName)) {
                 return;
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if(!(qualifier instanceof PsiReferenceExpression)){
+            if (!(qualifier instanceof PsiReferenceExpression)) {
                 return;
             }
-            final PsiElement referent =
-                    ((PsiReference) qualifier).resolve();
-            if(referent == null)
-            {
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) qualifier;
+            final PsiElement referent = referenceExpression.resolve();
+            if (referent == null) {
                 return;
             }
-            if(referent.equals(objectToClose)){
+            if (referent.equals(objectToClose)) {
                 containsClose = true;
             }
         }
 
-        public boolean containsStreamClose(){
+        public boolean containsStreamClose() {
             return containsClose;
         }
     }
