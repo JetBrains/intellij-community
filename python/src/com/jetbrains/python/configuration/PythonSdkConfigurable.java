@@ -24,14 +24,12 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.jetbrains.python.sdk.PythonSdkType;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.List;
 
 public class PythonSdkConfigurable implements Configurable {
@@ -46,19 +44,7 @@ public class PythonSdkConfigurable implements Configurable {
     myProjectRootManager = projectRootManager;
     myProject = project;
 
-    mySdkComboBox.setRenderer(new ColoredListCellRenderer() {
-
-      protected void customizeCellRenderer(final JList list,
-                                           final Object value,
-                                           final int index,
-                                           final boolean selected,
-                                           final boolean hasFocus) {
-        Sdk sdk = (Sdk) value;
-        if (sdk != null) {
-          append(sdk.getName() + " (" + FileUtil.toSystemDependentName(sdk.getHomePath()) + ")", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        }
-      }
-    });
+    mySdkComboBox.setRenderer(new PythonSdkCellRenderer());
 
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -104,15 +90,8 @@ public class PythonSdkConfigurable implements Configurable {
   }
 
   private void refreshSdkList() {
-    List<Sdk> pythonSdks = new ArrayList<Sdk>();
-    final Sdk[] sdks = ProjectJdkTable.getInstance().getAllJdks();
-    for(Sdk sdk: sdks) {
-      if (sdk.getSdkType() instanceof PythonSdkType) {
-        pythonSdks.add(sdk);
-      }
-    }
-
-    mySdkComboBox.setModel(new MyComboBoxModel(pythonSdks, myProjectRootManager.getProjectJdk()));
+    List<Sdk> pythonSdks = PythonSdkType.getAllSdks();
+    mySdkComboBox.setModel(new CollectionComboBoxModel(pythonSdks, myProjectRootManager.getProjectJdk()));
   }
 
   private void addSdk() {
@@ -155,29 +134,4 @@ public class PythonSdkConfigurable implements Configurable {
 
   }
 
-  private static class MyComboBoxModel extends AbstractListModel implements ComboBoxModel {
-    private List myItems;
-    private Object mySelection;
-
-    private MyComboBoxModel(final List items, final Object selection) {
-      myItems = items;
-      mySelection = selection;
-    }
-
-    public int getSize() {
-      return myItems.size();
-    }
-
-    public Object getElementAt(final int index) {
-      return myItems.get(index);
-    }
-
-    public void setSelectedItem(final Object anItem) {
-      mySelection = anItem;
-    }
-
-    public Object getSelectedItem() {
-      return mySelection;
-    }
-  }
 }

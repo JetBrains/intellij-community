@@ -24,6 +24,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.TreeSet;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author yole
@@ -218,5 +220,16 @@ public class PythonSdkType extends SdkType {
       LOG.error(e);
     }
 
+  }
+
+  public static List<Sdk> getAllSdks() {
+    List<Sdk> pythonSdks = new ArrayList<Sdk>();
+    final Sdk[] sdks = ProjectJdkTable.getInstance().getAllJdks();
+    for(Sdk sdk: sdks) {
+      if (sdk.getSdkType() instanceof PythonSdkType) {
+        pythonSdks.add(sdk);
+      }
+    }
+    return pythonSdks;
   }
 }

@@ -29,6 +29,7 @@ public class PythonRunConfiguration extends RunConfigurationBase implements Loca
   public String SCRIPT_NAME;
   public String PARAMETERS;
   public String WORKING_DIRECTORY;
+  public String SDK_HOME;
   public boolean PASS_PARENT_ENVS;
   private Map<String, String> myEnvs = new HashMap<String, String>();
 
@@ -52,14 +53,21 @@ public class PythonRunConfiguration extends RunConfigurationBase implements Loca
     CommandLineState state = new CommandLineState(env) {
       protected OSProcessHandler startProcess() throws ExecutionException {
         GeneralCommandLine commandLine = new GeneralCommandLine();
-        final Sdk projectJdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
-        assert projectJdk != null;
 
-        commandLine.setExePath(PythonSdkType.getInterpreterPath(projectJdk.getHomePath()));
+        String sdkHome = SDK_HOME;
+        if (sdkHome == null) {
+          final Sdk projectJdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
+          assert projectJdk != null;
+          sdkHome = projectJdk.getHomePath();
+        }
+
+        commandLine.setExePath(PythonSdkType.getInterpreterPath(sdkHome));
 
         commandLine.addParameter(SCRIPT_NAME);
         commandLine.getParametersList().addParametersString(PARAMETERS);
-        commandLine.setWorkDirectory(WORKING_DIRECTORY);
+        if (WORKING_DIRECTORY != null && WORKING_DIRECTORY.length() > 0) {
+          commandLine.setWorkDirectory(WORKING_DIRECTORY);
+        }
         commandLine.setEnvParams(getEnvs());
         commandLine.setPassParentEnvs(PASS_PARENT_ENVS);
 
@@ -73,9 +81,14 @@ public class PythonRunConfiguration extends RunConfigurationBase implements Loca
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
-    final Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
-    if (projectSdk == null || !(projectSdk.getSdkType() instanceof PythonSdkType)) {
-      throw new RuntimeConfigurationException("Please, specify Python SDK");
+    if (SDK_HOME == null) {
+      final Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
+      if (projectSdk == null || !(projectSdk.getSdkType() instanceof PythonSdkType)) {
+        throw new RuntimeConfigurationException("Please, specify Python SDK");
+      }
+    }
+    else if (!PythonSdkType.getInstance().isValidSdkHome(SDK_HOME)) {
+      throw new RuntimeConfigurationException("Please select a valid Python interpeter");
     }
   }
 
