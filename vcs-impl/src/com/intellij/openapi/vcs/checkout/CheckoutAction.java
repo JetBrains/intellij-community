@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -23,8 +24,9 @@ public class CheckoutAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    myProvider.doCheckout(new MyListener(project));
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    project = (project == null) ? ProjectManager.getInstance().getDefaultProject() : project;
+    myProvider.doCheckout(project, new MyListener(project));
   }
 
   private static VirtualFile refreshVFS(final File directory) {

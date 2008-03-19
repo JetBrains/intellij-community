@@ -9,19 +9,21 @@ import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.ui.experts.checkout.CheckoutWizard;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
 public class CvsCheckoutProvider implements CheckoutProvider {
-  public void doCheckout(final CheckoutProvider.Listener listener) {
+  public void doCheckout(@NotNull final Project project, final CheckoutProvider.Listener listener) {
 
     final File checkoutDirectory;
     final CvsElement[] selectedElements;
 
-    CheckoutWizard checkoutWizard = new CheckoutWizard(null);
+    CheckoutWizard checkoutWizard = new CheckoutWizard(project);
     checkoutWizard.show();
     if (!checkoutWizard.isOK()) return;
     final boolean useAlternateCheckoutPath = checkoutWizard.useAlternativeCheckoutLocation();

@@ -52,6 +52,7 @@ public class VcsGeneralConfigurationPanel {
   private JCheckBox myCbAddRemoveInBackground;
   private JButton myConfigureHistoryCacheButton;
   private JComboBox myFailedCommitChangelistCombo;
+  private JCheckBox myCbCheckoutInBackground;
 
   public VcsGeneralConfigurationPanel(final Project project) {
 
@@ -103,6 +104,7 @@ public class VcsGeneralConfigurationPanel {
     settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = myCbOfferToMoveChanges.isSelected();
     settings.PERFORM_COMMIT_IN_BACKGROUND = myCbCommitInBackground.isSelected();
     settings.PERFORM_UPDATE_IN_BACKGROUND = myCbUpdateInBackground.isSelected();
+    settings.PERFORM_CHECKOUT_IN_BACKGROUND = myCbCheckoutInBackground.isSelected();
     settings.PERFORM_EDIT_IN_BACKGROUND = myCbEditInBackground.isSelected();
     settings.PERFORM_ADD_REMOVE_IN_BACKGROUND = myCbAddRemoveInBackground.isSelected();
     settings.MOVE_TO_FAILED_COMMIT_CHANGELIST = getFailedCommitConfirm();
@@ -165,6 +167,11 @@ public class VcsGeneralConfigurationPanel {
     if (settings.PERFORM_UPDATE_IN_BACKGROUND != myCbUpdateInBackground.isSelected()) {
       return true;
     }
+
+    if (settings.PERFORM_CHECKOUT_IN_BACKGROUND != myCbCheckoutInBackground.isSelected()) {
+      return true;
+    }
+
     if (settings.PERFORM_EDIT_IN_BACKGROUND != myCbEditInBackground.isSelected()) {
       return true;
     }
@@ -197,6 +204,7 @@ public class VcsGeneralConfigurationPanel {
     myShowReadOnlyStatusDialog.setSelected(getReadOnlyStatusHandler().getState().SHOW_DIALOG);
     myCbCommitInBackground.setSelected(settings.PERFORM_COMMIT_IN_BACKGROUND);
     myCbUpdateInBackground.setSelected(settings.PERFORM_UPDATE_IN_BACKGROUND);
+    myCbCheckoutInBackground.setSelected(settings.PERFORM_CHECKOUT_IN_BACKGROUND);
     myCbEditInBackground.setSelected(settings.PERFORM_EDIT_IN_BACKGROUND);
     myCbAddRemoveInBackground.setSelected(settings.PERFORM_ADD_REMOVE_IN_BACKGROUND);
     if (settings.MOVE_TO_FAILED_COMMIT_CHANGELIST == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {

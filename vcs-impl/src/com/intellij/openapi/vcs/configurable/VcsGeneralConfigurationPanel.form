@@ -129,7 +129,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <grid id="d038a" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="d038a" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -157,7 +157,7 @@
                   </component>
                   <component id="45c51" class="javax.swing.JCheckBox" binding="myCbEditInBackground">
                     <constraints>
-                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <text resource-bundle="messages/VcsBundle" key="perform.edit.in.background"/>
@@ -165,10 +165,18 @@
                   </component>
                   <component id="a39f0" class="javax.swing.JCheckBox" binding="myCbAddRemoveInBackground">
                     <constraints>
-                      <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <text resource-bundle="messages/VcsBundle" key="perform.add.remove.in.background"/>
+                    </properties>
+                  </component>
+                  <component id="8c7af" class="javax.swing.JCheckBox" binding="myCbCheckoutInBackground">
+                    <constraints>
+                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Perform checkout from VCS in background"/>
                     </properties>
                   </component>
                 </children>

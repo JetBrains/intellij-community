@@ -16,7 +16,9 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -28,7 +30,7 @@ import java.io.File;
 public interface CheckoutProvider {
   @NonNls ExtensionPointName<CheckoutProvider> EXTENSION_POINT_NAME = new ExtensionPointName<CheckoutProvider>("com.intellij.checkoutProvider");
 
-  void doCheckout(@Nullable Listener listener);
+  void doCheckout(@NotNull final Project project, @Nullable Listener listener);
   @NonNls String getVcsName();
 
   interface Listener {
