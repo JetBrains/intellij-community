@@ -4,7 +4,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.XDebugSessionTab;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 

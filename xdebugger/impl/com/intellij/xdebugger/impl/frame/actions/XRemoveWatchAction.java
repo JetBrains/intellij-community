@@ -2,7 +2,7 @@ package com.intellij.xdebugger.impl.frame.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.XDebugSessionTab;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 

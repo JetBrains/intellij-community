@@ -12,11 +12,13 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * @author nik
@@ -26,10 +28,11 @@ public class XWatchesView extends XDebugViewBase {
   private List<String> myWatchExpressions = new ArrayList<String>();
   private XDebuggerTreeState myTreeState;
 
-  public XWatchesView(final XDebugSession session, final Disposable parentDisposable) {
+  public XWatchesView(final XDebugSession session, final Disposable parentDisposable, final XDebugSessionData sessionData) {
     super(session, parentDisposable);
     myTreePanel = new XDebuggerTreePanel(session, session.getDebugProcess().getEditorsProvider(), null,
                                          XDebuggerActions.WATCHES_TREE_POPUP_GROUP);
+    myWatchExpressions.addAll(Arrays.asList(sessionData.getWatchExpressions()));
   }
 
   public void addWatchExpression(@NotNull String expression) {
@@ -84,5 +87,9 @@ public class XWatchesView extends XDebugViewBase {
     }
 
     watchesRoot.removeChildren(watchNodes);
+  }
+
+  public String[] getWatchExpressions() {
+    return myWatchExpressions.toArray(new String[myWatchExpressions.size()]);
   }
 }

@@ -1,8 +1,8 @@
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.XDebugSessionTab;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;

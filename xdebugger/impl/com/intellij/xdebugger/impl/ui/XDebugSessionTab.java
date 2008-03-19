@@ -1,4 +1,4 @@
-package com.intellij.xdebugger.impl;
+package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.DefaultExecutionResult;
@@ -25,11 +25,11 @@ import com.intellij.ui.content.Content;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.frame.XFramesView;
+import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
-import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,8 +68,8 @@ public class XDebugSessionTab implements Disposable {
                               XDebuggerBundle.message("debugger.session.tab.variables.title"), XDebuggerUIConstants.VARIABLES_TAB_ICON, null);
   }
 
-  private Content createWatchesContent(final XDebugSession session) {
-    myWatchesView = new XWatchesView(session, this);
+  private Content createWatchesContent(final XDebugSession session, final XDebugSessionData sessionData) {
+    myWatchesView = new XWatchesView(session, this, sessionData);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getMainPanel(),
                                          XDebuggerBundle.message("debugger.session.tab.watches.title"),
                                          XDebuggerUIConstants.WATCHES_TAB_ICON, null);
@@ -107,21 +107,32 @@ public class XDebugSessionTab implements Disposable {
     return stepping;
   }
 
+  public XDebugSessionData saveData() {
+    return new XDebugSessionData(myWatchesView.getWatchExpressions());
+  }
+
   public void dispose() {
     myProject = null;
   }
 
-  public void reuse(@NotNull final XDebugSession session) {
+  public void loadData(final XDebugSessionData sessionData) {
+    
+  }
+
+  public ExecutionConsole getConsole() {
+    return myConsole;
   }
 
   public String getSessionName() {
     return mySessionName;
   }
 
-  public RunContentDescriptor attachToSession(@NotNull final XDebugSession session, @NotNull final ProgramRunner runner, @NotNull ExecutionEnvironment env) {
+  public RunContentDescriptor attachToSession(final @NotNull XDebugSession session, final @NotNull ProgramRunner runner,
+                                              final @NotNull ExecutionEnvironment env,
+                                              final @NotNull XDebugSessionData sessionData) {
     myEnvironment = env;
     myRunner = runner;
-    return initUI(session);
+    return initUI(session, sessionData);
   }
 
   @NotNull
@@ -140,13 +151,13 @@ public class XDebugSessionTab implements Disposable {
     return myWatchesView;
   }
 
-  private RunContentDescriptor initUI(@NotNull final XDebugSession session) {
+  private RunContentDescriptor initUI(final @NotNull XDebugSession session, final @NotNull XDebugSessionData sessionData) {
     ExecutionResult executionResult = createExecutionResult(session);
     myConsole = executionResult.getExecutionConsole();
 
     myUi.addContent(createFramesContent(session), 0, RunnerLayoutUi.PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(session), 0, RunnerLayoutUi.PlaceInGrid.center, false);
-    myUi.addContent(createWatchesContent(session), 0, RunnerLayoutUi.PlaceInGrid.right, false);
+    myUi.addContent(createWatchesContent(session, sessionData), 0, RunnerLayoutUi.PlaceInGrid.right, false);
     // attach console here
     myUi.addContent(createConsoleContent(), 1, RunnerLayoutUi.PlaceInGrid.bottom, false);
 
