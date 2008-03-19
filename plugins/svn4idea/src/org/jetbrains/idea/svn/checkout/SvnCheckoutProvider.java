@@ -17,27 +17,32 @@ package org.jetbrains.idea.svn.checkout;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.CheckoutProvider;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.CheckoutProvider;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.SVNCommitClient;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
 import java.io.File;
 
 public class SvnCheckoutProvider implements CheckoutProvider {
 
-  public void doCheckout(Listener listener) {
-    final Project project = ProjectManager.getInstance().getDefaultProject();
+  public void doCheckout(@NotNull final Project project, Listener listener) {
     CheckoutDialog dialog = new CheckoutDialog(project, listener);
     dialog.show();
   }
@@ -49,9 +54,10 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       final SVNException[] exception = new SVNException[1];
       final SVNUpdateClient client = SvnVcs.getInstance(project).createUpdateClient();
 
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
+                  SvnBundle.message("message.title.check.out"), true, VcsConfiguration.getInstance(project).getCheckoutOption()) {
+        public void run(@NotNull final ProgressIndicator indicator) {
+          final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
           client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), false, progressIndicator));
           client.setIgnoreExternals(ignoreExternals);
           try {
@@ -68,7 +74,10 @@ public class SvnCheckoutProvider implements CheckoutProvider {
             client.setEventHandler(null);
           }
         }
-      }, SvnBundle.message("message.title.check.out"), true, project);
+      };
+      
+      ProgressManager.getInstance().run(checkoutBackgroundTask);
+
       if (exception[0] != null) {
         throw exception[0];
       }
