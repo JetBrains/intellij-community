@@ -50,7 +50,7 @@ public interface GroovyFileBase extends PsiFile, GroovyPsiElement, GrVariableDec
 
   GrMethod[] getTopLevelMethods();
 
-  GrVariable[] getTopLevelVariables();
+  GrVariableDeclaration[] getTopLevelVariableDeclarations();
 
   GrTopStatement[] getTopStatements();
 

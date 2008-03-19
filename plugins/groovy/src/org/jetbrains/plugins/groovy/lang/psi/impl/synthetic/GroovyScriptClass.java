@@ -31,7 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
@@ -321,12 +323,14 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner {
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
-    for (PsiMethod method : getMethods()) {
-      if (!ResolveUtil.processElement(processor, method)) return false;
-    }
+    if (!(lastParent instanceof GroovyPsiElement)) {
+      for (PsiMethod method : getMethods()) {
+        if (!ResolveUtil.processElement(processor, method)) return false;
+      }
 
-    for (GrVariable variable : myFile.getTopLevelVariables()) {
-      if (!ResolveUtil.processElement(processor, variable)) return false;
+      for (GrVariableDeclaration variableDeclaration : myFile.getTopLevelVariableDeclarations()) {
+        if (!variableDeclaration.processDeclarations(processor, substitutor, lastParent, place)) return false;
+      }
     }
 
     PsiClass scriptClass = getSuperClass();

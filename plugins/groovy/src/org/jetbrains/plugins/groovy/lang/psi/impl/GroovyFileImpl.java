@@ -97,7 +97,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (!(lastParent instanceof GrTypeDefinition)) {
       if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter())) return false;
 
-      GlobalSearchScope resolveScope = getResolveScope();
       PsiClass scriptClass = getScriptClass();
       if (scriptClass != null && !scriptClass.processDeclarations(processor, substitutor, lastParent, place))
         return false;
@@ -152,7 +151,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     while (run != null) {
       if (!(run instanceof GrTopLevelDefintion) &&
           !(run instanceof GrImportStatement) &&
-          !(lastParent instanceof GrMethod && run instanceof GrVariableDeclaration) &&
           !run.processDeclarations(processor, substitutor, null, place)) return false;
       run = run.getPrevSibling();
     }

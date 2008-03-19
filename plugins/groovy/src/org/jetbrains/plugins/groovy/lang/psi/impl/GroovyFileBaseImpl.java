@@ -34,7 +34,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
@@ -42,14 +45,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 
-import java.util.ArrayList;
-
 /**
  * @author ilyas
  */
 public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFileBase, GrControlFlowOwner {
-  private GrVariable[] myTopLevelVariables;
-
   protected GroovyFileBaseImpl(FileViewProvider viewProvider, @NotNull Language language) {
     super(viewProvider, language);
   }
@@ -80,22 +79,8 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return findChildrenByClass(GrMethod.class);
   }
 
-  public GrVariable[] getTopLevelVariables() {
-    if (myTopLevelVariables == null) {
-      GrVariableDeclaration[] declarations = findChildrenByClass(GrVariableDeclaration.class);
-      if (declarations.length == 0) return GrField.EMPTY_ARRAY;
-      ArrayList<GrVariable> result = new ArrayList<GrVariable>();
-      for (GrVariableDeclaration declaration : declarations) {
-        GrVariable[] variables = declaration.getVariables();
-        for (GrVariable variable : variables) {
-          result.add(variable);
-        }
-      }
-
-      myTopLevelVariables = result.toArray(new GrVariable[result.size()]);
-    }
-
-    return myTopLevelVariables;
+  public GrVariableDeclaration[] getTopLevelVariableDeclarations() {
+    return findChildrenByClass(GrVariableDeclaration.class);
   }
 
   public GrTopStatement[] getTopStatements() {
@@ -168,7 +153,6 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   public void clearCaches() {
     super.clearCaches();
     myControlFlow = null;
-    myTopLevelVariables = null;
   }
 
 
