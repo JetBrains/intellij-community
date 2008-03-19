@@ -93,7 +93,12 @@ public class CvsChangeProvider implements ChangeProvider {
 
   private void processEntriesIn(@NotNull VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively) {
     final FilePath path = VcsContextFactory.SERVICE.getInstance().createFilePathOn(dir);
-    if (!scope.belongsTo(path)) return;
+    if (!scope.belongsTo(path)) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Skipping out of scope path " + path);
+      }
+      return;
+    }
     final DirectoryContent dirContent = getDirectoryContent(dir);
 
     for (VirtualFile file : dirContent.getUnknownFiles()) {
@@ -133,8 +138,16 @@ public class CvsChangeProvider implements ChangeProvider {
       final VirtualFile[] children = CvsVfsUtil.getChildrenOf(dir);
       if (children != null) {
         for (VirtualFile file : children) {
-          if (file.isDirectory() && !ProjectRootManager.getInstance(myVcs.getProject()).getFileIndex().isIgnored(file)) {
-            processEntriesIn(file, scope, builder, true);
+          if (file.isDirectory()) {
+            final boolean isIgnored = ProjectRootManager.getInstance(myVcs.getProject()).getFileIndex().isIgnored(file);
+            if (!isIgnored) {
+              processEntriesIn(file, scope, builder, true);
+            }
+            else {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Skipping ignored path " + file.getPath());
+              }
+            }
           }
         }
       }
