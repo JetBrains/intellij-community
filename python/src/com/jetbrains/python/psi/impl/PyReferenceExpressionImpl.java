@@ -29,6 +29,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyClassType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -227,6 +228,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
     if (target instanceof PyFile) {
       return new PyModuleType((PyFile) target);
+    }
+    if (target instanceof PyClass) {
+      return new PyClassType((PyClass) target);
     }
     return getReferenceTypeFromProviders(target);
   }
