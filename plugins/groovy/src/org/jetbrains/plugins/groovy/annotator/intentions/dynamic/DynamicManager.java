@@ -113,9 +113,9 @@ public abstract class DynamicManager implements ProjectComponent, PersistentStat
 
   public abstract void replaceDynamicMethodName(String className, String oldName, String newName, String[] types);
 
-  public abstract GrDynamicImplicitMethodImpl getMethod(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName, List<MyPair> pairs, PsiFile containingFile);
+  public abstract GrDynamicImplicitMethodImpl getCashedOrCreateMethod(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName, PsiFile containingFile, final String[] paramTypes);
 
-  public abstract GrDynamicImplicitPropertyImpl getProperty(PsiManager manager, String name, String type, String containingClassQualifiedName, PsiFile containingFile);
+  public abstract GrDynamicImplicitPropertyImpl getCashedOrCreateProperty(PsiManager manager, String name, String type, String containingClassQualifiedName, PsiFile containingFile);
 
   public abstract String[] getMethodsNamesOfClass(String qualifiedName);
 }

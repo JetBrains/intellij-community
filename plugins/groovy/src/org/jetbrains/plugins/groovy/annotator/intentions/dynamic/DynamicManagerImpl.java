@@ -26,8 +26,10 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemE
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitPropertyImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
@@ -324,8 +326,7 @@ public class DynamicManagerImpl extends DynamicManager {
     }
   }
 
-  public GrDynamicImplicitMethodImpl getMethod(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName, List<MyPair> pairs, PsiFile containingFile) {
-    final String[] paramTypes = QuickfixUtil.getArgumentsTypes(pairs);
+  public GrDynamicImplicitMethodImpl getCashedOrCreateMethod(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName, PsiFile containingFile, final String[] paramTypes) {
     final Pair<String, String[]> typeAndPairs = new Pair<String, String[]>(type, paramTypes);
 
     final Pair<String, Pair<String, String[]>> methodPair = new Pair<String, Pair<String, String[]>>(name, typeAndPairs);
@@ -335,13 +336,15 @@ public class DynamicManagerImpl extends DynamicManager {
 
     if (implicitMethod != null) return implicitMethod;
 
-    final GrDynamicImplicitMethodImpl newMethod = new GrDynamicImplicitMethodImpl(manager, name, type, containingClassName, pairs, containingFile);
+    final GrMethod method = (new GroovyPsiElementFactoryImpl(myProject)).createMethodFromText(name, type, paramTypes);
+
+    final GrDynamicImplicitMethodImpl newMethod = new GrDynamicImplicitMethodImpl(manager, method, containingClassName, containingFile);
     myNamesToMethodsMap.put(pair, newMethod);
 
     return newMethod;
   }
 
-  public GrDynamicImplicitPropertyImpl getProperty(PsiManager manager, String name, String type, String containingClassName, PsiFile containingFile) {
+  public GrDynamicImplicitPropertyImpl getCashedOrCreateProperty(PsiManager manager, String name, String type, String containingClassName, PsiFile containingFile) {
     final Pair<String, String> property = new Pair<String, String>(name, type);
     final Pair<String, Pair<String, String>> pair = new Pair<String, Pair<String, String>>(containingClassName, property);
     final GrDynamicImplicitPropertyImpl implicitProperty = myNamesToPropertiesMap.get(pair);
