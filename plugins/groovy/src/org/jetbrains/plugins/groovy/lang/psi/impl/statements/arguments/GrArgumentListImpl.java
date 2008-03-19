@@ -16,17 +16,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 
 /**
  * @author ilyas
@@ -55,12 +54,12 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
 
   public GrArgumentList replaceWithArgumentList(GrArgumentList newArgList) throws IncorrectOperationException {
     if (this.getParent() == null ||
-        this.getParent().getNode() == null ||
-        newArgList.getNode() == null) {
+        this.getParent().getNode() == null) {
       throw new IncorrectOperationException();
     }
     ASTNode parentNode = this.getParent().getNode();
     ASTNode newNode = newArgList.getNode();
+    assert parentNode != null;
     parentNode.replaceChild(this.getNode(), newNode);
     if (!(newNode.getPsi() instanceof GrArgumentList)) {
       throw new IncorrectOperationException();
