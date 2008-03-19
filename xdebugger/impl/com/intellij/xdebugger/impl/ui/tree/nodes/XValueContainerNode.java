@@ -45,7 +45,6 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   public void addChildren(final List<XValue> children, final boolean last) {
     DebuggerUIUtil.invokeLater(new Runnable() {
       public void run() {
-        myCachedAllChildren = null;
         if (myValueChildren == null) {
           myValueChildren = new ArrayList<XValueContainerNode<?>>();
         }
@@ -55,6 +54,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
         if (last) {
           myMessageChildren = null;
         }
+        myCachedAllChildren = null;
         fireNodeChildrenChanged();
         myTree.childrenLoaded(XValueContainerNode.this, myValueChildren, last);
       }
