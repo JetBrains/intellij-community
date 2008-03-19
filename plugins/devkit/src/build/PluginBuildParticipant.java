@@ -22,15 +22,22 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.descriptors.ConfigFile;
+import com.intellij.util.descriptors.CustomConfigFile;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.dom.Dependency;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 
 /**
@@ -165,6 +172,34 @@ public class PluginBuildParticipant extends BuildParticipantBase {
         makeUtil.addLibraryLink(context, instructions, libraryLink, getModule(), explodedPath);
       }
     }
+  }
+
+  protected CustomConfigFile[] getCustomDescriptors() {
+    final ConfigFile[] configFiles = getDeploymentDescriptors();
+    if (configFiles.length == 1) {
+      final ConfigFile configFile = configFiles[0];
+      final XmlFile xmlFile = configFile.getXmlFile();
+      if (xmlFile != null) {
+        final XmlDocument document = xmlFile.getDocument();
+        if (document != null) {
+          final DomElement domElement = DomManager.getDomManager(xmlFile.getProject()).getDomElement(document.getRootTag());
+          if (domElement instanceof IdeaPlugin) {
+            final ArrayList<CustomConfigFile> list = new ArrayList<CustomConfigFile>();
+            for(Dependency dependency: ((IdeaPlugin)domElement).getDependencies()) {
+              final String file = dependency.getConfigFile().getValue();
+              final VirtualFile virtualFile = configFile.getVirtualFile();
+              assert virtualFile != null;
+              final VirtualFile parent = virtualFile.getParent();
+              assert parent != null;
+              final String url = parent.getUrl();
+              list.add(new CustomConfigFile(url + "/" + file, configFile.getMetaData().getDirectoryPath()));
+            }
+            return list.toArray(new CustomConfigFile[list.size()]);
+          }
+        }
+      }
+    }
+    return super.getCustomDescriptors();
   }
 
   protected ConfigFile[] getDeploymentDescriptors() {
