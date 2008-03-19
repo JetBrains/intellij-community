@@ -165,16 +165,10 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     final PyStatementList statementList = getStatementList();
-    for (PsiElement element : statementList.getChildren()) {
-      if (element instanceof PyFunction) {
-        final PyFunction function = (PyFunction)element;
-        final String name = function.getName();
-        if ("__init__".equals(name)) {
-          if (!processFields(processor, function, substitutor)) return false;
-        }
-        else {
-          if (!processor.execute(element, substitutor)) return false;
-        }
+    for(PyFunction func: getMethods()) {
+      if (!processor.execute(func, substitutor)) return false;
+      if ("__init__".equals(func.getName())) {
+        if (!processFields(processor, func, substitutor)) return false;
       }
     }
     for (PsiElement psiElement : statementList.getChildren()) {
