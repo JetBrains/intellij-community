@@ -99,6 +99,10 @@ public class ResolveUtil {
         if (!processElement(processor, defaultMethod)) return false;
       }
 
+      for (PsiMethod method : DynamicManager.getInstance(project).getMethods(qName)) {
+        if (!processElement(processor, method)) return false;
+      }
+
       for (PsiType superType : type.getSuperTypes()) {
         if (!processNonCodeMethods(TypeConversionUtil.erasure(superType), processor, project, visited)) return false;
       }

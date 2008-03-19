@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -118,4 +119,6 @@ public abstract class DynamicManager implements ProjectComponent, PersistentStat
   public abstract GrDynamicImplicitPropertyImpl getCashedOrCreateProperty(PsiManager manager, String name, String type, String containingClassQualifiedName, PsiFile containingFile);
 
   public abstract String[] getMethodsNamesOfClass(String qualifiedName);
+
+  public abstract Iterable<PsiMethod> getMethods(String classQname);
 }

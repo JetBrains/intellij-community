@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -30,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitPropertyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
@@ -54,10 +56,8 @@ public class DynamicManagerImpl extends DynamicManager {
   private List<DynamicChangeListener> myListeners = new ArrayList<DynamicChangeListener>();
   private DRootElement myRootElement = new DRootElement();
 
-  //Pair: Pair<ClassName, Pair<MethodName, argumentsTypes>>
   private final Map<Pair<String, Pair<String, Pair<String, String[]>>>, GrDynamicImplicitMethodImpl> myNamesToMethodsMap = new HashMap<Pair<String, Pair<String, Pair<String, String[]>>>, GrDynamicImplicitMethodImpl>();
 
-  //Pair: Pair<ClassName, Pair<PropretyName, Type>>
   private final Map<Pair<String, Pair<String, String>>, GrDynamicImplicitPropertyImpl> myNamesToPropertiesMap = new HashMap<Pair<String, Pair<String, String>>, GrDynamicImplicitPropertyImpl>();
 
   public DynamicManagerImpl(Project project) {
@@ -336,7 +336,7 @@ public class DynamicManagerImpl extends DynamicManager {
 
     if (implicitMethod != null) return implicitMethod;
 
-    final GrMethod method = (new GroovyPsiElementFactoryImpl(myProject)).createMethodFromText(name, type, paramTypes);
+    final GrMethod method = GroovyPsiElementFactory.getInstance(myProject).createMethodFromText(name, type, paramTypes);
 
     final GrDynamicImplicitMethodImpl newMethod = new GrDynamicImplicitMethodImpl(manager, method, containingClassName, containingFile);
     myNamesToMethodsMap.put(pair, newMethod);
@@ -367,6 +367,10 @@ public class DynamicManagerImpl extends DynamicManager {
     }
 
     return result.toArray(new String[result.size()]);
+  }
+
+  public Iterable<PsiMethod> getMethods(String classQname) {
+    return Collections.emptyList();
   }
 
   public String replaceClassName(String oldClassName, String newClassName) {

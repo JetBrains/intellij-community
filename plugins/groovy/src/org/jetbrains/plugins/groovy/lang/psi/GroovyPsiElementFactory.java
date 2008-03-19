@@ -120,4 +120,6 @@ public abstract class GroovyPsiElementFactory {
   public abstract GrMethod createMethodFromText(String methodText);
 
   public abstract GroovyFile createGroovyFile(String text, boolean isPhisical, PsiElement context);
+
+  public abstract GrMethod createMethodFromText(String name, String type, String[] paramTypes);
 }
