@@ -82,6 +82,9 @@ public class CvsChangeProvider implements ChangeProvider {
         processFile(path, builder);
       }
     }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Done processing changes");
+    }
   }
 
   public boolean isModifiedDocumentTrackingRequired() {
