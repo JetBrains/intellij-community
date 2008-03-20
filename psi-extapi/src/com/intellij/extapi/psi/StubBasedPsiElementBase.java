@@ -13,6 +13,7 @@ import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegatePsiElement {
   private volatile T myStub;
@@ -73,4 +74,29 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   public void setStub(T stub) {
     myStub = stub;
   }
+
+  @Nullable
+  protected PsiElement getStubOrPsiChild(final IElementType elementType) {
+    if (myStub != null) {
+      final StubElement element = myStub.findChildStubByType(elementType);
+      if (element != null) {
+        return element.getPsi();
+      }
+    }
+    else {
+      final ASTNode childNode = getNode().findChildByType(elementType);
+      if (childNode != null) {
+        return childNode.getPsi();
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  protected PsiElement getRequiredStubOrPsiChild(final IElementType elementType) {
+    PsiElement result = getStubOrPsiChild(elementType);
+    assert result != null: "Missing required child of type " + elementType;
+    return result;
+  }
+
 }

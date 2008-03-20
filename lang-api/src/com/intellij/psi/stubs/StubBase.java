@@ -5,6 +5,8 @@ package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +31,16 @@ public abstract class StubBase<T extends PsiElement> implements StubElement<T> {
 
   public List<StubElement> getChildrenStubs() {
     return myChildren;
+  }
+
+  @Nullable
+  public StubElement findChildStubByType(final IElementType elementType) {
+    for (StubElement childStub : getChildrenStubs()) {
+      if (childStub.getStubType() == elementType) {
+        return childStub;
+      }
+    }
+    return null;
   }
 
   public void setPsi(final T psi) {
