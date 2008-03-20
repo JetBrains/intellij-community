@@ -218,7 +218,7 @@ public class TypesUtil {
     return manager.getElementFactory().createTypeByFQClassName(fqName, context.getResolveScope());
   }
 
-  public static PsiClassType getJavaLangObject(PsiElement context) {
+  public static PsiClassType getJavaLangObject(GroovyPsiElement context) {
     return PsiType.getJavaLangObject(context.getManager(), context.getResolveScope());
   }
 }
