@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ public class JNDIResourceInspection extends BaseInspection {
 
         @NonNls private static final String LIST = "list";
         @NonNls private static final String LIST_BINDING = "listBindings";
+        @NonNls private static final String GET_ALL = "getAll";
 
         @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
@@ -106,7 +107,8 @@ public class JNDIResourceInspection extends BaseInspection {
         }
 
 
-        @Override public void visitNewExpression(@NotNull PsiNewExpression expression){
+        @Override public void visitNewExpression(
+                @NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);
             if(!isJNDIResource(expression)){
                 return;
@@ -152,8 +154,7 @@ public class JNDIResourceInspection extends BaseInspection {
                     return;
                 }
                 if(resourceIsOpenedInTryAndClosedInFinally(tryStatement,
-                        expression,
-                        boundVariable)){
+                        expression, boundVariable)) {
                     return;
                 }
                 currentContext = tryStatement;
@@ -161,7 +162,7 @@ public class JNDIResourceInspection extends BaseInspection {
         }
 
         private static boolean resourceIsOpenedInTryAndClosedInFinally(
-                PsiTryStatement tryStatement, PsiExpression lhs,
+                PsiTryStatement tryStatement, PsiExpression resourceExpression,
                 PsiVariable boundVariable){
             final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
             if(finallyBlock == null){
@@ -171,7 +172,7 @@ public class JNDIResourceInspection extends BaseInspection {
             if(tryBlock == null){
                 return false;
             }
-            if(!PsiTreeUtil.isAncestor(tryBlock, lhs, true)){
+            if(!PsiTreeUtil.isAncestor(tryBlock, resourceExpression, true)){
                 return false;
             }
             return containsResourceClose(finallyBlock, boundVariable);
@@ -195,16 +196,27 @@ public class JNDIResourceInspection extends BaseInspection {
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
-            if(!(LIST.equals(methodName) || LIST_BINDING.equals(methodName))){
+            if (LIST.equals(methodName) || LIST_BINDING.equals(methodName)) {
+                final PsiExpression qualifier =
+                        methodExpression.getQualifierExpression();
+                if (qualifier == null) {
+                    return false;
+                }
+                return TypeUtils.expressionHasTypeOrSubtype(qualifier,
+                        "javax.naming.Context");
+            } else if (GET_ALL.equals(methodName)) {
+                final PsiExpression qualifier =
+                        methodExpression.getQualifierExpression();
+                if (qualifier == null) {
+                    return false;
+                }
+                return TypeUtils.expressionHasTypeOrSubtype(qualifier,
+                        "javax.naming.directory.Attribute") ||
+                        TypeUtils.expressionHasTypeOrSubtype(qualifier,
+                                "javax.naming.directory.Attributes");
+            } else {
                 return false;
             }
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if(qualifier == null){
-                return false;
-            }
-            return TypeUtils.expressionHasTypeOrSubtype(qualifier,
-		            "javax.naming.Context");
         }
     }
 
