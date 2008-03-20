@@ -3,6 +3,7 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.tree.IElementType;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class StubBase<T extends PsiElement> implements StubElement<T> {
+public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase implements StubElement<T> {
   private final StubElement myParent;
   private final List<StubElement> myChildren = new ArrayList<StubElement>();
   private final IStubElementType myElementType;

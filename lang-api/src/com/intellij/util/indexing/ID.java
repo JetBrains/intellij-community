@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NonNls;
  * @author Eugene Zhuravlev
  *         Date: Feb 12, 2008
  */
-public final class ID<K, V> {
+public class ID<K, V> {
   private static int ourCounter = 0;
   
   private final int myIndex = ourCounter++;

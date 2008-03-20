@@ -125,7 +125,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     final Map<Key, Value> oldData = mapOld(oldContent);
     final Map<Key, Value> data = mapNew(content);
 
-    update(inputId, oldData, data);
+    updateWithMap(inputId, oldData, data);
   }
 
   protected Map<Key, Value> mapNew(final Input content) {
@@ -136,10 +136,10 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     return oldContent != null? myIndexer.map(oldContent) : Collections.<Key, Value>emptyMap();
   }
 
-  private void update(final int inputId, final Map<Key, Value> oldData, final Map<Key, Value> data) throws StorageException {
-    final Set<Key> allKeys = new HashSet<Key>(oldData.size() + data.size());
+  protected void updateWithMap(final int inputId, final Map<Key, Value> oldData, final Map<Key, Value> newData) throws StorageException {
+    final Set<Key> allKeys = new HashSet<Key>(oldData.size() + newData.size());
     allKeys.addAll(oldData.keySet());
-    allKeys.addAll(data.keySet());
+    allKeys.addAll(newData.keySet());
 
     if (allKeys.size() > 0) {
       final Lock writeLock = getWriteLock();
@@ -152,8 +152,8 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
             myStorage.removeValue(key, inputId, oldValue);
           }
           // add new values
-          if (data.containsKey(key)) {
-            final Value newValue = data.get(key);
+          if (newData.containsKey(key)) {
+            final Value newValue = newData.get(key);
             myStorage.addValue(key, inputId, newValue);
           }
         }

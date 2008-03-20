@@ -5,7 +5,6 @@ import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -24,12 +23,10 @@ import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -39,13 +36,13 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
 import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -66,20 +63,14 @@ import java.util.concurrent.locks.Lock;
 )
 public class FileBasedIndex implements ApplicationComponent, PersistentStateComponent<FileBasedIndexState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndex");
-  
-  private static final int VERSION = 3;
 
   private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>> myIndices = new HashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
   private final Set<ID<?, ?>> myNeedContentLoading = new HashSet<ID<?, ?>>();
   private FileBasedIndexState myPreviouslyRegistered;
 
-  private final TObjectLongHashMap<ID<?, ?>> myIndexIdToCreationStamp = new TObjectLongHashMap<ID<?, ?>>();
-
   private final Map<Document, AtomicLong> myLastIndexedDocStamps = new HashMap<Document, AtomicLong>();
   private final Map<Document, CharSequence> myLastIndexedUnsavedContent = new HashMap<Document, CharSequence>();
-  
-  private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
   private ChangedFilesUpdater myChangedFilesUpdater;
 
@@ -121,7 +112,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     myChangedFilesUpdater = new ChangedFilesUpdater();
     vfManager.addVirtualFileListener(myChangedFilesUpdater);
     vfManager.registerRefreshUpdater(myChangedFilesUpdater);
-    myFileContentAttic = new FileContentStorage(new File(getPersistenceRoot(), "updates.tmp"));
+    myFileContentAttic = new FileContentStorage(new File(IndexInfrastructure.getPersistenceRoot(), "updates.tmp"));
   }
 
   public static FileBasedIndex getInstance() {
@@ -139,23 +130,23 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       myNeedContentLoading.add(name);
     }
     myIndexIdToVersionMap.put(name, version);
-    final File versionFile = getVersionFile(name);
-    if (versionDiffers(versionFile, version)) {
-      FileUtil.delete(getIndexRootDir(name));
-      rewriteVersion(versionFile, version);
+    final File versionFile = IndexInfrastructure.getVersionFile(name);
+    if (IndexInfrastructure.versionDiffers(versionFile, version)) {
+      FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
+      IndexInfrastructure.rewriteVersion(versionFile, version);
     }
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        final MapIndexStorage<K, V> storage = new MapIndexStorage<K, V>(getStorageFile(name), extension.getKeyDescriptor(), extension.getValueExternalizer());
+        final MapIndexStorage<K, V> storage = new MapIndexStorage<K, V>(IndexInfrastructure.getStorageFile(name), extension.getKeyDescriptor(), extension.getValueExternalizer());
         final MemoryIndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
         final UpdatableIndex<K, V, FileContent> index = createIndex(extension, memStorage);
         myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, extension.getInputFilter()));
         break;
       }
       catch (IOException e) {
-        FileUtil.delete(getIndexRootDir(name));
-        rewriteVersion(versionFile, version);
+        FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
+        IndexInfrastructure.rewriteVersion(versionFile, version);
       }
     }
   }
@@ -166,23 +157,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
     else {
       return new MapReduceIndex<K, V, FileContent>(extension.getIndexer(), memStorage);
-    }
-  }
-
-  private static boolean versionDiffers(final File versionFile, final int currentIndexVersion) {
-    try {
-      final DataInputStream in = new DataInputStream(new FileInputStream(versionFile));
-      try {
-        final int savedIndexVersion = in.readInt();
-        final int commonVersion = in.readInt();
-        return (savedIndexVersion != currentIndexVersion) || (commonVersion != VERSION); 
-      }
-      finally {
-        in.close();
-      }
-    }
-    catch (IOException e) {
-      return true;
     }
   }
 
@@ -297,7 +271,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
             final V value = valueIt.next();
             for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext();) {
               final int id = inputIdsIterator.next();
-              VirtualFile file = findFileById(dirIndex, fs, id);
+              VirtualFile file = IndexInfrastructure.findFileById(dirIndex, fs, id);
               if (file != null) {
                 processor.process(file, value);
                 if (ensureValueProcessedOnce) {
@@ -335,7 +309,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
     getIndex(indexId).clear();
     try {
-      rewriteVersion(getVersionFile(indexId), myIndexIdToVersionMap.get(indexId));
+      IndexInfrastructure.rewriteVersion(IndexInfrastructure.getVersionFile(indexId), myIndexIdToVersionMap.get(indexId));
     }
     catch (IOException e) {
       LOG.error(e);
@@ -384,28 +358,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       }
       semaphore.waitFor();
     }
-  }
-
-  @Nullable
-  private static VirtualFile findFileById(final DirectoryIndex dirIndex, final PersistentFS fs, final int id) {
-    if (ourUnitTestMode) {
-      final VirtualFile testFile = findTestFile(id);
-      if (testFile != null) {
-        return testFile;
-      }
-    }
-    
-    final boolean isDirectory = fs.isDirectory(id);
-    final DirectoryInfo directoryInfo = isDirectory ? dirIndex.getInfoForDirectoryId(id) : dirIndex.getInfoForDirectoryId(fs.getParent(id));
-    if (directoryInfo != null && (directoryInfo.contentRoot != null || directoryInfo.sourceRoot != null)) {
-      return isDirectory? directoryInfo.directory : directoryInfo.directory.findChild(fs.getName(id));
-    }
-    return null;
-  }
-
-  @Nullable
-  private static VirtualFile findTestFile(final int id) {
-    return ourUnitTestMode ? DummyFileSystem.getInstance().findById(id) : null;
   }
 
   public void indexUnsavedDocuments() throws StorageException {
@@ -478,7 +430,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       indicesToDrop.remove(key.toString());
     }
     for (String s : indicesToDrop) {
-      FileUtil.delete(getIndexRootDir(new ID(s)));
+      FileUtil.delete(IndexInfrastructure.getIndexRootDir(new ID(s)));
     }
   }
 
@@ -497,61 +449,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   private InputFilter getInputFilter(ID<?, ?> indexId) {
     final Pair<UpdatableIndex<?, ?, FileContent>, InputFilter> pair = myIndices.get(indexId);
     return pair != null? pair.getSecond() : null;
-  }
-
-  private long getIndexCreationStamp(ID<?, ?> indexName) {
-    long stamp = myIndexIdToCreationStamp.get(indexName);
-    if (stamp <= 0) {
-      stamp = getVersionFile(indexName).lastModified();
-      myIndexIdToCreationStamp.put(indexName, stamp);
-    }
-    return stamp;
-  }
-  
-  private static File getVersionFile(final ID<?, ?> indexName) {
-    return new File(getIndexRootDir(indexName), indexName + ".ver");
-  }
-
-  private static File getStorageFile(final ID<?, ?> indexName) {
-    return new File(getIndexRootDir(indexName), indexName.toString());
-  }
-
-  private static File getIndexRootDir(final ID<?, ?> indexName) {
-    final File indexDir = new File(getPersistenceRoot(), indexName.toString().toLowerCase(Locale.US));
-    indexDir.mkdirs();
-    return indexDir;
-  }
-
-  private static File getPersistenceRoot() {
-    File file = new File(PathManager.getSystemPath(), "index");
-    try {
-      file = file.getCanonicalFile();
-    }
-    catch (IOException ignored) {
-    }
-    file.mkdirs();
-    return file;
-  }
-
-  private void rewriteVersion(final File file, final int version) throws IOException {
-    FileUtil.delete(file);
-    try {
-      // need this to ensure the timestamp of the newly created file will be different 
-      Thread.sleep(501);
-    }
-    catch (InterruptedException ignored) {
-    }
-    file.getParentFile().mkdirs();
-    file.createNewFile();
-    final DataOutputStream os = new DataOutputStream(new FileOutputStream(file));
-    try {
-      os.writeInt(version);
-      os.writeInt(VERSION);
-    }
-    finally {
-      myIndexIdToCreationStamp.clear();
-      os.close();
-    }
   }
 
   public void indexFileContent(com.intellij.ide.startup.FileContent content) {
@@ -591,7 +488,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     index.update(inputId, currentFC, oldFC);
     if (file.isValid()) {
       if (currentFC != null) {
-        IndexingStamp.update(file, indexId, getIndexCreationStamp(indexId));
+        IndexingStamp.update(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
       }
       else {
         // mark the file as unindexed
@@ -695,7 +592,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       else {
         final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(myIndices.size());
         for (ID<?, ?> indexId : myIndices.keySet()) {
-          if (getInputFilter(indexId).acceptInput(file) && IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId))) {
+          if (getInputFilter(indexId).acceptInput(file) && IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId))) {
             if (myNeedContentLoading.contains(indexId)) {
               affectedIndices.add(indexId);
             }
@@ -874,7 +771,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     private boolean shouldIndexFile(final VirtualFile file, final ID<?, ?> indexId) {
-      return getInputFilter(indexId).acceptInput(file) && !IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId));
+      return getInputFilter(indexId).acceptInput(file) && !IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
     }
   }
 

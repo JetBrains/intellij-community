@@ -4,8 +4,10 @@
 package com.intellij.extapi.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.stubs.IStubElementType;
@@ -36,6 +38,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   public ASTNode getNode() {
     if (myNode == null) {
       PsiFileImpl file = (PsiFileImpl)getContainingFile();
+      assert file.getTreeElement() == null;
       file.loadTreeElement();
       if (myNode == null) {
         assert false: "failed to bind stub to AST for element " + this + " in " +
@@ -61,6 +64,44 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     }
 
     return super.getContainingFile();
+  }
+
+  public boolean isWritable() {
+    return getContainingFile().isWritable();
+  }
+
+  public boolean isValid() {
+    if (myStub != null) {
+      if (myStub instanceof PsiFileStub) {
+        return myStub.getPsi().isValid();
+      }
+
+      return myStub.getParentStub().getPsi().isValid();
+    }
+
+    return super.isValid();
+  }
+
+  public PsiManagerEx getManager() {
+    return (PsiManagerEx)getContainingFile().getManager();
+  }
+
+  @NotNull
+  public Project getProject() {
+    return getContainingFile().getProject();
+  }
+
+  public boolean isPhysical() {
+    return getContainingFile().isPhysical();
+  }
+
+  public PsiElement getContext() {
+    if (myStub != null) {
+      if (!(myStub instanceof PsiFileStub)) {
+        return myStub.getParentStub().getPsi();
+      }
+    }
+    return super.getContext();
   }
 
   public PsiElement getParent() {

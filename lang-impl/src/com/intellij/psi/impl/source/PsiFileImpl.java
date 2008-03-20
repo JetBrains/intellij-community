@@ -216,6 +216,32 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return treeElement;
   }
 
+  public ASTNode findTreeForStub(StubTree tree, StubElement stub) {
+    final Iterator<StubElement<?>> stubs = tree.getPlainList().iterator();
+    stubs.next();
+    return findTreeForStub(calcTreeElement(), stubs, stub);
+  }
+
+  private static ASTNode findTreeForStub(ASTNode tree, final Iterator<StubElement<?>> stubs, final StubElement stub) {
+    if (tree instanceof ChameleonElement) {
+      tree = ChameleonTransforming.transform((ChameleonElement)tree);
+    }
+
+    final IElementType type = tree.getElementType();
+
+    if (type instanceof IStubElementType && ((IStubElementType) type).shouldCreateStub(tree)) {
+      final StubElement curStub = stubs.next();
+      if (curStub == stub) return tree;
+    }
+
+    for (ASTNode node : tree.getChildren(null)) {
+      final ASTNode treeForStub = findTreeForStub(node, stubs, stub);
+      if (treeForStub != null) return treeForStub;
+    }
+
+    return null;
+  }
+
 
   private static void switchFromStubToAST(ASTNode tree, Iterator<StubElement<?>> stubs) {
     if (tree instanceof ChameleonElement) {
@@ -504,21 +530,24 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   @Nullable
   public StubElement getStub() {
+    StubTree stubHolder = getStubTree();
+    return stubHolder != null ? stubHolder.getRoot() : null;
+  }
+
+  @Nullable
+  public StubTree getStubTree() {
     StubTree stubHolder = myStub != null ? myStub.get() : null;
     if (stubHolder == null) {
-      if (getTreeElement() != null) return null;
+      if (getTreeElement() == null) {
 
-      final VirtualFile vFile = getVirtualFile();
-      stubHolder = StubTree.readFromVFile(vFile, getProject());
-      if (stubHolder == null) {
-        return null;
-      }
-      else {
-        myStub = new WeakReference<StubTree>(stubHolder);
-        ((PsiFileStubImpl)stubHolder.getRoot()).setPsi(this);
+        final VirtualFile vFile = getVirtualFile();
+        stubHolder = StubTree.readFromVFile(vFile, getProject());
+        if (stubHolder != null) {
+          myStub = new WeakReference<StubTree>(stubHolder);
+          ((PsiFileStubImpl)stubHolder.getRoot()).setPsi(this);
+        }
       }
     }
-
-    return stubHolder.getRoot();
+    return stubHolder;
   }
 }

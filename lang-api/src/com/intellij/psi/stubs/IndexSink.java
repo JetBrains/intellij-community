@@ -3,6 +3,8 @@
  */
 package com.intellij.psi.stubs;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface IndexSink {
-  void occurence(StubIndexKey indexKey, Object value);
+  void occurence(@NotNull StubIndexKey indexKey, @NotNull Object value);
 }
