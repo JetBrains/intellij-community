@@ -54,6 +54,10 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   @Override
   public String getName() {
+    final PyTargetExpressionStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
+    }
     ASTNode node = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
     return node != null ? node.getText() : null;
   }

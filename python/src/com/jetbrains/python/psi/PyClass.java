@@ -50,4 +50,8 @@ public interface PyClass extends PsiNamedElement, PyElement, PyDocStringOwner, S
 
   @Nullable
   PyFunction findMethodByName(@NotNull final String name);
+
+  PyTargetExpression[] getClassAttributes();
+
+  PyTargetExpression[] getInstanceAttributes();
 }

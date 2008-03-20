@@ -17,7 +17,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -25,9 +24,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassStub;
+import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.validation.DocStringAnnotator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,7 +111,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (superExpressions != null) {
       List<PsiElement> superClasses = new ArrayList<PsiElement>();
       for(PyExpression expr: superExpressions) {
-        if (expr instanceof PyReferenceExpression && !"object".equals(expr.getText())) {
+        if (expr instanceof PyReferenceExpression && !PyNames.OBJECT.equals(expr.getText())) {
           PyReferenceExpression ref = (PyReferenceExpression) expr;
           final PsiElement result = ref.resolve();
           if (result != null) {
@@ -139,6 +140,10 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @NotNull
   public PyFunction[] getMethods() {
+    final PyClassStub classStub = getStub();
+    if (classStub != null) {
+      return classStub.getChildrenByType(PyElementTypes.FUNCTION_DECLARATION, new PyFunction[0]);
+    }
     List<PyFunction> result = new ArrayList<PyFunction>();
     final PyStatementList statementList = getStatementList();
     for (PsiElement element : statementList.getChildren()) {
@@ -159,58 +164,74 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return null;
   }
 
-  @Override
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState substitutor,
-                                     PsiElement lastParent,
-                                     @NotNull PsiElement place) {
-    final PyStatementList statementList = getStatementList();
-    for(PyFunction func: getMethods()) {
-      if (!processor.execute(func, substitutor)) return false;
-      if ("__init__".equals(func.getName())) {
-        if (!processFields(processor, func, substitutor)) return false;
-      }
+  public PyTargetExpression[] getClassAttributes() {
+    PyClassStub stub = getStub();
+    if (stub != null) {
+      return stub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, new PyTargetExpression[0]);
     }
-    for (PsiElement psiElement : statementList.getChildren()) {
+    List<PyTargetExpression> result = new ArrayList<PyTargetExpression>();
+    for (PsiElement psiElement : getStatementList().getChildren()) {
       if (psiElement instanceof PyAssignmentStatement) {
         final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)psiElement;
         final PyExpression[] targets = assignmentStatement.getTargets();
         for (PyExpression target : targets) {
           if (target instanceof PyTargetExpression) {
-            if (!processor.execute(target, substitutor)) return false;
+            result.add((PyTargetExpression) target);
           }
         }
       }
     }
-    if (processor instanceof PyResolveUtil.VariantsProcessor) {
-      return true;
-    }
-    return processor.execute(this, substitutor);
+    return result.toArray(new PyTargetExpression[result.size()]);
   }
 
-  private static boolean processFields(final PsiScopeProcessor processor, final PyFunction function, final ResolveState substitutor) {
-    final PyParameter[] params = function.getParameterList().getParameters();
-    if (params.length == 0) return true;
-    final Ref<Boolean> result = new Ref<Boolean>();
-    function.getStatementList().accept(new PyRecursiveElementVisitor() {
+  public PyTargetExpression[] getInstanceAttributes() {
+    PyFunctionImpl initMethod = (PyFunctionImpl) findMethodByName(PyNames.INIT);
+    if (initMethod == null) return PyTargetExpression.EMPTY_ARRAY;
+    final PyParameter[] params = initMethod.getParameterList().getParameters();
+    if (params.length == 0) return PyTargetExpression.EMPTY_ARRAY;
+
+    final PyFunctionStub methodStub = initMethod.getStub();
+    if (methodStub != null) {
+      return methodStub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, new PyTargetExpression[0]);
+    }
+
+    final List<PyTargetExpression> result = new ArrayList<PyTargetExpression>();
+    initMethod.getStatementList().accept(new PyRecursiveElementVisitor() {
       public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
-        if (!result.isNull()) return;
         super.visitPyAssignmentStatement(node);
         final PyExpression[] targets = node.getTargets();
         for(PyExpression target: targets) {
           if (target instanceof PyTargetExpression) {
             PyExpression qualifier = ((PyTargetExpression) target).getQualifier();
             if (qualifier != null && qualifier.getText().equals(params [0].getName())) {
-              if (!processor.execute(target, substitutor)) {
-                result.set(Boolean.FALSE);
-              }
+              result.add((PyTargetExpression)target);
             }
           }
         }
       }
     });
 
-    return result.isNull();
+    return result.toArray(new PyTargetExpression[result.size()]);
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState substitutor,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    for(PyFunction func: getMethods()) {
+      if (!processor.execute(func, substitutor)) return false;
+    }
+    for(PyTargetExpression expr: getClassAttributes()) {
+      if (!processor.execute(expr, substitutor)) return false;
+    }
+    for(PyTargetExpression expr: getInstanceAttributes()) {
+      if (!processor.execute(expr, substitutor)) return false;
+    }
+    if (processor instanceof PyResolveUtil.VariantsProcessor) {
+      return true;
+    }
+    return processor.execute(this, substitutor);
   }
 
   public int getTextOffset() {

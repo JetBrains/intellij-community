@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use File | Settings | File Templates.
  */
 public interface PyTargetExpression extends PyExpression, PsiNamedElement, StubBasedPsiElement<PyTargetExpressionStub> {
+  PyTargetExpression[] EMPTY_ARRAY = new PyTargetExpression[0];
+  
   @Nullable
   PyExpression getQualifier();
 }

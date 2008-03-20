@@ -15,10 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 
@@ -54,14 +51,26 @@ public class PyStubsTest extends CodeInsightTestCase {
     PyClass pyClass = classes.get(0);
     assertEquals("FooClass", pyClass.getName());
 
+    final PyTargetExpression[] attrs = pyClass.getClassAttributes();
+    assertEquals(1, attrs.length);
+    assertEquals("staticField", attrs [0].getName());
+
+    final PyFunction[] methods = pyClass.getMethods();
+    assertEquals(2, methods.length);
+    assertEquals("__init__", methods [0].getName());
+    assertEquals("fooFunction", methods [1].getName());
+
+    final PyTargetExpression[] instanceAttrs = pyClass.getInstanceAttributes();
+    assertEquals(1, instanceAttrs.length);
+    assertEquals("instanceField", instanceAttrs [0].getName());
+
     final List<PyFunction> functions = file.getTopLevelFunctions();
     assertEquals(1, functions.size());
     PyFunction func = functions.get(0);
 
     assertEquals("topLevelFunction", func.getName());
 
-    // Ensure all these operations were performed without actually parsing the file
-    assertNull(((PyFileImpl)file).getTreeElement());
+    assertNull("Operations should have been performed on stubs but caused file to be parsed", ((PyFileImpl)file).getTreeElement());
   }
   
   public void testLoadingDeeperTreeRemainsKnownPsiElement() throws Exception {
@@ -72,8 +81,7 @@ public class PyStubsTest extends CodeInsightTestCase {
 
     assertEquals("SomeClass", pyClass.getName());
 
-    // Ensure we haven't loaded the tree yet.
-    assertNull(((PyFileImpl)file).getTreeElement());
+    assertNull("Operations should have been performed on stubs but caused file to be parsed", ((PyFileImpl)file).getTreeElement());
 
     // load the tree now
     final PyStatementList statements = pyClass.getStatementList();
@@ -93,8 +101,7 @@ public class PyStubsTest extends CodeInsightTestCase {
 
     assertEquals("SomeClass", pyClass.getName());
 
-    // Ensure we haven't loaded the tree yet.
-    assertNull(((PyFileImpl)file).getTreeElement());
+    assertNull("Operations should have been performed on stubs but caused file to be parsed", ((PyFileImpl)file).getTreeElement());
 
     final PsiElement[] children = file.getChildren(); // Load the tree
 
