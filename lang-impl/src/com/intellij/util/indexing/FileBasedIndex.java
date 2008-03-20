@@ -408,7 +408,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     return ourUnitTestMode ? DummyFileSystem.getInstance().findById(id) : null;
   }
 
-  private void indexUnsavedDocuments() throws StorageException {
+  public void indexUnsavedDocuments() throws StorageException {
     myChangedFilesUpdater.forceUpdate();
     
     final FileDocumentManager fdManager = FileDocumentManager.getInstance();
