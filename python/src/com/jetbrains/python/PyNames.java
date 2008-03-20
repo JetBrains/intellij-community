@@ -6,6 +6,8 @@ import org.jetbrains.annotations.NonNls;
  * @author yole
  */
 public class PyNames {
+  @NonNls public static final String NONE = "None";
+
   private PyNames() {
   }
 

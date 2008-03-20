@@ -98,7 +98,17 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   public PyType getType() {
     if (getParent() instanceof PyAssignmentStatement) {
       final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)getParent();
-      return assignmentStatement.getAssignedValue().getType();
+      final PyExpression assignedValue = assignmentStatement.getAssignedValue();
+      if (assignedValue != null) {
+        if (assignedValue instanceof PyReferenceExpression) {
+          final PsiElement resolveResult = ((PyReferenceExpression)assignedValue).resolve();
+          if (resolveResult == this) {
+            return null;  // fix SOE on "a = a"
+          }
+          return PyReferenceExpressionImpl.getTypeFromTarget(resolveResult);          
+        }
+        return assignedValue.getType();
+      }
     }
     return null;
   }
