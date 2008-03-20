@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,8 +66,10 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,7 +85,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   @NonNls public static final String COPY_OF_PREFIX = "CopyOf";
   @NonNls public static final String NEW_FOLDER_POSTFIX = "NewFolder";
 
-  private RepositoryBrowserDialog.DeleteAction myDeleteAction = new DeleteAction();
+  private DeleteAction myDeleteAction = new DeleteAction();
+  private AnAction copyUrlAction = new CopyUrlAction();
 
   @NonNls private static final String PLACE_TOOLBAR = "RepositoryBrowser.Toolbar";
   @NonNls private static final String PLACE_MENU = "RepositoryBrowser.Menu";
@@ -125,6 +129,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     group.add(refreshAction);
 
     myDeleteAction.registerCustomShortcutSet(CommonShortcuts.DELETE, getRepositoryBrowser());
+    copyUrlAction = new CopyUrlAction();
+    copyUrlAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT,
+                                                              KeyEvent.CTRL_MASK|KeyEvent.CTRL_DOWN_MASK|
+                                                              KeyEvent.ALT_MASK|KeyEvent.ALT_DOWN_MASK)), getRepositoryBrowser());
 
     AnAction action = CommonActionsManager.getInstance().createCollapseAllAction(new TreeExpander() {
       public void expandAll() {
@@ -176,6 +184,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     group.add(new CopyAction());
     group.add(new MoveAction());
     group.add(myDeleteAction);
+    group.add(copyUrlAction);
     group.addSeparator();
     group.add(new RefreshAction());
     group.add(new DiscardLocationAction());
@@ -546,6 +555,22 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         String message = dialog.getCommitMessage();
         doCopy(src, dst, true, message);
         node.reload();
+      }
+    }
+  }
+
+  protected class CopyUrlAction extends AnAction {
+    public void update(AnActionEvent e) {
+      e.getPresentation().setText("Copy URL...");
+      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
+      e.getPresentation().setEnabled(node != null);
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      final RepositoryTreeNode treeNode = getRepositoryBrowser().getSelectedNode();
+      if (treeNode != null) {
+        final String url = treeNode.getURL().toString();
+        CopyPasteManager.getInstance().setContents(new StringSelection(url));
       }
     }
   }

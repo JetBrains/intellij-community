@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
@@ -43,9 +42,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 
 /**
  * Created by IntelliJ IDEA.
@@ -58,8 +54,6 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
 
   private JTree myRepositoryTree;
   private final SvnVcs myVCS;
-
-  private final static String COPY_URL = "CopyUrl";
 
   public RepositoryBrowserComponent(@NotNull SvnVcs vcs) {
     myVCS = vcs;
@@ -167,21 +161,6 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     myRepositoryTree.setCellRenderer(new SvnRepositoryTreeCellRenderer());
 
     EditSourceOnDoubleClickHandler.install(myRepositoryTree);
-
-    myRepositoryTree.getActionMap().put(COPY_URL, new CopyUrlAction());
-    myRepositoryTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT,
-                                                              KeyEvent.CTRL_MASK|KeyEvent.CTRL_DOWN_MASK|
-                                                              KeyEvent.ALT_MASK|KeyEvent.ALT_DOWN_MASK), COPY_URL);
-  }
-
-  private class CopyUrlAction extends AbstractAction {
-    public void actionPerformed(final ActionEvent e) {
-      final RepositoryTreeNode treeNode = getSelectedNode();
-      if (treeNode != null) {
-        final String url = treeNode.getURL().toString();
-        CopyPasteManager.getInstance().setContents(new StringSelection(url));
-      }
-    }
   }
 
   @Nullable
