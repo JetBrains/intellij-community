@@ -11,9 +11,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Constructor;
+
 public class PyElementType extends IElementType {
   protected Class<? extends PsiElement> _psiElementClass;
   private static final Class[] PARAMETER_TYPES = new Class[]{ASTNode.class};
+  private Constructor<? extends PsiElement> myConstructor;
 
   public PyElementType(@NotNull @NonNls String debugName) {
     super(debugName, PythonFileType.INSTANCE.getLanguage());
@@ -31,7 +34,11 @@ public class PyElementType extends IElementType {
     }
 
     try {
-      return _psiElementClass.getConstructor(PARAMETER_TYPES).newInstance(node);
+      if (myConstructor == null) {
+        myConstructor = _psiElementClass.getConstructor(PARAMETER_TYPES);
+      }
+
+      return myConstructor.newInstance(node);
     }
     catch (Exception e) {
       throw new IllegalStateException("No necessary constructor for " + node.getElementType(), e);
