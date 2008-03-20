@@ -70,6 +70,11 @@ public class PyStubsTest extends CodeInsightTestCase {
 
     assertEquals("topLevelFunction", func.getName());
 
+    final List<PyTargetExpression> exprs = file.getTopLevelAttributes();
+    assertEquals(2, exprs.size());
+    assertEquals("top1", exprs.get(0).getName());
+    assertEquals("top2", exprs.get(1).getName());
+
     assertNull("Operations should have been performed on stubs but caused file to be parsed", ((PyFileImpl)file).getTreeElement());
   }
   

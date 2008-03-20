@@ -15,4 +15,6 @@ public interface PyFile extends PyElement, PsiFile {
   List<PyClass> getTopLevelClasses();
 
   List<PyFunction> getTopLevelFunctions();
+
+  List<PyTargetExpression> getTopLevelAttributes();
 }

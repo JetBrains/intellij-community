@@ -220,12 +220,15 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     for(PyFunction func: getMethods()) {
+      if (func == lastParent) continue;
       if (!processor.execute(func, substitutor)) return false;
     }
     for(PyTargetExpression expr: getClassAttributes()) {
+      if (expr == lastParent) continue;
       if (!processor.execute(expr, substitutor)) return false;
     }
     for(PyTargetExpression expr: getInstanceAttributes()) {
+      if (expr == lastParent) continue;
       if (!processor.execute(expr, substitutor)) return false;
     }
     if (processor instanceof PyResolveUtil.VariantsProcessor) {

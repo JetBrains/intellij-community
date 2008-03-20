@@ -8,3 +8,7 @@ class FooClass:
 
 def topLevelFunction(tlfp1, tlfp2) :
   pass
+  
+top1 = 1
+if True:
+  top2 = 2
