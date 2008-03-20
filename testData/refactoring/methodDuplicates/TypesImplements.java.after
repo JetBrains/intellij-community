@@ -5,6 +5,6 @@ class Types {
 
   public void context() {
     String v = "child type";
-      char c = method(v);
+    char c = method(v);
   }
 }

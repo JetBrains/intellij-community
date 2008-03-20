@@ -6,15 +6,30 @@ package com.intellij.refactoring;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.idea.Bombed;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.idea.Bombed;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 
 public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
+  private LanguageLevel myPreviousLanguageLevel;
+
+  protected void setUp() throws Exception {
+    super.setUp();
+    myPreviousLanguageLevel = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
+    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+  }
+
+  protected void tearDown() throws Exception {
+    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myPreviousLanguageLevel);
+    super.tearDown();
+  }
+
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk("java 1.5");
   }
@@ -213,11 +228,11 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest();
   }
 
-  @Bombed(description = "Fails in sources, not in build.", user = "Anna Kozlova", month = 3, day = 25)
   public void testTypesGenericsConcrete2ConcreteDifferent() throws Exception {
     doTest(false);
   }
 
+  @Bombed(description = "Fails in sources, not in build.", user = "Anna Kozlova", month = 3, day = 25)
   public void testTypesGenericsConcrete2Extends() throws Exception {
     doTest();
   }
@@ -230,7 +245,6 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest();
   }
 
-  @Bombed(description = "Fails in sources, not in build.", user = "Anna Kozlova", month = 3, day = 25)
   public void testTypesGenericsConcrete2SuperDifferent() throws Exception {
     doTest(false);
   }
@@ -247,7 +261,6 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest();
   }
 
-  @Bombed(description = "Fails in sources, not in build.", user = "Anna Kozlova", month = 3, day = 25)
   public void testTypesImplements() throws Exception {
     doTest();
   }
