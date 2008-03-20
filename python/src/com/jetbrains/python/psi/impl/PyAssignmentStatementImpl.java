@@ -43,19 +43,20 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     pyVisitor.visitPyAssignmentStatement(this);
   }
 
-  @PsiCached
   public PyExpression[] getTargets() {
-    //TODO: this is incomplete. it should look for the = sign
     final ASTNode[] nodes = getNode().getChildren(PyElementTypes.EXPRESSIONS);
-    ASTNode[] targets = new ASTNode[nodes.length - 1];
-    System.arraycopy(nodes, 0, targets, 0, nodes.length - 1);
-    return PyPsiUtils.nodesToPsi(targets, PyExpression.EMPTY_ARRAY);
+    if (nodes.length > 0) {
+      final PyExpression target = (PyExpression) nodes [0].getPsi();
+      if (target instanceof PyTupleExpression) {
+        return ((PyTupleExpression) target).getElements();
+      }
+      return new PyExpression[] { target };
+    }
+    return PyExpression.EMPTY_ARRAY;
   }
 
-  @PsiCached
-  public
   @Nullable
-  PyExpression getAssignedValue() {
+  public PyExpression getAssignedValue() {
     PsiElement child = getLastChild();
     while (child != null && !(child instanceof PyExpression)) {
       child = child.getPrevSibling();
