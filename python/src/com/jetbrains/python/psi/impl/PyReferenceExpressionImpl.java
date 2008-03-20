@@ -25,11 +25,13 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyModuleType;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.types.PyNoneType;
+import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -203,12 +205,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   public boolean shouldHighlightIfUnresolved() {
-    return getQualifier() == null && !isBuiltInConstant();
+    if (isBuiltInConstant()) return false;
+    final PyExpression qualifier = getQualifier();
+    return qualifier == null /*|| qualifier.getType() != null*/;
   }
 
   private boolean isBuiltInConstant() {
     String name = getReferencedName();
-    return "None".equals(name) || "True".equals(name) || "False".equals(name);
+    return PyNames.NONE.equals(name) || "True".equals(name) || "False".equals(name);
   }
 
   @Nullable
@@ -222,7 +226,18 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   public PyType getType() {
+    if (getQualifier() == null) {
+      String name = getReferencedName();
+      if (PyNames.NONE.equals(name)) {
+        return PyNoneType.INSTANCE;
+      }
+    }
     PsiElement target = resolve();
+    return getTypeFromTarget(target);
+  }
+
+  @Nullable
+  public static PyType getTypeFromTarget(final PsiElement target) {
     if (target instanceof PyExpression) {
       return ((PyExpression) target).getType();
     }
