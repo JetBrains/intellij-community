@@ -17,6 +17,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -204,10 +205,16 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return processor.execute(this, substitutor);
   }
 
-  public boolean shouldHighlightIfUnresolved() {
-    if (isBuiltInConstant()) return false;
+  public HighlightSeverity getUnresolvedHighlightSeverity() {
+    if (isBuiltInConstant()) return null;
     final PyExpression qualifier = getQualifier();
-    return qualifier == null /*|| qualifier.getType() != null*/;
+    if (qualifier == null) {
+      return HighlightSeverity.ERROR;
+    }
+    if (qualifier.getType() != null) {
+      return HighlightSeverity.WARNING;
+    }
+    return null;
   }
 
   private boolean isBuiltInConstant() {
