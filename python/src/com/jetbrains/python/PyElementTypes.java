@@ -16,6 +16,8 @@ public interface PyElementTypes {
 
   PyStubElementType<PyParameterStub, PyParameter> FORMAL_PARAMETER = new PyFormalParameterElementType();
 
+  TokenSet FORMAL_PARAMETER_SET = TokenSet.create(FORMAL_PARAMETER);
+
   PyElementType DECORATED_FUNCTION_DECLARATION = new PyElementType("DECORATED_FUNCTION_DECLARATION", PyDecoratedFunctionImpl.class);
   PyElementType ARGUMENT_LIST = new PyElementType("ARGUMENT_LIST", PyArgumentListImpl.class);
   PyElementType IMPORT_ELEMENT = new PyElementType("IMPORT_ELEMENT", PyImportElementImpl.class);

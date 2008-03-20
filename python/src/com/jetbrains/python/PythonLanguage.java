@@ -4,12 +4,10 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.StubBuilder;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.impl.PyElementGeneratorImpl;
-import com.jetbrains.python.psi.impl.stubs.PyStubBuilder;
 import com.jetbrains.python.validation.*;
 
 import java.util.Set;
@@ -20,11 +18,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 public class PythonLanguage extends Language {
   private final PyElementGenerator elementGenerator = new PyElementGeneratorImpl(this);
-  private final IFileElementType ELTYPE_FILE = new IStubFileElementType(this) {
-    public StubBuilder getBuilder() {
-      return new PyStubBuilder();
-    }
-  };
+  private final IFileElementType ELTYPE_FILE = new IStubFileElementType(this);
   private final Set<Class<? extends PyAnnotator>> _annotators = new CopyOnWriteArraySet<Class<? extends PyAnnotator>>();
 
   public static PythonLanguage getInstance() {
