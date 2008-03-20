@@ -200,12 +200,38 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest();
   }
 
+  public void testTypesExtendsReturn() throws Exception {
+    doTest();
+  }
+
+  @Bombed(description = "Check issues: IDEADEV-25308.", user = "Anna Kozlova", month = 6, day = 20)
+  public void testTypesExtendsReturnDifferent() throws Exception {
+    doTest(false);
+  }
+
   public void testTypesGenericsConcrete2Concrete() throws Exception {
     doTest();
   }
 
   @Bombed(description = "Fails in sources, not in build.", user = "Anna Kozlova", month = 3, day = 25)
   public void testTypesGenericsConcrete2ConcreteDifferent() throws Exception {
+    doTest(false);
+  }
+
+  public void testTypesGenericsConcrete2Extends() throws Exception {
+    doTest();
+  }
+
+  public void testTypesGenericsConcrete2ExtendsDifferent() throws Exception {
+    doTest(false);
+  }
+
+  public void testTypesGenericsConcrete2Super() throws Exception {
+    doTest();
+  }
+
+  @Bombed(description = "Fails in sources, not in build.", user = "Anna Kozlova", month = 3, day = 25)
+  public void testTypesGenericsConcrete2SuperDifferent() throws Exception {
     doTest(false);
   }
 
