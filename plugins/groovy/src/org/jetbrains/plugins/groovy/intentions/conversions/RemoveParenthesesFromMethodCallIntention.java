@@ -45,7 +45,7 @@ public class RemoveParenthesesFromMethodCallIntention extends Intention {
         newStatementText.append(arguments[0].getText());
         for (int i = 1; i < arguments.length; i++) {
           newStatementText.append(",");
-          GrExpression argument = arguments[i];
+          final GrExpression argument = arguments[i];
           newStatementText.append(argument.getText());
         }
       }
