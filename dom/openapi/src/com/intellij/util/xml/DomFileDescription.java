@@ -84,13 +84,13 @@ public class DomFileDescription<T> {
   /**
    * @param namespaceKey namespace identifier
    * @see @com.intellij.util.xml.Namespace()
-   * @param namespace XML namespace or DTD public id value for the given namespaceKey
+   * @param namespaces XML namespace or DTD public or system id value for the given namespaceKey
    */
-  protected final void registerNamespacePolicy(String namespaceKey, final String namespace) {
+  protected final void registerNamespacePolicy(String namespaceKey, final String... namespaces) {
     registerNamespacePolicy(namespaceKey, new NotNullFunction<XmlTag, List<String>>() {
       @NotNull
       public List<String> fun(final XmlTag tag) {
-        return Arrays.asList(namespace);
+        return Arrays.asList(namespaces);
       }
     });
   }
