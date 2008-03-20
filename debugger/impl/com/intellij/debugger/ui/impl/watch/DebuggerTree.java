@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.InvokeThread;
@@ -352,11 +353,15 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     saveState((DebuggerTreeNodeImpl)getModel().getRoot());
   }
 
-  protected abstract static class RefreshDebuggerTreeCommand extends DebuggerContextCommandImpl {
+  protected abstract static class RefreshDebuggerTreeCommand extends SuspendContextCommandImpl {
+    private final DebuggerContextImpl myDebuggerContext;
     public RefreshDebuggerTreeCommand(DebuggerContextImpl context) {
-      super(context);
+      super(context.getSuspendContext());
+      myDebuggerContext = context;
     }
-    public void threadAction() {
+
+    public final DebuggerContextImpl getDebuggerContext() {
+      return myDebuggerContext;
     }
   }
 

@@ -7,7 +7,7 @@ import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationListener;
-import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -43,7 +43,6 @@ import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -71,7 +70,7 @@ public class DebuggerSession {
   public static final int EVENT_DISPOSE = 10;
   public static final int EVENT_REFRESH_VIEWS_ONLY = 11;
 
-  private boolean myIsEvaluating;
+  private volatile boolean myIsEvaluating;
 
   private DebuggerSessionState myState = null;
 
@@ -134,8 +133,8 @@ public class DebuggerSession {
         setStateRunnable.run();
       }
       else {
-        getProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(context) {
-          public void threadAction() {
+        getProcess().getManagerThread().invokeLater(new SuspendContextCommandImpl(context.getSuspendContext()) {
+          public void contextAction() throws Exception {
             context.initCaches();
             DebuggerInvocationUtil.invokeLater(getProject(), setStateRunnable);
           }
@@ -514,17 +513,13 @@ public class DebuggerSession {
 
   private class MyEvaluationListener implements EvaluationListener {
     public void evaluationStarted(SuspendContextImpl context) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          myIsEvaluating = true;
-        }
-      });
+      myIsEvaluating = true;
     }
 
     public void evaluationFinished(final SuspendContextImpl context) {
+      myIsEvaluating = false;
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
         public void run() {
-          myIsEvaluating = false;
           if (context != getSuspendContext()) {
             getContextManager().setState(DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, context), STATE_PAUSED, EVENT_REFRESH, null);
           }

@@ -1,5 +1,6 @@
 package com.intellij.debugger.ui;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -237,26 +238,45 @@ public class FramesPanel extends UpdatableDebuggerView {
         });
       }
       else { // full rebuild
-        final List<ThreadDescriptorImpl> threadItems = createThreadDescriptorsList();
-        DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-          public void run() {
-            try {
-              myThreadsListener.setEnabled(false);
-
-              myThreadsCombo.removeAllItems();
-              for (final ThreadDescriptorImpl threadItem : threadItems) {
-                myThreadsCombo.addItem(threadItem);
-              }
-
-              selectThread(threadToSelect);
-            }
-            finally {
-              myThreadsListener.setEnabled(true);
-            }
-          }
-        });
+        refillThreadsCombo(threadToSelect);
       }
     }
+
+    protected void commandCancelled() {
+      // context thread is not suspended
+      final DebuggerContextImpl context = getDebuggerContext();
+
+      final ThreadReferenceProxyImpl threadToSelect = context.getThreadProxy();
+      if(threadToSelect == null) {
+        return;
+      }
+
+      final SuspendContextImpl threadContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(), threadToSelect);
+      context.getDebugProcess().getManagerThread().invokeLater(new RebuildFramesListCommand(context, threadContext));
+      refillThreadsCombo(threadToSelect);
+    }
+
+    private void refillThreadsCombo(final ThreadReferenceProxyImpl threadToSelect) {
+      final List<ThreadDescriptorImpl> threadItems = createThreadDescriptorsList();
+      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+        public void run() {
+          try {
+            myThreadsListener.setEnabled(false);
+
+            myThreadsCombo.removeAllItems();
+            for (final ThreadDescriptorImpl threadItem : threadItems) {
+              myThreadsCombo.addItem(threadItem);
+            }
+
+            selectThread(threadToSelect);
+          }
+          finally {
+            myThreadsListener.setEnabled(true);
+          }
+        }
+      });
+    }
+
   }
 
   private class UpdateFramesListCommand extends SuspendContextCommandImpl {
@@ -333,6 +353,27 @@ public class FramesPanel extends UpdatableDebuggerView {
       final ThreadReferenceProxyImpl thread = myDebuggerContext.getThreadProxy();
       try {
         if(!getSuspendContext().getDebugProcess().getSuspendManager().isSuspended(thread)) {
+          DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+            public void run() {
+              try {
+                myFramesListener.setEnabled(false);
+                synchronized (myFramesList) {
+                  final DefaultListModel model = myFramesList.getModel();
+                  model.clear();
+                  model.addElement(new Object() {
+                    public String toString() {
+                      return DebuggerBundle.message("frame.panel.frames.not.available");
+                    }
+                  });
+                  myFramesList.setSelectedIndex(0);
+                }
+              }
+              finally {
+                myFramesListener.setEnabled(true);
+              }
+            }
+          });
+          
           return;
         }
       }

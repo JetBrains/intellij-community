@@ -858,9 +858,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
       SuspendContextImpl suspendContext = evaluationContext.getSuspendContext();
       SuspendManagerUtil.assertSuspendContext(suspendContext);
 
-      myEvaluationDispatcher.getMulticaster().evaluationStarted(suspendContext);
-
-      beforeMethodInvocation(suspendContext, method);
       ThreadReferenceProxyImpl invokeThread = suspendContext.getThread();
 
       if (SuspendManagerUtil.isEvaluating(getSuspendManager(), invokeThread)) {
@@ -869,6 +866,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
       Set<SuspendContextImpl> suspendingContexts = SuspendManagerUtil.getSuspendingContexts(getSuspendManager(), invokeThread);
       final ThreadReference invokeThreadRef = invokeThread.getThreadReference();
+
+      myEvaluationDispatcher.getMulticaster().evaluationStarted(suspendContext);
+      beforeMethodInvocation(suspendContext, method);
+      
       Object resumeData = null;
       try {
         for (final SuspendContextImpl suspendingContext : suspendingContexts) {

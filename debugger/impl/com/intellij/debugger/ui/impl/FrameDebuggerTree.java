@@ -275,8 +275,7 @@ public class FrameDebuggerTree extends DebuggerTree {
       super(context);
     }
 
-    public void threadAction() {
-      super.threadAction();
+    public void contextAction() throws Exception {
       DebuggerTreeNodeImpl rootNode;
 
       final DebuggerContextImpl debuggerContext = getDebuggerContext();
@@ -383,6 +382,7 @@ public class FrameDebuggerTree extends DebuggerTree {
         }
       });
     }
+
   }
 
   private static class VariablesCollector extends JavaRecursiveElementVisitor {
