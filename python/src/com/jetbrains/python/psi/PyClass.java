@@ -19,7 +19,6 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.psi.stubs.MayHaveStubsInside;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PyClass extends PsiNamedElement, PyElement, PyDocStringOwner, StubBasedPsiElement<PyClassStub> {
   @NotNull
-  @MayHaveStubsInside
   PyStatementList getStatementList();
 
   @Nullable

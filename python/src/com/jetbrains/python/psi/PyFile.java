@@ -4,12 +4,10 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.stubs.MayHaveStubsInside;
 
 import java.util.List;
 
 public interface PyFile extends PyElement, PsiFile {
-  @MayHaveStubsInside
   List<PyStatement> getStatements();
 
   List<PyClass> getTopLevelClasses();
