@@ -17,4 +17,6 @@ public interface StubElement<T extends PsiElement> {
   StubElement findChildStubByType(IElementType elementType);
 
   T getPsi();
+
+  <E> E[] getChildrenByType(final IElementType elementType, final E[] array);
 }

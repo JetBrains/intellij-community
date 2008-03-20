@@ -12,6 +12,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,4 +100,19 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return result;
   }
 
+
+  protected <E> E[] getStubOrPsiChildren(final IElementType elementType, E[] array) {
+    if (myStub != null) {
+      //noinspection unchecked
+      return (E[])myStub.getChildrenByType(elementType, array);
+    }
+    else {
+      final ASTNode[] nodes = getNode().getChildren(TokenSet.create(elementType));
+      E[] psiElements = (E[])java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), nodes.length);
+      for (int i = 0; i < nodes.length; i++) {
+        psiElements[i] = (E)nodes[i].getPsi();
+      }
+      return psiElements;
+    }
+  }
 }

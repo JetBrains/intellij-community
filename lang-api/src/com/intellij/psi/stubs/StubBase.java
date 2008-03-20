@@ -60,6 +60,17 @@ public abstract class StubBase<T extends PsiElement> implements StubElement<T> {
     return myPsi;
   }
 
+  public <E> E[] getChildrenByType(final IElementType elementType, final E[] array) {
+    List<E> result = new ArrayList<E>();
+    for(StubElement childStub: getChildrenStubs()) {
+      if (childStub.getStubType() == elementType) {
+        //noinspection unchecked
+        result.add((E)childStub.getPsi());
+      }
+    }
+    return result.toArray(array);
+  }
+
   public IStubElementType getStubType() {
     return myElementType;
   }
