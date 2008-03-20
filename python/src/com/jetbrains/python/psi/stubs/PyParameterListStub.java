@@ -7,5 +7,4 @@ import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyParameterList;
 
 public interface PyParameterListStub extends StubElement<PyParameterList> {
-  PyParameterStub[] getParameters();
 }

@@ -17,13 +17,11 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
-import com.jetbrains.python.psi.stubs.PyParameterStub;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,9 +31,6 @@ import com.jetbrains.python.psi.stubs.PyParameterStub;
  * To change this template use File | Settings | File Templates.
  */
 public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> implements PyParameterList {
-
-  private final TokenSet PARAMETER_FILTER = TokenSet.create(PyElementTypes.FORMAL_PARAMETER);
-
   public PyParameterListImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -50,23 +45,6 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
   }
 
   public PyParameter[] getParameters() {
-    final PyParameterListStub stub = getStub();
-    if (stub != null) {
-      final PyParameterStub[] paramStubs = stub.getParameters();
-      PyParameter[] params = new PyParameter[paramStubs.length];
-      for (int i = 0; i < paramStubs.length; i++) {
-        PyParameterStub paramStub = paramStubs[i];
-        params[i] = paramStub.getPsi();
-      }
-      return params;
-    }
-    else {
-      final ASTNode[] nodes = getNode().getChildren(PARAMETER_FILTER);
-      final PyParameter[] params = new PyParameter[nodes.length];
-      for (int i = 0; i < params.length; i++) {
-        params[i] = (PyParameter)nodes[i].getPsi();
-      }
-      return params;
-    }
+    return getStubOrPsiChildren(PyElementTypes.FORMAL_PARAMETER, new PyParameter[0]);
   }
 }
