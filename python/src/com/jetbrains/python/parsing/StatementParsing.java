@@ -140,7 +140,7 @@ public class StatementParsing extends Parsing {
       exprStatement.done(PyElementTypes.EXPRESSION_STATEMENT);
       return;
     }
-    else if (getExpressionParser().parseExpressionOptional(builder)) {
+    else if (getExpressionParser().parseExpressionOptional()) {
       IElementType statementType = PyElementTypes.EXPRESSION_STATEMENT;
       if (PyTokenTypes.AUG_ASSIGN_OPERATIONS.contains(builder.getTokenType())) {
         statementType = PyElementTypes.AUG_ASSIGNMENT_STATEMENT;
@@ -153,7 +153,7 @@ public class StatementParsing extends Parsing {
         statementType = PyElementTypes.ASSIGNMENT_STATEMENT;
         exprStatement.rollbackTo();
         exprStatement = builder.mark();
-        getExpressionParser().parseExpression(builder, false, true);
+        getExpressionParser().parseExpression(false, true);
         LOG.assertTrue(builder.getTokenType() == PyTokenTypes.EQ);
         builder.advanceLexer();
 
@@ -166,7 +166,7 @@ public class StatementParsing extends Parsing {
           }
           if (builder.getTokenType() == PyTokenTypes.EQ) {
             maybeExprMarker.rollbackTo();
-            getExpressionParser().parseExpression(builder, false, true);
+            getExpressionParser().parseExpression(false, true);
             LOG.assertTrue(builder.getTokenType() == PyTokenTypes.EQ);
             builder.advanceLexer();
           }
@@ -414,7 +414,7 @@ public class StatementParsing extends Parsing {
     LOG.assertTrue(builder.getTokenType() == PyTokenTypes.EXEC_KEYWORD);
     final PsiBuilder.Marker execStatement = builder.mark();
     builder.advanceLexer();
-    getExpressionParser().parseExpression(builder, true, false);
+    getExpressionParser().parseExpression(true, false);
     if (builder.getTokenType() == PyTokenTypes.IN_KEYWORD) {
       builder.advanceLexer();
       getExpressionParser().parseSingleExpression(false);
@@ -452,7 +452,7 @@ public class StatementParsing extends Parsing {
     LOG.assertTrue(builder.getTokenType() == PyTokenTypes.FOR_KEYWORD);
     final PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
-    getExpressionParser().parseExpression(builder, true, true);
+    getExpressionParser().parseExpression(true, true);
     checkMatches(PyTokenTypes.IN_KEYWORD, "'in' expected");
     getExpressionParser().parseExpression();
     checkMatches(PyTokenTypes.COLON, "colon expected");
