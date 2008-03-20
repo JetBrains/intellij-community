@@ -20,8 +20,8 @@ import java.util.List;
  * Date: 18.02.2008
  */
 public class DynamicMethodDialog extends DynamicDialog {
-  public DynamicMethodDialog(Module project, GrReferenceExpression referenceExpression) {
-    super(project, referenceExpression);
+  public DynamicMethodDialog(GrReferenceExpression referenceExpression) {
+    super(referenceExpression);
 
 //    setupParameterList(QuickfixUtil.getMethodArgumentsNames(referenceExpression.getParent()), QuickfixUtil.getMethodArgumentsTypes(((GrCall) referenceExpression.getParent())));
     setTitle(GroovyBundle.message("add.dynamic.method"));

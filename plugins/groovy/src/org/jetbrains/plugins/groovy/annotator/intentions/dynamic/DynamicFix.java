@@ -2,10 +2,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -43,27 +40,14 @@ public class DynamicFix implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
-
-    VirtualFile file;
-    if (psiFile != null) {
-      file = psiFile.getVirtualFile();
-      if (file == null) return;
-    } else return;
-
-    final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(file);
-    if (module == null) return;
-
-    DynamicDialog dialog;
-    if (myIsMethod) {
-      dialog = new DynamicMethodDialog(module, myReferenceExpression);
-    } else {
-      dialog = new DynamicPropertyDialog(module, myReferenceExpression);
-    }
+    DynamicDialog dialog = myIsMethod ?
+                           new DynamicMethodDialog(myReferenceExpression) :
+                           new DynamicPropertyDialog(myReferenceExpression);
 
     dialog.show();
   }
 
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 }

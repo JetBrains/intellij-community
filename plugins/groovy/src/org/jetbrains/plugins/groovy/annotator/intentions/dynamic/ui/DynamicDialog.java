@@ -4,10 +4,10 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorTextField;
@@ -60,9 +60,9 @@ public abstract class DynamicDialog extends DialogWrapper {
   private EventListenerList myListenerList = new EventListenerList();
   private final GrReferenceExpression myReferenceExpression;
 
-  public DynamicDialog(Module module, GrReferenceExpression referenceExpression) {
-    super(module.getProject(), true);
-    myProject = module.getProject();
+  public DynamicDialog(GrReferenceExpression referenceExpression) {
+    super(referenceExpression.getProject(), true);
+    myProject = referenceExpression.getProject();
 
     if (!isTableVisible()) {
       myTable.setVisible(false);
@@ -282,6 +282,15 @@ public abstract class DynamicDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
+    super.doOKAction();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        doAction();
+      }
+    });
+  }
+
+  private void doAction() {
     GrTypeElement typeElement = getEnteredTypeName();
 
     DItemElement myDynamicElement;
@@ -322,7 +331,6 @@ public abstract class DynamicDialog extends DialogWrapper {
     }
 
     myDynamicManager.fireChange();
-    super.doOKAction();
   }
 
   class ContainingClassItem {
