@@ -39,11 +39,10 @@ public class DynamicFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
-    return true;
+    return myReferenceExpression.isValid();
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
-    DynamicDialog dialog = null;
 
     VirtualFile file;
     if (psiFile != null) {
@@ -54,13 +53,13 @@ public class DynamicFix implements IntentionAction {
     final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(file);
     if (module == null) return;
 
+    DynamicDialog dialog;
     if (myIsMethod) {
       dialog = new DynamicMethodDialog(module, myReferenceExpression);
     } else {
       dialog = new DynamicPropertyDialog(module, myReferenceExpression);
     }
 
-    if (dialog == null) return;
     dialog.show();
   }
 
