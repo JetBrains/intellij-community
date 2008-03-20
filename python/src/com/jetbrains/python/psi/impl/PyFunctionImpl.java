@@ -33,8 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
-import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -82,12 +80,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @NotNull
   public PyParameterList getParameterList() {
-    final PyFunctionStub stub = getStub();
-    if (stub != null) {
-      return stub.getParameterList().getPsi();
-    }
-
-    return childToPsiNotNull(PyElementTypes.PARAMETER_LIST);
+    return (PyParameterList) getRequiredStubOrPsiChild(PyElementTypes.PARAMETER_LIST);
   }
 
   @NotNull
