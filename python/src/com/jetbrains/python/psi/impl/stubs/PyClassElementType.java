@@ -5,19 +5,19 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.IndexSink;
-import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.PersistentStringEnumerator;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyClassImpl;
-import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.stubs.PyClassStub;
 
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.DataInputStream;
 
 public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> {
   public PyClassElementType() {
@@ -48,6 +48,9 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
   }
 
   public void indexStub(final PyClassStub stub, final IndexSink sink) {
-    sink.occurence(PyClassNameIndex.KEY, stub.getName());
+    final String name = stub.getName();
+    if (name != null) {
+      sink.occurence(PyClassNameIndex.KEY, name);
+    }
   }
 }
