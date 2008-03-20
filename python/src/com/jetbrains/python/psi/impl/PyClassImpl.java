@@ -245,4 +245,8 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   public String getDocString() {
     return DocStringAnnotator.findDocString(getStatementList());
   }
+
+  public String toString() {
+    return "PyClass: " + getName();
+  }
 }

@@ -35,10 +35,14 @@
     <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>
     <fileBasedIndex implementation="com.jetbrains.python.index.PyClassIndex"/>
     <gotoClassContributor implementation="com.jetbrains.python.PyGotoClassContributor"/>
+    <gotoSymbolContributor implementation="com.jetbrains.python.PyGotoSymbolContributor"/>
     <codeInsight.parameterInfo language="Python" implementationClass="com.jetbrains.python.PyParameterInfoHandler"/>
     <colorSettingsPage implementation="com.jetbrains.python.PythonColorsPage"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyWordSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyStatementSelectionHandler"/>
+
+    <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndex"/>
+    <stubIndex implementation="com.jetbrains.python.psi.stubs.PyFunctionNameIndex"/>
 
     <!-- Run/Debug -->
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
