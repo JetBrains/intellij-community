@@ -209,6 +209,9 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
 
   @NonNls
   private static String getTextForOperator(IElementType operator) {
+    if (operator ==  null) {
+      return null;
+    }
     if (operator.equals(GroovyTokenTypes.mPLUS)) {
       return "+";
     }
