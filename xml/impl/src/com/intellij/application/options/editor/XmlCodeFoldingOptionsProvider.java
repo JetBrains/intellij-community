@@ -4,7 +4,6 @@
  */
 package com.intellij.application.options.editor;
 
-import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurationException;
 
@@ -18,17 +17,17 @@ public class XmlCodeFoldingOptionsProvider implements CodeFoldingOptionsProvider
   }
 
   public boolean isModified() {
-    CodeFoldingSettings codeFoldingSettings = CodeFoldingSettings.getInstance();
+    XmlFoldingSettings codeFoldingSettings = XmlFoldingSettings.getInstance();
     return codeFoldingSettings.isCollapseXmlTags() != myCbCollapseXMLTags.isSelected();
   }
 
   public void apply() throws ConfigurationException {
-    CodeFoldingSettings codeFoldingSettings = CodeFoldingSettings.getInstance();
+    XmlFoldingSettings codeFoldingSettings = XmlFoldingSettings.getInstance();
     codeFoldingSettings.setCollapseXmlTags(myCbCollapseXMLTags.isSelected());
   }
 
   public void reset() {
-    CodeFoldingSettings codeFoldingSettings = CodeFoldingSettings.getInstance();
+    XmlFoldingSettings codeFoldingSettings = XmlFoldingSettings.getInstance();
     myCbCollapseXMLTags.setSelected(codeFoldingSettings.isCollapseXmlTags());
   }
 

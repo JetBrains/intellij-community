@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -54,14 +55,6 @@ public class CodeFoldingSettingsImpl extends CodeFoldingSettings implements Name
     COLLAPSE_JAVADOCS = value;
   }
 
-  public boolean isCollapseXmlTags() {
-    return COLLAPSE_XML_TAGS;
-  }
-
-  public void setCollapseXmlTags(boolean value) {
-    COLLAPSE_XML_TAGS = value;
-  }
-
   public boolean isCollapseFileHeader() {
     return COLLAPSE_FILE_HEADER;
   }
@@ -92,13 +85,12 @@ public class CodeFoldingSettingsImpl extends CodeFoldingSettings implements Name
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ACCESSORS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_INNER_CLASSES = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_JAVADOCS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_XML_TAGS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_FILE_HEADER = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ANONYMOUS_CLASSES = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ANNOTATIONS = false;
 
   public String getExternalFileName() {
-    return "editor.codeinsight";
+    return CodeInsightSettings.EXTERNAL_FILE_NAME;
   }
 
   @NotNull

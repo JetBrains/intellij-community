@@ -1,6 +1,6 @@
 package com.intellij.lang.xml;
 
-import com.intellij.codeInsight.folding.CodeFoldingSettings;
+import com.intellij.application.options.editor.XmlFoldingSettings;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
@@ -12,8 +12,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlTagUtil;
 
@@ -213,7 +213,7 @@ public class XmlFoldingBuilder implements FoldingBuilder {
   public boolean isCollapsedByDefault(ASTNode node) {
     final PsiElement psi = node.getPsi();
     if (psi instanceof XmlTag) {
-      return CodeFoldingSettings.getInstance().isCollapseXmlTags();
+      return XmlFoldingSettings.getInstance().isCollapseXmlTags();
     }
     return false;
   }

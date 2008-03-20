@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.javaee.ExternalResourceManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -336,8 +335,8 @@ public class FetchExtResourceAction extends BaseExtResourceAction {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             Messages.showMessageDialog(project,
-                                       QuickFixBundle.message("invalid.url.no.xml.file.at.location", resourceUrl),
-                                       QuickFixBundle.message("invalid.url.title"),
+                                       XmlBundle.message("invalid.url.no.xml.file.at.location", resourceUrl),
+                                       XmlBundle.message("invalid.url.title"),
                                        Messages.getErrorIcon());
           }
         }, indicator.getModalityState());
@@ -505,8 +504,8 @@ public class FetchExtResourceAction extends BaseExtResourceAction {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             Messages.showMessageDialog(project,
-                                       QuickFixBundle.message("invalid.uril.message", dtdUrl),
-                                       QuickFixBundle.message("invalid.url.title"),
+                                       XmlBundle.message("invalid.uril.message", dtdUrl),
+                                       XmlBundle.message("invalid.url.title"),
                                        Messages.getErrorIcon());
           }
         }, indicator.getModalityState());

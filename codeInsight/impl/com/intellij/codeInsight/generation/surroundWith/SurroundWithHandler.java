@@ -43,7 +43,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
            element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS;
   }
 
-  public static boolean isLanguageWithWSSignificant(Language lang) {
+  private static boolean isLanguageWithWSSignificant(Language lang) {
     return lang == StdLanguages.HTML ||
            lang == StdLanguages.XHTML ||
            lang == StdLanguages.JSP ||

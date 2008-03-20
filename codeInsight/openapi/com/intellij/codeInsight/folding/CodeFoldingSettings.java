@@ -41,9 +41,6 @@ public abstract class CodeFoldingSettings implements ApplicationComponent {
   public abstract boolean isCollapseJavadocs();
   public abstract void setCollapseJavadocs(boolean value);
 
-  public abstract boolean isCollapseXmlTags();
-  public abstract void setCollapseXmlTags(boolean value);
-
   public abstract boolean isCollapseFileHeader();
   public abstract void setCollapseFileHeader(boolean value);
 

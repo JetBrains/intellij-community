@@ -6,6 +6,7 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.codeInsight.CodeInsightSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +75,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
   }
 
   public String getExternalFileName() {
-    return "editor.codeinsight";
+    return CodeInsightSettings.EXTERNAL_FILE_NAME;
   }
 
   public Object clone() {

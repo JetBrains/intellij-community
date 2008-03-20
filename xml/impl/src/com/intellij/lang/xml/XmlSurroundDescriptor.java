@@ -6,7 +6,6 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.XmlContextType;
 import com.intellij.codeInsight.template.HtmlContextType;
-import com.intellij.codeInsight.template.JspContextType;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.util.Pair;
@@ -52,17 +51,16 @@ public class XmlSurroundDescriptor implements SurroundDescriptor {
     TemplateImpl[] templates = TemplateSettings.getInstance().getTemplates();
     for (TemplateImpl template : templates) {
       if (template.isDeactivated() || !template.isSelectionTemplate()) continue;
-      if (isEnabledInXml(template)) {
+      if (isEnabled(template)) {
         surrounders.add(new TemplateSurrounder(template));
       }
     }
     return surrounders.toArray(new Surrounder[surrounders.size()]);
   }
 
-  public static boolean isEnabledInXml(final TemplateImpl template) {
+  protected boolean isEnabled(final TemplateImpl template) {
     final TemplateContext context = template.getTemplateContext();
     return new XmlContextType().isEnabled(context) ||
-           new HtmlContextType().isEnabled(context) ||
-           new JspContextType().isEnabled(context);
+           new HtmlContextType().isEnabled(context);
   }
 }

@@ -28,6 +28,7 @@ import java.util.List;
 public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, ExportableApplicationComponent {
   @NonNls private static final String EXCLUDED_PACKAGE = "EXCLUDED_PACKAGE";
   @NonNls private static final String ATTRIBUTE_NAME = "NAME";
+  @NonNls public static final String EXTERNAL_FILE_NAME = "editor.codeinsight";
 
   public static CodeInsightSettings getInstance() {
     return ApplicationManager.getApplication().getComponent(CodeInsightSettings.class);
@@ -39,7 +40,7 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
   }
 
   public String getExternalFileName() {
-    return "editor.codeinsight";
+    return EXTERNAL_FILE_NAME;
   }
 
   @NotNull
