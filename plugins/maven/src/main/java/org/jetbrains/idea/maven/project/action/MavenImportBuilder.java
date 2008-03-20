@@ -147,7 +147,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   private List<String> collectProfiles(Collection<VirtualFile> files) throws MavenException {
     final SortedSet<String> profiles = new TreeSet<String>();
 
-    final MavenEmbedder embedder = getCoreState().createEmbedder();
+    final MavenEmbedder embedder = MavenFactory.createEmbedder(getCoreState());
     final MavenProjectReader reader = new MavenProjectReader(embedder);
     for (VirtualFile file : files) {
       ProjectUtil.collectProfileIds(reader.readBare(file.getPath()), profiles);

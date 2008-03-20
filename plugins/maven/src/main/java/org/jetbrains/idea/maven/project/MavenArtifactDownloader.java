@@ -71,7 +71,7 @@ public class MavenArtifactDownloader {
     }
 
     try {
-      final MavenEmbedder mavenEmbedder = project.getComponent(MavenCore.class).getState().createEmbedder();
+      final MavenEmbedder mavenEmbedder = MavenFactory.createEmbedder(project.getComponent(MavenCore.class).getState());
 
       try {
         Progress.run(project, ProjectBundle.message("maven.title.downloading"), new Progress.Process() {

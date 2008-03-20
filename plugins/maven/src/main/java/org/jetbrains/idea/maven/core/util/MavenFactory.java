@@ -169,15 +169,14 @@ public class MavenFactory {
                           customizer);
   }
 
-  public static MavenEmbedder createEmbedder(String mavenHome,
-                                             File localRepo,
-                                             String userSettings,
-                                             ClassLoader classLoader,
-                                             ContainerCustomizer customizer) throws MavenException {
-
+  private static MavenEmbedder createEmbedder(String mavenHome,
+                                              File localRepo,
+                                              String userSettings,
+                                              ClassLoader classLoader,
+                                              ContainerCustomizer customizer) throws MavenException {
     Configuration configuration = new DefaultConfiguration();
-
     configuration.setConfigurationCustomizer(customizer);
+    
     configuration.setLocalRepository(localRepo);
 
     MavenEmbedderConsoleLogger l = new MavenEmbedderConsoleLogger();

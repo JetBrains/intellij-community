@@ -45,7 +45,7 @@ public class FoldersConfigurator {
   }
 
   private static void doUpdateProjectsExcludeFolders(Project p) throws MavenException {
-    MavenEmbedder embedder = MavenCore.getInstance(p).getState().createEmbedder();
+    MavenEmbedder embedder = MavenFactory.createEmbedder(MavenCore.getInstance(p).getState());
     try {
       MavenProjectReader r = new MavenProjectReader(embedder);
       for (Module m : ModuleManager.getInstance(p).getModules()) {
