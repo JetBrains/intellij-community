@@ -37,7 +37,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     if (myNode == null) {
       PsiFileImpl file = (PsiFileImpl)getContainingFile();
       file.loadTreeElement();
-      assert myNode != null;
+      assert myNode != null: "failed to bind stub to AST for element " + this;
     }
 
     return myNode;
