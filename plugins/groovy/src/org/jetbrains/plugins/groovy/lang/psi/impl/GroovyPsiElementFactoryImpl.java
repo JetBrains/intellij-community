@@ -104,7 +104,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
   public GrVariableDeclaration createVariableDeclaration(String[] modifiers, GrExpression initializer, PsiType type, String... identifiers) {
     StringBuffer text = writeModifiers(modifiers);
 
-    text.append("def ")
+    text.append("def ");
     if (type != null) {
       type = TypesUtil.unboxPrimitiveTypeWrapper(type);
       text.append(getTypeText(type)).append(" ");
