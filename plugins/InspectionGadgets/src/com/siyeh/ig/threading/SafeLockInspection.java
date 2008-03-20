@@ -84,8 +84,7 @@ public class SafeLockInspection extends BaseInspection {
                 return;
             }
             PsiTryStatement tryStatement = (PsiTryStatement) nextStatement;
-            if (lockIsUnlockedInFinally(tryStatement,
-                    boundVariable)) {
+            if (lockIsUnlockedInFinally(tryStatement, boundVariable)) {
                 return;
             }
             registerError(expression, referenceExpression);

@@ -21,8 +21,8 @@ public class SafeLockInspection{
     public void test3()
     {
         final Lock lock = new ReentrantLock();
+        lock.lock();
         try{
-            lock.lock();
         } finally{
             lock.unlock();
         }

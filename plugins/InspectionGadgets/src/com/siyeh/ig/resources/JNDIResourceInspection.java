@@ -40,8 +40,12 @@ public class JNDIResourceInspection extends BaseInspection {
 
     @NotNull
     public String buildErrorString(Object... infos){
+        final PsiExpression expression = (PsiExpression) infos[0];
+        final PsiType type = expression.getType();
+        assert type != null;
+        final String text = type.getPresentableText();
         return InspectionGadgetsBundle.message(
-                "resource.opened.not.closed.problem.descriptor", infos[0]);
+                "resource.opened.not.closed.problem.descriptor", text);
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -62,12 +66,7 @@ public class JNDIResourceInspection extends BaseInspection {
             }
             final PsiElement parent = expression.getParent();
             if(!(parent instanceof PsiAssignmentExpression)){
-                final PsiType type = expression.getType();
-                if (type == null) {
-                    return;
-                }
-                final String text = type.getPresentableText();
-                registerError(expression, text);
+                registerError(expression, expression);
                 return;
             }
             final PsiAssignmentExpression assignment =
@@ -89,12 +88,7 @@ public class JNDIResourceInspection extends BaseInspection {
                         PsiTreeUtil.getParentOfType(currentContext,
                                 PsiTryStatement.class);
                 if(tryStatement == null){
-                    final PsiType type = expression.getType();
-                    if (type == null) {
-                        return;
-                    }
-                    final String text = type.getPresentableText();
-                    registerError(expression, text);
+                    registerError(expression, expression);
                     return;
                 }
                 if(resourceIsOpenedInTryAndClosedInFinally(tryStatement,
@@ -118,12 +112,7 @@ public class JNDIResourceInspection extends BaseInspection {
             }
             final PsiElement parent = expression.getParent();
             if(!(parent instanceof PsiAssignmentExpression)){
-                final PsiType type = expression.getType();
-                if (type == null) {
-                    return;
-                }
-                final String text = type.getPresentableText();
-                registerError(expression, text);
+                registerError(expression, expression);
                 return;
             }
             final PsiAssignmentExpression assignment =
@@ -145,12 +134,7 @@ public class JNDIResourceInspection extends BaseInspection {
                         PsiTreeUtil.getParentOfType(currentContext,
                                 PsiTryStatement.class);
                 if(tryStatement == null){
-                    final PsiType type = expression.getType();
-                    if (type == null) {
-                        return;
-                    }
-                    final String text = type.getPresentableText();
-                    registerError(expression, text);
+                    registerError(expression, expression);
                     return;
                 }
                 if(resourceIsOpenedInTryAndClosedInFinally(tryStatement,

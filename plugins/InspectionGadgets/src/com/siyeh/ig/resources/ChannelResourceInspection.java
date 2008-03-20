@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ChannelResourceInspection extends BaseInspection {
+public class ChannelResourceInspection extends BaseInspection{
 
     @NotNull
     public String getID(){
@@ -56,43 +56,64 @@ public class ChannelResourceInspection extends BaseInspection {
         @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            if(!isChannelFactoryMethod(expression)) {
+            if(!isChannelFactoryMethod(expression)){
                 return;
             }
             final PsiElement parent = expression.getParent();
-            if(!(parent instanceof PsiAssignmentExpression)) {
+            final PsiVariable boundVariable;
+            if (parent instanceof PsiAssignmentExpression) {
+                final PsiAssignmentExpression assignment =
+                        (PsiAssignmentExpression) parent;
+                final PsiExpression lhs = assignment.getLExpression();
+                if (!(lhs instanceof PsiReferenceExpression)) {
+                    return;
+                }
+                final PsiReferenceExpression referenceExpression =
+                        (PsiReferenceExpression) lhs;
+                final PsiElement referent = referenceExpression.resolve();
+                if (referent == null || !(referent instanceof PsiVariable)) {
+                    return;
+                }
+                boundVariable = (PsiVariable) referent;
+            } else if (parent instanceof PsiVariable) {
+                boundVariable = (PsiVariable) parent;
+            } else {
                 registerError(expression, expression);
                 return;
             }
-            final PsiAssignmentExpression assignment =
-                    (PsiAssignmentExpression) parent;
-            final PsiExpression lhs = assignment.getLExpression();
-            if(!(lhs instanceof PsiReferenceExpression)) {
+            final PsiStatement statement =
+                    PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
+            if (statement == null) {
                 return;
             }
-            final PsiElement referent =
-                    ((PsiReference) lhs).resolve();
-            if(referent == null || !(referent instanceof PsiVariable)) {
+            PsiStatement nextStatement =
+                    PsiTreeUtil.getNextSiblingOfType(statement,
+                            PsiStatement.class);
+            if (!(nextStatement instanceof PsiTryStatement)) {
+                registerError(expression, expression);
                 return;
             }
-            final PsiVariable boundVariable = (PsiVariable) referent;
-
-            PsiElement currentContext = expression;
-            while(true){
-                final PsiTryStatement tryStatement =
-                        PsiTreeUtil.getParentOfType(currentContext,
-                                PsiTryStatement.class);
-                if(tryStatement == null) {
-                    registerError(expression, expression);
-                    return;
-                }
-                if(resourceIsOpenedInTryAndClosedInFinally(tryStatement,
-                        expression,
-                        boundVariable)) {
-                    return;
-                }
-                currentContext = tryStatement;
+            //while (!(nextStatement instanceof PsiTryStatement)) {
+            //if (!(nextStatement instanceof PsiDeclarationStatement)) {
+            //    registerError(expression, expression);
+            //    return;
+            //}
+            //final VariableReferenceVisitor visitor =
+            //        new VariableReferenceVisitor(boundVariable);
+            //nextStatement.accept(visitor);
+            //if (visitor.containsReference()) {
+            //    registerError(expression, expression);
+            //    return;
+            //}
+            //nextStatement =
+            //        PsiTreeUtil.getNextSiblingOfType(nextStatement,
+            //                PsiStatement.class);
+            //}
+            PsiTryStatement tryStatement = (PsiTryStatement) nextStatement;
+            if (resourceIsClosedInFinally(tryStatement, boundVariable)) {
+                return;
             }
+            registerError(expression, expression);
         }
 
         private static boolean isChannelFactoryMethod(
@@ -117,9 +138,8 @@ public class ChannelResourceInspection extends BaseInspection {
 		            "java.io.RandomAccessFile");
         }
 
-        private static boolean resourceIsOpenedInTryAndClosedInFinally(
-                PsiTryStatement tryStatement, PsiExpression lhs,
-                PsiVariable boundVariable){
+        private static boolean resourceIsClosedInFinally(
+                PsiTryStatement tryStatement, PsiVariable boundVariable){
             final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
             if(finallyBlock == null){
                 return false;
@@ -128,27 +148,51 @@ public class ChannelResourceInspection extends BaseInspection {
             if(tryBlock == null){
                 return false;
             }
-            if(!PsiTreeUtil.isAncestor(tryBlock, lhs, true)){
-                return false;
-            }
-            return containsResourceClose(finallyBlock, boundVariable);
-        }
-
-        private static boolean containsResourceClose(PsiCodeBlock finallyBlock,
-                                                     PsiVariable boundVariable){
-            final CloseVisitor visitor =
-                    new CloseVisitor(boundVariable);
+            final CloseVisitor visitor = new CloseVisitor(boundVariable);
             finallyBlock.accept(visitor);
             return visitor.containsStreamClose();
         }
     }
 
+    /*
+    private static class VariableReferenceVisitor
+            extends JavaRecursiveElementVisitor{
+
+        private boolean containsReference = false;
+        private PsiVariable variable;
+
+        VariableReferenceVisitor(@NotNull PsiVariable variable) {
+            this.variable = variable;
+        }
+
+        @Override
+        public void visitReferenceExpression(
+                PsiReferenceExpression expression) {
+            if (containsReference) {
+                return;
+            }
+            final PsiExpression qualifier = expression.getQualifierExpression();
+            if (qualifier != null) {
+                return;
+            }
+            final PsiElement target = expression.resolve();
+            if (variable.equals(target)) {
+                containsReference = true;
+            }
+        }
+
+        public boolean containsReference() {
+            return containsReference;
+        }
+    }
+    */
+
     private static class CloseVisitor extends JavaRecursiveElementVisitor{
+
         private boolean containsClose = false;
         private PsiVariable objectToClose;
 
         private CloseVisitor(PsiVariable objectToClose){
-            super();
             this.objectToClose = objectToClose;
         }
 
@@ -175,13 +219,10 @@ public class ChannelResourceInspection extends BaseInspection {
             if(!(qualifier instanceof PsiReferenceExpression)){
                 return;
             }
-            final PsiElement referent =
-                    ((PsiReference) qualifier).resolve();
-            if(referent == null)
-            {
-                return;
-            }
-            if(referent.equals(objectToClose)){
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) qualifier;
+            final PsiElement referent = referenceExpression.resolve();
+            if(objectToClose.equals(referent)){
                 containsClose = true;
             }
         }
