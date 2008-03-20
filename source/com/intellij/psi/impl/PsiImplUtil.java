@@ -278,22 +278,23 @@ public class PsiImplUtil {
     }
 
     if (member.hasModifierProperty(PsiModifier.PUBLIC)) {
-      return aClass != null ? aClass.getUseScope() : maximalUseScope;
+      return maximalUseScope; // class use scope doesn't matter, since another very visible class can inherit from aClass
     }
     else if (member.hasModifierProperty(PsiModifier.PROTECTED)) {
-      return aClass != null ? aClass.getUseScope() : maximalUseScope;
+      return maximalUseScope; // class use scope doesn't matter, since another very visible class can inherit from aClass
     }
     else if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
       PsiClass topClass = PsiUtil.getTopLevelClass(member);
       return topClass != null ? new LocalSearchScope(topClass) : new LocalSearchScope(file);
     }
     else {
-      PsiPackage aPackage = file instanceof PsiJavaFile ? JavaPsiFacade.getInstance(psiManager.getProject())
-        .findPackage(((PsiJavaFile)file).getPackageName()) : null;
-      if (aPackage != null) {
-        SearchScope scope = PackageScope.packageScope(aPackage, false);
-        scope = scope.intersectWith(maximalUseScope);
-        return scope;
+      if (file instanceof PsiJavaFile) {
+        PsiPackage aPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(((PsiJavaFile)file).getPackageName());
+        if (aPackage != null) {
+          SearchScope scope = PackageScope.packageScope(aPackage, false);
+          scope = scope.intersectWith(maximalUseScope);
+          return scope;
+        }
       }
 
       return maximalUseScope;
