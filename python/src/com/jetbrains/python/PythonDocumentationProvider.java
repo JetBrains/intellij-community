@@ -16,7 +16,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
   public String generateDoc(final PsiElement element, final PsiElement originalElement) {
     if (element instanceof PyDocStringOwner) {
       String docString = ((PyDocStringOwner) element).getDocString();
-      return XmlStringUtil.escapeString(docString);
+      return XmlStringUtil.escapeString(docString).replace("\n", "<br>");
     }
     return null;
   }
