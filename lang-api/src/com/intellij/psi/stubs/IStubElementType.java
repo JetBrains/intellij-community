@@ -3,6 +3,7 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -17,5 +18,9 @@ public abstract class IStubElementType<StubT extends StubElement, PsiT extends P
 
   public abstract PsiT createPsi(StubT stub);
 
-  public abstract StubT createStub(PsiT psi, final StubElement parentStub);  
+  public abstract StubT createStub(PsiT psi, final StubElement parentStub);
+
+  public boolean shouldCreateStub(ASTNode node) {
+    return true;
+  }
 }

@@ -224,7 +224,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
     final IElementType type = tree.getElementType();
 
-    if (type instanceof IStubElementType) {
+    if (type instanceof IStubElementType && ((IStubElementType) type).shouldCreateStub(tree)) {
       final StubElement stub = stubs.next();
       final PsiElement psi = stub.getPsi();
       ((CompositeElement)tree).setPsi(psi);

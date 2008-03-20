@@ -20,7 +20,12 @@ public class DefaultStubBuilder implements StubBuilder {
   protected StubElement buildStubTreeFor(PsiElement elt, StubElement parentStub) {
     StubElement stub = parentStub;
     if (elt instanceof StubBasedPsiElement) {
-      stub = createStubForElement(elt, parentStub);
+      final IStubElementType type = ((StubBasedPsiElement)elt).getElementType();
+
+      if (type.shouldCreateStub(elt.getNode())) {
+        //noinspection unchecked
+        stub = type.createStub(elt, parentStub);
+      }
     }
 
     final PsiElement[] psiElements = elt.getChildren();
@@ -29,13 +34,6 @@ public class DefaultStubBuilder implements StubBuilder {
     }
 
     return stub;
-  }
-
-  protected StubElement createStubForElement(final PsiElement elt, final StubElement parentStub) {
-    final IStubElementType type = ((StubBasedPsiElement)elt).getElementType();
-
-    //noinspection unchecked
-    return type.createStub(elt, parentStub);
   }
 
 }
