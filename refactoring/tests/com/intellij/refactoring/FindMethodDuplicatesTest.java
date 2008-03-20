@@ -236,7 +236,6 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest(false);
   }
 
-  @Bombed(description = "Fails in sources, not in build.", user = "Anna Kozlova", month = 3, day = 25)
   public void testTypesGenericsConcrete2Extends() throws Exception {
     doTest();
   }
