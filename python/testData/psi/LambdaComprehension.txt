@@ -7,7 +7,7 @@ PyFile:LambdaComprehension.py
       PsiWhiteSpace(' ')
       PsiElement(Py:FOR_KEYWORD)('for')
       PsiWhiteSpace(' ')
-      PyTargetExpression
+      PyTargetExpression: x
         PsiElement(Py:IDENTIFIER)('x')
       PsiWhiteSpace(' ')
       PsiElement(Py:IN_KEYWORD)('in')

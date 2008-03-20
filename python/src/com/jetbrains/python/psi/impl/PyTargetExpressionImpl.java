@@ -119,6 +119,6 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   }
 
   public String toString() {
-    return super.toString() + ":" + getName();
+    return super.toString() + ": " + getName();
   }
 }

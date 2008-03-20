@@ -10,7 +10,7 @@ PyFile:YieldInAugAssignment.py
     PsiWhiteSpace('\n  ')
     PyStatementList
       PyAssignmentStatement
-        PyTargetExpression
+        PyTargetExpression: x
           PsiElement(Py:IDENTIFIER)('x')
         PsiWhiteSpace(' ')
         PsiElement(Py:EQ)('=')

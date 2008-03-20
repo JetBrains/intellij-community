@@ -7,7 +7,7 @@ PyFile:ConditionalParenLambda.py
       PsiWhiteSpace(' ')
       PsiElement(Py:FOR_KEYWORD)('for')
       PsiWhiteSpace(' ')
-      PyTargetExpression
+      PyTargetExpression: f
         PsiElement(Py:IDENTIFIER)('f')
       PsiWhiteSpace(' ')
       PsiElement(Py:IN_KEYWORD)('in')

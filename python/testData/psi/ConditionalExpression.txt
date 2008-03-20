@@ -1,6 +1,6 @@
 PyFile:ConditionalExpression.py
   PyAssignmentStatement
-    PyTargetExpression
+    PyTargetExpression: x
       PsiElement(Py:IDENTIFIER)('x')
     PsiWhiteSpace(' ')
     PsiElement(Py:EQ)('=')
