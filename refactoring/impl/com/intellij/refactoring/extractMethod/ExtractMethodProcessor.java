@@ -415,6 +415,10 @@ public class ExtractMethodProcessor implements MatchProvider {
       @Override public void visitAnonymousClass(final PsiAnonymousClass aClass) {
         visitElement(aClass);
       }
+
+      @Override public void visitTypeParameter(final PsiTypeParameter classParameter) {
+        visitElement(classParameter);
+      }
     });
     for(PsiClass localClass: localClasses) {
       final boolean classExtracted = isExtractedElement(localClass);
