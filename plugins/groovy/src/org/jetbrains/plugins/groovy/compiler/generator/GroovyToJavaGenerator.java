@@ -609,7 +609,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     PsiType retType;
     if (method instanceof GrMethod) {
       retType = ((GrMethod) method).getDeclaredReturnType();
-      if (retType == null) retType = TypesUtil.createJavaLangObject(method);
+      if (retType == null) retType = TypesUtil.getJavaLangObject(method);
     } else retType = method.getReturnType();
 
     text.append(getTypeText(retType));

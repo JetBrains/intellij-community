@@ -213,17 +213,12 @@ public class TypesUtil {
     return null;
   }
 
-  public static PsiClassType createJavaLangObject(PsiElement context) {
-    final String typeText = "java.lang.Object";
-    return context.getManager().getElementFactory().createTypeByFQClassName(typeText, context.getResolveScope());
-  }
-
   public static PsiClassType createType(String fqName, PsiElement context) {
     PsiManager manager = context.getManager();
     return manager.getElementFactory().createTypeByFQClassName(fqName, context.getResolveScope());
   }
 
-  public static PsiClassType getJavaLangObject(GroovyPsiElement context) {
+  public static PsiClassType getJavaLangObject(PsiElement context) {
     return PsiType.getJavaLangObject(context.getManager(), context.getResolveScope());
   }
 }

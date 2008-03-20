@@ -86,7 +86,7 @@ public class GrAccessorMethodImpl extends LightElement implements GrAccessorMeth
           if (myIsSetter) {
             PsiType type = myProperty.getDeclaredType();
             if (type == null) {
-              type = TypesUtil.createJavaLangObject(myProperty);
+              type = TypesUtil.getJavaLangObject(myProperty);
             }
             return new LightParameter[]{new LightParameter(manager, myProperty.getName(), null, type, GrAccessorMethodImpl.this)};
           }

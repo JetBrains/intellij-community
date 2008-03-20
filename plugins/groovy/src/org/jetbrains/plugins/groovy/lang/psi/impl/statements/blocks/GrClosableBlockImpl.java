@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -154,7 +153,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
         if (scriptClass != null) type = factory.createType(scriptClass);
       }
       if (type == null) {
-        type = TypesUtil.createJavaLangObject(this);
+        type = TypesUtil.getJavaLangObject(this);
       }
 
       myOwner = GroovyPsiElementFactory.getInstance(getProject()).createVariableDeclaration(null, null, type, OWNER_NAME).getVariables()[0];

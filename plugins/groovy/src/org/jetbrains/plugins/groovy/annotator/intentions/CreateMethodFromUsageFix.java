@@ -22,10 +22,7 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -81,7 +78,7 @@ public class CreateMethodFromUsageFix implements IntentionAction {
     ParameterNameExpression paramNameExpression = new ParameterNameExpression();
     for (int i = 0; i < argTypes.length; i++) {
       PsiType argType = argTypes[i];
-      if (argType == null) argType = TypesUtil.createJavaLangObject(myRefExpression);
+      if (argType == null) argType = TypesUtil.getJavaLangObject(myRefExpression);
       if (i > 0) methodBuffer.append(", ");
       methodBuffer.append("Object o").append(i);
       paramTypesExpressions[i] = new ChooseTypeExpression(new TypeConstraint[]{SupertypeConstraint.create(argType)}, myRefExpression.getManager());

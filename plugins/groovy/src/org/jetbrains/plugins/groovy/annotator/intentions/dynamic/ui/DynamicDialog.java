@@ -196,7 +196,7 @@ public abstract class DynamicDialog extends DialogWrapper {
       }
     });
 
-    final PsiClassType objectType = TypesUtil.createJavaLangObject(myReferenceExpression);
+    final PsiClassType objectType = TypesUtil.getJavaLangObject(myReferenceExpression);
     myTypeComboBox.getEditor().setItem(createDocument(objectType.getPresentableText()));
   }
 
