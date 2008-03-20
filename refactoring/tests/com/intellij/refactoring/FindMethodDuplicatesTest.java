@@ -31,7 +31,7 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
   }
 
   protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk("java 1.5");
+    return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 
   private void doTest() throws Exception {
