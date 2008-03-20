@@ -50,7 +50,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
@@ -107,26 +106,17 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
 
     if (type != null) {
       type = TypesUtil.unboxPrimitiveTypeWrapper(type);
-      final String typeText = getTypeText(type);
-      int lastDot = typeText.lastIndexOf('.');
-      int idx = 0 < lastDot && lastDot < typeText.length() - 1 ? lastDot + 1 : 0;
-      if (Character.isLowerCase(typeText.charAt(idx)) &&
-          !GroovyNamesUtil.isKeyword(typeText)) { //primitive type
-        text.append("def ");
-      }
-      text.append(typeText).append(" ");
+      text.append("def ").append(getTypeText(type)).append(" ");
     } else {
       text.append("def ");
     }
 
-    int i = 1;
-    for (String identifier : identifiers) {
+    for (int i = 0; i < identifiers.length; i++) {
+      if (i > 0) text.append(", ");
+      String identifier = identifiers[i];
       text.append(identifier);
-      if (i < identifiers.length) {
-        text.append(", ");
-      }
-      i++;
     }
+
     GrExpression expr;
 
     if (initializer != null) {
@@ -263,7 +253,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
   }
 
   public GrVariableDeclaration createSimpleVariableDeclaration(String name, String typeText) {
-    String classText = "";
+    String classText;
     if (Character.isLowerCase(typeText.charAt(0))) {
       classText = "class A { def " + typeText + " " + name + "}";
     } else {
