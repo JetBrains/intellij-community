@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
@@ -104,10 +105,19 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
   public GrVariableDeclaration createVariableDeclaration(String[] modifiers, GrExpression initializer, PsiType type, String... identifiers) {
     StringBuffer text = writeModifiers(modifiers);
 
-    text.append("def ");
     if (type != null) {
       type = TypesUtil.unboxPrimitiveTypeWrapper(type);
-      text.append(getTypeText(type)).append(" ");
+      final String typeText = getTypeText(type);
+      int lastDot = typeText.lastIndexOf('.');
+      int idx = 0 < lastDot && lastDot < typeText.length() - 1 ? lastDot + 1 : 0;
+      char c = typeText.charAt(idx);
+      if (!Character.isLetter(c) || Character.isLowerCase(c) &&
+          !GroovyNamesUtil.isKeyword(typeText)) { //primitive type
+        text.append("def ");
+      }
+      text.append(typeText).append(" ");
+    } else {
+      text.append("def ");
     }
 
     for (int i = 0; i < identifiers.length; i++) {
@@ -115,7 +125,6 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
       String identifier = identifiers[i];
       text.append(identifier);
     }
-
     GrExpression expr;
 
     if (initializer != null) {
@@ -252,7 +261,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
   }
 
   public GrVariableDeclaration createSimpleVariableDeclaration(String name, String typeText) {
-    String classText;
+    String classText = "";
     if (Character.isLowerCase(typeText.charAt(0))) {
       classText = "class A { def " + typeText + " " + name + "}";
     } else {
