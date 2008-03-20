@@ -82,6 +82,10 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest();
   }
 
+  public void testLocationQuantity() throws Exception {
+    doTest();
+  }
+
   public void testMappingExpression2Field() throws Exception {
     doTest(false);
   }
