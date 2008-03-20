@@ -5,36 +5,26 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.versioning.VersionRange;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.util.MavenId;
 
 import java.io.File;
 import java.util.*;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public class MavenToIdeaMapping {
-
-  final private Map<MavenId, String> projectIdToModuleName = new HashMap<MavenId, String>();
-
-  final private Set<String> projectNames = new HashSet<String>();
-
-  final private Map<MavenProjectModel.Node, String> projectToModuleName = new HashMap<MavenProjectModel.Node, String>();
-
-  final private Map<MavenProjectModel.Node, String> projectToModulePath = new HashMap<MavenProjectModel.Node, String>();
-
-  final private Map<String, Module> nameToModule = new HashMap<String, Module>();
-
-  final private Map<String, String> libraryNameToModuleName = new HashMap<String, String>();
-
-  final private Map<MavenProjectModel.Node, Module> projectToModule = new HashMap<MavenProjectModel.Node, Module>();
-
-  final private Set<Module> obsoleteModules = new HashSet<Module>();
-
   @NonNls private static final String IML_EXT = ".iml";
+
+  private Map<MavenId, VirtualFile> mavenProjectsFiles = new HashMap<MavenId, VirtualFile>();
+  private Map<MavenId, String> projectIdToModuleName = new HashMap<MavenId, String>();
+  private Set<String> projectNames = new HashSet<String>();
+  private Map<MavenProjectModel.Node, String> projectToModuleName = new HashMap<MavenProjectModel.Node, String>();
+  private Map<MavenProjectModel.Node, String> projectToModulePath = new HashMap<MavenProjectModel.Node, String>();
+  private Map<String, Module> nameToModule = new HashMap<String, Module>();
+  private Map<String, String> libraryNameToModuleName = new HashMap<String, String>();
+  private Map<MavenProjectModel.Node, Module> projectToModule = new HashMap<MavenProjectModel.Node, Module>();
+  private Set<Module> obsoleteModules = new HashSet<Module>();
 
   public MavenToIdeaMapping(MavenProjectModel mavenProjectModel, String moduleDir, Project project) {
     resolveModuleNames(mavenProjectModel);
@@ -62,6 +52,7 @@ public class MavenToIdeaMapping {
         libraryNameToModuleName.put(getLibraryName(id), name);
 
         projectNames.add(name);
+        mavenProjectsFiles.put(id, node.getFile());
       }
     });
   }
@@ -137,25 +128,16 @@ public class MavenToIdeaMapping {
                     projectToModuleName.get(node) + IML_EXT).getPath();
   }
 
+  public VirtualFile getMavenProjectFile(MavenId id) {
+    return mavenProjectsFiles.get(id);
+  }
+
   public String getLibraryName(MavenId id) {
     return id.toString();
   }
 
   public String getModuleName(Artifact a) {
-    // HACK!!!
-    // we should find module by version range version, since it might be X-SNAPSHOT or SNAPSHOT
-    // which is resolved in X-timestamp-build. But mapping contains base artefact versions.
-    // todo: user MavenArtifactResolver instread.
-
-    VersionRange range = a.getVersionRange();
-    String version = range == null ? a.getVersion() : range.toString();
-    MavenId versionId = new MavenId(a.getGroupId(), a.getArtifactId(), version);
-
-    return getModuleName(versionId);
-  }
-
-  private String getModuleName(MavenId id) {
-    String name = projectIdToModuleName.get(id);
+    String name = projectIdToModuleName.get(new MavenId(a));
     if (nameToModule.containsKey(name) || projectNames.contains(name)) return name;
     return null;
   }

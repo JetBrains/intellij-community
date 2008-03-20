@@ -103,6 +103,37 @@ public class BasicImportingTest extends ImportingTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
+  public void testParentWithoutARelativePath() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>modules/m</module>" +
+                     "</modules>");
+
+    createModulePom("modules/m", "<groupId>test</groupId>" +
+                                 "<artifactId>m1</artifactId>" +
+                                 "<version>1</version>" +
+
+                                 "<parent>" +
+                                 "  <groupId>test</groupId>" +
+                                 "  <artifactId>project</artifactId>" +
+                                 "  <version>1</version>" +
+                                 "</parent>");
+
+    try {
+      // shouldn't throw the 'parent pom not found' exception.
+      importProject();
+      fail();
+    }
+    catch (MavenException e) {
+      // todo: not sure if we should support such configurations.
+      // strictly speaking the configuration is invalid.
+    }
+  }
+
   public void testOptionalLibraryDependencyIsNotExportable() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -250,10 +281,7 @@ public class BasicImportingTest extends ImportingTestCase {
     assertModules("project", "m1", "m2");
 
     assertModuleLibDeps("m2", "group:id:1");
-
-    // should be uncommented when embedder bug is fixed
-    assertModuleLibDeps("m1");
-    // assertModuleLibDeps("m1", "group:id:1");
+    assertModuleLibDeps("m1", "group:id:1");
   }
 
   public void testTransitiveLibraryDependencyVersionResolution() throws Exception {
@@ -535,13 +563,12 @@ public class BasicImportingTest extends ImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>2</version>");
 
-    // will fail when problem with ranges is solved in embedder
+    // todo will fail when problem with ranges is solved in embedder
     try {
       importProject();
       fail();
     }
     catch (Exception e) {
-      e.printStackTrace();
     }
 
     //assertModules("project", "m1", "m2");
@@ -719,7 +746,7 @@ public class BasicImportingTest extends ImportingTestCase {
       importProject();
       fail();
     } catch(MavenException e) {
-      // until the bug in the embedder is fixed.
+      // todo until the bug in the embedder is fixed.
     }
     
     //assertModules("project", "m");

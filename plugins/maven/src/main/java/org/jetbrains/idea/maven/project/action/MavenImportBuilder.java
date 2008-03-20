@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.FileFinder;
-import org.jetbrains.idea.maven.core.util.MavenEnv;
+import org.jetbrains.idea.maven.core.util.MavenFactory;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
@@ -152,7 +152,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     for (VirtualFile file : files) {
       ProjectUtil.collectProfileIds(reader.readBare(file.getPath()), profiles);
     }
-    MavenEnv.releaseEmbedder(embedder);
+    MavenFactory.releaseEmbedder(embedder);
 
     return new ArrayList<String>(profiles);
   }

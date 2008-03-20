@@ -1,10 +1,11 @@
 package org.jetbrains.idea.maven.core;
 
 import org.apache.maven.embedder.MavenEmbedder;
+import org.apache.maven.embedder.ContainerCustomizer;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.util.MavenEnv;
+import org.jetbrains.idea.maven.core.util.MavenFactory;
 import org.jetbrains.idea.maven.project.MavenException;
 
 import java.io.File;
@@ -81,7 +82,7 @@ public class MavenCoreSettings implements Cloneable {
 
   @Nullable
   public File getEffectiveLocalRepository() {
-    return MavenEnv.resolveLocalRepository(mavenHome, mavenSettingsFile, localRepository);
+    return MavenFactory.resolveLocalRepository(mavenHome, mavenSettingsFile, localRepository);
   }
 
   public void setLocalRepository(final @Nullable String localRepository) {
@@ -182,9 +183,17 @@ public class MavenCoreSettings implements Cloneable {
   }
 
   public MavenEmbedder createEmbedder () throws MavenException {
-    return MavenEnv.createEmbedder(getMavenHome(),
+    return MavenFactory.createEmbedder(getMavenHome(),
                                    getEffectiveLocalRepository(),
                                    getMavenSettingsFile(),
-                                   getClass().getClassLoader());
+                                   getClass().getClassLoader(),
+                                   null);
+  }
+
+  public MavenEmbedder createEmbedder(ContainerCustomizer customizer) throws MavenException {
+    return MavenFactory.createEmbedder(getMavenHome(),
+                                   getEffectiveLocalRepository(),
+                                   getMavenSettingsFile(),
+                                   getClass().getClassLoader(), customizer);
   }
 }

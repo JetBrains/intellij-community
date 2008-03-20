@@ -12,7 +12,7 @@ import org.apache.maven.model.Build;
 import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.core.util.MavenEnv;
+import org.jetbrains.idea.maven.core.util.MavenFactory;
 import org.jetbrains.idea.maven.core.util.Path;
 
 import java.io.File;
@@ -53,7 +53,7 @@ public class FoldersConfigurator {
       }
     }
     finally {
-      MavenEnv.releaseEmbedder(embedder);
+      MavenFactory.releaseEmbedder(embedder);
     }
   }
 

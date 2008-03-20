@@ -2,10 +2,16 @@ package org.jetbrains.idea.maven.core.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.embedder.*;
+import org.codehaus.plexus.PlexusContainer;
+import org.codehaus.plexus.component.repository.ComponentDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.project.MavenException;
+import org.jetbrains.idea.maven.project.MavenToIdeaMapping;
+import org.jetbrains.idea.maven.project.ProjectArtifactResolver;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,8 +23,10 @@ import java.util.List;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenEnv {
-  private static final Logger LOG = Logger.getInstance("#" + MavenEnv.class.getName());
+public class MavenFactory {
+  public static MavenToIdeaMapping ourMapping;
+
+  private static final Logger LOG = Logger.getInstance("#" + MavenFactory.class.getName());
 
   @NonNls private static final String PROP_MAVEN_HOME = "maven.home";
   @NonNls private static final String PROP_USER_HOME = "user.home";
@@ -109,7 +117,7 @@ public class MavenEnv {
 
     final File userSettingsFile = resolveUserSettingsFile(userSettings);
     if (userSettingsFile != null) {
-      final String fromUserSettings = MavenEnv.getRepositoryFromSettings(userSettingsFile);
+      final String fromUserSettings = MavenFactory.getRepositoryFromSettings(userSettingsFile);
       if (!StringUtil.isEmpty(fromUserSettings)) {
         return new File(fromUserSettings);
       }
@@ -117,7 +125,7 @@ public class MavenEnv {
 
     final File globalSettingsFile = resolveGlobalSettingsFile(mavenHome);
     if (globalSettingsFile != null) {
-      final String fromGlobalSettings = MavenEnv.getRepositoryFromSettings(globalSettingsFile);
+      final String fromGlobalSettings = MavenFactory.getRepositoryFromSettings(globalSettingsFile);
       if (!StringUtil.isEmpty(fromGlobalSettings)) {
         return new File(fromGlobalSettings);
       }
@@ -149,11 +157,27 @@ public class MavenEnv {
     return Arrays.asList(standardGoals);
   }
 
-  public static MavenEmbedder createEmbedder(String mavenHome, File localRepo, String userSettings, ClassLoader classLoader)
-    throws MavenException {
+  public static MavenEmbedder createEmbedder(MavenCoreSettings settings) throws MavenException {
+    return createEmbedder(settings, null);
+  }
+
+  public static MavenEmbedder createEmbedder(MavenCoreSettings settings, ContainerCustomizer customizer) throws MavenException {
+    return createEmbedder(settings.getMavenHome(),
+                          settings.getEffectiveLocalRepository(),
+                          settings.getMavenSettingsFile(),
+                          settings.getClass().getClassLoader(),
+                          customizer);
+  }
+
+  public static MavenEmbedder createEmbedder(String mavenHome,
+                                             File localRepo,
+                                             String userSettings,
+                                             ClassLoader classLoader,
+                                             ContainerCustomizer customizer) throws MavenException {
 
     Configuration configuration = new DefaultConfiguration();
 
+    configuration.setConfigurationCustomizer(customizer);
     configuration.setLocalRepository(localRepo);
 
     MavenEmbedderConsoleLogger l = new MavenEmbedderConsoleLogger();
@@ -187,6 +211,18 @@ public class MavenEnv {
       LOG.info(e);
       throw new MavenException(e);
     }
+  }
+
+  public static ContainerCustomizer createCustomizerWithMapping(final MavenToIdeaMapping mapping) {
+    return new ContainerCustomizer() {
+      public void customize(PlexusContainer c) {
+        // TODO this is an ugly hack in order to to pass the parameter to the component.
+        // I have to find a way to do it correctly.
+        ourMapping = mapping;
+        ComponentDescriptor resolverDescriptor = c.getComponentDescriptor(ArtifactResolver.ROLE);
+        resolverDescriptor.setImplementation(ProjectArtifactResolver.class.getName());
+      }
+    };
   }
 
   private static List<Exception> collectExceptions(ConfigurationValidationResult result) {

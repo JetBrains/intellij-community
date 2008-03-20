@@ -19,7 +19,7 @@ import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.core.util.MavenEnv;
+import org.jetbrains.idea.maven.core.util.MavenFactory;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.runner.MavenRunner;
@@ -85,7 +85,7 @@ public class MavenArtifactDownloader {
           }
         });
       } finally {
-        MavenEnv.releaseEmbedder(mavenEmbedder);
+        MavenFactory.releaseEmbedder(mavenEmbedder);
       }
     }
     catch (MavenException e) {
