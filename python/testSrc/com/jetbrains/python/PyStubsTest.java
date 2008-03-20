@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -43,6 +44,7 @@ public class PyStubsTest extends CodeInsightTestCase {
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       }
     }.execute();
+    FileBasedIndex.getInstance().indexUnsavedDocuments();
   }
 
   public void testStubStructure() throws Exception {
