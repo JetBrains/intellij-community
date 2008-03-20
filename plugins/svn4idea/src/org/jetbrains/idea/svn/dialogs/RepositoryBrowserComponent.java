@@ -39,6 +39,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
@@ -170,6 +171,11 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
       return (RepositoryTreeNode) selection.getLastPathComponent();
     }
     return null;
+  }
+
+  public void setSelectedNode(@NotNull final TreeNode node) {
+    final TreeNode[] pathNodes = ((RepositoryTreeModel) myRepositoryTree.getModel()).getPathToRoot(node);
+    myRepositoryTree.setSelectionPath(new TreePath(pathNodes));
   }
 
   @Nullable

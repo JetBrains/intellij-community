@@ -24,6 +24,8 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -37,8 +39,6 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,11 +65,12 @@ import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -591,8 +592,28 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         SVNURL url = node.getURL();
         String message = dialog.getCommitMessage();
         doDelete(url, message);
-        ((RepositoryTreeNode) node.getParent()).reload();
+
+        final RepositoryTreeNode parentNode = (RepositoryTreeNode) node.getParent();
+        parentNode.reload(new AfterDeletionSelectionInstaller(node));
       }
+    }
+  }
+
+  private class AfterDeletionSelectionInstaller implements Runnable {
+    private final RepositoryTreeNode myParentNode;
+    private final String myDeletedNodeName;
+    private final boolean myIsFolder;
+
+    private AfterDeletionSelectionInstaller(final RepositoryTreeNode deletedNode) {
+      myParentNode = (RepositoryTreeNode) deletedNode.getParent();
+      myDeletedNodeName = deletedNode.toString();
+      myIsFolder = ! deletedNode.isLeaf();
+    }
+
+    public void run() {
+      TreeNode nodeToSelect = myParentNode.getNextChildByKey(myDeletedNodeName, myIsFolder);
+      nodeToSelect = (nodeToSelect == null) ? myParentNode : nodeToSelect;
+      getRepositoryBrowser().setSelectedNode(nodeToSelect);
     }
   }
 

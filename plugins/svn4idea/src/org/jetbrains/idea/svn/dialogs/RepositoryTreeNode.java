@@ -23,6 +23,8 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   private final SVNURL myURL;
   private final Object myUserObject;
 
+  private Runnable myAfterChildrenLoad;
+
   public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode, @NotNull SVNRepository repository,
                             @NotNull SVNURL url, Object userObject) {
     myParentNode = parentNode;
@@ -71,12 +73,28 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   }
 
   public void reload() {
+    reload(null);
+  }
+
+  public void reload(@Nullable final Runnable doAfterChildrenLoad) {
     // couldn't do that when 'loading' is in progress.
     myChildren = null;
+
+    if (doAfterChildrenLoad != null) {
+      myAfterChildrenLoad = doAfterChildrenLoad;
+    }
+
     myModel.reload(this);
     if (isLeaf()) {
       ((RepositoryTreeNode) getParent()).reload();
     }
+  }
+
+  @Nullable
+  public TreeNode getNextChildByKey(final String key, final boolean isFolder) {
+    final ByKeySelectedSearcher searcher = (isFolder) ? new FolderByKeySelectedSearcher(key, myChildren) :
+                                                 new FileByKeySelectedSearcher(key, myChildren);
+    return searcher.getNextSelectedByKey();
   }
 
   public String toString() {
@@ -107,16 +125,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
           });
         } catch (SVNException e) {
           final SVNErrorMessage err = e.getErrorMessage();
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              // could be null if refresh was called during 'loading'.
-              if (myChildren != null) {
-                myChildren.clear();
-                myChildren.add(new DefaultMutableTreeNode(err));
-              }
-              myModel.reload(RepositoryTreeNode.this);
-            }
-          });
+          invokeLaterTreeFilling(Collections.singletonList((TreeNode) new DefaultMutableTreeNode(err)));
           return;
         }
         // create new node for each entry, then update browser in a swing thread.
@@ -127,14 +136,24 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
           }
           nodes.add(new RepositoryTreeNode(myModel, RepositoryTreeNode.this, myRepository, entry.getURL(), entry));
         }
+
+        invokeLaterTreeFilling(nodes);
+      }
+
+      private void invokeLaterTreeFilling(@NotNull final List<TreeNode> nodesToFillWith) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             // could be null if refresh was called during 'loading'.
             if (myChildren != null) {
               myChildren.clear();
-              myChildren.addAll(nodes);
+              myChildren.addAll(nodesToFillWith);
             }
             myModel.reload(RepositoryTreeNode.this);
+
+            if (myAfterChildrenLoad != null) {
+              myAfterChildrenLoad.run();
+              myAfterChildrenLoad = null;
+            }
           }
         });
       }
