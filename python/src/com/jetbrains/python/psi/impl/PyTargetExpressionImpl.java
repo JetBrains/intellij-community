@@ -117,4 +117,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     final ASTNode[] nodes = getNode().getChildren(PyElementTypes.EXPRESSIONS);
     return (PyExpression)(nodes.length == 1 ? nodes[0].getPsi() : null);
   }
+
+  public String toString() {
+    return super.toString() + ":" + getName();
+  }
 }
