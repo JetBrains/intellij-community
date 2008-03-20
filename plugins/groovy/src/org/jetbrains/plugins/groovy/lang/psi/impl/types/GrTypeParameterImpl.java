@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.util.IncorrectOperationException;
@@ -205,11 +206,11 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
   }
 
   public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
-    return false;
+    return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 
   public boolean isInheritorDeep(PsiClass baseClass, @Nullable PsiClass classToByPass) {
-    return false;
+    return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
   }
 
   @Nullable
