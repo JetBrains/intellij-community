@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemE
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitElement;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;

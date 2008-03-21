@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.lang.psi.util;
+package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
@@ -6,6 +6,8 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.MethodSignature;
@@ -23,6 +25,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWind
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -209,6 +212,11 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
 
   public String toString() {
     return "DynamicMethod:" + getName();
+  }
+
+  @NotNull
+  public SearchScope getUseScope() {
+    return GlobalSearchScope.projectScope(myProject);
   }
 
   public void navigate(boolean requestFocus) {

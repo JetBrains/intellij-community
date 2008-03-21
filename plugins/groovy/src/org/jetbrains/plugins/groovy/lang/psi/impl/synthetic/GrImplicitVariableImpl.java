@@ -2,7 +2,7 @@
  * Copyright (c) 2008, Your Corporation. All Rights Reserved.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.util;
+package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightIdentifier;

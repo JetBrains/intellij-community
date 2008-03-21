@@ -1,10 +1,8 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiVariable;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitPropertyImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitPropertyImpl;
 
 /**
  * User: Dmitry.Krasilschikov
