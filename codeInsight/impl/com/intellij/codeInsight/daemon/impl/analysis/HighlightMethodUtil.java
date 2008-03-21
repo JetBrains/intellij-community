@@ -466,6 +466,7 @@ public class HighlightMethodUtil {
     if (methodCandidates.length == 0) {
       QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new StaticImportMethodFix(methodCall), null);
     }
+    QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new ReplaceAddAllArrayToCollectionFix(methodCall), null);
   }
 
   private static void registerMethodAccessLevelIntentions(CandidateInfo[] methodCandidates,
