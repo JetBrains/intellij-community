@@ -216,8 +216,9 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
 
     window.activate(new Runnable() {
       public void run() {
-        final TreeTable treeTable = DynamicToolWindowWrapper.getTreeTable(window, myProject);
-        final ListTreeTableModelOnColumns model = DynamicToolWindowWrapper.getTreeTableModel(window, myProject);
+        DynamicToolWindowWrapper toolWindowWrapper = DynamicToolWindowWrapper.getInstance(myProject);
+        final TreeTable treeTable = toolWindowWrapper.getTreeTable(window, myProject);
+        final ListTreeTableModelOnColumns model = toolWindowWrapper.getTreeTableModel(window, myProject);
 
         Object root = model.getRoot();
 

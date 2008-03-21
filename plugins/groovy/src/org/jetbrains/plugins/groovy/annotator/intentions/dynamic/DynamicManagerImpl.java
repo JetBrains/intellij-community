@@ -67,7 +67,7 @@ public class DynamicManagerImpl extends DynamicManager {
 
   private void addItemInTree(DClassElement classElement, DItemElement itemElement) {
     final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID);
-    final ListTreeTableModelOnColumns myTreeTableModel = DynamicToolWindowWrapper.getTreeTableModel(window, myProject);
+    final ListTreeTableModelOnColumns myTreeTableModel = DynamicToolWindowWrapper.getInstance(myProject).getTreeTableModel(window, myProject);
 
     final Object rootObject = myTreeTableModel.getRoot();
     if (!(rootObject instanceof DefaultMutableTreeNode)) return;

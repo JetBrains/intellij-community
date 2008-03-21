@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -27,6 +28,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
@@ -49,12 +51,16 @@ import java.util.List;
  * User: Dmitry.Krasilschikov
  * Date: 09.01.2008
  */
-public class DynamicToolWindowWrapper {
+public class DynamicToolWindowWrapper implements ProjectComponent {
+
+  public static DynamicToolWindowWrapper getInstance(Project project) {
+    return project.getComponent(DynamicToolWindowWrapper.class);
+  }
 
   public static final String DYNAMIC_TOOLWINDOW_ID = GroovyBundle.message("dynamic.tool.window.id");
   public static final String QUALIFIED_IDENTIFIER_REGEXP = "[a-zA-Z0-9(.)]+";
-  private static JPanel myTreeTablePanel;
-  private static JPanel myBigPanel;
+  private JPanel myTreeTablePanel;
+  private JPanel myBigPanel;
   private static ListTreeTableModelOnColumns myTreeTableModel;
 
   private static final int CLASS_OR_ELEMENT_NAME_COLUMN = 0;
@@ -67,11 +73,11 @@ public class DynamicToolWindowWrapper {
 
   private static TreeTable myTreeTable;
 
-  private static boolean doesTreeTableInit() {
+  private boolean doesTreeTableInit() {
     return myBigPanel != null && myTreeTableModel != null && myTreeTablePanel != null;
   }
 
-  public static TreeTable getTreeTable(ToolWindow window, Project project) {
+  public TreeTable getTreeTable(ToolWindow window, Project project) {
     if (!doesTreeTableInit()) {
       reconfigureWindow(project, window);
     }
@@ -79,11 +85,11 @@ public class DynamicToolWindowWrapper {
     return returnTreeTable();
   }
 
-  public static void configureWindow(final Project project, ToolWindow window) {
+  public void configureWindow(final Project project, ToolWindow window) {
     reconfigureWindow(project, window);
   }
 
-  private static void reconfigureWindow(final Project project, ToolWindow window) {
+  private void reconfigureWindow(final Project project, ToolWindow window) {
     window.setTitle(GroovyBundle.message("toolwindow.dynamic.properties"));
     window.setToHideOnEmptyContent(true);
 
@@ -91,7 +97,7 @@ public class DynamicToolWindowWrapper {
     window.getComponent().add(getContentPane(project));
   }
 
-  private static JPanel buildBigPanel(final Project project) {
+  private JPanel buildBigPanel(final Project project) {
     myBigPanel = new JPanel(new BorderLayout());
     myBigPanel.setBackground(UIUtil.getFieldForegroundColor());
 
@@ -111,14 +117,14 @@ public class DynamicToolWindowWrapper {
     return myBigPanel;
   }
 
-  public static void rebuildTreePanel(Project project) {
+  public void rebuildTreePanel(Project project) {
     DefaultMutableTreeNode myRootNode = new DefaultMutableTreeNode();
     buildTree(project, myRootNode);
 
     rebuildTreeView(project, myRootNode, false);
   }
 
-  private static void rebuildTreeView(Project project, DefaultMutableTreeNode root, boolean expandAll) {
+  private void rebuildTreeView(Project project, DefaultMutableTreeNode root, boolean expandAll) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     myTreeTablePanel.removeAll();
@@ -167,7 +173,7 @@ public class DynamicToolWindowWrapper {
     return rootNode;
   }
 
-  private static JScrollPane createTable(final Project project, MutableTreeNode myTreeRoot) {
+  private JScrollPane createTable(final Project project, MutableTreeNode myTreeRoot) {
     ColumnInfo[] columnInfos = {new ClassColumnInfo(myColumnNames[CLASS_OR_ELEMENT_NAME_COLUMN]), new PropertyTypeColumnInfo(myColumnNames[TYPE_COLUMN])};
 
     myTreeTableModel = new ListTreeTableModelOnColumns(myTreeRoot, columnInfos);
@@ -315,7 +321,7 @@ public class DynamicToolWindowWrapper {
     return scrollpane;
   }
 
-  private static void deleteRow(final Project project) {
+  private void deleteRow(final Project project) {
     final int[] rows = myTreeTable.getSelectedRows();
 
     boolean isShowDialog = true;
@@ -363,13 +369,13 @@ public class DynamicToolWindowWrapper {
     DynamicManager.getInstance(project).fireChange();
   }
 
-  private static boolean removeClass(Project project, TreePath selectionPath, DefaultMutableTreeNode classNode, boolean isShowDialog, int rowsCount) {
+  private boolean removeClass(Project project, TreePath selectionPath, DefaultMutableTreeNode classNode, boolean isShowDialog, int rowsCount) {
     final TreeNode rootObject = classNode.getParent();
     return rootObject instanceof DefaultMutableTreeNode && removeDynamicElement(project, selectionPath, classNode, ((DefaultMutableTreeNode) rootObject), isShowDialog, rowsCount);
 
   }
 
-  private static boolean removeDynamicElement(Project project, TreePath selectionPath, DefaultMutableTreeNode child, DefaultMutableTreeNode parent, boolean isShowDialog, int rowsCount) {
+  private boolean removeDynamicElement(Project project, TreePath selectionPath, DefaultMutableTreeNode child, DefaultMutableTreeNode parent, boolean isShowDialog, int rowsCount) {
     Object namedElement = child.getUserObject();
 
     if (!(namedElement instanceof DNamedElement)) return false;
@@ -441,7 +447,7 @@ public class DynamicToolWindowWrapper {
     return toolWindow != null && toolWindow.isVisible();
   }
 
-  private static JPanel getContentPane(Project project) {
+  private JPanel getContentPane(Project project) {
     if (!doesTreeTableInit()) {
       buildBigPanel(project);
     }
@@ -451,6 +457,28 @@ public class DynamicToolWindowWrapper {
 
   private static TreeTable returnTreeTable() {
     return myTreeTable;
+  }
+
+  public void projectOpened() {
+    //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  public void projectClosed() {
+    //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @NonNls
+  @NotNull
+  public String getComponentName() {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  public void initComponent() {
+    //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  public void disposeComponent() {
+    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   static class PropertyTypeColumnInfo extends ColumnInfo<DefaultMutableTreeNode, String> {
@@ -477,7 +505,7 @@ public class DynamicToolWindowWrapper {
     }
   }
 
-  static class ClassColumnInfo extends ColumnInfo<DefaultMutableTreeNode, DNamedElement> {
+  class ClassColumnInfo extends ColumnInfo<DefaultMutableTreeNode, DNamedElement> {
     public ClassColumnInfo(String name) {
       super(name);
     }
@@ -502,7 +530,7 @@ public class DynamicToolWindowWrapper {
     }
   }
 
-  static class DynamicFilterComponent extends FilterComponent {
+  class DynamicFilterComponent extends FilterComponent {
     private final Project myProject;
 
     public DynamicFilterComponent(Project project, @NonNls String propertyName, int historySize) {
@@ -587,7 +615,7 @@ public class DynamicToolWindowWrapper {
     return ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(currentFile);
   }
 
-  public static ListTreeTableModelOnColumns getTreeTableModel(ToolWindow window, Project project) {
+  public ListTreeTableModelOnColumns getTreeTableModel(ToolWindow window, Project project) {
     if (!doesTreeTableInit()) {
       reconfigureWindow(project, window);
     }

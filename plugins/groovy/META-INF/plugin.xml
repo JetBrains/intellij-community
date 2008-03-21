@@ -99,6 +99,10 @@
       <implementation-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl
       </implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper
+      </implementation-class>
+    </component>
   </project-components>
   <module-components>
     <component>
