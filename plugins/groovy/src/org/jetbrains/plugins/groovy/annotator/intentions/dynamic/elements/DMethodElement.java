@@ -2,10 +2,15 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiClassType;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitMethod;
 
 import java.util.ArrayList;
@@ -18,6 +23,7 @@ import java.util.List;
 public class DMethodElement extends DItemElement implements Comparable {
   public List<MyPair> myPairs = new ArrayList<MyPair>();
   private PsiMethod myImplicitMethod;
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement");
 
   public DMethodElement() {
     super(null, null);
@@ -40,9 +46,21 @@ public class DMethodElement extends DItemElement implements Comparable {
   public PsiMethod getPsi(PsiManager manager, String containingClassName) {
     if (myImplicitMethod != null) return myImplicitMethod;
 
-    final GrMethod method = GroovyPsiElementFactory.getInstance(manager.getProject()).createMethodFromText(getName(), getType(), QuickfixUtil.getArgumentsTypes(myPairs));
+    //TODO: createTypeElement and check it for resolving
+    final String type = getType();
 
-    myImplicitMethod = new GrDynamicImplicitMethod(manager, method, containingClassName);
+    try {
+      final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(manager.getProject()).createTypeElement(type);
+
+      final PsiType psiType = typeElement.getType();
+      if (!(psiType instanceof PsiClassType)) return null;
+
+      final GrMethod method = GroovyPsiElementFactory.getInstance(manager.getProject()).createMethodFromText(getName(), type, QuickfixUtil.getArgumentsTypes(myPairs));
+
+      myImplicitMethod = new GrDynamicImplicitMethod(manager, method, containingClassName);
+    } catch (IncorrectOperationException e) {
+      LOG.error("expected variable declaration");
+    }
     return myImplicitMethod;
   }
 

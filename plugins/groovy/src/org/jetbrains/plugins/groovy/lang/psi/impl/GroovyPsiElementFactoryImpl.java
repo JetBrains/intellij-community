@@ -420,6 +420,6 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
       parameters += paramType.toLowerCase() + i;
     }
 
-    return createMethodFromText(type + " " + name + "(" + parameters + ")" + "{}");
+    return createMethodFromText("def " + type + " " + name + "(" + parameters + ")" + "{}");
   }
 }
