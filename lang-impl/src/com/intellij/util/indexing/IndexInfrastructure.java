@@ -21,7 +21,7 @@ import java.util.Locale;
 public class IndexInfrastructure {
   private static final int VERSION = 3;
   private final static TObjectLongHashMap<ID<?, ?>> myIndexIdToCreationStamp = new TObjectLongHashMap<ID<?, ?>>();
-  static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+  private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
   private IndexInfrastructure() {
   }
@@ -116,7 +116,7 @@ public class IndexInfrastructure {
   }
 
   @Nullable
-  static VirtualFile findTestFile(final int id) {
+  private static VirtualFile findTestFile(final int id) {
     return ourUnitTestMode ? DummyFileSystem.getInstance().findById(id) : null;
   }
 }

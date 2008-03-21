@@ -3,10 +3,12 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.FileBasedIndex;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 
 public class StubTree {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubTree");
+
   private final Key<StubTree> HARD_REF_IN_STUB = new Key<StubTree>("HARD_REF_IN_STUB");
   private final PsiFileStub myRoot;
   private final List<StubElement<?>> myPlainList = new ArrayList<StubElement<?>>();
@@ -41,8 +45,8 @@ public class StubTree {
     return myPlainList;
   }
 
-  public Map<StubIndexKey, Map<Object, Integer>> indexStubTree() {
-    final Map<StubIndexKey, Map<Object, Integer>> result = new HashMap<StubIndexKey, Map<Object, Integer>>();
+  public Map<StubIndexKey, Map<Object, TIntArrayList>> indexStubTree() {
+    final Map<StubIndexKey, Map<Object, TIntArrayList>> result = new HashMap<StubIndexKey, Map<Object, TIntArrayList>>();
 
     for (int i = 0; i < myPlainList.size(); i++) {
       StubElement<?> stub = myPlainList.get(i);
@@ -50,17 +54,18 @@ public class StubTree {
       final int stubIdx = i;
       serializer.indexStub(stub, new IndexSink() {
         public void occurence(@NotNull final StubIndexKey indexKey, @NotNull final Object value) {
-          if (value != null) {
-            Map<Object, Integer> map = result.get(indexKey);
-            if (map == null) {
-              map = new HashMap<Object, Integer>();
-              result.put(indexKey, map);
-            }
-            map.put(value, stubIdx);
+          Map<Object, TIntArrayList> map = result.get(indexKey);
+          if (map == null) {
+            map = new HashMap<Object, TIntArrayList>();
+            result.put(indexKey, map);
           }
-          else {
-            System.out.println("Oops! There shall be no null values in indices.");
+          
+          TIntArrayList list = map.get(value);
+          if (list == null) {
+            list = new TIntArrayList();
+            map.put(value, list);
           }
+          list.add(stubIdx);
         }
       });
     }

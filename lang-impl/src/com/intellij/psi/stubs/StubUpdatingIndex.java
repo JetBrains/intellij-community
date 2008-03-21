@@ -19,6 +19,7 @@ import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -131,8 +132,8 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
   }
 
   private static class MyIndex extends MapReduceIndex<Integer, SerializedStubTree, FileBasedIndex.FileContent> {
-    private Map<StubIndexKey, Map<Object, Integer>> myOld;
-    private Map<StubIndexKey, Map<Object, Integer>> myNew;
+    private Map<StubIndexKey, Map<Object, TIntArrayList>> myOld;
+    private Map<StubIndexKey, Map<Object, TIntArrayList>> myNew;
 
     public MyIndex(final IndexStorage<Integer, SerializedStubTree> storage,
                    final DataIndexer<Integer, SerializedStubTree, FileBasedIndex.FileContent> indexer) {

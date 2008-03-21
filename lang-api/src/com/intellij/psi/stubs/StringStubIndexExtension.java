@@ -9,7 +9,7 @@ import com.intellij.util.io.PersistentEnumerator;
 
 public abstract class StringStubIndexExtension<Psi extends PsiElement> implements StubIndexExtension<String, Psi> {
   public int getVersion() {
-    return 1;
+    return 2;
   }
 
   public PersistentEnumerator.DataDescriptor<String> getKeyDescriptor() {

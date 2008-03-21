@@ -22,6 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
+import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,8 +67,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        final MapIndexStorage<K, Integer> storage = new MapIndexStorage<K, Integer>(IndexInfrastructure.getStorageFile(name), extension.getKeyDescriptor(), new StubIdExternalizer());
-        final MemoryIndexStorage<K, Integer> memStorage = new MemoryIndexStorage<K, Integer>(storage);
+        final MapIndexStorage<K, TIntArrayList> storage = new MapIndexStorage<K, TIntArrayList>(IndexInfrastructure.getStorageFile(name), extension.getKeyDescriptor(), new StubIdExternalizer());
+        final MemoryIndexStorage<K, TIntArrayList> memStorage = new MemoryIndexStorage<K, TIntArrayList>(storage);
         final MyIndex index = createIndex(extension, memStorage);
         myIndicies.put(name, index);
         break;
@@ -79,13 +80,34 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
-  private static class StubIdExternalizer implements DataExternalizer<Integer> {
-    public void save(final DataOutput out, final Integer value) throws IOException {
-      DataInputOutputUtil.writeINT(out, value.intValue());
+  private static class StubIdExternalizer implements DataExternalizer<TIntArrayList> {
+    public void save(final DataOutput out, final TIntArrayList value) throws IOException {
+      int size = value.size();
+      if (size == 1) {
+        DataInputOutputUtil.writeSINT(out, -value.get(0));
+      }
+      else {
+        DataInputOutputUtil.writeSINT(out, size);
+        for (int i = 0; i < size; i++) {
+          DataInputOutputUtil.writeINT(out, value.get(i));
+        }
+      }
     }
 
-    public Integer read(final DataInput in) throws IOException {
-      return DataInputOutputUtil.readINT(in);
+    public TIntArrayList read(final DataInput in) throws IOException {
+      int size = DataInputOutputUtil.readSINT(in);
+      if (size < 0) {
+        TIntArrayList result = new TIntArrayList(1);
+        result.add(-size);
+        return result;
+      }
+      else {
+        TIntArrayList result = new TIntArrayList(size);
+        for (int i = 0; i < size; i++) {
+          result.add(DataInputOutputUtil.readINT(in));
+        }
+        return result;
+      }
     }
   }
 
@@ -103,9 +125,9 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       final List<Psi> result = new ArrayList<Psi>();
       final MyIndex<Key> index = (MyIndex<Key>)myIndicies.get(indexKey);
 
-      final ValueContainer<Integer> container = index.getData(key);
-      container.forEach(new ValueContainer.ContainerAction<Integer>() {
-        public void perform(final int id, final Integer value) {
+      final ValueContainer<TIntArrayList> container = index.getData(key);
+      container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
+        public void perform(final int id, final TIntArrayList value) {
           final VirtualFile file = IndexInfrastructure.findFileById(dirIndex, fs, id);
           if (file != null && (scope == null || scope.contains(file))) {
             final PsiFileImpl psiFile = (PsiFileImpl)psiManager.findFile(file);
@@ -114,13 +136,17 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
               if (stubTree == null) {
                 stubTree = StubTree.readFromVFile(file, project);
                 final List<StubElement<?>> plained = stubTree.getPlainList();
-                final StubElement<?> stub = plained.get(value);
-                final ASTNode tree = psiFile.findTreeForStub(stubTree, stub);
-                result.add((Psi)tree.getPsi());
+                for (int i = 0; i < value.size(); i++) {
+                  final StubElement<?> stub = plained.get(value.get(i));
+                  final ASTNode tree = psiFile.findTreeForStub(stubTree, stub);
+                  result.add((Psi)tree.getPsi());
+                }
               }
               else {
                 final List<StubElement<?>> plained = stubTree.getPlainList();
-                result.add((Psi)plained.get(value).getPsi());
+                for (int i = 0; i < value.size(); i++) {
+                  result.add((Psi)plained.get(value.get(i)).getPsi());
+                }
               }
             }
           }
@@ -179,8 +205,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   public void updateIndex(StubIndexKey key,
                           int fileId,
-                          Map<?, Integer> oldValues,
-                          Map<?, Integer> newValues) {
+                          Map<?, TIntArrayList> oldValues,
+                          Map<?, TIntArrayList> newValues) {
     try {
       final MyIndex index = myIndicies.get(key);
       index.updateWithMap(fileId, oldValues, newValues);
@@ -190,12 +216,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
-  private static class MyIndex<K> extends MapReduceIndex<K, Integer, Void> {
+  private static class MyIndex<K> extends MapReduceIndex<K, TIntArrayList, Void> {
     public MyIndex(final MemoryIndexStorage memStorage) {
       super(null, memStorage);
     }
 
-    public void updateWithMap(final int inputId, final Map oldData, final Map newData) throws StorageException {
+    public void updateWithMap(final int inputId, final Map<K, TIntArrayList> oldData, final Map<K, TIntArrayList> newData) throws StorageException {
       super.updateWithMap(inputId, oldData, newData);
     }
   }
