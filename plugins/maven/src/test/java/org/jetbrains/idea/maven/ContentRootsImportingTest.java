@@ -2,6 +2,8 @@ package org.jetbrains.idea.maven;
 
 public class ContentRootsImportingTest extends ImportingTestCase {
   public void testSimpleProjectStructure() throws Exception {
+    createStdProjectFolders();
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -14,6 +16,9 @@ public class ContentRootsImportingTest extends ImportingTestCase {
   }
 
   public void testCustomSourceFolders() throws Exception {
+    createStdProjectFolders();
+    createProjectSubDirs("src", "test", "res1", "res2", "testRes1", "testRes2");
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -39,6 +44,13 @@ public class ContentRootsImportingTest extends ImportingTestCase {
   }
 
   public void testCustomSourceFoldersWithRelativePaths() throws Exception {
+    createStdProjectFolders();
+    createProjectSubDirs("m",
+                         "src",
+                         "test",
+                         "res",
+                         "testRes");
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -73,6 +85,9 @@ public class ContentRootsImportingTest extends ImportingTestCase {
   }
 
   public void testPluginSources() throws Exception {
+    createStdProjectFolders();
+    createProjectSubDirs("src1", "src2");
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -106,6 +121,9 @@ public class ContentRootsImportingTest extends ImportingTestCase {
   }
 
   public void testPluginSourceDuringGenerateResourcesPhase() throws Exception {
+    createStdProjectFolders();
+    createProjectSubDirs("extraResources");
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -138,6 +156,9 @@ public class ContentRootsImportingTest extends ImportingTestCase {
   }
 
   public void testPluginTestSourcesDuringGenerateTestResourcesPhase() throws Exception {
+    createStdProjectFolders();
+    createProjectSubDirs("extraTestResources");
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -170,6 +191,9 @@ public class ContentRootsImportingTest extends ImportingTestCase {
   }
 
   public void testPluginSourcesWithRelativePath() throws Exception {
+    createStdProjectFolders();
+    createProjectSubDirs("relativePath");
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -202,6 +226,9 @@ public class ContentRootsImportingTest extends ImportingTestCase {
   }
 
   public void testPluginSourcesWithVariables() throws Exception {
+    createStdProjectFolders();
+    createProjectSubDirs("target/src");
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -234,6 +261,9 @@ public class ContentRootsImportingTest extends ImportingTestCase {
   }
 
   public void testPluginSourcesWithInvalidDependency() throws Exception {
+    createStdProjectFolders();
+    createProjectSubDirs("src");
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -290,8 +320,9 @@ public class ContentRootsImportingTest extends ImportingTestCase {
   }
 
   public void testAddingExistingGeneratedSources() throws Exception {
-    createProjectSubDir("target/generated-sources/src1");
-    createProjectSubDir("target/generated-sources/src2");
+    createStdProjectFolders();
+    createProjectSubDirs("target/generated-sources/src1",
+                         "target/generated-sources/src2");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -305,8 +336,9 @@ public class ContentRootsImportingTest extends ImportingTestCase {
   }
 
   public void testAddingExistingGeneratedSourcesWithCustomTargetDir() throws Exception {
-    createProjectSubDir("targetCustom/generated-sources/src1");
-    createProjectSubDir("targetCustom/generated-sources/src2");
+    createStdProjectFolders();
+    createProjectSubDirs("targetCustom/generated-sources/src1",
+                         "targetCustom/generated-sources/src2");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -324,7 +356,8 @@ public class ContentRootsImportingTest extends ImportingTestCase {
   }
 
   public void testDoesNotAddAlreadyRegisteredSourcesUnderGeneratedDir() throws Exception {
-    createProjectSubDir("target/generated-sources/main");
+    createStdProjectFolders();
+    createProjectSubDir("target/generated-sources/main/src");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -360,6 +393,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
   }
 
   public void testIgnoringFilesRightUnderGeneratedSources() throws Exception {
+    createStdProjectFolders();
     createProjectSubFile("target/generated-sources/f.txt");
 
     importProject("<groupId>test</groupId>" +
@@ -460,14 +494,18 @@ public class ContentRootsImportingTest extends ImportingTestCase {
   }
 
   public void testDoesNotExcludeGeneratedSourcesUnderTargetDir() throws Exception {
-    createProjectSubDir("target/foo");
-    createProjectSubDir("target/generated-sources/bar");
+    createStdProjectFolders();
+    createProjectSubDirs("target/foo",
+                         "target/generated-sources/bar");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    assertExcludes("project", "target/foo");
+    assertExcludes("project",
+                   "target/foo",
+                   "target/classes");
+
     assertSources("project",
                   "src/main/java",
                   "src/main/resources",
@@ -475,9 +513,10 @@ public class ContentRootsImportingTest extends ImportingTestCase {
   }
 
   public void testDoesNotExcludeSourcesUnderTargetDir() throws Exception {
-    createProjectSubDir("target/src");
-    createProjectSubDir("target/test");
-    createProjectSubDir("target/xxx");
+    createStdProjectFolders();
+    createProjectSubDirs("target/src",
+                         "target/test",
+                         "target/xxx");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -490,12 +529,15 @@ public class ContentRootsImportingTest extends ImportingTestCase {
 
     assertModules("project");
 
-    assertExcludes("project", "target/xxx");
+    assertExcludes("project",
+                   "target/xxx",
+                   "target/classes");
   }
 
   public void testDoesNotExcludeFoldersWithSourcesUnderTargetDir() throws Exception {
-    createProjectSubDir("target/src/main");
-    createProjectSubDir("target/foo");
+    createStdProjectFolders();
+    createProjectSubDirs("target/src/main",
+                         "target/foo");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -507,10 +549,12 @@ public class ContentRootsImportingTest extends ImportingTestCase {
 
     assertModules("project");
 
+    assertExcludes("project",
+                   "target/foo",
+                   "target/classes");
+
     assertSources("project",
                   "target/src/main",
                   "src/main/resources");
-                            
-    assertExcludes("project", "target/foo");
   }
 }

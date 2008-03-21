@@ -55,6 +55,7 @@ public class FoldersConfiguratorTest extends ImportingTestCase {
   }
   
   public void testDoesNotTouchSourceFolders() throws Exception {
+    createStdProjectFolders();
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -82,6 +83,8 @@ public class FoldersConfiguratorTest extends ImportingTestCase {
   }
 
   public void testDoesNotExcludeRegisteredSources() throws Exception {
+    new File(projectRoot.getPath(), "target/src").mkdirs();
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -109,7 +112,6 @@ public class FoldersConfiguratorTest extends ImportingTestCase {
                   "  </plugins>" +
                   "</build>");
 
-    new File(projectRoot.getPath(), "target/src").mkdirs();
     new File(projectRoot.getPath(), "target/foo").mkdirs();
 
     updateFolders();

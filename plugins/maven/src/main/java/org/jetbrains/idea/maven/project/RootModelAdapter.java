@@ -74,12 +74,18 @@ public class RootModelAdapter {
     return myLibraryTable;
   }
 
-  public void addSourceDir(String path, boolean testSource) {
+  public void addSourceFolder(String path, boolean testSource) {
+    if (!exists(path)) return;
+
     Url url = toUrl(path);
     findOrCreateContentRoot(url).addSourceFolder(url.getUrl(), testSource);
   }
 
-  public Set<Path> getExistingSourceFolders() {
+  private boolean exists(String path) {
+    return new File(new Path(path).getPath()).exists();
+  }
+
+  public Set<Path> getSourceFolders() {
     Set<Path> result = new HashSet<Path>();
     for (ContentEntry entry : myRootModel.getContentEntries()) {
       for (SourceFolder f : entry.getSourceFolders()) {
@@ -89,9 +95,19 @@ public class RootModelAdapter {
     return result;
   }
 
-  public void excludeRoot(String path) {
+  public void addExcludedFolder(String path) {
     Url url = toUrl(path);
     findOrCreateContentRoot(url).addExcludeFolder(url.getUrl());
+  }
+
+  public Set<Path> getExcludedFolders() {
+    Set<Path> result = new HashSet<Path>();
+    for (ContentEntry entry : myRootModel.getContentEntries()) {
+      for (ExcludeFolder f : entry.getExcludeFolders()) {
+        result.add(new Path(VirtualFileManager.extractPath(f.getUrl())));
+      }
+    }
+    return result;
   }
 
   public void useProjectOutput() {

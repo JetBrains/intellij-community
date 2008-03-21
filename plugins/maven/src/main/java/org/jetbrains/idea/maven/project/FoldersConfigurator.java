@@ -6,7 +6,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashSet;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Resource;
@@ -16,13 +15,11 @@ import org.jetbrains.idea.maven.core.util.MavenFactory;
 import org.jetbrains.idea.maven.core.util.Path;
 
 import java.io.File;
-import java.util.Set;
 
 public class FoldersConfigurator {
   private MavenProject myMavenProject;
   private MavenImporterSettings myPrefs;
   private RootModelAdapter myModel;
-  private Set<Path> mySourceFolders = new HashSet<Path>();
 
   public static void updateProjectExcludedFolders(final Project p) throws MavenException {
     try {
@@ -66,7 +63,7 @@ public class FoldersConfigurator {
     MavenProject project = r.readBare(f.getPath());
 
     RootModelAdapter a = new RootModelAdapter(m);
-    new FoldersConfigurator(project, settings, a).updateFodersUnderTargetDir();
+    new FoldersConfigurator(project, settings, a).configFoldersUnderTargetDir();
     a.commit();
   }
 
@@ -78,29 +75,37 @@ public class FoldersConfigurator {
 
   public void config() {
     configSourceFolders();
-    configFoldersUnderTargetDir();
     configOutputFolders();
+    configFoldersUnderTargetDir();
   }
 
   private void configSourceFolders() {
     for (Object o : myMavenProject.getCompileSourceRoots()) {
-      addAndRegisterSourceFolder((String)o, false);
+      myModel.addSourceFolder((String)o, false);
     }
     for (Object o : myMavenProject.getTestCompileSourceRoots()) {
-      addAndRegisterSourceFolder((String)o, true);
+      myModel.addSourceFolder((String)o, true);
     }
 
     for (Object o : myMavenProject.getResources()) {
-      addAndRegisterSourceFolder(((Resource)o).getDirectory(), false);
+      myModel.addSourceFolder(((Resource)o).getDirectory(), false);
     }
     for (Object o : myMavenProject.getTestResources()) {
-      addAndRegisterSourceFolder(((Resource)o).getDirectory(), true);
+      myModel.addSourceFolder(((Resource)o).getDirectory(), true);
     }
   }
 
-  private void addAndRegisterSourceFolder(String path, boolean isTestSource) {
-    myModel.addSourceDir(path, isTestSource);
-    mySourceFolders.add(new Path(path));
+  private void configOutputFolders() {
+    Build build = myMavenProject.getBuild();
+
+    if (myPrefs.isUseMavenOutput()) {
+      myModel.useModuleOutput(build.getOutputDirectory(), build.getTestOutputDirectory());
+    }
+    else {
+      myModel.useProjectOutput();
+      myModel.addExcludedFolder(build.getOutputDirectory());
+      myModel.addExcludedFolder(build.getTestOutputDirectory());
+    }
   }
 
   private void configFoldersUnderTargetDir() {
@@ -113,8 +118,9 @@ public class FoldersConfigurator {
         addAllSubDirsAsSources(f);
       }
       else {
-        if (hasRegisteredSubfolder(f)) continue;
-        myModel.excludeRoot(f.getPath());
+        if (hasRegisteredSourceSubfolder(f)) continue;
+        if (isAlreadyExcluded(f)) continue;
+        myModel.addExcludedFolder(f.getPath());
       }
     }
   }
@@ -122,14 +128,23 @@ public class FoldersConfigurator {
   private void addAllSubDirsAsSources(File dir) {
     for (File f : getChildren(dir)) {
       if (!f.isDirectory()) continue;
-      if (hasRegisteredSubfolder(f)) continue;
-      myModel.addSourceDir(f.getPath(), false);
+      if (hasRegisteredSourceSubfolder(f)) continue;
+      myModel.addSourceFolder(f.getPath(), false);
     }
   }
 
-  private boolean hasRegisteredSubfolder(File f) {
-    for (Path existing : mySourceFolders) {
-      if (existing.getPath().startsWith(new Path(f.getPath()).getPath())) return true;
+  private boolean hasRegisteredSourceSubfolder(File f) {
+    String path = new Path(f.getPath()).getPath();
+    for (Path existing : myModel.getSourceFolders()) {
+      if (existing.getPath().startsWith(path)) return true;
+    }
+    return false;
+  }
+
+  private boolean isAlreadyExcluded(File f) {
+    String path = new Path(f.getPath()).getPath();
+    for (Path existing : myModel.getExcludedFolders()) {
+      if (path.startsWith(existing.getPath())) return true;
     }
     return false;
   }
@@ -137,27 +152,5 @@ public class FoldersConfigurator {
   private File[] getChildren(File dir) {
     File[] result = dir.listFiles();
     return result == null ? new File[0] : result;
-  }
-
-  private void updateFodersUnderTargetDir() {
-    collectExistingSourceFolders();
-    configFoldersUnderTargetDir();
-  }
-
-  private void collectExistingSourceFolders() {
-    mySourceFolders = myModel.getExistingSourceFolders();
-  }
-
-  private void configOutputFolders() {
-    Build build = myMavenProject.getBuild();
-
-    if (myPrefs.isUseMavenOutput()) {
-      myModel.useModuleOutput(build.getOutputDirectory(), build.getTestOutputDirectory());
-    }
-    else {
-      myModel.useProjectOutput();
-      myModel.excludeRoot(build.getOutputDirectory());
-      myModel.excludeRoot(build.getTestOutputDirectory());
-    }
   }
 }

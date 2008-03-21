@@ -113,6 +113,20 @@ public abstract class MavenTestCase extends IdeaTestCase {
            "</profiles>";
   }
 
+
+  protected void createStdProjectFolders() {
+    createProjectSubDirs("src/main/java",
+                         "src/main/resources",
+                         "src/test/java",
+                         "src/test/resources");
+  }
+
+  protected void createProjectSubDirs(String... relativePaths) {
+    for (String path : relativePaths) {
+      createProjectSubDir(path);
+    }
+  }
+
   protected VirtualFile createProjectSubDir(String relativePath) {
     File f = new File(getProjectPath(), relativePath);
     f.mkdirs();
