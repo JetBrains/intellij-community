@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,12 +44,11 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes 
     if (node == null) return;
     IElementType type = node.getElementType();
 
-    if (GroovyElementTypes.BLOCK_SET.contains(type) || type == GroovyElementTypes.CLOSABLE_BLOCK) {
+    if (BLOCK_SET.contains(type) || type == CLOSABLE_BLOCK) {
       if (isMultiline(element, document)) {
         descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
       }
     }
-
     // comments
     if ((type.equals(mML_COMMENT) || type.equals(GROOVY_DOC_COMMENT)) &&
         isMultiline(element, document) &&
@@ -76,7 +76,7 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes 
 
   public String getPlaceholderText(ASTNode node) {
     final IElementType elemType = node.getElementType();
-    if (GroovyElementTypes.BLOCK_SET.contains(elemType) || elemType == GroovyElementTypes.CLOSABLE_BLOCK) {
+    if (BLOCK_SET.contains(elemType) || elemType == CLOSABLE_BLOCK) {
       return "{...}";
     }
     if (elemType.equals(mML_COMMENT)) {

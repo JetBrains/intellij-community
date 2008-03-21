@@ -292,7 +292,7 @@ public class ExtractMethodUtil {
     final PsiPrimitiveType outUnboxed = PsiPrimitiveType.getUnboxedType(type);
     if (outUnboxed != null) type = outUnboxed;
     String typeText = forPresentation ? type.getPresentableText() : type.getCanonicalText();
-    String returnType = typeText.equals("void") || typeText.equals("Object") || !helper.specifyType() ? "" : typeText;
+    String returnType = typeText == null || typeText.equals("void") || typeText.equals("Object") || !helper.specifyType() ? "" : typeText;
     if (returnType.length() == 0) {
       typeText = "def ";
     } else {
