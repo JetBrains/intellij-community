@@ -1,8 +1,6 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
-import com.intellij.codeInsight.daemon.impl.ExternalToolPass;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -353,9 +351,8 @@ public class DynamicManagerImpl extends DynamicManager {
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(textEditor.getDocument());
     if (file == null) return;
 
-    ExternalToolPass externalToolPass = new ExternalToolPass(file, textEditor, file.getTextRange().getStartOffset(), file.getTextRange().getStartOffset());
-    externalToolPass.doCollectInformation(new DaemonProgressIndicator());
     GroovyPsiManager.getInstance(myProject).dropTypesCache();
+    PsiManager.getInstance(myProject).dropResolveCaches();
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
