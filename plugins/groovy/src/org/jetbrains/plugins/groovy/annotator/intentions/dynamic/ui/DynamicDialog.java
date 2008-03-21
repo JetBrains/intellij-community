@@ -139,7 +139,9 @@ public abstract class DynamicDialog extends DialogWrapper {
   }
 
   private Document createDocument(final String text) {
-    return PsiDocumentManager.getInstance(myProject).getDocument(new GroovyCodeFragment(myProject, text));
+    GroovyCodeFragment fragment = new GroovyCodeFragment(myProject, text);
+    fragment.setContext(myReferenceExpression);
+    return PsiDocumentManager.getInstance(myProject).getDocument(fragment);
   }
 
   private void setUpTypeComboBox() {
