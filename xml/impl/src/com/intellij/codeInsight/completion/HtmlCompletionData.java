@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.TextStartFilter;
+import com.intellij.psi.filters.TextContainFilter;
 import com.intellij.psi.filters.getters.HtmlAttributeValueGetter;
 import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.filters.position.XmlTokenTypeFilter;
@@ -44,7 +44,7 @@ public class HtmlCompletionData extends XmlCompletionData {
     if (isCaseInsensitive()) {
       return new AndFilter(
         new XmlTokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
-        new TextStartFilter("&")
+        new TextContainFilter("&")
       );
     }
     
@@ -224,10 +224,12 @@ public class HtmlCompletionData extends XmlCompletionData {
       
       if (insertedElement instanceof XmlToken &&
           ((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS &&
-          prefix != null &&
-          prefix.startsWith("&")
-         ) {
-        prefix = prefix.substring(1);
+          prefix != null) {
+        if (prefix.startsWith("&")) {
+          prefix = prefix.substring(1);
+        } else if (prefix.contains("&")) {
+          prefix = prefix.substring(prefix.indexOf("&") + 1);
+        }
       }
     }
 
