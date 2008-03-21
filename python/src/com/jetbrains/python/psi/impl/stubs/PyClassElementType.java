@@ -10,10 +10,12 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassStub;
+import com.jetbrains.python.psi.stubs.PySuperClassIndex;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -33,24 +35,42 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
   }
 
   public PyClassStub createStub(final PyClass psi, final StubElement parentStub) {
-    return new PyClassStubImpl(psi.getName(), parentStub);
+    final PyExpression[] exprs = psi.getSuperClassExpressions();
+    String[] superClasses = new String[exprs.length];
+    for(int i=0; i<exprs.length; i++) {
+      superClasses [i] = exprs [i].getText();
+    }
+    return new PyClassStubImpl(psi.getName(), parentStub, superClasses);
   }
 
   public void serialize(final PyClassStub pyClassStub, final DataOutputStream dataStream,
                         final PersistentStringEnumerator nameStorage) throws IOException {
     DataInputOutputUtil.writeNAME(dataStream, pyClassStub.getName(), nameStorage);
+    final String[] classes = pyClassStub.getSuperClasses();
+    dataStream.writeByte(classes.length);
+    for(String s: classes) {
+      DataInputOutputUtil.writeNAME(dataStream, s, nameStorage);
+    }
   }
 
   public PyClassStub deserialize(final DataInputStream dataStream, final StubElement parentStub,
                                  final PersistentStringEnumerator nameStorage) throws IOException {
     String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-    return new PyClassStubImpl(name, parentStub);
+    int superClassCount = dataStream.readByte();
+    String[] superClasses = new String[superClassCount];
+    for(int i=0; i<superClassCount; i++) {
+      superClasses [i] = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+    }
+    return new PyClassStubImpl(name, parentStub, superClasses);
   }
 
   public void indexStub(final PyClassStub stub, final IndexSink sink) {
     final String name = stub.getName();
     if (name != null) {
       sink.occurence(PyClassNameIndex.KEY, name);
+    }
+    for(String s: stub.getSuperClasses()) {
+      sink.occurence(PySuperClassIndex.KEY, s);
     }
   }
 }

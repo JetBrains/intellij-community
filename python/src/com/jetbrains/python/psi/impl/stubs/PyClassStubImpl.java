@@ -11,13 +11,19 @@ import com.jetbrains.python.psi.stubs.PyClassStub;
 
 public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
   private final String myName;
+  private final String[] mySuperClasses;
 
-  public PyClassStubImpl(final String name, StubElement parentStub) {
+  public PyClassStubImpl(final String name, StubElement parentStub, final String[] superClasses) {
     super(parentStub, PyElementTypes.CLASS_DECLARATION);
     myName = name;
+    mySuperClasses = superClasses;
   }
 
   public String getName() {
     return myName;
+  }
+
+  public String[] getSuperClasses() {
+    return mySuperClasses;
   }
 }

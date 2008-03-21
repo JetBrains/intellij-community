@@ -42,6 +42,7 @@
 
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyFunctionNameIndex"/>
+    <stubIndex implementation="com.jetbrains.python.psi.stubs.PySuperClassIndex"/>
 
     <!-- Run/Debug -->
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
@@ -60,6 +61,12 @@
   <extensionPoints>
     <extensionPoint name="importResolver" interface="com.jetbrains.python.psi.impl.PyImportResolver"/>
     <extensionPoint name="typeProvider" interface="com.jetbrains.python.psi.impl.PyTypeProvider"/>
-    <extensionPoint name="pySuperMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="Pythonid.pySuperMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="Pythonid.pyClassInheritorsSearch" interface="com.intellij.util.QueryExecutor"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <pySuperMethodsSearch implementation="com.jetbrains.python.psi.search.PySuperMethodsSearchExecutor"/>
+    <pyClassInheritorsSearch implementation="com.jetbrains.python.psi.search.PyClassInheritorsSearchExecutor"/>
+  </extensions>
 </idea-plugin>

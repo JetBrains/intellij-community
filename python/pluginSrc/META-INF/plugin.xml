@@ -1,4 +1,7 @@
 <idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- Components and extensions declared in this file work ONLY in Python plugin, not in standalone PyCharm.
+       Anything related to Python/Java integration must go in this file. -->
+
   <id>Pythonid</id>
   <name>Pythonid</name>
   <xi:include href="/META-INF/python-plugin-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -6,7 +9,6 @@
   <extensions defaultExtensionNs="Pythonid">
     <importResolver implementation="com.jetbrains.python.psi.impl.PyJavaImportResolver"/>
     <typeProvider implementation="com.jetbrains.python.psi.impl.PyJavaTypeProvider"/>
-    <pySuperMethodsSearch implementation="com.jetbrains.python.psi.search.PySuperMethodsSearchExecutor"/>
     <pySuperMethodsSearch implementation="com.jetbrains.python.psi.impl.PyJavaSuperMethodsSearchExecutor"/>
   </extensions>
 </idea-plugin>

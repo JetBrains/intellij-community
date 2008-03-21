@@ -34,7 +34,7 @@ public interface PyClass extends PsiNamedElement, PyElement, PyDocStringOwner, S
   @NotNull
   PyStatementList getStatementList();
 
-  @Nullable
+  @NotNull
   PyExpression[] getSuperClassExpressions();
 
   @Nullable

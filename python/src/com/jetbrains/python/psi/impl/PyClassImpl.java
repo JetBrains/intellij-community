@@ -91,7 +91,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return childToPsiNotNull(PyElementTypes.STATEMENT_LIST);
   }
 
-  @Nullable
+  @NotNull
   public PyExpression[] getSuperClassExpressions() {
     final PyParenthesizedExpression superExpression = PsiTreeUtil.getChildOfType(this, PyParenthesizedExpression.class);
     if (superExpression != null) {
@@ -103,25 +103,22 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         return new PyExpression[] { expr };
       }
     }
-    return null;
+    return PyExpression.EMPTY_ARRAY;
   }
 
   public PsiElement[] getSuperClassElements() {
     final PyExpression[] superExpressions = getSuperClassExpressions();
-    if (superExpressions != null) {
-      List<PsiElement> superClasses = new ArrayList<PsiElement>();
-      for(PyExpression expr: superExpressions) {
-        if (expr instanceof PyReferenceExpression && !PyNames.OBJECT.equals(expr.getText())) {
-          PyReferenceExpression ref = (PyReferenceExpression) expr;
-          final PsiElement result = ref.resolve();
-          if (result != null) {
-            superClasses.add(result);
-          }
+    List<PsiElement> superClasses = new ArrayList<PsiElement>();
+    for(PyExpression expr: superExpressions) {
+      if (expr instanceof PyReferenceExpression && !PyNames.OBJECT.equals(expr.getText())) {
+        PyReferenceExpression ref = (PyReferenceExpression) expr;
+        final PsiElement result = ref.resolve();
+        if (result != null) {
+          superClasses.add(result);
         }
       }
-      return superClasses.toArray(new PsiElement[superClasses.size()]);
     }
-    return null;
+    return superClasses.toArray(new PsiElement[superClasses.size()]);
   }
 
   public PyClass[] getSuperClasses() {
