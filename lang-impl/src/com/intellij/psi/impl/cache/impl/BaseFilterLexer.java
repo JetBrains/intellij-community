@@ -3,6 +3,7 @@ package com.intellij.psi.impl.cache.impl;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
+import com.intellij.psi.impl.search.CachesBasedRefSearcher;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
@@ -107,6 +108,12 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
   }
 
   public final void run(CharSequence chars, int start, int end, char[] charArray) {
+    if (CachesBasedRefSearcher.DEBUG) {
+      System.out.println("BaseFilterLexer.run");
+      System.out.println("this = " + this);
+      System.out.println(new String(charArray, start, end - start));
+    }
+
     if (charArray != null) {
       myOccurrenceConsumer.addOccurrence(charArray, start, end, myOccurenceMask);
     } else {

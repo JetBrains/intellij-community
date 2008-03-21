@@ -12,6 +12,7 @@ import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.psi.impl.search.CachesBasedRefSearcher;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.DataInput;
@@ -66,9 +67,15 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
     public Map<IdIndexEntry, Integer> map(final FileBasedIndex.FileContent inputData) {
       final VirtualFile file = inputData.file;
       final FileTypeIdIndexer indexer = IdTableBuilding.getFileTypeIndexer(file.getFileType());
+      if (CachesBasedRefSearcher.DEBUG) {
+        System.out.println("fileName = " + inputData.fileName);
+        System.out.println("inputData = " + inputData.content);
+        System.out.println("indexer = " + indexer);
+      }
       if (indexer != null) {
         return indexer.map(inputData);
       }
+
       return Collections.emptyMap();
     }
   };
