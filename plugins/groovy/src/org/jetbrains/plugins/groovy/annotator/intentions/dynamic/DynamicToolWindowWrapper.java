@@ -198,6 +198,8 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
         }
 
         final TreePath editingTypePath = tree.getSelectionPath();
+        if (editingTypePath == null) return;
+        
         final TreePath editingClassPath = editingTypePath.getParentPath();
 
         Object oldTypeValue = myTreeTable.getValueAt(tree.getRowForPath(editingTypePath), TYPE_COLUMN);
