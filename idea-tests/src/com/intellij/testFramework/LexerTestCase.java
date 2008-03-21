@@ -4,23 +4,16 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.openapi.fileTypes.FileTypeFactory;
-import com.intellij.openapi.fileTypes.impl.DefaultFileTypeFactory;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
  */
-public abstract class LexerTestCase extends LiteFixture {
-  protected void setUp() throws Exception {
-    super.setUp();
-    initApplication();
-    registerExtension(FileTypeFactory.FILE_TYPE_FACTORY_EP, new DefaultFileTypeFactory());
-  }
+public abstract class LexerTestCase extends UsefulTestCase {
 
   protected void doTest(@NonNls String text) {
     Lexer lexer = createLexer();
