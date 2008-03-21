@@ -104,7 +104,10 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   public void registerExtensionPoint(PluginDescriptor pluginDescriptor, Element extensionPointElement) {
     assert pluginDescriptor.getPluginId() != null;
-    String epName = pluginDescriptor.getPluginId().getIdString() + '.' + extensionPointElement.getAttributeValue("name");
+    String epName = extensionPointElement.getAttributeValue("qualifiedName");
+    if (epName == null) {
+      epName = pluginDescriptor.getPluginId().getIdString() + '.' + extensionPointElement.getAttributeValue("name");
+    }
     String className = extensionPointElement.getAttributeValue("beanClass");
     if (className == null) {
       className = extensionPointElement.getAttributeValue("interface");
