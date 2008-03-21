@@ -15,16 +15,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
@@ -37,7 +36,7 @@ import javax.swing.border.Border;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.EventListener;
 import java.util.List;
 
 /**
@@ -244,14 +243,13 @@ public abstract class DynamicDialog extends DialogWrapper {
 
     if (typeEditorDocument == null) return null;
 
-    final String text = typeEditorDocument.getText();
-    if (!text.matches(DynamicToolWindowWrapper.QUALIFIED_IDENTIFIER_REGEXP)) return null;
     try {
-      return GroovyPsiElementFactory.getInstance(myProject).createTypeElement(text);
+      final String typeText = typeEditorDocument.getText();
+
+      return GroovyPsiElementFactory.getInstance(myProject).createTypeElement(typeText);
     } catch (IncorrectOperationException e) {
       return null;
     }
-
   }
 
   public Document getTypeEditorDocument() {

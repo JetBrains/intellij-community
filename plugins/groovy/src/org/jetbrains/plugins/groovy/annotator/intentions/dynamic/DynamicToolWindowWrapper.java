@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -11,25 +13,23 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.FilterComponent;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.*;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
@@ -58,7 +58,6 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
   }
 
   public static final String DYNAMIC_TOOLWINDOW_ID = GroovyBundle.message("dynamic.tool.window.id");
-  public static final String QUALIFIED_IDENTIFIER_REGEXP = "[a-zA-Z0-9(.)]+";
   private JPanel myTreeTablePanel;
   private JPanel myBigPanel;
   private ListTreeTableModelOnColumns myTreeTableModel;
@@ -190,7 +189,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     myTreeTable.setSelectionMode(DefaultTreeSelectionModel.CONTIGUOUS_TREE_SELECTION);
 
     final MyPropertyOrClassCellEditor propertyOrClassCellEditor = new MyPropertyOrClassCellEditor();
-    final MyPropertyTypeCellEditor typeCellEditor = new MyPropertyTypeCellEditor();
+    final MyPropertyTypeCellEditor typeCellEditor = new MyPropertyTypeCellEditor(project);
 
     typeCellEditor.addCellEditorListener(new CellEditorListener() {
       public void editingStopped(ChangeEvent e) {
@@ -715,7 +714,12 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
   }
 
   private static class MyPropertyTypeCellEditor extends AbstractTableCellEditor {
-    final JTextField field = new JTextField();
+    final EditorTextField field;
+
+    public MyPropertyTypeCellEditor(Project project) {
+      final Document document = PsiDocumentManager.getInstance(project).getDocument(new GroovyCodeFragment(project, ""));
+      field = new EditorTextField(document, project, GroovyFileType.GROOVY_FILE_TYPE);
+    }
 
     public String getCellEditorValue() {
       return field.getText();
@@ -734,7 +738,6 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
   private TreeTableTree getTree() {
     return myTreeTable != null ? myTreeTable.getTree() : null;
   }
-
 
 //  class MyTreeTable extends TreeTable implements DataProvider {
 //    public MyTreeTable(TreeTableModel treeTableModel) {
