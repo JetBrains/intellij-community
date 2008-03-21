@@ -145,8 +145,9 @@ public class PluginManager {
       } else {
         descriptor.setEnabled(false);
         final List<File> classPath = descriptor.getClassPath();
-        descriptor
-          .setLoader(createPluginClassLoader(classPath.toArray(new File[classPath.size()]), new ClassLoader[]{parentLoader}, descriptor));
+        final ClassLoader loader =
+            createPluginClassLoader(classPath.toArray(new File[classPath.size()]), new ClassLoader[]{parentLoader}, descriptor);
+        descriptor.setLoader(loader, false);
       }
     }
 
@@ -172,7 +173,7 @@ public class PluginManager {
 
     for (final IdeaPluginDescriptorImpl pluginDescriptor : result) {
       if (pluginDescriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID) || pluginDescriptor.isUseCoreClassLoader()) {
-        pluginDescriptor.setLoader(parentLoader);
+        pluginDescriptor.setLoader(parentLoader, true);
       }
       else {
         final List<File> classPath = pluginDescriptor.getClassPath();
@@ -182,7 +183,7 @@ public class PluginManager {
         final ClassLoader pluginClassLoader = createPluginClassLoader(classPath.toArray(new File[classPath.size()]),
                                                                       parentLoaders.length > 0 ? parentLoaders : new ClassLoader[] {parentLoader},
                                                                       pluginDescriptor);
-        pluginDescriptor.setLoader(pluginClassLoader);
+        pluginDescriptor.setLoader(pluginClassLoader, true);
       }
 
       pluginDescriptor.registerExtensions();

@@ -275,7 +275,10 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   public void registerExtensionPoint(final String extensionPointName, String extensionPointBeanClass, PluginDescriptor descriptor) {
     if (hasExtensionPoint(extensionPointName)) {
       if (DEBUG_REGISTRATION) {
-        myLogger.error(myEPTraces.get(extensionPointName));
+        final ExtensionPointImpl oldEP = (ExtensionPointImpl)getExtensionPoint(extensionPointName);
+        myLogger.error("Duplicate registration for EP: " + extensionPointName + ": original plugin " + oldEP.getDescriptor().getPluginId() +
+                       ", new plugin " + descriptor.getPluginId(),
+                       myEPTraces.get(extensionPointName));
       }
       throw new RuntimeException("Duplicate registration for EP: " + extensionPointName);
     }

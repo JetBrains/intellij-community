@@ -340,12 +340,14 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myDeleted = deleted;
   }
 
-  public void setLoader(ClassLoader loader) {
+  public void setLoader(ClassLoader loader, final boolean registerExtensions) {
     myLoader = loader;
 
     //Now we're ready to load root area extensions
 
-    Extensions.getRootArea().registerAreaExtensionsAndPoints(this, myExtensionsPoints, myExtensions);
+    if (registerExtensions) {
+      Extensions.getRootArea().registerAreaExtensionsAndPoints(this, myExtensionsPoints, myExtensions);
+    }
 
     initialize(getPluginClassLoader());
   }
