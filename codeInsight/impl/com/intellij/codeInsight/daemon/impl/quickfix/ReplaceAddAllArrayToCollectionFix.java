@@ -6,7 +6,12 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -34,6 +39,13 @@ public class ReplaceAddAllArrayToCollectionFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+    final Module module = ModuleUtil.findModuleForPsiElement(file);
+    if (module == null) return false;
+    final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
+    if (jdk == null) return false;
+    final String versionString = jdk.getVersionString();
+    if (versionString == null || JavaSdk.getInstance().compareTo(versionString, "1.5") < 0) return false;
+
     final PsiReferenceExpression expression = myMethodCall.getMethodExpression();
     final PsiElement element = expression.resolve();
     if (element instanceof PsiMethod) {
