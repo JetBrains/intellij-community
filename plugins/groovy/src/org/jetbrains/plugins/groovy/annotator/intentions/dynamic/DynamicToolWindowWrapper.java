@@ -1,16 +1,11 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -29,11 +24,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
+import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrDynamicImplicitElement;
 
 import javax.swing.*;
@@ -596,20 +591,6 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     }
   }
 
-  //TODO: return effective module
-  public static Module getActiveModule(Project project) {
-    //TODO
-    final VirtualFile currentFile = FileEditorManagerEx.getInstanceEx(project).getCurrentFile();
-
-    if (currentFile == null) {
-      //TODO
-      final Module[] modules = ModuleManager.getInstance(project).getModules();
-      return modules[0];
-    }
-
-    return ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(currentFile);
-  }
-
   public ListTreeTableModelOnColumns getTreeTableModel(ToolWindow window, Project project) {
     if (!doesTreeTableInit()) {
       reconfigureWindow(project, window);
@@ -757,7 +738,13 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
 //        if (userObject instanceof DClassElement) {
 //          final DClassElement classElement = (DClassElement) userObject;
 //          final Project project = classElement.getProject();
-//          return PsiManager.getInstance(project).findClass(classElement.getName(), project.getAllScope());
+//
+//          try {
+//            return GroovyPsiElementFactory.getInstance(project).createTypeElement(classElement.getName());
+//
+//          } catch (IncorrectOperationException e) {
+//            return null;
+//          }
 //        } else if (userObject instanceof DPropertyElement) {
 //          final DPropertyElement propertyElement = (DPropertyElement) userObject;
 //
@@ -770,6 +757,8 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
 //          final String className = ((DClassElement) classObject).getName();
 //        }
 //      }
+//
+//      return null;
 //    }
 //  }
 }
