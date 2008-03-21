@@ -3,6 +3,7 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.pom.xml.XmlChangeVisitor;
 import com.intellij.pom.xml.events.*;
@@ -11,13 +12,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementChangedEvent;
-import com.intellij.openapi.diagnostic.Logger;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,25 +24,8 @@ import java.util.Map;
  */
 public class ExternalChangeProcessor implements XmlChangeVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.ExternalChangeProcessor");
-  private static final TagChangeSet NULL_CHANGE_SET = new TagChangeSet(null){
-    protected XmlTag getXmlTag(final DomInvocationHandler handler) {
-      return null;
-    }
 
-    public void addAdded(XmlElement child) {
-    }
-
-    public void addAttributeChanged(String s) {
-    }
-
-    public void addChanged(XmlElement child) {
-    }
-
-    public void addRemoved(XmlElement child) {
-    }
-  };
-
-  private final Map<XmlTag,TagChangeSet> myChangeSets = new HashMap<XmlTag, TagChangeSet>();
+  private final Map<XmlTag,DomInvocationHandler> myChangeSets = new HashMap<XmlTag, DomInvocationHandler>();
   private boolean myDocumentChanged;
   private final DomManagerImpl myDomManager;
 
@@ -56,28 +38,39 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
 
   public void processChanges() {
     if (myDocumentChanged) return;
-    for (TagChangeSet changeSet : myChangeSets.values()) {
-      changeSet.processChanges();
+    for (DomInvocationHandler handler : myChangeSets.values()) {
+      myDomManager.fireEvent(new ElementChangedEvent(handler));
     }
   }
 
-  private TagChangeSet getChangeSet(XmlTag tag) {
+  public void addChange(XmlTag tag) {
+    DomInvocationHandler handler = myChangeSets.get(tag);
+    if (handler != null) return;
+
     assert tag != null;
-    TagChangeSet changeSet = myChangeSets.get(tag);
-    if (changeSet == null) {
-      DomInvocationHandler handler = DomManagerImpl.getCachedElement(tag);
-      if (handler != null) {
-        changeSet = new TagChangeSet(handler);
-        myChangeSets.put(tag, changeSet);
-      } else {
-        changeSet = NULL_CHANGE_SET;
+    while (tag != null) {
+      final DomInvocationHandler data = tag.getUserData(DomManagerImpl.CACHED_DOM_HANDLER);
+      if (data != null) {
+        if (handler == null) {
+          handler = data;
+        }
+
+        final Type chosenType = data.getDomElementType();
+        final Type abstractType = data.getAbstractType();
+        if (!chosenType.equals(abstractType) &&
+            !chosenType.equals(myDomManager.getTypeChooserManager().getTypeChooser(chosenType).chooseType(tag))) {
+          handler = data;
+        }
       }
+      tag = tag.getParentTag();
     }
-    return changeSet;
+    if (handler != null) {
+      myChangeSets.put(tag, handler);
+    }
   }
 
   public void visitXmlAttributeSet(final XmlAttributeSet xmlAttributeSet) {
-    getChangeSet(xmlAttributeSet.getTag()).addAttributeChanged(xmlAttributeSet.getName());
+    addChange(xmlAttributeSet.getTag());
   }
 
   public void visitDocumentChanged(final XmlDocumentChanged change) {
@@ -86,9 +79,9 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
 
   private void documentChanged(final XmlFile xmlFile) {
     myDocumentChanged = true;
-    final DomFileElementImpl oldElement = myDomManager.getCachedFileElement(xmlFile);
+    final DomFileElementImpl oldElement = DomManagerImpl.getCachedFileElement(xmlFile);
     if (oldElement != null) {
-      final List<DomEvent> events = myDomManager.recomputeFileElement(xmlFile, true);
+      final DomEvent[] events = myDomManager.recomputeFileElement(xmlFile, true);
       if (myDomManager.getFileElement(xmlFile) != oldElement) {
         for (final DomEvent event : events) {
           myDomManager.fireEvent(event);
@@ -97,11 +90,11 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
       }
 
       final DomInvocationHandler rootHandler = oldElement.getRootHandler();
-      rootHandler.detach(false);
+      rootHandler.detach();
       final XmlTag rootTag = oldElement.getRootTag();
       if (rootTag != null) {
         LOG.assertTrue(rootTag.isValid());
-        rootHandler.attach(rootTag);
+        rootHandler.setXmlElement(rootTag);
       }
       myDomManager.fireEvent(new ElementChangedEvent(oldElement.getRootElement()));
     }
@@ -111,27 +104,27 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
     final XmlElement element = xmlElementChanged.getElement();
     final PsiElement parent = element.getParent();
     if (parent instanceof XmlTag) {
-      getChangeSet((XmlTag)parent).addChanged(element);
+      addChange((XmlTag)parent);
     }
   }
 
   public void visitXmlTagChildAdd(final XmlTagChildAdd xmlTagChildAdd) {
-    getChangeSet(xmlTagChildAdd.getTag()).addAdded(xmlTagChildAdd.getChild());
+    addChange(xmlTagChildAdd.getTag());
   }
 
   public void visitXmlTagChildChanged(final XmlTagChildChanged xmlTagChildChanged) {
-    getChangeSet(xmlTagChildChanged.getTag()).addChanged(xmlTagChildChanged.getChild());
+    addChange(xmlTagChildChanged.getTag());
   }
 
   public void visitXmlTagChildRemoved(final XmlTagChildRemoved xmlTagChildRemoved) {
-    getChangeSet(xmlTagChildRemoved.getTag()).addRemoved(xmlTagChildRemoved.getChild());
+    addChange(xmlTagChildRemoved.getTag());
   }
 
   public void visitXmlTagNameChanged(final XmlTagNameChanged xmlTagNameChanged) {
     final XmlTag tag = xmlTagNameChanged.getTag();
     final XmlTag parentTag = tag.getParentTag();
     if (parentTag != null) {
-      getChangeSet(parentTag).addChanged(tag);
+      addChange(parentTag);
     } else {
       final PsiFile file = tag.getContainingFile();
       if (file instanceof XmlFile) {
@@ -141,7 +134,6 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
   }
 
   public void visitXmlTextChanged(final XmlTextChanged xmlTextChanged) {
-    final XmlText text = xmlTextChanged.getText();
-    getChangeSet(text.getParentTag()).addChanged(text);
+    addChange(xmlTextChanged.getText().getParentTag());
   }
 }

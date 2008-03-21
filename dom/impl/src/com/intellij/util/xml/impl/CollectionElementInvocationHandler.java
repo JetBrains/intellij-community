@@ -4,7 +4,9 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.events.ElementChangedEvent;
 import org.jetbrains.annotations.NotNull;
@@ -17,13 +19,11 @@ import java.util.List;
  * @author peter
  */
 public class CollectionElementInvocationHandler extends DomInvocationHandler<AbstractDomChildDescriptionImpl>{
-  private final String myNamespace;
 
   public CollectionElementInvocationHandler(final Type type, @NotNull final XmlTag tag,
                                             final AbstractCollectionChildDescription description,
                                             final DomInvocationHandler parent) {
     super(type, tag, parent, description.createEvaluatedXmlName(parent, tag), (AbstractDomChildDescriptionImpl)description, parent.getManager());
-    myNamespace = tag.getNamespace();
   }
 
   protected final XmlTag setEmptyXmlTag() {
@@ -32,28 +32,30 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
                                             "xmlElementName=" + getXmlElementName());
   }
 
-  public String getNamespace() {
-    return myNamespace;
+  public boolean equals(final Object obj) {
+    if (!(obj instanceof CollectionElementInvocationHandler)) return false;
+
+    final DomInvocationHandler handler = (DomInvocationHandler)obj;
+    return getXmlTag().equals(handler.getXmlTag());
+  }
+
+  public int hashCode() {
+    return getXmlTag().hashCode();
   }
 
   public boolean isValid() {
-    if (!super.isValid()) {
-      return false;
-    }
-    final XmlTag tag = getXmlTag();
-    if (tag == null || !tag.isValid()) {
-      detach(true);
-      return false;
-    }
-    return true;
+    ProgressManager.getInstance().checkCanceled();
+    final XmlElement element = getXmlElement();
+    return element != null && element.isValid();
   }
+
 
   public final void undefineInternal() {
     final DomElement parent = getParent();
     final XmlTag tag = getXmlTag();
     if (tag == null) return;
 
-    detach(true);
+    getManager().cacheHandler(tag, null);
     deleteTag(tag);
     getManager().fireEvent(new ElementChangedEvent(parent));
   }

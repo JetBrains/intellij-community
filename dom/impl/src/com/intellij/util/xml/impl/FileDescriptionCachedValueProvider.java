@@ -6,34 +6,31 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.JBLock;
-import com.intellij.util.concurrency.JBReentrantReadWriteLock;
-import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.events.DomEvent;
-import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author peter
  */
-class FileDescriptionCachedValueProvider<T extends DomElement> implements ModificationTracker {
+class FileDescriptionCachedValueProvider<T extends DomElement> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.FileDescriptionCachedValueProvider");
   private static final Key<CachedValue<String>> ROOT_TAG_NS_KEY = Key.create("rootTag&ns");
   private static final UserDataCache<CachedValue<String>,XmlFile,Object> ourRootTagCache = new UserDataCache<CachedValue<String>, XmlFile, Object>() {
@@ -54,189 +51,63 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   };
 
   private final XmlFile myXmlFile;
-  private final ThreadLocal<Boolean> myComputing = new ThreadLocal<Boolean>();
-  private DomFileElementImpl<T> myLastResult;
-  private final CachedValue<Boolean> myCachedValue;
+  private volatile boolean myComputed;
+  private volatile DomFileElementImpl<T> myLastResult;
   private final MyCondition myCondition = new MyCondition();
 
-  private DomFileDescription<T> myFileDescription;
   private final DomManagerImpl myDomManager;
-  private int myModCount;
-
-  private static final JBReentrantReadWriteLock rwl = LockFactory.createReadWriteLock();
-  private static final JBLock r = rwl.readLock();
-  private static final JBLock w = rwl.writeLock();
 
   public FileDescriptionCachedValueProvider(final DomManagerImpl domManager, final XmlFile xmlFile) {
     myDomManager = domManager;
     myXmlFile = xmlFile;
-    myCachedValue = xmlFile.getManager().getCachedValuesManager().createCachedValue(new MyCachedValueProvider(), false);
-  }
-
-  @Nullable
-  public final DomFileDescription<T> getFileDescription() {
-    r.lock();
-    final DomFileDescription<T> description = myFileDescription;
-    r.unlock();
-    return description;
   }
 
   @Nullable
   public final DomFileElementImpl<T> getFileElement() {
-    r.lock();
-    try {
-      if (myCachedValue.hasUpToDateValue()) return myLastResult;
-    }
-    finally {
-      r.unlock();
-    }
+    if (myComputed) return myLastResult;
 
     final String rootTagName = getRootTag();
-    w.lock();
     try {
-      if (!myCachedValue.hasUpToDateValue()) {
-        _computeFileElement(false, false, rootTagName);
-      }
-      return myLastResult;
+      _computeFileElement(false, false, rootTagName);
     }
     finally {
-      w.unlock();
+      myXmlFile.putUserData(DomManagerImpl.CACHED_FILE_ELEMENT, myLastResult);
+      myComputed = true;
     }
-  }
-
-  @NotNull
-  public final List<DomEvent> computeFileElement(boolean fireEvents, boolean fireChanged) {
-    final String rootTagName = getRootTag();
-    w.lock();
-    try {
-      return _computeFileElement(fireEvents, fireChanged, rootTagName);
-    }
-    finally {
-      w.unlock();
-    }
+    return myLastResult;
   }
 
   private List<DomEvent> _computeFileElement(final boolean fireEvents, boolean fireChanged, final String rootTagName) {
-    if (myComputing.get() != null || myDomManager.getProject().isDisposed()) return Collections.emptyList();
-    myComputing.set(Boolean.TRUE);
-    try {
-      if (!myXmlFile.isValid()) {
-        myModCount++;
-        computeCachedValue(ArrayUtil.EMPTY_OBJECT_ARRAY);
-        if (fireEvents && myLastResult != null) {
-          myLastResult.resetRoot(true);
-          return Arrays.<DomEvent>asList(new ElementUndefinedEvent(myLastResult));
-        }
-        return Collections.emptyList();
+    final DomFileElementImpl<T> lastResult = myLastResult;
+    if (!myXmlFile.isValid()) {
+      myLastResult = null;
+      if (fireEvents && lastResult != null) {
+        return Arrays.<DomEvent>asList(new ElementUndefinedEvent(lastResult));
       }
-
-      final Module module = ModuleUtil.findModuleForPsiElement(myXmlFile);
-      if (lastResultSuits(rootTagName, module)) {
-        List<DomEvent> list = new SmartList<DomEvent>();
-        if (fireEvents && fireChanged) {
-          list.add(new ElementChangedEvent(myLastResult));
-        }
-        myCachedValue.getValue();
-        return list;
-      }
-
-      myModCount++;
-
-      final Pair<DomFileDescription<T>,Object[]> description = findFileDescription(module, rootTagName);
-      if (myCachedValue.hasUpToDateValue()) {
-        return Collections.emptyList();
-      }
-
-      return saveResult(description.first, fireEvents, description.second);
-    }
-    finally {
-      myComputing.set(null);
-    }
-  }
-
-  private boolean lastResultSuits(final String rootTagName, final Module module) {
-    if (myLastResult == null) return false;
-    final DomFileDescription<T> description = myFileDescription;
-    if (!description.getRootTagName().equals(rootTagName) && !description.acceptsOtherRootTagNames()) return false;
-    w.unlock();
-    try {
-      return description.isMyFile(myXmlFile, module);
-    }
-    finally {
-      w.lock();
-    }
-  }
-
-  private MyCachedValueProvider getCachedValueProvider() {
-    return ((MyCachedValueProvider)myCachedValue.getValueProvider());
-  }
-
-  @NotNull
-  private Pair<DomFileDescription<T>,Object[]> findFileDescription(Module module, final String rootTagName) {
-    final DomFileDescription<T> mockDescription = myXmlFile.getUserData(DomManagerImpl.MOCK_DESCIPRTION);
-    if (mockDescription != null) return Pair.create(mockDescription, ArrayUtil.EMPTY_OBJECT_ARRAY);
-
-    final XmlFile originalFile = (XmlFile)myXmlFile.getOriginalFile();
-    if (originalFile != null) {
-      final FileDescriptionCachedValueProvider<T> provider = myDomManager.<T>getOrCreateCachedValueProvider(originalFile);
-      provider.getFileElement();
-      final Object[] dependencies = provider.getCachedValueProvider().dependencies;
-      assert dependencies != null;
-      return Pair.create(provider.getFileDescription(), dependencies);
+      return Collections.emptyList();
     }
 
-    myCondition.module = module;
+    final Module module = ModuleUtil.findModuleForPsiElement(myXmlFile);
+    final DomFileDescription<T> description = findFileDescription(module, rootTagName);
 
-    w.unlock();
-    try {
-      //noinspection unchecked
-      DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(rootTagName), myCondition);
-      if (description == null) {
-        description = ContainerUtil.find(myDomManager.getAcceptingOtherRootTagNameDescriptions(), myCondition);
-      }
-      if (description == null) {
-        return Pair.create(description, getAllDependencyItems());
-      }
-      final Set<Object> deps = new HashSet<Object>(description.getDependencyItems(myXmlFile));
-      deps.add(this);
-      deps.add(myXmlFile);
-      return Pair.create(description, deps.toArray());
-    }
-    finally {
-      w.lock();
-    }
-  }
-
-  @Nullable
-  private String getRootTag() {
-    return myXmlFile.isValid() ? ourRootTagCache.get(ROOT_TAG_NS_KEY, myXmlFile, null).getValue() : null;
-  }
-
-  private List<DomEvent> saveResult(final DomFileDescription<T> description, final boolean fireEvents, Object[] dependencyItems) {
     final DomFileElementImpl oldValue = getLastValue();
-    final DomFileDescription oldFileDescription = myFileDescription;
     final List<DomEvent> events = fireEvents ? new SmartList<DomEvent>() : Collections.<DomEvent>emptyList();
     if (oldValue != null) {
-      assert oldFileDescription != null;
-      oldValue.resetRoot(true);
       if (fireEvents) {
         events.add(new ElementUndefinedEvent(oldValue));
       }
     }
 
-    myFileDescription = description;
     if (description == null) {
       myLastResult = null;
-      computeCachedValue(dependencyItems);
       return events;
     }
 
     final Class<T> rootElementClass = description.getRootElementClass();
     final XmlName xmlName = DomImplUtil.createXmlName(description.getRootTagName(), rootElementClass, null);
     assert xmlName != null;
-    final EvaluatedXmlNameImpl rootTagName = EvaluatedXmlNameImpl.createEvaluatedXmlName(xmlName, xmlName.getNamespaceKey());
-    myLastResult = new DomFileElementImpl<T>(myXmlFile, rootElementClass, rootTagName, myDomManager);
-    computeCachedValue(dependencyItems);
+    final EvaluatedXmlNameImpl rootTagName1 = EvaluatedXmlNameImpl.createEvaluatedXmlName(xmlName, xmlName.getNamespaceKey());
+    myLastResult = new DomFileElementImpl<T>(myXmlFile, rootElementClass, rootTagName1, myDomManager, description);
 
     if (fireEvents) {
       events.add(new ElementDefinedEvent(myLastResult));
@@ -244,33 +115,34 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     return events;
   }
 
-  private void computeCachedValue(@NotNull final Object[] dependencyItems) {
-    getCachedValueProvider().dependencies = dependencyItems;
-    myCachedValue.getValue();
+  @Nullable
+  private DomFileDescription<T> findFileDescription(Module module, final String rootTagName) {
+    final DomFileDescription<T> mockDescription = myXmlFile.getUserData(DomManagerImpl.MOCK_DESCIPRTION);
+    if (mockDescription != null) return mockDescription;
+
+    final XmlFile originalFile = (XmlFile)myXmlFile.getOriginalFile();
+    if (originalFile != null) {
+      final FileDescriptionCachedValueProvider<T> provider = myDomManager.<T>getOrCreateCachedValueProvider(originalFile);
+      final DomFileElementImpl<T> element = provider.getFileElement();
+      return element == null ? null : element.getFileDescription();
+    }
+
+    //noinspection unchecked
+    DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(rootTagName), myCondition);
+    if (description == null) {
+      description = ContainerUtil.find(myDomManager.getAcceptingOtherRootTagNameDescriptions(), myCondition);
+    }
+    return description;
   }
 
-  @NotNull
-  private Object[] getAllDependencyItems() {
-    final Set<Object> deps = new LinkedHashSet<Object>();
-    deps.add(this);
-    deps.add(myXmlFile);
-    Set<DomFileDescription> domFileDescriptions = DomApplicationComponent.getInstance().getAllFileDescriptions();
-    for (final DomFileDescription<?> fileDescription : new HashSet<DomFileDescription>(domFileDescriptions)) {
-      deps.addAll(fileDescription.getDependencyItems(myXmlFile));
-    }
-    return deps.toArray();
+  @Nullable
+  private String getRootTag() {
+    return myXmlFile.isValid() ? ourRootTagCache.get(ROOT_TAG_NS_KEY, myXmlFile, null).getValue() : null;
   }
 
   @Nullable
   final DomFileElementImpl<T> getLastValue() {
-    r.lock();
-    final DomFileElementImpl<T> element = myLastResult;
-    r.unlock();
-    return element;
-  }
-
-  public long getModificationCount() {
-    return myModCount;
+    return myLastResult;
   }
 
   private class MyCondition implements Condition<DomFileDescription> {
@@ -281,12 +153,4 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     }
   }
 
-  private static class MyCachedValueProvider implements CachedValueProvider<Boolean> {
-    public Object[] dependencies;
-
-    public Result<Boolean> compute() {
-      assert dependencies != null;
-      return Result.create(Boolean.TRUE, dependencies);
-    }
-  }
 }

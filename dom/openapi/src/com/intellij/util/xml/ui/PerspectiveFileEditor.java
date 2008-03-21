@@ -67,7 +67,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
 
     FileEditorManager.getInstance(myProject).addFileEditorManagerListener(new FileEditorManagerAdapter() {
       public void selectionChanged(FileEditorManagerEvent event) {
-        if (!checkIsValid()) return;
+        if (!isValid()) return;
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {

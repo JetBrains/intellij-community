@@ -76,15 +76,8 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
     if (handler != null) {
       handler.checkIsValid();
-      DomInvocationHandler.r.lock();
-      try {
-        handler._checkInitialized(this);
-        for (int i = 0; i < myCount; i++) {
-          result.add(handler.getFixedChild(Pair.create(this, i)).getProxy());
-        }
-      }
-      finally {
-        DomInvocationHandler.r.unlock();
+      for (int i = 0; i < myCount; i++) {
+        result.add(handler.getFixedChild(Pair.create(this, i)).getProxy());
       }
     } else {
       for (Collection<JavaMethod> methods : myGetterMethods) {

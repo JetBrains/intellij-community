@@ -37,7 +37,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
       final XmlTag tag = getXmlTag();
       if (tag != null) {
         deleteTag(tag);
-        detachChildren();
+        detach();
         fireUndefinedEvent();
       }
     }
@@ -46,13 +46,21 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
     }
   }
 
+  public boolean equals(final Object obj) {
+    if (!(obj instanceof DomRootInvocationHandler)) return false;
+
+    final DomRootInvocationHandler handler = (DomRootInvocationHandler)obj;
+    return myParent.equals(handler.myParent);
+  }
+
+  public int hashCode() {
+    return myParent.hashCode();
+  }
+
   public boolean isValid() {
-    if (!super.isValid() || !myParent.isValid()) return false;
+    if (!myParent.isValid()) return false;
     final XmlTag tag = getXmlTag();
-    if (tag != null) {
-      LOG.assertTrue(tag.isValid());
-    }
-    return true;
+    return tag == null || tag.isValid();
   }
 
   @NotNull
@@ -61,8 +69,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
   }
 
   @NotNull
-  public <T extends DomElement> DomFileElementImpl<T> getRoot() {
-    LOG.assertTrue(super.isValid());
+  public <T extends DomElement> DomFileElementImpl<T> _getRoot() {
     return (DomFileElementImpl<T>)myParent;
   }
 

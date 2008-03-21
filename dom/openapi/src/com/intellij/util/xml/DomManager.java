@@ -64,9 +64,6 @@ public abstract class DomManager implements ProjectComponent, ModificationTracke
   public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file);
 
   @NotNull
-  public abstract DomFileDescription<?> getFileDescription(@NotNull DomElement element);
-
-  @NotNull
   @Deprecated
   /**
    * @deprecated use {@link #getFileElement(XmlFile, Class)}

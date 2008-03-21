@@ -11,6 +11,7 @@ import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.XmlElementFactory;
@@ -20,7 +21,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.JBLock;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.FactoryMap;
@@ -33,7 +33,6 @@ import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +43,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
@@ -61,16 +63,14 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   private final EvaluatedXmlName myTagName;
   private final T myChildDescription;
   private final Converter myGenericConverter;
-  protected XmlTag myXmlTag;
+  private long myModCount;
+  private XmlElement myXmlElement;
 
   private XmlFile myFile;
   private DomFileElementImpl myRoot;
   private final DomElement myProxy;
-  private Set<AbstractDomChildDescriptionImpl> myInitializedChildren;
-  private Map<Pair<FixedChildDescriptionImpl, Integer>, IndexedElementInvocationHandler> myFixedChildren;
   private DomGenericInfoEx myGenericInfo;
   private Map<FixedChildDescriptionImpl, Class> myFixedChildrenClasses;
-  private Throwable myInvalidated;
   private final InvocationCache myInvocationCache;
   private final FactoryMap<JavaMethod, Converter> myScalarConverters = new FactoryMap<JavaMethod, Converter>() {
     protected Converter create(final JavaMethod method) {
@@ -85,8 +85,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   };
 
   private static final JBReentrantReadWriteLock rwl = LockFactory.createReadWriteLock();
-  public static final JBLock r = rwl.readLock();
-  public static final JBLock w = rwl.writeLock();
 
   protected DomInvocationHandler(final Type type,
                                  final XmlTag tag,
@@ -103,6 +101,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     final Type concreteInterface = manager.getTypeChooserManager().getTypeChooser(type).chooseType(tag);
     myType = concreteInterface;
 
+    myModCount = getCurrentModCount();
+
     final Converter converter = getConverter(this, DomUtil.getGenericValueParameter(concreteInterface), null);
     myGenericConverter = converter;
     myInvocationCache =
@@ -114,16 +114,22 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       implementation = (Class<? extends DomElement>)rawType;
     }
     myProxy = AdvancedProxy.createProxy(this, implementation, isInterface ? new Class[]{rawType} : ArrayUtil.EMPTY_CLASS_ARRAY);
-    setXmlTag(tag);
-    cacheInTag(tag);
+    setXmlElement(tag);
+  }
+
+  private long getCurrentModCount() {
+    return PsiManager.getInstance(myManager.getProject()).getModificationTracker().getModificationCount();
   }
 
   @NotNull
   public <T extends DomElement> DomFileElementImpl<T> getRoot() {
     checkIsValid();
+    return _getRoot();
+  }
 
+  protected <T extends DomElement> DomFileElementImpl<T> _getRoot() {
     if (myRoot == null) {
-      myRoot = myParent.getRoot();
+      myRoot = myParent._getRoot();
     }
     return myRoot;
   }
@@ -136,9 +142,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   protected final void checkIsValid() {
-    if (!isValid()) {
-      throw new RuntimeException("element " + myType.toString() + " is not valid", myInvalidated);
-    }
+    LOG.assertTrue(isValid());
   }
 
   @Nullable
@@ -214,16 +218,9 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   public <T extends DomElement> T createStableCopy() {
-    final XmlTag tag;
-    r.lock();
-    try {
-      tag = myXmlTag;
-    } finally {
-      r.unlock();
-    }
-    if (tag != null && tag.isPhysical()) {
-      assert myManager.getDomElement(tag) == getProxy() : myManager.getDomElement(tag) + "\n\n" + tag.getParent().getText();
-      final SmartPsiElementPointer<XmlTag> pointer = SmartPointerManager.getInstance(myManager.getProject()).createLazyPointer(tag);
+    if (myXmlElement != null && myXmlElement.isPhysical()) {
+      assert getProxy().equals(myManager.getDomElement(getXmlTag())) : myManager.getDomElement(getXmlTag()) + "\n\n" + myXmlElement.getParent().getText();
+      final SmartPsiElementPointer<XmlTag> pointer = SmartPointerManager.getInstance(myManager.getProject()).createLazyPointer(getXmlTag());
       return myManager.createStableValue(new StableCopyFactory<T>(pointer, myType, getClass()));
     }
     return (T)createPathStableCopy();
@@ -259,17 +256,25 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   public XmlTag ensureTagExists() {
     checkIsValid();
 
-    if (myXmlTag != null) return myXmlTag;
+    if (myXmlElement != null) return (XmlTag)myXmlElement;
 
-    attach(setEmptyXmlTag());
+    final XmlTag tag = setEmptyXmlTag();
+    setXmlElement(tag);
 
     myManager.fireEvent(new ElementDefinedEvent(getProxy()));
     addRequiredChildren();
-    return myXmlTag;
+    myManager.cacheHandler(tag, this);
+    myModCount = getCurrentModCount();
+
+    return (XmlTag)myXmlElement;
   }
 
   public XmlElement getXmlElement() {
-    return getXmlTag();
+    if (myXmlElement == null && getCurrentModCount() != myModCount) {
+      setXmlElement(recomputeXmlElement());
+    }
+
+    return myXmlElement;
   }
 
   public XmlElement ensureXmlElementExists() {
@@ -280,7 +285,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     final String localName = tagName.getXmlName().getLocalName();
     if (localName.contains(":")) {
       try {
-        return XmlElementFactory.getInstance(myXmlTag.getProject()).createTagFromText("<" + localName + "/>");
+        return XmlElementFactory.getInstance(myXmlElement.getProject()).createTagFromText("<" + localName + "/>");
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -289,22 +294,19 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
     final XmlElement element = getXmlElement();
     assert element != null;
-    return myXmlTag.createChildTag(localName, tagName.getNamespace(element), "", false);
+    return getXmlTag().createChildTag(localName, tagName.getNamespace(element), "", false);
   }
 
   public boolean isValid() {
     ProgressManager.getInstance().checkCanceled();
-    r.lock();
-    try {
-      return _isValid();
+    final XmlElement element = getXmlElement();
+    if (element != null) {
+      return element.isValid();
     }
-    finally {
-      r.unlock();
+    if (getCurrentModCount() != myModCount) {
+      return false;
     }
-  }
-
-  private boolean _isValid() {
-    return myInvalidated == null;
+    return getParentHandler().isValid();
   }
 
   @NotNull
@@ -319,14 +321,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     undefineInternal();
   }
 
-  protected final void detachChildren() {
-    if (myFixedChildren != null) {
-      for (final IndexedElementInvocationHandler handler : myFixedChildren.values()) {
-        handler.detach(false);
-      }
-    }
-  }
-
   protected final void deleteTag(final XmlTag tag) {
     final boolean changing = myManager.setChanging(true);
     try {
@@ -337,13 +331,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     }
     finally {
       myManager.setChanging(changing);
-    }
-    w.lock();
-    try {
-      setXmlTag(null);
-    }
-    finally {
-      w.unlock();
     }
   }
 
@@ -402,20 +389,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
         value.accept(visitor);
       }
     }
-  }
-
-  final List<CollectionElementInvocationHandler> getAllCollectionChildren() {
-    final List<CollectionElementInvocationHandler> collectionChildren = new ArrayList<CollectionElementInvocationHandler>();
-    final XmlTag tag = getXmlTag();
-    if (tag != null) {
-      for (XmlTag xmlTag : tag.getSubTags()) {
-        final DomInvocationHandler cachedElement = DomManagerImpl.getCachedElement(xmlTag);
-        if (cachedElement instanceof CollectionElementInvocationHandler) {
-          collectionChildren.add((CollectionElementInvocationHandler)cachedElement);
-        }
-      }
-    }
-    return collectionChildren;
   }
 
   @NotNull
@@ -477,7 +450,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   @NotNull
   protected final XmlFile getFile() {
     if (myFile == null) {
-      myFile = getRoot().getFile();
+      myFile = _getRoot().getFile();
     }
     return myFile;
   }
@@ -543,36 +516,37 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @NotNull
   final IndexedElementInvocationHandler getFixedChild(final Pair<FixedChildDescriptionImpl, Integer> info) {
-    r.lock();
-    try {
-      LOG.assertTrue(myFixedChildren != null);
-      final IndexedElementInvocationHandler handler = myFixedChildren.get(info);
-      if (handler == null) {
-        LOG.assertTrue(false, this + " " + info.toString());
+    final FixedChildDescriptionImpl description = info.first;
+    final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(description.getXmlName());
+    final XmlTag tag = getXmlTag();
+    final int index = info.second;
+    if (tag != null) {
+      final List<XmlTag> tags = DomImplUtil.findSubTags(tag.getSubTags(), evaluatedXmlName, getFile());
+      if (tags.size() > index) {
+        XmlTag childTag = tags.get(index);
+        DomInvocationHandler handler = myManager.getCachedHandler(childTag);
+        if (handler == null || !(handler instanceof IndexedElementInvocationHandler)) {
+          handler = createIndexedChild(childTag, evaluatedXmlName, info);
+          myManager.cacheHandler(childTag, handler);
+        }
+        return (IndexedElementInvocationHandler)handler;
       }
-      return handler;
     }
-    finally {
-      r.unlock();
-    }
-  }
-
-  final Collection<IndexedElementInvocationHandler> getFixedChildren() {
-    return myFixedChildren == null ? Collections.<IndexedElementInvocationHandler>emptyList() : myFixedChildren.values();
+    return createIndexedChild(null, evaluatedXmlName, info);
   }
 
   @NotNull
   final AttributeChildInvocationHandler getAttributeChild(final AttributeChildDescriptionImpl description) {
     checkIsValid();
     final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(description.getXmlName());
-    final XmlTag tag = myXmlTag;
+    final XmlTag tag = getXmlTag();
     if (tag != null) {
       final XmlAttribute attribute = tag.getAttribute(description.getXmlName().getLocalName(), evaluatedXmlName.getNamespace(tag));
       if (attribute != null) {
-        AttributeChildInvocationHandler handler = myManager.getCachedAttribute(attribute);
+        AttributeChildInvocationHandler handler = (AttributeChildInvocationHandler)myManager.getCachedHandler(attribute);
         if (handler == null) {
           handler = createAttributeHandler(description, evaluatedXmlName, attribute);
-          myManager.cacheAttribute(attribute, handler);
+          myManager.cacheHandler(attribute, handler);
         }
         return handler;
       }
@@ -582,7 +556,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   private AttributeChildInvocationHandler createAttributeHandler(final AttributeChildDescriptionImpl description, final EvaluatedXmlName evaluatedXmlName, @Nullable final XmlAttribute attribute) {
-    return new AttributeChildInvocationHandler(description.getType(), myXmlTag, this, evaluatedXmlName, description, myManager, attribute);
+    return new AttributeChildInvocationHandler(description.getType(), getXmlTag(), this, evaluatedXmlName, description, myManager, attribute);
   }
 
   @Nullable
@@ -620,79 +594,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     return myType.toString() + " @" + hashCode();
   }
 
-  final void _checkInitialized(final AbstractDomChildDescriptionImpl description) {
-    if (myInitializedChildren != null && myInitializedChildren.contains(description)) return;
-    r.unlock();
-
-    final List<XmlTag> subTags;
-    try {
-      subTags = getSubTags(description);
-    }
-    finally {
-      r.lock();
-    }
-    r.unlock();
-
-    w.lock();
-    try {
-      if (myInitializedChildren != null && myInitializedChildren.contains(description)) return;
-
-      if (description instanceof FixedChildDescriptionImpl) {
-        final FixedChildDescriptionImpl fixedChildDescription = (FixedChildDescriptionImpl)description;
-        final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(fixedChildDescription.getXmlName());
-        final int count = fixedChildDescription.getCount();
-        for (int i = 0; i < count; i++) {
-          getOrCreateIndexedChild(findSubTag(subTags, i), evaluatedXmlName, Pair.create(fixedChildDescription, i));
-        }
-      }
-      else if (myXmlTag != null && description instanceof AbstractCollectionChildDescription) {
-        final AbstractCollectionChildDescription childDescription = (AbstractCollectionChildDescription)description;
-        for (XmlTag subTag : subTags) {
-          new CollectionElementInvocationHandler(description.getType(), subTag, childDescription, this);
-        }
-      }
-      if (myInitializedChildren == null) myInitializedChildren = new THashSet<AbstractDomChildDescriptionImpl>();
-      myInitializedChildren.add(description);
-    }
-    finally {
-      r.lock();
-      w.unlock();
-    }
-  }
-
-  private List<XmlTag> getSubTags(final AbstractDomChildDescriptionImpl description) {
-    final XmlTag tag = getXmlTag();
-    final XmlFile file = getFile();
-    if (tag != null) {
-      final XmlTag[] xmlTags = tag.getSubTags();
-      r.lock();
-      try {
-        if (description instanceof FixedChildDescriptionImpl) {
-          return DomImplUtil.findSubTags(xmlTags, createEvaluatedXmlName(((DomChildDescriptionImpl)description).getXmlName()), file);
-        }
-        if (description instanceof AbstractCollectionChildDescription) {
-          return ((AbstractCollectionChildDescription) description).getSubTags(this, xmlTags, file);
-        }
-      }
-      finally {
-        r.unlock();
-      }
-    }
-    return Collections.emptyList();
-  }
-
-  private void getOrCreateIndexedChild(final XmlTag subTag, EvaluatedXmlName name, final Pair<FixedChildDescriptionImpl, Integer> pair) {
-    if (myFixedChildren == null) myFixedChildren = new THashMap<Pair<FixedChildDescriptionImpl, Integer>, IndexedElementInvocationHandler>();
-    IndexedElementInvocationHandler handler = myFixedChildren.get(pair);
-    if (handler == null) {
-      handler = createIndexedChild(subTag, name, pair);
-      myFixedChildren.put(pair, handler);
-    }
-    else {
-      handler.attach(subTag);
-    }
-  }
-
   private IndexedElementInvocationHandler createIndexedChild(final XmlTag subTag, EvaluatedXmlName qname, final Pair<FixedChildDescriptionImpl, Integer> pair) {
     final FixedChildDescriptionImpl description = pair.first;
     Type type = getFixedChildrenClass(description);
@@ -712,83 +613,26 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   @Nullable
-  private static XmlTag findSubTag(@NotNull List<XmlTag> subTags, final int index) {
-    return subTags.size() <= index ? null : subTags.get(index);
+  public XmlTag getXmlTag() {
+    return (XmlTag) getXmlElement();
   }
 
   @Nullable
-  public XmlTag getXmlTag() {
-    ProgressManager.getInstance().checkCanceled();
-    r.lock();
-    try {
-      return myXmlTag;
-    }
-    finally {
-      r.unlock();
-    }
+  protected XmlElement recomputeXmlElement() {
+    return null;
   }
 
-  protected final void detach(boolean invalidate) {
-    w.lock();
-    try {
-      if (invalidate && _isValid()) {
-        myInvalidated = new Throwable();
-      }
-      if (myInitializedChildren != null && !myInitializedChildren.isEmpty()) {
-        if (myFixedChildren != null) {
-          for (DomInvocationHandler handler : myFixedChildren.values()) {
-            handler.detach(invalidate);
-          }
-        }
-        if (myXmlTag != null && myXmlTag.isValid()) {
-          for (CollectionElementInvocationHandler handler : getAllCollectionChildren()) {
-            handler.detach(true);
-          }
-        }
-      }
-
-      myInitializedChildren = null;
-      removeFromCache();
-      setXmlTag(null);
-    } finally {
-      w.unlock();
-    }
+  protected final void detach() {
+    final XmlElement element = getXmlElement();
+    if (element != null) myManager.cacheHandler(element, null);
+    setXmlElement(null);
   }
 
-  protected void removeFromCache() {
-    if (myXmlTag != null && DomManagerImpl.getCachedElement(myXmlTag) == this) {
-      DomManagerImpl.setCachedElement(myXmlTag, null);
-    }
-  }
-
-  protected final void attach(final XmlTag tag) {
-    w.lock();
-    try {
-      setXmlTag(tag);
-      cacheInTag(tag);
-    } finally{
-      r.lock();
-      w.unlock();
-    }
-    try {
-      if (myFixedChildren != null) {
-        for (final Pair<FixedChildDescriptionImpl, Integer> pair : myFixedChildren.keySet()) {
-          _checkInitialized(pair.first);
-        }
-      }
-    } finally {
-      r.unlock();
-    }
-  }
-
-  protected final void setXmlTag(final XmlTag tag) {
+  protected final void setXmlElement(final XmlElement tag) {
     final StaticGenericInfo staticInfo = myManager.getStaticGenericInfo(myType);
-    myGenericInfo = tag == null || ((DomInvocationHandler)this) instanceof AttributeChildInvocationHandler ? staticInfo : new DynamicGenericInfo(this, staticInfo, myManager.getProject());
-    myXmlTag = tag;
-  }
-
-  protected void cacheInTag(final XmlTag tag) {
-    DomManagerImpl.setCachedElement(tag, this);
+    myGenericInfo = tag == null || isAttribute() ? staticInfo : new DynamicGenericInfo(this, staticInfo, myManager.getProject());
+    myXmlElement = tag;
+    myModCount = getCurrentModCount();
   }
 
   @NotNull
@@ -797,28 +641,16 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   public final DomElement addCollectionChild(final CollectionChildDescriptionImpl description, final Type type, int index) throws IncorrectOperationException {
-    checkInitialized(description);
     final EvaluatedXmlName name = createEvaluatedXmlName(description.getXmlName());
     final XmlTag tag = addEmptyTag(name, index);
     final CollectionElementInvocationHandler handler = new CollectionElementInvocationHandler(type, tag, description, this);
     myManager.fireEvent(new ElementChangedEvent(getProxy()));
     handler.addRequiredChildren();
+    getManager().getTypeChooserManager().getTypeChooser(description.getType()).distinguishTag(tag, type);
     return handler.getProxy();
   }
 
-  final void checkInitialized(final DomChildDescriptionImpl description) {
-    checkIsValid();
-    r.lock();
-    try {
-      _checkInitialized(description);
-    }
-    finally {
-      r.unlock();
-    }
-  }
-
   protected final void createFixedChildrenTags(EvaluatedXmlName tagName, FixedChildDescriptionImpl description, int count) {
-    checkInitialized(description);
     final XmlTag tag = ensureTagExists();
     final List<XmlTag> subTags = DomImplUtil.findSubTags(tag, tagName, getFile());
     if (subTags.size() < count) {
@@ -850,26 +682,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     }
   }
 
-  public final boolean isInitialized(final AbstractDomChildDescriptionImpl qname) {
-    r.lock();
-    try {
-      return myInitializedChildren != null && myInitializedChildren.contains(qname);
-    } finally{
-      r.unlock();
-    }
-  }
-
-  public final boolean isAnythingInitialized() {
-    r.lock();
-    try {
-      return myInitializedChildren != null && !myInitializedChildren.isEmpty();
-    } finally{
-      r.unlock();
-    }
-  }
-
   public void setFixedChildClass(final FixedChildDescriptionImpl tagName, final Class<? extends DomElement> aClass) {
-    assert !isInitialized(tagName);
     if (myFixedChildrenClasses == null) myFixedChildrenClasses = new THashMap<FixedChildDescriptionImpl, Class>();
     myFixedChildrenClasses.put(tagName, aClass);
   }
@@ -879,30 +692,24 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     return getXmlName().evaluateChildName(xmlName);
   }
 
-  public List<? extends DomElement> getCollectionChildren(final AbstractDomChildDescriptionImpl description, final NotNullFunction<DomInvocationHandler, List<XmlTag>> tagsGetter) {
+  public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description, final NotNullFunction<DomInvocationHandler, List<XmlTag>> tagsGetter) {
     XmlTag tag = getXmlTag();
     if (tag == null) return Collections.emptyList();
 
     checkIsValid();
-    r.lock();
-    try {
-      _checkInitialized(description);
+    final List<XmlTag> subTags = tagsGetter.fun(this);
+    if (subTags.isEmpty()) return Collections.emptyList();
 
-      final List<XmlTag> subTags = tagsGetter.fun(this);
-      if (subTags.isEmpty()) return Collections.emptyList();
-
-      List<DomElement> elements = new ArrayList<DomElement>(subTags.size());
-      for (XmlTag subTag : subTags) {
-        final DomInvocationHandler element = DomManagerImpl.getCachedElement(subTag);
-        if (element != null) {
-          elements.add(element.getProxy());
-        }
+    List<DomElement> elements = new ArrayList<DomElement>(subTags.size());
+    for (XmlTag subTag : subTags) {
+      DomInvocationHandler handler = myManager.getCachedHandler(subTag);
+      if (handler == null || !(handler instanceof CollectionElementInvocationHandler)) {
+        handler = new CollectionElementInvocationHandler(description.getType(), subTag, description, this);
+        myManager.cacheHandler(subTag, handler);
       }
-      return Collections.unmodifiableList(elements);
+      elements.add(handler.getProxy());
     }
-    finally {
-      r.unlock();
-    }
+    return Collections.unmodifiableList(elements);
   }
 
   private static class StableCopyFactory<T extends DomElement> implements NullableFactory<T> {

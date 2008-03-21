@@ -21,5 +21,7 @@ import com.intellij.util.xml.DomEventVisitor;
  * @author peter
  */
 public interface DomEvent {
+  DomEvent[] EMPTY_ARRAY = new DomEvent[0];
+
   void accept(DomEventVisitor visitor);
 }

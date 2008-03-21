@@ -13,9 +13,6 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.concurrency.JBLock;
-import com.intellij.util.concurrency.JBReentrantReadWriteLock;
-import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NonNls;
@@ -24,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.annotation.Annotation;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashMap;
@@ -116,26 +112,22 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   };
 
   private final XmlFile myFile;
+  private final DomFileDescription<T> myFileDescription;
   private final Class<T> myRootElementClass;
   private final EvaluatedXmlNameImpl myRootTagName;
   private final DomManagerImpl myManager;
-  private WeakReference<DomRootInvocationHandler> myRootHandler;
   private final Map<Key,Object> myUserData = new HashMap<Key, Object>();
   private long myModificationCount;
-  private boolean myInvalidated;
-
-  private static final JBReentrantReadWriteLock rwl = LockFactory.createReadWriteLock();
-  private static final JBLock r = rwl.readLock();
-  private static final JBLock w = rwl.writeLock();
 
   protected DomFileElementImpl(final XmlFile file,
                                final Class<T> rootElementClass,
                                final EvaluatedXmlNameImpl rootTagName,
-                               final DomManagerImpl manager) {
+                               final DomManagerImpl manager, final DomFileDescription<T> fileDescription) {
     myFile = file;
     myRootElementClass = rootElementClass;
     myRootTagName = rootTagName;
     myManager = manager;
+    myFileDescription = fileDescription;
   }
 
   @NotNull
@@ -158,7 +150,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     if (document != null) {
       final XmlTag tag = document.getRootTag();
       if (tag != null) {
-        if (tag.getTextLength() > 0 && myManager.getFileDescription(this).acceptsOtherRootTagNames()) return tag;
+        if (tag.getTextLength() > 0 && ((DomElement)this).getRoot().getFileDescription().acceptsOtherRootTagNames()) return tag;
         if (myRootTagName.getXmlName().getLocalName().equals(tag.getLocalName()) &&
             myRootTagName.isNamespaceAllowed(this, tag.getNamespace())) {
           return tag;
@@ -166,6 +158,27 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
       }
     }
     return null;
+  }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (!(o instanceof DomFileElementImpl)) return false;
+
+    final DomFileElementImpl that = (DomFileElementImpl)o;
+
+    if (myFile != null ? !myFile.equals(that.myFile) : that.myFile != null) return false;
+    if (myRootElementClass != null ? !myRootElementClass.equals(that.myRootElementClass) : that.myRootElementClass != null) return false;
+    if (myRootTagName != null ? !myRootTagName.equals(that.myRootTagName) : that.myRootTagName != null) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = (myFile != null ? myFile.hashCode() : 0);
+    result = 31 * result + (myRootElementClass != null ? myRootElementClass.hashCode() : 0);
+    result = 31 * result + (myRootTagName != null ? myRootTagName.hashCode() : 0);
+    return result;
   }
 
   @NotNull
@@ -256,38 +269,20 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   @NotNull
   public DomFileDescription<T> getFileDescription() {
-    final DomFileDescription description = myManager.getDomFileDescription(getFile());
-    assert description != null;
-    return description;
+    return myFileDescription;
   }
 
   protected final DomRootInvocationHandler getRootHandler() {
-    r.lock();
-    if (myRootHandler == null || myRootHandler.get() == null) {
-      r.unlock();
-      final XmlTag tag = getRootTag(); // do not take root tag under our lock to prevent dead lock with PsiLock
-      w.lock();
-      try {
-        if (myRootHandler == null || myRootHandler.get() == null) {
-          myRootHandler = new WeakReference<DomRootInvocationHandler>(new DomRootInvocationHandler(myRootElementClass, tag, this, myRootTagName));
-        }
+    final XmlTag tag = getRootTag();
+    if (tag != null) {
+      DomInvocationHandler handler = myManager.getCachedHandler(tag);
+      if (!(handler instanceof DomRootInvocationHandler)) {
+        handler = new DomRootInvocationHandler(myRootElementClass, tag, this, myRootTagName);
+        myManager.cacheHandler(tag, handler);
       }
-      finally{
-        w.unlock();
-        r.lock();
-      }
+      return (DomRootInvocationHandler)handler;
     }
-    final DomRootInvocationHandler rootHandler = myRootHandler.get();
-    r.unlock();
-    return rootHandler;
-  }
-
-  protected final void resetRoot(boolean invalidate) {
-    myInvalidated = invalidate;
-    if (myRootHandler != null && myRootHandler.get() != null) {
-      myRootHandler.get().detach(true);
-      myRootHandler = null;
-    }
+    return new DomRootInvocationHandler(myRootElementClass, null, this, myRootTagName);
   }
 
   public @NonNls String toString() {
@@ -328,9 +323,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   public final boolean isValid() {
-    if (myInvalidated) return false;
-    myInvalidated = !myFile.isValid() || myManager.getFileElement(myFile) != this;
-    return !myInvalidated;
+    return myFile.isValid() && equals(myManager.getFileElement(myFile));
   }
 
   @NotNull

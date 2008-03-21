@@ -25,7 +25,7 @@ class AddToCompositeCollectionInvocation implements Invocation {
 
   public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
     for (final CollectionChildDescriptionImpl qname : myQnames) {
-      handler.checkInitialized(qname);
+      handler.getCollectionChildren(qname, qname.getTagsGetter());
     }
 
     final XmlTag tag = handler.ensureTagExists();
@@ -37,8 +37,8 @@ class AddToCompositeCollectionInvocation implements Invocation {
     for (final XmlTag subTag : tags) {
       if (i == index) break;
       if (DomImplUtil.containsTagName(myQnames, subTag, handler)) {
-        final DomInvocationHandler element = DomManagerImpl.getCachedElement(subTag);
-        if (element != null) {
+        final DomInvocationHandler element = handler.getManager().getCachedHandler(subTag);
+        if (element instanceof CollectionElementInvocationHandler) {
           lastTag = subTag;
           i++;
         }

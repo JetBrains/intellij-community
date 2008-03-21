@@ -85,6 +85,8 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
   }
 
   private boolean hasErrors() {
+    if (!myParentElement.isValid()) return false;
+
     for (DomElement domElement : myChildDescription.getStableValues(myParentElement)) {
       final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(getProject());
       final DomElementsProblemsHolder holder = annotationsManager.getCachedProblemHolder(domElement);
@@ -96,6 +98,8 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
   }
 
   public String getNodeName() {
+    if (!myParentElement.isValid()) return "";
+
     return myChildDescription.getCommonPresentableName(myParentElement);
   }
 

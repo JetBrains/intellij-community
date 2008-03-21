@@ -29,7 +29,7 @@ public class CompoundRuntimeException extends RuntimeException {
 
   public CompoundRuntimeException(final List<Throwable> throwables) {
     //noinspection HardCodedStringLiteral
-    super("Several Exceptions occured");
+    super("Several Exceptions occured", throwables.get(0));
     myThrowables = throwables;
   }
 

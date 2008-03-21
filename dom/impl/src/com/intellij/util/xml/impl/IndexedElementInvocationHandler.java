@@ -6,6 +6,8 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
@@ -31,16 +33,50 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     myIndex = index;
   }
 
-  public boolean isValid() {
-    return super.isValid() && getParentHandler().isValid();
+  public boolean equals(final Object obj) {
+    if (!(obj instanceof IndexedElementInvocationHandler)) return false;
+
+    final IndexedElementInvocationHandler handler = (IndexedElementInvocationHandler)obj;
+    if (!getParentHandler().equals(handler.getParentHandler()) || !getChildDescription().equals(handler.getChildDescription())) {
+      return false;
+    }
+
+    final XmlTag tag = getXmlTag();
+    final XmlTag herTag = handler.getXmlTag();
+    if (tag != null) {
+      return tag.equals(herTag);
+    }
+    if (herTag != null) return false;
+
+    return myIndex == handler.myIndex;
+  }
+
+  public int hashCode() {
+    return getParentHandler().hashCode() * 239 + getChildDescription().hashCode() * 42;
+  }
+
+  protected XmlElement recomputeXmlElement() {
+    final DomInvocationHandler handler = getParentHandler();
+    if (!handler.isValid()) return null;
+
+    final XmlTag tag = handler.getXmlTag();
+    if (tag == null) return null;
+
+    final List<XmlTag> tags = DomImplUtil.findSubTags(tag, getXmlName(), getFile());
+    if (tags.size() <= myIndex) return null;
+
+    return tags.get(myIndex);
   }
 
   protected XmlTag setEmptyXmlTag() {
     final DomInvocationHandler parent = getParentHandler();
     final FixedChildDescriptionImpl description = getChildDescription();
+    final XmlFile xmlFile = getFile();
     parent.createFixedChildrenTags(getXmlName(), description, myIndex);
-    final XmlTag tag = getXmlTag();
-    if (tag != null) return tag;
+    final List<XmlTag> tags = DomImplUtil.findSubTags(parent.getXmlTag(), getXmlName(), xmlFile);
+    if (tags.size() > myIndex) {
+      return tags.get(myIndex);
+    }
 
     final XmlTag[] newTag = new XmlTag[1];
     getManager().runChange(new Runnable() {
@@ -67,7 +103,6 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
 
     final EvaluatedXmlName xmlElementName = getXmlName();
     final FixedChildDescriptionImpl description = getChildDescription();
-    parent.checkInitialized(description);
 
     final int totalCount = description.getCount();
 
@@ -76,20 +111,22 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
       return;
     }
 
+    XmlTag tag = getXmlTag();
+    if (tag == null) return;
+
     final boolean changing = getManager().setChanging(true);
     try {
-      XmlTag tag = getXmlTag();
-      assert tag != null;
-      detach(false);
       if (totalCount == myIndex + 1 && subTags.size() >= myIndex + 1) {
         for (int i = myIndex; i < subTags.size(); i++) {
           subTags.get(i).delete();
         }
+        detach();
       }
       else if (subTags.size() == myIndex + 1) {
         tag.delete();
+        detach();
       } else {
-        attach((XmlTag) tag.replace(parent.createChildTag(getXmlName())));
+        setXmlElement((XmlTag) tag.replace(parent.createChildTag(getXmlName())));
       }
     }
     catch (IncorrectOperationException e) {
@@ -97,7 +134,6 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     } finally {
       getManager().setChanging(changing);
     }
-    detachChildren();
     fireUndefinedEvent();
   }
 

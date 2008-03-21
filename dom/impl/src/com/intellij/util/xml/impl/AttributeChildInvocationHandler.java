@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
@@ -25,7 +26,6 @@ import java.lang.reflect.Type;
  */
 public class AttributeChildInvocationHandler extends DomInvocationHandler<AttributeChildDescriptionImpl> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.AttributeChildInvocationHandler");
-  private XmlAttribute myAttribute;
 
   protected AttributeChildInvocationHandler(final Type type,
                                             final XmlTag tag,
@@ -35,7 +35,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
                                             final DomManagerImpl manager,
                                             final XmlAttribute attribute) {
     super(type, tag, parent, attributeName, description, manager);
-    myAttribute = attribute;
+    setXmlElement(attribute);
   }
 
   public void acceptChildren(DomElementVisitor visitor) {
@@ -45,16 +45,8 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     return ensureTagExists();
   }
 
-  public boolean isValid() {
-    return myAttribute == null ? getParentHandler().isValid() :  myAttribute.isValid();
-  }
-
   protected boolean isAttribute() {
     return true;
-  }
-
-  public final XmlAttribute getXmlElement() {
-    return myAttribute;
   }
 
   public boolean equals(final Object obj) {
@@ -68,16 +60,28 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     return getParentHandler().hashCode() * 239 + getChildDescription().hashCode() * 42;
   }
 
+  protected XmlElement recomputeXmlElement() {
+    final DomInvocationHandler handler = getParentHandler();
+    if (!handler.isValid()) return null;
+
+    final XmlTag tag = handler.getXmlTag();
+    if (tag == null) return null;
+
+    return tag.getAttribute(getXmlElementName(), getXmlElementNamespace());
+  }
+
   public final XmlAttribute ensureXmlElementExists() {
-    if (myAttribute != null) return myAttribute;
+    XmlAttribute attribute = (XmlAttribute)getXmlElement();
+    if (attribute != null) return attribute;
 
     final DomManagerImpl manager = getManager();
     final boolean b = manager.setChanging(true);
     try {
-      myAttribute = ensureTagExists().setAttribute(getXmlElementName(), getXmlElementNamespace(), "");
-      getManager().cacheAttribute(myAttribute, this);
+      attribute = ensureTagExists().setAttribute(getXmlElementName(), getXmlElementNamespace(), "");
+      setXmlElement(attribute);
+      getManager().cacheHandler(attribute, this);
       manager.fireEvent(new ElementDefinedEvent(getProxy()));
-      return myAttribute;
+      return attribute;
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -97,26 +101,14 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     });
   }
 
-  protected final void cacheInTag(final XmlTag tag) {
-  }
-
-  protected final void removeFromCache() {
-  }
-
   public final void undefineInternal() {
     final XmlTag tag = getXmlTag();
-    w.lock();
-    try {
-      setXmlTag(null);
-    }
-    finally {
-      w.unlock();
-    }
     if (tag != null) {
       getManager().runChange(new Runnable() {
         public void run() {
           try {
-            myAttribute = tag.setAttribute(getXmlElementName(), getXmlElementNamespace(), null);
+            tag.setAttribute(getXmlElementName(), getXmlElementNamespace(), null);
+            setXmlElement(null);
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
@@ -138,10 +130,11 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
 
   @Nullable
   protected String getValue() {
-    if (myAttribute != null) {
-      final XmlAttributeValue value = myAttribute.getValueElement();
+    final XmlAttribute attribute = (XmlAttribute)getXmlElement();
+    if (attribute != null) {
+      final XmlAttributeValue value = attribute.getValueElement();
       if (value != null && value.getTextLength() >= 2) {
-        return myAttribute.getDisplayValue();
+        return attribute.getDisplayValue();
       }
     }
     return null;
@@ -158,7 +151,9 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     getManager().runChange(new Runnable() {
       public void run() {
         try {
-          myAttribute = tag.setAttribute(attributeName, namespace, newValue);
+          XmlAttribute attribute = tag.setAttribute(attributeName, namespace, newValue);
+          setXmlElement(attribute);
+          getManager().cacheHandler(attribute, AttributeChildInvocationHandler.this);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
