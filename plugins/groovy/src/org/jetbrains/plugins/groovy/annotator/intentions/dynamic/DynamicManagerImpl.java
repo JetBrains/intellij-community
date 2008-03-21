@@ -87,7 +87,7 @@ public class DynamicManagerImpl extends DynamicManager {
           int index = getIndexToInsert(classNode, itemElement);
           classNode.insert(node, index);
           myTreeTableModel.nodesWereInserted(classNode, new int[]{index});
-          DynamicToolWindowWrapper.setSelectedNode(node);
+          DynamicToolWindowWrapper.getInstance(myProject).setSelectedNode(node);
           return;
         }
       }
@@ -102,7 +102,7 @@ public class DynamicManagerImpl extends DynamicManager {
     classNode.add(node);
     myTreeTableModel.nodesWereInserted(classNode, new int[]{0});
 
-    DynamicToolWindowWrapper.setSelectedNode(node);
+    DynamicToolWindowWrapper.getInstance(myProject).setSelectedNode(node);
   }
 
   private int getIndexToInsert(DefaultMutableTreeNode parent, DNamedElement namedElement) {

@@ -61,7 +61,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
   public static final String QUALIFIED_IDENTIFIER_REGEXP = "[a-zA-Z0-9(.)]+";
   private JPanel myTreeTablePanel;
   private JPanel myBigPanel;
-  private static ListTreeTableModelOnColumns myTreeTableModel;
+  private ListTreeTableModelOnColumns myTreeTableModel;
 
   private static final int CLASS_OR_ELEMENT_NAME_COLUMN = 0;
   private static final int TYPE_COLUMN = 1;
@@ -71,7 +71,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
       "Type"
   };
 
-  private static TreeTable myTreeTable;
+  private TreeTable myTreeTable;
 
   private boolean doesTreeTableInit() {
     return myBigPanel != null && myTreeTableModel != null && myTreeTablePanel != null;
@@ -425,7 +425,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     }
   }
 
-  public static void setSelectedNode(DefaultMutableTreeNode node) {
+  public void setSelectedNode(DefaultMutableTreeNode node) {
     JTree tree = myTreeTable.getTree();
     TreePath path = new TreePath(node.getPath());
     tree.expandPath(path.getParentPath());
@@ -435,7 +435,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
   }
 
 
-  private static void removeFromParent(DefaultMutableTreeNode parent, DefaultMutableTreeNode child) {
+  private void removeFromParent(DefaultMutableTreeNode parent, DefaultMutableTreeNode child) {
     int idx = myTreeTableModel.getIndexOfChild(parent, child);
     child.removeFromParent();
     myTreeTableModel.nodesWereRemoved(parent, new int[]{idx}, new TreeNode[]{child});
@@ -455,30 +455,26 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     return myBigPanel;
   }
 
-  private static TreeTable returnTreeTable() {
+  private TreeTable returnTreeTable() {
     return myTreeTable;
   }
 
   public void projectOpened() {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   public void projectClosed() {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   @NonNls
   @NotNull
   public String getComponentName() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return "DynamicToolWindowWrapper";
   }
 
   public void initComponent() {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   public void disposeComponent() {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   static class PropertyTypeColumnInfo extends ColumnInfo<DefaultMutableTreeNode, String> {
@@ -623,7 +619,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     return returnTreeTableModel();
   }
 
-  private static ListTreeTableModelOnColumns returnTreeTableModel() {
+  private ListTreeTableModelOnColumns returnTreeTableModel() {
     return myTreeTableModel;
   }
 
@@ -735,7 +731,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
   }
 
   @Nullable
-  private static TreeTableTree getTree() {
+  private TreeTableTree getTree() {
     return myTreeTable != null ? myTreeTable.getTree() : null;
   }
 
