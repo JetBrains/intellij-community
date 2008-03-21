@@ -365,9 +365,8 @@ public class DynamicToolWindowWrapper {
 
   private static boolean removeClass(Project project, TreePath selectionPath, DefaultMutableTreeNode classNode, boolean isShowDialog, int rowsCount) {
     final TreeNode rootObject = classNode.getParent();
-    if (!(rootObject instanceof DefaultMutableTreeNode)) return false;
+    return rootObject instanceof DefaultMutableTreeNode && removeDynamicElement(project, selectionPath, classNode, ((DefaultMutableTreeNode) rootObject), isShowDialog, rowsCount);
 
-    return removeDynamicElement(project, selectionPath, classNode, ((DefaultMutableTreeNode) rootObject), isShowDialog, rowsCount);
   }
 
   private static boolean removeDynamicElement(Project project, TreePath selectionPath, DefaultMutableTreeNode child, DefaultMutableTreeNode parent, boolean isShowDialog, int rowsCount) {
@@ -412,7 +411,7 @@ public class DynamicToolWindowWrapper {
 
   private static void removeNamedElement(Project project, DNamedElement namedElement) {
     if (namedElement instanceof DClassElement) {
-      DynamicManager.getInstance(project).removeClassElement(((DClassElement) namedElement).getName());
+      DynamicManager.getInstance(project).removeClassElement(namedElement.getName());
     } else if (namedElement instanceof DPropertyElement) {
       DynamicManager.getInstance(project).removePropertyElement(((DPropertyElement) namedElement));
     } else if (namedElement instanceof DMethodElement) {
@@ -616,8 +615,7 @@ public class DynamicToolWindowWrapper {
 
       if (value instanceof DClassElement) {
         final String containingClassName = ((DClassElement) value).getName();
-        final String className = QuickfixUtil.shortenType(containingClassName);
-//        append(className, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        //        append(className, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         append(containingClassName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
 

@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorTextField;
@@ -283,14 +282,6 @@ public abstract class DynamicDialog extends DialogWrapper {
 
   protected void doOKAction() {
     super.doOKAction();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        doAction();
-      }
-    });
-  }
-
-  private void doAction() {
     GrTypeElement typeElement = getEnteredTypeName();
 
     DItemElement myDynamicElement;
