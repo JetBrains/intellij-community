@@ -450,6 +450,14 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         myChildren.clear();
         myChildren.add(myNodeManager.createMessageNode(new MessageDescriptor(e.getMessage())));
       }
+      catch (InternalException e) {
+        if (e.errorCode() == 35) {
+          myChildren.add(myNodeManager.createMessageNode(new MessageDescriptor(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()))));
+        }
+        else {
+          throw e;
+        }
+      }
 
       updateUI(true);
     }
