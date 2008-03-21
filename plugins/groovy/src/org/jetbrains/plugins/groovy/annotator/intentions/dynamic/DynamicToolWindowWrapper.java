@@ -18,7 +18,10 @@ import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.treetable.*;
+import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
+import com.intellij.util.ui.treetable.TreeTable;
+import com.intellij.util.ui.treetable.TreeTableModel;
+import com.intellij.util.ui.treetable.TreeTableTree;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitEle
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -175,15 +179,22 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     myTreeTable = new TreeTable(myTreeTableModel);
 
     final MyColoredTreeCellRenderer treeCellRenderer = new MyColoredTreeCellRenderer();
-    final TreeTableCellRenderer tableCellRenderer = new TreeTableCellRenderer(myTreeTable, myTreeTable.getTree());
-    tableCellRenderer.setCellRenderer(treeCellRenderer);
+
+    myTreeTable.setDefaultRenderer(String.class, new TableCellRenderer() {
+      public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        if (value instanceof String) {
+          return new JLabel(QuickfixUtil.shortenType((String) value));
+        }
+
+        return new JLabel();
+      }
+    });
 
     myTreeTable.setTreeCellRenderer(treeCellRenderer);
 
     myTreeTable.setRootVisible(false);
     myTreeTable.setSelectionMode(DefaultTreeSelectionModel.CONTIGUOUS_TREE_SELECTION);
 
-    final MyPropertyOrClassCellEditor propertyOrClassCellEditor = new MyPropertyOrClassCellEditor();
     final MyPropertyTypeCellEditor typeCellEditor = new MyPropertyTypeCellEditor(project);
 
     typeCellEditor.addCellEditorListener(new CellEditorListener() {
@@ -199,7 +210,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
 
         final TreePath editingTypePath = tree.getSelectionPath();
         if (editingTypePath == null) return;
-        
+
         final TreePath editingClassPath = editingTypePath.getParentPath();
 
         Object oldTypeValue = myTreeTable.getValueAt(tree.getRowForPath(editingTypePath), TYPE_COLUMN);
@@ -267,7 +278,6 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
       }
     });
 
-    myTreeTable.setDefaultEditor(TreeTableModel.class, propertyOrClassCellEditor);
     myTreeTable.setDefaultEditor(String.class, typeCellEditor);
 
     myTreeTable.registerKeyboardAction(
@@ -487,11 +497,8 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     public String valueOf(DefaultMutableTreeNode treeNode) {
       Object userObject = treeNode.getUserObject();
 
-      if (userObject instanceof DPropertyElement)
-        return QuickfixUtil.shortenType(((DPropertyElement) userObject).getType());
-
-      if (userObject instanceof DMethodElement)
-        return QuickfixUtil.shortenType(((DMethodElement) userObject).getType());
+      if (userObject instanceof DItemElement)
+        return ((DItemElement) userObject).getType();
 
       return null;
     }
@@ -637,7 +644,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
         }
 
         if (value instanceof DMethodElement) {
-          appendMethodAttributes((DMethodElement) value);
+          appendMethodParameters((DMethodElement) value);
         }
       }
     }
@@ -657,7 +664,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
       append(name, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
     }
 
-    private void appendMethodAttributes(DMethodElement value) {
+    private void appendMethodParameters(DMethodElement value) {
       append("(", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
 
       final String[] types = QuickfixUtil.getArgumentsTypes(value.getPairs());
@@ -668,31 +675,6 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
         append(QuickfixUtil.shortenType(type), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
       }
       append(")", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-    }
-  }
-
-  private static class MyPropertyOrClassCellEditor extends AbstractTableCellEditor {
-    private final JTextField field = new JTextField();
-
-    public MyPropertyOrClassCellEditor() {
-    }
-
-    public Object getCellEditorValue() {
-      return field.getText();
-    }
-
-    public boolean isCellEditable(EventObject anEvent) {
-      return false;
-    }
-
-    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-      if (value instanceof String) {
-        field.setText(((String) value));
-      } else if (value instanceof DClassElement) {
-        field.setText(((DClassElement) value).getName());
-      }
-
-      return field;
     }
   }
 
