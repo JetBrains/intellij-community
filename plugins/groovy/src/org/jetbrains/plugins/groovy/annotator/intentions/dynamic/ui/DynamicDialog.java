@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
@@ -138,8 +139,7 @@ public abstract class DynamicDialog extends DialogWrapper {
   }
 
   private Document createDocument(final String text) {
-    final PsiFile groovyFile = GroovyPsiElementFactory.getInstance(myProject).createGroovyFile(text, true, null);
-    return PsiDocumentManager.getInstance(myReferenceExpression.getProject()).getDocument(groovyFile);
+    return PsiDocumentManager.getInstance(myProject).getDocument(new GroovyCodeFragment(myProject, text));
   }
 
   private void setUpTypeComboBox() {
