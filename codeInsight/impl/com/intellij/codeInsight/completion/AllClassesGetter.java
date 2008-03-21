@@ -1,12 +1,8 @@
-package com.intellij.psi.filters.getters;
+package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
-import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.DefaultInsertHandler;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -18,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,7 +35,7 @@ import java.util.Set;
  * To change this template use Options | File Templates.
  */
 public class AllClassesGetter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.filters.getters.AllClassesGetter");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.AllClassesGetter");
 
   private final ElementFilter myFilter;
   private static final SimpleInsertHandler INSERT_HANDLER = new SimpleInsertHandler() {
@@ -97,6 +94,12 @@ public class AllClassesGetter {
         endOffset = i + 1 + qname.length();
       }
 
+      if (tailType == TailTypes.SMART_COMPLETION) {
+        document.insertString(endOffset, "(");
+        endOffset++;
+      }
+      editor.getCaretModel().moveToOffset(endOffset);
+
       //todo[peter] hack, to deal with later
       if (psiClass.isAnnotationType()) {
         // Check if someone inserts annotation class that require @
@@ -119,15 +122,10 @@ public class AllClassesGetter {
           if (parent instanceof PsiModifierListOwner) {
             document.insertString(elementAt.getTextRange().getStartOffset(), "@");
             endOffset++;
+            editor.getCaretModel().moveToOffset(endOffset);
           }
         }
       }
-
-      if (tailType == TailTypes.SMART_COMPLETION) {
-        document.insertString(endOffset, "(");
-        endOffset++;
-      }
-      editor.getCaretModel().moveToOffset(endOffset);
 
       return endOffset;
     }
@@ -140,6 +138,26 @@ public class AllClassesGetter {
       return iterator.getTokenType() != JavaTokenType.AT && iterator.getTokenType() != JavaTokenType.DOT;
     }
 
+  };
+  private static final TailType PARENS_WITH_PARAMS = new TailType() {
+    public int processTail(final Editor editor, final int tailOffset) {
+      final int offset = editor.getCaretModel().getOffset();
+      if (!editor.getDocument().getText().substring(offset).startsWith("()")) {
+        editor.getDocument().insertString(offset, "()");
+      }
+      editor.getCaretModel().moveToOffset(offset + 1);
+      return offset + 1;
+    }
+  };
+  private static final TailType PARENS_NO_PARAMS = new TailType() {
+    public int processTail(final Editor editor, final int tailOffset) {
+      final int offset = editor.getCaretModel().getOffset();
+      if (!editor.getDocument().getText().substring(offset).startsWith("()")) {
+        editor.getDocument().insertString(offset, "()");
+      }
+      editor.getCaretModel().moveToOffset(offset + 2);
+      return offset + 2;
+    }
   };
 
   private static PsiElement resolveReference(final PsiReference psiReference) {
@@ -154,7 +172,7 @@ public class AllClassesGetter {
     myFilter = filter;
   }
 
-  public void getClasses(final PsiElement context, CompletionContext completionContext, CompletionResultSet<LookupElement> set) {
+  public void getClasses(final PsiElement context, CompletionContext completionContext, CompletionResultSet<LookupElement> set, boolean afterNew) {
     if(context == null || !context.isValid()) return;
 
     String prefix = context.getText().substring(0, completionContext.getStartOffset() - context.getTextRange().getStartOffset());
@@ -172,6 +190,11 @@ public class AllClassesGetter {
 
     final GlobalSearchScope scope = context.getContainingFile().getResolveScope();
     final String[] names = cache.getAllClassNames(true);
+    Arrays.sort(names, new Comparator<String>() {
+      public int compare(final String o1, final String o2) {
+        return o1.compareToIgnoreCase(o2);
+      }
+    });
 
     Arrays.sort(names, new Comparator<String>() {
       public int compare(final String o1, final String o2) {
@@ -190,7 +213,9 @@ public class AllClassesGetter {
     for (final String name : names) {
       if (!matcher.prefixMatches(name)) continue;
 
+      ProgressManager.getInstance().checkCanceled();
       for (PsiClass psiClass : cache.getClassesByName(name, scope)) {
+        ProgressManager.getInstance().checkCanceled();
         if (lookingForAnnotations && !psiClass.isAnnotationType()) continue;
 
         if (JavaCompletionUtil.isInExcludedPackage(psiClass)) continue;
@@ -201,16 +226,26 @@ public class AllClassesGetter {
         if (!myFilter.isAcceptable(psiClass, context)) continue;
 
         if (qnames.add(qualifiedName)) {
-          set.addElement(createLookupItem(psiClass));
+          set.addElement(createLookupItem(psiClass, afterNew));
         }
       }
     }
   }
 
-  protected LookupItem<PsiClass> createLookupItem(final PsiClass psiClass) {
+  public static LookupItem<PsiClass> createLookupItem(final PsiClass psiClass, boolean afterNew) {
     final LookupItem<PsiClass> item = LookupElementFactoryImpl.getInstance().createLookupElement(psiClass).setInsertHandler(INSERT_HANDLER);
-    item.setAttribute(LookupItem.FORCE_SHOW_FQN_ATTR, "");
+    JavaAwareCompletionData.setShowFQN(item);
+    if (afterNew) {
+      item.setTailType(hasParams(psiClass) ? PARENS_WITH_PARAMS : PARENS_NO_PARAMS);
+    }
     return item;
+  }
+
+  private static boolean hasParams(PsiClass psiClass) {
+    for (final PsiMethod method : psiClass.getConstructors()) {
+      if (method.getParameterList().getParameters().length > 0) return true;
+    }
+    return false;
   }
 
 }
