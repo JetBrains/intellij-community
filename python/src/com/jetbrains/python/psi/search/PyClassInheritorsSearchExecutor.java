@@ -24,7 +24,12 @@ public class PyClassInheritorsSearchExecutor implements QueryExecutor<PyClass, P
       if (classes != null) {
         for(PyClass superClassCandidate: classes) {
           if (superClassCandidate.isEquivalentTo(superClass)) {
-            if (!consumer.process(superClassCandidate)) return false;                    
+            if (!consumer.process(candidate)) {
+              return false;
+            }
+            else {
+              break;
+            }
           }
         }
       }
