@@ -21,6 +21,8 @@ public interface ExtensionPoint extends DomElement {
   @NameValue
   GenericAttributeValue<String> getName();
 
+  GenericAttributeValue<String> getQualifiedName();
+
   @NotNull
   GenericAttributeValue<PsiClass> getInterface();
 
