@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -176,7 +177,7 @@ public class CompleteReferenceExpression {
     final LookupElementFactory factory = LookupElementFactory.getInstance();
 
     for (PsiElement element : elements) {
-      if (element instanceof PsiMethod) {
+      if (element instanceof PsiMethod && !(element instanceof GrAccessorMethod)) {
         PsiMethod method = (PsiMethod) element;
         if (PsiUtil.isSimplePropertyAccessor(method)) {
           String propName = PropertyUtil.getPropertyName(method);
