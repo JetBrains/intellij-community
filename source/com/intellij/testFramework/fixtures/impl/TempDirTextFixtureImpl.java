@@ -87,6 +87,7 @@ public class TempDirTextFixtureImpl extends BaseFixture implements TempDirTestFi
       public VirtualFile compute() {
         try {
           final File file1 = new File(file, name);
+          file1.getParentFile().mkdirs();
           file1.createNewFile();
           return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
         }
