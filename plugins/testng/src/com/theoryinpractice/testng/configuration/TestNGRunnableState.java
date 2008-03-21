@@ -16,8 +16,8 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -171,7 +171,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     JavaSdkUtil.addRtJar(javaParameters.getClassPath());
 
     // Append coverage parameters if appropriate
-    if (config.isCoverageEnabled()) {
+    if (!(runnerSettings.getData() instanceof DebuggingRunnerData) && config.isCoverageEnabled()) {
       final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
       DefaultCoverageFileProvider fileProvider = new DefaultCoverageFileProvider(config.getCoverageFilePath());
       LOGGER.info("Adding coverage data from " + fileProvider.getCoverageDataFilePath());
