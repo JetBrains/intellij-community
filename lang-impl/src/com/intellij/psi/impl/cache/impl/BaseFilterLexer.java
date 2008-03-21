@@ -111,7 +111,7 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
     if (CachesBasedRefSearcher.DEBUG) {
       System.out.println("BaseFilterLexer.run");
       System.out.println("this = " + this);
-      System.out.println(new String(charArray, start, end - start));
+      System.out.println(charArray == null ? "charArray == null" : new String(charArray, start, end - start));
     }
 
     if (charArray != null) {
