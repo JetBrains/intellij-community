@@ -57,9 +57,12 @@ public class WatchesRootNode extends XDebuggerTreeNode {
         myChildren.set(i, newNode);
         if (newNode instanceof XValueContainerNode<?>) {
           myLoadedChildren = null;
+          fireNodeChildrenChanged();
           myTree.childrenLoaded(this, Collections.<XValueContainerNode<?>>singletonList((XValueContainerNode<?>)newNode), false);
         }
-        fireNodeChildrenChanged();
+        else {
+          fireNodeChildrenChanged();
+        }
         return;
       }
     }

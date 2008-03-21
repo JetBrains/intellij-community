@@ -48,15 +48,18 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
         if (myValueChildren == null) {
           myValueChildren = new ArrayList<XValueContainerNode<?>>();
         }
+        List<XValueContainerNode<?>> newChildren = new ArrayList<XValueContainerNode<?>>();
         for (XValue child : children) {
-          myValueChildren.add(createChildNode(child));
+          XValueContainerNode<?> node = createChildNode(child);
+          myValueChildren.add(node);
+          newChildren.add(node);
         }
         if (last) {
           myMessageChildren = null;
         }
         myCachedAllChildren = null;
         fireNodeChildrenChanged();
-        myTree.childrenLoaded(XValueContainerNode.this, myValueChildren, last);
+        myTree.childrenLoaded(XValueContainerNode.this, newChildren, last);
       }
     });
   }

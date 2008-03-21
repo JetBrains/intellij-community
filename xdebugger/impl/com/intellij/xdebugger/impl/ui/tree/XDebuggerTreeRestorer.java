@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * @author nik
  */
-class XDebuggerTreeRestorer implements XDebuggerTreeListener {
+public class XDebuggerTreeRestorer implements XDebuggerTreeListener {
   private final XDebuggerTree myTree;
   private Map<XDebuggerTreeNode, XDebuggerTreeState.NodeInfo> myNode2State = new HashMap<XDebuggerTreeNode, XDebuggerTreeState.NodeInfo>();
   private Map<XValueNodeImpl, XDebuggerTreeState.NodeInfo> myNode2ParentState = new HashMap<XValueNodeImpl, XDebuggerTreeState.NodeInfo>();
@@ -87,7 +87,7 @@ class XDebuggerTreeRestorer implements XDebuggerTreeListener {
     }
   }
 
-  private void dispose() {
+  public void dispose() {
     myNode2ParentState.clear();
     myNode2State.clear();
     myTree.removeTreeListener(this);

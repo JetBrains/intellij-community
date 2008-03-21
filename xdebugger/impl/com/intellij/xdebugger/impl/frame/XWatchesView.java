@@ -8,6 +8,7 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
 import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
@@ -27,6 +28,7 @@ public class XWatchesView extends XDebugViewBase {
   private XDebuggerTreePanel myTreePanel;
   private List<String> myWatchExpressions = new ArrayList<String>();
   private XDebuggerTreeState myTreeState;
+  private XDebuggerTreeRestorer myTreeRestorer;
 
   public XWatchesView(final XDebugSession session, final Disposable parentDisposable, final XDebugSessionData sessionData) {
     super(session, parentDisposable);
@@ -52,6 +54,9 @@ public class XWatchesView extends XDebugViewBase {
     XDebuggerTree tree = myTreePanel.getTree();
 
     if (event == SessionEvent.BEFORE_RESUME) {
+      if (myTreeRestorer != null) {
+        myTreeRestorer.dispose();
+      }
       myTreeState = XDebuggerTreeState.saveState(tree);
       return;
     }
@@ -60,7 +65,7 @@ public class XWatchesView extends XDebugViewBase {
       tree.setSourcePosition(stackFrame.getSourcePosition());
       tree.setRoot(new WatchesRootNode(tree, myWatchExpressions, stackFrame.getEvaluator()), false);
       if (myTreeState != null) {
-        myTreeState.restoreState(tree);
+        myTreeRestorer = myTreeState.restoreState(tree);
       }
     }
     else {

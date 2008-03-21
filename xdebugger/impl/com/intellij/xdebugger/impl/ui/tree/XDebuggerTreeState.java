@@ -22,10 +22,11 @@ public class XDebuggerTreeState {
     addChildren(tree, myRootInfo, ((XDebuggerTreeNode)tree.getTreeModel().getRoot()));
   }
 
-  public void restoreState(@NotNull XDebuggerTree tree) {
+  public XDebuggerTreeRestorer restoreState(@NotNull XDebuggerTree tree) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     XDebuggerTreeRestorer restorer = new XDebuggerTreeRestorer(tree);
     restorer.restoreChildren(((XDebuggerTreeNode)tree.getTreeModel().getRoot()), myRootInfo);
+    return restorer;
   }
 
   public static XDebuggerTreeState saveState(@NotNull XDebuggerTree tree) {

@@ -7,6 +7,7 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
 import com.intellij.openapi.Disposable;
@@ -21,6 +22,7 @@ public class XVariablesView extends XDebugViewBase {
   private XDebuggerTreePanel myDebuggerTreePanel;
   private XDebuggerTreeState myTreeState;
   private Object myFrameEqualityObject;
+  private XDebuggerTreeRestorer myTreeRestorer;
 
   public XVariablesView(@NotNull XDebugSession session, final Disposable parentDisposable) {
     super(session, parentDisposable);
@@ -33,6 +35,9 @@ public class XVariablesView extends XDebugViewBase {
     XDebuggerTree tree = myDebuggerTreePanel.getTree();
 
     if (event == SessionEvent.BEFORE_RESUME) {
+      if (myTreeRestorer != null) {
+        myTreeRestorer.dispose();
+      }
       myFrameEqualityObject = stackFrame != null ? stackFrame.getEqualityObject() : null;
       myTreeState = XDebuggerTreeState.saveState(tree);
       return;
@@ -44,7 +49,7 @@ public class XVariablesView extends XDebugViewBase {
       tree.setRoot(new XStackFrameNode(tree, stackFrame), false);
       Object newEqualityObject = stackFrame.getEqualityObject();
       if (myFrameEqualityObject != null && newEqualityObject != null && myFrameEqualityObject.equals(newEqualityObject) && myTreeState != null) {
-        myTreeState.restoreState(tree);
+        myTreeRestorer = myTreeState.restoreState(tree);
       }
     }
     else {
