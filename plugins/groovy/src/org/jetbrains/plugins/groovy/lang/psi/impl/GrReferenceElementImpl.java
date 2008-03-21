@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 
 /**
  * @author ven
@@ -111,7 +112,7 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
   }
 
   private boolean mayInsertImport() {
-    return PsiTreeUtil.getParentOfType(this, GrDocComment.class) == null;
+    return PsiTreeUtil.getParentOfType(this, GrDocComment.class) == null && !(getContainingFile() instanceof GroovyCodeFragment);
   }
 
   private PsiElement bindWithQualifiedRef(String qName) {
