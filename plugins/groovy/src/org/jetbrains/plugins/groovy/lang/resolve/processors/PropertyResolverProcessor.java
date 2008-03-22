@@ -68,19 +68,24 @@ public class PropertyResolverProcessor extends ResolverProcessor {
 
   public GroovyResolveResult[] getCandidates() {
     if (myProperty != null) {
-      boolean containingAccessorFound = false;
-      for (Iterator<GroovyResolveResult> it = myCandidates.iterator(); it.hasNext();) {
-        PsiElement element = it.next().getElement();
-        if (element instanceof GrMethod && PsiTreeUtil.isAncestor(element, myPlace, false)) {
-          it.remove();
-          containingAccessorFound = true;
-          break;
+      if (myForCompletion) {
+        myCandidates.add(myProperty); //could be completed to avoid runtime errors in some cases - see e.g. contr4.test
+      } else {
+        boolean containingAccessorFound = false;
+        for (Iterator<GroovyResolveResult> it = myCandidates.iterator(); it.hasNext();) {
+          PsiElement element = it.next().getElement();
+          if (element instanceof GrMethod && PsiTreeUtil.isAncestor(element, myPlace, false)) {
+            it.remove();
+            containingAccessorFound = true;
+            break;
+          }
+        }
+
+        if (containingAccessorFound) {
+          myCandidates.add(myProperty);
         }
       }
 
-      if (containingAccessorFound) {
-        myCandidates.add(myProperty);
-      }
       myProperty = null;
     }
 
