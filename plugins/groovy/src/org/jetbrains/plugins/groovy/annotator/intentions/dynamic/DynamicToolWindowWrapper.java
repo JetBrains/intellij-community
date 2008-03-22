@@ -22,6 +22,7 @@ import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.ui.treetable.TreeTable;
 import com.intellij.util.ui.treetable.TreeTableModel;
 import com.intellij.util.ui.treetable.TreeTableTree;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,8 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMetho
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -201,11 +204,19 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
       public void editingStopped(ChangeEvent e) {
         final TreeTableTree tree = getTree();
 
-        final String newTypeValue = ((MyPropertyTypeCellEditor) e.getSource()).getCellEditorValue();
+        String newTypeValue = ((MyPropertyTypeCellEditor) e.getSource()).getCellEditorValue();
 
         if (newTypeValue == null || tree == null) {
           myTreeTable.editingStopped(e);
           return;
+        }
+
+        try {
+          GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(project).createTypeElement(newTypeValue);
+          String canonical = typeElement.getType().getCanonicalText();
+          if (canonical != null) newTypeValue = canonical;
+        } catch (IncorrectOperationException ex) {
+          //do nothing in case bad string is entered
         }
 
         final TreePath editingTypePath = tree.getSelectionPath();
