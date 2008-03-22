@@ -333,10 +333,8 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner {
     }
 
     PsiClass scriptClass = getSuperClass();
-    if (scriptClass != null && !scriptClass.processDeclarations(processor, substitutor, lastParent, place)) return false;
+    return scriptClass == null || scriptClass.processDeclarations(processor, substitutor, lastParent, place);
 
-    PsiClassType scriptType = getManager().getElementFactory().createType(this);
-    return ResolveUtil.processNonCodeMethods(scriptType, processor, getProject());
   }
 
   //default implementations of methods from NavigationItem

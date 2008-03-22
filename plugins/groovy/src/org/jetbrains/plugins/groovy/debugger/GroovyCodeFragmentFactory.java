@@ -26,9 +26,9 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -97,7 +97,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
 
     String[] names = namesList.toArray(new String[namesList.size()]);
 
-    PsiClass contextClass = getContextClass(context);
+    PsiClass contextClass = PsiUtil.getContextClass(context);
     boolean isStatic = isStaticContext(context);
     StringBuffer javaText = new StringBuffer();
 
@@ -162,13 +162,6 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
       buffer.append(names[i]);
     }
     return buffer.toString();
-  }
-
-  private PsiClass getContextClass(PsiElement context) {
-    GroovyPsiElement parent = PsiTreeUtil.getParentOfType(context, GrTypeDefinition.class, GroovyFile.class);
-    if (parent instanceof GrTypeDefinition) return (PsiClass) parent;
-    else if (parent instanceof GroovyFile) return ((GroovyFile) parent).getScriptClass();
-    return null;
   }
 
   private boolean isStaticContext(PsiElement context) {

@@ -16,37 +16,54 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.*;
-import org.jetbrains.annotations.*;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.Collections;
 
@@ -194,7 +211,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         PsiType returnType = resolveResult.getSubstitutor().substitute(method.getReturnType());
         return GrClosureType.create(getResolveScope(), returnType, method.getParameterList().getParameters(), getManager());
       }
-      return getManager().getElementFactory().createTypeByFQClassName(GrClosableBlock.GROOVY_LANG_CLOSURE);
+      return getManager().getElementFactory().createTypeByFQClassName(GrClosableBlock.GROOVY_LANG_CLOSURE, getResolveScope());
     }
     PsiType result = null;
     PsiManager manager = getManager();
@@ -383,6 +400,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       GrExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier == null) {
         ResolveUtil.treeWalkUp(refExpr, processor);
+        PsiClass contextClass = PsiUtil.getContextClass(refExpr);
+        if (contextClass != null) {
+          PsiClassType scriptType = refExpr.getManager().getElementFactory().createType(contextClass);
+          if (!ResolveUtil.processNonCodeMethods(scriptType, processor, refExpr.getProject())) return;
+        }
         if (!processor.hasCandidates()) {
           qualifier = PsiImplUtil.getRuntimeQualifier(refExpr);
           if (qualifier != null) {
@@ -572,14 +594,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   @NotNull
   public GroovyResolveResult[] getSameNameVariants() {
-    PsiReference[] otherReferences = com.intellij.psi.impl.source.resolve.ResolveUtil.getReferencesFromProviders(this, GrReferenceExpression.class);
-//    for (PsiReference reference : otherReferences) {
-//      if (reference instanceof XXX) {
-//        XXX xxx = (XXX) reference;
-//        xxx.getSameNameVariants();
-//      }
-//    }
-
     return RESOLVER.resolve(this, true);
   }
 

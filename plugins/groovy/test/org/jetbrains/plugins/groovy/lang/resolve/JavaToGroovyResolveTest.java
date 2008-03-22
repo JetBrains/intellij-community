@@ -68,4 +68,9 @@ public class JavaToGroovyResolveTest extends GroovyResolveTestCase {
     assertTrue(resolveResult.isValidResult());
   }
 
+  public void testNoDGM() throws Exception {
+    PsiJavaReference ref = (PsiJavaReference) configureByFile("noDGM/A.java");
+    assertNull(ref.advancedResolve(false).getElement());
+  }
+
 }
