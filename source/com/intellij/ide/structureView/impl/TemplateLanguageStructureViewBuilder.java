@@ -149,7 +149,8 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   public StructureView createStructureView(FileEditor fileEditor, Project project) {
     myFileEditor = fileEditor;
     List<StructureViewComposite.StructureViewDescriptor> descriptors = new ArrayList<StructureViewComposite.StructureViewDescriptor>();
-    descriptors.add(createMainView(fileEditor, myMainFile));
+    final StructureViewComposite.StructureViewDescriptor structureViewDescriptor = createMainView(fileEditor, myMainFile);
+    if (structureViewDescriptor != null) descriptors.add(structureViewDescriptor);
 
     myBaseLanguageViewDescriptorIndex = -1;
     final Language dataLanguage = getViewProvider().getTemplateDataLanguage();
