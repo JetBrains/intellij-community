@@ -2,13 +2,12 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -54,6 +53,10 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
       return new Color(color.getRed(), color.getGreen(), color.getBlue(), WaverGraphicsDecorator.WAVE_ALPHA_KEY);
     }
     return color;
+  }
+
+  public boolean isProblem(@NotNull final VirtualFile file) {
+    return myProblemSolver.isProblemFile(file);
   }
 
   public String getFileTooltipText(final VirtualFile file) {

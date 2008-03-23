@@ -68,4 +68,12 @@ public class SimpleColoredText {
     }
     return myCachedToString;
   }
+
+  public ArrayList<String> getTexts() {
+    return myTexts;
+  }
+
+  public ArrayList<SimpleTextAttributes> getAttributes() {
+    return myAttributes;
+  }
 }

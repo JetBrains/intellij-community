@@ -13,11 +13,10 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
 import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.AwtVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,10 +115,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
             }
             return null;
           }
-        });
+        }).setInnerInsets(new Insets(1, 0, 0, 0));
     final ActionGroup popup = (ActionGroup)myActionManager.getAction(VIEW_POPUP);
     myTabs.setPopupGroup(popup, TAB_POPUP_PLACE);
-    myTabs.setPaintBorder(false);
+    myTabs.setPaintBorder(-1, 0, 0, 0);
     myTabs.setPaintFocus(false);
     myTabs.setRequestFocusOnLastFocusedComponent(true);
 
@@ -601,33 +600,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
       saveUiState();
     }
-  }
-
-  public static void removeScrollBorder(final Component c) {
-    new AwtVisitor(c) {
-      public boolean visit(final Component component) {
-        if (component instanceof JScrollPane) {
-          if (!hasNonPrimitiveParents(c, component)) {
-            ((JScrollPane)component).setBorder(null);
-          }
-        }
-        return false;
-      }
-    };
-  }
-
-  private static boolean hasNonPrimitiveParents(Component stopParent, Component c) {
-    Component eachParent = c.getParent();
-    while (true) {
-      if (eachParent == null || eachParent == stopParent) return false;
-      if (!isPrimitive(eachParent)) return true;
-      eachParent = eachParent.getParent();
-    }
-  }
-
-
-  private static boolean isPrimitive(Component c) {
-    return c instanceof JPanel;
   }
 
   public static boolean ensureValid(JComponent c) {

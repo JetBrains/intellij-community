@@ -74,7 +74,7 @@ public class GridCell implements Disposable {
     myTabs.setUiDecorator(new JBTabsImpl.UiDecorator() {
       @NotNull
       public JBTabsImpl.UiDecoration getDecoration() {
-        return new JBTabsImpl.UiDecoration(null, new Insets(0, -1, 0, -1));
+        return new JBTabsImpl.UiDecoration(null, new Insets(1, -1, 1, -1));
       }
     });
     myTabs.setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal());
@@ -163,8 +163,6 @@ public class GridCell implements Disposable {
 
   private TabInfo createTabInfoFor(Content content) {
     final JComponent c = content.getComponent();
-
-    RunnerContentUi.removeScrollBorder(c);
 
     final TabInfo tabInfo = updatePresentation(new TabInfo(new ProviderWrapper(content, myContext)), content)
       .setObject(content)

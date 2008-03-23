@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.*;
@@ -18,6 +19,7 @@ import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.util.ui.Animator;
+import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.ComparableObjectCheck;
 import org.jetbrains.annotations.NonNls;
@@ -26,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.plaf.ComponentUI;
@@ -51,13 +54,13 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   private final Map<TabInfo, JComponent> myInfo2Toolbar = new HashMap<TabInfo, JComponent>();
   private Dimension myHeaderFitSize;
 
-  private static final int INNER = 1;
+  private Insets myInnerInsets = new Insets(0, 0, 0, 0);
 
   private final List<MouseListener> myTabMouseListeners = new ArrayList<MouseListener>();
   private final List<TabsListener> myTabListeners = new ArrayList<TabsListener>();
   private boolean myFocused;
 
-  private ActionGroup myPopupGroup;
+  private Getter<ActionGroup> myPopupGroup;
   private String myPopupPlace;
   private TabInfo myPopupInfo;
   private DefaultActionGroup myNavigationActions;
@@ -91,7 +94,6 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   private UiDecorator myUiDecorator;
   private static final UiDecorator ourDefaultDecorator = new DefautDecorator();
 
-  private boolean myPaintBorder = true;
   private boolean myPaintFocus = true;
 
   private boolean myHideTabs = false;
@@ -106,12 +108,20 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   private boolean myPaintBlocked;
   private BufferedImage myImage;
   private IdeFocusManager myFocusManager;
+  private boolean myAdjustBorders = true;
+
+  private int myTopBorderSize;
+  private int myLeftBorderSize;
+  private int myRightBorderSize;
+  private int myBottomBorderSize;
 
 
   public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
     myProject = project;
     myActionManager = actionManager;
     myFocusManager = focusManager;
+    setOpaque(true);
+    setPaintBorder(-1, -1, -1, -1);
 
     Disposer.register(parent, this);
 
@@ -180,6 +190,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     myInfo2Toolbar.clear();
   }
 
+
   private void processFocusChange() {
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (owner == null) {
@@ -239,15 +250,18 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   }
 
   public void updateTabActions(final boolean validateNow) {
+    boolean changed = false;
     for (TabLabel label : myInfo2Label.values()) {
-      label.updateTabActions();
+      changed |= label.updateTabActions();
     }
 
-    if (validateNow) {
-      validate();
-      paintImmediately(0, 0, getWidth(), getHeight());
-    } else {
-      revalidateAndRepaint();
+    if (changed) {
+      if (validateNow) {
+        validate();
+        paintImmediately(0, 0, getWidth(), getHeight());
+      } else {
+        revalidateAndRepaint();
+      }
     }
   }
 
@@ -301,7 +315,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
     if (toFocus == null) {
       toFocus = info.getPreferredFocusableComponent();
-      final JComponent policyToFocus = myFocusManager.getFocusTargetFor(toFocus);
+      final JComponent policyToFocus = myFocusManager != null ? myFocusManager.getFocusTargetFor(toFocus) : null;
       if (policyToFocus != null) {
         toFocus = policyToFocus;
       }
@@ -375,6 +389,10 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     }
 
 
+    adjust(info);
+
+    revalidateAndRepaint();
+
     return info;
   }
 
@@ -385,16 +403,25 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   }
 
   public ActionGroup getPopupGroup() {
-    return myPopupGroup;
+    return myPopupGroup.get();
   }
 
   public String getPopupPlace() {
     return myPopupPlace;
   }
 
-  public void setPopupGroup(@NotNull final ActionGroup popupGroup, @NotNull String place) {
+  public JBTabs setPopupGroup(@NotNull final ActionGroup popupGroup, @NotNull String place) {
+    return setPopupGroup(new Getter<ActionGroup>() {
+      public ActionGroup get() {
+        return popupGroup;
+      }
+    }, place);
+  }
+
+  public JBTabs setPopupGroup(@NotNull final Getter<ActionGroup> popupGroup, @NotNull final String place) {
     myPopupGroup = popupGroup;
     myPopupPlace = place;
+    return this;
   }
 
   private void updateAll(final boolean forcedRelayout) {
@@ -574,6 +601,14 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   private void revalidateAndRepaint() {
     revalidate();
     repaint();
+
+    if (myVisibleInfos.size() == 0) {
+      final Component nonOpaque = UIUtil.findUltimateParent(this);
+      if (nonOpaque != null && getParent() != null) {
+        final Rectangle toRepaint = SwingUtilities.convertRectangle(getParent(), getBounds(), nonOpaque);
+        nonOpaque.repaint(toRepaint.x, toRepaint.y, toRepaint.width, toRepaint.height);
+      }
+    }
   }
 
 
@@ -596,7 +631,9 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   }
 
   private void updateText(final TabInfo tabInfo) {
-    myInfo2Label.get(tabInfo).setText(tabInfo.getColoredText());
+    final JBTabsImpl.TabLabel label = myInfo2Label.get(tabInfo);
+    label.setText(tabInfo.getColoredText());
+    label.setToolTipText(tabInfo.getTooltipText());
     revalidateAndRepaint();
   }
 
@@ -676,11 +713,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   }
 
   private void resetPopup() {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        myPopupInfo = null;
-      }
-    });
+    myPopupInfo = null;
   }
 
   public void setPaintBlocked(boolean blocked) {
@@ -787,11 +820,26 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     }
   }
 
+  public void validate() {
+    super.validate();
+  }
+
+  public void invalidate() {
+    super.invalidate();
+  }
+
+  
+
+  public boolean isValid() {
+    return super.isValid();
+  }
+
   private void layoutTable() {
     resetLayout(true);
     final TableLayoutData data = computeLayoutTable();
     final Insets insets = getLayoutInsets();
-    int eachY = insets.top, eachX;
+    int eachY = insets.top;
+    int eachX;
     for (TableRow eachRow : data.table) {
       eachX = insets.left;
       for (int i = 0; i < eachRow.myColumns.size(); i++) {
@@ -887,8 +935,9 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
         myLastSingRowLayout.contentCount == getTabCount() &&
         myLastSingRowLayout.laayoutSize.equals(getSize())) {
       for (TabInfo each : myVisibleInfos) {
+        final TabLabel eachLabel = myInfo2Label.get(each);
+        if (!eachLabel.isValid()) break;
         if (getSelectedInfo() == each) {
-          final TabLabel eachLabel = myInfo2Label.get(each);
           if (eachLabel.getBounds().width != 0) {
             data = myLastSingRowLayout;
             layoutLabels = false;
@@ -919,7 +968,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       }
     }
 
-    data.yComp = isHideTabs() ? insets.top : myHeaderFitSize.height + insets.top;
+    data.yComp = isHideTabs() ? insets.top : myHeaderFitSize.height + insets.top + (isStealthModeEffective() ? 0 : 1);
     if (selectedToolbar != null) {
       if (!isSideComponentVertical() && !isHideTabs()) {
         int toolbarX = data.eachX + getToolbarInset() + (data.moreRect != null ? data.moreRect.width : 0);
@@ -953,8 +1002,35 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
   private void layoutComp(int xAddin, int yComp, final JComponent comp) {
     final Insets insets = getLayoutInsets();
-    comp.setBounds(insets.left + INNER + xAddin, yComp + 1, getWidth() - insets.left - insets.right - INNER * 2 - xAddin,
-                   getHeight() - insets.bottom - yComp - 2);
+
+    final Insets border = isHideTabs() ? new Insets(0, 0, 0, 0) : new Insets(myTopBorderSize, myLeftBorderSize, myBottomBorderSize, myRightBorderSize);
+    if (isStealthModeEffective() || isHideTabs()) {
+      border.top = getBorder(-1);
+      border.bottom = getBorder(-1);
+      border.left = getBorder(-1);
+      border.right = getBorder(-1);
+    }
+
+    final Insets inner = getInnerInsets();
+    border.top += inner.top;
+    border.bottom += inner.bottom;
+    border.left += inner.left;
+    border.right += inner.right;
+
+    comp.setBounds(insets.left + xAddin + border.left,
+                   yComp + border.top,
+                   getWidth() - insets.left - insets.right - xAddin - border.left - border.right,
+                   getHeight() - insets.bottom - yComp - border.top - border.bottom - 1);
+  }
+
+
+  public JBTabs setInnerInsets(final Insets innerInsets) {
+    myInnerInsets = innerInsets;
+    return this;
+  }
+
+  public Insets getInnerInsets() {
+    return myInnerInsets; 
   }
 
   private Insets getLayoutInsets() {
@@ -965,21 +1041,26 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     return insets;
   }
 
+  private int fixInset(int inset, int addin) {
+    return inset + addin;
+  }
+
   private void layoutLabels(final LineLayoutData data, final Insets insets) {
+    int y = insets.top;
     boolean reachedBounds = false;
     for (TabInfo eachInfo : data.toLayout) {
       final TabLabel label = myInfo2Label.get(eachInfo);
       final Dimension eachSize = label.getPreferredSize();
 
       if (data.eachX + eachSize.width <= data.toFitWidth) {
-        label.setBounds(data.eachX, insets.top, eachSize.width, myHeaderFitSize.height);
+        label.setBounds(data.eachX, y, eachSize.width, myHeaderFitSize.height);
         data.eachX += eachSize.width;
         data.eachX++;
       }
       else {
         if (!reachedBounds) {
           final int width = getWidth() - data.eachX - data.moreRectWidth;
-          label.setBounds(data.eachX, insets.top, width, myHeaderFitSize.height);
+          label.setBounds(data.eachX, y, width, myHeaderFitSize.height);
           data.eachX += width;
           data.eachX++;
         }
@@ -1070,6 +1151,14 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
     Graphics2D g2d = (Graphics2D)g;
 
+
+    if (isOpaque()) {
+      if (myVisibleInfos.size() > 0) {
+        g.setColor(getBackground());
+        g.fillRect(0, 0, getWidth(), getHeight());
+      }
+    }
+
     int arc = getArcSize();
     Insets insets = getLayoutInsets();
 
@@ -1079,6 +1168,9 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     if (!isStealthModeEffective() && !isHideTabs()) {
       for (int i = myVisibleInfos.size() - 1; i >= 0; i--) {
         TabInfo each = myVisibleInfos.get(i);
+
+        if (getSelectedInfo() == each) continue;
+
         final TabLabel eachLabel = myInfo2Label.get(each);
 
         final Rectangle eachBounds = eachLabel.getBounds();
@@ -1092,7 +1184,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
         int leftX = firstOne ? eachBounds.x : eachBounds.x - arc - 1;
         int topY = eachBounds.y + 2;
         int rigthX = !lastOne && leftFromSelection ? (int)eachBounds.getMaxX() + arc + 1: (int)eachBounds.getMaxX();
-        int bottomY = (int)eachBounds.getMaxY();
+        int bottomY = (int)eachBounds.getMaxY() + 1;
 
         path.moveTo(leftX, bottomY);
         path.lineTo(leftX, topY + arc);
@@ -1127,7 +1219,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
 
     final GeneralPath path = new GeneralPath();
-    final int bottomY = (int)selectedTabBounds.getMaxY();
+    final int bottomY = (int)selectedTabBounds.getMaxY() + 1;
     final int topY = selectedTabBounds.y;
     int leftX = selectedTabBounds.x;
 
@@ -1153,7 +1245,20 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     }
 
     path.lineTo(lastX, bottomY);
-    path.closePath();
+
+    if (isStealthModeEffective()) {
+      path.closePath();
+    }
+
+    final GeneralPath fillPath = (GeneralPath)path.clone();
+    if (!isHideTabs()) {
+      fillPath.lineTo(lastX, bottomY + 1);
+      fillPath.lineTo(leftX, bottomY + 1);
+      fillPath.closePath();
+      g2d.setColor(getBackground());
+      g2d.fill(fillPath);
+    }
+
 
     final Color from;
     final Color to;
@@ -1176,35 +1281,33 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     }
 
 
-    g2d.setColor(getBackground());
-    if (!isHideTabs()) {
-      g2d.fill(path);
-    }
-
     g2d.setPaint(new GradientPaint(selectedTabBounds.x, topY, from, selectedTabBounds.x, bottomY, to));
 
     if (!isHideTabs()) {
-      g2d.fill(path);
+      g2d.fill(fillPath);
     }
 
+    Color borderColor;
     if (paintFocused) {
-      g2d.setColor(UIUtil.getFocusedBoundsColor());
+      borderColor = UIUtil.getFocusedBoundsColor();
     }
     else {
-      g2d.setColor(CaptionPanel.CNT_ACTIVE_COLOR.darker());
+      borderColor = CaptionPanel.CNT_ACTIVE_COLOR.darker();
     }
+
+    g2d.setColor(borderColor);
 
     if (!isHideTabs()) {
       g2d.draw(path);
     }
 
-    if (myPaintBorder) {
-      if (isHideTabs()) {
-        g2d.drawRect(insets.left, insets.top, getWidth() - insets.left - insets.right - 1, getHeight() - insets.bottom - insets.top - 1);
-      }
-      else {
-        g2d.drawRect(insets.left, bottomY, getWidth() - insets.left - insets.right - 1, getHeight() - bottomY - insets.bottom - 1);
-      }
+    if (isHideTabs()) {
+      paintBorder(g2d, insets.left, insets.top, getWidth() - insets.left - insets.right, getHeight() - insets.bottom - insets.top, borderColor,
+                  from, to);
+    }
+    else {
+      paintBorder(g2d, insets.left, bottomY, getWidth() - insets.left - insets.right, getHeight() - bottomY - insets.bottom, borderColor, from,
+                  to);
     }
 
     config.setAntialiasing(false);
@@ -1218,12 +1321,57 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     }
 
     config.restore();
+  }
 
+  private void paintBorder(Graphics2D g2d, int x, int y, int width, int height, final Color borderColor, final Color fillFrom,
+                           final Color fillTo) {
+    int topY = y + 1;
+    int bottomY = y + myTopBorderSize - 2;
+    int middleY = topY + (bottomY - topY) / 2;
+
+
+    if (myTopBorderSize > 0) {
+      if (isHideTabs()) {
+        g2d.setColor(borderColor);
+        g2d.drawLine(x, y, x + width - 1, y);
+      } else if (isStealthModeEffective()) {
+        g2d.setColor(borderColor);
+        g2d.drawLine(x, y - 1, x + width - 1, y - 1);
+      } else {
+        if (myTopBorderSize > 1) {
+          g2d.setColor(Color.white);
+          g2d.fillRect(x, topY, width, bottomY - topY);
+
+          g2d.setColor(fillTo);
+          g2d.fillRect(x, topY, width, middleY - topY);
+
+          g2d.setPaint(new GradientPaint(x, middleY, UIUtil.toAlpha(borderColor.brighter(), 125), x, bottomY, UIUtil.toAlpha(Color.white, 255)));
+          g2d.fillRect(x, middleY, width, bottomY - middleY);
+
+          g2d.setColor(UIUtil.toAlpha(Color.white, 100));
+          g2d.drawLine(x, topY, x + width - 1, topY);
+
+
+          g2d.setColor(Color.lightGray);
+          g2d.drawLine(x, bottomY, x + width - 1, bottomY);
+        } else if (myTopBorderSize == 1) {
+          g2d.setColor(borderColor);
+          g2d.drawLine(x, y, x + width - 1, y);
+        }
+      }
+    }
+
+    g2d.setColor(borderColor);
+    g2d.fillRect(x, y + height - myBottomBorderSize, width, myBottomBorderSize);
+
+    g2d.fillRect(x, y, myLeftBorderSize, height);
+    g2d.fillRect(x + width - myRightBorderSize, y, myRightBorderSize, height);
   }
 
   private boolean isStealthModeEffective() {
     return myStealthTabMode && getTabCount() == 1 && isSideComponentVertical();
   }
+
 
   private boolean isNavigationVisible() {
     if (myStealthTabMode && getTabCount() == 1) return false;
@@ -1320,19 +1468,21 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
 
     if (toSelect != null) {
-      final JComponent deferred = processRemove(info);
+      final JComponent deferred = processRemove(info, false);
       _setSelected(toSelect, true).doWhenDone(new Runnable() {
         public void run() {
           removeDeferred(deferred);
         }
       });
     } else {
-      removeDeferred(processRemove(info));
+      removeDeferred(processRemove(info, true));
     }
+
+    revalidateAndRepaint();
   }
 
   @Nullable
-  private JComponent processRemove(final TabInfo info) {
+  private JComponent processRemove(final TabInfo info, boolean forcedNow) {
     remove(myInfo2Label.get(info));
     final JComponent tb = myInfo2Toolbar.get(info);
     if (tb != null) {
@@ -1341,7 +1491,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
     JComponent tabComponent = info.getComponent();
 
-    if (!isFocused(tabComponent)) {
+    if (!isFocused(tabComponent) || forcedNow) {
       remove(tabComponent);
       tabComponent = null;
     } else {
@@ -1572,17 +1722,19 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
           handlePopup(e);
         }
       });
+
+      myLabel.setBorder(new LineBorder(Color.red));
     }
 
     public void paint(final Graphics g) {
       if (getSelectedInfo() != myInfo) {
-        g.translate(0, 1);
+        g.translate(0, 2);
       }
 
       super.paint(g);
 
       if (getSelectedInfo() != myInfo) {
-        g.translate(0, -1);
+        g.translate(0, -2);
       }
     }
 
@@ -1623,6 +1775,10 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       }
     }
 
+    public void setToolTipText(final String text) {
+      super.setToolTipText(text);
+    }
+
     private void clear() {
       myLabel.clear();
       myLabel.setIcon(myIcon);
@@ -1630,6 +1786,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
     public void setIcon(final Icon icon) {
       getLayeredIcon().setIcon(icon, 0);
+      invalidate();
     }
 
     private LayeredIcon getLayeredIcon() {
@@ -1656,8 +1813,10 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       Insets insets = decoration.getLabelInsets();
       if (insets != null) {
         Insets current = ourDefaultDecorator.getDecoration().getLabelInsets();
-        setBorder(new EmptyBorder(getValue(current.top, insets.top) + 2, getValue(current.left, insets.left),
-                                  getValue(current.bottom, insets.bottom) + 1, getValue(current.right, insets.right)));
+        setBorder(new EmptyBorder(getValue(current.top, insets.top), getValue(current.left, insets.left),
+                                  getValue(current.bottom, insets.bottom), getValue(current.right, insets.right)));
+        //setBorder(new EmptyBorder(getValue(current.top, insets.top) + 2, getValue(current.left, insets.left),
+        //                          getValue(current.bottom, insets.bottom) + 1, getValue(current.right, insets.right)));
       }
     }
 
@@ -1687,10 +1846,9 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       }
     }
 
-    public void updateTabActions() {
-      if (myActionPanel != null) {
-        myActionPanel.update();
-      }
+    public boolean updateTabActions() {
+      return myActionPanel != null && myActionPanel.update();
+
     }
 
     public boolean repaintAttraction() {
@@ -1755,6 +1913,10 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     repaint();
   }
 
+  public int getIndexOf(@Nullable final TabInfo tabInfo) {
+    return myVisibleInfos.indexOf(tabInfo);
+  }
+
   public boolean isHideTabs() {
     return myHideTabs;
   }
@@ -1767,18 +1929,58 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     relayout(true);
   }
 
-  public boolean isPaintBorder() {
-    return myPaintBorder;
+  public JBTabs setPaintBorder(int top, int left, int right, int bottom) {
+    myTopBorderSize = getBorder(top);
+    myLeftBorderSize = getBorder(left);
+    myRightBorderSize = getBorder(right);
+    myBottomBorderSize = getBorder(bottom);
+
+    revalidateAndRepaint();
+
+    return this;
   }
 
-  public void setPaintBorder(final boolean paintBorder) {
-    myPaintBorder = paintBorder;
-    repaint();
+  private static int getBorder(int size) {
+    return size == -1 ? 1 : size;
   }
 
   public boolean isPaintFocus() {
     return myPaintFocus;
   }
+
+  @NotNull
+  public JBTabs setAdjustBorders(final boolean adjust) {
+    myAdjustBorders = adjust;
+    return this;
+  }
+
+  public static void removeScrollBorder(final Component c) {
+    new AwtVisitor(c) {
+      public boolean visit(final Component component) {
+        if (component instanceof JScrollPane) {
+          if (!hasNonPrimitiveParents(c, component)) {
+            ((JScrollPane)component).setBorder(null);
+          }
+        }
+        return false;
+      }
+    };
+  }
+
+  private static boolean hasNonPrimitiveParents(Component stopParent, Component c) {
+    Component eachParent = c.getParent();
+    while (true) {
+      if (eachParent == null || eachParent == stopParent) return false;
+      if (!isPrimitive(eachParent)) return true;
+      eachParent = eachParent.getParent();
+    }
+  }
+
+
+  private static boolean isPrimitive(Component c) {
+    return c instanceof JPanel;
+  }
+
 
   public void setPaintFocus(final boolean paintFocus) {
     myPaintFocus = paintFocus;
@@ -1902,7 +2104,13 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
   public void updateUI() {
     super.updateUI();
-    applyDecoration();
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        applyDecoration();
+
+        revalidateAndRepaint();
+      }
+    });
   }
 
   private void applyDecoration() {
@@ -1913,33 +2121,24 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       }
     }
 
+
+    for (TabInfo each : getTabs()) {
+      adjust(each);
+    }
+
     relayout(true);
+  }
+
+  private void adjust(final TabInfo each) {
+    if (myAdjustBorders) {
+      removeScrollBorder(each.getComponent());
+    }
   }
 
   public void sortTabs(Comparator<TabInfo> comparator) {
     Collections.sort(myVisibleInfos, comparator);
 
     relayout(true);
-  }
-
-  public static class UiDecoration {
-    private @Nullable Font myLabelFont;
-    private @Nullable Insets myLabelInsets;
-
-    public UiDecoration(final Font labelFont, final Insets labelInsets) {
-      myLabelFont = labelFont;
-      myLabelInsets = labelInsets;
-    }
-
-    @Nullable
-    public Font getLabelFont() {
-      return myLabelFont;
-    }
-
-    @Nullable
-    public Insets getLabelInsets() {
-      return myLabelInsets;
-    }
   }
 
   public boolean isRequestFocusOnLastFocusedComponent() {
@@ -1969,15 +2168,13 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       }
     }
 
-    public void update() {
+    public boolean update() {
       boolean changed = false;
       for (ActionButton each : myButtons) {
         changed |= each.update();
       }
 
-      if (changed) {
-        JBTabsImpl.this.relayout(true);
-      }
+      return changed;
     }
 
     public Dimension getPreferredSize() {
@@ -2207,9 +2404,9 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
 
     tabs.addTab(toAnimate1).append("Tree2", new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.black, Color.red));
-    tabs.addTab(new TabInfo(new JTable())).setText("Table 1").setActions(new DefaultActionGroup(), null);
-    tabs.addTab(new TabInfo(new JTable())).setText("Table 2").setActions(new DefaultActionGroup(), null);
-    tabs.addTab(new TabInfo(new JTable())).setText("Table 3").setActions(new DefaultActionGroup(), null);
+    //tabs.addTab(new TabInfo(new JTable())).setText("Table 1").setActions(new DefaultActionGroup(), null);
+    //tabs.addTab(new TabInfo(new JTable())).setText("Table 2").setActions(new DefaultActionGroup(), null);
+    //tabs.addTab(new TabInfo(new JTable())).setText("Table 3").setActions(new DefaultActionGroup(), null);
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 4").setActions(new DefaultActionGroup(), null);
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 5").setActions(new DefaultActionGroup(), null);
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 6").setActions(new DefaultActionGroup(), null);
@@ -2218,14 +2415,17 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
 
 
-    tabs.getComponent().setBorder(new EmptyBorder(6, 6, 20, 6));
+    //tabs.getComponent().setBorder(new EmptyBorder(5, 5, 5, 5));
+    //tabs.setPaintBorder(10, -1, -1, -1);
 
-    //tabs.setUiDecorator(new UiDecorator() {
-    //  public UiDecoration getDecoration() {
-    //    return new UiDecoration(null, new Insets(1, -1, 1, -1));
-    //  }
-    //});
+    tabs.setUiDecorator(new UiDecorator() {
+      public UiDecoration getDecoration() {
+        return new UiDecoration(null, new Insets(0, -1, 0, -1));
+      }
+    });
 
+
+    tabs.setStealthTabMode(true);
 
     frame.setBounds(200, 200, 800, 400);
     frame.show();

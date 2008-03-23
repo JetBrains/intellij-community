@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -127,6 +128,9 @@ public class EditorWindow {
       else {
         myPanel.removeAll ();
       }
+
+
+
       if (unsplit && getTabCount() == 0) {
         unsplit ();
       }
@@ -189,6 +193,12 @@ public class EditorWindow {
   public void setForegroundAt(final int index, final Color color) {
     if (myTabbedPane != null) {
       myTabbedPane.setForegroundAt(index, color);
+    }
+  }
+
+  public void setWaveColor(final int index, @Nullable final Color color) {
+    if (myTabbedPane != null) {
+      myTabbedPane.setWaveColor(index, color);
     }
   }
 
@@ -376,7 +386,7 @@ public class EditorWindow {
         else {
           final int indexToInsert = myTabbedPane.getSelectedIndex() + 1;
           final VirtualFile file = editor.getFile();
-          myTabbedPane.insertTab(file.getPresentableName(), null, new TComp(editor), null, indexToInsert);
+          myTabbedPane.insertTab(file, null, new TComp(editor), null, indexToInsert);
           trimToSize(UISettings.getInstance().EDITOR_TAB_LIMIT, file);
           setSelectedEditor(editor, focusEditor);
           myOwner.updateFileIcon(file);

@@ -133,6 +133,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     if (statusColor == null) statusColor = Color.BLACK;
     return statusColor;
   }
+
+  public boolean isProblem(@NotNull final VirtualFile file) {
+    return false;
+  }
   
   public String getFileTooltipText(VirtualFile file) {
     return file.getPresentableUrl();

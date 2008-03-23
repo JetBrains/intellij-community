@@ -1,281 +1,144 @@
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.Patches;
-import com.intellij.ide.actions.HideAllToolWindowsAction;
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.ui.plaf.beg.BegTabbedPaneUI;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.TabbedPaneUI;
-import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class EditorTabbedContainer extends TabbedPaneWrapper {
+final class EditorTabbedContainer  {
   private final EditorWindow myWindow;
   private final Project myProject;
+  private JBTabs myTabs;
+
+  @NonNls public static final String HELP_ID = "ideaInterface.editor";
 
   EditorTabbedContainer(final EditorWindow window, Project project, int tabPlacement) {
-    super(tabPlacement);
     myWindow = window;
     myProject = project;
-  }
-
-  protected TabbedPane createTabbedPane(int tabPlacement) {
-    return new MyTabbedPane(tabPlacement);
-
-  }
-
-  protected TabbedPaneHolder createTabbedPaneHolder() {
-    return new MyTabbedPaneHolder();
-  }
-
-  private final class MyTabbedPane extends TabbedPaneWrapper.TabbedPane {
-    private final MyTabbedPanePopupHandler myTabbedPanePopupHandler;
-    private int myLastClickedIndex;
-
-    public MyTabbedPane(int tabPlacement) {
-      super(tabPlacement);
-      enableEvents(MouseEvent.MOUSE_EVENT_MASK);
-      setOpaque(true);
-      myTabbedPanePopupHandler = new MyTabbedPanePopupHandler();
-//      putClientProperty("TabbedPane.paintContentBorder", Boolean.FALSE);
-      setFocusable(false);
-      updateUI();
-    }
-
-    /**
-     * Actually all this stuff should be placed into updateUI method.
-     * But due to this method replaces the current UI of the tabbed pane
-     * this code exists here. One I [vova] placed it into updateUI and
-     * middle mouse button stop working in SCROLL_TAB_LAYOUT.
-     */
-    public void setTabLayoutPolicy(int tabLayoutPolicy) {
-      super.setTabLayoutPolicy(tabLayoutPolicy);
-      if (Patches.SUN_BUG_ID_4620537) {
-        TabbedPaneUI tabbedPaneUI = getUI();
-        if (!(tabbedPaneUI instanceof BasicTabbedPaneUI)) {
-          return;
+    final ActionManager actionManager = ActionManager.getInstance();
+    myTabs = new JBTabsImpl(project, actionManager, IdeFocusManager.getInstance(project), project);
+    myTabs.setDataProvider(new DataProvider() {
+      public Object getData(@NonNls final String dataId) {
+        if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
+          return myWindow.getSelectedFile();
         }
-        for (int i = 0; i < getComponentCount(); i++) {
-          Component c = getComponent(i);
-          if (!(c instanceof JViewport)) {
-            continue;
-          }
-          JPanel panel = (JPanel)((JViewport)c).getView();
-          panel.setBackground(UIUtil.getTabbedPaneBackground());
-
-          for (MouseListener listener : panel.getListeners(MouseListener.class)) {
-            panel.removeMouseListener(listener);
-          }
+        if (DataConstantsEx.EDITOR_WINDOW.equals(dataId)) {
+          return myWindow;
         }
-      }
-    }
-
-    private VirtualFile getFileAt(final int x, final int y) {
-      final int index = getTabIndexAt(x, y);
-      if (index < 0) {
+        if (DataConstants.HELP_ID.equals(dataId)) {
+          return HELP_ID;
+        }
         return null;
       }
-      return myWindow.getEditors()[index].getFile();
-    }
-
-    public void setSelectedIndex(final int index) {
-      if (getSelectedIndex() == index) {
-        return;
+    }).setPaintBorder(10, -1, 0, -1).setPopupGroup(new Getter<ActionGroup>() {
+      public ActionGroup get() {
+        return (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_POPUP);
       }
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-        public void run() {
-          if (index < 0 || index >= MyTabbedPane.super.getTabCount()) return;
-          
-          // [jeka] IMPORTANT: setSelectedIndex must be invoked inside a Command
-          //  in order to support back-forward history navigation
-          final EditorComposite oldComposite = myWindow.getSelectedEditor();
-          if (oldComposite != null) {
-            oldComposite.getSelectedEditor().deselectNotify();
-          }
-          MyTabbedPane.super.setSelectedIndex(index);
-          final EditorComposite composite = myWindow.getSelectedEditor();
-          if (composite != null) {
-            myWindow.getManager().openFileImpl3(myWindow, composite.getFile(), false, null);
-          }
-        }
-      }, "", null);
-    }
-
-    protected void processMouseEvent(MouseEvent e) {
-      if (Patches.MAC_AQUA_TABS_HACK && myTabbedPane != null && myTabbedPane.getTabCount() == 0) return;
-
-      // First of all we have to hide showing popup menu (if any)
-      if (MouseEvent.MOUSE_PRESSED == e.getID()) {
-        final MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
-        menuSelectionManager.clearSelectedPath();
-        myWindow.setAsCurrentWindow(true);
-      }
-
-      // activate current tabbed pane:
-      //if (MouseEvent.MOUSE_RELEASED == e.getID ()) {
-      //}
-
-      if (e.isPopupTrigger()) { // Popup doesn't activate clicked tab
-        myTabbedPanePopupHandler.invokePopup(e.getComponent(), e.getX(), e.getY());
-        return;
-      }
-
-      if (!e.isShiftDown() && (MouseEvent.BUTTON1_MASK & e.getModifiers()) > 0) {
-        // RightClick without Shift modifiers just select tab
-        // To reach this behaviour we have to block all MOUSE_PRESSED events
-        // and react only on MOUSE_RELEASE. But clicks outside tab bounds
-        // have a special sense under Mac OS X. There is a special scroll button
-        // in Aqua LAF which shows drop down list with opened tab. To make it
-        // work we also have to specially hande clicks outsode the tab bounds.
-
-        if (MouseEvent.MOUSE_PRESSED == e.getID()) {
-          // use index from mouse pressed event, cause when MOUSE_release event is dispatched, 
-          // the tab may shift because the toolwindow at the left will hide, 
-          // so the situation is: the mouse is pressed over one tab and released over another tab (or even outside the tab area)
-          myLastClickedIndex = getTabIndexAt(e.getX(), e.getY());
-        }
-
-        if (MouseEvent.MOUSE_RELEASED == e.getID()) {
-          if (myLastClickedIndex != -1) {
-            if (e.getClickCount() == 1 ) {
-              if (myLastClickedIndex >= 0 && myLastClickedIndex < getTabCount()) {
-                setSelectedIndex(myLastClickedIndex);
-              }
-              myLastClickedIndex = -1;
-            }
-            else if (e.getClickCount() == 2) { // Left double click invokes Hide All Windows
-              HideAllToolWindowsAction.performAction(myProject);
-            }
-            else {
-              // push forward events outside thw tab bounds
-              super.processMouseEvent(e);
-            }
-          }
-          else {
-            // push forward events outside thw tab bounds
-            super.processMouseEvent(e);
-          }
-        }
-        else {
-          if (myLastClickedIndex == -1) {
-            // push forward events outside thw tab bounds
-            boolean shouldProcess = true;
-            if (Patches.MAC_AQUA_TABS_HACK) {
-              shouldProcess = myTabbedPane != null && myTabbedPane.getTabCount() > 0;
-            }
-            
-            // http://www.jetbrains.net/jira/browse/IDEADEV-4132
-            // sometimes tooltip text appears to be null, which causes NPE inside Swing's TooltipManager
-            if (e.getID() == MouseEvent.MOUSE_ENTERED && getToolTipText(e) == null) {
-              shouldProcess = false;
-            }
-
-            if (shouldProcess) {
-              super.processMouseEvent(e);
-            }
+    }, ActionPlaces.EDITOR_POPUP).addTabMouseListener(new MouseAdapter() {
+      public void mousePressed(final MouseEvent e) {
+        if (UIUtil.isCloseClick(e)) {
+          final TabInfo info = myTabs.findInfo(e);
+          if (info != null) {
+            myWindow.closeFile((VirtualFile)info.getObject());
           }
         }
       }
-      else if (e.isShiftDown() && (MouseEvent.BUTTON1_MASK & e.getModifiers()) > 0) { // Shift+LeftClick closes the tab
-        if (MouseEvent.MOUSE_RELEASED == e.getID()) {
-          final VirtualFile file = getFileAt(e.getX(), e.getY());
-          if (file != null) {
-            FileEditorManagerEx.getInstanceEx(myProject).closeFile(file, myWindow);
-          }
-        }
+    }).setUiDecorator(new JBTabs.UiDecorator() {
+      @NotNull
+      public JBTabs.UiDecoration getDecoration() {
+        return new JBTabs.UiDecoration(null, new Insets(1, 6, 1, 6));
       }
-      else if ((MouseEvent.BUTTON2_MASK & e.getModifiers()) > 0) { // MouseWheelClick closes the tab
-        if (MouseEvent.MOUSE_RELEASED == e.getID()) {
-          final VirtualFile file = getFileAt(e.getX(), e.getY());
-          if (file != null) {
-            FileEditorManagerEx.getInstanceEx(myProject).closeFile(file, myWindow);
-          }
-        }
-      }
-      else if ((MouseEvent.BUTTON3_MASK & e.getModifiers()) > 0 && SystemInfo.isWindows) { // Right mouse button doesn't activate tab
-      }
-      else {
-        super.processMouseEvent(e);
-      }
-    }
-
-    public void paint(Graphics g) {
-      if (getTabCount() != 0) {
-        if (LafManager.getInstance().isUnderAquaLookAndFeel()) {
-          super.paint(g);
-        }
-        else {
-          super.paint(new WaverGraphicsDecorator((Graphics2D)g, Color.red));
-        }
-      }
-      else {
-        g.setColor(Color.gray);
-        g.fillRect(0, 0, getWidth(), getHeight());
-      }
-    }
-
-    protected void paintComponent(Graphics g) {
-      if (LafManager.getInstance().isUnderAquaLookAndFeel()) {
-        super.paintComponent(g);
-      }
-      else {
-        super.paintComponent(new WaverGraphicsDecorator((Graphics2D)g, Color.red));
-      }
-    }
-
-    public void updateUI() {
-      super.updateUI();
-      if (getUI() instanceof BegTabbedPaneUI) {
-        ((BegTabbedPaneUI)getUI()).setNoIconSpace(UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK);
-      }
-    }
-
-
-
-    private final class MyTabbedPanePopupHandler extends PopupHandler {
-      public void invokePopup(final Component comp, final int x, final int y) {
-        final ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP);
-        final ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_TAB_POPUP, group);
-        menu.getComponent().show(comp, x, y);
-      }
-    }
+    });
   }
-  
-  private final class MyTabbedPaneHolder extends TabbedPaneWrapper.TabbedPaneHolder implements DataProvider {
-    @NonNls public static final String HELP_ID = "ideaInterface.editor";
 
-    public Object getData(String dataId) {
-      if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
-        return myWindow.getSelectedFile();
-      }
-      if (DataConstantsEx.EDITOR_WINDOW.equals(dataId)) {
-        return myWindow;
-      }
-      if (DataConstants.HELP_ID.equals(dataId)) {
-        return HELP_ID;
-      }
-      return null;
-    }
+  public Component getComponent() {
+    return myTabs.getComponent();
+  }
+
+  public int getTabCount() {
+    return myTabs.getTabCount();
+  }
+
+  public void setSelectedIndex(final int indexToSelect) {
+    setSelectedIndex(indexToSelect, true);
+  }
+
+  public void setSelectedIndex(final int indexToSelect, boolean focusEditor) {
+    myTabs.select(myTabs.getTabAt(indexToSelect), focusEditor);
+  }
+
+  public void removeTabAt(final int componentIndex) {
+    myTabs.removeTab(myTabs.getTabAt(componentIndex));
+  }
+
+  public int getSelectedIndex() {
+    return myTabs.getIndexOf(myTabs.getSelectedInfo());
+  }
+
+  public void setForegroundAt(final int index, final Color color) {
+    myTabs.getTabAt(index).setDefaultForeground(color);
+  }
+
+  public void setWaveColor(final int index, @Nullable final Color color) {
+    myTabs.getTabAt(index).setWaveColor(color);
+  }
+
+  public void setIconAt(final int index, final Icon icon) {
+    myTabs.getTabAt(index).setIcon(icon);
+  }
+
+  public void setTitleAt(final int index, final String text) {
+    myTabs.getTabAt(index).setText(text);
+  }
+                 
+  public void setToolTipTextAt(final int index, final String text) {
+    myTabs.getTabAt(index).setTooltipText(text);
+  }
+
+  public void setTabLayoutPolicy(final int policy) {
+  }
+
+  public void setTabPlacement(final int tabPlacement) {
+  }
+
+  @Nullable
+  public Object getSelectedComponent() {
+    final TabInfo info = myTabs.getTargetInfo();
+    return info != null ? info.getComponent() : null;
+  }
+
+  public void insertTab(final VirtualFile file, final Icon icon, final JComponent comp, final String tooltip,
+                        final int indexToInsert) {
+
+    TabInfo tab = myTabs.findInfo(file);
+    if (tab != null) return;
+
+    tab = new TabInfo(comp).setText(file.getPresentableName()).setIcon(icon).setTooltipText(tooltip).setObject(file);
+    myTabs.addTab(tab, indexToInsert);
+  }
+
+  public Component getComponentAt(final int i) {
+    final TabInfo tab = myTabs.getTabAt(i);
+    return tab.getComponent();
   }
 
 }

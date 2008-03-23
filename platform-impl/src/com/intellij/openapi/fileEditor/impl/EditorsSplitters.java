@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ArrayListSet;
@@ -113,7 +114,7 @@ public final class EditorsSplitters extends JPanel {
       res.addContent(second);
       return res;
     }
-    else if (comp instanceof JPanel) {
+    else if (comp instanceof JBTabs) {
       final Element res = new Element("leaf");
       final EditorWindow window = findWindowWith(comp);
       if (window != null) {
@@ -312,6 +313,7 @@ public final class EditorsSplitters extends JPanel {
       final int index = window.findEditorIndex(window.findFileComposite(file));
       LOG.assertTrue(index != -1);
       window.setForegroundAt(index, getManager().getFileColor(file));
+      window.setWaveColor(index, getManager().isProblem(file) ? Color.red : null);
     }
   }
 

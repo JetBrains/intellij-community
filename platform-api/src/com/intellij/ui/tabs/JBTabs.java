@@ -3,7 +3,7 @@ package com.intellij.ui.tabs;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +34,9 @@ public interface JBTabs {
   @Nullable
   String getPopupPlace();
 
-  void setPopupGroup(@NotNull ActionGroup popupGroup, @NotNull String place);
-
+  JBTabs setPopupGroup(@NotNull ActionGroup popupGroup, @NotNull String place);
+  JBTabs setPopupGroup(@NotNull Getter<ActionGroup> popupGroup, @NotNull String place);
+  
   ActionCallback select(@NotNull TabInfo info, boolean requestFocus);
 
   @Nullable
@@ -53,9 +54,7 @@ public interface JBTabs {
 
   void setHideTabs(boolean hideTabs);
 
-  boolean isPaintBorder();
-
-  void setPaintBorder(boolean paintBorder);
+  JBTabs setPaintBorder(int top, int left, int right, int bottom);
 
   boolean isPaintFocus();
 
@@ -115,8 +114,38 @@ public interface JBTabs {
 
   void setFocused(boolean focused);
 
+  int getIndexOf(@Nullable final TabInfo tabInfo);
+
+  JBTabs setInnerInsets(Insets innerInsets);
+
+  Insets getInnerInsets();
+
   interface UiDecorator {
     @NotNull
-    JBTabsImpl.UiDecoration getDecoration();
+    UiDecoration getDecoration();
+  }
+
+  @NotNull
+  JBTabs setAdjustBorders(boolean adjust);
+
+
+  class UiDecoration {
+    private @Nullable Font myLabelFont;
+    private @Nullable Insets myLabelInsets;
+
+    public UiDecoration(final Font labelFont, final Insets labelInsets) {
+      myLabelFont = labelFont;
+      myLabelInsets = labelInsets;
+    }
+
+    @Nullable
+    public Font getLabelFont() {
+      return myLabelFont;
+    }
+
+    @Nullable
+    public Insets getLabelInsets() {
+      return myLabelInsets;
+    }
   }
 }

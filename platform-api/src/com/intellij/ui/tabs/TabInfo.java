@@ -7,6 +7,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
 
@@ -46,6 +47,11 @@ public final class TabInfo {
   private JComponent myActionsContextComponent;
 
   private SimpleColoredText myText = new SimpleColoredText();
+  private String myTooltipText;
+
+  private Color myDefaultForeground;
+  private Color myWaveColor;
+  private String myAttributedByDefault;
 
   public TabInfo(final JComponent component) {
     myComponent = component;
@@ -57,12 +63,17 @@ public final class TabInfo {
   }
 
   public TabInfo setText(String text) {
-    clear();
-    append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    clearText();
+    SimpleTextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+    if (myDefaultForeground != null) {
+      attributes = new SimpleTextAttributes(attributes.getBgColor(), myDefaultForeground, attributes.getWaveColor(), attributes.getStyle());
+    }
+    append(text, attributes);
+    myAttributedByDefault = text;
     return this;
   }
 
-  public TabInfo clear() {
+  public TabInfo clearText() {
     final String old = myText.toString();
     myText.clear();
     myChangeSupport.firePropertyChange(TEXT, old, myText.toString());
@@ -72,6 +83,7 @@ public final class TabInfo {
   public TabInfo append(String fragment, SimpleTextAttributes attributes) {
     final String old = myText.toString();
     myText.append(fragment, attributes);
+    myAttributedByDefault = null;
     myChangeSupport.firePropertyChange(TEXT, old, myText.toString());
     return this;
   }
@@ -226,5 +238,53 @@ public final class TabInfo {
 
   public boolean isHidden() {
     return myHidden;
+  }
+
+  public TabInfo setDefaultForeground(@Nullable final Color color) {
+    myDefaultForeground = color;
+    if (myAttributedByDefault != null) {
+      setText(getText());
+    }
+    return this;
+  }
+
+  public TabInfo setWaveColor(@Nullable Color color) {
+    if (myWaveColor == null && color == null) return this;
+    if (myWaveColor != null && myWaveColor.equals(color)) return this;
+                       
+    myWaveColor = color;
+
+    final SimpleTextAttributes[] attrs = myText.getAttributes().toArray(new SimpleTextAttributes[myText.getAttributes().size()]);
+    final String[] texts = myText.getTexts().toArray(new String[myText.getTexts().size()]);
+
+    clearText();
+
+    for (int i = 0; i < attrs.length; i++) {
+      SimpleTextAttributes each = attrs[i];
+
+      int style = each.getStyle();
+      if (color == null) {
+        style &= (~SimpleTextAttributes.STYLE_WAVED);
+      } else {
+        style |= SimpleTextAttributes.STYLE_WAVED;
+      }
+
+      final SimpleTextAttributes newStyle = each.derive(style, null, null, myWaveColor);
+      append(texts[i], newStyle);
+    }
+
+
+    return this;
+  }
+
+  public TabInfo setTooltipText(final String text) {
+    String old = myTooltipText;
+    myTooltipText = text;
+    myChangeSupport.firePropertyChange(TEXT, old, myTooltipText);
+    return this;
+  }
+
+  public String getTooltipText() {
+    return myTooltipText;
   }
 }

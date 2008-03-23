@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -167,5 +168,9 @@ public final class SimpleTextAttributes {
       effectType = null;
     }
     return new TextAttributes(myFgColor, null,effectColor, effectType, myStyle & FONT_MASK);
+  }
+
+  public SimpleTextAttributes derive(int style, @Nullable Color fg, @Nullable Color bg, @Nullable Color wave) {
+    return new SimpleTextAttributes(bg != null ? bg : getBgColor(), fg != null ? fg : getFgColor(), wave != null ? wave : getWaveColor(), style != -1 ? style : getStyle());   
   }
 }
