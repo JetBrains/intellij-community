@@ -29,14 +29,16 @@ public class JavacRunner {
     String[] newArgs;
     if (versionString.indexOf("1.1") > -1) {
       // expand the file
-      Vector arguments = new Vector();
+      final Vector arguments = new Vector();
+      boolean isClasspath = false;
       for (int idx = 3; idx < args.length; idx++) {
-        String arg = args[idx];
-        if (arg.startsWith("@")) {
+        final String arg = args[idx];
+        if (arg.startsWith("@") && !isClasspath) {
           String path = arg.substring(1);
           addFilesToCompile(arguments, path);
         }
         else {
+          isClasspath = "-classpath".equals(arg) || "-cp".equals(arg) || "-bootclasspath".equals(arg);
           arguments.addElement(arg);
         }
       }
