@@ -27,6 +27,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -433,6 +434,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return methodCall;
   }
 
+  @Nullable
   private PsiMethodCallExpression createGetterCall(final int fieldIndex, PsiReferenceExpression expr)
           throws IncorrectOperationException {
     String[] getterNames = myDialog.getGetterNames();
@@ -458,6 +460,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return methodCall;
   }
 
+  @Nullable
   private PsiMethodCallExpression checkMethodResolvable(PsiMethodCallExpression methodCall, final PsiMethod targetMethod, PsiReferenceExpression context) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getInstance(targetMethod.getProject()).getElementFactory();
     final PsiElement resolved = methodCall.getMethodExpression().resolve();
@@ -465,9 +468,11 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
       PsiClass containingClass;
       if (resolved instanceof PsiMethod) {
         containingClass = ((PsiMethod) resolved).getContainingClass();
-      } else {
-        LOG.assertTrue(resolved instanceof PsiClass);
+      } else if (resolved instanceof PsiClass) {
         containingClass = (PsiClass)resolved;
+      }
+      else {
+        return null;
       }
       if(containingClass.isInheritor(myClass, false)) {
         final PsiExpression newMethodExpression =
@@ -480,7 +485,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return methodCall;
   }
 
-  private boolean isPlusPlusOrMinusMinus(PsiElement expression) {
+  private static boolean isPlusPlusOrMinusMinus(PsiElement expression) {
     if (expression instanceof PsiPrefixExpression){
       PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
       PsiJavaToken sign = prefixExpression.getOperationSign();
