@@ -106,12 +106,12 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
                                                 boolean cellHasFocus) {
     removeAll();
     String moduleName = null;
-    if (UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION) {
-      final PsiElementModuleRenderer psiElementModuleRenderer = new PsiElementModuleRenderer();
+    DefaultListCellRenderer rightRenderer = getRightCellRenderer();
+    if (rightRenderer != null) {
       final Component rightCellRendererComponent =
-        psiElementModuleRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        rightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       add(rightCellRendererComponent, BorderLayout.EAST);
-      moduleName = psiElementModuleRenderer.getText();
+      moduleName = rightRenderer.getText();
       final JPanel spacer = new JPanel();
       spacer.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
       spacer.setBackground(isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
@@ -122,6 +122,14 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     add(leftCellRendererComponent, BorderLayout.WEST);
     setBackground(isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
     return this;
+  }
+
+  @Nullable
+  protected DefaultListCellRenderer getRightCellRenderer() {
+    if (UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION) {
+      return new PsiElementModuleRenderer();
+    }
+    return null;
   }
 
   public abstract String getElementText(T element);
