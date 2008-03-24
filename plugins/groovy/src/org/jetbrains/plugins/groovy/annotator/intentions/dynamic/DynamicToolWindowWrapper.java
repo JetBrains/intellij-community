@@ -57,8 +57,10 @@ import java.util.Set;
  * Date: 09.01.2008
  */
 public class DynamicToolWindowWrapper implements ProjectComponent {
+  private static Project myProject;
 
   public static DynamicToolWindowWrapper getInstance(Project project) {
+    myProject = project;
     return project.getComponent(DynamicToolWindowWrapper.class);
   }
 
@@ -81,9 +83,9 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     return myBigPanel != null && myTreeTableModel != null && myTreeTablePanel != null;
   }
 
-  public TreeTable getTreeTable(ToolWindow window, Project project) {
+  public TreeTable getTreeTable(ToolWindow window) {
     if (!doesTreeTableInit()) {
-      reconfigureWindow(project, window);
+      reconfigureWindow(myProject, window);
     }
 
     return returnTreeTable();
@@ -415,7 +417,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
 
     removeNamedElement(project, ((DNamedElement) namedElement));
 
-    final Object selectionNode = selectionPath.getLastPathComponent();
+    /*final Object selectionNode = selectionPath.getLastPathComponent();
     if (!(selectionNode instanceof DefaultMutableTreeNode)) return false;
 
     DefaultMutableTreeNode toSelect = (parent.getChildAfter(child) != null || parent.getChildCount() == 1 ?
@@ -426,8 +428,8 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
 
     removeFromParent(parent, child);
     if (toSelect != null) {
-      setSelectedNode(toSelect, project);
-    }
+      setSelectedNode(toSelect, myProject);
+    }*/
 
     return true;
   }
@@ -435,10 +437,8 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
   private static void removeNamedElement(Project project, DNamedElement namedElement) {
     if (namedElement instanceof DClassElement) {
       DynamicManager.getInstance(project).removeClassElement(namedElement.getName());
-    } else if (namedElement instanceof DPropertyElement) {
-      DynamicManager.getInstance(project).removePropertyElement(((DPropertyElement) namedElement));
-    } else if (namedElement instanceof DMethodElement) {
-      DynamicManager.getInstance(project).removeMethodElement(((DMethodElement) namedElement));
+    } else if (namedElement instanceof DItemElement) {
+      DynamicManager.getInstance(project).removeItemElement((DItemElement) namedElement);
     }
   }
 
@@ -453,16 +453,10 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
   }
 
 
-  private void removeFromParent(DefaultMutableTreeNode parent, DefaultMutableTreeNode child) {
+  public void removeFromParent(DefaultMutableTreeNode parent, DefaultMutableTreeNode child) {
     int idx = myTreeTableModel.getIndexOfChild(parent, child);
     child.removeFromParent();
     myTreeTableModel.nodesWereRemoved(parent, new int[]{idx}, new TreeNode[]{child});
-  }
-
-  protected boolean isDynamicToolWindowShowing(Project project) {
-    ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
-    ToolWindow toolWindow = windowManager.getToolWindow(DYNAMIC_TOOLWINDOW_ID);
-    return toolWindow != null && toolWindow.isVisible();
   }
 
   private JPanel getContentPane(Project project) {
@@ -618,9 +612,9 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     }
   }
 
-  public ListTreeTableModelOnColumns getTreeTableModel(ToolWindow window, Project project) {
+  public ListTreeTableModelOnColumns getTreeTableModel(ToolWindow window) {
     if (!doesTreeTableInit()) {
-      reconfigureWindow(project, window);
+      reconfigureWindow(myProject, window);
     }
 
     return returnTreeTableModel();

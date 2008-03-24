@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -65,9 +66,29 @@ public class DynamicManagerImpl extends DynamicManager {
     addItemInTree(classElement, propertyElement);
   }
 
+  private void removeItemFromTree(DItemElement itemElement, DClassElement classElement) {
+    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID);
+    DynamicToolWindowWrapper wrapper = DynamicToolWindowWrapper.getInstance(myProject);
+    ListTreeTableModelOnColumns model = wrapper.getTreeTableModel(window);
+    Object classNode = TreeUtil.findNodeWithObject(classElement, model, model.getRoot());
+    final DefaultMutableTreeNode node = (DefaultMutableTreeNode) TreeUtil.findNodeWithObject(itemElement, model, classNode);
+    if (node == null) return;
+    DefaultMutableTreeNode parent = (DefaultMutableTreeNode) node.getParent();
+
+    DefaultMutableTreeNode toSelect = (parent.getChildAfter(node) != null || parent.getChildCount() == 1 ?
+        node.getNextNode() :
+        node.getPreviousNode());
+
+
+    wrapper.removeFromParent(parent, node);
+    if (toSelect != null) {
+      wrapper.setSelectedNode(toSelect, myProject);
+    }
+  }
+
   private void addItemInTree(final DClassElement classElement, final DItemElement itemElement) {
     final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID);
-    final ListTreeTableModelOnColumns myTreeTableModel = DynamicToolWindowWrapper.getInstance(myProject).getTreeTableModel(window, myProject);
+    final ListTreeTableModelOnColumns myTreeTableModel = DynamicToolWindowWrapper.getInstance(myProject).getTreeTableModel(window);
 
     window.activate(new Runnable() {
       public void run() {
@@ -140,7 +161,7 @@ public class DynamicManagerImpl extends DynamicManager {
     rootElement.removeClassElement(containingClassName);
   }
 
-  public void removePropertyElement(DPropertyElement propertyElement) {
+  private void removePropertyElement(DPropertyElement propertyElement) {
     final DClassElement classElement = getClassElementByItem(propertyElement);
     assert classElement != null;
 
@@ -211,10 +232,6 @@ public class DynamicManagerImpl extends DynamicManager {
     myListeners.remove(listener);
   }
 
-  public void replaceDynamicProperty(DPropertyElement oldElement, DPropertyElement newElement) {
-    removePropertyElement(oldElement);
-  }
-
   /*
   * Changes dynamic property
   */
@@ -260,7 +277,7 @@ public class DynamicManagerImpl extends DynamicManager {
     return findConcreteDynamicMethod(getRootElement(), conatainingClassName, name, parameterTypes);
   }
 
-  public void removeMethodElement(DMethodElement methodElement) {
+  private void removeMethodElement(DMethodElement methodElement) {
     final DClassElement classElement = getClassElementByItem(methodElement);
     assert classElement != null;
 
@@ -268,11 +285,14 @@ public class DynamicManagerImpl extends DynamicManager {
   }
 
   public void removeItemElement(DItemElement element) {
+    DClassElement classElement = getClassElementByItem(element);
     if (element instanceof DPropertyElement) {
       removePropertyElement(((DPropertyElement) element));
     } else if (element instanceof DMethodElement) {
       removeMethodElement(((DMethodElement) element));
     }
+
+    removeItemFromTree(element, classElement);
   }
 
   public void replaceDynamicMethodType(String className, String name, List<MyPair> myPairList, String oldType, String newType) {

@@ -91,8 +91,8 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
     window.activate(new Runnable() {
       public void run() {
         DynamicToolWindowWrapper toolWindowWrapper = DynamicToolWindowWrapper.getInstance(myProject);
-        final TreeTable treeTable = toolWindowWrapper.getTreeTable(window, myProject);
-        final ListTreeTableModelOnColumns model = toolWindowWrapper.getTreeTableModel(window, myProject);
+        final TreeTable treeTable = toolWindowWrapper.getTreeTable(window);
+        final ListTreeTableModelOnColumns model = toolWindowWrapper.getTreeTableModel(window);
 
         Object root = model.getRoot();
 
