@@ -603,11 +603,14 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     repaint();
 
     if (myVisibleInfos.size() == 0) {
+      setOpaque(false);
       final Component nonOpaque = UIUtil.findUltimateParent(this);
       if (nonOpaque != null && getParent() != null) {
         final Rectangle toRepaint = SwingUtilities.convertRectangle(getParent(), getBounds(), nonOpaque);
         nonOpaque.repaint(toRepaint.x, toRepaint.y, toRepaint.width, toRepaint.height);
       }
+    } else {
+      setOpaque(true);
     }
   }
 
@@ -1146,18 +1149,16 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
 
+    if (myVisibleInfos.size() == 0) return;
+
     final GraphicsConfig config = new GraphicsConfig(g);
     config.setAntialiasing(true);
 
     Graphics2D g2d = (Graphics2D)g;
 
 
-    if (isOpaque()) {
-      if (myVisibleInfos.size() > 0) {
-        g.setColor(getBackground());
-        g.fillRect(0, 0, getWidth(), getHeight());
-      }
-    }
+    g.setColor(getBackground());
+    g.fillRect(0, 0, getWidth(), getHeight());
 
     int arc = getArcSize();
     Insets insets = getLayoutInsets();
