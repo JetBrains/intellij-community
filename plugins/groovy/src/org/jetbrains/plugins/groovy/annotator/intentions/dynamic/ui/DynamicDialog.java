@@ -7,6 +7,8 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorTextField;
@@ -287,19 +289,19 @@ public abstract class DynamicDialog extends DialogWrapper {
     super.doOKAction();
     GrTypeElement typeElement = getEnteredTypeName();
 
-    DItemElement myDynamicElement;
+    final DItemElement dynamicElement;
     if (QuickfixUtil.isCall(myReferenceExpression)) {
       final String[] methodArgumentsNames = QuickfixUtil.getMethodArgumentsNames(((GrCallExpression) myReferenceExpression.getParent()));
       final String[] methodArgumentsTypes = QuickfixUtil.getMethodArgumentsTypes(((GrCallExpression) myReferenceExpression.getParent()));
       final List<MyPair> pairs = QuickfixUtil.swapArgumentsAndTypes(methodArgumentsNames, methodArgumentsTypes);
 
-      myDynamicElement = new DMethodElement(myReferenceExpression.getName(), null, pairs);
+      dynamicElement = new DMethodElement(myReferenceExpression.getName(), null, pairs);
     } else {
-      myDynamicElement = new DPropertyElement(myReferenceExpression.getName(), null);
+      dynamicElement = new DPropertyElement(myReferenceExpression.getName(), null);
     }
 
     if (typeElement == null) {
-      myDynamicElement.setType("java.lang.Object");
+      dynamicElement.setType("java.lang.Object");
     } else {
       PsiType type = typeElement.getType();
       if (type instanceof PsiPrimitiveType) {
@@ -309,21 +311,48 @@ public abstract class DynamicDialog extends DialogWrapper {
       final String typeQualifiedName = type.getCanonicalText();
 
       if (typeQualifiedName != null) {
-        myDynamicElement.setType(typeQualifiedName);
+        dynamicElement.setType(typeQualifiedName);
       } else {
-        myDynamicElement.setType(type.getPresentableText());
+        dynamicElement.setType(type.getPresentableText());
       }
     }
 
     final DynamicManager dynamicManager = DynamicManager.getInstance(myProject);
     final DClassElement classElement = dynamicManager.getOrCreateClassElement(myProject, getEnteredContaningClass().getContainingClass().getQualifiedName());
+    final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReferenceExpression.getContainingFile());
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        UndoManager.getInstance(myProject).undoableActionPerformed(new UndoableAction() {
+          public void undo() throws UnexpectedUndoException {
+            dynamicManager.removeItemElement(dynamicElement);
 
-    if (myDynamicElement instanceof DMethodElement) {
-      dynamicManager.addMethod(classElement, ((DMethodElement) myDynamicElement));
+            myDynamicManager.fireChange();
+          }
+
+          public void redo() throws UnexpectedUndoException {
+            addElement(dynamicElement, dynamicManager, classElement);
+          }
+
+          public DocumentReference[] getAffectedDocuments() {
+            return new DocumentReference[]{DocumentReferenceByDocument.createDocumentReference(document)};
+          }
+
+          public boolean isComplex() {
+            return true;
+          }
+        });
+
+        addElement(dynamicElement, dynamicManager, classElement);
+      }
+    }, "Add dynamic element", null);
+  }
+
+  private void addElement(DItemElement dynamicElement, DynamicManager dynamicManager, DClassElement classElement) {
+    if (dynamicElement instanceof DMethodElement) {
+      dynamicManager.addMethod(classElement, ((DMethodElement) dynamicElement));
     } else {
-      dynamicManager.addProperty(classElement, ((DPropertyElement) myDynamicElement));
+      dynamicManager.addProperty(classElement, ((DPropertyElement) dynamicElement));
     }
-
     myDynamicManager.fireChange();
   }
 
