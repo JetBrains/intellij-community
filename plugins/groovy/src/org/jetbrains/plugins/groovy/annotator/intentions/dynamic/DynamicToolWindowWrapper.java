@@ -561,7 +561,11 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
       DefaultMutableTreeNode classNode = (DefaultMutableTreeNode) rootNode.getFirstChild();
       while (classNode != null) {
 
-        if (classNode.isLeaf()) return;
+        if (classNode.isLeaf()) {
+          classNode = (DefaultMutableTreeNode) rootNode.getChildAfter(classNode);
+          continue;
+        }
+
         DefaultMutableTreeNode dynamicNode = (DefaultMutableTreeNode) classNode.getFirstChild();
         while (dynamicNode != null) {
 
@@ -610,6 +614,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
       classes.clear();
 
       rebuildTreeView(myProject, rootNode, true);
+      myBigPanel.invalidate();
     }
   }
 
