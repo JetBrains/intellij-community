@@ -12,6 +12,7 @@ import com.intellij.util.io.PersistentStringEnumerator;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyStubElementType;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -38,7 +39,13 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     final PyExpression[] exprs = psi.getSuperClassExpressions();
     String[] superClasses = new String[exprs.length];
     for(int i=0; i<exprs.length; i++) {
-      superClasses [i] = exprs [i].getText();
+      final PyExpression expression = exprs[i];
+      if (expression instanceof PyReferenceExpression) {
+        superClasses [i] = ((PyReferenceExpression) expression).getReferencedName();
+      }
+      else {
+        superClasses [i] = expression.getText();
+      }
     }
     return new PyClassStubImpl(psi.getName(), parentStub, superClasses);
   }

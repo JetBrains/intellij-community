@@ -31,6 +31,13 @@ public class PyInheritorsSearchTest extends CodeInsightTestCase {
     assertEquals(2, inheritors.size());
   }
 
+  public void testDotted() throws Exception {
+    setupProject();
+    final PyClass pyClass = findClass("A");
+    Collection<PyClass> inheritors = PyClassInheritorsSearch.search(pyClass, true).findAll();
+    assertEquals(1, inheritors.size());
+  }
+
   private void setupProject() throws Exception {
     String testName = getTestName(true);
     String root = PathManager.getHomePath() + "/plugins/python/testData/inheritors/" + testName;
