@@ -7,6 +7,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
@@ -19,6 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -49,7 +54,7 @@ final class EditorTabbedContainer  {
         }
         return null;
       }
-    }).setPaintBorder(10, -1, 0, -1).setPopupGroup(new Getter<ActionGroup>() {
+    }).setPopupGroup(new Getter<ActionGroup>() {
       public ActionGroup get() {
         return (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_POPUP);
       }
@@ -68,10 +73,18 @@ final class EditorTabbedContainer  {
         return new JBTabs.UiDecoration(null, new Insets(1, 6, 1, 6));
       }
     });
-  }
 
-  public Component getComponent() {
-    return myTabs.getComponent();
+    updateTabBorder();
+
+    ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
+      public void stateChanged() {
+        updateTabBorder();
+      }
+
+      public void toolWindowRegistered(final String id) {
+        updateTabBorder();
+      }
+    });
   }
 
   public int getTabCount() {
@@ -84,6 +97,16 @@ final class EditorTabbedContainer  {
 
   public void setSelectedIndex(final int indexToSelect, boolean focusEditor) {
     myTabs.select(myTabs.getTabAt(indexToSelect), focusEditor);
+  }
+
+  private void updateTabBorder() {
+    final List<String> rightIds =
+        ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).getIdsOn(ToolWindowAnchor.RIGHT);
+     myTabs.setPaintBorder(10, -1, rightIds.size() > 0 ? 1 : 0, -1);
+  }
+
+  public Component getComponent() {
+    return myTabs.getComponent();
   }
 
   public void removeTabAt(final int componentIndex) {

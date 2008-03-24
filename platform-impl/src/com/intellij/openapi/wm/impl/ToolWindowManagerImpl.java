@@ -390,6 +390,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return myLayout.getInfo(id, true);
   }
 
+  public List<String> getIdsOn(final ToolWindowAnchor anchor) {
+    return myLayout.getVisibleIdsOn(anchor, this);
+  }
+
   public ToolWindow getToolWindow(final String id) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myLayout.isToolWindowRegistered(id)) {

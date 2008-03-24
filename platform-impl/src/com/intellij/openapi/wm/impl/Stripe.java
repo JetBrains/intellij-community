@@ -155,7 +155,7 @@ final class Stripe extends JPanel{
   }
 
 
-  private ToolWindowAnchor getAnchor() {
+  public ToolWindowAnchor getAnchor() {
     return ToolWindowAnchor.get(myAnchor);
   }
 

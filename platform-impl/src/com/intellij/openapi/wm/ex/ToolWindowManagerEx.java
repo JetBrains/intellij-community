@@ -3,9 +3,11 @@ package com.intellij.openapi.wm.ex;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 
 import javax.swing.*;
+import java.util.List;
 
 public abstract class ToolWindowManagerEx extends ToolWindowManager{
   public static ToolWindowManagerEx getInstanceEx(final Project project){
@@ -43,4 +45,6 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager{
   public abstract void clearSideStack();
 
   public abstract void hideToolWindow(String id, boolean hideSide);
+
+  public abstract List<String> getIdsOn(final ToolWindowAnchor anchor);
 }

@@ -3,13 +3,11 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.ide.ui.UISettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * @author Vladimir Kondratyev
@@ -283,6 +281,18 @@ public final class DesktopLayout implements JDOMExternalizable {
       infos[i].writeExternal(element);
       layoutElement.addContent(element);
     }
+  }
+
+  public List<String> getVisibleIdsOn(final ToolWindowAnchor anchor, ToolWindowManagerImpl manager) {
+    ArrayList<String> ids = new ArrayList<String>();
+    for (WindowInfoImpl each : myRegisteredInfos) {
+      if (each.getAnchor() == anchor) {
+        if (manager.getToolWindow(each.getId()).isAvailable() || UISettings.getInstance().ALWAYS_SHOW_WINDOW_BUTTONS) {
+          ids.add(each.getId());
+        }
+      }
+    }
+    return ids;
   }
 
   private static final class MyWindowInfoComparator implements Comparator {

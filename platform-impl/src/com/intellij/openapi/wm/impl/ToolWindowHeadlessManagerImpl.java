@@ -34,6 +34,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 
 @SuppressWarnings({"ConstantConditions"})
 public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
@@ -269,5 +270,9 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   public void hideToolWindow(final String id, final boolean hideSide) {
+  }
+
+  public List<String> getIdsOn(final ToolWindowAnchor anchor) {
+    return new ArrayList<String>();
   }
 }

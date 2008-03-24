@@ -1168,22 +1168,34 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     if (!isStealthModeEffective() && !isHideTabs()) {
       for (int i = myVisibleInfos.size() - 1; i >= 0; i--) {
         TabInfo each = myVisibleInfos.get(i);
-
         if (getSelectedInfo() == each) continue;
 
         final TabLabel eachLabel = myInfo2Label.get(each);
+        if (eachLabel.getBounds().width == 0) continue;
+
+        
+        TabInfo prev = i > 0 ? myVisibleInfos.get(i - 1) : null;
+        TabInfo next = i < myVisibleInfos.size() - 1 ? myVisibleInfos.get(i + 1) : null;
 
         final Rectangle eachBounds = eachLabel.getBounds();
         final GeneralPath path = new GeneralPath();
 
-        boolean firstOne = i == 0;
-        boolean lastOne = i == myVisibleInfos.size() - 1;
+        boolean firstShowing = prev == null;
+        if (!firstShowing) {
+          firstShowing = myInfo2Label.get(prev).getBounds().width == 0;
+        }
+
+        boolean lastShowing = next == null;
+        if (!lastShowing) {
+          lastShowing = myInfo2Label.get(next).getBounds().width == 0;
+        }
+
         boolean leftFromSelection = selected != null && i == myVisibleInfos.indexOf(selected) - 1;
 
 
-        int leftX = firstOne ? eachBounds.x : eachBounds.x - arc - 1;
+        int leftX = firstShowing ? eachBounds.x : eachBounds.x - arc - 1;
         int topY = eachBounds.y + 2;
-        int rigthX = !lastOne && leftFromSelection ? (int)eachBounds.getMaxX() + arc + 1: (int)eachBounds.getMaxX();
+        int rigthX = !lastShowing && leftFromSelection ? (int)eachBounds.getMaxX() + arc + 1: (int)eachBounds.getMaxX();
         int bottomY = (int)eachBounds.getMaxY() + 1;
 
         path.moveTo(leftX, bottomY);
@@ -1930,6 +1942,8 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   }
 
   public JBTabs setPaintBorder(int top, int left, int right, int bottom) {
+    if (myTopBorderSize == top && myLeftBorderSize == left && myRightBorderSize == right && myBottomBorderSize == bottom) return this;
+
     myTopBorderSize = getBorder(top);
     myLeftBorderSize = getBorder(left);
     myRightBorderSize = getBorder(right);
