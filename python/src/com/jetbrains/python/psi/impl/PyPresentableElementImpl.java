@@ -29,7 +29,7 @@ public abstract class PyPresentableElementImpl<T extends StubElement> extends Py
       }
 
       public String getLocationString() {
-        return null;
+        return "(" + getContainingFile().getName() + ")";
       }
 
       public Icon getIcon(final boolean open) {
