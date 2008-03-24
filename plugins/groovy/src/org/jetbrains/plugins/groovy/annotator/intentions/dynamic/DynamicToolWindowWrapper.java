@@ -436,7 +436,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
 
   private static void removeNamedElement(Project project, DNamedElement namedElement) {
     if (namedElement instanceof DClassElement) {
-      DynamicManager.getInstance(project).removeClassElement(namedElement.getName());
+      DynamicManager.getInstance(project).removeClassElement((DClassElement) namedElement);
     } else if (namedElement instanceof DItemElement) {
       DynamicManager.getInstance(project).removeItemElement((DItemElement) namedElement);
     }

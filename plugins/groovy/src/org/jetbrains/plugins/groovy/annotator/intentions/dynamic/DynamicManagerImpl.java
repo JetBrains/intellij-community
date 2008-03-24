@@ -75,6 +75,21 @@ public class DynamicManagerImpl extends DynamicManager {
     if (node == null) return;
     DefaultMutableTreeNode parent = (DefaultMutableTreeNode) node.getParent();
 
+    doRemove(wrapper, node, parent);
+  }
+
+  private void removeClassFromTree(DClassElement classElement) {
+    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID);
+    DynamicToolWindowWrapper wrapper = DynamicToolWindowWrapper.getInstance(myProject);
+    ListTreeTableModelOnColumns model = wrapper.getTreeTableModel(window);
+    final DefaultMutableTreeNode node = (DefaultMutableTreeNode) TreeUtil.findNodeWithObject(classElement, model, model.getRoot());
+    if (node == null) return;
+    DefaultMutableTreeNode parent = (DefaultMutableTreeNode) node.getParent();
+
+    doRemove(wrapper, node, parent);
+  }
+
+  private void doRemove(DynamicToolWindowWrapper wrapper, DefaultMutableTreeNode node, DefaultMutableTreeNode parent) {
     DefaultMutableTreeNode toSelect = (parent.getChildAfter(node) != null || parent.getChildCount() == 1 ?
         node.getNextNode() :
         node.getPreviousNode());
@@ -155,10 +170,11 @@ public class DynamicManagerImpl extends DynamicManager {
     addItemInTree(classElement, methodElement);
   }
 
-  public void removeClassElement(String containingClassName) {
+  public void removeClassElement(DClassElement classElement) {
 
     final DRootElement rootElement = getRootElement();
-    rootElement.removeClassElement(containingClassName);
+    rootElement.removeClassElement(classElement.getName());
+    removeClassFromTree(classElement);
   }
 
   private void removePropertyElement(DPropertyElement propertyElement) {

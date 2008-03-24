@@ -67,7 +67,7 @@ public abstract class DynamicManager implements ProjectComponent, PersistentStat
 
   public abstract void addMethod(DClassElement classElement, DMethodElement methodElement);
 
-  public abstract void removeClassElement(String className);
+  public abstract void removeClassElement(DClassElement classElement);
 
   @Nullable
   public abstract DPropertyElement findConcreteDynamicProperty(final String conatainingClassName, final String propertyName);
