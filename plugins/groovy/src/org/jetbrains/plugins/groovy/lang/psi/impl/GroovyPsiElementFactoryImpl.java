@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
@@ -414,7 +415,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
 
       if (i > 0) builder.append(", ");
 
-      builder.append(paramType).append(" ").append(paramType.toLowerCase()).append(i);
+      builder.append(paramType).append(" ").append(QuickfixUtil.shortenType(paramType).toLowerCase()).append(i);
     }
 
     builder.append(")").append("{}");

@@ -2,7 +2,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiVariable;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitPropertyImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitProperty;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -26,7 +26,7 @@ public class DPropertyElement extends DItemElement {
 
   public PsiVariable getPsi(PsiManager manager, String containingClassName) {
     if (myPsi != null) return myPsi;
-    myPsi = new GrDynamicImplicitPropertyImpl(manager, getName(), getType(), containingClassName);
+    myPsi = new GrDynamicImplicitProperty(manager, getName(), getType(), containingClassName);
     return myPsi;
   }
 }

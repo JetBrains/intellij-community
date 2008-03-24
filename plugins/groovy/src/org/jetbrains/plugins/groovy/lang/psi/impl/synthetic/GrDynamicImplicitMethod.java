@@ -294,7 +294,7 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
         treeTable.getTree().setSelectionPath(path);
         treeTable.getTree().fireTreeExpanded(path);
 
-        treeTable.requestFocus();
+        ToolWindowManager.getInstance(myProject).requestFocus(treeTable, true);
         treeTable.revalidate();
         treeTable.repaint();
       }

@@ -426,7 +426,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
 
     removeFromParent(parent, child);
     if (toSelect != null) {
-      setSelectedNode(toSelect);
+      setSelectedNode(toSelect, project);
     }
 
     return true;
@@ -442,13 +442,14 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     }
   }
 
-  public void setSelectedNode(DefaultMutableTreeNode node) {
+  public void setSelectedNode(DefaultMutableTreeNode node, Project project) {
     JTree tree = myTreeTable.getTree();
     TreePath path = new TreePath(node.getPath());
     tree.expandPath(path.getParentPath());
     int row = tree.getRowForPath(path);
     myTreeTable.getSelectionModel().setSelectionInterval(row, row);
     myTreeTable.scrollRectToVisible(myTreeTable.getCellRect(row, 0, true));
+    ToolWindowManager.getInstance(project).requestFocus(myTreeTable, true);
   }
 
 

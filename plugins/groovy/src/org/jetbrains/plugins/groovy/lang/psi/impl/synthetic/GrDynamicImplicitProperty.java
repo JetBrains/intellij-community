@@ -44,11 +44,11 @@ import javax.swing.tree.TreePath;
 /**
  * @author ilyas
  */
-public class GrDynamicImplicitPropertyImpl extends GrImplicitVariableImpl implements GrDynamicImplicitElement {
+public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements GrDynamicImplicitElement {
   private final String myContainingClassName;
   private final Project myProject;
 
-  public GrDynamicImplicitPropertyImpl(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName) {
+  public GrDynamicImplicitProperty(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName) {
     super(manager, name, type, null);
     myContainingClassName = containingClassName;
     myProject = manager.getProject();
@@ -86,6 +86,7 @@ public class GrDynamicImplicitPropertyImpl extends GrImplicitVariableImpl implem
 
   public void navigate(boolean requestFocus) {
     final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID);
+
 
     window.activate(new Runnable() {
       public void run() {
@@ -127,9 +128,10 @@ public class GrDynamicImplicitPropertyImpl extends GrImplicitVariableImpl implem
         treeTable.getTree().setSelectionPath(path);
         treeTable.getTree().fireTreeExpanded(path);
 
-        treeTable.requestFocus();
+        ToolWindowManager.getInstance(myProject).requestFocus(treeTable, true);        
         treeTable.revalidate();
         treeTable.repaint();
+
       }
     }, true);
   }

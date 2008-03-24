@@ -46,7 +46,6 @@ public class DMethodElement extends DItemElement implements Comparable {
   public PsiMethod getPsi(PsiManager manager, String containingClassName) {
     if (myImplicitMethod != null) return myImplicitMethod;
 
-    //TODO: createTypeElement and check it for resolving
     final String type = getType();
 
     try {
