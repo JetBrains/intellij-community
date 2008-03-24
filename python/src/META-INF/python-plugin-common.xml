@@ -56,6 +56,7 @@
 
     <referenceImporter implementation="com.jetbrains.python.validation.PythonReferenceImporter"/>
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.PyLineMarkerProvider"/>
+    <definitionsSearch implementation="com.jetbrains.python.psi.search.PyDefinitionsSearch"/>
   </extensions>
 
   <extensionPoints>
