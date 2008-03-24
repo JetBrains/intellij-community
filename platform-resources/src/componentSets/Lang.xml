@@ -245,6 +245,9 @@
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.ShowAutoImportPassFactory</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.SlowLineMarkersPassFactory</implementation-class>
+    </component>
 
     <component>
       <interface-class>com.intellij.codeInsight.template.TemplateManager</interface-class>

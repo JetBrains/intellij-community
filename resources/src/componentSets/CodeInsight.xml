@@ -13,9 +13,6 @@
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.PostHighlightingPassFactory</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.OverriddenMarkersPassFactory</implementation-class>
-    </component>
 
 
   </project-components>

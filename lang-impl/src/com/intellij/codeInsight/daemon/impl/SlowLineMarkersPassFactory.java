@@ -13,8 +13,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author cdr
 */
-public class OverriddenMarkersPassFactory extends AbstractProjectComponent implements DirtyScopeTrackingHighlightingPassFactory {
-  public OverriddenMarkersPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
+public class SlowLineMarkersPassFactory extends AbstractProjectComponent implements DirtyScopeTrackingHighlightingPassFactory {
+  public SlowLineMarkersPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, false, Pass.UPDATE_OVERRIDEN_MARKERS);
   }
@@ -22,14 +22,14 @@ public class OverriddenMarkersPassFactory extends AbstractProjectComponent imple
   @NonNls
   @NotNull
   public String getComponentName() {
-    return "OverriddenMarkersPassFactory";
+    return "SlowLineMarkersPassFactory";
   }
 
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcess(editor);
     if (textRange == null) return null;
-    return new OverriddenMarkersPass(myProject, file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset());
+    return new SlowLineMarkersPass(myProject, file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset());
   }
 
   private static TextRange calculateRangeToProcess(Editor editor) {
