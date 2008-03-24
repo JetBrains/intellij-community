@@ -402,8 +402,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         ResolveUtil.treeWalkUp(refExpr, processor);
         PsiClass contextClass = PsiUtil.getContextClass(refExpr);
         if (contextClass != null) {
-          PsiClassType scriptType = refExpr.getManager().getElementFactory().createType(contextClass);
-          if (!ResolveUtil.processNonCodeMethods(scriptType, processor, refExpr.getProject())) return;
+          PsiClassType classType = refExpr.getManager().getElementFactory().createType(contextClass);
+          if (!ResolveUtil.processNonCodeMethods(classType, processor, refExpr.getProject())) return;
         }
         if (!processor.hasCandidates()) {
           qualifier = PsiImplUtil.getRuntimeQualifier(refExpr);

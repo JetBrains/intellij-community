@@ -120,6 +120,11 @@ public class CompleteReferenceExpression {
     String[] sameQualifier = getVariantsWithSameQualifier(qualifier, refExpr);
     if (qualifier == null) {
       ResolveUtil.treeWalkUp(refExpr, processor);
+      PsiClass contextClass = PsiUtil.getContextClass(refExpr);
+      if (contextClass != null) {
+        PsiClassType classType = refExpr.getManager().getElementFactory().createType(contextClass);
+        ResolveUtil.processNonCodeMethods(classType, processor, refExpr.getProject());
+      }
       qualifier = PsiImplUtil.getRuntimeQualifier(refExpr);
       if (qualifier != null) {
         getVariantsFromQualifier(refExpr, processor, qualifier);
