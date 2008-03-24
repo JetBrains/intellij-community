@@ -142,4 +142,12 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   public String getDocString() {
     return DocStringAnnotator.findDocString(getStatementList());
   }
+
+  protected String getElementLocation() {
+    final PyClass containingClass = getContainingClass();
+    if (containingClass != null) {
+      return "(" + containingClass.getName() + " in " + getPackageForFile(getContainingFile()) + ")";
+    }
+    return super.getElementLocation();
+  }
 }

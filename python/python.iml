@@ -25,6 +25,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="vcs-api" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
