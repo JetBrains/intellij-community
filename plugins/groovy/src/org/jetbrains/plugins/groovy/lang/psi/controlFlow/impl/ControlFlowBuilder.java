@@ -496,6 +496,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       assert oldPending != null;
       oldPending.addAll(myPending);
       myPending = oldPending;
+    } else {
+      if (tryEnd != null) {
+        addPendingEdge(tryCatchStatement, tryEnd);
+      }
     }
   }
 

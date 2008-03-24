@@ -1,0 +1,21 @@
+Object url
+if (url == null) {
+  try {
+    url = null // Warning is here
+  } catch (Exception e) {
+    throw new RuntimeException(e)
+  }
+ }
+return url
+-----
+0(1) element: null
+1(2) element: IF statement
+2(3,9) READ url
+3(4) element: Block statement
+4(5,6) element: Open block
+5(6,9) WRITE url
+6(7) element: Catch clause
+7(8) READ e
+8(10) element: THROW statement
+9(10) READ url
+10() element: null
