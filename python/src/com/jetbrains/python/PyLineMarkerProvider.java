@@ -11,6 +11,8 @@ import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
+import java.util.Collection;
 
 /**
  * @author yole
@@ -36,5 +38,8 @@ public class PyLineMarkerProvider implements LineMarkerProvider {
       return info;
     }
     return null;
+  }
+
+  public void collectSlowLineMarkers(final List<PsiElement> elements, final Collection<LineMarkerInfo> result) {
   }
 }
