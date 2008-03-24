@@ -18,12 +18,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,14 +91,6 @@ public class CollectClassMembersUtil {
 
     for (PsiMethod method : includeSynthetic || !(aClass instanceof GrTypeDefinition) ? aClass.getMethods() : ((GrTypeDefinition) aClass).getGroovyMethods()) {
       addMethod(allMethods, method, substitutor);
-    }
-
-    String qName = aClass.getQualifiedName();
-    if (qName != null) {
-      List<PsiMethod> defaultMethods = GroovyPsiManager.getInstance(aClass.getProject()).getDefaultMethods(qName);
-      for (PsiMethod defaultMethod : defaultMethods) {
-        addMethod(allMethods, defaultMethod, substitutor);
-      }
     }
 
     for (PsiClassType superType : aClass.getSuperTypes()) {
