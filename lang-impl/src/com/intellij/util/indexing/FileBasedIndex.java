@@ -279,6 +279,9 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
               }
               VirtualFile file = IndexInfrastructure.findFileById(dirIndex, fs, id);
               if (file != null) {
+                if (CachesBasedRefSearcher.DEBUG) {
+                  System.out.println("file = " + file.getPresentableUrl());
+                }
                 processor.process(file, value);
                 if (ensureValueProcessedOnce) {
                   break; // continue with the next value
@@ -400,6 +403,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
                   System.out.println("FileBasedIndex.indexUnsavedDocuments");
                   System.out.println("indexId = " + indexId);
                   System.out.println("Indexing inputId = " + inputId);
+                  System.out.println("file = " + vFile.getPresentableUrl());
                 }
                 getIndex(indexId).update(inputId, newFc, oldFc);
               }
