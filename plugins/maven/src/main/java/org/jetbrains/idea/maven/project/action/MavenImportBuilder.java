@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.FileFinder;
-import org.jetbrains.idea.maven.core.util.MavenFactory;
+import org.jetbrains.idea.maven.core.MavenFactory;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
@@ -147,7 +147,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   private List<String> collectProfiles(Collection<VirtualFile> files) throws MavenException {
     final SortedSet<String> profiles = new TreeSet<String>();
 
-    final MavenEmbedder embedder = MavenFactory.createEmbedder(getCoreState());
+    final MavenEmbedder embedder = MavenFactory.createEmbedderForRead(getCoreState());
     final MavenProjectReader reader = new MavenProjectReader(embedder);
     for (VirtualFile file : files) {
       ProjectUtil.collectProfileIds(reader.readBare(file.getPath()), profiles);

@@ -22,7 +22,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.util.MavenFactory;
+import org.jetbrains.idea.maven.core.MavenFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

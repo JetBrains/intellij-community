@@ -19,7 +19,7 @@ import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.core.util.MavenFactory;
+import org.jetbrains.idea.maven.core.MavenFactory;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.runner.MavenRunner;
@@ -71,7 +71,7 @@ public class MavenArtifactDownloader {
     }
 
     try {
-      final MavenEmbedder mavenEmbedder = MavenFactory.createEmbedder(project.getComponent(MavenCore.class).getState());
+      final MavenEmbedder mavenEmbedder = MavenFactory.createEmbedderForRead(project.getComponent(MavenCore.class).getState());
 
       try {
         Progress.run(project, ProjectBundle.message("maven.title.downloading"), new Progress.Process() {

@@ -1,17 +1,18 @@
-package org.jetbrains.idea.maven.core.util;
+package org.jetbrains.idea.maven.core;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.embedder.*;
+import org.apache.maven.extension.BuildExtensionScanner;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.ComponentDescriptor;
+import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.MavenCoreSettings;
+import org.jetbrains.idea.maven.core.util.JDOMReader;
 import org.jetbrains.idea.maven.project.MavenException;
 import org.jetbrains.idea.maven.project.MavenToIdeaMapping;
-import org.jetbrains.idea.maven.project.ProjectArtifactResolver;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,12 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public class MavenFactory {
-  public static MavenToIdeaMapping ourMapping;
-
   private static final Logger LOG = Logger.getInstance("#" + MavenFactory.class.getName());
 
   @NonNls private static final String PROP_MAVEN_HOME = "maven.home";
@@ -45,9 +41,9 @@ public class MavenFactory {
 
   @NonNls private static final String[] standardPhases = {"clean", "compile", "test", "package", "install", "site"};
   @NonNls private static final String[] standardGoals = {"clean", "validate", "generate-sources", "process-sources", "generate-resources",
-    "process-resources", "compile", "process-classes", "generate-test-sources", "process-test-sources", "generate-test-resources",
-    "process-test-resources", "test-compile", "test", "package", "pre-integration-test", "integration-test", "post-integration-test",
-    "verify", "install", "site", "deploy"};
+      "process-resources", "compile", "process-classes", "generate-test-sources", "process-test-sources", "generate-test-resources",
+      "process-test-resources", "test-compile", "test", "package", "pre-integration-test", "integration-test", "post-integration-test",
+      "verify", "install", "site", "deploy"};
 
   @Nullable
   public static File resolveMavenHomeDirectory(@Nullable final String override) {
@@ -157,11 +153,19 @@ public class MavenFactory {
     return Arrays.asList(standardGoals);
   }
 
-  public static MavenEmbedder createEmbedder(MavenCoreSettings settings) throws MavenException {
+  public static MavenEmbedder createEmbedderForExecute(MavenCoreSettings settings) throws MavenException {
     return createEmbedder(settings, null);
   }
 
-  public static MavenEmbedder createEmbedder(MavenCoreSettings settings, ContainerCustomizer customizer) throws MavenException {
+  public static MavenEmbedder createEmbedderForRead(MavenCoreSettings settings) throws MavenException {
+    return createEmbedder(settings, new CustomizerForRead());
+  }
+
+  public static MavenEmbedder createEmbedderForResolve(MavenCoreSettings settings, MavenToIdeaMapping mapping) throws MavenException {
+    return createEmbedder(settings, new CustomizerForResolve(mapping));
+  }
+
+  private static MavenEmbedder createEmbedder(MavenCoreSettings settings, CustomizerForRead customizer) throws MavenException {
     return createEmbedder(settings.getMavenHome(),
                           settings.getEffectiveLocalRepository(),
                           settings.getMavenSettingsFile(),
@@ -173,38 +177,37 @@ public class MavenFactory {
                                               File localRepo,
                                               String userSettings,
                                               ClassLoader classLoader,
-                                              ContainerCustomizer customizer) throws MavenException {
+                                              CustomizerForRead customizer) throws MavenException {
     Configuration configuration = new DefaultConfiguration();
+
     configuration.setConfigurationCustomizer(customizer);
-    
+    configuration.setClassLoader(classLoader);
     configuration.setLocalRepository(localRepo);
 
     MavenEmbedderConsoleLogger l = new MavenEmbedderConsoleLogger();
     l.setThreshold(MavenEmbedderLogger.LEVEL_WARN);
     configuration.setMavenEmbedderLogger(l);
 
-    final File userSettingsFile = resolveUserSettingsFile(userSettings);
+    File userSettingsFile = resolveUserSettingsFile(userSettings);
     if (userSettingsFile != null) {
       configuration.setUserSettingsFile(userSettingsFile);
     }
 
-    final File globalSettingsFile = resolveGlobalSettingsFile(mavenHome);
+    File globalSettingsFile = resolveGlobalSettingsFile(mavenHome);
     if (globalSettingsFile != null) {
       configuration.setGlobalSettingsFile(globalSettingsFile);
     }
 
-    configuration.setClassLoader(classLoader);
-
-    ConfigurationValidationResult result = MavenEmbedder.validateConfiguration(configuration);
-
-    if (!result.isValid()) {
-      throw new MavenException(collectExceptions(result));
-    }
+    validate(configuration);
 
     System.setProperty(PROP_MAVEN_HOME, mavenHome);
 
     try {
-      return new MavenEmbedder(configuration);
+      MavenEmbedder result = new MavenEmbedder(configuration);
+      if (customizer != null) {
+        customizer.postCustomize(result);
+      }
+      return result;
     }
     catch (MavenEmbedderException e) {
       LOG.info(e);
@@ -212,27 +215,19 @@ public class MavenFactory {
     }
   }
 
-  public static ContainerCustomizer createCustomizerWithMapping(final MavenToIdeaMapping mapping) {
-    return new ContainerCustomizer() {
-      public void customize(PlexusContainer c) {
-        // TODO this is an ugly hack in order to to pass the parameter to the component.
-        // I have to find a way to do it correctly.
-        ourMapping = mapping;
-        ComponentDescriptor resolverDescriptor = c.getComponentDescriptor(ArtifactResolver.ROLE);
-        resolverDescriptor.setImplementation(ProjectArtifactResolver.class.getName());
-      }
-    };
-  }
+  private static void validate(Configuration configuration) throws MavenException {
+    ConfigurationValidationResult result = MavenEmbedder.validateConfiguration(configuration);
 
-  private static List<Exception> collectExceptions(ConfigurationValidationResult result) {
-    List<Exception> ee = new ArrayList<Exception>();
+    if (!result.isValid()) {
+      List<Exception> ee = new ArrayList<Exception>();
 
-    Exception ex1 = result.getGlobalSettingsException();
-    Exception ex2 = result.getUserSettingsException();
-    if (ex1 != null) ee.add(ex1);
-    if (ex2 != null) ee.add(ex2);
+      Exception ex1 = result.getGlobalSettingsException();
+      Exception ex2 = result.getUserSettingsException();
+      if (ex1 != null) ee.add(ex1);
+      if (ex2 != null) ee.add(ex2);
 
-    return ee;
+      throw new MavenException(ee);
+    }
   }
 
   public static void releaseEmbedder(MavenEmbedder mavenEmbedder) {
@@ -241,6 +236,51 @@ public class MavenFactory {
         mavenEmbedder.stop();
       }
       catch (MavenEmbedderException ignore) {
+      }
+    }
+  }
+
+  public static CustomBuildExtensionScanner getBuildExtensionScanner(MavenEmbedder e) {
+    try {
+      return (CustomBuildExtensionScanner)e.getPlexusContainer().lookup(BuildExtensionScanner.ROLE);
+    }
+    catch (ComponentLookupException ex) {
+      throw new RuntimeException(ex);
+    }
+  }
+
+  public static class CustomizerForRead implements ContainerCustomizer {
+    public void customize(PlexusContainer c) {
+      ComponentDescriptor d = c.getComponentDescriptor(BuildExtensionScanner.ROLE);
+      d.setImplementation(CustomBuildExtensionScanner.class.getName());
+    }
+
+    public void postCustomize(MavenEmbedder e) {
+    }
+  }
+
+  private static class CustomizerForResolve extends CustomizerForRead {
+    private MavenToIdeaMapping myMapping;
+
+    public CustomizerForResolve(MavenToIdeaMapping mapping) {
+      myMapping = mapping;
+    }
+
+    @Override
+    public void customize(PlexusContainer c) {
+      super.customize(c);
+      ComponentDescriptor d = c.getComponentDescriptor(ArtifactResolver.ROLE);
+      d.setImplementation(CustomArtifactResolver.class.getName());
+    }
+
+    @Override
+    public void postCustomize(MavenEmbedder e) {
+      try {
+        CustomArtifactResolver r = (CustomArtifactResolver)e.getPlexusContainer().lookup(ArtifactResolver.ROLE);
+        r.setMapping(myMapping);
+      }
+      catch (ComponentLookupException ex) {
+        throw new RuntimeException(ex);
       }
     }
   }

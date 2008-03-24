@@ -18,7 +18,7 @@ import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenDataKeys;
-import org.jetbrains.idea.maven.core.util.MavenFactory;
+import org.jetbrains.idea.maven.core.MavenFactory;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.runner.execution.MavenGoalLocation;
 import org.jetbrains.idea.maven.state.MavenProjectsState;

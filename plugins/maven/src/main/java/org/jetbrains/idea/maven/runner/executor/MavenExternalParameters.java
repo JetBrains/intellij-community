@@ -29,7 +29,7 @@ import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.core.util.MavenFactory;
+import org.jetbrains.idea.maven.core.MavenFactory;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.RunnerBundle;
 

@@ -36,27 +36,6 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
     }
   }
 
-  public void testInvalidExtension() throws Exception {
-    try {
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<build>" +
-                    " <extensions>" +
-                    "   <extension>" +
-                    "     <groupId>group</groupId>" +
-                    "     <artifactId>bla-bla-bla</artifactId>" +
-                    "    </extension>" +
-                    "  </extensions>" +
-                    "</build>");
-      fail();
-    }
-    catch (MavenException e) {
-      assertExceptionHasPomFileContains(e, "group:bla-bla-bla");
-    }
-  }
-
   public void testInvalidProjectModelException() throws Exception {
     try {
       createModulePom("foo", "<groupId>test</groupId>" +
@@ -216,6 +195,29 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
     importProject();
     assertEquals(0, unresolvedArtifacts.size());
   }
+
+  public void testReportingInvalidExtensions() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  " <extensions>" +
+                  "   <extension>" +
+                  "     <groupId>xxx</groupId>" +
+                  "     <artifactId>yyy</artifactId>" +
+                  "     <version>1</version>" +
+                  "    </extension>" +
+                  "  </extensions>" +
+                  "</build>");
+
+    //assertEquals(1, unresolvedArtifacts.size());
+    //
+    //MavenProject p1 = unresolvedArtifacts.get(0).first;
+    //assertEquals("project", p1.getArtifactId());
+    //assertArtifactsAre(unresolvedArtifacts.get(0).second, "xxx:yyy:1");
+  }
+
 
   private void assertArtifactsAre(List<Artifact> actual, String... expectedNames) {
     List<String> actualNames = new ArrayList<String>();

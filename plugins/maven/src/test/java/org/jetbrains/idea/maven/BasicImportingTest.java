@@ -887,6 +887,23 @@ public class BasicImportingTest extends ImportingTestCase {
     assertModules("project");
   }
 
+  public void testProjectWithInvalidBuildExtension() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  " <extensions>" +
+                  "   <extension>" +
+                  "     <groupId>xxx</groupId>" +
+                  "     <artifactId>yyy</artifactId>" +
+                  "     <version>1</version>" +
+                  "    </extension>" +
+                  "  </extensions>" +
+                  "</build>");
+    assertModules("project"); // shouldn't throw any exception
+  }
+
   public void testUsingPropertyInBuildExtensionsOfChildModule() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
