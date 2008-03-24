@@ -12,13 +12,19 @@ public class PyClassInheritorsSearch extends ExtensibleQueryFactory<PyClass, PyC
 
   public static class SearchParameters {
     private PyClass mySuperClass;
+    private boolean myCheckDeepInheritance;
 
-    public SearchParameters(final PyClass superClass) {
+    public SearchParameters(final PyClass superClass, final boolean checkDeepInheritance) {
       mySuperClass = superClass;
+      myCheckDeepInheritance = checkDeepInheritance;
     }
 
     public PyClass getSuperClass() {
       return mySuperClass;
+    }
+
+    public boolean isCheckDeepInheritance() {
+      return myCheckDeepInheritance;
     }
   }
 
@@ -26,8 +32,8 @@ public class PyClassInheritorsSearch extends ExtensibleQueryFactory<PyClass, PyC
     super("Pythonid");
   }
 
-  public static Query<PyClass> search(final PyClass superClass) {
-    final SearchParameters parameters = new SearchParameters(superClass);
+  public static Query<PyClass> search(final PyClass superClass, final boolean checkDeepInheritance) {
+    final SearchParameters parameters = new SearchParameters(superClass, checkDeepInheritance);
     return INSTANCE.createUniqueResultsQuery(parameters);
   }
 }

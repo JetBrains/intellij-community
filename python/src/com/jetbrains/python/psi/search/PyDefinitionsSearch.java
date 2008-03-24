@@ -12,7 +12,7 @@ import com.jetbrains.python.psi.PyClass;
 public class PyDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement> {
   public boolean execute(final PsiElement queryParameters, final Processor<PsiElement> consumer) {
     if (queryParameters instanceof PyClass) {
-      final Query<PyClass> query = PyClassInheritorsSearch.search((PyClass)queryParameters);
+      final Query<PyClass> query = PyClassInheritorsSearch.search((PyClass)queryParameters, true);
       return query.forEach(new Processor<PyClass>() {
         public boolean process(final PyClass pyClass) {
           return consumer.process(pyClass);

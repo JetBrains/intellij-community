@@ -20,7 +20,14 @@ public class PyInheritorsSearchTest extends CodeInsightTestCase {
   public void testSimple() throws Exception {
     setupProject();
     final PyClass pyClass = findClass("A");
-    Collection<PyClass> inheritors = PyClassInheritorsSearch.search(pyClass).findAll();
+    Collection<PyClass> inheritors = PyClassInheritorsSearch.search(pyClass, false).findAll();
+    assertEquals(2, inheritors.size());
+  }
+
+  public void testDeep() throws Exception {
+    setupProject();
+    final PyClass pyClass = findClass("A");
+    Collection<PyClass> inheritors = PyClassInheritorsSearch.search(pyClass, true).findAll();
     assertEquals(2, inheritors.size());
   }
 
