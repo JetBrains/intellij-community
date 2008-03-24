@@ -2,8 +2,9 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.Validator;
-import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.javaee.ExternalResourceManagerEx;
+import com.intellij.javaee.UriUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
@@ -11,8 +12,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -245,7 +245,7 @@ public class XmlUtil {
       }
     }
     if (result == null) {
-      result = PsiUtil.findRelativeFile(uri, base);
+      result = findRelativeFile(uri, base);
     }
 
     if (result instanceof XmlFile) {
@@ -458,6 +458,25 @@ public class XmlUtil {
       }
     }
     return false;
+  }
+
+  @Nullable
+  public static PsiFile findRelativeFile(String uri, PsiElement base) {
+    if (base instanceof PsiFile) {
+      PsiFile baseFile = (PsiFile) base;
+      if (baseFile.getOriginalFile() != null) return findRelativeFile(uri, baseFile.getOriginalFile());
+      VirtualFile file = UriUtil.findRelativeFile(uri, baseFile.getVirtualFile());
+      if (file == null) return null;
+      return base.getManager().findFile(file);
+    }
+    else if (base instanceof PsiDirectory) {
+      PsiDirectory baseDir = (PsiDirectory) base;
+      VirtualFile file = UriUtil.findRelativeFile(uri, baseDir.getVirtualFile());
+      if (file == null) return null;
+      return base.getManager().findFile(file);
+    }
+
+    return null;
   }
 
   private static class XmlElementProcessor {
@@ -820,7 +839,7 @@ public class XmlUtil {
     if (tag == null) return new String[][]{new String[]{"", EMPTY_URI}};
 
     if (file != null) {
-      final @NotNull XmlFileNSInfoProvider[] nsProviders = ApplicationManager.getApplication().getComponents(XmlFileNSInfoProvider.class);
+      final @NotNull XmlFileNSInfoProvider[] nsProviders = Extensions.getExtensions(XmlFileNSInfoProvider.EP_NAME);
 
       NextProvider:
       for (XmlFileNSInfoProvider nsProvider : nsProviders) {
@@ -846,18 +865,6 @@ public class XmlUtil {
     }
 
     if (file != null) {
-      final FileType fileType = file.getViewProvider().getVirtualFile().getFileType();
-      if (fileType == StdFileTypes.JSP) {
-        String baseLanguageNameSpace = EMPTY_URI;
-        if (PsiUtil.isInJspFile(file)) {
-          final Language baseLanguage = PsiUtil.getJspFile(file).getViewProvider().getTemplateDataLanguage();
-          if (baseLanguage == StdLanguages.HTML || baseLanguage == StdLanguages.XHTML) {
-            baseLanguageNameSpace = XHTML_URI;
-          }
-        }
-
-        return new String[][]{new String[]{"", baseLanguageNameSpace}, new String[]{"jsp", JSP_URI}};
-      }
 
       final Language language = file.getLanguage();
       if (language == StdLanguages.HTML || language == StdLanguages.XHTML) {

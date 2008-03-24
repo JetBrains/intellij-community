@@ -16,14 +16,18 @@
 
 package com.intellij.psi.xml;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
  * Implementations of this interface exposed as ApplicationComponent add default mappings
  * for namespace prefixes to namespaces for any xml file.
  */
 public interface XmlFileNSInfoProvider {
+
+  ExtensionPointName<XmlFileNSInfoProvider> EP_NAME = new ExtensionPointName<XmlFileNSInfoProvider>("com.intellij.xml.fileNSInfoProvider");
   /**
    * Provides information (if any) for default mappings of namespace prefix to namespace identifiers.
    * @param file for which ns mapping information is requested.
@@ -31,5 +35,7 @@ public interface XmlFileNSInfoProvider {
    * null if the interface implementation does not know about such mapping.
    * Empty nsPrefix is "", nsPrefix, namespaceId should not be null, invalid mapping table is skipped.
    */
-  @Nullable String[][] getDefaultNamespaces(@NotNull XmlFile file);
+  @Nullable
+  @NonNls
+  String[][] getDefaultNamespaces(@NotNull XmlFile file);
 }

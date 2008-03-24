@@ -12,7 +12,7 @@ import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -80,7 +80,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
 
     private XmlNSDescriptor getNsDescriptor() {
       final XmlElement parentThatProvidesMetaData = PsiTreeUtil.getParentOfType(
-        PsiUtil.getOriginalElement(myElement,(Class<XmlElement>)myElement.getClass()),
+        PsiUtilBase.getOriginalElement(myElement,(Class<XmlElement>)myElement.getClass()),
         XmlDocument.class,
         XmlMarkupDecl.class
       );

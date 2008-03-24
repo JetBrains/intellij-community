@@ -129,14 +129,14 @@ public class TagNameReference implements PsiReference {
     return element.getManager().areElementsEquivalent(element, resolve());
   }
 
-  public Object[] getVariants(){
+  public String[] getVariants(){
 
     final PsiElement element = getElement();
     if(!myStartTagFlag){
       if (element instanceof XmlTag) {
-        return new Object[]{((XmlTag)element).getName()};
+        return new String[]{((XmlTag)element).getName()};
       } else {
-        return EMPTY_ARRAY;
+        return new String[0];
       }
     }
     return getTagNameVariants((XmlTag)element);
@@ -179,14 +179,11 @@ public class TagNameReference implements PsiReference {
         curElement = curElement.getContext();
       }
     }
-    final Iterator<String> nsIterator = namespaces.iterator();
 
     final Set<XmlNSDescriptor> visited = new HashSet<XmlNSDescriptor>();
-
     final XmlExtension extension = XmlExtension.getExtension((XmlFile)element.getContainingFile());
     final ArrayList<XmlElementDescriptor> variants = new ArrayList<XmlElementDescriptor>();
-    while (nsIterator.hasNext()) {
-      final String namespace = nsIterator.next();
+    for (final String namespace: namespaces) {
       final int initialSize = variants.size();
       processVariantsInNamespace(namespace, element, variants, elementDescriptor, elementNamespace, descriptorsMap, visited,
                                  context instanceof XmlTag ? (XmlTag)context : element, extension);

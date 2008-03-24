@@ -1,9 +1,9 @@
 package com.intellij.codeInsight.daemon.impl.analysis.encoding;
 
+import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiElement;
@@ -75,7 +75,7 @@ public class XmlEncodingReference implements PsiReference, EmptyResolveMessagePr
     List<LookupItem> suggestions = new ArrayList<LookupItem>(charsets.length);
     for (Charset charset : charsets) {
       String name = charset.name();
-      LookupItem item = LookupItemUtil.objectToLookupItem(name);
+      LookupItem item = new SimpleLookupItem(name);
       item.setAttribute(LookupItem.CASE_INSENSITIVE, true);
       suggestions.add(item);
     }

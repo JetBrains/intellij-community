@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewUtil;
@@ -26,7 +25,7 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
            element instanceof XmlTag ||
            element instanceof XmlAttributeValue ||
            element instanceof PsiFile ||
-           (PsiUtil.isInJspFile(element) && element instanceof XmlComment);
+           element instanceof XmlComment;
   }
 
   @NotNull

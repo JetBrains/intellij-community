@@ -16,11 +16,15 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.jsp.impl.JspElementDescriptor;
+import com.intellij.jsp.impl.TldAttributeDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -31,12 +35,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.jsp.impl.JspElementDescriptor;
-import com.intellij.jsp.impl.TldAttributeDescriptor;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -127,11 +127,11 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
       }
 
       public LookupItem[] calculateLookupItems(ExpressionContext context) {
-        final LookupItem items[] = new LookupItem[myValues == null ? 0 : myValues.length];
+        final LookupItem[] items = new LookupItem[myValues == null ? 0 : myValues.length];
 
         if (myValues != null) {
           for (int i = 0; i < items.length; i++) {
-            items[i] = LookupItemUtil.objectToLookupItem(myValues[i]);
+            items[i] = new SimpleLookupItem(myValues[i]);
           }
         }
         return items;

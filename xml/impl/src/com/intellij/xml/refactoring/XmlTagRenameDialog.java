@@ -6,8 +6,8 @@
  */
 package com.intellij.xml.refactoring;
 
+import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -19,7 +19,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.refactoring.IdentifierCharFilter;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -111,7 +110,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
     if (reference != null) {
       final Object[] variants = reference.getVariants();
       for (Object variant : variants) {
-        LookupItemUtil.addLookupItem(set, variant);
+        set.add(new SimpleLookupItem(variant));
       }
 
       LookupItem[] lookupItems = set.toArray(new LookupItem[set.size()]);

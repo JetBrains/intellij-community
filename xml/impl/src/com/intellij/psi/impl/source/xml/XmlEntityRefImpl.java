@@ -8,7 +8,6 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
@@ -72,10 +71,6 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
 
   public static XmlEntityDecl resolveEntity(final XmlElement element, final String text, PsiFile targetFile) {
     final String entityName = text.substring(1, text.length() - 1);
-
-    if (PsiUtil.isInJspFile(targetFile)) {
-      targetFile = (PsiUtil.getJspFile(targetFile)).getBaseLanguageRoot();
-    }
 
     final PsiElement targetElement = targetFile != null ? targetFile : element;
     CachedValue<XmlEntityDecl> value;

@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.javaee.UriUtil;
 import com.intellij.lang.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -23,7 +22,6 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
@@ -399,44 +397,6 @@ public final class PsiUtil extends PsiUtilBase {
   private static final String[] accessModifiers = new String[]{
     PsiModifier.PRIVATE, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC
   };
-
-  @Nullable
-  public static PsiFile findRelativeFile(String uri, PsiElement base) {
-    if (base instanceof PsiFile) {
-      PsiFile baseFile = (PsiFile) base;
-      if (baseFile.getOriginalFile() != null) return findRelativeFile(uri, baseFile.getOriginalFile());
-      VirtualFile file = UriUtil.findRelativeFile(uri, baseFile.getVirtualFile());
-      if (file == null) return null;
-      return base.getManager().findFile(file);
-    }
-    else if (base instanceof PsiDirectory) {
-      PsiDirectory baseDir = (PsiDirectory) base;
-      VirtualFile file = UriUtil.findRelativeFile(uri, baseDir.getVirtualFile());
-      if (file == null) return null;
-      return base.getManager().findFile(file);
-    }
-
-    return null;
-  }
-
-  @Nullable
-  public static PsiDirectory findRelativeDirectory(String uri, PsiElement base) {
-    if (base instanceof PsiFile) {
-      PsiFile baseFile = (PsiFile) base;
-      if (baseFile.getOriginalFile() != null) return findRelativeDirectory(uri, baseFile.getOriginalFile());
-      VirtualFile file = UriUtil.findRelativeFile(uri, baseFile.getVirtualFile());
-      if (file == null) return null;
-      return base.getManager().findDirectory(file);
-    }
-    else if (base instanceof PsiDirectory) {
-      PsiDirectory baseDir = (PsiDirectory) base;
-      VirtualFile file = UriUtil.findRelativeFile(uri, baseDir.getVirtualFile());
-      if (file == null) return null;
-      return base.getManager().findDirectory(file);
-    }
-
-    return null;
-  }
 
   /**
    * @return true if element specified is statement or expression statement. see JLS 14.5-14.8
@@ -949,22 +909,6 @@ public final class PsiUtil extends PsiUtilBase {
       return superClass == null || hasDefaultConstructor(superClass);
     }
     return false;
-  }
-
-  @Nullable
-  public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, final Class<? extends T> elementClass) {
-    final PsiFile psiFile = psiElement.getContainingFile();
-    final PsiFile originalFile = psiFile.getOriginalFile();
-    if (originalFile == null) return psiElement;
-    final TextRange range = psiElement.getTextRange();
-    final PsiElement element = originalFile.findElementAt(range.getStartOffset());
-    final int maxLength = range.getLength();
-    T parent = PsiTreeUtil.getParentOfType(element, elementClass, false);
-    for (T next = parent ;
-         next != null && next.getTextLength() <= maxLength;
-         parent = next, next = PsiTreeUtil.getParentOfType(next, elementClass, true)) {
-    }
-    return parent;
   }
 
   public static final Comparator<PsiElement> BY_POSITION = new Comparator<PsiElement>() {

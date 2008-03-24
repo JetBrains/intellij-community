@@ -350,4 +350,20 @@ public class PsiUtilBase {
     if (host != null) return isUnderPsiRoot(root, host);
     return false;
   }
+
+  @Nullable
+  public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, final Class<? extends T> elementClass) {
+    final PsiFile psiFile = psiElement.getContainingFile();
+    final PsiFile originalFile = psiFile.getOriginalFile();
+    if (originalFile == null) return psiElement;
+    final TextRange range = psiElement.getTextRange();
+    final PsiElement element = originalFile.findElementAt(range.getStartOffset());
+    final int maxLength = range.getLength();
+    T parent = PsiTreeUtil.getParentOfType(element, elementClass, false);
+    for (T next = parent ;
+         next != null && next.getTextLength() <= maxLength;
+         parent = next, next = PsiTreeUtil.getParentOfType(next, elementClass, true)) {
+    }
+    return parent;
+  }
 }

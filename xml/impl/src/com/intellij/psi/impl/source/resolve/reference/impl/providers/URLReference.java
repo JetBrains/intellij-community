@@ -9,16 +9,13 @@ import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
-import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction;
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -27,11 +24,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.XmlSchemaProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -176,34 +175,25 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
   }
 
   public Object[] getVariants() {
-    String[] resourceUrls = ExternalResourceManager.getInstance().getResourceUrls(null, true);
-    final PsiFile containingFile = myElement.getContainingFile();
-
-    if (PsiUtil.isInJspFile(containingFile)) {
-      final JspManager jspManager = JspManager.getInstance(containingFile.getProject());
-      if (jspManager != null) {
-        final Object[] possibleTldUris = jspManager.getPossibleTldUris(
-          PsiUtil.getJspFile(containingFile));
-        @NonNls Object[] result = new Object[resourceUrls.length + possibleTldUris.length + 1];
-        System.arraycopy(resourceUrls, 0, result, 0, resourceUrls.length);
-        System.arraycopy(possibleTldUris, 0, result, resourceUrls.length, possibleTldUris.length);
-        result[result.length - 1] = JspManager.TAG_DIR_NS_PREFIX + "/WEB-INF/tags";
-        return result;
-      }
-    } else if (containingFile instanceof XmlFile) {
-      final XmlDocument document = ((XmlFile)containingFile).getDocument();
-      assert document != null;
-      XmlTag rootTag = document.getRootTag();
-      final ArrayList<String> additionalNs = new ArrayList<String>();
-      if (rootTag != null) processWsdlSchemas(rootTag, new Processor<XmlTag>() {
-        public boolean process(final XmlTag xmlTag) {
-          final String s = xmlTag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME);
-          if (s != null) { additionalNs.add(s); }
-          return true;
-        }
-      });
-      resourceUrls = ArrayUtil.mergeArrays(resourceUrls, additionalNs.toArray(new String[additionalNs.size()]), String.class);
+    final XmlFile file = (XmlFile)myElement.getContainingFile();
+    final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
+    if (provider != null) {
+      final Set<String> strings = provider.getAvailableNamespaces(file);
+      return strings.toArray(new Object[strings.size()]);
     }
+    String[] resourceUrls = ExternalResourceManager.getInstance().getResourceUrls(null, true);
+    final XmlDocument document = file.getDocument();
+    assert document != null;
+    XmlTag rootTag = document.getRootTag();
+    final ArrayList<String> additionalNs = new ArrayList<String>();
+    if (rootTag != null) processWsdlSchemas(rootTag, new Processor<XmlTag>() {
+      public boolean process(final XmlTag xmlTag) {
+        final String s = xmlTag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME);
+        if (s != null) { additionalNs.add(s); }
+        return true;
+      }
+    });
+    resourceUrls = ArrayUtil.mergeArrays(resourceUrls, additionalNs.toArray(new String[additionalNs.size()]), String.class);
     return resourceUrls;
   }
 

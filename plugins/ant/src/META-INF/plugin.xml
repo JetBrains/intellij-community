@@ -26,6 +26,7 @@
     <lang.psiStructureViewFactory language="ANT" implementationClass="com.intellij.lang.ant.AntStructureViewBuilderFactory"/>
     <highlightRangeExtension implementation="com.intellij.lang.ant.AntHighlightRangeExtension"/>
     <vetoRenameCondition implementation="com.intellij.lang.ant.refactoring.AntVetoRenameCondition"/>
+    <xml.fileNSInfoProvider implementation="com.intellij.lang.ant.AntDefaultNSProvider"/>
   </extensions>
 
   <application-components>
@@ -36,10 +37,6 @@
     <component>
       <interface-class>com.intellij.lang.ant.config.impl.GlobalAntConfiguration</interface-class>
       <implementation-class>com.intellij.lang.ant.config.impl.GlobalAntConfiguration</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.psi.xml.XmlFileNSInfoProvider</interface-class>
-      <implementation-class>com.intellij.lang.ant.AntDefaultNSProvider</implementation-class>
     </component>
   </application-components>
 
