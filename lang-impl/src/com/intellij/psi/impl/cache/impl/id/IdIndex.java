@@ -69,8 +69,6 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
       final FileTypeIdIndexer indexer = IdTableBuilding.getFileTypeIndexer(file.getFileType());
       if (CachesBasedRefSearcher.DEBUG) {
         System.out.println("fileName = " + inputData.fileName);
-        System.out.println("inputData = " + inputData.content);
-        System.out.println("indexer = " + indexer);
       }
       if (indexer != null) {
         return indexer.map(inputData);

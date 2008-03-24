@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
+import com.intellij.psi.impl.search.CachesBasedRefSearcher;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
@@ -271,6 +272,11 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
             final V value = valueIt.next();
             for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext();) {
               final int id = inputIdsIterator.next();
+              if (CachesBasedRefSearcher.DEBUG) {
+                System.out.println("FileBasedIndex.processValuesImpl");
+                System.out.println("indexId = " + indexId);
+                System.out.println("id = " + id);
+              }
               VirtualFile file = IndexInfrastructure.findFileById(dirIndex, fs, id);
               if (file != null) {
                 processor.process(file, value);
@@ -390,6 +396,11 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
             for (ID<?, ?> indexId : myIndices.keySet()) {
               if (getInputFilter(indexId).acceptInput(vFile)) {
                 final int inputId = Math.abs(getFileId(vFile));
+                if (CachesBasedRefSearcher.DEBUG) {
+                  System.out.println("FileBasedIndex.indexUnsavedDocuments");
+                  System.out.println("indexId = " + indexId);
+                  System.out.println("Indexing inputId = " + inputId);
+                }
                 getIndex(indexId).update(inputId, newFc, oldFc);
               }
             }
