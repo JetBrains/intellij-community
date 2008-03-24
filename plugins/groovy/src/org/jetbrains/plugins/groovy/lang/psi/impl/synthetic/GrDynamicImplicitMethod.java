@@ -205,9 +205,7 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
   }
 
   public boolean isValid() {
-    final PsiClass psiClass = myManager.findClass(myContainingClassName, myProject.getAllScope());
-
-    return psiClass != null && psiClass.isValid();
+    return true;
   }
 
   @Nullable

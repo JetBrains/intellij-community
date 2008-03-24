@@ -158,8 +158,6 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
   }
 
   public boolean isValid() {
-    final PsiClass psiClass = myManager.findClass(myContainingClassName, myProject.getAllScope());
-
-    return psiClass != null && psiClass.isValid();
+    return true;
   }
 }
