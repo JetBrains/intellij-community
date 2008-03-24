@@ -79,7 +79,8 @@ public class FormNode extends ProjectViewNode<Form>{
   @Override
   public FileStatus getFileStatus() {
     for(BasePsiNode<? extends PsiElement> child: myChildren) {
-      if (!child.getValue().isValid()) continue;
+      final PsiElement value = child.getValue();
+      if (value == null || !value.isValid()) continue;
       final FileStatus fileStatus = child.getFileStatus();
       if (fileStatus != FileStatus.NOT_CHANGED) {
         return fileStatus;
