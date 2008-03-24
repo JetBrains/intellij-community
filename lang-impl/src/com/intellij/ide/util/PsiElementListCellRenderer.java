@@ -127,7 +127,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   @Nullable
   protected DefaultListCellRenderer getRightCellRenderer() {
     if (UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION) {
-      return new PsiElementModuleRenderer();
+      return ModuleRendererFactory.getInstance().getModuleRenderer();
     }
     return null;
   }

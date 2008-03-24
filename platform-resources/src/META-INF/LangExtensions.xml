@@ -52,6 +52,9 @@
   <applicationService serviceInterface="com.intellij.ide.PsiActionSupportFactory"
                       serviceImplementation="com.intellij.ide.PsiActionSupportFactoryImpl"/>
 
+  <applicationService serviceInterface="com.intellij.ide.util.ModuleRendererFactory"
+                      serviceImplementation="com.intellij.ide.util.PlatformModuleRendererFactory"/>
+
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
   <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"

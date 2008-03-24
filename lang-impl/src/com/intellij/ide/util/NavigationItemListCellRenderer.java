@@ -70,8 +70,9 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
       new LeftRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     add(leftCellRendererComponent, BorderLayout.WEST);
     if  (UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION){
+      final DefaultListCellRenderer moduleRenderer = ModuleRendererFactory.getInstance().getModuleRenderer();
       final Component rightCellRendererComponent =
-        new PsiElementModuleRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        moduleRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       add(rightCellRendererComponent, BorderLayout.EAST);
       final JPanel spacer = new JPanel();
       final Dimension size = rightCellRendererComponent.getSize();
