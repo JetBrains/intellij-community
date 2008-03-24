@@ -97,7 +97,7 @@ public class DynamicManagerImpl extends DynamicManager {
 
     wrapper.removeFromParent(parent, node);
     if (toSelect != null) {
-      wrapper.setSelectedNode(toSelect, myProject);
+      wrapper.setSelectedNode(toSelect);
     }
   }
 
@@ -125,7 +125,7 @@ public class DynamicManagerImpl extends DynamicManager {
               int index = getIndexToInsert(classNode, itemElement);
               classNode.insert(node, index);
               myTreeTableModel.nodesWereInserted(classNode, new int[]{index});
-              DynamicToolWindowWrapper.getInstance(myProject).setSelectedNode(node, myProject);
+              DynamicToolWindowWrapper.getInstance(myProject).setSelectedNode(node);
               return;
             }
           }
@@ -140,7 +140,7 @@ public class DynamicManagerImpl extends DynamicManager {
         classNode.add(node);
         myTreeTableModel.nodesWereInserted(classNode, new int[]{0});
 
-        DynamicToolWindowWrapper.getInstance(myProject).setSelectedNode(node, myProject);
+        DynamicToolWindowWrapper.getInstance(myProject).setSelectedNode(node);
       }
     }, true);
   }

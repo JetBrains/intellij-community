@@ -171,7 +171,7 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
             dynamicToolWindow.setIcon(IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/dynamicProperty.png"));
             dynamicToolWindow.setTitle(GroovyBundle.message("dynamic.window"));
 
-            DynamicToolWindowWrapper.getInstance(project).configureWindow(project, dynamicToolWindow);
+            DynamicToolWindowWrapper.getInstance(project).configureWindow(dynamicToolWindow);
           }
         });
 

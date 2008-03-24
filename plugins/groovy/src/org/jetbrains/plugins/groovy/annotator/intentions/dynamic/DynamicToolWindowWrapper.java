@@ -57,10 +57,13 @@ import java.util.Set;
  * Date: 09.01.2008
  */
 public class DynamicToolWindowWrapper implements ProjectComponent {
-  private static Project myProject;
+  private Project myProject;
+
+  public DynamicToolWindowWrapper(Project project) {
+    myProject = project;
+  }
 
   public static DynamicToolWindowWrapper getInstance(Project project) {
-    myProject = project;
     return project.getComponent(DynamicToolWindowWrapper.class);
   }
 
@@ -85,36 +88,36 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
 
   public TreeTable getTreeTable(ToolWindow window) {
     if (!doesTreeTableInit()) {
-      reconfigureWindow(myProject, window);
+      reconfigureWindow(window);
     }
 
     return returnTreeTable();
   }
 
-  public void configureWindow(final Project project, ToolWindow window) {
-    reconfigureWindow(project, window);
+  public void configureWindow(ToolWindow window) {
+    reconfigureWindow(window);
   }
 
-  private void reconfigureWindow(final Project project, ToolWindow window) {
+  private void reconfigureWindow(ToolWindow window) {
     window.setTitle(GroovyBundle.message("toolwindow.dynamic.properties"));
     window.setToHideOnEmptyContent(true);
 
-    buildBigPanel(project);
-    window.getComponent().add(getContentPane(project));
+    buildBigPanel();
+    window.getComponent().add(getContentPane());
   }
 
-  private JPanel buildBigPanel(final Project project) {
+  private JPanel buildBigPanel() {
     myBigPanel = new JPanel(new BorderLayout());
     myBigPanel.setBackground(UIUtil.getFieldForegroundColor());
 
-    final DynamicFilterComponent filter = new DynamicFilterComponent(project, GroovyBundle.message("dynamic.toolwindow.property.fiter"), 10);
+    final DynamicFilterComponent filter = new DynamicFilterComponent(GroovyBundle.message("dynamic.toolwindow.property.fiter"), 10);
     filter.setBackground(UIUtil.getLabelBackground());
 
     myBigPanel.add(new Label(GroovyBundle.message("dynamic.toolwindow.search.elements")), BorderLayout.NORTH);
     myBigPanel.add(filter, BorderLayout.NORTH);
 
     myTreeTablePanel = new JPanel(new BorderLayout());
-    rebuildTreePanel(project);
+    rebuildTreePanel();
 
     myBigPanel.add(myTreeTablePanel);
     myBigPanel.setPreferredSize(new Dimension(200, myBigPanel.getHeight()));
@@ -123,19 +126,19 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     return myBigPanel;
   }
 
-  public void rebuildTreePanel(Project project) {
-    DefaultMutableTreeNode myRootNode = new DefaultMutableTreeNode();
-    buildTree(project, myRootNode);
+  public void rebuildTreePanel() {
+    DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
+    buildTree(rootNode);
 
-    rebuildTreeView(project, myRootNode, false);
+    rebuildTreeView(rootNode, false);
   }
 
-  private void rebuildTreeView(Project project, DefaultMutableTreeNode root, boolean expandAll) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+  private void rebuildTreeView(DefaultMutableTreeNode root, boolean expandAll) {
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     myTreeTablePanel.removeAll();
 
-    final JScrollPane treeTable = createTable(project, root);
+    final JScrollPane treeTable = createTable(root);
 
     if (expandAll) {
       TreeUtil.expandAll(myTreeTable.getTree());
@@ -144,14 +147,14 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     myTreeTablePanel.add(treeTable);
   }
 
-  private static DefaultMutableTreeNode buildTree(Project project, DefaultMutableTreeNode rootNode) {
-    final Collection<DClassElement> containingClasses = DynamicManager.getInstance(project).getAllContainingClasses();
+  private DefaultMutableTreeNode buildTree(DefaultMutableTreeNode rootNode) {
+    final Collection<DClassElement> containingClasses = DynamicManager.getInstance(myProject).getAllContainingClasses();
 
     DefaultMutableTreeNode containingClassNode;
     for (DClassElement containingClassElement : containingClasses) {
       containingClassNode = new DefaultMutableTreeNode(containingClassElement);
 
-      final Collection<DPropertyElement> properties = DynamicManager.getInstance(project).findDynamicPropertiesOfClass(containingClassElement.getName());
+      final Collection<DPropertyElement> properties = DynamicManager.getInstance(myProject).findDynamicPropertiesOfClass(containingClassElement.getName());
 
 //      if (properties.length == 0) continue;
 
@@ -168,7 +171,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
       for (DMethodElement methodElement : methods) {
         final String[] psiTypes = QuickfixUtil.getArgumentsTypes(methodElement.getPairs());
 
-        final DMethodElement method = DynamicManager.getInstance(project).findConcreteDynamicMethod(containingClassElement.getName(), methodElement.getName(), psiTypes);
+        final DMethodElement method = DynamicManager.getInstance(myProject).findConcreteDynamicMethod(containingClassElement.getName(), methodElement.getName(), psiTypes);
 
         methodTreeNode = new DefaultMutableTreeNode(method);
         containingClassNode.add(methodTreeNode);
@@ -179,12 +182,12 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     return rootNode;
   }
 
-  private JScrollPane createTable(final Project project, MutableTreeNode myTreeRoot) {
+  private JScrollPane createTable(MutableTreeNode myTreeRoot) {
     ColumnInfo[] columnInfos = {new ClassColumnInfo(myColumnNames[CLASS_OR_ELEMENT_NAME_COLUMN]), new PropertyTypeColumnInfo(myColumnNames[TYPE_COLUMN])};
 
     myTreeTableModel = new ListTreeTableModelOnColumns(myTreeRoot, columnInfos);
 
-    myTreeTable = new MyTreeTable(myTreeTableModel, project);
+    myTreeTable = new MyTreeTable(myTreeTableModel);
 
     final MyColoredTreeCellRenderer treeCellRenderer = new MyColoredTreeCellRenderer();
 
@@ -203,7 +206,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     myTreeTable.setRootVisible(false);
     myTreeTable.setSelectionMode(DefaultTreeSelectionModel.CONTIGUOUS_TREE_SELECTION);
 
-    final MyPropertyTypeCellEditor typeCellEditor = new MyPropertyTypeCellEditor(project);
+    final MyPropertyTypeCellEditor typeCellEditor = new MyPropertyTypeCellEditor();
 
     typeCellEditor.addCellEditorListener(new CellEditorListener() {
       public void editingStopped(ChangeEvent e) {
@@ -217,7 +220,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
         }
 
         try {
-          GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(project).createTypeElement(newTypeValue);
+          GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(myProject).createTypeElement(newTypeValue);
           String canonical = typeElement.getType().getCanonicalText();
           if (canonical != null) newTypeValue = canonical;
         } catch (IncorrectOperationException ex) {
@@ -249,11 +252,11 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
         final String className = ((DClassElement) editingClassObject).getName();
 
         if (dynamicElement instanceof DPropertyElement) {
-          DynamicManager.getInstance(project).replaceDynamicPropertyType(className, name, (String) oldTypeValue, newTypeValue);
+          DynamicManager.getInstance(myProject).replaceDynamicPropertyType(className, name, (String) oldTypeValue, newTypeValue);
 
         } else if (dynamicElement instanceof DMethodElement) {
           final List<MyPair> myPairList = ((DMethodElement) dynamicElement).getPairs();
-          DynamicManager.getInstance(project).replaceDynamicMethodType(className, name, myPairList, (String) oldTypeValue, newTypeValue);
+          DynamicManager.getInstance(myProject).replaceDynamicMethodType(className, name, myPairList, (String) oldTypeValue, newTypeValue);
         }
       }
 
@@ -263,7 +266,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
       }
     });
 
-    RefactoringListenerManager.getInstance(project).addListenerProvider(new RefactoringElementListenerProvider() {
+    RefactoringListenerManager.getInstance(myProject).addListenerProvider(new RefactoringElementListenerProvider() {
       @Nullable
       public RefactoringElementListener getListener(final PsiElement element) {
         if (element instanceof PsiClass) {
@@ -271,18 +274,18 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
 
           return new RefactoringElementListener() {
             public void elementMoved(PsiElement newElement) {
-              renameElement(project, qualifiedName, newElement);
+              renameElement(qualifiedName, newElement);
             }
 
             public void elementRenamed(PsiElement newElement) {
-              renameElement(project, qualifiedName, newElement);
+              renameElement(qualifiedName, newElement);
             }
 
-            private void renameElement(Project project, String oldElementName, PsiElement newElement) {
+            private void renameElement(String oldElementName, PsiElement newElement) {
               if (newElement instanceof PsiClass) {
                 final String newQualifiedName = ((PsiClass) newElement).getQualifiedName();
 
-                DynamicManager.getInstance(project).replaceClassName(oldElementName, newQualifiedName);
+                DynamicManager.getInstance(myProject).replaceClassName(oldElementName, newQualifiedName);
               }
             }
           };
@@ -296,7 +299,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     myTreeTable.registerKeyboardAction(
         new ActionListener() {
           public void actionPerformed(ActionEvent event) {
-            deleteRow(project);
+            deleteRow();
           }
         },
         KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
@@ -340,7 +343,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     return scrollpane;
   }
 
-  private void deleteRow(final Project project) {
+  private void deleteRow() {
     final int[] rows = myTreeTable.getSelectedRows();
 
     boolean isShowDialog = true;
@@ -362,7 +365,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
         final Object classRow = selectionPath.getLastPathComponent();
         if (!(classRow instanceof DefaultMutableTreeNode)) return;
 
-        if (!removeClass(project, selectionPath, ((DefaultMutableTreeNode) classRow), isShowDialog, rowsCount)) return;
+        if (!removeClass(((DefaultMutableTreeNode) classRow), isShowDialog, rowsCount)) return;
 
       } else {
         //selectionPath is dynamic item
@@ -376,25 +379,25 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
         final DefaultMutableTreeNode classNode = (DefaultMutableTreeNode) classRow;
 
         if (classNode.getChildCount() == 1) {
-          if (!removeClass(project, selectionPath, classNode, isShowDialog, rowsCount)) return;
+          if (!removeClass(classNode, isShowDialog, rowsCount)) return;
 
         } else {
 
-          if (!removeDynamicElement(project, selectionPath, dynamicItemNode, classNode, isShowDialog, rowsCount))
+          if (!removeDynamicElement(dynamicItemNode, isShowDialog, rowsCount))
             return;
         }
       }
     }
-    DynamicManager.getInstance(project).fireChange();
+    DynamicManager.getInstance(myProject).fireChange();
   }
 
-  private boolean removeClass(Project project, TreePath selectionPath, DefaultMutableTreeNode classNode, boolean isShowDialog, int rowsCount) {
+  private boolean removeClass(DefaultMutableTreeNode classNode, boolean isShowDialog, int rowsCount) {
     final TreeNode rootObject = classNode.getParent();
-    return rootObject instanceof DefaultMutableTreeNode && removeDynamicElement(project, selectionPath, classNode, ((DefaultMutableTreeNode) rootObject), isShowDialog, rowsCount);
+    return rootObject instanceof DefaultMutableTreeNode && removeDynamicElement(classNode, isShowDialog, rowsCount);
 
   }
 
-  private boolean removeDynamicElement(Project project, TreePath selectionPath, DefaultMutableTreeNode child, DefaultMutableTreeNode parent, boolean isShowDialog, int rowsCount) {
+  private boolean removeDynamicElement(DefaultMutableTreeNode child, boolean isShowDialog, int rowsCount) {
     Object namedElement = child.getUserObject();
 
     if (!(namedElement instanceof DNamedElement)) return false;
@@ -415,7 +418,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
       if (result != DialogWrapper.OK_EXIT_CODE) return false;
     }
 
-    removeNamedElement(project, ((DNamedElement) namedElement));
+    removeNamedElement(((DNamedElement) namedElement));
 
     /*final Object selectionNode = selectionPath.getLastPathComponent();
     if (!(selectionNode instanceof DefaultMutableTreeNode)) return false;
@@ -434,22 +437,22 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     return true;
   }
 
-  private static void removeNamedElement(Project project, DNamedElement namedElement) {
+  private void removeNamedElement(DNamedElement namedElement) {
     if (namedElement instanceof DClassElement) {
-      DynamicManager.getInstance(project).removeClassElement((DClassElement) namedElement);
+      DynamicManager.getInstance(myProject).removeClassElement((DClassElement) namedElement);
     } else if (namedElement instanceof DItemElement) {
-      DynamicManager.getInstance(project).removeItemElement((DItemElement) namedElement);
+      DynamicManager.getInstance(myProject).removeItemElement((DItemElement) namedElement);
     }
   }
 
-  public void setSelectedNode(DefaultMutableTreeNode node, Project project) {
+  public void setSelectedNode(DefaultMutableTreeNode node) {
     JTree tree = myTreeTable.getTree();
     TreePath path = new TreePath(node.getPath());
     tree.expandPath(path.getParentPath());
     int row = tree.getRowForPath(path);
     myTreeTable.getSelectionModel().setSelectionInterval(row, row);
     myTreeTable.scrollRectToVisible(myTreeTable.getCellRect(row, 0, true));
-    ToolWindowManager.getInstance(project).requestFocus(myTreeTable, true);
+    ToolWindowManager.getInstance(myProject).requestFocus(myTreeTable, true);
   }
 
 
@@ -459,9 +462,9 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     myTreeTableModel.nodesWereRemoved(parent, new int[]{idx}, new TreeNode[]{child});
   }
 
-  private JPanel getContentPane(Project project) {
+  private JPanel getContentPane() {
     if (!doesTreeTableInit()) {
-      buildBigPanel(project);
+      buildBigPanel();
     }
 
     return myBigPanel;
@@ -536,16 +539,14 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
   }
 
   class DynamicFilterComponent extends FilterComponent {
-    private final Project myProject;
 
-    public DynamicFilterComponent(Project project, @NonNls String propertyName, int historySize) {
+    public DynamicFilterComponent(@NonNls String propertyName, int historySize) {
       super(propertyName, historySize);
-      myProject = project;
     }
 
     public void filter() {
       DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
-      buildTree(myProject, rootNode);
+      buildTree(rootNode);
 
       String filterText;
       List<DefaultMutableTreeNode> classes = new ArrayList<DefaultMutableTreeNode>();
@@ -607,14 +608,14 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
 
       classes.clear();
 
-      rebuildTreeView(myProject, rootNode, true);
+      rebuildTreeView(rootNode, true);
       myBigPanel.invalidate();
     }
   }
 
   public ListTreeTableModelOnColumns getTreeTableModel(ToolWindow window) {
     if (!doesTreeTableInit()) {
-      reconfigureWindow(myProject, window);
+      reconfigureWindow(window);
     }
 
     return returnTreeTableModel();
@@ -690,12 +691,12 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     }
   }
 
-  private static class MyPropertyTypeCellEditor extends AbstractTableCellEditor {
+  private class MyPropertyTypeCellEditor extends AbstractTableCellEditor {
     final EditorTextField field;
 
-    public MyPropertyTypeCellEditor(Project project) {
-      final Document document = PsiDocumentManager.getInstance(project).getDocument(new GroovyCodeFragment(project, ""));
-      field = new EditorTextField(document, project, GroovyFileType.GROOVY_FILE_TYPE);
+    public MyPropertyTypeCellEditor() {
+      final Document document = PsiDocumentManager.getInstance(myProject).getDocument(new GroovyCodeFragment(myProject, ""));
+      field = new EditorTextField(document, myProject, GroovyFileType.GROOVY_FILE_TYPE);
     }
 
     public String getCellEditorValue() {
@@ -717,11 +718,8 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
   }
 
   public class MyTreeTable extends TreeTable implements DataProvider {
-    private final Project myProject;
-
-    public MyTreeTable(TreeTableModel treeTableModel, Project project) {
+    public MyTreeTable(TreeTableModel treeTableModel) {
       super(treeTableModel);
-      myProject = project;
     }
 
     @Nullable
