@@ -18,6 +18,7 @@ import java.util.List;
 public abstract class JavaStatisticsManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.statistics.JavaStatisticsManager");
   protected static final int MAX_NAME_SUGGESTIONS_COUNT = 5;
+  @NonNls public static final String CLASS_PREFIX = "class#";
 
   @Nullable
   public static NameContext getContext(final PsiElement element) {
@@ -105,9 +106,15 @@ public abstract class JavaStatisticsManager {
   }
 
   @NonNls @NotNull
-  private static String getMemberUseKey1(PsiType qualifierType) {
+  public static String getMemberUseKey1(PsiType qualifierType) {
     qualifierType = TypeConversionUtil.erasure(qualifierType);
     return "member#" + (qualifierType == null ? "" : qualifierType.getCanonicalText());
+  }
+
+  @NonNls @NotNull
+  public static String getNameUseKey1(PsiType qualifierType) {
+    qualifierType = TypeConversionUtil.erasure(qualifierType);
+    return "memberForName#" + (qualifierType == null ? "" : qualifierType.getCanonicalText());
   }
 
   @NonNls
@@ -129,7 +136,7 @@ public abstract class JavaStatisticsManager {
       return "field#" + member.getName();
     }
 
-    return "class#" + ((PsiClass)member).getQualifiedName();
+    return CLASS_PREFIX + ((PsiClass)member).getQualifiedName();
   }
 
   public static StatisticsInfo createInfo(final PsiType qualifierType, final PsiMember member) {
@@ -137,7 +144,7 @@ public abstract class JavaStatisticsManager {
   }
 
   private static StatisticsInfo createNameUseInfo(final PsiType type, final NameContext context, final String name) {
-    return new StatisticsInfo(getMemberUseKey1(type), getNameUseKey(context, name));
+    return new StatisticsInfo(getNameUseKey1(type), getNameUseKey(context, name));
   }
 
   private static String getNameUseKey(final NameContext context, final String name) {
@@ -172,7 +179,7 @@ public abstract class JavaStatisticsManager {
 
   public static String[] getNameSuggestions(PsiType type, NameContext context, String prefix) {
     final List<String> suggestions = new ArrayList<String>();
-    final String key1 = getMemberUseKey1(type);
+    final String key1 = getNameUseKey1(type);
 
     final StatisticsInfo[] possibleNames = StatisticsManager.getInstance().getAllValues(key1);
     Arrays.sort(possibleNames);
