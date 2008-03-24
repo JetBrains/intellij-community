@@ -20,7 +20,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
@@ -33,11 +36,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author ven
@@ -107,8 +113,20 @@ public class ResolveUtil {
         if (!processElement(processor, var)) return false;
       }
 
-      for (PsiType superType : type.getSuperTypes()) {
-        if (!processNonCodeMethods(TypeConversionUtil.erasure(superType), processor, project, visited)) return false;
+
+      if (type instanceof PsiArrayType) {
+        //implicit super types
+        PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+        PsiClassType t = factory.createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(project));
+        if (!processNonCodeMethods(t, processor, project, visited)) return false;
+        t = factory.createTypeByFQClassName("java.lang.Comparable", GlobalSearchScope.allScope(project));
+        if (!processNonCodeMethods(t, processor, project, visited)) return false;
+        t = factory.createTypeByFQClassName("java.io.Serializable", GlobalSearchScope.allScope(project));
+        if (!processNonCodeMethods(t, processor, project, visited)) return false;
+      } else {
+        for (PsiType superType : type.getSuperTypes()) {
+          if (!processNonCodeMethods(TypeConversionUtil.erasure(superType), processor, project, visited)) return false;
+        }
       }
     }
 
