@@ -81,8 +81,6 @@ public abstract class DynamicManager implements ProjectComponent, PersistentStat
   @Nullable
   public abstract String getPropertyType(String className, String propertyName);
 
-  public abstract void replaceDynamicMethod(DMethodElement oldElement, DMethodElement newElement);
-
   public abstract String replaceDynamicPropertyName(String className, String oldPropertyName, String newPropertyName);
 
   public abstract String replaceDynamicPropertyType(String className, String propertyName, String oldPropertyType, String newPropertyType);

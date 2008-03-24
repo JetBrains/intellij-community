@@ -215,13 +215,6 @@ public class DynamicManagerImpl extends DynamicManager {
     return dynamicProperty.getType();
   }
 
-  public void replaceDynamicMethod(DMethodElement oldMethod, DMethodElement newElement) {
-//    final DClassElement className = oldMethod.getClassElement();
-//    assert className.getName().equals(newElement.getClassElement().getName());
-
-//    className.removeMethod(oldMethod);
-  }
-
   @NotNull
   public Collection<DClassElement> getAllContainingClasses() {
     //TODO: use iterator
