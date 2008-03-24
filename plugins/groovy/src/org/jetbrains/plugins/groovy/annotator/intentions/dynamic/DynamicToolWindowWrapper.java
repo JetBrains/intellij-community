@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -8,12 +10,13 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.ui.*;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
@@ -22,7 +25,6 @@ import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.ui.treetable.TreeTable;
 import com.intellij.util.ui.treetable.TreeTableModel;
 import com.intellij.util.ui.treetable.TreeTableTree;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +35,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemE
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
@@ -46,8 +47,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -72,7 +75,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
       "Type"
   };
 
-  private TreeTable myTreeTable;
+  private MyTreeTable myTreeTable;
 
   private boolean doesTreeTableInit() {
     return myBigPanel != null && myTreeTableModel != null && myTreeTablePanel != null;
@@ -179,7 +182,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
 
     myTreeTableModel = new ListTreeTableModelOnColumns(myTreeRoot, columnInfos);
 
-    myTreeTable = new TreeTable(myTreeTableModel);
+    myTreeTable = new MyTreeTable(myTreeTableModel, project);
 
     final MyColoredTreeCellRenderer treeCellRenderer = new MyColoredTreeCellRenderer();
 
@@ -261,27 +264,24 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     RefactoringListenerManager.getInstance(project).addListenerProvider(new RefactoringElementListenerProvider() {
       @Nullable
       public RefactoringElementListener getListener(final PsiElement element) {
-        if (element instanceof GrDynamicImplicitElement) {
+        if (element instanceof PsiClass) {
+          final String qualifiedName = ((PsiClass) element).getQualifiedName();
+
           return new RefactoringElementListener() {
             public void elementMoved(PsiElement newElement) {
-              renameElement(newElement, project, element);
+              renameElement(project, qualifiedName, newElement);
             }
 
             public void elementRenamed(PsiElement newElement) {
-              renameElement(newElement, project, element);
+              renameElement(project, qualifiedName, newElement);
             }
 
-            private void renameElement(PsiElement newElement, Project project, PsiElement element) {
-//              final PsiClass psiClass = ((GrDynamicImplicitElement) element).getContainingClassElement();
-//              String typeText = psiClass.getQualifiedName();
-//
-//              if (element instanceof GrDynamicImplicitPropertyImpl) {
-//                DynamicManager.getInstance(project).replaceDynamicPropertyName(typeText, ((GrDynamicImplicitElement) element).getName(), newElement.getText());
-//
-//              } else if (element instanceof GrDynamicImplicitMethod) {
-//                final String[] types = ((GrDynamicImplicitMethod) element).getParameterTypes();
-//                DynamicManager.getInstance(project).replaceDynamicMethodName(typeText, ((GrDynamicImplicitElement) element).getName(), newElement.getText(), types);
-//              }
+            private void renameElement(Project project, String oldElementName, PsiElement newElement) {
+              if (newElement instanceof PsiClass) {
+                final String newQualifiedName = ((PsiClass) newElement).getQualifiedName();
+
+                DynamicManager.getInstance(project).replaceClassName(oldElementName, newQualifiedName);
+              }
             }
           };
         }
@@ -560,6 +560,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
       DefaultMutableTreeNode classNode = (DefaultMutableTreeNode) rootNode.getFirstChild();
       while (classNode != null) {
 
+        if (classNode.isLeaf()) return;
         DefaultMutableTreeNode dynamicNode = (DefaultMutableTreeNode) classNode.getFirstChild();
         while (dynamicNode != null) {
 
@@ -715,45 +716,59 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     return myTreeTable != null ? myTreeTable.getTree() : null;
   }
 
-//  class MyTreeTable extends TreeTable implements DataProvider {
-//    public MyTreeTable(TreeTableModel treeTableModel) {
-//      super(treeTableModel);
-//    }
-//
-//    @Nullable
-//    public Object getData(@NonNls String dataId) {
-//      if (DataConstantsEx.PSI_ELEMENT.equals(dataId)) {
-//        final Object selectedObject = getValueAt(getSelectedRow(), getSelectedColumn());
-//        if (!(selectedObject instanceof DefaultMutableTreeNode)) return null;
-//
-//        final DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) selectedObject;
-//        final Object userObject = selectedNode.getUserObject();
-//        if (!(userObject instanceof DNamedElement)) return null;
-//
-//        if (userObject instanceof DClassElement) {
-//          final DClassElement classElement = (DClassElement) userObject;
-//          final Project project = classElement.getProject();
-//
-//          try {
-//            return GroovyPsiElementFactory.getInstance(project).createTypeElement(classElement.getName());
-//
-//          } catch (IncorrectOperationException e) {
-//            return null;
-//          }
-//        } else if (userObject instanceof DPropertyElement) {
-//          final DPropertyElement propertyElement = (DPropertyElement) userObject;
-//
-//          final TreeNode parentNode = selectedNode.getParent();
-//          if (!(parentNode instanceof DefaultMutableTreeNode)) return null;
-//
-//          final Object classObject = ((DefaultMutableTreeNode) parentNode).getUserObject();
-//          if (!(classObject instanceof DClassElement)) return null;
-//
-//          final String className = ((DClassElement) classObject).getName();
-//        }
-//      }
-//
-//      return null;
-//    }
-//  }
+  public class MyTreeTable extends TreeTable implements DataProvider {
+    private final Project myProject;
+
+    public MyTreeTable(TreeTableModel treeTableModel, Project project) {
+      super(treeTableModel);
+      myProject = project;
+    }
+
+    @Nullable
+    public Object getData(@NonNls String dataId) {
+      if (DataConstantsEx.PSI_ELEMENT.equals(dataId)) {
+        final TreePath path = getTree().getSelectionPath();
+
+        final Object selectedObject = path.getLastPathComponent();
+        if (!(selectedObject instanceof DefaultMutableTreeNode)) return null;
+
+        final DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) selectedObject;
+        final Object userObject = selectedNode.getUserObject();
+        if (!(userObject instanceof DNamedElement)) return null;
+
+        if (userObject instanceof DClassElement) {
+          final DClassElement classElement = (DClassElement) userObject;
+
+          try {
+            final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(myProject).createTypeElement(classElement.getName());
+            PsiType type = typeElement.getType();
+
+            if (type instanceof PsiPrimitiveType) {
+              type = ((PsiPrimitiveType) type).getBoxedType(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
+            }
+
+            if (!(type instanceof PsiClassType)) return null;
+            return ((PsiClassType) type).resolve();
+
+          } catch (IncorrectOperationException e) {
+            return null;
+          }
+        } else if (userObject instanceof DItemElement) {
+          final DItemElement itemElement = (DItemElement) userObject;
+
+          final TreeNode parentNode = selectedNode.getParent();
+          if (!(parentNode instanceof DefaultMutableTreeNode)) return null;
+
+          final Object classObject = ((DefaultMutableTreeNode) parentNode).getUserObject();
+          if (!(classObject instanceof DClassElement)) return null;
+
+          final String className = ((DClassElement) classObject).getName();
+
+          return itemElement.getPsi(PsiManager.getInstance(myProject), className);
+        }
+      }
+
+      return null;
+    }
+  }
 }

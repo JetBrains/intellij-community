@@ -1,15 +1,17 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
@@ -23,8 +25,10 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
@@ -206,8 +210,26 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
     return psiClass != null && psiClass.isValid();
   }
 
+  @Nullable
   public PsiClass getContainingClass() {
-    return myManager.findClass(myContainingClassName, myProject.getAllScope());
+    final Ref<PsiClass> aclass = new Ref<PsiClass>(null);
+
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        try {
+          final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(myProject).createTypeElement(myContainingClassName);
+          if (typeElement == null) return;
+
+          final PsiType type = typeElement.getType();
+          if (!(type instanceof PsiClassType)) return;
+
+          aclass.set(((PsiClassType) type).resolve());
+        } catch (IncorrectOperationException e) {
+        }
+      }
+    });
+
+    return aclass.get();
   }
 
   public String toString() {

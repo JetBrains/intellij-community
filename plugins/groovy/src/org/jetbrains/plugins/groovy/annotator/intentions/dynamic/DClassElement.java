@@ -112,8 +112,4 @@ public class DClassElement implements DNamedElement {
     return myNamesToProperties.keySet().contains(itemElement.getName()) ||
         (itemElement instanceof DMethodElement && myMethods.contains(itemElement));
   }
-
-  public Project getProject() {
-    return myProject;
-  }
 }

@@ -51,7 +51,7 @@ public abstract class DynamicManager implements ProjectComponent, PersistentStat
   @NotNull
   public abstract Collection<DClassElement> getAllContainingClasses();
 
-  public abstract String replaceClassName(String oldClassName, String newClassName);
+  public abstract void replaceClassName(String oldClassName, String newClassName);
 
   /*
   * Adds dynamicPropertyChange listener

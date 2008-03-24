@@ -1,10 +1,9 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DNamedElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DTypedElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiManager;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -71,6 +70,7 @@ public abstract class DItemElement implements DNamedElement, DTypedElement {
 
   public void setName(String name) {
     this.myName = name;
+    clearCache();
   }
 
   public abstract PsiNamedElement getPsi(PsiManager manager, String containingClassName);

@@ -325,17 +325,51 @@ public class DynamicManagerImpl extends DynamicManager {
     });
   }
 
-  public String replaceClassName(String oldClassName, String newClassName) {
+  public void replaceClassName(String oldClassName, String newClassName) {
     final DRootElement rootElement = getRootElement();
     final DClassElement oldClassElement = findClassElement(rootElement, oldClassName);
-    if (oldClassElement == null) return oldClassName;
+    if (oldClassElement == null) return;
 
     oldClassElement.setName(newClassName);
 
+//    updateClassNameInTree(oldClassElement, newClassName);
     fireChange();
-
-    return newClassName;
   }
+
+//  private void updateClassNameInTree(DClassElement oldClassElement, String newClassName) {
+//    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID);
+//    final ListTreeTableModelOnColumns myTreeTableModel = DynamicToolWindowWrapper.getInstance(myProject).getTreeTableModel(window, myProject);
+//
+//    final Object rootObject = myTreeTableModel.getRoot();
+//    if (!(rootObject instanceof DefaultMutableTreeNode)) return;
+//    final DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) rootObject;
+//
+//    if (rootNode.getChildCount() > 0) {
+//      for (DefaultMutableTreeNode classNode = (DefaultMutableTreeNode) rootNode.getFirstChild();
+//           classNode != null;
+//           classNode = (DefaultMutableTreeNode) rootNode.getChildAfter(classNode)) {
+//
+//        final Object classRow = classNode.getUserObject();
+//
+//        if (!(classRow instanceof DClassElement)) return;
+//
+//        DClassElement otherClassName = (DClassElement) classRow;
+//        if (otherClassName.getName().equals(oldClassElement.getName())) {
+//
+//          final DefaultMutableTreeNode classNode1 = classNode;
+//          ApplicationManager.getApplication().invokeLater(new Runnable() {
+//            public void run() {
+//              myTreeTableModel.nodeStructureChanged(classNode1);
+//              myTreeTableModel.nodeChanged(classNode1);
+//            }
+//          });
+//
+//          DynamicToolWindowWrapper.getInstance(myProject).setSelectedNode(classNode);
+//          return;
+//        }
+//      }
+//    }
+//  }
 
   public void fireChange() {
     for (DynamicChangeListener listener : myListeners) {
