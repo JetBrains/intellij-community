@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent;
+import org.jetbrains.idea.svn.dialogs.RepositoryTreeModel;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -18,6 +19,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.TreeNode;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -35,13 +37,13 @@ public class CopyOptionsDialog extends DialogWrapper {
   private JComboBox myMessagesBox;
   private JPanel myMainPanel;
 
-  public CopyOptionsDialog(String title, Project project, SVNURL rootURL, SVNURL url) {
+  public CopyOptionsDialog(String title, Project project, final RepositoryTreeNode root, final RepositoryTreeNode node) {
     super(project, true);
-    myURL = url;
     myProject = project;
+    myURL = node.getURL();
 
     myURLLabel.setText(myURL.toString());
-    myBrowser.setRepositoryURL(rootURL, false);
+    myBrowser.setRepositoryURL(root.getURL(), false);
     myBrowser.addChangeListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         update();
@@ -80,6 +82,16 @@ public class CopyOptionsDialog extends DialogWrapper {
     setTitle(title);
     init();
     update();
+
+    expandNode(node);
+  }
+
+  private void expandNode(final RepositoryTreeNode node) {
+    // we need only a path to root, i.e. without first element
+    final RepositoryTreeModel model = (RepositoryTreeModel) myBrowser.getRepositoryTree().getModel();
+    final TreeNode[] subPath = model.getPathToSubRoot(node);
+
+    ((RepositoryTreeNode) model.getRoot()).reload(new Expander(subPath, myBrowser));
   }
 
   @Override
@@ -111,6 +123,12 @@ public class CopyOptionsDialog extends DialogWrapper {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public TreeNode[] getTargetPath() {
+    final RepositoryTreeNode selectedNode = myBrowser.getSelectedNode();
+    return (selectedNode == null) ? null : selectedNode.getSelfPath();
   }
 
   @Nullable

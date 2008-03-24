@@ -9,6 +9,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 
 public class RepositoryTreeModel extends DefaultTreeModel implements Disposable {
 
@@ -54,6 +55,13 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
       }
     }
     return false;
+  }
+
+  public TreeNode[] getPathToSubRoot(final TreeNode node) {
+    final TreeNode[] path = getPathToRoot(node);
+    final TreeNode[] result = new TreeNode[path.length - 1];
+    System.arraycopy(path, 1, result, 0, path.length - 1);
+    return result;
   }
 
   public void addRoot(SVNURL url) {

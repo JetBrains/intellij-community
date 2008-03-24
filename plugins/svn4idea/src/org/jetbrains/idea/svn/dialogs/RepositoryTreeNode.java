@@ -23,7 +23,11 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   private final SVNURL myURL;
   private final Object myUserObject;
 
-  private Runnable myAfterChildrenLoad;
+  private ReloadListener myAfterChildrenLoad;
+  /**
+   * true is children was not loaded jet = are made null by reload OR contain only fake element
+   */
+  private boolean myChildrenInvalidated;
 
   public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode, @NotNull SVNRepository repository,
                             @NotNull SVNURL url, Object userObject) {
@@ -38,6 +42,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     }
     myModel = model;
     myUserObject = userObject;
+    myChildrenInvalidated = true;
   }
 
   public Object getUserObject() {
@@ -76,9 +81,12 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     reload(null);
   }
 
-  public void reload(@Nullable final Runnable doAfterChildrenLoad) {
+  public void reload(@Nullable final ReloadListener doAfterChildrenLoad) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     // couldn't do that when 'loading' is in progress.
     myChildren = null;
+    myChildrenInvalidated = true;
 
     if (doAfterChildrenLoad != null) {
       myAfterChildrenLoad = doAfterChildrenLoad;
@@ -86,7 +94,22 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
 
     myModel.reload(this);
     if (isLeaf()) {
-      ((RepositoryTreeNode) getParent()).reload();
+      ((RepositoryTreeNode) getParent()).reload(doAfterChildrenLoad);
+    }
+  }
+
+  public void registerReloadListener(@Nullable final ReloadListener doAfterChildrenLoad) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    if (doAfterChildrenLoad != null) {
+      if (myChildrenInvalidated) {
+        myAfterChildrenLoad = doAfterChildrenLoad;
+
+        getChildren();
+      } else {
+        // for next level children: call directly
+        doAfterChildrenLoad.onAfterReload(this);
+      }
     }
   }
 
@@ -105,7 +128,9 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   }
 
   private List getChildren() {
-    if (myChildren == null) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    
+    if ((myChildren == null) && myChildrenInvalidated) {
       myChildren = new ArrayList<TreeNode>();
       myChildren.add(new DefaultMutableTreeNode("Loading"));
       loadChildren();
@@ -143,16 +168,19 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
       private void invokeLaterTreeFilling(@NotNull final List<TreeNode> nodesToFillWith) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            // could be null if refresh was called during 'loading'.
-            if (myChildren != null) {
-              myChildren.clear();
-              myChildren.addAll(nodesToFillWith);
-            }
-            myModel.reload(RepositoryTreeNode.this);
+            if (myChildrenInvalidated) {
+              // could be null if refresh was called during 'loading'.
+              if (myChildren != null) {
+                myChildren.clear();
+                myChildren.addAll(nodesToFillWith);
+              }
+              myModel.reload(RepositoryTreeNode.this);
 
-            if (myAfterChildrenLoad != null) {
-              myAfterChildrenLoad.run();
-              myAfterChildrenLoad = null;
+              if (myAfterChildrenLoad != null) {
+                myAfterChildrenLoad.onAfterReload(RepositoryTreeNode.this);
+                myAfterChildrenLoad = null;
+              }
+              myChildrenInvalidated = false;
             }
           }
         });
@@ -175,5 +203,13 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
 
   public void dispose() {
     myRepository.closeSession();
+  }
+
+  public TreeNode[] getSelfPath() {
+    return myModel.getPathToRoot(this);
+  }
+
+  public boolean isRepositoryRoot() {
+    return ! (myUserObject instanceof SVNDirEntry);
   }
 }

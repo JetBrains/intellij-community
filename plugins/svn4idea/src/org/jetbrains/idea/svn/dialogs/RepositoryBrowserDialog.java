@@ -182,8 +182,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     group.add(new ImportAction());
     group.add(new ExportAction());
     group.addSeparator();
-    group.add(new CopyAction());
-    group.add(new MoveAction());
+    group.add(new CopyOrMoveAction("Branch or Tag...", "copy.dialog.title", false));
+    group.add(new CopyOrMoveAction("_Move or Rename...", "move.dialog.title", true));
     group.add(myDeleteAction);
     group.add(copyUrlAction);
     group.addSeparator();
@@ -507,55 +507,42 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected class CopyAction extends AnAction {
+  protected class CopyOrMoveAction extends AnAction {
+    private final String myActionName;
+    private final String myDialogTitleKey;
+    private final boolean myMove;
+
+    public CopyOrMoveAction(final String actionName, final String dialogTitleKey, final boolean move) {
+      myActionName = actionName;
+      myDialogTitleKey = dialogTitleKey;
+      myMove = move;
+    }
+
     public void update(AnActionEvent e) {
-      e.getPresentation().setText("Branch or Tag...");
+      e.getPresentation().setText(myActionName);
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       e.getPresentation().setEnabled(node != null && node.getSVNDirEntry() != null);
     }
-    public void actionPerformed(AnActionEvent e) {
-      SVNURL root;
-      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
-      while (node.getSVNDirEntry() != null) {
-        node = (RepositoryTreeNode) node.getParent();
+
+    public void actionPerformed(final AnActionEvent e) {
+      final RepositoryTreeNode node = getNotNullSelectedNode();
+      RepositoryTreeNode rootNode = node;
+      while (! rootNode.isRepositoryRoot()) {
+        rootNode = (RepositoryTreeNode) rootNode.getParent();
       }
-      root = node.getURL();
-      CopyOptionsDialog dialog = new CopyOptionsDialog(SvnBundle.message("copy.dialog.title"),
-                                                       myProject, root, getNotNullSelectedNode().getURL());
+
+      CopyOptionsDialog dialog = new CopyOptionsDialog(SvnBundle.message(myDialogTitleKey), myProject, rootNode, node);
       dialog.show();
       if (dialog.isOK()) {
         SVNURL dst = dialog.getTargetURL();
         SVNURL src = dialog.getSourceURL();
         String message = dialog.getCommitMessage();
-        doCopy(src, dst, false, message);
+        doCopy(src, dst, myMove, message);
         node.reload();
-      }
-    }
-  }
-  protected class MoveAction extends AnAction {
-
-    public void update(AnActionEvent e) {
-      e.getPresentation().setText("_Move or Rename...");
-      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
-      e.getPresentation().setEnabled(node != null && node.getSVNDirEntry() != null);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      SVNURL root;
-      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
-      while (node.getSVNDirEntry() != null) {
-        node = (RepositoryTreeNode) node.getParent();
-      }
-      root = node.getURL();
-      CopyOptionsDialog dialog = new CopyOptionsDialog(SvnBundle.message("move.dialog.title"),
-                                                       myProject, root, getRepositoryBrowser().getSelectedNode().getURL());
-      dialog.show();
-      if (dialog.isOK()) {
-        SVNURL dst = dialog.getTargetURL();
-        SVNURL src = dialog.getSourceURL();
-        String message = dialog.getCommitMessage();
-        doCopy(src, dst, true, message);
-        node.reload();
+        final TreeNode[] path = dialog.getTargetPath();
+        if (path != null) {
+          rootNode.reload(new Expander(path, myRepositoryBrowser));
+        }
       }
     }
   }
@@ -599,7 +586,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  private class AfterDeletionSelectionInstaller implements Runnable {
+  private class AfterDeletionSelectionInstaller implements ReloadListener {
     private final RepositoryTreeNode myParentNode;
     private final String myDeletedNodeName;
     private final boolean myIsFolder;
@@ -610,7 +597,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       myIsFolder = ! deletedNode.isLeaf();
     }
 
-    public void run() {
+    public void onAfterReload(final RepositoryTreeNode node) {
       TreeNode nodeToSelect = myParentNode.getNextChildByKey(myDeletedNodeName, myIsFolder);
       nodeToSelect = (nodeToSelect == null) ? myParentNode : nodeToSelect;
       getRepositoryBrowser().setSelectedNode(nodeToSelect);

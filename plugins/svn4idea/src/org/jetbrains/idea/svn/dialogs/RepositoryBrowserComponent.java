@@ -81,6 +81,15 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     myRepositoryTree.setSelectionRow(0);
   }
 
+  public void expandNode(@NotNull final TreeNode treeNode) {
+    final TreeNode[] pathToNode = ((RepositoryTreeModel) myRepositoryTree.getModel()).getPathToRoot(treeNode);
+
+    if ((pathToNode != null) && (pathToNode.length > 0)) {
+      final TreePath treePath = new TreePath(pathToNode);
+      myRepositoryTree.expandPath(treePath);
+    }
+  }
+
   public void addURL(String url) {
     try {
       ((RepositoryTreeModel) myRepositoryTree.getModel()).addRoot(SVNURL.parseURIEncoded(url));
