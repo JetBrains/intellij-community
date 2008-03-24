@@ -39,6 +39,8 @@
                         serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
     <applicationService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
                         serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
+    <applicationService serviceInterface="com.intellij.ide.util.ModuleRendererFactory"
+                        serviceImplementation="com.intellij.ide.util.PlatformModuleRendererFactory"/>
 
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler"/>
