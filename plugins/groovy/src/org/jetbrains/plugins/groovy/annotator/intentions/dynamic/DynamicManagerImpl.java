@@ -65,44 +65,48 @@ public class DynamicManagerImpl extends DynamicManager {
     addItemInTree(classElement, propertyElement);
   }
 
-  private void addItemInTree(DClassElement classElement, DItemElement itemElement) {
+  private void addItemInTree(final DClassElement classElement, final DItemElement itemElement) {
     final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID);
     final ListTreeTableModelOnColumns myTreeTableModel = DynamicToolWindowWrapper.getInstance(myProject).getTreeTableModel(window, myProject);
 
-    final Object rootObject = myTreeTableModel.getRoot();
-    if (!(rootObject instanceof DefaultMutableTreeNode)) return;
-    final DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) rootObject;
+    window.activate(new Runnable() {
+      public void run() {
+        final Object rootObject = myTreeTableModel.getRoot();
+        if (!(rootObject instanceof DefaultMutableTreeNode)) return;
+        final DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) rootObject;
 
-    DefaultMutableTreeNode node = new DefaultMutableTreeNode(itemElement);
-    if (rootNode.getChildCount() > 0) {
-      for (DefaultMutableTreeNode classNode = (DefaultMutableTreeNode) rootNode.getFirstChild();
-           classNode != null;
-           classNode = (DefaultMutableTreeNode) rootNode.getChildAfter(classNode)) {
+        DefaultMutableTreeNode node = new DefaultMutableTreeNode(itemElement);
+        if (rootNode.getChildCount() > 0) {
+          for (DefaultMutableTreeNode classNode = (DefaultMutableTreeNode) rootNode.getFirstChild();
+               classNode != null;
+               classNode = (DefaultMutableTreeNode) rootNode.getChildAfter(classNode)) {
 
-        final Object classRow = classNode.getUserObject();
-        if (!(classRow instanceof DClassElement)) return;
+            final Object classRow = classNode.getUserObject();
+            if (!(classRow instanceof DClassElement)) return;
 
-        DClassElement otherClassName = (DClassElement) classRow;
-        if (otherClassName.equals(classElement)) {
-          int index = getIndexToInsert(classNode, itemElement);
-          classNode.insert(node, index);
-          myTreeTableModel.nodesWereInserted(classNode, new int[]{index});
-          DynamicToolWindowWrapper.getInstance(myProject).setSelectedNode(node, myProject);
-          return;
+            DClassElement otherClassName = (DClassElement) classRow;
+            if (otherClassName.equals(classElement)) {
+              int index = getIndexToInsert(classNode, itemElement);
+              classNode.insert(node, index);
+              myTreeTableModel.nodesWereInserted(classNode, new int[]{index});
+              DynamicToolWindowWrapper.getInstance(myProject).setSelectedNode(node, myProject);
+              return;
+            }
+          }
         }
+
+        // if there is no such class in tree
+        int index = getIndexToInsert(rootNode, classElement);
+        DefaultMutableTreeNode classNode = new DefaultMutableTreeNode(classElement);
+        rootNode.insert(classNode, index);
+        myTreeTableModel.nodesWereInserted(rootNode, new int[]{index});
+
+        classNode.add(node);
+        myTreeTableModel.nodesWereInserted(classNode, new int[]{0});
+
+        DynamicToolWindowWrapper.getInstance(myProject).setSelectedNode(node, myProject);
       }
-    }
-
-    // if there is no such class in tree
-    int index = getIndexToInsert(rootNode, classElement);
-    DefaultMutableTreeNode classNode = new DefaultMutableTreeNode(classElement);
-    rootNode.insert(classNode, index);
-    myTreeTableModel.nodesWereInserted(rootNode, new int[]{index});
-
-    classNode.add(node);
-    myTreeTableModel.nodesWereInserted(classNode, new int[]{0});
-
-    DynamicToolWindowWrapper.getInstance(myProject).setSelectedNode(node, myProject);
+    }, true);
   }
 
   private int getIndexToInsert(DefaultMutableTreeNode parent, DNamedElement namedElement) {
