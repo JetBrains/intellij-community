@@ -158,26 +158,23 @@ public class MavenFactory {
   }
 
   public static MavenEmbedder createEmbedderForRead(MavenCoreSettings settings) throws MavenException {
-    return createEmbedder(settings, new CustomizerForRead());
+    return createEmbedder(settings, new EmbedderCustomizer(null));
   }
 
   public static MavenEmbedder createEmbedderForResolve(MavenCoreSettings settings, MavenToIdeaMapping mapping) throws MavenException {
-    return createEmbedder(settings, new CustomizerForResolve(mapping));
+    return createEmbedder(settings, new EmbedderCustomizer(mapping));
   }
 
-  private static MavenEmbedder createEmbedder(MavenCoreSettings settings, CustomizerForRead customizer) throws MavenException {
-    return createEmbedder(settings.getMavenHome(),
-                          settings.getEffectiveLocalRepository(),
-                          settings.getMavenSettingsFile(),
-                          settings.getClass().getClassLoader(),
-                          customizer);
+  private static MavenEmbedder createEmbedder(MavenCoreSettings settings, EmbedderCustomizer customizer) throws MavenException {
+    return createEmbedder(settings.getMavenHome(), settings.getEffectiveLocalRepository(), settings.getMavenSettingsFile(),
+                          settings.getClass().getClassLoader(), customizer);
   }
 
   private static MavenEmbedder createEmbedder(String mavenHome,
                                               File localRepo,
                                               String userSettings,
                                               ClassLoader classLoader,
-                                              CustomizerForRead customizer) throws MavenException {
+                                              EmbedderCustomizer customizer) throws MavenException {
     Configuration configuration = new DefaultConfiguration();
 
     configuration.setConfigurationCustomizer(customizer);
@@ -249,31 +246,21 @@ public class MavenFactory {
     }
   }
 
-  public static class CustomizerForRead implements ContainerCustomizer {
-    public void customize(PlexusContainer c) {
-      ComponentDescriptor d = c.getComponentDescriptor(ExtensionManager.class.getName());
-      d.setImplementation(CustomExtensionManager.class.getName());
-    }
-
-    public void postCustomize(MavenEmbedder e) {
-    }
-  }
-
-  private static class CustomizerForResolve extends CustomizerForRead {
+  private static class EmbedderCustomizer implements ContainerCustomizer {
     private MavenToIdeaMapping myMapping;
 
-    public CustomizerForResolve(MavenToIdeaMapping mapping) {
+    public EmbedderCustomizer(MavenToIdeaMapping mapping) {
       myMapping = mapping;
     }
 
-    @Override
     public void customize(PlexusContainer c) {
-      super.customize(c);
       ComponentDescriptor d = c.getComponentDescriptor(ArtifactResolver.ROLE);
       d.setImplementation(CustomArtifactResolver.class.getName());
+
+      d = c.getComponentDescriptor(ExtensionManager.class.getName());
+      d.setImplementation(CustomExtensionManager.class.getName());
     }
 
-    @Override
     public void postCustomize(MavenEmbedder e) {
       try {
         CustomArtifactResolver r = (CustomArtifactResolver)e.getPlexusContainer().lookup(ArtifactResolver.ROLE);
