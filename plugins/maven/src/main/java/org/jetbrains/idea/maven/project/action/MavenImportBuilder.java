@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.project.action;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenFactory;
+import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.FileFinder;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.project.*;
@@ -64,6 +66,12 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     try {
       myResolutionProblems = new ArrayList<Pair<File, List<String>>>();
       myImportProcessor.resolve(dest, myProfiles, myResolutionProblems);
+
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()
+          && !myResolutionProblems.isEmpty()) {
+        logResolutionProblems();
+        return false;
+      }
     }
     catch (MavenException e) {
       Messages.showErrorDialog(dest, e.getMessage(), getTitle());
@@ -73,6 +81,18 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
       return false;
     }
     return true;
+  }
+
+  private void logResolutionProblems() {
+    String formatted = "There were resolution problems:";
+    for (Pair<File, List<String>> problems : myResolutionProblems) {
+      formatted += "\n" + problems.first;
+      for (String message : problems.second) {
+        formatted += "\n\t" + message;
+      }
+      formatted += "\n";
+    }
+    MavenLog.LOG.error(formatted);
   }
 
   public void commit(final Project project) {
