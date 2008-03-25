@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -23,7 +24,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -69,39 +73,29 @@ public class QuickfixUtil {
   }
 
   public static String[] getMethodArgumentsNames(Project project, PsiType[] types) {
-    List<String> unicNames = new ArrayList<String>();
+    Set<String> uniqNames = new LinkedHashSet<String>();
+    Set<String> nonUniqNames = new THashSet<String>();
     for (PsiType type : types) {
       final SuggestedNameInfo nameInfo = CodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, null, type);
 
-      final String name = nameInfo.names[0] + "<0";
-      if (unicNames.contains(name)) {
-        final String[] strings = name.split("<");
-        final String realName = strings[0];
-        final String count = strings[1];
-        final int i = Integer.parseInt(count);
-        unicNames.add(realName + "<" + (i + 1));
-        continue;
-      }
-
-      unicNames.add(name);
-    }
-
-    List<String> names = new ArrayList<String>();
-    for (String unicName : unicNames) {
-      final String[] strings = unicName.split("<");
-      final String realName = strings[0];
-      final String countStr = strings[1];
-
-      final String name;
-      if ("0".equals(countStr)) {
-        name = realName;
+      final String name = nameInfo.names[0];
+      if (uniqNames.contains(name)) {
+        int i = 2;
+        while (uniqNames.contains(name + i)) i++;
+        uniqNames.add(name + i);
+        nonUniqNames.add(name);
       } else {
-        name = realName + countStr;
+        uniqNames.add(name);
       }
-      names.add(name);
     }
 
-    return names.toArray(new String[names.size()]);
+    final String[] result = new String[uniqNames.size()];
+    int i = 0;
+    for (String name : uniqNames) {
+      result[i] = nonUniqNames.contains(name) ? name + 1 : name;
+      i++;
+    }
+    return result;
   }
 
   public static List<MyPair> swapArgumentsAndTypes(String[] names, PsiType[] types) {
