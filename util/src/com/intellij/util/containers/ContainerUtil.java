@@ -265,7 +265,8 @@ public class ContainerUtil {
       T t = iterator.next();
       if (!collected.contains(t)) {
         collected.add(t);
-      } else {
+      }
+      else {
         iterator.remove();
       }
     }

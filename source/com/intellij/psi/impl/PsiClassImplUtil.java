@@ -637,8 +637,7 @@ public class PsiClassImplUtil {
         return new PsiClassType[]{baseClassType};
       }
       else {
-        PsiClassType objectType = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Object",
-                                                                                                    psiClass.getResolveScope());
+        PsiClassType objectType = PsiType.getJavaLangObject(psiClass.getManager(), psiClass.getResolveScope());
         return new PsiClassType[]{objectType, baseClassType};
       }
     }
@@ -655,7 +654,7 @@ public class PsiClassImplUtil {
         return PsiClassType.EMPTY_ARRAY;
       }
       PsiManager manager = psiClass.getManager();
-      PsiClassType objectType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Object", psiClass.getResolveScope());
+      PsiClassType objectType = PsiType.getJavaLangObject(manager, psiClass.getResolveScope());
       result[0] = objectType;
     }
     System.arraycopy(implementsTypes, 0, result, extendsListLength, implementsTypes.length);

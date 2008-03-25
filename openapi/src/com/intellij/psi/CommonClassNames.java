@@ -57,4 +57,5 @@ public interface CommonClassNames {
   @NonNls String JAVA_LANG_CHARACTER = "java.lang.Character";
 
 
+  @NonNls String JAVA_LANG_CLONEABLE = "java.lang.Cloneable";
 }

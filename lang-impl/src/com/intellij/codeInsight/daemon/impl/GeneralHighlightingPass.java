@@ -325,6 +325,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
     collection.addAll(myHighlights);
     myInjectedPsiHighlights.put(range, collection);
+    myHighlights = Collections.emptyList();
+
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myInjectedPsiHighlights, Pass.UPDATE_ALL);
 
     if (myUpdateAll) {

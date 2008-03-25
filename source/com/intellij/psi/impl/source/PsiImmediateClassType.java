@@ -23,7 +23,7 @@ public class PsiImmediateClassType extends PsiClassType {
   private String myPresentableText;
   private String myInternalCanonicalText;
 
-  private final PsiClassType.ClassResolveResult myClassResolveResult = new PsiClassType.ClassResolveResult() {
+  private final ClassResolveResult myClassResolveResult = new ClassResolveResult() {
     public PsiClass getElement() {
       return myClass;
     }
@@ -46,10 +46,6 @@ public class PsiImmediateClassType extends PsiClassType {
 
     public PsiElement getCurrentFileResolveScope() {
       return null;
-    }
-
-    public boolean hasCandidates() {
-      return true;
     }
 
     public boolean isPackagePrefixPackageReference() {
@@ -87,7 +83,7 @@ public class PsiImmediateClassType extends PsiClassType {
   }
 
   @NotNull
-  public PsiClassType.ClassResolveResult resolveGenerics() {
+  public ClassResolveResult resolveGenerics() {
     return myClassResolveResult;
   }
 
@@ -98,7 +94,7 @@ public class PsiImmediateClassType extends PsiClassType {
 
   public String getPresentableText() {
     if (myPresentableText == null) {
-      final StringBuffer buffer = new StringBuffer();
+      final StringBuilder buffer = new StringBuilder();
       buildText(myClass, buffer, false, false);
       myPresentableText = buffer.toString();
     }
@@ -107,7 +103,7 @@ public class PsiImmediateClassType extends PsiClassType {
 
   public String getCanonicalText() {
     if (myCanonicalText == null) {
-      final StringBuffer buffer = new StringBuffer();
+      final StringBuilder buffer = new StringBuilder();
       buildText(myClass, buffer, true, false);
       myCanonicalText = buffer.toString();
     }
@@ -116,14 +112,14 @@ public class PsiImmediateClassType extends PsiClassType {
 
   public String getInternalCanonicalText() {
     if (myInternalCanonicalText == null) {
-      final StringBuffer buffer = new StringBuffer();
+      final StringBuilder buffer = new StringBuilder();
       buildText(myClass, buffer, true, true);
       myInternalCanonicalText = buffer.toString();
     }
     return myInternalCanonicalText;
   }
 
-  private void buildText(PsiClass aClass, StringBuffer buffer, boolean canonical, boolean internal) {
+  private void buildText(PsiClass aClass, StringBuilder buffer, boolean canonical, boolean internal) {
     PsiSubstitutor substitutor = mySubstitutor;
     if (aClass instanceof PsiAnonymousClass) {
       ClassResolveResult baseResolveResult = ((PsiAnonymousClass) aClass).getBaseClassType().resolveGenerics();
@@ -163,7 +159,7 @@ public class PsiImmediateClassType extends PsiClassType {
 
     final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
     if (typeParameters.length > 0) {
-      StringBuffer pineBuffer = new StringBuffer();
+      StringBuilder pineBuffer = new StringBuilder();
       pineBuffer.append('<');
       for (int i = 0; i < typeParameters.length; i++) {
         PsiTypeParameter typeParameter = typeParameters[i];

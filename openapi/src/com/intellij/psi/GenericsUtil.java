@@ -51,14 +51,14 @@ public class GenericsUtil {
     if (type1 instanceof PsiCapturedWildcardType) {
       return getLeastUpperBound(((PsiCapturedWildcardType)type1).getUpperBound(), type2, compared, manager);
     }
-    else if (type2 instanceof PsiCapturedWildcardType) {
+    if (type2 instanceof PsiCapturedWildcardType) {
       return getLeastUpperBound(type1, ((PsiCapturedWildcardType)type2).getUpperBound(), compared, manager);
     }
 
     if (type1 instanceof PsiWildcardType) {
       return getLeastUpperBound(((PsiWildcardType)type1).getExtendsBound(), type2, compared, manager);
     }
-    else if (type2 instanceof PsiWildcardType) {
+    if (type2 instanceof PsiWildcardType) {
       return getLeastUpperBound(type1, ((PsiWildcardType)type2).getExtendsBound(), compared, manager);
     }
 
@@ -69,7 +69,7 @@ public class GenericsUtil {
         return componentType.createArrayType();
       }
     }
-    else if (type1 instanceof PsiIntersectionType) {
+    if (type1 instanceof PsiIntersectionType) {
       Set<PsiType> newConjuncts = new LinkedHashSet<PsiType>();
       final PsiType[] conjuncts = ((PsiIntersectionType)type1).getConjuncts();
       for (PsiType type : conjuncts) {
@@ -77,30 +77,28 @@ public class GenericsUtil {
       }
       return PsiIntersectionType.createIntersection(newConjuncts.toArray(new PsiType[newConjuncts.size()]));
     }
-    else if (type2 instanceof PsiIntersectionType) {
+    if (type2 instanceof PsiIntersectionType) {
       return getLeastUpperBound(type2, type1, compared, manager);
     }
-    else if (type1 instanceof PsiClassType && type2 instanceof PsiClassType) {
+    if (type1 instanceof PsiClassType && type2 instanceof PsiClassType) {
       PsiClassType.ClassResolveResult classResolveResult1 = ((PsiClassType)type1).resolveGenerics();
       PsiClassType.ClassResolveResult classResolveResult2 = ((PsiClassType)type2).resolveGenerics();
       PsiClass aClass = classResolveResult1.getElement();
       PsiClass bClass = classResolveResult2.getElement();
       if (aClass == null || bClass == null) {
-        return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(manager.getProject()));
+        return PsiType.getJavaLangObject(manager, GlobalSearchScope.allScope(manager.getProject()));
       }
 
       PsiClass[] supers = getLeastUpperClasses(aClass, bClass);
       if (supers.length == 0) {
-        return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Object", aClass.getResolveScope());
+        return PsiType.getJavaLangObject(manager, aClass.getResolveScope());
       }
 
       PsiClassType[] conjuncts = new PsiClassType[supers.length];
       for (int i = 0; i < supers.length; i++) {
         PsiClass aSuper = supers[i];
-        PsiSubstitutor subst1 = TypeConversionUtil.getSuperClassSubstitutor(aSuper, aClass,
-                                                                            classResolveResult1.getSubstitutor());
-        PsiSubstitutor subst2 = TypeConversionUtil.getSuperClassSubstitutor(aSuper, bClass,
-                                                                            classResolveResult2.getSubstitutor());
+        PsiSubstitutor subst1 = TypeConversionUtil.getSuperClassSubstitutor(aSuper, aClass, classResolveResult1.getSubstitutor());
+        PsiSubstitutor subst2 = TypeConversionUtil.getSuperClassSubstitutor(aSuper, bClass, classResolveResult2.getSubstitutor());
         Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aSuper);
         PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
         while (iterator.hasNext()) {
@@ -121,8 +119,19 @@ public class GenericsUtil {
 
       return PsiIntersectionType.createIntersection(conjuncts);
     }
+    if (type2 instanceof PsiArrayType && !(type1 instanceof PsiArrayType)) {
+      return getLeastUpperBound(type2, type1, compared, manager);
+    }
+    if (type1 instanceof PsiArrayType) {
+      PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+      GlobalSearchScope all = GlobalSearchScope.allScope(manager.getProject());
+      PsiClassType serializable = factory.createTypeByFQClassName(CommonClassNames.JAVA_IO_SERIALIZABLE, all);
+      PsiClassType cloneable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_CLONEABLE, all);
+      PsiType arraySupers = PsiIntersectionType.createIntersection(serializable, cloneable);
+      return getLeastUpperBound(arraySupers, type2, compared, manager);
+    }
 
-    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(manager.getProject()));
+    return PsiType.getJavaLangObject(manager, GlobalSearchScope.allScope(manager.getProject()));
   }
 
   private static PsiType getLeastContainingTypeArgument(PsiType type1,
