@@ -4,6 +4,8 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -11,6 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,11 +23,12 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public class TemplateSurrounder implements Surrounder {
+
+  private final TemplateImpl myTemplate;
+
   public TemplateSurrounder(final TemplateImpl template) {
     myTemplate = template;
   }
-
-  private TemplateImpl myTemplate;
 
   public String getTemplateDescription() {
     return myTemplate.getDescription();
@@ -49,7 +54,7 @@ public class TemplateSurrounder implements Surrounder {
   @Nullable public TextRange surroundElements(@NotNull final Project project,
                                               @NotNull final Editor editor,
                                               @NotNull PsiElement[] elements) throws IncorrectOperationException {
-    final boolean languageWithWSSignificant = SurroundWithHandler.isLanguageWithWSSignificant(elements[0]);
+    final boolean languageWithWSSignificant = isLanguageWithWSSignificant(elements[0]);
 
     final int startOffset = languageWithWSSignificant ?
                             editor.getSelectionModel().getSelectionStart():
@@ -83,4 +88,23 @@ public class TemplateSurrounder implements Surrounder {
 
     return null;
   }
+
+  public static boolean isLanguageWithWSSignificant(PsiElement element) {
+    return isLanguageWithWSSignificant(getLanguage(element)) ||
+           element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS;
+  }
+
+  private static boolean isLanguageWithWSSignificant(Language lang) {
+    return lang == StdLanguages.HTML ||
+           lang == StdLanguages.XHTML ||
+           lang == StdLanguages.JSP ||
+           lang == StdLanguages.JSPX;
+  }
+
+  private static Language getLanguage(PsiElement element) {
+    Language lang = element.getLanguage();
+    if (lang == StdLanguages.XML) lang = element.getParent().getLanguage();
+    return lang;
+  }
+
 }

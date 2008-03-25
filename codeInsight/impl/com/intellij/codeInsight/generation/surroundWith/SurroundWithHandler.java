@@ -19,8 +19,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.TestOnly;
 
@@ -36,11 +34,6 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
 
   public boolean startInWriteAction() {
     return true;
-  }
-
-  public static boolean isLanguageWithWSSignificant(PsiElement element) {
-    return isLanguageWithWSSignificant(getLanguage(element)) ||
-           element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS;
   }
 
   private static boolean isLanguageWithWSSignificant(Language lang) {
