@@ -100,6 +100,8 @@ final class EditorTabbedContainer  {
   }
 
   private void updateTabBorder() {
+    if (!myProject.isOpen()) return;
+
     final List<String> rightIds =
         ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).getIdsOn(ToolWindowAnchor.RIGHT);
      myTabs.setPaintBorder(10, -1, rightIds.size() > 0 ? 1 : 0, -1);
