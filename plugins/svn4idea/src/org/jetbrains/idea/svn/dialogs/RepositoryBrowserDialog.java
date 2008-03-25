@@ -87,7 +87,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   @NonNls public static final String NEW_FOLDER_POSTFIX = "NewFolder";
 
   private DeleteAction myDeleteAction = new DeleteAction();
-  private AnAction copyUrlAction = new CopyUrlAction();
+  private AnAction copyUrlAction;
+  private AnAction mkDirAction;
 
   @NonNls private static final String PLACE_TOOLBAR = "RepositoryBrowser.Toolbar";
   @NonNls private static final String PLACE_MENU = "RepositoryBrowser.Menu";
@@ -133,6 +134,9 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     copyUrlAction = new CopyUrlAction();
     copyUrlAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT,
                                                               KeyEvent.CTRL_MASK|KeyEvent.CTRL_DOWN_MASK|
+                                                              KeyEvent.ALT_MASK|KeyEvent.ALT_DOWN_MASK)), getRepositoryBrowser());
+    mkDirAction = new MkDirAction();
+    mkDirAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT,
                                                               KeyEvent.ALT_MASK|KeyEvent.ALT_DOWN_MASK)), getRepositoryBrowser());
 
     AnAction action = CommonActionsManager.getInstance().createCollapseAllAction(new TreeExpander() {
