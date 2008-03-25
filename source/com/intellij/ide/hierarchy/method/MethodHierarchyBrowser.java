@@ -44,8 +44,7 @@ import java.util.List;
 public final class MethodHierarchyBrowser extends JPanel implements DataProvider, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.method.MethodHierarchyBrowser");
 
-  @NonNls
-  private final static String HELP_ID = "reference.toolWindows.hierarchy";
+  @NonNls private static final String HELP_ID = "reference.toolWindows.hierarchy";
 
   private Content myContent;
   private final Project myProject;

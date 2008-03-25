@@ -47,8 +47,7 @@ import java.util.List;
 public final class TypeHierarchyBrowser extends JPanel implements DataProvider, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.type.TypeHierarchyBrowser");
 
-  @NonNls
-  private final static String HELP_ID = "reference.toolWindows.hierarchy";
+  @NonNls private static final String HELP_ID = "reference.toolWindows.hierarchy";
   @NonNls
   static final String TYPE_HIERARCHY_BROWSER_ID = "TYPE_HIERARCHY_BROWSER_ID";
 
@@ -71,7 +70,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
   private boolean myCachedIsValidBase = false;
 
   private static final String TYPE_HIERARCHY_BROWSER_DATA_CONSTANT = "com.intellij.ide.hierarchy.type.TypeHierarchyBrowser";
-  private List<Runnable> myRunOnDisposeList = new ArrayList<Runnable>();
+  private final List<Runnable> myRunOnDisposeList = new ArrayList<Runnable>();
   private final HashMap<String, OccurenceNavigator> myOccurenceNavigators = new HashMap<String, OccurenceNavigator>();
   private static final OccurenceNavigator EMPTY_NAVIGATOR = new OccurenceNavigator() {
     public boolean hasNextOccurence() {

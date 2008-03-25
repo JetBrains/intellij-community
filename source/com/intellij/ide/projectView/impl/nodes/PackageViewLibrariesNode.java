@@ -55,7 +55,7 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
     super(project, new LibrariesElement(module, project), viewSettings);
   }
 
-  public boolean contains(final VirtualFile file) {
+  public boolean contains(@NotNull final VirtualFile file) {
     return someChildContainsFile(file);
   }
 

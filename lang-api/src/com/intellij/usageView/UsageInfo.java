@@ -126,8 +126,7 @@ public class UsageInfo {
   }
 
   public int hashCode() {
-    int result;
-    result = (mySmartPointer != null ? mySmartPointer.hashCode() : 0);
+    int result = mySmartPointer != null ? mySmartPointer.hashCode() : 0;
     result = 29 * result + startOffset;
     result = 29 * result + endOffset;
     result = 29 * result + (isNonCodeUsage ? 1 : 0);

@@ -59,7 +59,7 @@ public class SimpleNodeRenderer extends NodeRenderer {
       }
 
       if (userObject instanceof SimpleNode) {
-        renderNodeText(((SimpleNode) userObject), this);
+        renderNodeText((SimpleNode)userObject, this);
         return;
       }
     }
@@ -80,8 +80,7 @@ public class SimpleNodeRenderer extends NodeRenderer {
     }
 
     final SimpleNode.ColoredFragment[] fragments = simpleNode.getColoredText();
-    for (int i = 0; i < fragments.length; i++) {
-      SimpleNode.ColoredFragment each = fragments[i];
+    for (SimpleNode.ColoredFragment each : fragments) {
       component.append(each.getText(), each.getAttributes());
       setToolTipText(each.getToolTip());
     }

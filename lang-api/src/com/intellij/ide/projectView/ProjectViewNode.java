@@ -43,7 +43,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
 
   protected static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.ProjectViewNode");
 
-  private ViewSettings mySettings;
+  private final ViewSettings mySettings;
 
   /**
    * Creates an instance of the project view node.
@@ -55,14 +55,6 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
   protected ProjectViewNode(Project project, Value value, ViewSettings viewSettings) {
     super(project, value);
     mySettings = viewSettings;
-  }
-
-  public boolean isAlwaysShowPlus() {
-    return false;
-  }
-
-  public boolean isAlwaysExpand() {
-    return false;
   }
 
   /**
@@ -112,7 +104,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
                                                                               IllegalAccessException,
                                                                               InvocationTargetException {
     Object[] parameters = new Object[]{project, value, settings};
-    for (Constructor<? extends AbstractTreeNode> constructor : ((Constructor<? extends AbstractTreeNode>[])nodeClass.getConstructors())) {
+    for (Constructor<? extends AbstractTreeNode> constructor : (Constructor<? extends AbstractTreeNode>[])nodeClass.getConstructors()) {
       if (constructor.getParameterTypes().length != 3) continue;
       try {
         return constructor.newInstance(parameters);

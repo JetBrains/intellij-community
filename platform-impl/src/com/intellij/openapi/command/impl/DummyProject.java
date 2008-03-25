@@ -87,7 +87,7 @@ public class DummyProject extends UserDataHolderBase implements Project {
     return ArrayUtil.EMPTY_CLASS_ARRAY;
   }
 
-  public boolean hasComponent(Class interfaceClass) {
+  public boolean hasComponent(@NotNull Class interfaceClass) {
     return false;
   }
 
@@ -96,6 +96,7 @@ public class DummyProject extends UserDataHolderBase implements Project {
     return (T[]) ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @NotNull
   public PicoContainer getPicoContainer() {
     throw new UnsupportedOperationException("getPicoContainer is not implement in : " + getClass());
   }

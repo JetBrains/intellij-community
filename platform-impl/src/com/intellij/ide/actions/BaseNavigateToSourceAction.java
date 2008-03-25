@@ -1,16 +1,13 @@
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.OpenSourceUtil;
 
 public abstract class BaseNavigateToSourceAction extends AnAction {
   private final boolean myFocusEditor;
 
-  public BaseNavigateToSourceAction(boolean focusEditor) {
+  protected BaseNavigateToSourceAction(boolean focusEditor) {
     myFocusEditor = focusEditor;
   }
 
@@ -26,7 +23,7 @@ public abstract class BaseNavigateToSourceAction extends AnAction {
   }
 
   private static boolean isEnabled(final DataContext dataContext) {
-    Navigatable[] navigatables = (Navigatable[])dataContext.getData(DataConstants.NAVIGATABLE_ARRAY);
+    Navigatable[] navigatables = PlatformDataKeys.NAVIGATABLE_ARRAY.getData(dataContext);
     if (navigatables != null) {
       for (Navigatable navigatable : navigatables) {
         if (navigatable.canNavigate()) return true;

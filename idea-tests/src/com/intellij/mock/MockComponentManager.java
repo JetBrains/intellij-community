@@ -76,7 +76,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     return ArrayUtil.EMPTY_CLASS_ARRAY;
   }
 
-  public boolean hasComponent(Class interfaceClass) {
+  public boolean hasComponent(@NotNull Class interfaceClass) {
     return false;
   }
 

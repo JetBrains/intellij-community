@@ -123,7 +123,7 @@ public class SimpleColoredComponent extends JComponent {
 
   /**
    * Clear all special attributes of <code>SimpleColoredComponent</code>.
-   * The are icon, text fragments and their attributes, "paint focus border".
+   * They are icon, text fragments and their attributes, "paint focus border".
    */
   public synchronized void clear() {
     myIcon = null;

@@ -61,22 +61,19 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     // We paint background if and only if tree path is selected and tree has focus.
     // If path is selected and tree is not focused then we just paint focused border.
     if (UIUtil.isUnderQuaquaLookAndFeel()) {
-      if (selected) {
-        setBackground(UIUtil.getTreeSelectionBackground());
-      }
-      else {
-        setBackground(null);
-      }
+        setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
     }
     else {
-      if(selected){
+      if (selected) {
         setPaintFocusBorder(true);
-        if(myFocused){
+        if (myFocused) {
           setBackground(UIUtil.getTreeSelectionBackground());
-        }else{
+        }
+        else {
           setBackground(null);
         }
-      }else{
+      }
+      else {
         setBackground(null);
       }
     }
@@ -84,12 +81,13 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     if (value instanceof LoadingNode) {
       setForeground(Color.gray);
       setIcon(LOADING_NODE_ICON);
-    } else {
+    }
+    else {
       setForeground(tree.getForeground());
       setIcon(null);
     }
 
-    customizeCellRenderer(tree,value,selected,expanded,leaf,row,hasFocus);
+    customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
     if (getFont() == null) {
       setFont(tree.getFont());
@@ -102,15 +100,12 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
    * When the item is selected then we use default tree's selection foreground.
    * It guaranties readability of selected text in any LAF.
    */
-  public void append(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText){
-    if(mySelected && myFocused){
-      super.append(
-        fragment,
-        new SimpleTextAttributes(
-          attributes.getStyle(), UIUtil.getTreeSelectionForeground()
-        ), isMainText);
-    }else{
-      super.append(fragment,attributes, isMainText);
+  public void append(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
+    if (mySelected && myFocused) {
+      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground()), isMainText);
+    }
+    else {
+      super.append(fragment, attributes, isMainText);
     }
   }
 

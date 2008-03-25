@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class UsageTreeColorsScheme implements ApplicationComponent, JDOMExternalizable{
   private EditorColorsScheme myColorsScheme;
-  private EditorColorsManager myEditorColorsManager;
+  private final EditorColorsManager myEditorColorsManager;
   @NonNls public static final String DEFAULT_SCHEME_NAME = "Default";
 
   public UsageTreeColorsScheme(EditorColorsManager editorColorsManager) {

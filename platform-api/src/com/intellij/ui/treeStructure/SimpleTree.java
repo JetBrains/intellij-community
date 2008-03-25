@@ -39,7 +39,7 @@ import java.util.List;
 
 public class SimpleTree extends JTree implements CellEditorListener {
 
-  protected final MouseListener myMouseListener = new MyMouseListener();
+  private final MouseListener myMouseListener = new MyMouseListener();
 
   private ActionGroup myPopupGroup;
   private String myPlace;

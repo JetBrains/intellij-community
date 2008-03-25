@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -17,10 +16,9 @@ import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
 
 public class LineMarkerInfo {
-  private Icon myIcon;
-  public final WeakReference<PsiElement> elementRef;
+  private final Icon myIcon;
+  private final WeakReference<PsiElement> elementRef;
   public final int startOffset;
-  public TextAttributes attributes;
   public Color separatorColor;
   public SeparatorPlacement separatorPlacement;
   public RangeHighlighter highlighter;

@@ -25,7 +25,7 @@ import javax.swing.*;
  *         Date: Jan 19, 2005
  */
 public abstract class RuleAction extends ToggleAction {
-  private UsageViewImpl myView;
+  private final UsageViewImpl myView;
   private boolean myState;
 
   public RuleAction(UsageViewImpl view, final String text, final Icon icon) {

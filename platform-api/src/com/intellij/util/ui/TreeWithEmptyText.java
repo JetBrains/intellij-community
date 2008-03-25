@@ -30,8 +30,8 @@ import java.util.ArrayList;
 */
 public class TreeWithEmptyText extends Tree {
   private String myEmptyText = "";
-  private SimpleColoredComponent myEmptyTextComponent = new SimpleColoredComponent();
-  private ArrayList<ActionListener> myEmptyTextClickListeners = new ArrayList<ActionListener>();
+  private final SimpleColoredComponent myEmptyTextComponent = new SimpleColoredComponent();
+  private final ArrayList<ActionListener> myEmptyTextClickListeners = new ArrayList<ActionListener>();
   private static final int EMPTY_TEXT_TOP = 20;
 
   public TreeWithEmptyText(final TreeModel model) {

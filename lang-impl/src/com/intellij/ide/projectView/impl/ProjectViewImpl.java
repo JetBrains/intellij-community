@@ -936,7 +936,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       if (DataConstants.PSI_ELEMENT.equals(dataId)) {
         if (currentProjectViewPane == null) return null;
         final PsiElement[] elements = currentProjectViewPane.getSelectedPSIElements();
-        return elements.length != 1 ? null : elements[0];
+        return elements.length == 1 ? elements[0] : null;
       }
       if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
         if (currentProjectViewPane == null) {

@@ -274,7 +274,7 @@ public class UpdateHighlightersUtil {
       RangeHighlighter marker = document.getMarkupModel(project).addRangeHighlighter(info.startOffset,
                                                                                      info.startOffset,
                                                                                      HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                                                     info.attributes,
+                                                                                     null,
                                                                                      HighlighterTargetArea.EXACT_RANGE);
       marker.setGutterIconRenderer(info.createGutterRenderer());
       marker.setLineSeparatorColor(info.separatorColor);

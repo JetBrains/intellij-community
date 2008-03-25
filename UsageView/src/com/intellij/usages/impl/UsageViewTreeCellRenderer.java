@@ -46,8 +46,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   public UsageViewTreeCellRenderer(UsageView view) {
     myView = view;
     myPresentation = view.getPresentation();
-    EditorColorsScheme colorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
-    myNumberOfUsagesAttribute = SimpleTextAttributes.fromTextAttributes(colorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES));
+    myNumberOfUsagesAttribute = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES));
   }
 
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
