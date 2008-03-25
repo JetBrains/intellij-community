@@ -52,17 +52,16 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       chars = editor.getDocument().getCharsSequence();
     }
 
-    FileType fileType = file.getFileType();
-    final QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(file);
-    if (quoteHandler == null) return false;
-
     final BackspaceHandlerDelegate[] delegates = Extensions.getExtensions(BackspaceHandlerDelegate.EP_NAME);
     for(BackspaceHandlerDelegate delegate: delegates) {
       delegate.beforeCharDeleted(c, file, editor);
     }
 
+    FileType fileType = file.getFileType();
+    final QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(file);
+
     HighlighterIterator hiterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
-    boolean wasClosingQuote = quoteHandler.isClosingQuote(hiterator, offset);
+    boolean wasClosingQuote = quoteHandler != null && quoteHandler.isClosingQuote(hiterator, offset);
 
     myOriginalHandler.execute(editor, dataContext);
 
@@ -106,7 +105,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       if (wasClosingQuote) return true;
 
       HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
-      if (!quoteHandler.isOpeningQuote(iterator,offset)) return true;
+      if (quoteHandler == null || !quoteHandler.isOpeningQuote(iterator,offset)) return true;
 
       editor.getDocument().deleteString(offset, offset + 1);
     }
