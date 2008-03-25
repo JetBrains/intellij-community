@@ -832,10 +832,13 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected void doImport() {
+  /**
+   * @return true only if import was called
+   */
+  protected boolean doImport() {
     File dir = selectFile("Import Directory", "Select directory to import into repository");
     if (dir == null) {
-      return;
+      return false;
     }
 
     SVNURL url = getNotNullSelectedNode().getURL();
@@ -849,6 +852,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       SvnCheckoutProvider.doImport(myProject, src, url, recursive, ignored, message);
       getNotNullSelectedNode().reload();
     }
+    return dialog.isOK();
   }
 
   private void doUnifiedDiff(File targetFile, SVNURL sourceURL, SVNURL targetURL) {

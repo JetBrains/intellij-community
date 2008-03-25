@@ -31,8 +31,9 @@ public class ImportDialog extends RepositoryBrowserDialog {
   }
 
   protected void doOKAction() {
-    doImport();
-    super.doOKAction();
+    if(doImport()) {
+      super.doOKAction();
+    }
   }
 
   @Override
