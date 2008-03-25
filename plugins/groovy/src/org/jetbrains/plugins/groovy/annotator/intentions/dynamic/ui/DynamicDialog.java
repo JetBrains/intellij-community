@@ -1,14 +1,14 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.command.undo.*;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorTextField;
@@ -28,7 +28,6 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
@@ -55,20 +54,21 @@ public abstract class DynamicDialog extends DialogWrapper {
   private JLabel myTypeLabel;
   private JPanel myTypeStatusPanel;
   private JLabel myTypeStatusLabel;
-  private JTable myTable;
+  private JTable myParametersTable;
   private JLabel myTableLabel;
   private final DynamicManager myDynamicManager;
   private final Project myProject;
-  //  private final DItemElement myDynamicElement;
+  private final DItemElement myItemElement;
   private EventListenerList myListenerList = new EventListenerList();
   private final GrReferenceExpression myReferenceExpression;
+
 
   public DynamicDialog(GrReferenceExpression referenceExpression) {
     super(referenceExpression.getProject(), true);
     myProject = referenceExpression.getProject();
 
     if (!isTableVisible()) {
-      myTable.setVisible(false);
+      myParametersTable.setVisible(false);
       myTableLabel.setVisible(false);
     }
     myReferenceExpression = referenceExpression;
@@ -83,17 +83,34 @@ public abstract class DynamicDialog extends DialogWrapper {
     setUpTableNameLabel();
 
     final Border border2 = BorderFactory.createLineBorder(Color.BLACK);
-    myTable.setBorder(border2);
+    myParametersTable.setBorder(border2);
 
     myTypeLabel.setLabelFor(myTypeComboBox);
     myClassLabel.setLabelFor(myClassComboBox);
+
+    myItemElement = createItemElement();
+  }
+
+  protected DItemElement createItemElement() {
+    DItemElement myDynamicElement;
+    if (QuickfixUtil.isCall(myReferenceExpression)) {
+      final PsiType[] types = PsiUtil.getArgumentTypes(myReferenceExpression, false);
+      final String[] names = QuickfixUtil.getMethodArgumentsNames(myProject, types);
+      final List<MyPair> pairs = QuickfixUtil.swapArgumentsAndTypes(names, types);
+
+      myDynamicElement = new DMethodElement(myReferenceExpression.getName(), null, pairs);
+    } else {
+      myDynamicElement = new DPropertyElement(myReferenceExpression.getName(), null);
+    }
+    return myDynamicElement;
   }
 
   private void setUpTableNameLabel() {
-    myTableLabel.setLabelFor(myTable);
+    myTableLabel.setLabelFor(myParametersTable);
     myTableLabel.setText(GroovyBundle.message("dynamic.properties.table.name"));
   }
 
+  
   private void setUpStatusLabel() {
     if (!isTypeChekerPanelEnable()) {
       myTypeStatusPanel.setVisible(false);
@@ -289,16 +306,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     super.doOKAction();
     GrTypeElement typeElement = getEnteredTypeName();
 
-    final DItemElement dynamicElement;
-    if (QuickfixUtil.isCall(myReferenceExpression)) {
-      final String[] methodArgumentsNames = QuickfixUtil.getMethodArgumentsNames(((GrCallExpression) myReferenceExpression.getParent()));
-      final String[] methodArgumentsTypes = QuickfixUtil.getMethodArgumentsTypes(((GrCallExpression) myReferenceExpression.getParent()));
-      final List<MyPair> pairs = QuickfixUtil.swapArgumentsAndTypes(methodArgumentsNames, methodArgumentsTypes);
-
-      dynamicElement = new DMethodElement(myReferenceExpression.getName(), null, pairs);
-    } else {
-      dynamicElement = new DPropertyElement(myReferenceExpression.getName(), null);
-    }
+    final DItemElement dynamicElement = getItemElement();
 
     if (typeElement == null) {
       dynamicElement.setType("java.lang.Object");
@@ -389,6 +397,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     }
   }
 
+  
   public void doCancelAction() {
     super.doCancelAction();
 
@@ -407,8 +416,8 @@ public abstract class DynamicDialog extends DialogWrapper {
     return false;
   }
 
-  public JTable getTable() {
-    return myTable;
+  public JTable getParametersTable() {
+    return myParametersTable;
   }
 
   protected boolean isTypeChekerPanelEnable() {
@@ -421,5 +430,9 @@ public abstract class DynamicDialog extends DialogWrapper {
 
   protected void setUpTypeLabel(String typeLabelText) {
     myTypeLabel.setText(typeLabelText);
+  }
+
+  public DItemElement getItemElement() {
+    return myItemElement;
   }
 }

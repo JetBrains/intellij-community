@@ -4,6 +4,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -11,6 +12,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicDialo
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicMethodDialog;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicPropertyDialog;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -27,7 +29,26 @@ public class DynamicFix implements IntentionAction {
 
   @NotNull
   public String getText() {
-    return !myIsMethod ? GroovyBundle.message("add.dynamic.property") : GroovyBundle.message("add.dynamic.method");
+    if (!myIsMethod){
+      return GroovyBundle.message("add.dynamic.property", myReferenceExpression.getName());
+    }
+
+    final PsiType[] methodArgumentsTypes = PsiUtil.getArgumentTypes(myReferenceExpression, false);
+    StringBuilder builder = new StringBuilder(" '").append(myReferenceExpression.getName());
+    builder.append("(");
+
+    for (int i = 0; i < methodArgumentsTypes.length; i++) {
+      PsiType type = methodArgumentsTypes[i];
+
+      if (i > 0){
+        builder.append(", ");
+      }
+      builder.append(type.getPresentableText());
+    }
+    builder.append(")");
+    builder.append("' ");
+
+    return GroovyBundle.message("add.dynamic.method") + builder.toString();
   }
 
   @NotNull

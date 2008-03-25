@@ -145,6 +145,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     }
 
     myTreeTablePanel.add(treeTable);
+    myTreeTablePanel.revalidate();
   }
 
   private DefaultMutableTreeNode buildTree(DefaultMutableTreeNode rootNode) {
@@ -642,7 +643,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
       if (value instanceof DClassElement) {
         final String containingClassName = ((DClassElement) value).getName();
         //        append(className, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        append(containingClassName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        append(QuickfixUtil.shortenType(containingClassName), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
 
       if (value instanceof DItemElement) {
@@ -680,12 +681,12 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     private void appendMethodParameters(DMethodElement value) {
       append("(", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
 
-      final String[] types = QuickfixUtil.getArgumentsTypes(value.getPairs());
+      final String[] types = QuickfixUtil.getArgumentsNames(value.getPairs());
       for (int i = 0; i < types.length; i++) {
         if (i != 0) append(", ", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
 
         String type = types[i];
-        append(QuickfixUtil.shortenType(type), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+        append(type, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
       }
       append(")", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
     }

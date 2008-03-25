@@ -6,11 +6,13 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
@@ -19,11 +21,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -68,44 +68,50 @@ public class QuickfixUtil {
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
-  public static String[] getMethodArgumentsTypes(GrCallExpression methodCall) {
-    final GrExpression[] argumentList = methodCall.getExpressionArguments();
-    List<String> types = new ArrayList<String>();
-    if (argumentList != null && argumentList.length != 0) {
-      for (GrExpression expression : argumentList) {
-        final PsiType type = expression.getType();
-        if (type == null) {
-          types.add("");
-          continue;
-        }
-        types.add(type.getCanonicalText());
+  public static String[] getMethodArgumentsNames(Project project, PsiType[] types) {
+    List<String> unicNames = new ArrayList<String>();
+    for (PsiType type : types) {
+      final SuggestedNameInfo nameInfo = CodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, null, type);
+
+      final String name = nameInfo.names[0] + "<0";
+      if (unicNames.contains(name)) {
+        final String[] strings = name.split("<");
+        final String realName = strings[0];
+        final String count = strings[1];
+        final int i = Integer.parseInt(count);
+        unicNames.add(realName + "<" + (i + 1));
+        continue;
       }
+
+      unicNames.add(name);
     }
 
-    return types.toArray(new String[types.size()]);
-  }
-
-  public static String[] getMethodArgumentsNames(GrCallExpression methodCall) {
-    final GrExpression[] argumentList = methodCall.getExpressionArguments();
     List<String> names = new ArrayList<String>();
-    if (argumentList != null && argumentList.length != 0) {
-      for (GrExpression expression : argumentList) {
-        final String expressionText = expression.getText();
-        names.add(expressionText);
+    for (String unicName : unicNames) {
+      final String[] strings = unicName.split("<");
+      final String realName = strings[0];
+      final String countStr = strings[1];
+
+      final String name;
+      if ("0".equals(countStr)) {
+        name = realName;
+      } else {
+        name = realName + countStr;
       }
+      names.add(name);
     }
 
-    return names.toArray(new String[]{""});
+    return names.toArray(new String[names.size()]);
   }
 
-  public static List<MyPair> swapArgumentsAndTypes(String[] names, String[] types) {
+  public static List<MyPair> swapArgumentsAndTypes(String[] names, PsiType[] types) {
     List<MyPair> result = new ArrayList<MyPair>();
 
     if (names.length != types.length) return null;
 
     for (int i = 0; i < names.length; i++) {
       String name = names[i];
-      result.add(new MyPair(name, types[i]));
+      result.add(new MyPair(name, types[i].getCanonicalText()));
     }
 
     return result;
@@ -126,10 +132,10 @@ public class QuickfixUtil {
     return result.toArray(new String[result.size()]);
   }
 
-  public static String[] getArgumentsNames(List<Pair<String, PsiType>> listOfPairs) {
+  public static String[] getArgumentsNames(List<MyPair> listOfPairs) {
     final ArrayList<String> result = new ArrayList<String>();
-    for (Pair<String, PsiType> listOfPair : listOfPairs) {
-      result.add(listOfPair.getFirst());
+    for (MyPair listOfPair : listOfPairs) {
+      result.add(listOfPair.first);
     }
 
     return result.toArray(new String[]{""});
