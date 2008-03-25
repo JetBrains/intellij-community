@@ -127,14 +127,32 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, null));
       return null;
     }
+
     final SVNStatus fileStatus = getFileStatus(vcs, srcFile);
     if (fileStatus != null && fileStatus.getContentsStatus() == SVNStatusType.STATUS_ADDED) {
       myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, null));
       return null;
     }
 
-    myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, srcFile));
+    if (sameRoot(vcs, srcFile.getParentFile(), destFile.getParentFile())) {
+      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, srcFile));
+      return null;
+    }
+
+    myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, null));
     return null;
+  }
+
+  private boolean sameRoot(final SvnVcs vcs, final File srcDir, final File dstDir) {
+    try {
+      final SVNInfo info1 = vcs.createWCClient().doInfo(srcDir, SVNRevision.WORKING);
+      final SVNInfo info2 = vcs.createWCClient().doInfo(dstDir, SVNRevision.WORKING);
+
+      return (info1 != null) && (info2 != null) && (info1.getRepositoryUUID().equals(info2.getRepositoryUUID()))
+          && (info1.getRepositoryRootURL().equals(info2.getRepositoryRootURL()));
+    } catch (SVNException e) {
+      return false;
+    }
   }
 
   public boolean move(VirtualFile file, VirtualFile toDir) throws IOException {
