@@ -165,12 +165,12 @@
 
     <group id="CodeMenu1">
       <reference ref="DelegateMethods"/>
-      <separator/>
-      <action id="SurroundWith" class="com.intellij.codeInsight.generation.actions.SurroundWithAction"/>
-      <action id="Unwrap" class="com.intellij.codeInsight.unwrap.UnwrapAction"/>
-
       <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="ImplementMethods"/>
     </group>
+
+    <action id="Unwrap" class="com.intellij.codeInsight.unwrap.UnwrapAction">
+      <add-to-group group-id="CodeSurroundGroup" anchor="last"/>
+    </action>
 
     <action id="AutoIndentLines" class="com.intellij.codeInsight.generation.actions.AutoIndentLinesAction">
       <add-to-group group-id="CodeFormatGroup" anchor="after" relative-to-action="ReformatCode"/>

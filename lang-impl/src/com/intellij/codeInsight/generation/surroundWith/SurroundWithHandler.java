@@ -3,22 +3,20 @@ package com.intellij.codeInsight.generation.surroundWith;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.lang.Language;
 import com.intellij.lang.LanguageSurrounders;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.TestOnly;
 
@@ -36,19 +34,6 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
     return true;
   }
 
-  private static boolean isLanguageWithWSSignificant(Language lang) {
-    return lang == StdLanguages.HTML ||
-           lang == StdLanguages.XHTML ||
-           lang == StdLanguages.JSP ||
-           lang == StdLanguages.JSPX;
-  }
-
-  private static Language getLanguage(PsiElement element) {
-    Language lang = element.getLanguage();
-    if (lang == StdLanguages.XML) lang = element.getParent().getLanguage();
-    return lang;
-  }
-
   public static void invoke(final Project project, final Editor editor, PsiFile file, Surrounder surrounder){
     if (!editor.getSelectionModel().hasSelection()) {
       editor.getSelectionModel().selectLineAtCaret();
@@ -62,22 +47,15 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
     PsiElement element2 = file.findElementAt(endOffset - 1);
 
     if (element1 == null || element2 == null) return;
-    Language lang1 = getLanguage(element1);
-    Language lang2 = getLanguage(element2);
 
-    if (element1 instanceof PsiWhiteSpace && isLanguageWithWSSignificant(lang1) ) {
-      startOffset = element1.getTextRange().getEndOffset();
-      element1 = file.findElementAt(startOffset);
+    TextRange textRange = new TextRange(startOffset, endOffset);
+    for(SurroundWithRangeAdjuster adjuster: Extensions.getExtensions(SurroundWithRangeAdjuster.EP_NAME)) {
+      textRange = adjuster.adjustSurroundWithRange(file, textRange);
+      if (textRange == null) return;
     }
-    if (element2 instanceof PsiWhiteSpace && isLanguageWithWSSignificant(lang2) ) {
-      endOffset = element2.getTextRange().getStartOffset();
-      element2 = file.findElementAt(endOffset);
-    }
-
-    lang1 = getLanguage(element1);
-    lang2 = getLanguage(element2);
-
-    if(lang1 != lang2) return;
+    startOffset = textRange.getStartOffset();
+    endOffset = textRange.getEndOffset();
+    element1 = file.findElementAt(startOffset);
 
     final List<SurroundDescriptor> surroundDescriptors = LanguageSurrounders.INSTANCE.allForLanguage(element1.getLanguage());
     if (surroundDescriptors.isEmpty()) return;

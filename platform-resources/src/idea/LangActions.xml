@@ -171,6 +171,10 @@
       <reference ref="ImplementMethods"/>
       <action id="Generate" class="com.intellij.codeInsight.generation.actions.GenerateAction"/>
       <separator/>
+      <group id="CodeSurroundGroup">
+        <action id="SurroundWith" class="com.intellij.codeInsight.generation.actions.SurroundWithAction"/>
+      </group>
+      <separator/>
 
       <group id="CodeCompletionGroup" class="com.intellij.codeInsight.completion.actions.CodeCompletionGroup" popup="true">
         <action id="CodeCompletion" class="com.intellij.codeInsight.completion.actions.CodeCompletionAction"/>
