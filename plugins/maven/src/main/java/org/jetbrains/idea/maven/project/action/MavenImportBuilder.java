@@ -10,19 +10,18 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
-import org.apache.maven.artifact.Artifact;
 import org.apache.maven.embedder.MavenEmbedder;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
-import org.jetbrains.idea.maven.core.util.FileFinder;
 import org.jetbrains.idea.maven.core.MavenFactory;
+import org.jetbrains.idea.maven.core.util.FileFinder;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.*;
 
 /**
@@ -43,7 +42,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   private MavenImportProcessor myImportProcessor;
 
   private boolean openModulesConfigurator;
-  private ArrayList<Pair<MavenProject, List<Artifact>>> myResolutionErrors;
+  private ArrayList<Pair<File, List<String>>> myResolutionProblems;
 
   public String getName() {
     return ProjectBundle.message("maven.name");
@@ -63,8 +62,8 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   @Override
   public boolean validate(Project current, Project dest) {
     try {
-      myResolutionErrors = new ArrayList<Pair<MavenProject, List<Artifact>>>();
-      myImportProcessor.resolve(dest, myProfiles, myResolutionErrors);
+      myResolutionProblems = new ArrayList<Pair<File, List<String>>>();
+      myImportProcessor.resolve(dest, myProfiles, myResolutionProblems);
     }
     catch (MavenException e) {
       Messages.showErrorDialog(dest, e.getMessage(), getTitle());
@@ -85,7 +84,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
       public void run() {
         MavenImportToolWindow toolWindow = new MavenImportToolWindow(project, ProjectBundle.message("maven.import"));
-        toolWindow.displayResolutionProblems(myResolutionErrors);
+        toolWindow.displayResolutionProblems(myResolutionProblems);
       }
     });
 

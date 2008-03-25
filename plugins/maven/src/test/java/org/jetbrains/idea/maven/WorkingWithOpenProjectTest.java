@@ -8,8 +8,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenImportProcessor;
 
 import java.io.File;
@@ -66,7 +64,7 @@ public class WorkingWithOpenProjectTest extends ImportingTestCase {
                              "  </dependency>" +
                              "</dependencies>"));
     
-    new MavenImportProcessor(myProject).synchronize(new ArrayList<Pair<MavenProject, List<Artifact>>>());
+    new MavenImportProcessor(myProject).synchronize(new ArrayList<Pair<File, List<String>>>());
 
     assertModuleLibDep("project", "junit:junit:4.0");
   }

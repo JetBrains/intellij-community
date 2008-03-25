@@ -4,7 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.embedder.*;
-import org.apache.maven.extension.BuildExtensionScanner;
+import org.apache.maven.extension.ExtensionManager;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.ComponentDescriptor;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
@@ -240,9 +240,9 @@ public class MavenFactory {
     }
   }
 
-  public static CustomBuildExtensionScanner getBuildExtensionScanner(MavenEmbedder e) {
+  public static CustomExtensionManager getExtensionManager(MavenEmbedder e) {
     try {
-      return (CustomBuildExtensionScanner)e.getPlexusContainer().lookup(BuildExtensionScanner.ROLE);
+      return (CustomExtensionManager)e.getPlexusContainer().lookup(ExtensionManager.class.getName());
     }
     catch (ComponentLookupException ex) {
       throw new RuntimeException(ex);
@@ -251,8 +251,8 @@ public class MavenFactory {
 
   public static class CustomizerForRead implements ContainerCustomizer {
     public void customize(PlexusContainer c) {
-      ComponentDescriptor d = c.getComponentDescriptor(BuildExtensionScanner.ROLE);
-      d.setImplementation(CustomBuildExtensionScanner.class.getName());
+      ComponentDescriptor d = c.getComponentDescriptor(ExtensionManager.class.getName());
+      d.setImplementation(CustomExtensionManager.class.getName());
     }
 
     public void postCustomize(MavenEmbedder e) {

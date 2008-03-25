@@ -1,11 +1,8 @@
 package org.jetbrains.idea.maven;
 
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenException;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File;
 
 public class InvalidProjectImportingTest extends ImportingTestCase {
   public void testUnknownProblem() throws Exception {
@@ -61,7 +58,7 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
     try {
       createModulePom("foo", "<groupId>test</groupId>" +
                              "<artifactId>foo</artifactId>" +
-                             "<version>1</version");
+                             "<version>1"); //  invalid tag
 
       importProject("<groupId>test</groupId>" +
                     "<artifactId>project</artifactId>" +
@@ -98,7 +95,7 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
     }
   }
   
-  public void testReportingUnresolvedLibrariesProblems() throws Exception {
+  public void testReportingDependenciesProblems() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -153,16 +150,19 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
 
     importProject();
 
-    assertEquals(2, unresolvedArtifacts.size());
+    assertEquals(2, resolutionProblems.size());
 
-    MavenProject p1 = unresolvedArtifacts.get(0).first;
-    MavenProject p2 = unresolvedArtifacts.get(1).first;
+    File f1 = resolutionProblems.get(0).first;
+    File f2 = resolutionProblems.get(1).first;
 
-    assertEquals("m1", p1.getArtifactId());
-    assertEquals("m2", p2.getArtifactId());
+    assertTrue(f1.toString(), f1.getPath().endsWith("m1\\pom.xml"));
+    assertTrue(f2.toString(), f2.getPath().endsWith("m2\\pom.xml"));
 
-    assertArtifactsAre(unresolvedArtifacts.get(0).second, "xxx:xxx:1", "yyy:yyy:2");
-    assertArtifactsAre(unresolvedArtifacts.get(1).second, "zzz:zzz:3");
+    assertOrderedElementsAreEqual(resolutionProblems.get(0).second,
+                                  "Unresolved dependency: xxx:xxx:jar:1:compile",
+                                  "Unresolved dependency: yyy:yyy:jar:2:compile");
+    assertOrderedElementsAreEqual(resolutionProblems.get(1).second,
+                                  "Unresolved dependency: zzz:zzz:jar:3:compile");
   }
   
   public void testDoesNotReportInterModuleDependenciesAsUnresolved() throws Exception {
@@ -193,7 +193,7 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
                           "<version>1</version>");
 
     importProject();
-    assertEquals(0, unresolvedArtifacts.size());
+    assertEquals(0, resolutionProblems.size());
   }
 
   public void testReportingInvalidExtensions() throws Exception {
@@ -211,26 +211,85 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
                   "  </extensions>" +
                   "</build>");
 
-    //assertEquals(1, unresolvedArtifacts.size());
-    //
-    //MavenProject p1 = unresolvedArtifacts.get(0).first;
-    //assertEquals("project", p1.getArtifactId());
-    //assertArtifactsAre(unresolvedArtifacts.get(0).second, "xxx:yyy:1");
+    assertEquals(1, resolutionProblems.size());
+
+    File f = resolutionProblems.get(0).first;
+    assertEquals(new File(projectPom.getPath()), f);
+    assertOrderedElementsAreEqual(resolutionProblems.get(0).second, "Unresolved build extension: xxx:yyy:jar:1");
   }
+  
+  public void testMultipleUnresolvedBuildExtensions() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
 
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
 
-  private void assertArtifactsAre(List<Artifact> actual, String... expectedNames) {
-    List<String> actualNames = new ArrayList<String>();
-    for (Artifact a : actual) {
-      actualNames.add(a.getArtifactId() + ":" + a.getGroupId() + ":" + a.getVersion());
-    }
-    assertOrderedElementsAreEqual(actualNames, expectedNames);
+    createModulePom("m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<build>" +
+                    " <extensions>" +
+                    "   <extension>" +
+                    "     <groupId>xxx</groupId>" +
+                    "     <artifactId>xxx</artifactId>" +
+                    "     <version>1</version>" +
+                    "    </extension>" +
+                    "  </extensions>" +
+                    "</build>");
+
+    createModulePom("m2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m2</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<build>" +
+                    " <extensions>" +
+                    "   <extension>" +
+                    "     <groupId>yyy</groupId>" +
+                    "     <artifactId>yyy</artifactId>" +
+                    "     <version>1</version>" +
+                    "    </extension>" +
+                    "   <extension>" +
+                    "     <groupId>zzz</groupId>" +
+                    "     <artifactId>zzz</artifactId>" +
+                    "     <version>1</version>" +
+                    "    </extension>" +
+                    "  </extensions>" +
+                    "</build>");
+
+    importProject();
+
+    assertEquals(resolutionProblems.toString(), 3, resolutionProblems.size());
+
+    File f1 = resolutionProblems.get(0).first;
+    File f2 = resolutionProblems.get(1).first;
+    File f3 = resolutionProblems.get(2).first;
+
+    assertEquals(new File(projectPom.getPath()), f1);
+    assertTrue(f2.toString(), f2.getPath().endsWith("m1\\pom.xml"));
+    assertTrue(f3.toString(), f3.getPath().endsWith("m2\\pom.xml"));
+
+    assertOrderedElementsAreEqual(resolutionProblems.get(0).second,
+                                  "Unresolved build extension: xxx:xxx:jar:1",
+                                  "Unresolved build extension: yyy:yyy:jar:1",
+                                  "Unresolved build extension: zzz:zzz:jar:1");
+    assertOrderedElementsAreEqual(resolutionProblems.get(1).second,
+                                  "Unresolved build extension: xxx:xxx:jar:1");
+    assertOrderedElementsAreEqual(resolutionProblems.get(2).second,
+                                  "Unresolved build extension: yyy:yyy:jar:1",
+                                  "Unresolved build extension: zzz:zzz:jar:1");
   }
 
   private void assertExceptionContains(MavenException e, String... parts) {
     for (String part : parts) {
-      assertTrue("Substring '" + part + "' not fund in '" + e.getMessage() + "'",
-                 e.getMessage().contains(part));
+      assertTrue("Substring '" + part + "' not fund in '" + e.getMessage() + "'", e.getMessage().contains(part));
     }
   }
 

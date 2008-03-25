@@ -14,8 +14,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
@@ -24,13 +22,14 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.repo.MavenRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
 public abstract class ImportingTestCase extends MavenTestCase {
   protected MavenImporterSettings myPrefs;
   protected MavenProjectModel projectModel;
-  protected List<Pair<MavenProject, List<Artifact>>> unresolvedArtifacts;
+  protected ArrayList<Pair<File, List<String>>> resolutionProblems;
 
   @Override
   protected void setUpInWriteAction() throws Exception {
@@ -313,8 +312,8 @@ public abstract class ImportingTestCase extends MavenTestCase {
       p.createMavenProjectModel(files, new HashMap<VirtualFile, Module>(), profilesList, new Progress());
       p.createMavenToIdeaMapping();
 
-      unresolvedArtifacts = new ArrayList<Pair<MavenProject, List<Artifact>>>();
-      p.resolve(myProject, profilesList, unresolvedArtifacts);
+      resolutionProblems = new ArrayList<Pair<File, List<String>>>();
+      p.resolve(myProject, profilesList, resolutionProblems);
       
       p.commit(myProject, profilesList);
       projectModel = p.getMavenProjectModel();

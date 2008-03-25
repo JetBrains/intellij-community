@@ -8,6 +8,7 @@ import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 import org.jetbrains.idea.maven.project.MavenException;
 
 import java.io.File;
+import java.util.List;
 
 public class BasicImportingTest extends ImportingTestCase {
   public void testUsingRelativePathForTheProject() throws Exception {
@@ -792,10 +793,11 @@ public class BasicImportingTest extends ImportingTestCase {
     importProject();
 
     assertModuleLibDeps("project");
-    assertEquals(1, unresolvedArtifacts.size());
+    assertEquals(1, resolutionProblems.size());
 
-    assertEquals(1, unresolvedArtifacts.get(0).second.size());
-    assertEquals("yyy", unresolvedArtifacts.get(0).second.get(0).getArtifactId());
+    List<String> problems = resolutionProblems.get(0).second;
+    assertEquals(1, problems.size());
+    assertTrue(problems.toString(), problems.get(0).contains("xxx:yyy:pom:4.0"));
   }
 
   public void testLanguageLevel() throws Exception {
