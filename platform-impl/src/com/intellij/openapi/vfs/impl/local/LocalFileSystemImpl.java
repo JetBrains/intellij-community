@@ -355,6 +355,13 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         }
       }
     }
+    else {
+      if (!path.startsWith("/")) {
+        path = new File(path).getAbsolutePath();
+      }
+    }
+
+    
     return path.replace(File.separatorChar, '/');
   }
 
