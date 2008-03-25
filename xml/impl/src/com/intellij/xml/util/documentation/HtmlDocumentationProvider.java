@@ -1,9 +1,9 @@
 package com.intellij.xml.util.documentation;
 
-import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.jsp.impl.TldAttributeDescriptor;
 import com.intellij.jsp.impl.TldDescriptor;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.DocumentationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -174,9 +174,9 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     final boolean istag = descriptor instanceof HtmlTagDescriptor;
     
     if (istag) {
-      JavaDocUtil.formatEntityName(XmlBundle.message("xml.javadoc.tag.name.message"),descriptor.getName(),buf);
+      DocumentationUtil.formatEntityName(XmlBundle.message("xml.javadoc.tag.name.message"),descriptor.getName(),buf);
     } else {
-      JavaDocUtil.formatEntityName(XmlBundle.message("xml.javadoc.attribute.name.message"),descriptor.getName(),buf);
+      DocumentationUtil.formatEntityName(XmlBundle.message("xml.javadoc.attribute.name.message"),descriptor.getName(),buf);
     }
 
     buf.append(XmlBundle.message("xml.javadoc.description.message")).append(NBSP).append(descriptor.getDescription()).append(BR);

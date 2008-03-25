@@ -424,8 +424,4 @@ public class JavaDocUtil {
     return list == null ? PsiClassType.EMPTY_ARRAY : list.getReferencedTypes();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static void formatEntityName(String type, String name, StringBuilder destination) {
-    destination.append(type).append(":&nbsp;<b>").append(name).append("</b><br>");
-  }
 }

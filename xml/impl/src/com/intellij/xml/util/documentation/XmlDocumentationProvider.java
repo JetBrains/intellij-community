@@ -1,10 +1,10 @@
 package com.intellij.xml.util.documentation;
 
 import com.intellij.codeInsight.completion.XmlCompletionData;
-import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.lang.documentation.MetaDataDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -201,9 +201,9 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
     StringBuilder buf = new StringBuilder(str.length() + 20);
 
     if (typeName==null) {
-      JavaDocUtil.formatEntityName(XmlBundle.message("xml.javadoc.tag.name.message"),name,buf);
+      DocumentationUtil.formatEntityName(XmlBundle.message("xml.javadoc.tag.name.message"),name,buf);
     } else {
-      JavaDocUtil.formatEntityName(XmlBundle.message("xml.javadoc.complex.type.message"),name,buf);
+      DocumentationUtil.formatEntityName(XmlBundle.message("xml.javadoc.complex.type.message"),name,buf);
     }
 
     final String indent = "  ";
