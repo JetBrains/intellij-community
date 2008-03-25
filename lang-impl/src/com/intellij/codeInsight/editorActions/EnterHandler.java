@@ -101,10 +101,10 @@ public class EnterHandler extends EditorWriteActionHandler {
     Ref<Integer> caretAdvanceRef = new Ref<Integer>(0);
     for(EnterHandlerDelegate delegate: Extensions.getExtensions(EnterHandlerDelegate.EP_NAME)) {
       EnterHandlerDelegate.Result result = delegate.preprocessEnter(file, editor, caretOffsetRef, caretAdvanceRef, dataContext, myOriginalHandler);
-      if (result == EnterHandlerDelegate.Result.HandledAndSkipOriginal) return;
-      if (result != EnterHandlerDelegate.Result.NotHandled) {
+      if (result == EnterHandlerDelegate.Result.Stop) return;
+      if (result != EnterHandlerDelegate.Result.Continue) {
         text = document.getCharsSequence();
-        if (result == EnterHandlerDelegate.Result.HandledAndForceIndent) {
+        if (result == EnterHandlerDelegate.Result.DefaultForceIndent) {
           forceIndent = true;
         }
         break;

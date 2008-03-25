@@ -20,9 +20,9 @@ public class EnterInPropertiesFileHandler implements EnterHandlerDelegate {
     PsiElement psiAtOffset = file.findElementAt(caretOffset);
     if (file instanceof PropertiesFile) {
       handleEnterInPropertiesFile(editor, editor.getDocument(), psiAtOffset, caretOffset);
-      return Result.HandledAndSkipOriginal;
+      return Result.Stop;
     }
-    return Result.NotHandled;
+    return Result.Continue;
   }
 
   private static void handleEnterInPropertiesFile(final Editor editor,

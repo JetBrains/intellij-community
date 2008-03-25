@@ -49,9 +49,9 @@ public class EnterAfterUnmatchedBraceHandler implements EnterHandlerDelegate {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-      return Result.HandledAndForceIndent;
+      return Result.DefaultForceIndent;
     }
-    return Result.NotHandled;
+    return Result.Continue;
   }
 
   public static boolean isAfterUnmatchedLBrace(Editor editor, int offset, FileType fileType) {

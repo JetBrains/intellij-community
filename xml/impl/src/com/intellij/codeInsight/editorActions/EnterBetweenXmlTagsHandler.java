@@ -18,9 +18,9 @@ public class EnterBetweenXmlTagsHandler implements EnterHandlerDelegate {
                                 final DataContext dataContext, final EditorActionHandler originalHandler) {
     if (file instanceof XmlFile && isBetweenXmlTags(editor, caretOffset.get().intValue())) {
       originalHandler.execute(editor, dataContext);
-      return Result.HandledAndForceIndent;
+      return Result.DefaultForceIndent;
     }
-    return Result.NotHandled;
+    return Result.Continue;
   }
 
   private static boolean isBetweenXmlTags(Editor editor, int offset) {

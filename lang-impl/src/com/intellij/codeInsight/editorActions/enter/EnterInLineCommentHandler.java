@@ -29,10 +29,10 @@ public class EnterInLineCommentHandler implements EnterHandlerDelegate {
         if (offset < document.getTextLength() && text.charAt(offset) != '\n') {
           assert commenter.getLineCommentPrefix() != null:"Line Comment type is set but Line Comment Prefix is null!";
           document.insertString(caretOffset, commenter.getLineCommentPrefix() + " ");
-          return Result.Handled;
+          return Result.Default;
         }
       }
     }
-    return Result.NotHandled;
+    return Result.Continue;
   }
 }

@@ -32,9 +32,9 @@ public class EnterBetweenBracesHandler implements EnterHandlerDelegate {
         catch (IncorrectOperationException e) {
           LOG.error(e);
         }
-        return Result.Handled;
+        return Result.Default;
       }
     }
-    return Result.NotHandled;
+    return Result.Continue;
   }
 }

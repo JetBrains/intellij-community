@@ -63,9 +63,9 @@ public class EnterInStringLiteralHandler implements EnterHandlerDelegate {
         }
         caretOffsetRef.set(caretOffset);
         caretAdvanceRef.set(caretAdvance);
-        return Result.HandledAndForceIndent;
+        return Result.DefaultForceIndent;
       }
     }
-    return Result.NotHandled;
+    return Result.Continue;
   }
 }
