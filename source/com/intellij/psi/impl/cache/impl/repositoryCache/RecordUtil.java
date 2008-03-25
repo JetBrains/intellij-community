@@ -24,10 +24,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -133,7 +130,7 @@ public class RecordUtil {
     return new int[size];
   }
 
-  static String[] createStringArray(int size) {
+  public static String[] createStringArray(int size) {
     if (size == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
     return new String[size];
   }
@@ -204,47 +201,49 @@ public class RecordUtil {
     if (psiElement instanceof PsiModifierListOwner) {
       psiModifierList = ((PsiModifierListOwner)psiElement).getModifierList();
     }
+
+    return psiModifierList != null ? packModifierList(psiModifierList) : 0;
+  }
+
+  public static int packModifierList(final PsiModifierList psiModifierList) {
     int packed = 0;
 
-    if (psiModifierList != null) {
-      if (psiModifierList.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        packed |= ModifierFlags.ABSTRACT_MASK;
-      }
-      if (psiModifierList.hasModifierProperty(PsiModifier.FINAL)) {
-        packed |= ModifierFlags.FINAL_MASK;
-      }
-      if (psiModifierList.hasModifierProperty(PsiModifier.NATIVE)) {
-        packed |= ModifierFlags.NATIVE_MASK;
-      }
-      if (psiModifierList.hasModifierProperty(PsiModifier.STATIC)) {
-        packed |= ModifierFlags.STATIC_MASK;
-      }
-      if (psiModifierList.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-        packed |= ModifierFlags.SYNCHRONIZED_MASK;
-      }
-      if (psiModifierList.hasModifierProperty(PsiModifier.TRANSIENT)) {
-        packed |= ModifierFlags.TRANSIENT_MASK;
-      }
-      if (psiModifierList.hasModifierProperty(PsiModifier.VOLATILE)) {
-        packed |= ModifierFlags.VOLATILE_MASK;
-      }
-      if (psiModifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
-        packed |= ModifierFlags.PRIVATE_MASK;
-      }
-      if (psiModifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
-        packed |= ModifierFlags.PROTECTED_MASK;
-      }
-      if (psiModifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
-        packed |= ModifierFlags.PUBLIC_MASK;
-      }
-      if (psiModifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-        packed |= ModifierFlags.PACKAGE_LOCAL_MASK;
-      }
-      if (psiModifierList.hasModifierProperty(PsiModifier.STRICTFP)) {
-        packed |= ModifierFlags.STRICTFP_MASK;
-      }
+    if (psiModifierList.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      packed |= ModifierFlags.ABSTRACT_MASK;
     }
-
+    if (psiModifierList.hasModifierProperty(PsiModifier.FINAL)) {
+      packed |= ModifierFlags.FINAL_MASK;
+    }
+    if (psiModifierList.hasModifierProperty(PsiModifier.NATIVE)) {
+      packed |= ModifierFlags.NATIVE_MASK;
+    }
+    if (psiModifierList.hasModifierProperty(PsiModifier.STATIC)) {
+      packed |= ModifierFlags.STATIC_MASK;
+    }
+    if (psiModifierList.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+      packed |= ModifierFlags.SYNCHRONIZED_MASK;
+    }
+    if (psiModifierList.hasModifierProperty(PsiModifier.TRANSIENT)) {
+      packed |= ModifierFlags.TRANSIENT_MASK;
+    }
+    if (psiModifierList.hasModifierProperty(PsiModifier.VOLATILE)) {
+      packed |= ModifierFlags.VOLATILE_MASK;
+    }
+    if (psiModifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
+      packed |= ModifierFlags.PRIVATE_MASK;
+    }
+    if (psiModifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
+      packed |= ModifierFlags.PROTECTED_MASK;
+    }
+    if (psiModifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
+      packed |= ModifierFlags.PUBLIC_MASK;
+    }
+    if (psiModifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+      packed |= ModifierFlags.PACKAGE_LOCAL_MASK;
+    }
+    if (psiModifierList.hasModifierProperty(PsiModifier.STRICTFP)) {
+      packed |= ModifierFlags.STRICTFP_MASK;
+    }
     return packed;
   }
 
@@ -475,6 +474,39 @@ public class RecordUtil {
       //writeSTR(record, text);
     }
   }
+
+  public static void writeTYPE(final DataOutputStream dataStream,
+                               final TypeInfo typeInfo,
+                               final PersistentStringEnumerator nameStorage) throws IOException {
+    if (typeInfo == null) {
+      dataStream.writeByte(0x02);
+      return;
+    }
+
+    boolean isEllipsis = typeInfo.isEllipsis;
+    String text = typeInfo.text;
+    byte arrayCount = typeInfo.arrayCount;
+
+    int frequentIndex = ourFrequentTypeIndex.get(text);
+    LOG.assertTrue(frequentIndex == 0 || frequentIndex < 16);
+    int flags = arrayCount == 0 ? 0 : 1;
+    if (isEllipsis) flags |= 2;
+    if (frequentIndex != 0) {
+      dataStream.writeByte((flags << 6) | 0x01 | (frequentIndex << 2));
+      if (arrayCount != 0) {
+        dataStream.writeByte(arrayCount);
+      }
+    }
+    else {
+      dataStream.writeByte((flags << 6) | 0x00);
+      if (arrayCount != 0) {
+        dataStream.writeByte(arrayCount);
+      }
+      DataInputOutputUtil.writeNAME(dataStream, text, nameStorage);
+      //writeSTR(record, text);
+    }
+  }
+
 
   public static void skipTYPE(DataInput record) throws IOException {
     final byte b = record.readByte();
