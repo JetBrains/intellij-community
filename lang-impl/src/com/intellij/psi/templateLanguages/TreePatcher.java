@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.CharTable;
 
 public interface TreePatcher {
+
   /** Inserts toInsert into destinationTree according to parser rules.*/
   void insert(CompositeElement parent, TreeElement anchorBefore, OuterLanguageElement toInsert);
 

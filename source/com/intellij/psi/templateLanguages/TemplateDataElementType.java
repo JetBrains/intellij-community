@@ -7,6 +7,7 @@ package com.intellij.psi.templateLanguages;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.LanguageExtension;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -34,6 +35,9 @@ import javax.swing.*;
  * @author peter
  */
 public class TemplateDataElementType extends IFileElementType implements ITemplateDataElementType {
+
+  private final static LanguageExtension<TreePatcher> TREE_PATCHER = new LanguageExtension<TreePatcher>("com.intellij.lang.treePatcher", new SimpleTreePatcher()); 
+
   private final IElementType myTemplateElementType;
   private final IElementType myOuterElementType;
 
@@ -99,7 +103,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   private void insertOuters(TreeElement root, Lexer lexer, final CharTable table) {
-    TreePatcher patcher = new SimpleTreePatcher();
+    TreePatcher patcher = TREE_PATCHER.forLanguage(root.getPsi().getLanguage());
 
     int treeOffset = 0;
     LeafElement leaf = TreeUtil.findFirstLeaf(root);

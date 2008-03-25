@@ -86,6 +86,8 @@
   <extensionPoint name="lang.surroundDescriptor" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.unwrapDescriptor" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.parserDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.treePatcher" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+
   <extensionPoint name="lang.fileViewProviderFactory" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="fileType.fileViewProviderFactory" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
 

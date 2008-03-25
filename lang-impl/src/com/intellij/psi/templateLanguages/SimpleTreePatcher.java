@@ -8,20 +8,11 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 
 public class SimpleTreePatcher implements TreePatcher {
   public void insert(CompositeElement parent, TreeElement anchorBefore, OuterLanguageElement toInsert) {
     if(anchorBefore != null) {
-      //[mike]
-      //Nasty hack. Is used not to insert OuterLanguageElements before the first token of tag.
-      //See GeneralJspParsingTest.testHtml6
-      if (anchorBefore.getElementType() == XmlTokenType.XML_START_TAG_START) {
-        anchorBefore = anchorBefore.getTreeParent();
-      }
-
-
       TreeUtil.insertBefore(anchorBefore, (TreeElement)toInsert);
     }
     else TreeUtil.addChildren(parent, (TreeElement)toInsert);

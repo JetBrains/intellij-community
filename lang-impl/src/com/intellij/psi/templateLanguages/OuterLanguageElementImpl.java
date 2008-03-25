@@ -4,7 +4,6 @@
  */
 package com.intellij.psi.templateLanguages;
 
-import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -20,11 +19,6 @@ public class OuterLanguageElementImpl extends LeafPsiElement implements OuterLan
   }
 
   public void accept(@NotNull final PsiElementVisitor visitor) {
-    if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitOuterLanguageElement(this);
-    }
-    else {
-      visitor.visitElement(this);
-    }
+    visitor.visitOuterLanguageElement(this);
   }
 }

@@ -323,10 +323,6 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitFile(file);
   }
 
-  public void visitOuterLanguageElement(OuterLanguageElement element) {
-    visitElement(element);
-  }
-
   public void visitImplicitVariable(ImplicitVariable variable) {
     visitLocalVariable(variable);
   }

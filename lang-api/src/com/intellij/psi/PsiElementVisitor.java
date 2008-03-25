@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
+
 /**
  * Visitor which can be used to visit Java, XML and JSP PSI elements.
  *
@@ -54,5 +56,9 @@ public abstract class PsiElementVisitor {
 
   public void visitWhiteSpace(PsiWhiteSpace space) {
     visitElement(space);
+  }
+
+  public void visitOuterLanguageElement(OuterLanguageElement element) {
+    visitElement(element);
   }
 }
