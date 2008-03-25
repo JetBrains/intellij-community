@@ -7,6 +7,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 
 /**
  * @author dsl
@@ -52,7 +53,7 @@ public class EnumConstantElement extends RepositoryTreeElement implements Consta
     }
     else if (i == JavaTokenType.C_STYLE_COMMENT || i == JavaTokenType.END_OF_LINE_COMMENT) {
       {
-        return ChildRole.NONE;
+        return ChildRoleBase.NONE;
       }
     }
     else if (i == JavaTokenType.IDENTIFIER) {
@@ -68,7 +69,7 @@ public class EnumConstantElement extends RepositoryTreeElement implements Consta
       return ChildRole.MODIFIER_LIST;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 }

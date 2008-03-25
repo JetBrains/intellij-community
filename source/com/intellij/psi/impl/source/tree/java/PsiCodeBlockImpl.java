@@ -16,6 +16,7 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -163,7 +164,7 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
       if (ElementType.STATEMENT_BIT_SET.contains(child.getElementType())) {
         return ChildRole.STATEMENT_IN_BLOCK;
       }
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

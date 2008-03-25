@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -310,12 +311,12 @@ public class ClassElement extends RepositoryTreeElement implements Constants {
 
     IElementType i = child.getElementType();
     if (i == SEMICOLON) {
-      if (!isEnum()) return ChildRole.NONE;
+      if (!isEnum()) return ChildRoleBase.NONE;
       if (child == findEnumConstantListDelimiter()) {
         return ChildRole.ENUM_CONSTANT_LIST_DELIMITER;
       }
       else {
-        return ChildRole.NONE;
+        return ChildRoleBase.NONE;
       }
     }
     else if (i == CLASS) {
@@ -337,7 +338,7 @@ public class ClassElement extends RepositoryTreeElement implements Constants {
       return getChildRole(child, ChildRole.DOC_COMMENT);
     }
     else if (i == C_STYLE_COMMENT || i == END_OF_LINE_COMMENT) {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
     else if (i == MODIFIER_LIST) {
       return ChildRole.MODIFIER_LIST;
@@ -367,7 +368,7 @@ public class ClassElement extends RepositoryTreeElement implements Constants {
       return ChildRole.AT;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

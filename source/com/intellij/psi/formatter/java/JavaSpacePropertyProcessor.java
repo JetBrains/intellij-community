@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -534,7 +535,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
 
-    else if (myRole1 == ChildRole.NONE || myRole2 == ChildRole.NONE) {
+    else if (myRole1 == ChildRoleBase.NONE || myRole2 == ChildRoleBase.NONE) {
       final IElementType firstElementType = myChild1.getElementType();
       if (
         firstElementType == JavaTokenType.END_OF_LINE_COMMENT
@@ -1033,7 +1034,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         space = true;
       }
 
-      if (!keepLineBreaks && myRole2 == ChildRole.NONE) {
+      if (!keepLineBreaks && myRole2 == ChildRoleBase.NONE) {
         keepLineBreaks = true;
       }
       myResult = Spacing.createSpacing(space ? 1 : 0, space ? 1 : 0, 0, keepLineBreaks, keepBlankLines);

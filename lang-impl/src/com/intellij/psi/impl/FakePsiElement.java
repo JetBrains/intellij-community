@@ -2,21 +2,20 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.psi.impl.beanProperties;
+package com.intellij.psi.impl;
 
 import com.intellij.extapi.psi.PsiElementBase;
-import com.intellij.lang.Language;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.Language;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
@@ -31,7 +30,7 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
 
   @NotNull
   public Language getLanguage() {
-    return StdLanguages.JAVA;
+    return Language.ANY;
   }
 
   @NotNull

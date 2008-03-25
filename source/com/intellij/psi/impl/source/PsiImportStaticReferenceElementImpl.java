@@ -17,6 +17,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +91,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
       return ChildRole.REFERENCE_NAME;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

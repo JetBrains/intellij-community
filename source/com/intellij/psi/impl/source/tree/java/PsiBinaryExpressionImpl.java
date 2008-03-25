@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements PsiBinaryExpression, Constants {
@@ -121,13 +122,13 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
     if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
       if (child == getFirstChildNode()) return ChildRole.LOPERAND;
       if (child == getLastChildNode()) return ChildRole.ROPERAND;
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
     else if (OUR_OPERATIONS_BIT_SET.contains(child.getElementType())) {
       return ChildRole.OPERATION_SIGN;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

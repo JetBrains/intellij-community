@@ -13,6 +13,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements PsiSwitchLabelStatement, Constants {
@@ -74,7 +75,7 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
         return ChildRole.CASE_EXPRESSION;
       }
       else {
-        return ChildRole.NONE;
+        return ChildRoleBase.NONE;
       }
     }
   }

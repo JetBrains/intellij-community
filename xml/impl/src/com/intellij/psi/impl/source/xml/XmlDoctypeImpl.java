@@ -7,9 +7,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +61,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
       return XmlChildRole.XML_NAME;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

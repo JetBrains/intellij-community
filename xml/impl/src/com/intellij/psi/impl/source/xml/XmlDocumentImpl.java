@@ -15,11 +15,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.CachedValueImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
-import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
@@ -69,7 +69,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
       return XmlChildRole.XML_TAG;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

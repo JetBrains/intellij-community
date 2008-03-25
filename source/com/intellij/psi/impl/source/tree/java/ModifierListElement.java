@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
@@ -31,7 +32,7 @@ public class ModifierListElement extends RepositoryTreeElement{
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child.getElementType() == JavaElementType.ANNOTATION) return ChildRole.ANNOTATION;
-    return ChildRole.NONE;
+    return ChildRoleBase.NONE;
   }
 
   private static final HashMap<String, Integer> ourModifierToOrderMap = new HashMap<String, Integer>();

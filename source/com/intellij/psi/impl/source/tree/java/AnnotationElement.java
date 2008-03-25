@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 
 /**
  * @author ven
@@ -33,7 +34,7 @@ public class AnnotationElement extends RepositoryTreeElement implements Constant
       return ChildRole.CLASS_REFERENCE;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

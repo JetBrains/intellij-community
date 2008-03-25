@@ -8,6 +8,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
@@ -95,7 +96,7 @@ public class MethodElement extends RepositoryTreeElement implements Constants {
     }
     else if (i == C_STYLE_COMMENT || i == END_OF_LINE_COMMENT) {
       {
-        return ChildRole.NONE;
+        return ChildRoleBase.NONE;
       }
     }
     else if (i == MODIFIER_LIST) {
@@ -123,7 +124,7 @@ public class MethodElement extends RepositoryTreeElement implements Constants {
       return getChildRole(child, ChildRole.CLOSING_SEMICOLON);
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 }

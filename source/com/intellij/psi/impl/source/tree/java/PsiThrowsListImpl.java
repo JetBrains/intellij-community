@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 
 /**
  *  @author dsl
@@ -50,7 +51,7 @@ public class PsiThrowsListImpl extends ReferenceListElement implements Constants
       return ChildRole.REFERENCE_IN_LIST;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 }

@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBreakStatement, Constants {
@@ -83,7 +84,7 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
       return ChildRole.CLOSING_SEMICOLON;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

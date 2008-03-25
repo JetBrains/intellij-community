@@ -6,7 +6,7 @@ import com.intellij.util.CharTable;
  * @author ven
  */
 public class ParsingContext {
-  protected final CharTable myTable;
+  private final CharTable myTable;
   
   public ParsingContext(final CharTable table) {
     myTable = table;

@@ -17,6 +17,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -274,7 +275,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
       return ChildRole.DOC_COMMENT_END;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

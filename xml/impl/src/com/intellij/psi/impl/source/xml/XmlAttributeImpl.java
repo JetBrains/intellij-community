@@ -16,11 +16,11 @@ import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
 import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -58,7 +58,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       return XmlChildRole.XML_ATTRIBUTE_VALUE;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

@@ -3,7 +3,7 @@ package com.intellij.xml.impl.dom;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.beanProperties.FakePsiElement;
+import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;

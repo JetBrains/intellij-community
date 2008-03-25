@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
 
@@ -26,7 +27,7 @@ public class TypeParameterElement extends RepositoryTreeElement {
       return getChildRole(child, ChildRole.EXTENDS_LIST);
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

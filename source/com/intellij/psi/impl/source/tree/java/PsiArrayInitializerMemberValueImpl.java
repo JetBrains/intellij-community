@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -55,7 +56,7 @@ public class PsiArrayInitializerMemberValueImpl extends PsiCommaSeparatedListImp
       if (ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getElementType())) {
         return ChildRole.ANNOTATION_VALUE;
       }
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

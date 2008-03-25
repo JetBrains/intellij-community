@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -117,11 +118,11 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
     else {
       if (child.getElementType() == CODE_BLOCK) {
         int role = getChildRole(child, ChildRole.TRY_BLOCK);
-        if (role != ChildRole.NONE) return role;
+        if (role != ChildRoleBase.NONE) return role;
         return getChildRole(child, ChildRole.FINALLY_BLOCK);
       }
       else {
-        return ChildRole.NONE;
+        return ChildRoleBase.NONE;
       }
     }
   }

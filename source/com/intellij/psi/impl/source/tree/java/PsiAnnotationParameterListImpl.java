@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +52,7 @@ public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl im
         return ChildRole.ANNOTATION_VALUE;
       }
       else {
-        return ChildRole.NONE;
+        return ChildRoleBase.NONE;
       }
     }
   }

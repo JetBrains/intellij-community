@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiWhileStatementImpl extends CompositePsiElement implements PsiWhileStatement, Constants {
@@ -76,7 +77,7 @@ public class PsiWhileStatementImpl extends CompositePsiElement implements PsiWhi
         return ChildRole.LOOP_BODY;
       }
       else {
-        return ChildRole.NONE;
+        return ChildRoleBase.NONE;
       }
     }
   }

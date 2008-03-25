@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAssertStatement, Constants {
@@ -74,10 +75,10 @@ public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAs
     else {
       if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         int role = getChildRole(child, ChildRole.CONDITION);
-        if (role != ChildRole.NONE) return role;
+        if (role != ChildRoleBase.NONE) return role;
         return ChildRole.ASSERT_DESCRIPTION;
       }
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

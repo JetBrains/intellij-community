@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -91,7 +92,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
       return ChildRole.CATCH_BLOCK_PARAMETER_RPARENTH;
     }
 
-    return ChildRole.NONE;
+    return ChildRoleBase.NONE;
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,

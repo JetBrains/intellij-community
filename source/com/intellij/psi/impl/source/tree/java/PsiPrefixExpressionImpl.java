@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements PsiPrefixExpression, Constants {
@@ -74,7 +75,7 @@ public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements Psi
     LOG.assertTrue(child.getTreeParent() == this);
     if (child == getFirstChildNode()) return ChildRole.OPERATION_SIGN;
     if (child == getLastChildNode() && EXPRESSION_BIT_SET.contains(child.getElementType())) return ChildRole.OPERAND;
-    return ChildRole.NONE;
+    return ChildRoleBase.NONE;
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

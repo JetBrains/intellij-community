@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +62,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
       if (STATEMENT_BIT_SET.contains(child.getElementType())) {
         return ChildRole.STATEMENT;
       }
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

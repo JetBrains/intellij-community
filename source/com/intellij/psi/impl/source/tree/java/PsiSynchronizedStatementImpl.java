@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiSynchronizedStatementImpl extends CompositePsiElement implements PsiSynchronizedStatement, Constants {
@@ -67,7 +68,7 @@ public class PsiSynchronizedStatementImpl extends CompositePsiElement implements
       if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.LOCK;
       }
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

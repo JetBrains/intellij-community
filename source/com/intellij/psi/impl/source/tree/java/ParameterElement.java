@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 
 public class ParameterElement extends RepositoryTreeElement{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ParameterElement");
@@ -56,7 +57,7 @@ public class ParameterElement extends RepositoryTreeElement{
       return getChildRole(child, ChildRole.NAME);
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 }

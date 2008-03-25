@@ -7,6 +7,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 public class FieldElement extends RepositoryTreeElement{
@@ -66,7 +67,7 @@ public class FieldElement extends RepositoryTreeElement{
       return getChildRole(child, ChildRole.DOC_COMMENT);
     }
     else if (i == JavaTokenType.C_STYLE_COMMENT || i == JavaTokenType.END_OF_LINE_COMMENT) {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
     else if (i == JavaElementType.MODIFIER_LIST) {
       return ChildRole.MODIFIER_LIST;
@@ -87,7 +88,7 @@ public class FieldElement extends RepositoryTreeElement{
       if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.INITIALIZER;
       }
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 }

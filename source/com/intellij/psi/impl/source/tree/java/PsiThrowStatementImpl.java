@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiThrowStatementImpl extends CompositePsiElement implements PsiThrowStatement, Constants {
@@ -55,7 +56,7 @@ public class PsiThrowStatementImpl extends CompositePsiElement implements PsiThr
         return ChildRole.EXCEPTION;
       }
       else {
-        return ChildRole.NONE;
+        return ChildRoleBase.NONE;
       }
     }
   }

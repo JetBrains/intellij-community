@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,9 +34,7 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile, XmlElementType 
   }
 
   private static IElementType getElementType(final FileViewProvider fileViewProvider) {
-    final Language dataLanguage = fileViewProvider instanceof JspxFileViewProvider ?
-                                  ((JspxFileViewProvider)fileViewProvider).getTemplateDataLanguage() :
-                                  fileViewProvider.getBaseLanguage();
+    final Language dataLanguage = fileViewProvider.getBaseLanguage();
 
     if (dataLanguage == StdLanguages.XML) return XML_FILE;
     if (dataLanguage == StdLanguages.XHTML) return XHTML_FILE;
@@ -99,12 +96,9 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile, XmlElementType 
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
-    if (!super.processDeclarations(processor, state, lastParent, place)) return false;
+    return super.processDeclarations(processor, state, lastParent, place) &&
+           (!isWebFileType() || ScriptSupportUtil.processDeclarations(this, processor, state, lastParent, place));
 
-    if (isWebFileType())
-      return ScriptSupportUtil.processDeclarations(this, processor, state, lastParent, place);
-
-    return true;
   }
 
   public GlobalSearchScope getFileResolveScope() {

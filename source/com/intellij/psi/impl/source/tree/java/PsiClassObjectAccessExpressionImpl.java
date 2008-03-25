@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +61,7 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
       return ChildRole.CLASS_KEYWORD;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

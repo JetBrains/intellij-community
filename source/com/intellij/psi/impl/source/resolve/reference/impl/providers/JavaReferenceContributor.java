@@ -7,6 +7,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.patterns.PlatformPatterns;
+import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
+import static com.intellij.patterns.XmlPatterns.xmlTag;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.i18n.I18nUtil;
 
@@ -16,8 +18,13 @@ import java.util.HashMap;
 /**
  * @author peter
  */
-public class FilePathReferenceContributor extends PsiReferenceContributor{
+public class JavaReferenceContributor extends PsiReferenceContributor{
   public void registerReferenceProviders(final PsiReferenceRegistrar registrar) {
+
+    final JavaClassListReferenceProvider classListProvider = new JavaClassListReferenceProvider();
+    registrar.registerReferenceProvider(xmlAttributeValue(), classListProvider, PsiReferenceRegistrar.LOWER_PRIORITY);
+    registrar.registerReferenceProvider(xmlTag(), classListProvider, PsiReferenceRegistrar.LOWER_PRIORITY);
+
     final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider();
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiLiteralExpression.class).and(new FilterPattern(new ElementFilter() {
       public boolean isAcceptable(Object element, PsiElement context) {

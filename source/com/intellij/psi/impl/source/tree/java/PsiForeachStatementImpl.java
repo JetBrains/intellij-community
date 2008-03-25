@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -100,7 +101,7 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
         return ChildRole.LOOP_BODY;
       }
       else {
-        return ChildRole.NONE;
+        return ChildRoleBase.NONE;
       }
     }
   }

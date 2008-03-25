@@ -3,10 +3,9 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.lang.ASTNode;
 
 /**
@@ -51,7 +50,7 @@ public class ImplementsListElement extends ReferenceListElement {
       return ChildRole.REFERENCE_IN_LIST;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 }

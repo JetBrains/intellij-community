@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -112,9 +113,9 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     LOG.assertTrue(child.getTreeParent() == this);
     if (EXPRESSION_BIT_SET.contains(child.getElementType())){
       int role = getChildRole(child, ChildRole.CONDITION);
-      if (role != ChildRole.NONE) return role;
+      if (role != ChildRoleBase.NONE) return role;
       role = getChildRole(child, ChildRole.THEN_EXPRESSION);
-      if (role != ChildRole.NONE) return role;
+      if (role != ChildRoleBase.NONE) return role;
       role = getChildRole(child, ChildRole.ELSE_EXPRESSION);
       return role;
     }
@@ -125,7 +126,7 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
       return ChildRole.COLON;
     }
     else{
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

@@ -1,16 +1,16 @@
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.TokenType;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
@@ -24,7 +24,7 @@ import java.util.List;
 
 public class XmlBlock extends AbstractXmlBlock {
   private final Indent myIndent;
-  private TextRange myTextRange;
+  private final TextRange myTextRange;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.XmlBlock");
 
@@ -97,7 +97,7 @@ public class XmlBlock extends AbstractXmlBlock {
     if (myNode.getElementType() == XmlElementType.HTML_DOCUMENT) {
       return Indent.getNoneIndent();
     }
-    if (myNode.getElementType() == ElementType.DUMMY_HOLDER) {
+    if (myNode.getElementType() == TokenType.DUMMY_HOLDER) {
       return Indent.getNoneIndent();
     }
     if (myNode.getElementType() == XmlElementType.XML_PROLOG) {

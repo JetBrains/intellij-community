@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 
 /**
  * @author dsl
@@ -56,7 +57,7 @@ public class ImportStatementBaseElement extends RepositoryTreeElement implements
       return ChildRole.CLOSING_SEMICOLON;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 }

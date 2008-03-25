@@ -21,6 +21,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.CharTable;
@@ -227,7 +228,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
       if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.INITIALIZER;
       }
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.Constants;
@@ -85,7 +86,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
       return ChildRole.OPERATION_SIGN;
     }
 
-    return ChildRole.NONE;
+    return ChildRoleBase.NONE;
   }
 
   public ASTNode findChildByRole(int role) {

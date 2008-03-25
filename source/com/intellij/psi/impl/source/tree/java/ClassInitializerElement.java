@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 
 public class ClassInitializerElement extends RepositoryTreeElement implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ClassInitializerElement");
@@ -34,7 +35,7 @@ public class ClassInitializerElement extends RepositoryTreeElement implements Co
     IElementType i = child.getElementType();
     if (i == C_STYLE_COMMENT || i == END_OF_LINE_COMMENT) {
       {
-        return ChildRole.NONE;
+        return ChildRoleBase.NONE;
       }
     }
     else if (i == MODIFIER_LIST) {
@@ -44,7 +45,7 @@ public class ClassInitializerElement extends RepositoryTreeElement implements Co
       return ChildRole.METHOD_BODY;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 }

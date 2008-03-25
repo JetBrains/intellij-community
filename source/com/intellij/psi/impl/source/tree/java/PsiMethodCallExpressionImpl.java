@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
@@ -84,7 +85,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.METHOD_EXPRESSION;
       }
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

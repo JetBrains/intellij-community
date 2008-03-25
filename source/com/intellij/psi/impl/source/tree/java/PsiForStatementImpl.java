@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -123,13 +124,13 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
       }
       else if (STATEMENT_BIT_SET.contains(child.getElementType())) {
         int role = getChildRole(child, ChildRole.FOR_INITIALIZATION);
-        if (role != ChildRole.NONE) return role;
+        if (role != ChildRoleBase.NONE) return role;
         role = getChildRole(child, ChildRole.FOR_UPDATE);
-        if (role != ChildRole.NONE) return role;
+        if (role != ChildRoleBase.NONE) return role;
         return ChildRole.LOOP_BODY;
       }
       else {
-        return ChildRole.NONE;
+        return ChildRoleBase.NONE;
       }
     }
   }

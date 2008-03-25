@@ -4,7 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.XmlElementVisitor;
-import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlDoctype;
 import com.intellij.psi.xml.XmlElementType;
@@ -36,7 +36,7 @@ public class XmlPrologImpl extends XmlElementImpl implements XmlProlog, XmlEleme
       return XmlChildRole.XML_DOCTYPE;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

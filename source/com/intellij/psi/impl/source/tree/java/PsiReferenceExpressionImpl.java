@@ -27,6 +27,7 @@ import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
@@ -502,7 +503,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.QUALIFIER;
       }
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

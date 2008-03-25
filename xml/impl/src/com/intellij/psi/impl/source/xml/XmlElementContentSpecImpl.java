@@ -6,8 +6,8 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlElementContentSpec;
 import com.intellij.psi.xml.XmlElementType;
@@ -36,7 +36,7 @@ public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElem
       return XmlChildRole.XML_PCDATA;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

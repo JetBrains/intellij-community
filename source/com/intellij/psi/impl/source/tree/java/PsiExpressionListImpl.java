@@ -9,6 +9,7 @@ import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +60,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
       if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.EXPRESSION_IN_LIST;
       }
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

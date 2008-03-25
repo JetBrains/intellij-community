@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiReturnStatementImpl extends CompositePsiElement implements PsiReturnStatement, Constants {
@@ -55,7 +56,7 @@ public class PsiReturnStatementImpl extends CompositePsiElement implements PsiRe
         return ChildRole.RETURN_VALUE;
       }
       else {
-        return ChildRole.NONE;
+        return ChildRoleBase.NONE;
       }
     }
   }

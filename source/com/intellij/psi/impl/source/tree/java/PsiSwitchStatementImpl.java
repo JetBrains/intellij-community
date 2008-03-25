@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiSwitchStatementImpl extends CompositePsiElement implements PsiSwitchStatement, Constants {
@@ -76,7 +77,7 @@ public class PsiSwitchStatementImpl extends CompositePsiElement implements PsiSw
         return ChildRole.SWITCH_BODY;
       }
       else {
-        return ChildRole.NONE;
+        return ChildRoleBase.NONE;
       }
     }
   }

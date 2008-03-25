@@ -9,6 +9,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
 
@@ -67,7 +68,7 @@ public abstract class AnonymousClassElementBase extends ClassElement {
       return getChildRole(child, ChildRole.RBRACE);
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 }

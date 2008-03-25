@@ -49,7 +49,7 @@ public class XmlApplicationComponent implements ApplicationComponent, IconProvid
           new AndFilter(
             new ClassFilter(XmlTag.class),
             new NamespaceFilter(XmlUtil.SCHEMA_URIS),
-           new TextFilter("schema")
+           new XmlTextFilter("schema")
           ),
           SchemaNSDescriptor.class
       );

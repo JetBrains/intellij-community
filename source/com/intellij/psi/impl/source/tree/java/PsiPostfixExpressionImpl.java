@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiPostfixExpressionImpl extends ExpressionPsiElement implements PsiPostfixExpression {
@@ -52,7 +53,7 @@ public class PsiPostfixExpressionImpl extends ExpressionPsiElement implements Ps
     LOG.assertTrue(child.getTreeParent() == this);
     if (child == getFirstChildNode()) return ChildRole.OPERAND;
     if (child == getLastChildNode()) return ChildRole.OPERATION_SIGN;
-    return ChildRole.NONE;
+    return ChildRoleBase.NONE;
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

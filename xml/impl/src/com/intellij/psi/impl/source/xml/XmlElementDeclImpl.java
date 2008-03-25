@@ -8,9 +8,9 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
@@ -36,7 +36,7 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
       return XmlChildRole.XML_ELEMENT_CONTENT_SPEC;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

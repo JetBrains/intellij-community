@@ -4,9 +4,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +30,7 @@ public class XmlAttlistDeclImpl extends XmlElementImpl implements XmlAttlistDecl
       return XmlChildRole.XML_NAME;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

@@ -23,10 +23,6 @@ import com.intellij.psi.xml.*;
 public class XmlReferenceContributor extends PsiReferenceContributor {
   public void registerReferenceProviders(final PsiReferenceRegistrar registrar) {
 
-    final JavaClassListReferenceProvider classListProvider = new JavaClassListReferenceProvider();
-    registrar.registerReferenceProvider(xmlAttributeValue(), classListProvider, PsiReferenceRegistrar.LOWER_PRIORITY);
-    registrar.registerReferenceProvider(xmlTag(), classListProvider, PsiReferenceRegistrar.LOWER_PRIORITY);
-
     final IdReferenceProvider idReferenceProvider = new IdReferenceProvider();
 
     XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, idReferenceProvider.getIdForAttributeNames(),
@@ -56,7 +52,7 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
         new AndFilter(
           new AndFilter(
             new ClassFilter(XmlTag.class),
-            new TextFilter("include")
+            new XmlTextFilter("include")
           ),
           new NamespaceFilter(XmlUtil.XINCLUDE_URI)
         ),

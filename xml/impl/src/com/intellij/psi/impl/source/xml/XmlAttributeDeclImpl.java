@@ -9,9 +9,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.meta.MetaRegistry;
-import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
@@ -52,7 +52,7 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
       return XmlChildRole.XML_ENUMERATED_TYPE;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

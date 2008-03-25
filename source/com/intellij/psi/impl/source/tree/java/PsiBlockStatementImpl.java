@@ -6,6 +6,7 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiBlockStatement;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
@@ -41,7 +42,7 @@ public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlo
       return ChildRole.BLOCK;
     }
     else {
-      return ChildRole.NONE;
+      return ChildRoleBase.NONE;
     }
   }
 

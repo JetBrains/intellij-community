@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -252,7 +253,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
         return child == getFirstChildNode() ? ChildRole.QUALIFIER : ChildRole.ARRAY_DIMENSION;
       }
       else {
-        return ChildRole.NONE;
+        return ChildRoleBase.NONE;
       }
     }
   }
