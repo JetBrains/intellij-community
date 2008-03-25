@@ -37,8 +37,7 @@ public class LookupValueFactory {
     private final String myName;
     private final Icon myIcon;
 
-    protected LookupValueWithIcon(@NotNull String name, @NotNull Icon icon) {
-
+    protected LookupValueWithIcon(@NotNull String name, @Nullable Icon icon) {
       myName = name;
       myIcon = icon;
     }

@@ -2,6 +2,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupValueFactory;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
@@ -18,6 +20,7 @@ import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.XmlTokenTypeFilter;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
@@ -26,8 +29,13 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -70,8 +78,8 @@ public class XmlCompletionData extends CompletionData {
     final ElementFilter entityCompletionFilter = createXmlEntityCompletionFilter();
 
     {
-      final CompletionVariant variant =
-        new CompletionVariant(new AndFilter(new XmlTokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), new NotFilter(entityCompletionFilter)));
+      final CompletionVariant variant = new CompletionVariant(
+          new AndFilter(new XmlTokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), new NotFilter(entityCompletionFilter)));
       variant.includeScopeClass(XmlToken.class, true);
       variant.addCompletion(new SimpleTagContentEnumerationValuesGetter(), TailType.NONE);
 
@@ -89,7 +97,8 @@ public class XmlCompletionData extends CompletionData {
 
   protected ElementFilter createXmlEntityCompletionFilter() {
     return new AndFilter(new LeftNeighbour(new XmlTextFilter("&")), new OrFilter(new XmlTokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
-                                                                              new XmlTokenTypeFilter(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN)));
+                                                                                 new XmlTokenTypeFilter(
+                                                                                     XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN)));
   }
 
   protected XmlAttributeValueGetter getAttributeValueGetter() {
@@ -199,10 +208,53 @@ public class XmlCompletionData extends CompletionData {
   }
 
   protected static class EntityRefGetter implements ContextGetter {
+
+    @NonNls
+    private static final List NAMES_LIST =
+        Arrays.asList("nbsp", "iexcl", "cent", "pound", "curren", "yen", "brvbar", "sect", "uml", "copy", "ordf", "laquo");
+
+    @Nullable
+    private static Object getLookupItem(@Nullable final XmlEntityDecl decl) {
+      if (decl == null) {
+        return null;
+      }
+
+      final String name = decl.getName();
+      if (name == null) {
+        return null;
+      }
+
+      final XmlAttributeValue value = decl.getValueElement();
+      final ASTNode node = value.getNode();
+      if (node != null) {
+        final ASTNode[] nodes = node.getChildren(TokenSet.create(XmlTokenType.XML_CHAR_ENTITY_REF));
+        if (nodes.length == 1) {
+          final String valueText = nodes[0].getText();
+          final int i = valueText.indexOf('#');
+          if (i > 0) {
+            String s = valueText.substring(i + 1);
+            if (s.endsWith(";")) {
+              s = s.substring(0, s.length() - 1);
+            }
+
+            try {
+              final int unicodeChar = Integer.valueOf(s).intValue();
+              return LookupValueFactory.createLookupValueWithHint(name, null, new String(Character.toChars(unicodeChar)));
+            }
+            catch (NumberFormatException e) {
+              return null;
+            }
+          }
+        }
+      }
+
+      return null;
+    }
+
     public Object[] get(final PsiElement context, CompletionContext completionContext) {
       final XmlTag parentOfType = PsiTreeUtil.getParentOfType(context, XmlTag.class);
       if (parentOfType != null) {
-        final List<String> results = new ArrayList<String>();
+        final List<Object> results = new ArrayList<Object>();
         final XmlFile containingFile = (XmlFile)parentOfType.getContainingFile();
 
         XmlFile descriptorFile = findDescriptorFile(parentOfType, containingFile);
@@ -215,7 +267,9 @@ public class XmlCompletionData extends CompletionData {
               if (element instanceof XmlEntityDecl) {
                 final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
                 if (xmlEntityDecl.isInternalReference() || acceptSystemEntities) {
-                  results.add(xmlEntityDecl.getName());
+                  final String name = xmlEntityDecl.getName();
+                  final Object _item = getLookupItem(xmlEntityDecl);
+                  results.add(_item == null ? name : _item);
                 }
               }
               return true;
