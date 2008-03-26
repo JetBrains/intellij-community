@@ -425,4 +425,9 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof PsiMethod);
   }
+
+  public void testMethodCallTypeFromMultiResolve() throws Exception {
+    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("methodCallTypeFromMultiResolve/A.groovy").getElement();
+    assertTrue(((GrMethodCallExpression) ref.getParent()).getType().equalsToText("java.lang.String"));
+  }
 }
