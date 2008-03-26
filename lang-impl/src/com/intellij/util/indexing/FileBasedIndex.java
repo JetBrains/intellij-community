@@ -258,6 +258,13 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
         if (restrictToFile != null) {
           final int restrictedFileId = getFileId(restrictToFile);
+          if (CachesBasedRefSearcher.DEBUG) {
+            System.out.println("FileBasedIndex.processValuesImpl restricted");
+            System.out.println("indexId = " + indexId);
+            System.out.println("id = " + restrictedFileId);
+            System.out.println("file = " + restrictToFile.getPresentableUrl());
+            System.out.println("k = " + dataKey);
+          }
           for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
             final V value = valueIt.next();
             if (container.isAssociated(value, restrictedFileId)) {
@@ -276,6 +283,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
                 System.out.println("FileBasedIndex.processValuesImpl");
                 System.out.println("indexId = " + indexId);
                 System.out.println("id = " + id);
+                System.out.println("k = " + dataKey);
               }
               VirtualFile file = IndexInfrastructure.findFileById(dirIndex, fs, id);
               if (file != null) {
