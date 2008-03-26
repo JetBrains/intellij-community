@@ -85,13 +85,21 @@ public class JavaClassNameCompletionContributor extends CompletionContributor{
                 });
             for (final ExpectedTypeInfo info : expectedInfos) {
               final PsiType type = info.getType();
-              final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+              final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+                public PsiClass compute() {
+                  return PsiUtil.resolveClassInType(type);
+                }
+              });
               if (psiClass != null) {
                 result.addElement(AllClassesGetter.createLookupItem(psiClass, afterNew));
               }
               final PsiType defaultType = info.getDefaultType();
               if (!defaultType.equals(type)) {
-                final PsiClass defClass = PsiUtil.resolveClassInType(defaultType);
+                final PsiClass defClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+                  public PsiClass compute() {
+                    return PsiUtil.resolveClassInType(defaultType);
+                  }
+                });
                 if (defClass != null) {
                   result.addElement(AllClassesGetter.createLookupItem(defClass, afterNew));
                 }
