@@ -55,7 +55,7 @@
                     serviceImplementation="com.jetbrains.python.psi.impl.PyBuiltinCache"/>
 
     <referenceImporter implementation="com.jetbrains.python.validation.PythonReferenceImporter"/>
-    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.PyLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
     <definitionsSearch implementation="com.jetbrains.python.psi.search.PyDefinitionsSearch"/>
     <gotoImplementationRendererProvider implementation="com.jetbrains.python.codeInsight.PyGotoImplementationRendererProvider"/>
   </extensions>
