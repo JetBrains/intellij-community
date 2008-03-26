@@ -2,11 +2,13 @@ package com.intellij.xml.util;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -14,8 +16,10 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xml.XmlExtension;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -27,13 +31,13 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 class AnchorReference implements PsiReference {
-  private String myAnchor;
-  private PsiReference myFileReference;
-  private PsiElement myElement;
-  private int myOffset;
+  private final String myAnchor;
+  private final PsiReference myFileReference;
+  private final PsiElement myElement;
+  private final int myOffset;
   @NonNls
-  public static final String ANCHOR_ELEMENT_NAME = "a";
-  private static Key<CachedValue<Map<String,XmlTag>>> ourCachedIdsKey = Key.create("cached.ids");
+  private static final String ANCHOR_ELEMENT_NAME = "a";
+  private static final Key<CachedValue<Map<String,XmlTag>>> ourCachedIdsKey = Key.create("cached.ids");
 
   AnchorReference(final String anchor, final PsiReference psiReference, final PsiElement element) {
     myAnchor = anchor;
@@ -62,7 +66,7 @@ class AnchorReference implements PsiReference {
     return null;
   }
 
-  static boolean processXmlElements(XmlTag element, PsiElementProcessor processor) {
+  private static boolean processXmlElements(XmlTag element, PsiElementProcessor processor) {
     if (!_processXmlElements(element,processor)) return false;
 
     for(PsiElement next = element.getNextSibling(); next != null; next = next.getNextSibling()) {
@@ -166,6 +170,7 @@ class AnchorReference implements PsiReference {
     return idMap.keySet().toArray(new Object[idMap.size()]);
   }
 
+  @Nullable
   private XmlFile getFile() {
     if (myFileReference!=null) {
       final PsiElement psiElement = myFileReference.resolve();
@@ -173,7 +178,13 @@ class AnchorReference implements PsiReference {
     }
 
     final PsiFile containingFile = myElement.getContainingFile();
-    return containingFile instanceof XmlFile ? (XmlFile)containingFile: PsiUtil.getJspFile(containingFile);
+    if (containingFile instanceof XmlFile) {
+      return (XmlFile)containingFile;
+    }
+    else {
+      final XmlExtension extension = XmlExtension.getExtensionByElement(myElement);
+      return extension == null ? null : extension.getContainingFile(myElement);
+    }
   }
 
   public boolean isSoft() {

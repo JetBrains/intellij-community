@@ -140,4 +140,14 @@ public abstract class XmlExtension {
   public XmlTag getParentTagForNamespace(XmlTag tag, String namespace) {
     return tag.getParentTag();
   }
+
+  @Nullable
+  public XmlFile getContainingFile(PsiElement element) {
+    if (element == null) {
+      return null;
+    }
+    final PsiFile psiFile = element.getContainingFile();
+    return psiFile instanceof XmlFile ? (XmlFile)psiFile : null;
+  }
+
 }

@@ -2,9 +2,9 @@ package com.intellij.xml.util.documentation;
 
 import com.intellij.codeInsight.completion.XmlCompletionData;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.DocumentationUtil;
 import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.lang.documentation.MetaDataDocumentationProvider;
-import com.intellij.lang.documentation.DocumentationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,7 +12,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -276,10 +275,11 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
           elementDescriptor = (nsDescriptor != null)?nsDescriptor.getElementDescriptor(tagFromText):null;
         }
 
-        // The very special case of xml file 
+        // The very special case of xml file
         final PsiFile containingFile = xmlTag.getContainingFile();
-        if (PsiUtil.isInJspFile(containingFile)) {
-          final XmlTag rootTag = ((XmlFile)containingFile).getDocument().getRootTag();
+        final XmlFile xmlFile = XmlUtil.getContainingFile(xmlTag);
+        if (xmlFile != containingFile) {
+          final XmlTag rootTag = xmlFile.getDocument().getRootTag();
           if (rootTag != null) {
             final XmlNSDescriptor nsDescriptor = rootTag.getNSDescriptor(rootTag.getNamespaceByPrefix(namespacePrefix), true);
             elementDescriptor = (nsDescriptor != null) ? nsDescriptor.getElementDescriptor(tagFromText) : null;

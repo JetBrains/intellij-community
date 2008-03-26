@@ -35,7 +35,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -43,10 +42,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.JDOMXIncluder;
-import com.intellij.xml.XmlBundle;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.XmlSchemaProvider;
+import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
@@ -1324,8 +1320,11 @@ public class XmlUtil {
   public static XmlFile getContainingFile(PsiElement element) {
     while (!(element instanceof XmlFile) && element != null) {
       final PsiElement context = element.getContext();
-      if (context == null && PsiUtil.isInJspFile(element)) {
-        element = PsiUtil.getJspFile(element);
+      if (context == null) { 
+        final XmlExtension extension = XmlExtension.getExtensionByElement(element);
+        if (extension != null) {
+          element = extension.getContainingFile(element);
+        }
       }
       else {
         element = context;

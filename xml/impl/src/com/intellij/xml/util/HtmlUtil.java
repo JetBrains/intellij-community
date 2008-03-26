@@ -14,10 +14,10 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -161,20 +161,9 @@ public class HtmlUtil {
     if (doc == null) return null;
     final PsiFile containingFile = doc.getContainingFile();
 
-    if (PsiUtil.isInJspFile(containingFile)) {
-      final JspFile jspFile = PsiUtil.getJspFile(containingFile);
-      
-      if (jspFile != null) { // it may be for some reason
-        final PsiFile baseLanguageRoot = jspFile.getBaseLanguageRoot();
-        final PsiElement[] children = baseLanguageRoot.getChildren();
-
-        for (PsiElement child : children) {
-          if (child instanceof XmlDocument) {
-            doc = (XmlDocument)child;
-            break;
-          }
-        }
-      }
+    final PsiFile templateFile = TemplateLanguageUtil.getTemplateFile(containingFile);
+    if (templateFile instanceof XmlFile) {
+      return ((XmlFile)templateFile).getDocument();
     }
     return doc;
   }
