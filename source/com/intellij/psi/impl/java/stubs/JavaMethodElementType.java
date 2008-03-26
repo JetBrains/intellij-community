@@ -33,7 +33,7 @@ public class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, Ps
   }
 
   public PsiMethodStub createStub(final PsiMethod psi, final StubElement parentStub) {
-    final byte flags = PsiMethodStubImpl.packFlags(psi.isConstructor(), psi instanceof PsiAnnotationMethod, psi.isVarArgs());
+    final byte flags = PsiMethodStubImpl.packFlags(psi.isConstructor(), psi instanceof PsiAnnotationMethod, psi.isVarArgs(), psi.isDeprecated());
 
     String defValueText = null;
     if (psi instanceof PsiAnnotationMethod) {

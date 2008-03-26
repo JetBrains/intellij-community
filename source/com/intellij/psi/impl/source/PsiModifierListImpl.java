@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements PsiModifierList, Constants {
-  private static Map<String, IElementType> NAME_TO_KEYWORD_TYPE_MAP = new THashMap<String, IElementType>();
+  private static final Map<String, IElementType> NAME_TO_KEYWORD_TYPE_MAP = new THashMap<String, IElementType>();
 
   static{
     NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.PUBLIC, PUBLIC_KEYWORD);
@@ -35,7 +35,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
     NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.VOLATILE, VOLATILE_KEYWORD);
   }
 
-  private static TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<String>();
+  private static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<String>();
 
   static{
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PUBLIC, ModifierFlags.PUBLIC_MASK);

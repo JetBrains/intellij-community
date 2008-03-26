@@ -1,7 +1,7 @@
 package com.intellij.psi.impl.light;
 
-import com.intellij.psi.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,5 +41,9 @@ public class LightEmptyImplementsList extends LightElement implements PsiReferen
   @NotNull
   public PsiClassType[] getReferencedTypes() {
     return PsiClassType.EMPTY_ARRAY;
+  }
+
+  public Role getRole() {
+    return Role.IMPLEMENTS_LIST;
   }
 }

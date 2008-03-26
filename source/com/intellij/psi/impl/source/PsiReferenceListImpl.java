@@ -135,6 +135,22 @@ public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implem
     return types;
   }
 
+  public Role getRole() {
+    if (myElementType == JavaElementType.EXTENDS_LIST) {
+      return Role.EXTENDS_LIST;
+    }
+    else if (myElementType == JavaElementType.IMPLEMENTS_LIST) {
+      return Role.IMPLEMENTS_LIST;
+    }
+    else if (myElementType == JavaElementType.THROWS_LIST) {
+      return Role.THROWS_LIST;
+    }
+    else {
+      LOG.error("Unknown element type:" + myElementType);
+      return null;
+    }
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReferenceList(this);

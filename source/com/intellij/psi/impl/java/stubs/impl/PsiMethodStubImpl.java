@@ -19,6 +19,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   private final static int CONSTRUCTOR = 0x01;
   private final static int VARARGS = 0x02;
   private final static int ANNOTATION = 0x04;
+  private final static int DEPRECATED = 0x08;
 
 
   public PsiMethodStubImpl(final StubElement parent, final IStubElementType elementType,
@@ -57,6 +58,10 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     return myReturnType;
   }
 
+  public boolean isDeprecated() {
+    return (myFlags & DEPRECATED) != 0;
+  }
+
   public String getName() {
     return myName;
   }
@@ -65,11 +70,12 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     return myFlags;
   }
 
-  public static byte packFlags(boolean isConstructor, boolean isAnnotationMethod, boolean isVarargs) {
+  public static byte packFlags(boolean isConstructor, boolean isAnnotationMethod, boolean isVarargs, boolean isDeprecated) {
     byte flags = 0;
     if (isConstructor) flags |= CONSTRUCTOR;
     if (isAnnotationMethod) flags |= ANNOTATION;
     if (isVarargs) flags |= VARARGS;
+    if (isDeprecated) flags |= DEPRECATED;
     return flags;
   }
 }

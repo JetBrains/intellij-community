@@ -60,6 +60,15 @@ public class ClsReferenceListImpl extends ClsElementImpl implements PsiReference
     return types;
   }
 
+  public Role getRole() {
+    if (PsiKeyword.EXTENDS.equals(myType)) return Role.EXTENDS_LIST;
+    if (PsiKeyword.IMPLEMENTS.equals(myType)) return Role.IMPLEMENTS_LIST;
+    if (PsiKeyword.THROWS.equals(myType)) return Role.THROWS_LIST;
+
+    LOG.error("Unknown type: " + myType);
+    return Role.EXTENDS_LIST;
+  }
+
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
     if (myReferences.length != 0) {
       buffer.append(myType);

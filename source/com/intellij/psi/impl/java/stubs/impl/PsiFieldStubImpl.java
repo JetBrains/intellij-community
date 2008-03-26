@@ -19,13 +19,16 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
   private final String myName;
   private final TypeInfo myType;
   private final String myInitializer;
-  private final boolean isEnumConst;
+  private final byte myFlags;
+
+  private final static int ENUM_CONST = 0x01;
+  private final static int DEPRECATED = 0x02;
 
   public PsiFieldStubImpl(final StubElement parent, final IStubElementType elementType,
                           final String name,
                           final TypeInfo type,
                           final String initializer,
-                          final boolean enumConst) {
+                          final byte flags) {
     super(parent, elementType);
 
     if (initializer != null && initializer.length() > INITIALIZER_LENGTH_LIMIT) {
@@ -37,7 +40,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
 
     myName = name;
     myType = type;
-    isEnumConst = enumConst;
+    myFlags = flags;
   }
 
   public TypeInfo getType() {
@@ -49,11 +52,26 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
     return myInitializer;
   }
 
+  public byte getFlags() {
+    return myFlags;
+  }
+
   public boolean isEnumConstant() {
-    return isEnumConst;
+    return (myFlags & ENUM_CONST) != 0;
+  }
+
+  public boolean isDeprecated() {
+    return (myFlags & DEPRECATED) != 0;
   }
 
   public String getName() {
     return myName;
+  }
+
+  public static byte packFlags(boolean isEnumConst, boolean isDeprecated) {
+    byte flags = 0;
+    if (isEnumConst) flags |= ENUM_CONST;
+    if (isDeprecated) flags |= DEPRECATED;
+    return flags;
   }
 }

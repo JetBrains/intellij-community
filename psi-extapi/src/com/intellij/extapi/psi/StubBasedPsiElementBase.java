@@ -104,6 +104,15 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return super.getContext();
   }
 
+  protected final PsiElement getParentByStub() {
+    final StubElement<?> stub = getStub();
+    if (stub != null) {
+      return stub.getParentStub().getPsi();
+    }
+
+    return SharedImplUtil.getParent(getNode());
+  }
+
   public PsiElement getParent() {
     return SharedImplUtil.getParent(getNode());
   }
@@ -121,9 +130,9 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   @Nullable
-  protected PsiElement getStubOrPsiChild(final IElementType elementType) {
+  public <Stub extends StubElement, Psi extends PsiElement> Psi getStubOrPsiChild(final IStubElementType<Stub, Psi> elementType) {
     if (myStub != null) {
-      final StubElement element = myStub.findChildStubByType(elementType);
+      final StubElement<Psi> element = myStub.findChildStubByType(elementType);
       if (element != null) {
         return element.getPsi();
       }
@@ -131,30 +140,30 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     else {
       final ASTNode childNode = getNode().findChildByType(elementType);
       if (childNode != null) {
-        return childNode.getPsi();
+        return (Psi)childNode.getPsi();
       }
     }
     return null;
   }
 
   @NotNull
-  protected PsiElement getRequiredStubOrPsiChild(final IElementType elementType) {
-    PsiElement result = getStubOrPsiChild(elementType);
+  public <Stub extends StubElement, Psi extends PsiElement> Psi getRequiredStubOrPsiChild(final IStubElementType<Stub, Psi> elementType) {
+    Psi result = getStubOrPsiChild(elementType);
     assert result != null: "Missing required child of type " + elementType;
     return result;
   }
 
 
-  protected <E> E[] getStubOrPsiChildren(final IElementType elementType, E[] array) {
+  public <Stub extends StubElement, Psi extends PsiElement> Psi[] getStubOrPsiChildren(final IStubElementType<Stub, Psi> elementType, Psi[] array) {
     if (myStub != null) {
       //noinspection unchecked
-      return (E[])myStub.getChildrenByType(elementType, array);
+      return (Psi[])myStub.getChildrenByType(elementType, array);
     }
     else {
       final ASTNode[] nodes = getNode().getChildren(TokenSet.create(elementType));
-      E[] psiElements = (E[])java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), nodes.length);
+      Psi[] psiElements = (Psi[])java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), nodes.length);
       for (int i = 0; i < nodes.length; i++) {
-        psiElements[i] = (E)nodes[i].getPsi();
+        psiElements[i] = (Psi)nodes[i].getPsi();
       }
       return psiElements;
     }

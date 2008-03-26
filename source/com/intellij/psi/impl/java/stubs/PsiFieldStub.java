@@ -11,5 +11,6 @@ import com.intellij.psi.stubs.NamedStub;
 public interface PsiFieldStub extends NamedStub<PsiField> {
   TypeInfo getType();
   String getInitializerText() throws InitializerTooLongException;
-  boolean isEnumConstant ();
+  boolean isEnumConstant();
+  boolean isDeprecated();
 }

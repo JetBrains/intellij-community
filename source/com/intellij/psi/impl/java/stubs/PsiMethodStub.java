@@ -14,4 +14,6 @@ public interface PsiMethodStub extends NamedStub<PsiMethod> {
 
   String getDefaultValueText();
   TypeInfo getReturnTypeText();
+
+  boolean isDeprecated();
 }

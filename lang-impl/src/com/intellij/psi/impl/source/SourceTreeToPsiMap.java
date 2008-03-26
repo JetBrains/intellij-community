@@ -10,12 +10,12 @@ public class SourceTreeToPsiMap {
   private SourceTreeToPsiMap() {
   }
 
-  @Nullable public static PsiElement treeElementToPsi(@Nullable ASTNode element) {
+  public static PsiElement treeElementToPsi(@Nullable ASTNode element) {
     if (element == null) return null;
     return element.getPsi();
   }
 
-  @Nullable public static ASTNode psiElementToTree(@Nullable PsiElement psiElement) {
+  public static ASTNode psiElementToTree(@Nullable PsiElement psiElement) {
     if (psiElement == null) return null;
     return psiElement.getNode();
   }

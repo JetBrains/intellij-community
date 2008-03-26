@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
  * @see PsiMethod#getThrowsList()
  */
 public interface PsiReferenceList extends PsiElement {
+  PsiReferenceList[] EMPTY_ARRAY = new PsiReferenceList[0];
+  
   /**
    * Returns the array of reference elements contained in the list.
    *
@@ -41,4 +43,12 @@ public interface PsiReferenceList extends PsiElement {
    */
   @NotNull
   PsiClassType[] getReferencedTypes();
+
+  Role getRole();
+
+  enum Role {
+    THROWS_LIST,
+    EXTENDS_LIST,
+    IMPLEMENTS_LIST
+  }
 }

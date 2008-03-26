@@ -10,11 +10,11 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 
 public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> implements PsiClassReferenceListStub {
-  private Role myRole;
+  private PsiReferenceList.Role myRole;
   private String[] myNames;
 
   public PsiClassReferenceListStubImpl(final StubElement parent, final IStubElementType elementType,
-                                       final String[] names, final Role role) {
+                                       final String[] names, final PsiReferenceList.Role role) {
     super(parent, elementType);
     myNames = names;
     myRole = role;
@@ -24,7 +24,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     return myNames;
   }
 
-  public Role getRole() {
+  public PsiReferenceList.Role getRole() {
     return myRole;
   }
 }

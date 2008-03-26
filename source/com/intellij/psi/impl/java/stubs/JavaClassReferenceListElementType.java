@@ -28,11 +28,7 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
   }
 
   public PsiClassReferenceListStub createStub(final PsiReferenceList psi, final StubElement parentStub) {
-    PsiClassReferenceListStub.Role role = parentStub instanceof PsiMethodStub
-                                          ? PsiClassReferenceListStub.Role.THROWS_LIST
-                                          : PsiClassReferenceListStub.Role.EXTENDS_OR_IMPLEMENTS_LIST;
-
-    return new PsiClassReferenceListStubImpl(parentStub, this, getTexts(psi), role);
+    return new PsiClassReferenceListStubImpl(parentStub, this, getTexts(psi), psi.getRole());
   }
 
   private static String[] getTexts(PsiReferenceList psi) {
@@ -51,8 +47,9 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
 
   public void serialize(final PsiClassReferenceListStub stub,
                         final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage) throws IOException {
-    byte role = stub.getRole() == PsiClassReferenceListStub.Role.EXTENDS_OR_IMPLEMENTS_LIST ? 0 : (byte)1;
-    dataStream.writeByte(role);
+    final PsiReferenceList.Role role = stub.getRole();
+    byte encodedRole = role == PsiReferenceList.Role.EXTENDS_LIST ? 0 : role == PsiReferenceList.Role.IMPLEMENTS_LIST ? (byte)1 : 2;
+    dataStream.writeByte(encodedRole);
     final String[] names = stub.getReferencedNames();
     DataInputOutputUtil.writeINT(dataStream, names.length);
     for (String name : names) {
@@ -70,12 +67,15 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
     }
 
     return new PsiClassReferenceListStubImpl(parentStub, this, names, role == 0
-                                                                      ? PsiClassReferenceListStub.Role.EXTENDS_OR_IMPLEMENTS_LIST
-                                                                      : PsiClassReferenceListStub.Role.THROWS_LIST);
+                                                                      ? PsiReferenceList.Role.EXTENDS_LIST
+                                                                      : role == 1
+                                                                        ? PsiReferenceList.Role.IMPLEMENTS_LIST
+                                                                        : PsiReferenceList.Role.THROWS_LIST);
   }
 
   public void indexStub(final PsiClassReferenceListStub stub, final IndexSink sink) {
-    if (stub.getRole() == PsiClassReferenceListStub.Role.EXTENDS_OR_IMPLEMENTS_LIST) {
+    final PsiReferenceList.Role role = stub.getRole();
+    if (role == PsiReferenceList.Role.EXTENDS_LIST || role == PsiReferenceList.Role.IMPLEMENTS_LIST) {
       final String[] names = stub.getReferencedNames();
       for (String name : names) {
         sink.occurence(JavaSuperClassNameOccurenceIndex.KEY, name);

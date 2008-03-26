@@ -32,7 +32,8 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
   public PsiFieldStub createStub(final PsiField psi, final StubElement parentStub) {
     final PsiExpression initializer = psi.getInitializer();
     final TypeInfo type = TypeInfo.create(psi.getType(), psi.getTypeElement());
-    return new PsiFieldStubImpl(parentStub, this, psi.getName(), type, initializer != null ? initializer.getText() : null, psi instanceof PsiEnumConstant);
+    final byte flags = PsiFieldStubImpl.packFlags(psi instanceof PsiEnumConstant, psi.isDeprecated());
+    return new PsiFieldStubImpl(parentStub, this, psi.getName(), type, initializer != null ? initializer.getText() : null, flags);
   }
 
   public String getExternalId() {
@@ -44,7 +45,7 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
     DataInputOutputUtil.writeNAME(dataStream, stub.getName(), nameStorage);
     RecordUtil.writeTYPE(dataStream, stub.getType(), nameStorage);
     DataInputOutputUtil.writeNAME(dataStream, getInitializerText(stub), nameStorage);
-    dataStream.writeBoolean(stub.isEnumConstant());
+    dataStream.writeByte(((PsiFieldStubImpl)stub).getFlags());
   }
 
   private static String getInitializerText(final PsiFieldStub stub) {
@@ -64,9 +65,8 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
     RecordUtil.readType(dataStream, type);
 
     String initializerText = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-    boolean isEnumConst = dataStream.readBoolean();
-
-    return new PsiFieldStubImpl(parentStub, this, name, type, initializerText, isEnumConst);
+    byte flags = dataStream.readByte();
+    return new PsiFieldStubImpl(parentStub, this, name, type, initializerText, flags);
   }
 
   public void indexStub(final PsiFieldStub stub, final IndexSink sink) {
