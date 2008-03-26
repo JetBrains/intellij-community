@@ -264,6 +264,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
             System.out.println("id = " + restrictedFileId);
             System.out.println("file = " + restrictToFile.getPresentableUrl());
             System.out.println("k = " + dataKey);
+            System.out.println("IndexInfrastructure.getIndexRootDir(indexId) = " + IndexInfrastructure.getIndexRootDir(indexId));
           }
           for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
             final V value = valueIt.next();
@@ -284,6 +285,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
                 System.out.println("indexId = " + indexId);
                 System.out.println("id = " + id);
                 System.out.println("k = " + dataKey);
+                System.out.println("IndexInfrastructure.getIndexRootDir(indexId) = " + IndexInfrastructure.getIndexRootDir(indexId));
               }
               VirtualFile file = IndexInfrastructure.findFileById(dirIndex, fs, id);
               if (file != null) {
@@ -412,6 +414,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
                   System.out.println("indexId = " + indexId);
                   System.out.println("Indexing inputId = " + inputId);
                   System.out.println("file = " + vFile.getPresentableUrl());
+                  System.out.println("IndexInfrastructure.getIndexRootDir(indexId) = " + IndexInfrastructure.getIndexRootDir(indexId));
                 }
                 getIndex(indexId).update(inputId, newFc, oldFc);
               }
@@ -513,6 +516,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       System.out.println("indexId = " + indexId);
       System.out.println("Indexing inputId = " + inputId);
       System.out.println("file = " + file.getPresentableUrl());
+      System.out.println("IndexInfrastructure.getIndexRootDir(indexId) = " + IndexInfrastructure.getIndexRootDir(indexId));
     }
 
 
