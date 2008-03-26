@@ -137,11 +137,10 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
               }
             }
           }
-          else {
-            for (FilePath oldBoy : myDirtyFiles) {
-              if (oldBoy.isDirectory() && newcomer.getVirtualFileParent() == oldBoy.getVirtualFile()) {
-                return;
-              }
+          else if (myDirtyFiles.size() > 0) {
+            VirtualFile parent = newcomer.getVirtualFileParent();
+            if (parent != null && myDirtyFiles.contains(new FilePathImpl(parent))) {
+              return;
             }
           }
 
