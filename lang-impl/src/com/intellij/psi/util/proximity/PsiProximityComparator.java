@@ -40,7 +40,7 @@ public class PsiProximityComparator implements Comparator<Object> {
       return 0;
     }
     if (!proximity1.equals(proximity2)) {
-      return proximity1.compareTo(proximity2);
+      return - proximity1.compareTo(proximity2);
     }
 
     Module contextModule = ModuleUtil.findModuleForPsiElement(myContext);
