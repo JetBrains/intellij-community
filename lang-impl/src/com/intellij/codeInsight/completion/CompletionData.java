@@ -182,10 +182,14 @@ public class CompletionData {
     return null;
   }
 
-  public static String findPrefixStatic(PsiElement insertedElement, int offsetInFile) {
+  public static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile) {
     if(insertedElement == null) return "";
 
-    final String prefix = getReferencePrefix(insertedElement, offsetInFile);
+    final String prefix = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        return getReferencePrefix(insertedElement, offsetInFile);
+      }
+    });
     if (prefix != null) return prefix;
 
     if (insertedElement instanceof PsiPlainText) return "";
