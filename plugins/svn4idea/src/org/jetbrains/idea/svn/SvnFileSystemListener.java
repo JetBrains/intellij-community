@@ -148,8 +148,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       final SVNInfo info1 = vcs.createWCClient().doInfo(srcDir, SVNRevision.WORKING);
       final SVNInfo info2 = vcs.createWCClient().doInfo(dstDir, SVNRevision.WORKING);
 
-      return (info1 != null) && (info2 != null) && (info1.getRepositoryUUID().equals(info2.getRepositoryUUID()))
-          && (info1.getRepositoryRootURL().equals(info2.getRepositoryRootURL()));
+      return (info1 != null) && (info2 != null) && (info1.getRepositoryUUID().equals(info2.getRepositoryUUID()));
     } catch (SVNException e) {
       return false;
     }
