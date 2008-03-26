@@ -5,8 +5,8 @@ package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,8 +41,8 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
 
     public Object getData(final String dataId) {
       if (DataConstants.DOMINANT_HINT_AREA_RECTANGLE.equals(dataId)) {
-        final Lookup lookup = LookupManager.getInstance(myProject).getActiveLookup();
-        if (lookup != null) {
+        final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(myProject).getActiveLookup();
+        if (lookup != null && lookup.isVisible()) {
           return lookup.getBounds();
         }
       }

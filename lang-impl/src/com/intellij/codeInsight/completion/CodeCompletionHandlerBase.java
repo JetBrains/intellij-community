@@ -133,6 +133,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                 indicator.cancel();
                 invokeAndWait(new Runnable() {
                   public void run() {
+                    HintManager.getInstance().hideAllHints();
                     handleEmptyLookup(context, data, parameters);
                   }
                 }, context.editor);
