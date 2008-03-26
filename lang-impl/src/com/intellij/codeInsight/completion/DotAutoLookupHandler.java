@@ -9,6 +9,6 @@ public class DotAutoLookupHandler extends CodeCompletionHandler{
     return false;
   }
 
-  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData, final String adText){
+  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData, final CompletionParameters parameters){
   }
 }

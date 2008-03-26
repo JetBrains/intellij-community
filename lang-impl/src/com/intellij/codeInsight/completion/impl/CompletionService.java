@@ -112,7 +112,20 @@ public class CompletionService implements CompletionRegistrar{
     for (final Pair<ElementPattern, CompletionAdvertiser> advertiser : myAdvertisers) {
       final ProcessingContext processingContext = new ProcessingContext();
       if (advertiser.first.accepts(queryParameters.getPosition(), processingContext)) {
-        final String s = advertiser.second.advertise(queryParameters, processingContext, matcher);
+        final String s = advertiser.second.advertise(queryParameters, processingContext);
+        if (s != null) return s;
+      }
+    }
+    return null;
+  }
+  @Nullable
+  public String getEmptyLookupText(final CompletionParameters queryParameters) {
+    final CompletionContext context = queryParameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
+    final PrefixMatcher matcher = new CamelHumpMatcher(CompletionData.findPrefixStatic(queryParameters.getPosition(), context.getStartOffset()));
+    for (final Pair<ElementPattern, CompletionAdvertiser> advertiser : myAdvertisers) {
+      final ProcessingContext processingContext = new ProcessingContext();
+      if (advertiser.first.accepts(queryParameters.getPosition(), processingContext)) {
+        final String s = advertiser.second.handleEmptyLookup(queryParameters, processingContext);
         if (s != null) return s;
       }
     }

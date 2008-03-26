@@ -9,7 +9,6 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -27,7 +26,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,8 +42,6 @@ import java.util.LinkedHashSet;
 
 abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
-  static final Key<Class<? extends CodeCompletionHandlerBase>> COMPLETION_HANDLER_CLASS_KEY =
-      Key.create("COMPLETION_HANDLER_CLASS_KEY");
   protected final CompletionType myCompletionType;
 
   protected CodeCompletionHandlerBase(final CompletionType completionType) {
@@ -127,7 +123,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           public void run() {
             try {
               final LookupData data = computeLookupData(insertedElement, insertedInfo.getFirst(), parameters, indicator);
-              insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, null);
               if (data == null) {
                 indicator.cancel();
                 return; //cancelled
@@ -138,7 +133,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                 indicator.cancel();
                 invokeAndWait(new Runnable() {
                   public void run() {
-                    handleEmptyLookup(context, data, adText);
+                    handleEmptyLookup(context, data, parameters);
                   }
                 }, context.editor);
                 return;
@@ -156,6 +151,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
               }
             }
             catch (ProcessCanceledException e) {
+            }
+            finally {
+              insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, null);
             }
           }
         }, indicator);
@@ -448,14 +446,15 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   protected void analyseItem(LookupItem item, PsiElement place, CompletionContext context) {}
 
-  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData, final String adText) {
+  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData, final CompletionParameters parameters) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     Project project = context.project;
     Editor editor = context.editor;
 
     LOG.assertTrue(lookupData.items.length == 0);
-    if (lookupData.prefix != null) {
-      HintManager.getInstance().showErrorHint(editor, appendSuggestion(LangBundle.message("completion.no.suggestions"), adText));
+    final String text = CompletionService.getCompletionService().getEmptyLookupText(parameters);
+    if (StringUtil.isNotEmpty(text)) {
+      HintManager.getInstance().showErrorHint(editor, text);
     }
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     if (codeAnalyzer != null) {

@@ -14,13 +14,9 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class CompletionAdvertiser {
-  public static final CompletionAdvertiser EMPTY_ADVERTISER = new CompletionAdvertiser() {
-  public String advertise(@NotNull final CompletionParameters parameters, final ProcessingContext context, final PrefixMatcher matcher) {
-    return null;
-  }
-};
 
-  @Nullable public abstract String advertise(@NotNull CompletionParameters parameters, final ProcessingContext context,
-                                             final PrefixMatcher matcher);
+  @Nullable public abstract String advertise(@NotNull CompletionParameters parameters, final ProcessingContext context);
+
+  @Nullable public abstract String handleEmptyLookup(@NotNull CompletionParameters parameters, final ProcessingContext context);
 
 }

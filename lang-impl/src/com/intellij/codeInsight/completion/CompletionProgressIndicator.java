@@ -63,7 +63,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         cancel();
       }
     });
-    myLookup.putUserData(CodeCompletionHandlerBase.COMPLETION_HANDLER_CLASS_KEY, myHandler.getClass());
     myLookup.setCalculating(true);
 
     myQueue = new MergingUpdateQueue("completion lookup progress", 400, true, myLookup.getComponent());

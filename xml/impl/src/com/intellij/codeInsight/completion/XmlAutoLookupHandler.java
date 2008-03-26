@@ -21,7 +21,7 @@ public class XmlAutoLookupHandler extends CodeCompletionHandler {
     return false;
   }
 
-  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData, final String adText) {
+  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData, final CompletionParameters parameters) {
   }
 
   protected void doComplete(final int offset1, final int offset2, final CompletionContext context, final String dummyIdentifier, Editor editor) {

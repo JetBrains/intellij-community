@@ -72,22 +72,28 @@ public class JavaCompletionUtil {
   static final NullableLazyKey<ExpectedTypeInfo[], CompletionLocation> EXPECTED_TYPES = NullableLazyKey.create("expectedTypes", new NullableFunction<CompletionLocation, ExpectedTypeInfo[]>() {
     @Nullable
     public ExpectedTypeInfo[] fun(final CompletionLocation location) {
-      final PsiExpression expr = PsiTreeUtil.getContextOfType(location.getCompletionParameters().getPosition(), PsiExpression.class, true);
-      if (expr != null) {
-        final ExpectedTypeInfo[] expectedInfos = ExpectedTypesProvider.getInstance(location.getProject()).getExpectedTypes(expr, true);
-        if(expectedInfos != null){
-          final Map<PsiType, ExpectedTypeInfo> map = new HashMap<PsiType, ExpectedTypeInfo>(expectedInfos.length);
-          for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
-            if (!map.containsKey(expectedInfo.getType())) {
-              map.put(expectedInfo.getType(), expectedInfo);
-            }
-          }
-          return map.values().toArray(new ExpectedTypeInfo[map.size()]);
-        }
-      }
-      return null;
+      return getExpectedTypes(location.getCompletionParameters());
     }
   });
+
+  @Nullable
+  public static ExpectedTypeInfo[] getExpectedTypes(final CompletionParameters parameters) {
+    final PsiExpression expr = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
+    if (expr != null) {
+      final ExpectedTypeInfo[] expectedInfos = ExpectedTypesProvider.getInstance(parameters.getPosition().getProject()).getExpectedTypes(expr, true);
+      if(expectedInfos != null){
+        final Map<PsiType, ExpectedTypeInfo> map = new HashMap<PsiType, ExpectedTypeInfo>(expectedInfos.length);
+        for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
+          if (!map.containsKey(expectedInfo.getType())) {
+            map.put(expectedInfo.getType(), expectedInfo);
+          }
+        }
+        return map.values().toArray(new ExpectedTypeInfo[map.size()]);
+      }
+    }
+    return null;
+  }
+
   static final NullableLazyKey<PsiMethod, CompletionLocation> POSITION_METHOD = NullableLazyKey.create("positionMethod", new NullableFunction<CompletionLocation, PsiMethod>() {
     public PsiMethod fun(final CompletionLocation location) {
       return PsiTreeUtil.getParentOfType(location.getCompletionParameters().getPosition(), PsiMethod.class, false);
