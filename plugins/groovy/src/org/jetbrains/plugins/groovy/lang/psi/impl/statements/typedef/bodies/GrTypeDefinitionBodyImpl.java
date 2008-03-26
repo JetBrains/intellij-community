@@ -54,7 +54,9 @@ public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements Gr
       for (GrVariableDeclaration declaration : declarations) {
         GrVariable[] variables = declaration.getVariables();
         for (GrVariable variable : variables) {
-          result.add((GrField) variable);
+          if (variable instanceof GrField) {
+            result.add((GrField) variable);
+          }
         }
       }
       myFields = result.toArray(new GrField[result.size()]);
