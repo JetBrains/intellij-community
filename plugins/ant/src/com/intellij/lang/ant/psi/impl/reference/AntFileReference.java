@@ -9,7 +9,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiUtilBase;
@@ -93,24 +95,6 @@ public class AntFileReference extends FileReference implements AntReference {
     TextRange range = new TextRange(getFileReferenceSet().getStartInElement(), getRangeInElement().getEndOffset());
     range = range.shiftRight(se.getTextRange().getStartOffset() - me.getTextRange().getStartOffset());
     return CachingReference.getManipulator(me).handleContentChange(me, range, newName);
-  }
-
-  protected ResolveResult[] innerResolve() {
-    final ResolveResult[] resolveResult = super.innerResolve();
-    if (resolveResult.length == 0) {
-      final String text = getText();
-      if (text != null && text.length() > 0 && getFileReferenceSet().isAbsolutePathReference()) {
-        final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(text));
-        if (file != null) {
-          final PsiManager psiManager = getElement().getManager();
-          final PsiFileSystemItem fsItem = file.isDirectory()? psiManager.findDirectory(file) : psiManager.findFile(file);
-          if (fsItem != null) {
-            return new ResolveResult[]{new PsiElementResolveResult(fsItem)};
-          }
-        }
-      }
-    }
-    return resolveResult;
   }
 
   private PsiElement getManipulatorElement() {

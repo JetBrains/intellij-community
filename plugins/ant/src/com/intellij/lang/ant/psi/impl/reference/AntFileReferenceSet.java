@@ -1,11 +1,13 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.lang.ant.psi.*;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReferenceProvider;
@@ -63,7 +65,14 @@ public class AntFileReferenceSet extends FileReferenceSet {
   }
 
   public boolean isAbsolutePathReference() {
-    return super.isAbsolutePathReference() || new File(getPathString()).isAbsolute();
+    if (super.isAbsolutePathReference()) {
+      return true;
+    }
+    final String pathString = getPathString();
+    if (SystemInfo.isWindows && pathString.length() == 2 && Character.isLetter(pathString.charAt(0)) && pathString.charAt(1) == ':') {
+      return true;
+    }
+    return new File(pathString).isAbsolute();
   }
   // todo: correct context for "output" attribute file reference of the "ant" task
   @NotNull
@@ -72,11 +81,20 @@ public class AntFileReferenceSet extends FileReferenceSet {
     final AntFile antFile = element.getAntFile();
     if (antFile != null) {
       VirtualFile vFile = antFile.getContainingPath();
-
-      if (!(element instanceof AntImport)) {
-        final String basedir = element.computeAttributeValue("${basedir}");
-        assert basedir != null;
-        vFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(basedir));
+      if (isAbsolutePathReference()) {
+        if (SystemInfo.isWindows) {
+          vFile = ManagingFS.getInstance().findRoot("", LocalFileSystem.getInstance());
+        }    
+        else {
+          vFile = LocalFileSystem.getInstance().findFileByPath("/");
+        }
+      }
+      else {
+        if (!(element instanceof AntImport)) {
+          final String basedir = element.computeAttributeValue("${basedir}");
+          assert basedir != null;
+          vFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(basedir));
+        } 
       }
 
       if (vFile != null) {

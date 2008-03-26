@@ -757,8 +757,16 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       if (roots.length == 1 && roots[0].getName().length() == 0) {
         return roots[0].list();
       }
+      final String[] names = new String[roots.length];
+      for (int i = 0; i < names.length; i++) {
+        String name = roots[i].getPath();
+        if (name.endsWith(File.separator)) {
+          name = name.substring(0, name.length() - File.separator.length());
+        }
+        names[i] = name;        
+      }
+      return names;
     }
-
     final String[] names = convertToIOFile(file).list();
     return names != null ? names : ArrayUtil.EMPTY_STRING_ARRAY;
   }
