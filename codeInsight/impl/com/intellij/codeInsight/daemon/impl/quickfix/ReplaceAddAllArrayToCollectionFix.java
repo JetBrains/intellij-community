@@ -39,6 +39,8 @@ public class ReplaceAddAllArrayToCollectionFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+    if (myMethodCall == null || !myMethodCall.isValid()) return false;
+
     final Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module == null) return false;
     final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();

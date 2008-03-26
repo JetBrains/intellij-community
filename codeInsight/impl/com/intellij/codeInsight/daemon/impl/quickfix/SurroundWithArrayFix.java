@@ -33,7 +33,7 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
-    return getExpression(element) != null;
+    return myMethodCall != null && myMethodCall.isValid() && getExpression(element) != null;
  }
 
   @Nullable
