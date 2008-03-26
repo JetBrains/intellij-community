@@ -6,19 +6,27 @@ import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class ModulePathMacroManager extends BasePathMacroManager {
+public class ModulePathMacroManager extends ProjectPathMacroManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.ModulePathMacroManager");
 
   private Module myModule;
 
 
   public ModulePathMacroManager(final Module module) {
+    super((ProjectEx)module.getProject());
+    myModule = module;
+  }
+
+  public ModulePathMacroManager(final Module module, final Project project) {
+    super((ProjectEx)project);
     myModule = module;
   }
 
