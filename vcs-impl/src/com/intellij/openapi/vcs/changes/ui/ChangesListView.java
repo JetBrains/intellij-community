@@ -152,11 +152,13 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     }
     else if (key == PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {
       final TreePath[] paths = getSelectionPaths();
-      for(TreePath path: paths) {
-        ChangesBrowserNode node = (ChangesBrowserNode) path.getLastPathComponent();
-        if (!(node.getUserObject() instanceof ChangeList)) {
-          sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new VirtualFileDeleteProvider());
-          break;
+      if (paths != null) {
+        for(TreePath path: paths) {
+          ChangesBrowserNode node = (ChangesBrowserNode) path.getLastPathComponent();
+          if (!(node.getUserObject() instanceof ChangeList)) {
+            sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new VirtualFileDeleteProvider());
+            break;
+          }
         }
       }
     }
