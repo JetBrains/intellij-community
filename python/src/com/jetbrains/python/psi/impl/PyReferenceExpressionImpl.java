@@ -240,6 +240,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       }
     }
     PsiElement target = resolve();
+    if (target == this) {
+      return null;
+    }
     return getTypeFromTarget(target);
   }
 

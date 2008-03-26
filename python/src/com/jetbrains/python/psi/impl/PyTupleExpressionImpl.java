@@ -54,7 +54,7 @@ public class PyTupleExpressionImpl extends PyElementImpl implements PyTupleExpre
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     for (PyExpression expression : getElements()) {
-      if (!expression.processDeclarations(processor, substitutor, lastParent, place)) {
+      if (expression != lastParent && !expression.processDeclarations(processor, substitutor, lastParent, place)) {
         return false;
       }
     }

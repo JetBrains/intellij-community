@@ -87,6 +87,12 @@ public class PyResolveTest extends ResolveTestCase {
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
+  public void testTuple() throws Exception {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
+  }
+
   @Override
   protected String getTestDataPath() {
     return PathManager.getHomePath() + "/plugins/python/testData/resolve/";
