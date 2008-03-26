@@ -335,7 +335,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   /**
    * @return point in layered pane coordinate system.
    */
-  Point calculatePosition(){
+  public Point calculatePosition(){
     Dimension dim = getComponent().getPreferredSize();
     int lookupStart = getLookupStart();
     LogicalPosition pos = myEditor.offsetToLogicalPosition(lookupStart);
@@ -353,11 +353,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     if (wshift < 0){
       layeredPanePoint.x += wshift;
     }
-    if (myPositionedAbove == null){
-      int shiftLow = layeredPane.getHeight() - (layeredPanePoint.y + dim.height);
-      int shiftHigh = layeredPanePoint.y - dim.height;
-      myPositionedAbove = shiftLow < 0 && shiftLow < shiftHigh ? Boolean.TRUE : Boolean.FALSE;
-    }
+
+    int shiftLow = layeredPane.getHeight() - (layeredPanePoint.y + dim.height);
+    int shiftHigh = layeredPanePoint.y - dim.height;
+    myPositionedAbove = shiftLow < 0 && shiftLow < shiftHigh ? Boolean.TRUE : Boolean.FALSE;
+
     if (myPositionedAbove.booleanValue()){
       layeredPanePoint.y -= dim.height + myEditor.getLineHeight();
     }

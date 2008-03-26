@@ -23,6 +23,8 @@ import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 
+import java.awt.*;
+
 /**
  * @author peter
  */
@@ -100,6 +102,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       myInitialized = true;
       myLookup.show();
     }
+    Point point=myLookup.calculatePosition();
+    Dimension preferredSize = myLookup.getComponent().getPreferredSize();
+    myLookup.setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
     myLookup.updateList();
     myLookup.adaptSize();
   }
