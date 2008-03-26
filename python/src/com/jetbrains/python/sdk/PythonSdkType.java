@@ -5,7 +5,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.SdkVersionUtil;
 import com.intellij.openapi.roots.OrderRootType;
@@ -23,9 +22,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.TreeSet;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeSet;
 
 /**
  * @author yole
@@ -34,13 +33,7 @@ public class PythonSdkType extends SdkType {
   private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
 
   public static PythonSdkType getInstance() {
-    for (SdkType sdkType : Extensions.getExtensions(EP_NAME)) {
-      if (sdkType instanceof PythonSdkType) {
-        return (PythonSdkType)sdkType;
-      }
-    }
-    assert false;
-    return null;
+    return SdkType.findInstance(PythonSdkType.class);
   }
 
   public PythonSdkType() {
