@@ -257,9 +257,10 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   public XmlTag ensureTagExists() {
     checkIsValid();
 
-    if (myXmlElement != null) return (XmlTag)myXmlElement;
+    XmlTag tag = getXmlTag();
+    if (tag != null) return tag;
 
-    final XmlTag tag = setEmptyXmlTag();
+    tag = setEmptyXmlTag();
     setXmlElement(tag);
 
     myManager.fireEvent(new ElementDefinedEvent(getProxy()));
@@ -267,7 +268,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     myManager.cacheHandler(tag, this);
     myModCount = getCurrentModCount();
 
-    return (XmlTag)myXmlElement;
+    return getXmlTag();
   }
 
   public XmlElement getXmlElement() {
@@ -286,7 +287,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     final String localName = tagName.getXmlName().getLocalName();
     if (localName.contains(":")) {
       try {
-        return XmlElementFactory.getInstance(myXmlElement.getProject()).createTagFromText("<" + localName + "/>");
+        return XmlElementFactory.getInstance(myManager.getProject()).createTagFromText("<" + localName + "/>");
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
