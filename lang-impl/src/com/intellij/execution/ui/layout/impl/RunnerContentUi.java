@@ -117,7 +117,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
           }
         }).setInnerInsets(new Insets(1, 0, 0, 0));
     final ActionGroup popup = (ActionGroup)myActionManager.getAction(VIEW_POPUP);
-    myTabs.setPopupGroup(popup, TAB_POPUP_PLACE);
+    myTabs.setPopupGroup(popup, TAB_POPUP_PLACE, true);
     myTabs.setPaintBorder(-1, 0, 0, 0);
     myTabs.setPaintFocus(false);
     myTabs.setRequestFocusOnLastFocusedComponent(true);

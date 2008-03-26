@@ -685,7 +685,15 @@ public class UIUtil {
   }
 
   public static Color getFocusedBoundsColor() {
-    return UIUtil.getListSelectionBackground().darker().darker();
+    return getBoundsColor();
+  }
+
+  public static Color getBoundsColor() {
+    return new Color(128, 128, 128);
+  }
+
+  public static Color getBoundsColor(boolean focused) {
+    return focused ? getFocusedBoundsColor() : getBoundsColor();
   }
 
   public static Color toAlpha(final Color color, final int alpha) {

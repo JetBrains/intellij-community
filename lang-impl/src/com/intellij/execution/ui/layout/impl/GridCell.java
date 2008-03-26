@@ -92,7 +92,7 @@ public class GridCell implements Disposable {
       }
     });
     myTabs.setPopupGroup((ActionGroup)myContext.getActionManager().getAction(RunnerContentUi.VIEW_POPUP),
-                         ViewContext.CELL_POPUP_PLACE);
+                         ViewContext.CELL_POPUP_PLACE, true);
     myTabs.addListener(new TabsListener() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
         updateSelection(myTabs.getComponent().isShowing());

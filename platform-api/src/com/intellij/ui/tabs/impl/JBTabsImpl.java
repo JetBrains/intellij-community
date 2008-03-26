@@ -9,8 +9,8 @@ import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.*;
@@ -38,6 +38,7 @@ import java.awt.geom.GeneralPath;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
@@ -74,6 +75,8 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   private boolean myStealthTabMode = false;
 
   private DataProvider myDataProvider;
+
+  private WeakReference<Component> myDeferredToRemove = new WeakReference<Component>(null);
 
   private MoreIcon myMoreIcon = new MoreIcon() {
     protected boolean isActive() {
@@ -114,6 +117,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   private int myLeftBorderSize;
   private int myRightBorderSize;
   private int myBottomBorderSize;
+  private boolean myAddNavigationGroup = true;
 
 
   public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
@@ -410,17 +414,18 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     return myPopupPlace;
   }
 
-  public JBTabs setPopupGroup(@NotNull final ActionGroup popupGroup, @NotNull String place) {
+  public JBTabs setPopupGroup(@NotNull final ActionGroup popupGroup, @NotNull String place, final boolean addNavigationGroup) {
     return setPopupGroup(new Getter<ActionGroup>() {
       public ActionGroup get() {
         return popupGroup;
       }
-    }, place);
+    }, place, addNavigationGroup);
   }
 
-  public JBTabs setPopupGroup(@NotNull final Getter<ActionGroup> popupGroup, @NotNull final String place) {
+  public JBTabs setPopupGroup(@NotNull final Getter<ActionGroup> popupGroup, @NotNull final String place, final boolean addNavigationGroup) {
     myPopupGroup = popupGroup;
     myPopupPlace = place;
+    myAddNavigationGroup = addNavigationGroup;
     return this;
   }
 
@@ -532,9 +537,24 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   private void setForDeferredRemove(Component c, boolean toRemove) {
     if (c instanceof JComponent) {
       ((JComponent)c).putClientProperty(DEFERRED_REMOVE_FLAG, toRemove ? Boolean.TRUE : null);
+      c.setBounds(0, 0, 0, 0);
+      if (toRemove) {
+        removeCurrentDeferred();
+        setDeferredToRemove(c);
+      } else if (getDeferredToRemove() != null && getDeferredToRemove() == c) {
+        setDeferredToRemove(null);
+      }
     }
   }
 
+  private void removeCurrentDeferred() {
+    if (getDeferredToRemove() != null) {
+      remove(getDeferredToRemove());
+      setDeferredToRemove(null);
+    }
+  }
+
+  @Nullable
   public void propertyChange(final PropertyChangeEvent evt) {
     final TabInfo tabInfo = (TabInfo)evt.getSource();
     if (TabInfo.ACTION_GROUP.equals(evt.getPropertyName())) {
@@ -734,6 +754,15 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       myImage = null;
       repaint();
     }
+  }
+
+  @Nullable
+  private Component getDeferredToRemove() {
+    return myDeferredToRemove != null ? myDeferredToRemove.get() : null;
+  }
+
+  private void setDeferredToRemove(final Component c) {
+    myDeferredToRemove = new WeakReference<Component>(c);
   }
 
   private class Toolbar extends JPanel {
@@ -1300,14 +1329,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       g2d.fill(fillPath);
     }
 
-    Color borderColor;
-    if (paintFocused) {
-      borderColor = UIUtil.getFocusedBoundsColor();
-    }
-    else {
-      borderColor = CaptionPanel.CNT_ACTIVE_COLOR.darker();
-    }
-
+    Color borderColor = UIUtil.getBoundsColor(paintFocused);
     g2d.setColor(borderColor);
 
     if (!isHideTabs()) {
@@ -1316,11 +1338,11 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
     if (isHideTabs()) {
       paintBorder(g2d, insets.left, insets.top, getWidth() - insets.left - insets.right, getHeight() - insets.bottom - insets.top, borderColor,
-                  from, to);
+                  from, to, paintFocused);
     }
     else {
       paintBorder(g2d, insets.left, bottomY, getWidth() - insets.left - insets.right, getHeight() - bottomY - insets.bottom, borderColor, from,
-                  to);
+                  to, paintFocused);
     }
 
     config.setAntialiasing(false);
@@ -1337,7 +1359,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   }
 
   private void paintBorder(Graphics2D g2d, int x, int y, int width, int height, final Color borderColor, final Color fillFrom,
-                           final Color fillTo) {
+                           final Color fillTo, boolean isFocused) {
     int topY = y + 1;
     int bottomY = y + myTopBorderSize - 2;
     int middleY = topY + (bottomY - topY) / 2;
@@ -1358,7 +1380,8 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
           g2d.setColor(fillTo);
           g2d.fillRect(x, topY, width, middleY - topY);
 
-          g2d.setPaint(new GradientPaint(x, middleY, UIUtil.toAlpha(borderColor.brighter(), 125), x, bottomY, UIUtil.toAlpha(Color.white, 255)));
+          final Color relfectionStartColor = isFocused ? UIUtil.toAlpha(UIUtil.getListSelectionBackground().darker(), 125) : UIUtil.toAlpha(borderColor, 75);
+          g2d.setPaint(new GradientPaint(x, middleY, relfectionStartColor, x, bottomY, UIUtil.toAlpha(Color.white, 255)));
           g2d.fillRect(x, middleY, width, bottomY - middleY);
 
           g2d.setColor(UIUtil.toAlpha(Color.white, 100));
@@ -1466,32 +1489,40 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     return getTabs().size();
   }
 
-  public void removeTab(final JComponent component) {
-    removeTab(findInfo(component));
+  public ActionCallback removeTab(final JComponent component) {
+    return removeTab(findInfo(component));
   }
 
-  public void removeTab(TabInfo info) {
-    removeTab(info, true);
+  public ActionCallback removeTab(final TabInfo info) {
+    return removeTab(info, true);
   }
 
-  public void removeTab(final TabInfo info, boolean transferFocus) {
-    if (info == null) return;
+  public ActionCallback removeTab(final TabInfo info, boolean transferFocus) {
+    if (info == null) return new ActionCallback.Done();
+
+    final ActionCallback result = new ActionCallback();
 
     TabInfo toSelect = transferFocus ? getToSelectOnRemoveOf(info) : null;
 
 
     if (toSelect != null) {
       final JComponent deferred = processRemove(info, false);
-      _setSelected(toSelect, true).doWhenDone(new Runnable() {
+      _setSelected(toSelect, true).doWhenProcessed(new Runnable() {
         public void run() {
           removeDeferred(deferred);
         }
-      });
+      }).notifyWhenDone(result);
     } else {
-      removeDeferred(processRemove(info, true));
+      removeDeferred(processRemove(info, true)).notifyWhenDone(result);
+    }
+
+    if (myVisibleInfos.size() == 0) {
+      removeCurrentDeferred();
     }
 
     revalidateAndRepaint();
+
+    return result;
   }
 
   @Nullable
@@ -1766,7 +1797,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
       Object tabs =
         DataManager.getInstance().getDataContext(e.getComponent(), e.getX(), e.getY()).getData(NAVIGATION_ACTIONS_KEY.getName());
-      if (tabs == JBTabsImpl.this) {
+      if (tabs == JBTabsImpl.this && myAddNavigationGroup) {
         toShow.addAll(myNavigationActions);
       }
 

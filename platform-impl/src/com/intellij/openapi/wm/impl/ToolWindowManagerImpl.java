@@ -1378,7 +1378,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void _requestFocus(final ActionCallback.Runnable command, final boolean forced, final ActionCallback result) {
-    if (!forced && !myUnforcedFocusRequestsAllowed) return;
+    if (!forced && !myUnforcedFocusRequestsAllowed) {
+      result.setRejected();
+      return;
+    }
 
     myRequestFocusCmd = command;
     if (forced) {
@@ -1405,6 +1408,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
               }
             }, 250);
           }
+        } else {
+          result.setRejected();
         }
       }
     });

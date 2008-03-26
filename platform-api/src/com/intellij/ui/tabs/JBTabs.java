@@ -22,9 +22,9 @@ public interface JBTabs {
   @NotNull
   TabInfo addTab(TabInfo info);
 
-  void removeTab(@Nullable TabInfo info);
+  ActionCallback removeTab(@Nullable TabInfo info);
 
-  void removeTab(@Nullable TabInfo info, boolean transferFocus);
+  ActionCallback removeTab(@Nullable TabInfo info, boolean transferFocus);
 
   void removeAllTabs();
 
@@ -34,8 +34,8 @@ public interface JBTabs {
   @Nullable
   String getPopupPlace();
 
-  JBTabs setPopupGroup(@NotNull ActionGroup popupGroup, @NotNull String place);
-  JBTabs setPopupGroup(@NotNull Getter<ActionGroup> popupGroup, @NotNull String place);
+  JBTabs setPopupGroup(@NotNull ActionGroup popupGroup, @NotNull String place, final boolean addNavigationGroup);
+  JBTabs setPopupGroup(@NotNull Getter<ActionGroup> popupGroup, @NotNull String place, final boolean addNavigationGroup);
   
   ActionCallback select(@NotNull TabInfo info, boolean requestFocus);
 

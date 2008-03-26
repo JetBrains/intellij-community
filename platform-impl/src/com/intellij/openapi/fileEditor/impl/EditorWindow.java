@@ -106,7 +106,6 @@ public class EditorWindow {
       final List<EditorWithProviderComposite> editors = editorManager.getEditorComposites(file);
       LOG.assertTrue(!editors.isEmpty());
       final EditorWithProviderComposite editor = findFileComposite(file);
-      editorManager.disposeComposite(editor);
 
       if (myTabbedPane != null) {
         final int componentIndex = findComponentIndex(editor.getComponent());
@@ -116,7 +115,11 @@ public class EditorWindow {
             myTabbedPane.setSelectedIndex(indexToSelect);
           }
 
-          myTabbedPane.removeTabAt(componentIndex);
+          myTabbedPane.removeTabAt(componentIndex).doWhenDone(new Runnable() {
+            public void run() {
+              editorManager.disposeComposite(editor);
+            }
+          });
 
           // Dirty hack [max].
           final VirtualFile selectedFile = getSelectedFile();
@@ -127,9 +130,8 @@ public class EditorWindow {
       }
       else {
         myPanel.removeAll ();
+        editorManager.disposeComposite(editor);
       }
-
-
 
       if (unsplit && getTabCount() == 0) {
         unsplit ();
