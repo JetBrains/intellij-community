@@ -19,8 +19,6 @@ public class ClassNameCompleteMacro extends BaseCompleteMacro {
       }
     };
 
-    classNameCompletionHandler.setShowOnEmptyPrefix(true);
-
     return classNameCompletionHandler;
   }
 }

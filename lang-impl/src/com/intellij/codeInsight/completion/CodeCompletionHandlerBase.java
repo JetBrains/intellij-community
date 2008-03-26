@@ -117,7 +117,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, insertedInfo.getFirst());
 
     final CompletionParametersImpl parameters = new CompletionParametersImpl(insertedInfo.getSecond(), insertedInfo.getFirst().file, myCompletionType);
-    final String adText = CompletionService.getCompletionService().getAdvertisementText(myCompletionType, parameters);
+    final String adText = CompletionService.getCompletionService().getAdvertisementText(parameters);
 
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, adText, this, insertedInfo.getFirst());
 
@@ -351,9 +351,13 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     CompletionService.getCompletionService().performAsyncCompletion(myCompletionType, parameters, new AsyncConsumer<LookupElement>() {
       public void consume(final LookupElement lookupElement) {
-        if (lookupSet.add(lookupElement)) {
-          indicator.addItem((LookupItem)lookupElement);
-        }
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            if (lookupSet.add(lookupElement)) {
+              indicator.addItem((LookupItem)lookupElement);
+            }
+          }
+        });
       }
     });
     final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);

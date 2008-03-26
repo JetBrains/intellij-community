@@ -40,11 +40,14 @@ public class JavaClassNameCompletionContributor extends CompletionContributor{
       PsiMethod.class).andNot(psiElement().inside(PsiCodeBlock.class)).andNot(psiElement().inside(PsiParameterList.class));
 
   public void registerCompletionProviders(final CompletionRegistrar registrar) {
-    registrar.extend(CompletionType.CLASS_NAME, psiElement()).withId(JavaCompletionContributor.JAVA_LEGACY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
+    registrar.extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
         CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         PsiElement insertedElement = parameters.getPosition();
-        result.setPrefixMatcher(CompletionData.findPrefixStatic(insertedElement, context.getStartOffset()));
+        String prefix = result.toString();
+
+        final PsiFile file = parameters.getOriginalFile();
+        final Project project = file.getProject();
 
         AllClassesGetter getter = new AllClassesGetter(TrueFilter.INSTANCE);
         boolean afterNew = AFTER_NEW.accepts(insertedElement);
@@ -57,22 +60,6 @@ public class JavaClassNameCompletionContributor extends CompletionContributor{
         else if (INSIDE_METHOD_THROWS_CLAUSE.accepts(insertedElement)) {
           getter = new AllClassesGetter(new ThisOrAnyInnerFilter(new AssignableFromFilter("java.lang.Throwable")));
         }
-
-        getter.getClasses(insertedElement, context, result, afterNew);
-      }
-    });
-
-    registrar.extend(CompletionType.CLASS_NAME, psiElement()).withId("green").dependingOn(JavaCompletionContributor.JAVA_LEGACY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
-      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
-        CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-        PsiElement insertedElement = parameters.getPosition();
-        final String prefix = CompletionData.findPrefixStatic(insertedElement, context.getStartOffset());
-        result.setPrefixMatcher(prefix);
-
-        final PsiFile file = parameters.getOriginalFile();
-        final Project project = file.getProject();
-
-        boolean afterNew = AFTER_NEW.accepts(insertedElement);
 
         final StatisticsInfo[] infos =
             StatisticsManager.getInstance().getAllValues(JavaCompletionStatistician.CLASS_NAME_COMPLETION_PREFIX + StringUtil.capitalsOnly(prefix));
@@ -90,7 +77,12 @@ public class JavaClassNameCompletionContributor extends CompletionContributor{
         if (afterNew) {
           final PsiExpression expr = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
           if (expr != null) {
-            final ExpectedTypeInfo[] expectedInfos = ExpectedTypesProvider.getInstance(project).getExpectedTypes(expr, true);
+            final ExpectedTypeInfo[] expectedInfos =
+                ApplicationManager.getApplication().runReadAction(new Computable<ExpectedTypeInfo[]>() {
+                  public ExpectedTypeInfo[] compute() {
+                    return ExpectedTypesProvider.getInstance(project).getExpectedTypes(expr, true);
+                  }
+                });
             for (final ExpectedTypeInfo info : expectedInfos) {
               final PsiType type = info.getType();
               final PsiClass psiClass = PsiUtil.resolveClassInType(type);
@@ -107,6 +99,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor{
             }
           }
         }
+
+        getter.getClasses(insertedElement, context, result, afterNew);
       }
     });
 

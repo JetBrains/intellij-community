@@ -8,23 +8,28 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.AsyncConsumer;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.AsyncConsumer;
 import com.intellij.util.containers.Stack;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author peter
  */
 public class CompletionService implements CompletionRegistrar{
-  private final PartiallyOrderedSet<String,CompletionPlaceImpl<LookupElement, CompletionParameters>> myBasicCompletionProviders = new PartiallyOrderedSet<String, CompletionPlaceImpl<LookupElement, CompletionParameters>>();
-  private final PartiallyOrderedSet<String,CompletionPlaceImpl<LookupElement, CompletionParameters>> mySmartCompletionProviders = new PartiallyOrderedSet<String, CompletionPlaceImpl<LookupElement, CompletionParameters>>();
-  private final PartiallyOrderedSet<String,CompletionPlaceImpl<LookupElement, CompletionParameters>> myClassNameCompletionProviders = new PartiallyOrderedSet<String, CompletionPlaceImpl<LookupElement, CompletionParameters>>();
+  private final List<CompletionPlaceImpl<LookupElement, CompletionParameters>> myBasicCompletionProviders = new ArrayList<CompletionPlaceImpl<LookupElement, CompletionParameters>>();
+  private final List<CompletionPlaceImpl<LookupElement, CompletionParameters>> mySmartCompletionProviders = new ArrayList<CompletionPlaceImpl<LookupElement, CompletionParameters>>();
+  private final List<CompletionPlaceImpl<LookupElement, CompletionParameters>> myClassNameCompletionProviders = new ArrayList<CompletionPlaceImpl<LookupElement, CompletionParameters>>();
+  private final List<Pair<ElementPattern, CompletionAdvertiser>> myAdvertisers = new ArrayList<Pair<ElementPattern, CompletionAdvertiser>>();
 
   public CompletionService() {
     for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
@@ -32,13 +37,16 @@ public class CompletionService implements CompletionRegistrar{
     }
   }
 
-  public CompletionPlace<LookupElement, CompletionParameters> extend(final CompletionType type,
-                                                                                   final ElementPattern<? extends PsiElement> place) {
-    return new CompletionPlaceImpl<LookupElement,CompletionParameters>(place, getProviderSet(type));
+  public void extend(final CompletionType type, final ElementPattern<? extends PsiElement> place, final CompletionProvider<LookupElement, CompletionParameters> provider) {
+    getProviderSet(type).add(new CompletionPlaceImpl<LookupElement, CompletionParameters>(place, provider));
+  }
+
+  public void extend(final ElementPattern<? extends PsiElement> place, final CompletionAdvertiser advertiser) {
+    myAdvertisers.add(new Pair<ElementPattern, CompletionAdvertiser>(place, advertiser));
   }
 
   private boolean executeForMatchingProviders(CompletionType type, final CompletionParameters queryParameters, PairProcessor<ProcessingContext,CompletionPlaceImpl<LookupElement,CompletionParameters>> processor) {
-    for (final CompletionPlaceImpl<LookupElement, CompletionParameters> place : getProviderSet(type).getValues()) {
+    for (final CompletionPlaceImpl<LookupElement, CompletionParameters> place : getProviderSet(type)) {
       final ProcessingContext processingContext = new ProcessingContext();
       if (place.myPlace.accepts(queryParameters.getPosition(), processingContext)) {
         if (!processor.process(processingContext, place)) return false;
@@ -97,21 +105,21 @@ public class CompletionService implements CompletionRegistrar{
     }
   }
 
-  public String getAdvertisementText(CompletionType type, final CompletionParameters queryParameters) {
+  @Nullable
+  public String getAdvertisementText(final CompletionParameters queryParameters) {
     final CompletionContext context = queryParameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
     final PrefixMatcher matcher = new CamelHumpMatcher(CompletionData.findPrefixStatic(queryParameters.getPosition(), context.getStartOffset()));
-    final Ref<String> result = Ref.create(null);
-    executeForMatchingProviders(type, queryParameters, new PairProcessor<ProcessingContext, CompletionPlaceImpl<LookupElement, CompletionParameters>>() {
-      public boolean process(final ProcessingContext processingContext, final CompletionPlaceImpl<LookupElement, CompletionParameters> place) {
-        final String ad = place.myAdvertiser.advertise(queryParameters, processingContext, matcher);
-        result.set(ad);
-        return ad == null;
+    for (final Pair<ElementPattern, CompletionAdvertiser> advertiser : myAdvertisers) {
+      final ProcessingContext processingContext = new ProcessingContext();
+      if (advertiser.first.accepts(queryParameters.getPosition(), processingContext)) {
+        final String s = advertiser.second.advertise(queryParameters, processingContext, matcher);
+        if (s != null) return s;
       }
-    });
-    return result.get();
+    }
+    return null;
   }
 
-  private PartiallyOrderedSet<String,CompletionPlaceImpl<LookupElement, CompletionParameters>> getProviderSet(CompletionType type) {
+  private List<CompletionPlaceImpl<LookupElement, CompletionParameters>> getProviderSet(CompletionType type) {
     switch (type) {
       case BASIC: return myBasicCompletionProviders;
       case SMART: return mySmartCompletionProviders;
@@ -124,47 +132,13 @@ public class CompletionService implements CompletionRegistrar{
     return ServiceManager.getService(CompletionService.class);
   }
 
-  public static class CompletionPlaceImpl<Result, Params extends CompletionParameters> implements CompletionPlace<Result,Params> {
+  public static class CompletionPlaceImpl<Result, Params extends CompletionParameters> {
     private final ElementPattern myPlace;
-    private final PartiallyOrderedSet<String, CompletionPlaceImpl<Result, Params>> myProviders;
-    private String myId;
-    private CompletionProvider<Result, Params> myProvider = CompletionProvider.EMPTY_PROVIDER;
-    private CompletionAdvertiser myAdvertiser = CompletionAdvertiser.EMPTY_ADVERTISER;
+    private final CompletionProvider<Result, Params> myProvider;
 
-    protected CompletionPlaceImpl(final ElementPattern place, PartiallyOrderedSet<String, CompletionPlaceImpl<Result,Params>> providers) {
+    public CompletionPlaceImpl(final ElementPattern place, final CompletionProvider<Result, Params> provider) {
       myPlace = place;
-      myProviders = providers;
-      myId = super.toString();
-    }
-
-    public CompletionPlace<Result, Params> withId(@NonNls @NotNull final String id) {
-      myId = id;
-      myProviders.addValue(myId, this);
-      return this;
-    }
-
-    public CompletionPlace<Result, Params> dependingOn(@NonNls final String... dependentIds) {
-      myProviders.addValue(myId, this);
-      for (final String dependentId : dependentIds) {
-        myProviders.addRelation(myId, dependentId);
-      }
-      return this;
-    }
-
-    public CompletionPlace<Result, Params> withProvider(final CompletionProvider<Result, Params> provider) {
-      myProviders.addValue(myId, this);
       myProvider = provider;
-      return this;
-    }
-
-    public CompletionPlace<Result, Params> withAdvertiser(final CompletionAdvertiser advertiser) {
-      myProviders.addValue(myId, this);
-      myAdvertiser = advertiser;
-      return this;
-    }
-
-    public String toString() {
-      return String.valueOf((myId != null ? myId : myProvider));
     }
   }
 

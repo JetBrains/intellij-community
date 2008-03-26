@@ -45,7 +45,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
 
   public void registerCompletionProviders(final CompletionRegistrar registrar) {
 
-    registrar.extend(CompletionType.SMART, psiElement()).withId(JavaCompletionContributor.JAVA_LEGACY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
+    registrar.extend(CompletionType.SMART, psiElement(), new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
         final Set<LookupItem> set = new LinkedHashSet<LookupItem>();
         final PsiElement identifierCopy = parameters.getPosition();
