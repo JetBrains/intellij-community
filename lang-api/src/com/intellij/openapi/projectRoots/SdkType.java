@@ -19,6 +19,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.OrderRootType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +37,8 @@ public abstract class SdkType {
   public static ExtensionPointName<SdkType> EP_NAME = ExtensionPointName.create("com.intellij.sdkType");
 
   private final String myName;
+
+  @NonNls public static final String MAC_HOME_PATH = "/Home";
 
   /**
    * @return path to set up filechooser to or null if not applicable
@@ -122,10 +129,50 @@ public abstract class SdkType {
     return getName();
   }
 
+  public FileChooserDescriptor getHomeChooserDescriptor() {
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
+      public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+        if (files.length != 0){
+          boolean valid = isValidSdkHome(files[0].getPath());
+          if (!valid){
+            if (SystemInfo.isMac) {
+              valid = isValidSdkHome(files[0].getPath() + MAC_HOME_PATH);
+            }
+            if (!valid) {
+              throw new Exception(ProjectBundle.message("sdk.configure.home.invalid.error", getPresentableName()));
+            }
+          }
+        }
+      }
+    };
+    descriptor.setTitle(ProjectBundle.message("sdk.configure.home.title", getPresentableName()));
+    return descriptor;
+  }
+
+
+  public String getHomeFieldLabel() {
+    return ProjectBundle.message("sdk.configure.type.home.path", getPresentableName());
+  }
+
   public static SdkType[] getAllTypes() {
     List<SdkType> allTypes = new ArrayList<SdkType>();
     Collections.addAll(allTypes, ApplicationManager.getApplication().getComponents(SdkType.class));
     Collections.addAll(allTypes, Extensions.getExtensions(EP_NAME));
     return allTypes.toArray(new SdkType[allTypes.size()]);
+  }
+
+  public static <T extends SdkType> T findInstance(final Class<T> sdkTypeClass) {
+    for (SdkType sdkType : Extensions.getExtensions(EP_NAME)) {
+      if (sdkTypeClass.isInstance(sdkType)) {
+        //noinspection unchecked
+        return (T)sdkType;
+      }
+    }
+    assert false;
+    return null;
+  }
+
+  public boolean isRootTypeApplicable(final OrderRootType type) {
+    return true;
   }
 }

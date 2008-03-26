@@ -32,8 +32,7 @@ public class JdkConfigurable extends NamedConfigurable<Sdk> implements Place.Nav
                          final Runnable updateTree, @NotNull History history) {
     super(true, updateTree);
     myProjectJdk = projectJdk;
-    mySdkEditor = new SdkEditor(configurable, history);
-    mySdkEditor.setSdk(myProjectJdk);
+    mySdkEditor = new SdkEditor(configurable, history, myProjectJdk);
   }
 
   public void setDisplayName(final String name) {

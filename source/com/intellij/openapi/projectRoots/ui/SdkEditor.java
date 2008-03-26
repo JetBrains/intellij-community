@@ -23,7 +23,6 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,19 +61,20 @@ public class SdkEditor implements Configurable, Place.Navigator {
   private final NotifiableSdkModel mySdkModel;
   private JLabel myHomeFieldLabel;
   private String myVersionString;
-  @NonNls private static final String MAC_HOME_PATH = "/Home";
 
   private String myInitialName;
   private String myInitialPath;
   private History myHistory;
 
-  public SdkEditor(NotifiableSdkModel sdkModel, History history) {
+  public SdkEditor(NotifiableSdkModel sdkModel, History history, final ProjectJdkImpl sdk) {
     mySdkModel = sdkModel;
     myHistory = history;
+    mySdk = sdk;
     createMainPanel();
+    initSdk(sdk);
   }
 
-  public void setSdk(Sdk sdk){
+  private void initSdk(Sdk sdk){
     mySdk = sdk;
     if (mySdk != null) {
       myInitialName = mySdk.getName();
@@ -113,9 +113,11 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
     myTabbedPane = new TabbedPaneWrapper();
     for (OrderRootType type : OrderRootType.getAllTypes()) {
-      final PathEditor pathEditor = OrderRootTypeUIFactory.FACTORY.getByKey(type).createPathEditor();
-      myTabbedPane.addTab(pathEditor.getDisplayName(), pathEditor.createComponent());
-      myPathEditors.put(type, pathEditor);
+      if (mySdk == null || mySdk.getSdkType().isRootTypeApplicable(type)) {
+        final PathEditor pathEditor = OrderRootTypeUIFactory.FACTORY.getByKey(type).createPathEditor();
+        myTabbedPane.addTab(pathEditor.getDisplayName(), pathEditor.createComponent());
+        myPathEditors.put(type, pathEditor);
+      }
     }
 
     myTabbedPane.addChangeListener(new ChangeListener() {
@@ -143,7 +145,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   private String getHomeFieldLabelValue() {
     if (mySdk != null) {
-      return ProjectBundle.message("sdk.configure.type.home.path", mySdk.getSdkType().getPresentableName());
+      return mySdk.getSdkType().getHomeFieldLabel();
     }
     return ProjectBundle.message("sdk.configure.general.home.path");
   }
@@ -241,7 +243,10 @@ public class SdkEditor implements Configurable, Place.Navigator {
     final Color fg;
     if (absolutePath != null && absolutePath.length() > 0) {
       final File homeDir = new File(absolutePath);
-      fg = homeDir.isDirectory() && homeDir.exists()? UIUtil.getFieldForegroundColor() : PathEditor.INVALID_COLOR;
+      boolean homeMustBeDirectory = mySdk == null || mySdk.getSdkType().getHomeChooserDescriptor().isChooseFolders();
+      fg = homeDir.exists() && (homeDir.isDirectory() == homeMustBeDirectory)
+           ? UIUtil.getFieldForegroundColor() 
+           : PathEditor.INVALID_COLOR;
     }
     else {
       fg = UIUtil.getFieldForegroundColor();
@@ -251,27 +256,12 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   @Nullable
   public static String selectSdkHome(final Component parentComponent, final SdkType sdkType){
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
-      public void validateSelectedFiles(VirtualFile[] files) throws Exception {
-        if (files.length != 0){
-          boolean valid = sdkType.isValidSdkHome(files[0].getPath());
-          if (!valid){
-            if (SystemInfo.isMac) {
-              valid = sdkType.isValidSdkHome(files[0].getPath() + MAC_HOME_PATH);
-            }
-            if (!valid) {
-              throw new Exception(ProjectBundle.message("sdk.configure.home.invalid.error", sdkType.getPresentableName()));
-            }
-          }
-        }
-      }
-    };
-    descriptor.setTitle(ProjectBundle.message("sdk.configure.home.title", sdkType.getPresentableName()));
+    final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
     VirtualFile[] files = FileChooser.chooseFiles(parentComponent, descriptor, getSuggestedSdkRoot(sdkType));
     if (files.length != 0){
       final String path = files[0].getPath();
       if (sdkType.isValidSdkHome(path)) return path;
-      return SystemInfo.isMac && sdkType.isValidSdkHome(path + MAC_HOME_PATH) ? path + MAC_HOME_PATH : null;
+      return SystemInfo.isMac && sdkType.isValidSdkHome(path + SdkType.MAC_HOME_PATH) ? path + SdkType.MAC_HOME_PATH : null;
     }
     return null;
   }
