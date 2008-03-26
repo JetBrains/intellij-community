@@ -59,6 +59,7 @@ public class EditorUtil {
       new WriteAction(){
         protected void run(final Result result) throws Throwable {
           editor.getDocument().insertString(offset, filler);
+          editor.getCaretModel().moveToOffset(offset + filler.length());
         }
       }.execute();
     }
