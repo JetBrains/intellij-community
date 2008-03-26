@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Computable;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -190,7 +191,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public boolean fillInCommonPrefix() {
-    return myLookup != null && myLookup.fillInCommonPrefix(true);
+    return ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        return myLookup != null && myLookup.fillInCommonPrefix(true);
+      }
+    });
   }
 
 }

@@ -10,14 +10,10 @@ import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
@@ -106,14 +102,7 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
   }
 
   public void setObject(@NotNull T o) {
-    if (o instanceof PsiElement){
-      PsiElement element = (PsiElement)o;
-      Project project = element.getProject();
-      myObject = element.isPhysical() ? SmartPointerManager.getInstance(project).createSmartPsiElementPointer((PsiElement)o) : element;
-    }
-    else{
-      myObject = o;
-    }
+    myObject = o;
 
     if (o instanceof LookupValueWithPriority) {
       setPriority(((LookupValueWithPriority)o).getPriority());
@@ -145,14 +134,7 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
    */
   @NotNull
   public T getObject() {
-    if (myObject instanceof SmartPsiElementPointer){
-      final T t = (T)((SmartPsiElementPointer)myObject).getElement();
-      assert t != null : "Pointer = " + myObject + "; lookupStrings = " + myAllLookupStrings;
-      return t;
-    }
-    else{
-      return (T)myObject;
-    }
+    return (T)myObject;
   }
 
   /**
