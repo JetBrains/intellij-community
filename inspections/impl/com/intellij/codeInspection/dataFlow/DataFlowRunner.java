@@ -34,7 +34,7 @@ public class DataFlowRunner {
 
   private Instruction[] myInstructions;
   private DfaVariableValue[] myFields;
-  private DfaValueFactory myValueFactory;
+  private final DfaValueFactory myValueFactory;
 
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.

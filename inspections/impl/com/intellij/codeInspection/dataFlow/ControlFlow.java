@@ -23,7 +23,7 @@ public class ControlFlow {
   private final HashMap<PsiElement,Integer> myElementToStartOffsetMap = new HashMap<PsiElement, Integer>();
   private final HashMap<PsiElement,Integer> myElementToEndOffsetMap = new HashMap<PsiElement, Integer>();
   private DfaVariableValue[] myFields;
-  private DfaValueFactory myFactory;
+  private final DfaValueFactory myFactory;
   private final InstructionFactory myInstructionFactory;
 
   public ControlFlow(final DfaValueFactory factory, final InstructionFactory instructionFactory) {
@@ -70,7 +70,7 @@ public class ControlFlow {
     return value.intValue();
   }
 
-    public DfaVariableValue[] getFields() {
+  public DfaVariableValue[] getFields() {
     return myFields;
   }
 

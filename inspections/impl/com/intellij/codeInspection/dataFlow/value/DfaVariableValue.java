@@ -17,7 +17,7 @@ public class DfaVariableValue extends DfaValue {
   public static class Factory {
     private final DfaVariableValue mySharedInstance;
     private final HashMap<String,ArrayList<DfaVariableValue>> myStringToObject;
-    private DfaValueFactory myFactory;
+    private final DfaValueFactory myFactory;
 
     Factory(DfaValueFactory factory) {
       myFactory = factory;
@@ -34,9 +34,9 @@ public class DfaVariableValue extends DfaValue {
       if (conditions == null) {
         conditions = new ArrayList<DfaVariableValue>();
         myStringToObject.put(id, conditions);
-      } else {
-        for (int i = 0; i < conditions.size(); i++) {
-          DfaVariableValue aVar = conditions.get(i);
+      }
+      else {
+        for (DfaVariableValue aVar : conditions) {
           if (aVar.hardEquals(mySharedInstance)) return aVar;
         }
       }

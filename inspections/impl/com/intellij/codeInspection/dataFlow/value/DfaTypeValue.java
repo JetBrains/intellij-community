@@ -8,20 +8,19 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiKeyword;
-import com.intellij.util.containers.HashMap;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiType;
+import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NonNls;
 
 public class DfaTypeValue extends DfaValue {
   public static class Factory {
     private final DfaTypeValue mySharedInstance;
     private final HashMap<String,ArrayList<DfaTypeValue>> myStringToObject;
-    private DfaValueFactory myFactory;
+    private final DfaValueFactory myFactory;
 
     Factory(DfaValueFactory factory) {
       myFactory = factory;
@@ -43,8 +42,7 @@ public class DfaTypeValue extends DfaValue {
         conditions = new ArrayList<DfaTypeValue>();
         myStringToObject.put(id, conditions);
       } else {
-        for (int i = 0; i < conditions.size(); i++) {
-          DfaTypeValue aType = conditions.get(i);
+        for (DfaTypeValue aType : conditions) {
           if (aType.hardEquals(mySharedInstance)) return aType;
         }
       }
@@ -95,12 +93,10 @@ public class DfaTypeValue extends DfaValue {
   }
 
   public boolean isAssignableFrom(DfaTypeValue dfaType) {
-    if (dfaType == null) return false;
-    return myType.isAssignableFrom(dfaType.myType);
+    return dfaType != null && myType.isAssignableFrom(dfaType.myType);
   }
 
   public boolean isConvertibleFrom(DfaTypeValue dfaType) {
-    if (dfaType == null) return false;
-    return myType.isConvertibleFrom(dfaType.myType);
+    return dfaType != null && myType.isConvertibleFrom(dfaType.myType);
   }
 }

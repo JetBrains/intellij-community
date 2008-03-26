@@ -284,22 +284,25 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @NotNull
-  private DfaValue[] getEqClassesFor(@NotNull DfaValue dfaValue) {
+  private List<DfaValue> getEqClassesFor(@NotNull DfaValue dfaValue) {
     int index = getEqClassIndex(dfaValue);
-    List<DfaValue> result = new ArrayList<DfaValue>();
     SortedIntSet set = index == -1 ? null : myEqClasses.get(index);
-    if (set != null) {
-      int[] ints = set.toNativeArray();
-      for (int cl : ints) {
-        DfaValue value = myFactory.getValue(cl);
-        result.add(value);
-      }
+    if (set == null) {
+      return Collections.emptyList();
     }
-    return result.toArray(new DfaValue[result.size()]);
+    final List<DfaValue> result = new ArrayList<DfaValue>(set.size());
+    set.forEach(new TIntProcedure() {
+      public boolean execute(int c1) {
+        DfaValue value = myFactory.getValue(c1);
+        result.add(value);
+        return true;
+      }
+    });
+    return result;
   }
 
   public  boolean canBeNaN(@NotNull DfaValue dfaValue) {
-    DfaValue[] eqClasses = getEqClassesFor(dfaValue);
+    List<DfaValue> eqClasses = getEqClassesFor(dfaValue);
     for (DfaValue eqClass : eqClasses) {
       if (isNaN(eqClass)) return true;
     }
@@ -322,7 +325,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     else if (valueToWrap instanceof DfaVariableValue) {
       if (((DfaVariableValue)valueToWrap).getPsiVariable().getType() == PsiType.BOOLEAN) return true;
-      DfaValue[] values = ((DfaMemoryStateImpl)memoryState).getEqClassesFor(valueToWrap);
+      List<DfaValue> values = ((DfaMemoryStateImpl)memoryState).getEqClassesFor(valueToWrap);
       for (DfaValue value : values) {
         if (value instanceof DfaConstValue && cacheable((DfaConstValue)value)) return true;
       }
@@ -535,12 +538,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
-    if (dfaRight instanceof DfaConstValue && dfaRight == myFactory.getConstFactory().getNull()) {
-      if (dfaLeft instanceof DfaVariableValue) {
-        final DfaVariableState varState = getVariableState((DfaVariableValue)dfaLeft);
-        if (varState.isNotNull()) return isNegated;
-        varState.setNullable(true);
-      }
+    if (dfaRight == myFactory.getConstFactory().getNull() && dfaLeft instanceof DfaVariableValue) {
+      final DfaVariableState varState = getVariableState((DfaVariableValue)dfaLeft);
+      if (varState.isNotNull()) return isNegated;
+      varState.setNullable(true);
     }
 
     if (dfaLeft instanceof DfaUnknownValue || dfaRight instanceof DfaUnknownValue) return true;

@@ -18,7 +18,7 @@ public class DfaValueFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.value.DfaValueFactory");
 
   private int myLastID;
-  private TIntObjectHashMap<DfaValue> myValues;
+  private final TIntObjectHashMap<DfaValue> myValues;
 
   public DfaValueFactory() {
     myValues = new TIntObjectHashMap<DfaValue>();

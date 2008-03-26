@@ -35,7 +35,7 @@ import java.util.*;
 
 public class DataFlowInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInspection");
-  private static final @NonNls String SHORT_NAME = "ConstantConditions";
+  @NonNls private static final String SHORT_NAME = "ConstantConditions";
   public boolean SUGGEST_NULLABLE_ANNOTATIONS = false;
   public boolean DONT_REPORT_TRUE_ASSERT_STATEMENTS = false;
 
@@ -85,7 +85,8 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     }
   }
 
-  private static @Nullable LocalQuickFix[] createNPEFixes(PsiExpression qualifier) {
+  @Nullable
+  private static LocalQuickFix[] createNPEFixes(PsiExpression qualifier) {
     if (qualifier != null &&
         !(qualifier instanceof PsiMethodCallExpression) &&
         !(qualifier instanceof PsiLiteralExpression && ((PsiLiteralExpression)qualifier).getValue() == null)) {
@@ -284,7 +285,8 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     return false;
   }
 
-  private static @Nullable LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
+  @Nullable
+  private static LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
     if (!(element instanceof PsiExpression)) return null;
     final PsiExpression expression = (PsiExpression)element;
     while (element.getParent() instanceof PsiExpression) {

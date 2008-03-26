@@ -51,7 +51,7 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
   }
 
   public static class MyInstructionFactory extends InstructionFactory {
-    private MultiValuesMap<PsiVariable, PsiExpression> myValues = new MultiValuesMap<PsiVariable, PsiExpression>();
+    private final MultiValuesMap<PsiVariable, PsiExpression> myValues = new MultiValuesMap<PsiVariable, PsiExpression>();
 
     private final PsiMethodCallExpression myContext;
 

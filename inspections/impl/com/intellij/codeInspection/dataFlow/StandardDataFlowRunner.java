@@ -40,7 +40,7 @@ public class StandardDataFlowRunner extends DataFlowRunner {
   private boolean myInNotNullMethod = false;
   private boolean myIsInMethod = false;
 
-  private Set<PsiExpression> myUnboxedNullables = new THashSet<PsiExpression>();
+  private final Set<PsiExpression> myUnboxedNullables = new THashSet<PsiExpression>();
 
   public StandardDataFlowRunner(boolean suggestNullableAnnotations) {
     super(new StandardInstructionFactory());
@@ -76,10 +76,6 @@ public class StandardDataFlowRunner extends DataFlowRunner {
 
   @NotNull public Set<PsiReturnStatement> getNullableReturns() {
     return myNullableReturns;
-  }
-
-  public boolean isInNullableMethod() {
-    return myInNullableMethod;
   }
 
   public boolean isInNotNullMethod() {

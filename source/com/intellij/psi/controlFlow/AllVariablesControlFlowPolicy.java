@@ -11,11 +11,11 @@ package com.intellij.psi.controlFlow;
 import com.intellij.psi.*;
 
 public class AllVariablesControlFlowPolicy implements ControlFlowPolicy {
-  private final static AllVariablesControlFlowPolicy INSTANCE = new AllVariablesControlFlowPolicy();
+  private static final AllVariablesControlFlowPolicy INSTANCE = new AllVariablesControlFlowPolicy();
 
   public PsiVariable getUsedVariable(PsiReferenceExpression refExpr) {
       PsiElement resolved = refExpr.resolve();
-      return (resolved instanceof PsiVariable) ? (PsiVariable) resolved : null;
+      return resolved instanceof PsiVariable ? (PsiVariable)resolved : null;
   }
 
   public boolean isParameterAccepted(PsiParameter psiParameter) {

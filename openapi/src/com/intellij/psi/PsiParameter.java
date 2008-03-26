@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents the parameter of a Java method, foreach (enhanced for) statement or catch block.

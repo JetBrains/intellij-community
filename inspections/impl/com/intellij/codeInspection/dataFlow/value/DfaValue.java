@@ -2,7 +2,7 @@ package com.intellij.codeInspection.dataFlow.value;
 
 public class DfaValue {
   private final int myID;
-  protected DfaValueFactory myFactory;
+  protected final DfaValueFactory myFactory;
 
   public DfaValue(final DfaValueFactory factory) {
     myFactory = factory;

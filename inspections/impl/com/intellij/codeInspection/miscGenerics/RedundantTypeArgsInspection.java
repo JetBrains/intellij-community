@@ -21,7 +21,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     myQuickFixAction = new MyQuickFixAction();
   }
 
-  private LocalQuickFix myQuickFixAction;
+  private final LocalQuickFix myQuickFixAction;
 
   @NotNull
   public String getGroupDisplayName() {
@@ -40,7 +40,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
 
 
 
-  public ProblemDescriptor[] checkMethod(PsiMethod psiMethod, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod psiMethod, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiCodeBlock body = psiMethod.getBody();
     if (body != null) {
       return getDescriptions(body, manager);

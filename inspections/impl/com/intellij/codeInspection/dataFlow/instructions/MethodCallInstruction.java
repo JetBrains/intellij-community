@@ -22,12 +22,12 @@ import org.jetbrains.annotations.Nullable;
 
 public class MethodCallInstruction extends Instruction {
   @Nullable private final PsiCallExpression myCall;
-  private DfaValueFactory myFactory;
+  private final DfaValueFactory myFactory;
   private boolean myIsNullable;
   private boolean myIsNotNull;
-  private boolean[] myParametersNotNull;
-  private @Nullable PsiType myType;
-  private @NotNull PsiExpression[] myArgs;
+  private final boolean[] myParametersNotNull;
+  @Nullable private PsiType myType;
+  @NotNull private final PsiExpression[] myArgs;
   private boolean myShouldFlushFields;
   @NotNull private final PsiExpression myContext;
   private final MethodType myMethodType;
@@ -90,7 +90,7 @@ public class MethodCallInstruction extends Instruction {
       }
     }
 
-    final @NotNull DfaValue qualifier = memState.pop();
+    @NotNull final DfaValue qualifier = memState.pop();
     try {
       if (!memState.applyNotNull(qualifier)) {
         if (myMethodType == MethodType.UNBOXING) {

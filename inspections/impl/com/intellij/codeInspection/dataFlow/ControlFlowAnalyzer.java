@@ -27,7 +27,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private HashSet<DfaVariableValue> myFields;
   private Stack<CatchDescriptor> myCatchStack;
   private PsiType myRuntimeException;
-  private DfaValueFactory myFactory;
+  private final DfaValueFactory myFactory;
   private final InstructionFactory myInstructionFactory;
   private boolean myHonorRuntimeExceptions = true;
 
