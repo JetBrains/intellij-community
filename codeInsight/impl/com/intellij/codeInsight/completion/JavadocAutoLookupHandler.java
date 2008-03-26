@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.editor.Editor;
 
 /**
  *
@@ -16,19 +17,17 @@ public class JavadocAutoLookupHandler extends CodeCompletionHandler{
     return false;
   }
 
-  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData){
+  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData, final String adText){
   }
 
-  protected LookupData getLookupData(CompletionContext context, final String dummyIdentifier){
+  protected void doComplete(final int offset1, final int offset2, final CompletionContext context, final String dummyIdentifier,
+                            final Editor editor) {
     PsiFile file = context.file;
     int offset = context.getStartOffset();
 
     PsiElement lastElement = file.findElementAt(offset - 1);
-    if (lastElement == null || !StringUtil.endsWithChar(lastElement.getText(), '@')) {
-      return LookupData.EMPTY;
-    }
-    else{
-      return super.getLookupData(context, dummyIdentifier);
-    }
+    if (lastElement == null || !StringUtil.endsWithChar(lastElement.getText(), '@')) return;
+
+    super.doComplete(offset1, offset2, context, dummyIdentifier, editor);
   }
 }

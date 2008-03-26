@@ -3,7 +3,9 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -34,7 +36,12 @@ public class XmlCompletionContributor extends CompletionContributor{
         final PsiElement element = parameters.getPosition();
         final XmlTag parent = (XmlTag)element.getParent();
         final String namespace = parent.getNamespace();
-        final XmlElementDescriptor parentDescriptor = parent.getDescriptor();
+        final XmlElementDescriptor parentDescriptor =
+            ApplicationManager.getApplication().runReadAction(new Computable<XmlElementDescriptor>() {
+              public XmlElementDescriptor compute() {
+                return parent.getDescriptor();
+              }
+            });
         final String prefix = result.getPrefixMatcher().getPrefix();
         final int pos = prefix.indexOf(':');
         final String namespacePrefix = pos > 0 ? prefix.substring(0, pos) : null;
@@ -51,24 +58,23 @@ public class XmlCompletionContributor extends CompletionContributor{
           result.setPrefixMatcher(pos >= 0 ? prefix.substring(pos + 1) : prefix);
 
           final XmlFile file = (XmlFile)parameters.getOriginalFile();
-          final XmlExtension extension = XmlExtension.getExtension(file);
-          final List<Pair<String,String>> names = extension.getAvailableTagNames(file, parent);
-          if (names.isEmpty()) {
-            return;
-          }
+          final List<Pair<String,String>> names =
+              ApplicationManager.getApplication().runReadAction(new Computable<List<Pair<String, String>>>() {
+                public List<Pair<String, String>> compute() {
+                  return XmlExtension.getExtension(file).getAvailableTagNames(file, parent);
+                }
+              });
           for (Pair<String, String> pair : names) {
             final String name = pair.getFirst();
-            if (result.getPrefixMatcher().prefixMatches(name)) {
-              final String ns = pair.getSecond();
-              final LookupItem item = new LookupItem<String>(name, name);
-              final XmlTagInsertHandler insertHandler = new ExtendedTagInsertHandler(name, ns, namespacePrefix);
-              item.setInsertHandler(insertHandler);
-              if (!StringUtil.isEmpty(ns)) {
-                item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " (" + ns + ")");
-                item.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
-              }
-              result.addElement(item);
+            final String ns = pair.getSecond();
+            final LookupItem item = new LookupItem<String>(name, name);
+            final XmlTagInsertHandler insertHandler = new ExtendedTagInsertHandler(name, ns, namespacePrefix);
+            item.setInsertHandler(insertHandler);
+            if (!StringUtil.isEmpty(ns)) {
+              item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " (" + ns + ")");
+              item.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
             }
+            result.addElement(item);
           }
         }
       }

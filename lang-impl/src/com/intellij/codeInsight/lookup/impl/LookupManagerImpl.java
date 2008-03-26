@@ -13,9 +13,7 @@ import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBus;
@@ -24,13 +22,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.Arrays;
-import java.util.Comparator;
 
 public class LookupManagerImpl extends LookupManager implements ProjectComponent {
   private final Project myProject;
 
-  protected Lookup myActiveLookup = null;
+  protected LookupImpl myActiveLookup = null;
   protected Editor myActiveLookupEditor = null;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
@@ -98,22 +94,18 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   }
 
   public Lookup showLookup(final Editor editor, LookupItem[] items, String prefix, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable final String bottomText) {
+    final LookupImpl lookup = createLookup(editor, items, prefix, itemPreferencePolicy, bottomText);
+    lookup.show();
+    return lookup;
+  }
+
+  public LookupImpl createLookup(final Editor editor, final LookupItem[] items, final String prefix, final LookupItemPreferencePolicy itemPreferencePolicy,
+                            final String bottomText) {
     hideActiveLookup();
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
-    items = items.clone();
-
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-    PsiElement context = psiFile;
-    if (psiFile != null) {
-      final PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
-      if (element != null) {
-        context = element;
-      }
-    }
-
-    sortItems(context, items);
 
     final Alarm alarm = new Alarm();
     final Runnable request = new Runnable(){
@@ -131,7 +123,6 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     }
     myActiveLookup = new LookupImpl(myProject, editor, items, prefix, itemPreferencePolicy, bottomText);
     myActiveLookupEditor = editor;
-    ((LookupImpl)myActiveLookup).show();
     myActiveLookup.addLookupListener(
       new LookupAdapter(){
         public void itemSelected(LookupEvent event) {
@@ -159,7 +150,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
           Lookup lookup = myActiveLookup;
           myActiveLookup = null;
           myActiveLookupEditor = null;
-          myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, lookup, myActiveLookup);
+          myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, lookup, null);
         }
       }
     );
@@ -169,34 +160,8 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
 
   public void hideActiveLookup() {
     if (myActiveLookup != null){
-      ((LookupImpl)myActiveLookup).hide();
-      Lookup lookup = myActiveLookup;
-      myActiveLookup = null;
-      myActiveLookupEditor = null;
-      myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, lookup, myActiveLookup);
+      myActiveLookup.hide();
     }
-  }
-
-  protected static void sortItems(PsiElement context, LookupItem[] items) {
-    final PsiProximityComparator proximityComparator = new PsiProximityComparator(context);
-    final Comparator<? super LookupItem> comparator = new Comparator<LookupItem>() {
-      public int compare(LookupItem o1, LookupItem o2) {
-        double priority1 = o1.getPriority();
-        double priority2 = o2.getPriority();
-        if (priority1 > priority2) return -1;
-        if (priority2 > priority1) return 1;
-
-        int grouping1 = o1.getGrouping();
-        int grouping2 = o2.getGrouping();
-        if (grouping1 > grouping2) return -1;
-        if (grouping2 > grouping1) return 1;
-
-        int stringCompare = o1.getLookupString().compareToIgnoreCase(o2.getLookupString());
-        return stringCompare != 0 ? stringCompare : proximityComparator.compare(o1.getObject(), o2.getObject());
-      }
-    };
-    Arrays.sort(items, comparator);
-
   }
 
   public Lookup getActiveLookup() {

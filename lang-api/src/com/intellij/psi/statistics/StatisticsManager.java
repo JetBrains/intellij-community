@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class StatisticsManager implements SettingsSavingComponent {
   private static final KeyedExtensionCollector<Statistician,Key> COLLECTOR = new KeyedExtensionCollector<Statistician, Key>("com.intellij.statistician") {
@@ -60,5 +61,5 @@ public abstract class StatisticsManager implements SettingsSavingComponent {
     }
   }
 
-  public abstract StatisticsInfo[] getAllValues(String context);
+  public abstract StatisticsInfo[] getAllValues(@NonNls String context);
 }

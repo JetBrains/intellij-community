@@ -12,6 +12,14 @@ public abstract class LookupManager {
     return project.getComponent(LookupManager.class);
   }
 
+  @Nullable
+  public static Lookup getActiveLookup(Editor editor) {
+    final Project project = editor.getProject();
+    if (project == null) return null;
+
+    return getInstance(project).getActiveLookup();
+  }
+
   @Deprecated
   public abstract Lookup showLookup(Editor editor, LookupItem[] items, String prefix, LookupItemPreferencePolicy itemPreferencePolicy);
   public abstract Lookup showLookup(Editor editor, LookupItem[] items, String prefix, LookupItemPreferencePolicy itemPreferencePolicy, @Nullable String bottomText);
@@ -24,4 +32,7 @@ public abstract class LookupManager {
   public abstract void removePropertyChangeListener(PropertyChangeListener listener);
 
   public abstract boolean isDisposed();
+
+  public abstract Lookup createLookup(Editor editor, LookupItem[] items, String prefix, LookupItemPreferencePolicy itemPreferencePolicy,
+                            String bottomText);
 }

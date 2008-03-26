@@ -185,6 +185,8 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     stack.push(baseClass);
     final GlobalSearchScope scope = GlobalSearchScope.allScope(baseClass.getProject());
     while (!stack.isEmpty()) {
+      ProgressManager.getInstance().checkCanceled();
+
       final PsiClass psiClass = stack.pop();
       if (processed.contains(psiClass)) continue;
       processed.add(psiClass);

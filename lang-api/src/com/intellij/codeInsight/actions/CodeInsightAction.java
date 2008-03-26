@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,7 +46,8 @@ public abstract class CodeInsightAction extends AnAction {
 
   public void actionPerformedImpl(final Project project, final Editor editor) {
     if (editor == null) return;
-    final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    //final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     if (psiFile == null) return;
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {

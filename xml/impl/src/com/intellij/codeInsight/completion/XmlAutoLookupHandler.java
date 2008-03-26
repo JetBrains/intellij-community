@@ -1,7 +1,8 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lang.Language;
+import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -20,15 +21,15 @@ public class XmlAutoLookupHandler extends CodeCompletionHandler {
     return false;
   }
 
-  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData) {
+  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData, final String adText) {
   }
 
-  protected LookupData getLookupData(CompletionContext context, final String dummyIdentifier) {
+  protected void doComplete(final int offset1, final int offset2, final CompletionContext context, final String dummyIdentifier, Editor editor) {
     PsiFile file = context.file;
     int offset = context.getStartOffset();
 
     PsiElement lastElement = file.findElementAt(offset - 1);
-    if (lastElement == null) return LookupData.EMPTY;
+    if (lastElement == null) return;
 
     final Ref<Boolean> isRelevantLanguage = new Ref<Boolean>();
     final Ref<Boolean> isAnt = new Ref<Boolean>();
@@ -37,25 +38,13 @@ public class XmlAutoLookupHandler extends CodeCompletionHandler {
     if (len < text.length()) {
       text = text.substring(0, len);
     }
-    if (text.equals("<") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt)) {
-      return super.getLookupData(context, dummyIdentifier);
-    } else if (text.equals(" ") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt)) {
-      return super.getLookupData(context, dummyIdentifier);
+    if (text.equals("<") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) ||
+        text.equals(" ") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) ||
+        text.endsWith("${") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue() ||
+        text.endsWith("@{") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue() ||
+        text.endsWith("</") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt)) {
+      super.doComplete(offset1, offset2, context, dummyIdentifier, editor);
     }
-    else if (text.endsWith("${") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue()) {
-      return super.getLookupData(context, dummyIdentifier);
-    }
-    else if (text.endsWith("@{") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue()) {
-      return super.getLookupData(context, dummyIdentifier);
-    }
-    else if (text.endsWith("</") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt)) {
-      return super.getLookupData(context, dummyIdentifier);
-    }
-    //if (lastElement instanceof PsiWhiteSpace && lastElement.getPrevSibling() instanceof XmlTag) {
-    //  return super.getLookupData(context);
-    //}
-
-    return LookupData.EMPTY;
   }
 
   private static boolean isLanguageRelevant(final PsiElement element,

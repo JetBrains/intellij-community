@@ -8,6 +8,8 @@ import com.intellij.codeInsight.lookup.PresentableLookupValue;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.patterns.ElementPattern;
 import static com.intellij.patterns.StandardPatterns.character;
 import static com.intellij.patterns.StandardPatterns.not;
@@ -23,8 +25,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
 import java.io.Serializable;
+import java.util.*;
 
 /**
  * @deprecated {@see com.intellij.codeInsight.completion.CompletionContributor}
@@ -83,32 +85,39 @@ public class CompletionData {
     myCompletionVariants.add(variant);
   }
 
-  public void completeReference(PsiReference reference, Set<LookupItem> set, @NotNull PsiElement position,
+  public void completeReference(final PsiReference reference, final Set<LookupItem> set, @NotNull final PsiElement position,
                                 final PrefixMatcher matcher, final PsiFile file, final int offset){
     final CompletionVariant[] variants = findVariants(position, file);
-    boolean hasApplicableVariants = false;
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        boolean hasApplicableVariants = false;
+        for (CompletionVariant variant : variants) {
+          if (variant.hasReferenceFilter()) {
+            variant.addReferenceCompletions(reference, position, set, matcher, file, CompletionData.this);
+            hasApplicableVariants = true;
+          }
+        }
 
-    for (CompletionVariant variant : variants) {
-      if (variant.hasReferenceFilter()) {
-        variant.addReferenceCompletions(reference, position, set, matcher, file, this);
-        hasApplicableVariants = true;
+        if (!hasApplicableVariants) {
+          myGenericVariant.addReferenceCompletions(reference, position, set, matcher, file, CompletionData.this);
+        }
       }
-    }
-
-    if(!hasApplicableVariants){
-      myGenericVariant.addReferenceCompletions(reference, position, set, matcher, file, this);
-    }
+    });
   }
 
   public void addKeywordVariants(Set<CompletionVariant> set, PsiElement position, final PsiFile file){
     set.addAll(Arrays.asList(findVariants(position, file)));
   }
 
-  public void completeKeywordsBySet(Set<LookupItem> set, Set<CompletionVariant> variants, PsiElement position,
+  public void completeKeywordsBySet(final Set<LookupItem> set, Set<CompletionVariant> variants, final PsiElement position,
                                     final PrefixMatcher matcher,
                                     final PsiFile file){
     for (final CompletionVariant variant : variants) {
-      variant.addKeywords(set, position, matcher, file, this);
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          variant.addKeywords(set, position, matcher, file, CompletionData.this);
+        }
+      });
     }
   }
 
@@ -117,30 +126,34 @@ public class CompletionData {
   }
 
   public CompletionVariant[] findVariants(final PsiElement position, final PsiFile file){
-    final List<CompletionVariant> variants = new ArrayList<CompletionVariant>();
-    PsiElement scope = position;
-    if(scope == null){
-      scope = file;
-    }
-    while (scope != null) {
-      boolean breakFlag = false;
-      if (isScopeAcceptable(scope)){
+    return ApplicationManager.getApplication().runReadAction(new Computable<CompletionVariant[]>() {
+      public CompletionVariant[] compute() {
+        final List<CompletionVariant> variants = new ArrayList<CompletionVariant>();
+        PsiElement scope = position;
+        if(scope == null){
+          scope = file;
+        }
+        while (scope != null) {
+          boolean breakFlag = false;
+          if (isScopeAcceptable(scope)){
 
-        for (final CompletionVariant variant : myCompletionVariants) {
-          if (variant.isVariantApplicable(position, scope) && !variants.contains(variant)) {
-            variants.add(variant);
-            if (variant.isScopeFinal(scope)) {
-              breakFlag = true;
+            for (final CompletionVariant variant : myCompletionVariants) {
+              if (variant.isVariantApplicable(position, scope) && !variants.contains(variant)) {
+                variants.add(variant);
+                if (variant.isScopeFinal(scope)) {
+                  breakFlag = true;
+                }
+              }
             }
           }
+          if(breakFlag || isScopeFinal(scope.getClass()))
+            break;
+          scope = scope.getContext();
+          if (scope instanceof PsiDirectory) break;
         }
+        return variants.toArray(new CompletionVariant[variants.size()]);
       }
-      if(breakFlag || isScopeFinal(scope.getClass()))
-        break;
-      scope = scope.getContext();
-      if (scope instanceof PsiDirectory) break;
-    }
-    return variants.toArray(new CompletionVariant[variants.size()]);
+    });
   }
 
   protected final CompletionVariant myGenericVariant = new CompletionVariant() {

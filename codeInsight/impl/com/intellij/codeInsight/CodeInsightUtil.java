@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -197,8 +198,6 @@ public class CodeInsightUtil {
     final PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
     if(baseClass == null) return;
 
-
-
     final Query<PsiClass> query = new FilteredQuery<PsiClass>(
       ClassInheritorsSearch.search(baseClass, context.getResolveScope(), true, false, false), new Condition<PsiClass>() {
       public boolean value(final PsiClass psiClass) {
@@ -206,12 +205,21 @@ public class CodeInsightUtil {
       }
     });
 
+    query.forEach(createInheritorsProcessor(context, baseType, arrayDim, getRawSubtypes, result, baseClass, baseSubstitutor));
+  }
+
+  public static Processor<PsiClass> createInheritorsProcessor(final PsiElement context, final PsiClassType baseType,
+                                                               final int arrayDim,
+                                                               final boolean getRawSubtypes,
+                                                               final Set<PsiType> result, final PsiClass baseClass, final PsiSubstitutor baseSubstitutor) {
     final PsiManager manager = context.getManager();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();
 
-    query.forEach(new Processor<PsiClass>() {
+    return new Processor<PsiClass>() {
       public boolean process(PsiClass inheritor) {
+        ProgressManager.getInstance().checkCanceled();
+
         if(!facade.getResolveHelper().isAccessible(inheritor, context, null)) return true;
 
         if(inheritor.getQualifiedName() == null && !manager.areElementsEquivalent(inheritor.getContainingFile(), context.getContainingFile())){
@@ -259,7 +267,7 @@ public class CodeInsightUtil {
         }
         return true;
       }
-    });
+    };
   }
 
   private static PsiType createType(PsiClass cls,

@@ -40,7 +40,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     myProject = project;
-    myFile = file;
+    myFile = file.getViewProvider().getPsi(file.getViewProvider().getBaseLanguage());
     myDocument = editor.getDocument();
 
     if (!myFile.isWritable()) {
@@ -135,7 +135,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     int offset = myDocument.getLineStartOffset(myLine1);
     offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
     Language languageAtStart = PsiUtilBase.getLanguageAtOffset(myFile, offset);
-    final Language languageSuitableForCompleteFragment = CommentByBlockCommentHandler.evaluateLanguageInRange(offset, CharArrayUtil.shiftBackward(
+    final Language languageSuitableForCompleteFragment = PsiUtilBase.evaluateLanguageInRange(offset, CharArrayUtil.shiftBackward(
       myDocument.getCharsSequence(), myDocument.getLineEndOffset(myLine2), " \t\n"), myFile, languageAtStart);
 
     Commenter blockSuitableCommenter = languageSuitableForCompleteFragment != languageAtStart ? LanguageCommenters.INSTANCE

@@ -12,6 +12,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ProcessingContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,11 +36,19 @@ public class LegacyCompletionContributor extends CompletionContributor{
         final int startOffset = context.getStartOffset();
         final PsiElement lastElement = file.findElementAt(startOffset - 1);
         PsiElement insertedElement = parameters.getPosition();
-        CompletionData completionData = CompletionUtil.getCompletionDataByElement(lastElement, file, startOffset);
+        CompletionData completionData = ApplicationManager.getApplication().runReadAction(new Computable<CompletionData>() {
+          public CompletionData compute() {
+            return CompletionUtil.getCompletionDataByElement(lastElement, file, startOffset);
+          }
+        });
         result.setPrefixMatcher(completionData == null ? CompletionData.findPrefixStatic(insertedElement, startOffset) : completionData.findPrefix(insertedElement, startOffset));
         if (completionData == null) {
           // some completion data may depend on prefix
-          completionData = CompletionUtil.getCompletionDataByElement(lastElement, file, startOffset);
+          completionData = ApplicationManager.getApplication().runReadAction(new Computable<CompletionData>() {
+            public CompletionData compute() {
+              return CompletionUtil.getCompletionDataByElement(lastElement, file, startOffset);
+            }
+          });
         }
 
         if (completionData == null) return;
@@ -48,6 +58,10 @@ public class LegacyCompletionContributor extends CompletionContributor{
         if (ref != null) {
           completionData.completeReference(ref, lookupSet, insertedElement, result.getPrefixMatcher(), context.file, context.getStartOffset());
         }
+        for (final LookupItem item : lookupSet) {
+          result.addElement(item);
+        }
+        lookupSet.clear();
 
         final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
         completionData.addKeywordVariants(keywordVariants, insertedElement, context.file);

@@ -79,6 +79,21 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return addBounds(substitute(typeParameter), typeParameter);
   }
 
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (!(o instanceof PsiSubstitutorImpl)) return false;
+
+    final PsiSubstitutorImpl that = (PsiSubstitutorImpl)o;
+
+    if (mySubstitutionMap != null ? !mySubstitutionMap.equals(that.mySubstitutionMap) : that.mySubstitutionMap != null) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return (mySubstitutionMap != null ? mySubstitutionMap.hashCode() : 0);
+  }
+
   private PsiType rawTypeForTypeParameter(final PsiTypeParameter typeParameter) {
     final PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
     if (extendsTypes.length > 0) {

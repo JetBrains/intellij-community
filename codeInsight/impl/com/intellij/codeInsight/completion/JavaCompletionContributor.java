@@ -5,7 +5,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.daemon.impl.JavaReferenceImporter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.StdLanguages;
@@ -15,6 +14,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -24,12 +24,11 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.AsyncConsumer;
+import com.intellij.util.ProcessingContext;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -96,9 +95,13 @@ public class JavaCompletionContributor extends CompletionContributor{
         context.setPrefix(insertedElement, context.getStartOffset(), completionData);
         result.setPrefixMatcher(context.getPrefix());
 
-        Set<LookupItem> lookupSet = new THashSet<LookupItem>();
+        final Set<LookupItem> lookupSet = new THashSet<LookupItem>();
         final PsiVariable variable = (PsiVariable)parameters.getPosition().getParent();
-        JavaCompletionUtil.completeLocalVariableName(lookupSet, result.getPrefixMatcher(), variable);
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            JavaCompletionUtil.completeLocalVariableName(lookupSet, result.getPrefixMatcher(), variable);
+          }
+        });
         for (final LookupItem item : lookupSet) {
           result.addElement(item);
         }
@@ -115,10 +118,14 @@ public class JavaCompletionContributor extends CompletionContributor{
             context.setPrefix(insertedElement, context.getStartOffset(), completionData);
             result.setPrefixMatcher(context.getPrefix());
 
-            Set<LookupItem> lookupSet = new THashSet<LookupItem>();
+            final Set<LookupItem> lookupSet = new THashSet<LookupItem>();
             final PsiVariable variable = (PsiVariable)parameters.getPosition().getParent();
-            JavaCompletionUtil.completeFieldName(lookupSet, variable, result.getPrefixMatcher());
-            JavaCompletionUtil.completeMethodName(lookupSet, variable, result.getPrefixMatcher());
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                JavaCompletionUtil.completeFieldName(lookupSet, variable, result.getPrefixMatcher());
+                JavaCompletionUtil.completeMethodName(lookupSet, variable, result.getPrefixMatcher());
+              }
+            });
             for (final LookupItem item : lookupSet) {
               result.addElement(item);
             }
@@ -137,8 +144,12 @@ public class JavaCompletionContributor extends CompletionContributor{
             context.setPrefix(insertedElement, context.getStartOffset(), completionData);
             result.setPrefixMatcher(context.getPrefix());
 
-            Set<LookupItem> lookupSet = new THashSet<LookupItem>();
-            JavaCompletionUtil.completeMethodName(lookupSet, parameters.getPosition().getParent(), result.getPrefixMatcher());
+            final Set<LookupItem> lookupSet = new THashSet<LookupItem>();
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                JavaCompletionUtil.completeMethodName(lookupSet, parameters.getPosition().getParent(), result.getPrefixMatcher());
+              }
+            });
             for (final LookupItem item : lookupSet) {
               result.addElement(item);
             }
@@ -149,8 +160,12 @@ public class JavaCompletionContributor extends CompletionContributor{
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet<LookupElement> result) {
         result.setSuccessorFilter(new AsyncConsumer<LookupElement>() {
           public void consume(final LookupElement lookupElement) {
-            LookupItem item = (LookupItem) lookupElement;
-            JavaCompletionUtil.highlightMemberOfContainer(item);
+            final LookupItem item = (LookupItem) lookupElement;
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                JavaCompletionUtil.highlightMemberOfContainer(item);
+              }
+            });
 
             if (item.getInsertHandler() == null) {
               item.setInsertHandler(new InsertHandler() {
@@ -363,9 +378,6 @@ public class JavaCompletionContributor extends CompletionContributor{
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
     final PsiFile file = context.getFile();
     final Project project = context.getProject();
-
-    JavaReferenceImporter.autoImportReferenceAtCursor(context.getEditor(), file, false); //let autoimport complete
-    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(file.getViewProvider());
 
     JavaCompletionUtil.initOffsets(file, project, context.getOffsetMap());
   }

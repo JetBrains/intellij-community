@@ -132,8 +132,8 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   public VirtualFile getVirtualFile() {
     VirtualFile result = getSourceElement().getVirtualFile();
     if (result == null) {
-      final PsiFile origFile = getSourceElement().getOriginalFile();
-      if (origFile != null) {
+      final PsiFile origFile = getOriginalFile();
+      if (origFile instanceof AntFile) {
         result = origFile.getVirtualFile();
       }
     }

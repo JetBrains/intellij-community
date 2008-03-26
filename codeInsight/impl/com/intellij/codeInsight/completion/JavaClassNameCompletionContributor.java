@@ -7,7 +7,9 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaElementPattern;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
@@ -16,7 +18,6 @@ import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.classes.ThisOrAnyInnerFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
-import com.intellij.codeInsight.completion.AllClassesGetter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -76,7 +77,11 @@ public class JavaClassNameCompletionContributor extends CompletionContributor{
         final StatisticsInfo[] infos =
             StatisticsManager.getInstance().getAllValues(JavaCompletionStatistician.CLASS_NAME_COMPLETION_PREFIX + StringUtil.capitalsOnly(prefix));
         for (final StatisticsInfo info : infos) {
-          final PsiClass[] classes = JavaPsiFacade.getInstance(project).findClasses(info.getValue(), file.getResolveScope());
+          final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
+            public PsiClass[] compute() {
+              return JavaPsiFacade.getInstance(project).findClasses(info.getValue(), file.getResolveScope());
+            }
+          });
           for (final PsiClass psiClass : classes) {
             result.addElement(AllClassesGetter.createLookupItem(psiClass, afterNew));
           }

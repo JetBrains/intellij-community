@@ -123,6 +123,14 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     }
     else {
       myComponent.setLocation(x, y);
+
+      final Dimension preferredSize = myComponent.getPreferredSize();
+      if (!preferredSize.equals(myComponent.getSize())) {
+        final JLayeredPane layeredPane = myParentComponent.getRootPane().getLayeredPane();
+        final Point layeredPanePoint = SwingUtilities.convertPoint(myParentComponent, x, y, layeredPane);
+        myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
+      }
+
       myComponent.validate();
       myComponent.repaint();
     }

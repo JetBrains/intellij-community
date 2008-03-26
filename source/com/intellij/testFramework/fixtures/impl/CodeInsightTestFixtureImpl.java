@@ -8,6 +8,8 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.completion.CodeCompletionHandler;
+import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.LookupData;
 import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -17,7 +19,6 @@ import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -501,11 +502,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                 return copy;
               }
 
-              protected Lookup showLookup(final Project project, final Editor editor, final LookupItem[] items, final String prefix, final LookupData data,
-                                          final PsiFile file,
-                                          final String bottomText) {
+              protected void computingFinished(final LookupData data, final LookupItem[] items, final String prefix, final String uniqueText,
+                                               final LookupItem item, final boolean doNotAutocomplete, final CompletionProgressIndicator indicator,
+                                               final int offset2,
+                                               final CompletionContext context,
+                                               final int offset1) {
+                super.computingFinished(data, items, prefix, uniqueText, item, doNotAutocomplete, indicator, offset2, context, offset1);
                 result.setResult(items);
-                return super.showLookup(project, editor, items, prefix, data, file, bottomText);
               }
             };
           }

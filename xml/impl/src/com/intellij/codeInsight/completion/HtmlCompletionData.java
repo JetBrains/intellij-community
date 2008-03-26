@@ -12,6 +12,8 @@ import com.intellij.psi.filters.position.XmlTokenTypeFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Set;
@@ -151,22 +153,25 @@ public class HtmlCompletionData extends XmlCompletionData {
     return false;
   }
 
-  public CompletionVariant[] findVariants(PsiElement position, final PsiFile file) {
-    CompletionVariant[] variants = super.findVariants(position, file);
+  public CompletionVariant[] findVariants(final PsiElement position, final PsiFile file) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<CompletionVariant[]>() {
+      public CompletionVariant[] compute() {
+        CompletionVariant[] variants = HtmlCompletionData.super.findVariants(position, file);
 
-    if (ourStyleCompletionData!=null && isStyleContext(position)) {
-      final CompletionVariant[] styleVariants = ourStyleCompletionData.findVariants(position, file);
+        if (ourStyleCompletionData!=null && isStyleContext(position)) {
+          final CompletionVariant[] styleVariants = ourStyleCompletionData.findVariants(position, file);
 
-      variants = ArrayUtil.mergeArrays(variants,styleVariants, CompletionVariant.class);
-    }
+          variants = ArrayUtil.mergeArrays(variants,styleVariants, CompletionVariant.class);
+        }
 
-    if (ourScriptCompletionData!=null && isScriptContext(position)) {
-      final CompletionVariant[] scriptVariants = ourScriptCompletionData.findVariants(position, file);
+        if (ourScriptCompletionData!=null && isScriptContext(position)) {
+          final CompletionVariant[] scriptVariants = ourScriptCompletionData.findVariants(position, file);
 
-      variants = ArrayUtil.mergeArrays(variants,scriptVariants, CompletionVariant.class);
-    }
-
-    return variants;
+          variants = ArrayUtil.mergeArrays(variants,scriptVariants, CompletionVariant.class);
+        }
+        return variants;
+      }
+    });
   }
 
   private boolean isStyleAttributeContext(PsiElement position) {
@@ -188,14 +193,19 @@ public class HtmlCompletionData extends XmlCompletionData {
     return isStyleTag(PsiTreeUtil.getParentOfType(position, XmlTag.class, false));
   }
 
-  public void addKeywordVariants(Set<CompletionVariant> set, PsiElement position, final PsiFile file) {
+  public void addKeywordVariants(final Set<CompletionVariant> set, final PsiElement position, final PsiFile file) {
     super.addKeywordVariants(set, position, file);
 
-    if (ourStyleCompletionData!=null && isStyleContext(position)) {
-      ourStyleCompletionData.addKeywordVariants(set, position, file);
-    } else if (ourScriptCompletionData!=null && isScriptContext(position)) {
-      ourScriptCompletionData.addKeywordVariants(set, position, file);
-    }
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        if (ourStyleCompletionData != null && isStyleContext(position)) {
+          ourStyleCompletionData.addKeywordVariants(set, position, file);
+        }
+        else if (ourScriptCompletionData != null && isScriptContext(position)) {
+          ourScriptCompletionData.addKeywordVariants(set, position, file);
+        }
+      }
+    });
   }
 
   public static void setStyleCompletionData(CompletionData cssCompletionData) {

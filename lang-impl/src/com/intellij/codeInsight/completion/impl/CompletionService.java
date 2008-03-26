@@ -49,7 +49,9 @@ public class CompletionService implements CompletionRegistrar{
 
   public void performAsyncCompletion(CompletionType type, final CompletionParameters queryParameters, AsyncConsumer<LookupElement> consumer) {
     final CompletionContext context = queryParameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-    final PrefixMatcher matcher = new CamelHumpMatcher(CompletionData.findPrefixStatic(queryParameters.getPosition(), context.getStartOffset()));
+    final String prefix = CompletionData.findPrefixStatic(queryParameters.getPosition(), context.getStartOffset());
+    final PrefixMatcher matcher = new CamelHumpMatcher(prefix);
+    context.setPrefix(prefix);
 
     final Stack<AsyncConsumer<LookupElement>> stack = new Stack<AsyncConsumer<LookupElement>>();
     stack.push(consumer);

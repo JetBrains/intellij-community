@@ -3,6 +3,7 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -23,7 +24,7 @@ class TypedHandler implements TypedActionHandler {
   }
 
   public void execute(final Editor editor, final char charTyped, DataContext dataContext){
-    final LookupImpl lookup = editor.getUserData(LookupImpl.LOOKUP_IN_EDITOR_KEY);
+    final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null){
       myOriginalHandler.execute(editor, charTyped, dataContext);
       return;
@@ -38,6 +39,7 @@ class TypedHandler implements TypedActionHandler {
         EditorModificationUtil.deleteSelectedText(editor);
         if (result == CharFilter.Result.ADD_TO_PREFIX) {
           lookup.setPrefix(lookup.getPrefix() + charTyped);
+          lookup.setSelectionChanged();
           EditorModificationUtil.insertStringAtCaret(editor, String.valueOf(charTyped));
         }
       }

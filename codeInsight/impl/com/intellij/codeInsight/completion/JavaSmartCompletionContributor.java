@@ -4,27 +4,32 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Computable;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.filters.FilterPositionUtil;
+import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.statistics.JavaStatisticsManager;
+import com.intellij.psi.statistics.StatisticsInfo;
+import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -48,7 +53,57 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
         final CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         context.setPrefix(identifierCopy, context.getStartOffset(), SMART_DATA);
 
-        PsiFile file = parameters.getOriginalFile();
+        final PsiFile file = parameters.getOriginalFile();
+
+        final DefaultInsertHandler defaultHandler = new DefaultInsertHandler();
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            if (JavaSmartCompletionData.AFTER_NEW.accepts(identifierCopy) && !JavaSmartCompletionData.AFTER_THROW_NEW.accepts(identifierCopy)) {
+              final PsiExpression expr = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
+              if (expr != null) {
+                final ExpectedTypeInfo[] expectedInfos = ExpectedTypesProvider.getInstance(file.getProject()).getExpectedTypes(expr, true);
+                for (final ExpectedTypeInfo info : expectedInfos) {
+                  final PsiType type = info.getType();
+                  if (type instanceof PsiClassType) {
+                    addExpectedType(result, defaultHandler, expectedInfos, type);
+
+                    final PsiType defaultType = info.getDefaultType();
+                    if (!defaultType.equals(type)) {
+                      addExpectedType(result, defaultHandler, expectedInfos, defaultType);
+                    }
+
+                    final PsiClassType.ClassResolveResult baseResult = JavaCompletionUtil.originalize((PsiClassType) type).resolveGenerics();
+                    final PsiClass baseClass = baseResult.getElement();
+                    final PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
+
+
+                    final THashSet<PsiType> statVariants = new THashSet<PsiType>();
+                    final Processor<PsiClass> processor = CodeInsightUtil.createInheritorsProcessor(parameters.getPosition(),
+                                                                                                    (PsiClassType)type, 0, false,
+                                                                                                    statVariants, baseClass,
+                                                                                                    baseSubstitutor);
+                    final StatisticsInfo[] statisticsInfos =
+                        StatisticsManager.getInstance().getAllValues(JavaStatisticsManager.getMemberUseKey1(type));
+                    for (final StatisticsInfo statisticsInfo : statisticsInfos) {
+                      final String value = statisticsInfo.getValue();
+                      if (value.startsWith(JavaStatisticsManager.CLASS_PREFIX)) {
+                        final String qname = value.substring(JavaStatisticsManager.CLASS_PREFIX.length());
+                        final PsiClass[] classes = JavaPsiFacade.getInstance(file.getProject()).findClasses(qname, file.getResolveScope());
+                        ContainerUtil.process(classes, processor);
+                      }
+                    }
+
+                    for (final PsiType variant : statVariants) {
+                      addExpectedType(result, defaultHandler, expectedInfos, variant);
+                    }
+                  }
+
+                }
+              }
+            }
+          }
+        });
+
         final PsiReference ref = identifierCopy.getContainingFile().findReferenceAt(identifierCopy.getTextRange().getStartOffset());
         if (ref != null) {
           SMART_DATA.completeReference(ref, set, identifierCopy, result.getPrefixMatcher(), file, context.getStartOffset());
@@ -58,30 +113,44 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
         JavaCompletionUtil.highlightMembersOfContainer(set);
 
         final PsiExpression expr = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
-        final ExpectedTypeInfo[] expectedInfos =
-            expr != null ? ExpectedTypesProvider.getInstance(context.project).getExpectedTypes(expr, true) : null;
+        final ExpectedTypeInfo[] expectedInfos = ApplicationManager.getApplication().runReadAction(new Computable<ExpectedTypeInfo[]>() {
+          public ExpectedTypeInfo[] compute() {
+            return expr != null ? ExpectedTypesProvider.getInstance(context.project).getExpectedTypes(expr, true) : null;
+          }
+        });
 
 
-        final DefaultInsertHandler defaultHandler = new DefaultInsertHandler();
         for (final LookupItem item : set) {
           final Object o = item.getObject();
           InsertHandler oldHandler = item.getInsertHandler();
           if (oldHandler == null) {
             oldHandler = defaultHandler;
           }
-
-          item.setInsertHandler(new AnalyzingInsertHandler(o, expectedInfos, oldHandler));
-
-        }
-
-        for (final LookupItem item : set) {
+          item.setInsertHandler(new AnalyzingInsertHandler(expectedInfos, oldHandler));
           result.addElement(item);
         }
       }
     });
   }
 
-  public static boolean shouldInsertExplicitTypeParams(final PsiMethod method) {
+  private static void addExpectedType(final CompletionResultSet<LookupElement> result, final DefaultInsertHandler defaultHandler,
+                                      final ExpectedTypeInfo[] expectedInfos, final PsiType type) {
+    final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+    if (psiClass == null) return;
+
+    final LookupItem item = LookupItemUtil.objectToLookupItem(JavaCompletionUtil.eliminateWildcards(type));
+    item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
+    JavaAwareCompletionData.setShowFQN(item);
+
+    if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      item.setAttribute(LookupItem.DO_NOT_AUTOCOMPLETE_ATTR, "");
+      item.setAttribute(LookupItem.INDICATE_ANONYMOUS, "");
+    }
+    item.setInsertHandler(new AnalyzingInsertHandler(expectedInfos, defaultHandler));
+    result.addElement(item);
+  }
+
+  private static boolean shouldInsertExplicitTypeParams(final PsiMethod method) {
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (typeParameters.length == 0) return false;
 
@@ -110,7 +179,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
           PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
           for (PsiTypeParameter typeParameter : typeParameters) {
             PsiType substitution = helper.getSubstitutionForTypeParameter(typeParameter, method.getReturnType(), type.getType(),
-                                                                                false, PsiUtil.getLanguageLevel(file));
+                                                                          false, PsiUtil.getLanguageLevel(file));
             if (substitution == PsiType.NULL) {
               substitution = TypeConversionUtil.typeParameterErasure(typeParameter);
             }
@@ -187,15 +256,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
         }
       }
       else if (completion instanceof PsiClass || completion instanceof PsiClassType) {
-        final PsiClass psiClass;
-
-        if (completion instanceof PsiClass) {
-          psiClass = (PsiClass)completion;
-        }
-        else {
-          psiClass = ((PsiClassType)completion).resolve();
-        }
-
         PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(position);
         boolean overwriteTypeCast = position instanceof PsiParenthesizedExpression ||
                                     prevElement != null
@@ -244,10 +304,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
     }
 
     if(item.getObject() instanceof PsiClass
-      && item.getAttribute(LookupItem.BRACKETS_COUNT_ATTR) == null
-      && enclosing instanceof PsiNewExpression
-      && !(position instanceof PsiParenthesizedExpression)
-       ){
+       && item.getAttribute(LookupItem.BRACKETS_COUNT_ATTR) == null
+       && enclosing instanceof PsiNewExpression
+       && !(position instanceof PsiParenthesizedExpression)
+        ){
       final PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(position, PsiAnonymousClass.class);
       if (anonymousClass == null || anonymousClass.getParent() != enclosing) {
 
@@ -332,12 +392,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
   }
 
   private static class AnalyzingInsertHandler implements InsertHandler {
-    private final Object myO;
     private final ExpectedTypeInfo[] myExpectedInfos;
     private final InsertHandler myHandler;
 
-    public AnalyzingInsertHandler(final Object o, final ExpectedTypeInfo[] expectedInfos, final InsertHandler handler) {
-      myO = o;
+    public AnalyzingInsertHandler(final ExpectedTypeInfo[] expectedInfos, final InsertHandler handler) {
       myExpectedInfos = expectedInfos;
       myHandler = handler;
     }
@@ -345,7 +403,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
     public void handleInsert(final CompletionContext context, final int startOffset, final LookupData data, final LookupItem item,
                              final boolean signatureSelected,
                              final char completionChar) {
-      analyzeItem(context, item, myO, context.file.findElementAt(context.getStartOffset() + item.getLookupString().length() - 1),
+      analyzeItem(context, item, item.getObject(), context.file.findElementAt(context.getStartOffset() + item.getLookupString().length() - 1),
                   myExpectedInfos);
       myHandler.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
     }

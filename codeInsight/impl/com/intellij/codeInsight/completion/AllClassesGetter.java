@@ -15,6 +15,8 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -172,10 +174,14 @@ public class AllClassesGetter {
     myFilter = filter;
   }
 
-  public void getClasses(final PsiElement context, CompletionContext completionContext, CompletionResultSet<LookupElement> set, boolean afterNew) {
+  public void getClasses(final PsiElement context, final CompletionContext completionContext, CompletionResultSet<LookupElement> set, boolean afterNew) {
     if(context == null || !context.isValid()) return;
 
-    String prefix = context.getText().substring(0, completionContext.getStartOffset() - context.getTextRange().getStartOffset());
+    String prefix = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        return context.getText().substring(0, completionContext.getStartOffset() - context.getTextRange().getStartOffset());
+      }
+    });
     final int i = prefix.lastIndexOf('.');
     String packagePrefix = "";
     if (i > 0) {
@@ -196,16 +202,9 @@ public class AllClassesGetter {
       }
     });
 
-    Arrays.sort(names, new Comparator<String>() {
-      public int compare(final String o1, final String o2) {
-        return o1.compareToIgnoreCase(o2);
-      }
-    });
-
     boolean lookingForAnnotations = false;
     final PsiElement prevSibling = context.getParent().getPrevSibling();
-    if (prevSibling instanceof PsiJavaToken &&
-        ((PsiJavaToken)prevSibling).getTokenType() == JavaTokenType.AT) {
+    if (prevSibling instanceof PsiJavaToken && ((PsiJavaToken)prevSibling).getTokenType() == JavaTokenType.AT) {
       lookingForAnnotations = true;
     }
 
@@ -214,31 +213,54 @@ public class AllClassesGetter {
       if (!matcher.prefixMatches(name)) continue;
 
       ProgressManager.getInstance().checkCanceled();
-      for (PsiClass psiClass : cache.getClassesByName(name, scope)) {
+      final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
+        public PsiClass[] compute() {
+          return cache.getClassesByName(name, scope);
+        }
+      });
+      for (PsiClass psiClass : classes) {
         ProgressManager.getInstance().checkCanceled();
-        if (lookingForAnnotations && !psiClass.isAnnotationType()) continue;
-
-        if (JavaCompletionUtil.isInExcludedPackage(psiClass)) continue;
-
-        final String qualifiedName = psiClass.getQualifiedName();
-        if (qualifiedName == null || !qualifiedName.startsWith(packagePrefix)) continue;
-
-        if (!myFilter.isAcceptable(psiClass, context)) continue;
-
-        if (qnames.add(qualifiedName)) {
+        if (isSuitable(context, packagePrefix, qnames, lookingForAnnotations, psiClass)) {
           set.addElement(createLookupItem(psiClass, afterNew));
         }
       }
     }
   }
 
-  public static LookupItem<PsiClass> createLookupItem(final PsiClass psiClass, boolean afterNew) {
-    final LookupItem<PsiClass> item = LookupElementFactoryImpl.getInstance().createLookupElement(psiClass).setInsertHandler(INSERT_HANDLER);
-    JavaAwareCompletionData.setShowFQN(item);
-    if (afterNew) {
-      item.setTailType(hasParams(psiClass) ? PARENS_WITH_PARAMS : PARENS_NO_PARAMS);
-    }
-    return item;
+  private boolean isSuitable(final PsiElement context, final String packagePrefix, final Set<String> qnames,
+                             final boolean lookingForAnnotations,
+                             final PsiClass psiClass) {
+    //noinspection AutoUnboxing
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        if (lookingForAnnotations && !psiClass.isAnnotationType()) return false;
+
+        if (JavaCompletionUtil.isInExcludedPackage(psiClass)) return false;
+
+        final String qualifiedName = psiClass.getQualifiedName();
+        if (qualifiedName == null || !qualifiedName.startsWith(packagePrefix)) return false;
+
+        if (!myFilter.isAcceptable(psiClass, context)) return false;
+
+        if (!(psiClass instanceof PsiCompiledElement) &&
+            !JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, null)) return false;
+
+        return qnames.add(qualifiedName);
+      }
+    });
+  }
+
+  public static LookupItem<PsiClass> createLookupItem(final PsiClass psiClass, final boolean afterNew) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<LookupItem<PsiClass>>() {
+      public LookupItem<PsiClass> compute() {
+        final LookupItem<PsiClass> item = LookupElementFactoryImpl.getInstance().createLookupElement(psiClass).setInsertHandler(INSERT_HANDLER);
+        JavaAwareCompletionData.setShowFQN(item);
+        if (afterNew) {
+          item.setTailType(hasParams(psiClass) ? PARENS_WITH_PARAMS : PARENS_NO_PARAMS);
+        }
+        return item;
+      }
+    });
   }
 
   private static boolean hasParams(PsiClass psiClass) {

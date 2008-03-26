@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -81,6 +82,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       final ClassView classView = repositoryManager.getClassView();
 
       for (final long candidateId : candidateIds) {
+        ProgressManager.getInstance().checkCanceled();
         PsiClass candidate = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
           public PsiClass compute() {
             if (!includeAnonymous && classView.isAnonymous(candidateId)) return null;

@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.xml.XMLLanguage;
@@ -119,7 +119,7 @@ public class SmartEnterProcessor {
         if (isEnabledForLanguage(language)) {
           for (Fixer fixer : ourFixers) {
             fixer.apply(myEditor, this, psiElement);
-            if (myEditor.getUserData(LookupImpl.LOOKUP_IN_EDITOR_KEY) != null) {
+            if (LookupManager.getInstance(myProject).getActiveLookup() != null) {
               return;
             }
             if (isUncommited() || !psiElement.isValid()) {

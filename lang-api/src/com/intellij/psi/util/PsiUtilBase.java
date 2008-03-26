@@ -2,15 +2,18 @@ package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -365,5 +368,78 @@ public class PsiUtilBase {
          parent = next, next = PsiTreeUtil.getParentOfType(next, elementClass, true)) {
     }
     return parent;
+  }
+
+  @Nullable
+  public static Language getLanguageInEditor(final Editor editor, final Project project) {
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (file == null) return null;
+
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    int caretOffset = editor.getCaretModel().getOffset();
+    int mostProbablyCorrectLanguageOffset = caretOffset == selectionModel.getSelectionStart() ||
+                                            caretOffset == selectionModel.getSelectionEnd()
+                                            ? selectionModel.getSelectionStart()
+                                            : caretOffset;
+    PsiElement elt = getElementAtOffset(file, mostProbablyCorrectLanguageOffset);
+    Language lang = elt != null ? findLanguageFromElement(elt, file): null;
+    if (lang == null) return null;
+
+    if (selectionModel.hasSelection()) {
+      lang = evaluateLanguageInRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), file, lang);
+    }
+
+    final LanguageDialect languageDialect = file.getLanguageDialect();
+    if (languageDialect != null) lang = languageDialect;
+    return lang;
+  }
+
+  @Nullable
+  public static PsiFile getPsiFileInEditor(final Editor editor, final Project project) {
+    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (file == null) return null;
+
+    final Language language = getLanguageInEditor(editor, project);
+    if (language == null) return file;
+
+    if (language == file.getLanguage() || language == file.getLanguageDialect()) return file;
+
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    int caretOffset = editor.getCaretModel().getOffset();
+    int mostProbablyCorrectLanguageOffset = caretOffset == selectionModel.getSelectionStart() ||
+                                            caretOffset == selectionModel.getSelectionEnd()
+                                            ? selectionModel.getSelectionStart()
+                                            : caretOffset;
+    PsiElement elt = getElementAtOffset(file, mostProbablyCorrectLanguageOffset);
+    if (elt == null) return file;
+
+    return elt.getContainingFile();
+  }
+
+  public static Language evaluateLanguageInRange(final int start, final int end, final PsiFile file, Language lang) {
+    PsiElement elt;
+    int curOffset = start;
+    do {
+      elt = getElementAtOffset(file,curOffset);
+      if (elt == null) break;
+      if (!(elt instanceof PsiWhiteSpace)) {
+        if (!Comparing.equal(lang, findLanguageFromElement(elt,file))) {
+          lang = file.getLanguage();
+          break;
+        }
+      }
+      curOffset = elt.getTextRange().getEndOffset();
+    } while(curOffset < end);
+    if (file.getLanguageDialect() != null) return file.getLanguageDialect();
+    return lang;
+  }
+
+  public static @Nullable PsiElement getElementAtOffset(@NotNull PsiFile file, int offset) {
+    PsiElement elt = file.findElementAt(offset);
+    if (elt == null && offset > 0) {
+      elt = file.findElementAt(offset - 1);
+    }
+
+    return elt;
   }
 }

@@ -133,7 +133,7 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
   }
 
   public int hashCode() {
-    return myAllLookupStrings.hashCode();
+    return myAllLookupStrings.hashCode() * 239 + getObject().hashCode();
   }
 
   public String toString() {
