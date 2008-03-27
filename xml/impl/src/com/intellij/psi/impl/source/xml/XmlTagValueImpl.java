@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -78,13 +79,23 @@ public class XmlTagValueImpl implements XmlTagValue{
 
   public void setText(String value) {
     try {
-      if(myElements.length > 0){
-        myTag.deleteChildRange(myElements[0], myElements[myElements.length - 1]);
+      XmlText text = null;
+      if (StringUtil.isNotEmpty(value)) {
+        final XmlText[] texts = getTextElements();
+        if (texts.length == 0) {
+          text = (XmlText)myTag.add(XmlElementFactory.getInstance(myTag.getProject()).createDisplayText("x"));
+        } else {
+          text = texts[0];
+        }
+        text.setValue(value);
       }
-      if(value != null && value.length() > 0) {
-        XmlText displayText = XmlElementFactory.getInstance(myTag.getProject()).createDisplayText("x");
-        displayText = (XmlText)myTag.add(displayText);
-        displayText.setValue(value);
+
+      if(myElements.length > 0){
+        for (final XmlTagChild child : myElements) {
+          if (child != text) {
+            child.delete();
+          }
+        }
       }
     }
     catch (IncorrectOperationException e) {
