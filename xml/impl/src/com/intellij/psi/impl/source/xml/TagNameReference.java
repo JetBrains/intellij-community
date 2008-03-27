@@ -285,7 +285,9 @@ public class TagNameReference implements PsiReference {
     return false;
   }
 
+  @Nullable
   public static TagNameReference create(XmlElement element, ASTNode nameElement, boolean startTagFlag) {
-    return XmlExtension.getExtension((XmlFile)element.getContainingFile()).createTagNameReference(nameElement, startTagFlag);
+    final XmlExtension extension = XmlExtension.getExtensionByElement(element);
+    return extension == null ? null : extension.createTagNameReference(nameElement, startTagFlag);
   }
 }
