@@ -18,18 +18,10 @@ public class MyPair  {
     this.second = second;
   }
 
-//  public String getFirst() {
-//    return first;
-//  }
-
   public void setFirst(String first) {
     this.first = first;
   }
-
-//  public PsiType getSecond() {
-//    return second;
-//  }
-
+  
   public void setSecond(String second) {
     this.second = second;
   }
