@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.impl.search.CachesBasedRefSearcher;
 
 /**
  * @author Eugene Zhuravlev
@@ -11,6 +12,9 @@ public final class IdIndexEntry {
   
   public IdIndexEntry(String word, boolean caseSensitive) {
     this(caseSensitive? StringUtil.stringHashCode(word) : StringUtil.stringHashCodeInsensitive(word));
+    if (CachesBasedRefSearcher.DEBUG) {
+      System.out.println("IdIndexEntry: word='" + word + "' code=" + getWordHashCode());
+    }
   }
 
   public IdIndexEntry(int wordHash) {
