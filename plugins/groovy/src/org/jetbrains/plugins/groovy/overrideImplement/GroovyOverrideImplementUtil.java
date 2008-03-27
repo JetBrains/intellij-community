@@ -153,10 +153,16 @@ public class GroovyOverrideImplementUtil {
     final GrOpenBlock body = result.getBlock();
     if (body == null) return;
 
-    PsiElement l = body.getLBrace().getNextSibling();
+    final PsiElement lBrace = body.getLBrace();
+    if (lBrace == null) return;
+
+    PsiElement l = lBrace.getNextSibling();
     while (l instanceof PsiWhiteSpace) l = l.getNextSibling();
     if (l == null) l = body;
-    PsiElement r = body.getRBrace().getPrevSibling();
+    final PsiElement rBrace = body.getRBrace();
+    if (rBrace == null) return;
+
+    PsiElement r = rBrace.getPrevSibling();
     while (r instanceof PsiWhiteSpace) r = r.getPrevSibling();
     if (r == null) r = body;
 
