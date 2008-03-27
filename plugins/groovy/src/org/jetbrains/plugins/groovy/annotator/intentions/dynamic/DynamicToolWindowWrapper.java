@@ -183,7 +183,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     return rootNode;
   }
 
-  private JScrollPane createTable(MutableTreeNode myTreeRoot) {
+  private JScrollPane createTable(final MutableTreeNode myTreeRoot) {
     ColumnInfo[] columnInfos = {new ClassColumnInfo(myColumnNames[CLASS_OR_ELEMENT_NAME_COLUMN]), new PropertyTypeColumnInfo(myColumnNames[TYPE_COLUMN])};
 
     myTreeTableModel = new ListTreeTableModelOnColumns(myTreeRoot, columnInfos);
@@ -282,11 +282,16 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
               renameElement(qualifiedName, newElement);
             }
 
-            private void renameElement(String oldElementName, PsiElement newElement) {
+            private void renameElement(String oldClassName, PsiElement newElement) {
               if (newElement instanceof PsiClass) {
-                final String newQualifiedName = ((PsiClass) newElement).getQualifiedName();
+                final String newClassName = ((PsiClass) newElement).getQualifiedName();
 
-                DynamicManager.getInstance(myProject).replaceClassName(oldElementName, newQualifiedName);
+                final DRootElement rootElement = DynamicManager.getInstance(myProject).getRootElement();
+                final DClassElement oldClassElement = rootElement.getClassElement(oldClassName);
+                final TreeNode oldClassNode = TreeUtil.findNodeWithObject((DefaultMutableTreeNode) myTreeRoot, oldClassElement);
+
+                DynamicManager.getInstance(myProject).replaceClassName(oldClassElement, newClassName);                
+                myTreeTableModel.nodeChanged(oldClassNode);
               }
             }
           };

@@ -358,12 +358,14 @@ public class DynamicManagerImpl extends DynamicManager {
     });
   }
 
-  public void replaceClassName(String oldClassName, String newClassName) {
-    final DRootElement rootElement = getRootElement();
-    final DClassElement oldClassElement = findClassElement(rootElement, oldClassName);
+  public void replaceClassName(final DClassElement oldClassElement, String newClassName) {
     if (oldClassElement == null) return;
 
+    final DRootElement rootElement = getRootElement();
+    rootElement.removeClassElement(oldClassElement.getName());
+
     oldClassElement.setName(newClassName);
+    rootElement.mergeAddClass(oldClassElement);
 
 //    updateClassNameInTree(oldClassElement, newClassName);
     fireChange();
