@@ -58,7 +58,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> myIllegalDependencies;
   private final MyTree myLeftTree = new MyTree();
   private final MyTree myRightTree = new MyTree();
-  private final UsagesPanel myUsagesPanel;
+  private final DependenciesUsagesPanel myUsagesPanel;
 
   private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<PsiFile>(0);
   private final TreeExpansionMonitor myRightTreeExpansionMonitor;
@@ -99,7 +99,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
     exclude(excluded);
     myProject = project;
-    myUsagesPanel = new UsagesPanel(myProject, myBuilders);
+    myUsagesPanel = new DependenciesUsagesPanel(myProject, myBuilders);
     Disposer.register(this, myUsagesPanel);
 
     final Splitter treeSplitter = new Splitter();

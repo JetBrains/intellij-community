@@ -35,10 +35,8 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * User: anna
@@ -50,7 +48,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
   private HashMap<PsiPackage, Set<List<PsiPackage>>> myDependencies;
   private MyTree myLeftTree = new MyTree();
   private MyTree myRightTree = new MyTree();
-  private UsagesPanel myUsagesPanel;
+  private DependenciesUsagesPanel myUsagesPanel;
 
   private TreeExpansionMonitor myRightTreeExpansionMonitor;
   private TreeExpansionMonitor myLeftTreeExpansionMonitor;
@@ -68,7 +66,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     myBuilder = builder;
     myProject = project;
     myUsagesPanel =
-    new UsagesPanel(myProject, builder.getForwardBuilder());
+    new DependenciesUsagesPanel(myProject, Collections.singletonList(builder.getForwardBuilder()));
 
     Disposer.register(this, myUsagesPanel);
 

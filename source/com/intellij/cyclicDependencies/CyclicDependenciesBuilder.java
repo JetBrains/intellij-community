@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.psi.*;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -64,7 +65,7 @@ public class CyclicDependenciesBuilder{
     return myScope;
   }
 
-  public ForwardDependenciesBuilder getForwardBuilder() {
+  public DependenciesBuilder getForwardBuilder() {
     return myForwardBuilder;
   }
 
