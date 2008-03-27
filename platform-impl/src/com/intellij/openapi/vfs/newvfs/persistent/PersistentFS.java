@@ -541,7 +541,9 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
           throw new RuntimeException(e);
         }
 
-        myRoots.put(rootUrl, root);
+        if (basePath.length() > 0) {
+          myRoots.put(rootUrl, root);
+        }
       }
 
       return root;
