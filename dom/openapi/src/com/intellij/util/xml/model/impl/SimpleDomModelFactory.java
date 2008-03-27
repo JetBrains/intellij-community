@@ -14,42 +14,29 @@
  * limitations under the License.
  */
 
-package com.intellij.util.xml.model;
+package com.intellij.util.xml.model.impl;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.ModelMerger;
-import com.intellij.util.xml.DomElement;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.ModelMerger;
+import com.intellij.util.xml.model.DomModel;
+import com.intellij.util.xml.model.SimpleModelFactory;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
  */
-public class SimpleDomModelFactory<T extends DomElement> {
-  protected final Class<T> myClass;
-  protected final ModelMerger myModelMerger;
+public abstract class SimpleDomModelFactory<T extends DomElement, M extends DomModel<T>> extends DomModelFactoryHelper<T> implements
+                                                                                                                         SimpleModelFactory<T, M> {
 
   public SimpleDomModelFactory(@NotNull Class<T> aClass, @NotNull ModelMerger modelMerger) {
-    myClass = aClass;
-    myModelMerger = modelMerger;
-  }
-
-  @Nullable
-  public T getDom(@NotNull XmlFile configFile) {
-    final DomFileElement<T> element = getDomRoot(configFile);
-    return element == null ? null : element.getRootElement();
-  }
-
-  @Nullable
-  public DomFileElement<T> getDomRoot(@NotNull XmlFile configFile) {
-    return DomManager.getDomManager(configFile.getProject()).getFileElement(configFile, myClass);
+    super(aClass, modelMerger);
   }
 
   @Deprecated
@@ -64,6 +51,6 @@ public class SimpleDomModelFactory<T extends DomElement> {
     for (XmlFile configFile : configFiles) {
       ContainerUtil.addIfNotNull(getDomRoot(configFile), configs);
     }
-    return myModelMerger.mergeModels(DomFileElement.class, configs);
+    return getModelMerger().mergeModels(DomFileElement.class, configs);
   }
 }

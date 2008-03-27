@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.util.xml.model;
+package com.intellij.util.xml.model.impl;
 
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
