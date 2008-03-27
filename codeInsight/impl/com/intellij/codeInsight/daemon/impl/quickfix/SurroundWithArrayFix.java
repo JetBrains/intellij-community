@@ -4,6 +4,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -63,6 +64,7 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     final PsiExpression expression = getExpression(file.findElementAt(editor.getCaretModel().getOffset()));
     assert expression != null;
