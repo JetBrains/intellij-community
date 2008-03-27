@@ -11,7 +11,6 @@ import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElementType;
@@ -93,7 +92,7 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   @Nullable
-  private Indent getChildDefaultIndent() {
+  protected Indent getChildDefaultIndent() {
     if (myNode.getElementType() == XmlElementType.HTML_DOCUMENT) {
       return Indent.getNoneIndent();
     }
@@ -103,16 +102,6 @@ public class XmlBlock extends AbstractXmlBlock {
     if (myNode.getElementType() == XmlElementType.XML_PROLOG) {
       return Indent.getNoneIndent();
     }
-    if (myNode.getElementType() == JspElementType.JSP_SCRIPTLET) {
-      return Indent.getNoneIndent();
-    }
-    if (myNode.getElementType() == JspElementType.JSP_DECLARATION) {
-      return Indent.getNoneIndent();
-    }
-    if (myNode.getElementType() == JspElementType.JSP_EXPRESSION) {
-      return Indent.getNoneIndent();
-    }
-
     else {
       return null;
     }
@@ -132,17 +121,6 @@ public class XmlBlock extends AbstractXmlBlock {
     if ((isXmlTag(node2) || type2 == XmlElementType.XML_END_TAG_START || type2 == XmlElementType.XML_TEXT) && myXmlFormattingPolicy
       .getShouldKeepWhiteSpaces()) {
       return Spacing.getReadOnlySpacing();
-    }
-
-    if (type1 == JspElementType.JSP_DECLARATION_START || type1 == JspElementType.JSP_SCRIPTLET_START) {
-      return Spacing.createDependentLFSpacing(0, 1, node2.getTextRange(), myXmlFormattingPolicy.getShouldKeepLineBreaks(),
-                                              myXmlFormattingPolicy.getKeepBlankLines());
-    }
-
-    if (type2 == JspElementType.JSP_DECLARATION_END || type2 == JspElementType.JSP_SCRIPTLET_END) {
-      return Spacing.createDependentLFSpacing(0, 1, node1.getTextRange(), myXmlFormattingPolicy.getShouldKeepLineBreaks(),
-                                              myXmlFormattingPolicy.getKeepBlankLines());
-
     }
 
     if (elementType == XmlElementType.XML_TEXT) {
@@ -190,42 +168,6 @@ public class XmlBlock extends AbstractXmlBlock {
         SourceTreeToPsiMap.treeElementToPsi(myNode) instanceof XmlDocument) {
       return Indent.getNoneIndent();
     }
-    /*
-    else if (myNode.getElementType() == ElementType.XML_COMMENT && myNode.textContains('\n')) {
-      return getFormatter().getAbsoluteNoneIndent();
-    }
-    */
-
-    /*
-    if (myNode.getElementType() == ElementType.JSP_SCRIPTLET || myNode.getElementType() == ElementType.JSP_DECLARATION) {
-      return getFormatter().getNoneIndent();
-    }
-    if (myNode.getElementType() == ElementType.JSP_XML_TEXT) {
-      return getFormatter().getNormalIndent();
-    }
-    if (myNode.getElementType() == ElementType.XML_TEXT) {
-      if (myNode.getPsi().getParent() instanceof JspXmlRootTag) {
-        return getFormatter().getNoneIndent();
-      } else {
-        return null;
-      }
-    }
-    else if (myNode.getElementType() == ElementType.XML_PROLOG || SourceTreeToPsiMap.treeElementToPsi(myNode) instanceof XmlDocument) {
-      return getFormatter().getNoneIndent();
-    }
-    else if (myNode.getElementType() == ElementType.XML_COMMENT && myNode.textContains('\n')) {
-      return getFormatter().getAbsoluteNoneIndent();
-    }
-    else if (myNode.getElementType() == ElementType.XML_DOCUMENT) {
-      return getFormatter().getNoneIndent();
-    }
-    else if (myNode.getElementType() == ElementType.XML_TAG) {
-      return getFormatter().getNoneIndent();
-    }    
-    else {
-      return null;
-    }
-    */
     return myIndent;
   }
 
@@ -245,21 +187,7 @@ public class XmlBlock extends AbstractXmlBlock {
   @Override
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    if (myNode.getElementType() == JspElementType.JSP_DECLARATION || myNode.getElementType() == JspElementType.JSP_SCRIPTLET) {
-      final List<Block> subBlocks = getSubBlocks();
-      if (subBlocks.size() == 3 && subBlocks.get(1) instanceof JspTextBlock) {
-        final JspTextBlock jspTextBlock = ((JspTextBlock)subBlocks.get(1));
-        if (newChildIndex == 2 && jspTextBlock.isTailIncomplete()) {
-          return ChildAttributes.DELEGATE_TO_PREV_CHILD;
-        }
-        if (newChildIndex == 1 && jspTextBlock.isHeadIncomplete()) {
-          return ChildAttributes.DELEGATE_TO_NEXT_CHILD;
-        }
-      }
-
-      return new ChildAttributes(Indent.getNormalIndent(), null);
-    }
-    else if (myNode.getPsi() instanceof PsiFile) {
+    if (myNode.getPsi() instanceof PsiFile) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }
     else {

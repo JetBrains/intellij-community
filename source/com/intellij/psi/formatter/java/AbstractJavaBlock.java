@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
+import com.intellij.psi.formatter.common.JavaBlockUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
@@ -1120,4 +1121,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     return null;
   }
+
+  public boolean isLeaf() {
+    return JavaBlockUtil.mayShiftIndentInside(myNode);
+  }
+  
 }

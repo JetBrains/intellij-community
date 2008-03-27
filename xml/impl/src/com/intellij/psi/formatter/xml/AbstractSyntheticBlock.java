@@ -6,11 +6,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
 
 import java.util.List;
 
@@ -125,13 +123,6 @@ public abstract class AbstractSyntheticBlock implements Block{
                                 subBlocks.get(subBlocks.size()-  1).getTextRange().getEndOffset());
   }
 
-  public static Block createSynteticBlock(final List<Block> subBlocks,
-                                          final Block parent,
-                                          final Indent indent,
-                                          XmlFormattingPolicy policy, final Indent childIndent) {
-    return new SyntheticBlock(subBlocks, parent, indent, policy, childIndent);
-  }
-
   public boolean isIncomplete() {
     return getSubBlocks().get(getSubBlocks().size() - 1).isIncomplete();
   }
@@ -150,15 +141,11 @@ public abstract class AbstractSyntheticBlock implements Block{
   }
   
   public boolean isJspTextBlock() {
-    final List<Block> subBlocks = getSubBlocks();
-    return subBlocks.size() == 1 && subBlocks.get(0) instanceof JspTextBlock &&
-      ((JspTextBlock) subBlocks.get(0)).getNode() instanceof OuterLanguageElement;
+    return false;
   }
 
   public boolean isJspxTextBlock() {
-    final List<Block> subBlocks = getSubBlocks();
-    return subBlocks.size() == 1 && subBlocks.get(0) instanceof JspTextBlock &&
-      ((JspTextBlock) subBlocks.get(0)).getNode() instanceof XmlText;
+    return false;
   }
 
   public boolean isLeaf() {

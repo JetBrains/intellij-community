@@ -81,8 +81,4 @@ public abstract class AbstractBlock implements Block {
   public boolean isIncomplete() {
     return FormatterUtil.isIncompleted(getNode());
   }
-
-  public boolean isLeaf() {
-    return JavaBlockUtil.mayShiftIndentInside(myNode);
-  }
 }

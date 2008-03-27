@@ -4,7 +4,6 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.formatter.common.AbstractBlock;
-import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
@@ -153,13 +152,11 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
     return (myXmlFormattingPolicy.keepWhiteSpacesInsideTag( getTag()) || myXmlFormattingPolicy.getShouldKeepWhiteSpaces());
   }
 
-  private boolean isTextFragment(final ASTNode node) {
+  protected boolean isTextFragment(final ASTNode node) {
     final ASTNode parent = node.getTreeParent();
     return parent != null && parent.getElementType() == XmlElementType.XML_TEXT
            || node.getElementType() == XmlElementType.XML_DATA_CHARACTERS
-           || node.getElementType() == JspElementType.JSP_SCRIPTLET
-           || node.getElementType() == JspElementType.JSP_DECLARATION
-           || node.getElementType() == JspElementType.JSP_EXPRESSION
+           
       ;
   }
 

@@ -19,6 +19,10 @@ public class ReadOnlyBlock extends AbstractBlock {
     return null;
   }
 
+  public boolean isLeaf() {
+    return true;
+  }
+
   protected List<Block> buildChildren() {
     return EMPTY;
   }

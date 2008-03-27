@@ -25,7 +25,7 @@ public class JavaBlockUtil {
            || leaf.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN;
   }
 
-  public static boolean checkJspTexts(final ASTNode leaf) {
+  private static boolean checkJspTexts(final ASTNode leaf) {
     ASTNode child = leaf.getFirstChildNode();
     while(child != null){
       if(child instanceof OuterLanguageElement) return true;
@@ -34,7 +34,7 @@ public class JavaBlockUtil {
     return false;
   }
 
-  public static  boolean isComment(final ASTNode node) {
+  private static  boolean isComment(final ASTNode node) {
     final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(node);
     if (psiElement instanceof PsiComment) return true;
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(psiElement.getLanguage());

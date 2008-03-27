@@ -86,7 +86,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
         else {
           final Indent indent;
 
-          if (localResult.size() == 1 && localResult.get(0) instanceof JspTextBlock) {
+          if (isJspResult(localResult)) {
             //indent = FormatterEx.getInstance().getNoneIndent();
             indent = getChildrenIndent();
           } else if (!insideTag) {
@@ -110,6 +110,10 @@ public class XmlTagBlock extends AbstractXmlBlock{
 
     return result;
 
+  }
+
+  protected boolean isJspResult(final ArrayList<Block> localResult) {
+    return false;
   }
 
   protected
@@ -188,17 +192,15 @@ public class XmlTagBlock extends AbstractXmlBlock{
   }
 
   private Block createTagContentNode(final ArrayList<Block> localResult) {
-    return AbstractSyntheticBlock.createSynteticBlock(
-      localResult, this, Indent.getNoneIndent(),
-      myXmlFormattingPolicy,
-     getChildrenIndent());
+    return createSyntheticBlock(localResult, getChildrenIndent());
+  }
+
+  protected Block createSyntheticBlock(final ArrayList<Block> localResult, final Indent childrenIndent) {
+    return new SyntheticBlock(localResult, this, Indent.getNoneIndent(), myXmlFormattingPolicy, childrenIndent);
   }
 
   private Block createTagDescriptionNode(final ArrayList<Block> localResult) {
-    return AbstractSyntheticBlock.createSynteticBlock(
-      localResult, this, Indent.getNoneIndent(),
-      myXmlFormattingPolicy,
-      null);
+    return createSyntheticBlock(localResult, null);
   }
 
   public Spacing getSpacing(Block child1, Block child2) {
