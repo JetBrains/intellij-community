@@ -43,10 +43,6 @@ public class DRootElement implements DElement {
     return containingClasses.values();
   }
 
-  public void setContainingClasses(Map<String, DClassElement> containingClasses) {
-    this.containingClasses = containingClasses;
-  }
-
   public DClassElement removeClassElement(String classElementName) {
     return containingClasses.remove(classElementName);
   }
