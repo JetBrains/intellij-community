@@ -728,6 +728,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
       if (DataConstantsEx.PSI_ELEMENT.equals(dataId)) {
         final TreePath path = getTree().getSelectionPath();
 
+        if (path == null) return null;
         final Object selectedObject = path.getLastPathComponent();
         if (!(selectedObject instanceof DefaultMutableTreeNode)) return null;
 
