@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
@@ -37,6 +38,8 @@ public interface GrMethod extends GrMember, GrMembersDeclaration, GrNamedElement
 
   @Nullable
   GrOpenBlock getBlock();
+
+  void setBlock(GrCodeBlock newBlock);
 
   @Nullable
   GrTypeElement getReturnTypeElementGroovy();

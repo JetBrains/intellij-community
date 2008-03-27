@@ -23,30 +23,42 @@ import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -78,6 +90,16 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   @Nullable
   public GrOpenBlock getBlock() {
     return this.findChildByClass(GrOpenBlock.class);
+  }
+
+  public void setBlock(GrCodeBlock newBlock) {
+    ASTNode newNode = newBlock.getNode().copyElement();
+    final GrOpenBlock oldBlock = getBlock();
+    if (oldBlock == null) {
+      getNode().addChild(newNode);
+      return;
+    }
+    getNode().replaceChild(oldBlock.getNode(), newNode);
   }
 
   public GrParameter[] getParameters() {
@@ -216,48 +238,48 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @NotNull
   public PsiMethod[] findDeepestSuperMethods() {
-        List<PsiMethod> methods = new ArrayList<PsiMethod>();
-        findDeepestSuperMethodsForClass(methods, this);
-        return methods.toArray(PsiMethod.EMPTY_ARRAY);
-    }
+    List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    findDeepestSuperMethodsForClass(methods, this);
+    return methods.toArray(PsiMethod.EMPTY_ARRAY);
+  }
 
-    private void findDeepestSuperMethodsForClass(List<PsiMethod> collectedMethods, PsiMethod method) {
-        PsiClassType[] superClassTypes = method.getContainingClass().getSuperTypes();
+  private void findDeepestSuperMethodsForClass(List<PsiMethod> collectedMethods, PsiMethod method) {
+    PsiClassType[] superClassTypes = method.getContainingClass().getSuperTypes();
 
-        for (PsiClassType superClassType : superClassTypes) {
-            PsiClass resolvedSuperClass = superClassType.resolve();
+    for (PsiClassType superClassType : superClassTypes) {
+      PsiClass resolvedSuperClass = superClassType.resolve();
 
-            if (resolvedSuperClass == null) continue;
-            PsiMethod[] superClassMethods = resolvedSuperClass.getMethods();
+      if (resolvedSuperClass == null) continue;
+      PsiMethod[] superClassMethods = resolvedSuperClass.getMethods();
 
-            for (PsiMethod superClassMethod : superClassMethods) {
-                MethodSignature superMethodSignature = superClassMethod.getHierarchicalMethodSignature();
-                final HierarchicalMethodSignature thisMethodSignature = getHierarchicalMethodSignature();
+      for (PsiMethod superClassMethod : superClassMethods) {
+        MethodSignature superMethodSignature = superClassMethod.getHierarchicalMethodSignature();
+        final HierarchicalMethodSignature thisMethodSignature = getHierarchicalMethodSignature();
 
-                if (superMethodSignature.equals(thisMethodSignature) && !superClassMethod.getModifierList().hasExplicitModifier(PsiModifier.STATIC)) {
-                    checkForMethodOverriding(collectedMethods, superClassMethod);
-                }
-                findDeepestSuperMethodsForClass(collectedMethods, superClassMethod);
-            }
+        if (superMethodSignature.equals(thisMethodSignature) && !superClassMethod.getModifierList().hasExplicitModifier(PsiModifier.STATIC)) {
+          checkForMethodOverriding(collectedMethods, superClassMethod);
         }
+        findDeepestSuperMethodsForClass(collectedMethods, superClassMethod);
+      }
     }
+  }
 
-    private void checkForMethodOverriding(List<PsiMethod> collectedMethods, PsiMethod superClassMethod) {
-        int i = 0;
-        while (i < collectedMethods.size()) {
-            PsiMethod collectedMethod = collectedMethods.get(i);
-            if (collectedMethod.getContainingClass().equals(superClassMethod.getContainingClass()) || collectedMethod.getContainingClass().isInheritor(superClassMethod.getContainingClass(), true)) {
-                collectedMethods.remove(collectedMethod);
-                continue;
-            }
-            i++;
-        }
-        collectedMethods.add(superClassMethod);
+  private void checkForMethodOverriding(List<PsiMethod> collectedMethods, PsiMethod superClassMethod) {
+    int i = 0;
+    while (i < collectedMethods.size()) {
+      PsiMethod collectedMethod = collectedMethods.get(i);
+      if (collectedMethod.getContainingClass().equals(superClassMethod.getContainingClass()) || collectedMethod.getContainingClass().isInheritor(superClassMethod.getContainingClass(), true)) {
+        collectedMethods.remove(collectedMethod);
+        continue;
+      }
+      i++;
     }
+    collectedMethods.add(superClassMethod);
+  }
 
-    @NotNull
-    public PsiMethod[] findSuperMethods(boolean checkAccess) {
-        PsiClass containingClass = getContainingClass();
+  @NotNull
+  public PsiMethod[] findSuperMethods(boolean checkAccess) {
+    PsiClass containingClass = getContainingClass();
 
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
     findSuperMethodRecursilvely(methods, containingClass, false, new HashSet<PsiClass>(), createMethodSignature(this), new HashSet<MethodSignature>());

@@ -20,6 +20,6 @@ public class OverrideMethodsHandler implements LanguageCodeInsightActionHandler 
   }
 
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 }

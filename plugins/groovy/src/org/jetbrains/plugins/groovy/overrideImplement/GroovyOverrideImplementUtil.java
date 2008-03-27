@@ -6,30 +6,28 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsParameterImpl;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -93,7 +91,7 @@ public class GroovyOverrideImplementUtil {
             result.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, false/*aClass.isInterface()*/);
             result.getModifierList().setModifierProperty(PsiModifier.NATIVE, false);
 
-            setupOverridingMethodBody(project, method, result, template, substitutor);
+            setupOverridingMethodBody(project, method, result, template, substitutor, editor);
 
             final GrTypeDefinitionBody classBody = ((GrTypeDefinition) aClass).getBody();
             final PsiMethod[] methods = aClass.getMethods();
@@ -140,12 +138,35 @@ public class GroovyOverrideImplementUtil {
             aClass.addMemberDeclaration(result, anchor);
 
             PsiUtil.shortenReferences(result);
+            positionCaret(editor, result);
           } catch (IncorrectOperationException e) {
-            LOG.error(e);
+            throw new RuntimeException(e);
           }
         }
       });
 
+    }
+  }
+
+  private static void positionCaret(Editor editor, GrMethod result) {
+    final GrOpenBlock body = result.getBlock();
+    if (body == null) return;
+
+    PsiElement l = body.getLBrace().getNextSibling();
+    while (l instanceof PsiWhiteSpace) l = l.getNextSibling();
+    if (l == null) l = body;
+    PsiElement r = body.getRBrace().getPrevSibling();
+    while (r instanceof PsiWhiteSpace) r = r.getPrevSibling();
+    if (r == null) r = body;
+
+    int start = l.getTextRange().getStartOffset();
+    int end = r.getTextRange().getEndOffset();
+
+    editor.getCaretModel().moveToOffset(Math.min(start, end));
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    if (start < end) {
+      //Not an empty body
+      editor.getSelectionModel().setSelection(start, end);
     }
   }
 
@@ -160,6 +181,7 @@ public class GroovyOverrideImplementUtil {
     }
     return wasAddedModifiers;
   }
+
 
   private static final String[] GROOVY_MODIFIERS = new String[]{
       PsiModifier.PUBLIC,
@@ -222,7 +244,7 @@ public class GroovyOverrideImplementUtil {
     return (GrMethod) GroovyPsiElementFactory.getInstance(project).createTopElementFromText(buffer.toString());
   }
 
-  private static void setupOverridingMethodBody(Project project, PsiMethod method, GrMethod result, FileTemplate template, PsiSubstitutor substitutor) {
+  private static void setupOverridingMethodBody(Project project, PsiMethod method, GrMethod resultMethod, FileTemplate template, PsiSubstitutor substitutor, final Editor editor) {
     final PsiType returnType = substitutor.substitute(method.getReturnType());
 
     String returnTypeText = "";
@@ -233,20 +255,20 @@ public class GroovyOverrideImplementUtil {
 
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnTypeText);
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType));
-    properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(method, result));
-    FileTemplateUtil.setClassAndMethodNameProperties(properties, method.getContainingClass(), result);
+    properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(method, resultMethod));
+    FileTemplateUtil.setClassAndMethodNameProperties(properties, method.getContainingClass(), resultMethod);
 
     try {
       String bodyText = template.getText(properties);
       final GrCodeBlock newBody = GroovyPsiElementFactory.getInstance(project).createMethodBodyFormText("\n" + bodyText + "\n");
 
-      final ASTNode resultNode = result.getNode();
-      assert resultNode != null;
-      final GrOpenBlock resultBlock = result.getBlock();
-      if (resultBlock == null) return;
+      resultMethod.setBlock(newBody);
+      final GrOpenBlock newBlock = resultMethod.getBlock();
 
-      resultNode.replaceChild(resultBlock.getNode(), newBody.getNode());
+      final int startChildOffset = newBlock.getLBrace().getTextRange().getEndOffset();
+      final int endChildOffset = newBlock.getRBrace().getTextRange().getStartOffset();
 
+      editor.getSelectionModel().setSelection(startChildOffset, endChildOffset);
     } catch (IOException e) {
       LOG.error(e);
     }

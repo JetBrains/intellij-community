@@ -20,6 +20,6 @@ public class ImplementMethodsHandler implements LanguageCodeInsightActionHandler
   }
 
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 }
