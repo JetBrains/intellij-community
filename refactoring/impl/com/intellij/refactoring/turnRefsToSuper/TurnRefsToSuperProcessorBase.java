@@ -508,8 +508,8 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     for (PsiReference call : ReferencesSearch.search(method).findAll()) {
       final PsiElement ref = call.getElement();
       if (PsiTreeUtil.getParentOfType(ref, PsiDocComment.class) != null) continue;
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)ref.getParent();
-      addLink(methodCall, returnType);
+      final PsiElement parent = ref.getParent();
+      addLink(parent, returnType);
     }
 
     final PsiReturnStatement[] returnStatements = RefactoringUtil.findReturnStatements(method);
