@@ -957,6 +957,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
   private void layoutSingleRow() {
     final TabInfo selected = getSelectedInfo();
+
     final JComponent selectedToolbar = myInfo2Toolbar.get(selected);
 
     LineLayoutData data = new LineLayoutData();
@@ -1817,6 +1818,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       if (text != null) {
         text.appendToComponent(myLabel);
       }
+      invalidate();
     }
 
     public void setToolTipText(final String text) {
@@ -1826,6 +1828,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     private void clear() {
       myLabel.clear();
       myLabel.setIcon(myIcon);
+      invalidate();
     }
 
     public void setIcon(final Icon icon) {
