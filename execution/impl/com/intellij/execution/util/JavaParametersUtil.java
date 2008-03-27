@@ -32,21 +32,18 @@ public class JavaParametersUtil {
   public static void configureConfiguration(final JavaParameters parameters, final RunJavaConfiguration configuration) {
     final Project project = configuration.getProject();
     parameters.getProgramParametersList().addParametersString(configuration.getProperty(RunJavaConfiguration.PROGRAM_PARAMETERS_PROPERTY));
-    PathMacroManager macroManager = PathMacroManager.getInstance(project);
+    Module module = null;
     if (configuration instanceof ModuleBasedConfiguration) {
-      final Module module = ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
-      if (module != null) {
-        macroManager = PathMacroManager.getInstance(module);
-      }
+      module = ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
     }
     String vmParameters = configuration.getProperty(RunJavaConfiguration.VM_PARAMETERS_PROPERTY);
     if (vmParameters != null) {
-      vmParameters = macroManager.expandPath(vmParameters);
+      vmParameters = expandPath(vmParameters, module, project);
     }
     if (parameters.getEnv() != null) {
       final Map<String, String> envs = new HashMap<String, String>();
       for (String env : parameters.getEnv().keySet()) {
-        final String value = macroManager.expandPath(parameters.getEnv().get(env));
+        final String value = expandPath(parameters.getEnv().get(env), module, project);
         envs.put(env, value);
         if (vmParameters != null) {
           vmParameters = StringUtil.replace(vmParameters, "$" + env + "$", value, false); //replace env usages
@@ -59,7 +56,16 @@ public class JavaParametersUtil {
     if (workingDirectory == null || workingDirectory.trim().length() == 0) {
       workingDirectory = PathUtil.getLocalPath(project.getBaseDir());
     }
-    parameters.setWorkingDirectory(macroManager.expandPath(workingDirectory));
+    parameters.setWorkingDirectory(expandPath(workingDirectory, module, project));
+  }
+
+  private static String expandPath(String path, Module module, Project project) {
+    path = PathMacroManager.getInstance(project).expandPath(path);
+    if (module != null) {
+      path = PathMacroManager.getInstance(module).expandPath(path);
+    }
+    return path;
+
   }
 
   public static int getClasspathType(final RunConfigurationModule configurationModule, final String mainClassName,

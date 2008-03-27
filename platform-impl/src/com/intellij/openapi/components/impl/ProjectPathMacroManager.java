@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class ProjectPathMacroManager extends ApplicationPathMacroManager {
+public class ProjectPathMacroManager extends BasePathMacroManager {
   private ProjectEx myProject;
 
 
