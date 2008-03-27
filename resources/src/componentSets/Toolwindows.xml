@@ -1,23 +1,24 @@
 <components>
   <project-components>
     <component>
-      <interface-class>com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration</interface-class>
       <implementation-class>com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
    
-
     <component>
-      <interface-class>com.intellij.ide.hierarchy.HierarchyBrowserManager</interface-class>
       <implementation-class>com.intellij.ide.hierarchy.HierarchyBrowserManager</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
 
     <component>
-      <interface-class>com.intellij.ide.palette.impl.PaletteManager</interface-class>
       <implementation-class>com.intellij.ide.palette.impl.PaletteManager</implementation-class>
+      <skipForDummyProject/>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.slicer.SliceManager</implementation-class>
       <skipForDummyProject/>
     </component>
   </project-components>

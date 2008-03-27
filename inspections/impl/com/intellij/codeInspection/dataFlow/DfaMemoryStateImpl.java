@@ -630,7 +630,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myFactory.getRelationFactory().create(dfaVar, dfaNull, "==", negated);
   }
 
-  protected DfaVariableState getVariableState(DfaVariableValue dfaVar) {
+  public DfaVariableState getVariableState(DfaVariableValue dfaVar) {
     DfaVariableState state = myVariableStates.get(dfaVar);
 
     if (state == null) {

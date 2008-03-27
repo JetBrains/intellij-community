@@ -198,6 +198,7 @@
       <action id="DupLocate" class="com.intellij.dupLocator.DuplocateAction"/>
       <separator/>
       <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction"/>
+      <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction" internal="true"/>
 
       <add-to-group group-id="AnalyzeMenu" anchor="last"/>
     </group>

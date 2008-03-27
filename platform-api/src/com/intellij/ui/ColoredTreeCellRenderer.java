@@ -28,7 +28,6 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent implements TreeCellRenderer{
-
   private static final Icon LOADING_NODE_ICON = new EmptyIcon(8, 16);
 
   /**
@@ -41,6 +40,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
   protected boolean myFocused;
 
   protected JTree myTree;
+  private boolean myOpaque = true;
 
   public final Component getTreeCellRendererComponent(
     JTree tree,
@@ -87,6 +87,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       setIcon(null);
     }
 
+    super.setOpaque(myOpaque || selected && hasFocus); // draw selection background even for non-opaque tree
     customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
     if (getFont() == null) {
@@ -94,6 +95,11 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     }
 
     return this;
+  }
+
+  public void setOpaque(boolean isOpaque) {
+    myOpaque = isOpaque;
+    super.setOpaque(isOpaque);
   }
 
   /**
