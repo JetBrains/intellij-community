@@ -5,6 +5,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -13,7 +14,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.RawCommandLineEditor;
-import com.jetbrains.python.configuration.PythonSdkCellRenderer;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,7 +73,7 @@ public class PythonRunConfigurationEditor extends SettingsEditor<PythonRunConfig
     }
     sdkList.addAll(allSdks);
     myInterpreterComboBox.setModel(new CollectionComboBoxModel(sdkList, selection));
-    myInterpreterComboBox.setRenderer(new PythonSdkCellRenderer("<Project Default>"));
+    myInterpreterComboBox.setRenderer(new SdkListCellRenderer("<Project Default>"));
   }
 
   protected void applyEditorTo(PythonRunConfiguration s) throws ConfigurationException {
