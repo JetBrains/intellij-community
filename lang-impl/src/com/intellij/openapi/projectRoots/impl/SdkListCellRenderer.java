@@ -1,4 +1,4 @@
-package com.jetbrains.python.configuration;
+package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -10,13 +10,13 @@ import javax.swing.*;
 /**
  * @author yole
 */
-public class PythonSdkCellRenderer extends ColoredListCellRenderer {
+public class SdkListCellRenderer extends ColoredListCellRenderer {
   private String myNullText = "";
 
-  public PythonSdkCellRenderer() {
+  public SdkListCellRenderer() {
   }
 
-  public PythonSdkCellRenderer(final String nullText) {
+  public SdkListCellRenderer(final String nullText) {
     myNullText = nullText;
   }
 

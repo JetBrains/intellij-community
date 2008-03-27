@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
+import java.util.List;
 
 public abstract class ProjectJdkTable {
   public static ProjectJdkTable getInstance() {
@@ -32,6 +33,8 @@ public abstract class ProjectJdkTable {
   public abstract Sdk findJdk(String name, String type);
 
   public abstract Sdk[] getAllJdks();
+
+  public abstract List<Sdk> getSdksOfType(SdkType type);
 
   public abstract void addJdk(Sdk jdk);
 

@@ -101,6 +101,17 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
     return myJdks.toArray(new Sdk[myJdks.size()]);
   }
 
+  public List<Sdk> getSdksOfType(final SdkType type) {
+    List<Sdk> result = new ArrayList<Sdk>();
+    final Sdk[] sdks = getAllJdks();
+    for(Sdk sdk: sdks) {
+      if (sdk.getSdkType() == type) {
+        result.add(sdk);
+      }
+    }
+    return result;
+  }
+
   public void addJdk(Sdk jdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myJdks.add(jdk);
