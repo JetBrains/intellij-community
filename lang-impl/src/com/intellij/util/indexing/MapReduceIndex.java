@@ -164,6 +164,16 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
             }
             myStorage.addValue(key, inputId, newValue);
           }
+          if (CachesBasedRefSearcher.DEBUG) {
+            System.out.println("MapReduceIndex.updateWithMap");
+            System.out.println("inputId = " + inputId);
+            final ValueContainer<Value> container = myStorage.read(key);
+            container.forEach(new ValueContainer.ContainerAction<Value>() {
+              public void perform(final int id, final Value value) {
+                System.out.println("id = " + id + "; value = " + value);
+              }
+            });
+          }
         }
         finally {
           writeLock.unlock();
