@@ -180,6 +180,30 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     myAnimator.setTakInitialDelay(false);
 
     Disposer.register(this, myAnimator);
+
+    setFocusCycleRoot(true);
+
+    setFocusTraversalPolicy(new FocusTraversalPolicy() {
+      public Component getComponentAfter(final Container aContainer, final Component aComponent) {
+        return getToFocus();
+      }
+
+      public Component getComponentBefore(final Container aContainer, final Component aComponent) {
+        return getToFocus();
+      }
+
+      public Component getFirstComponent(final Container aContainer) {
+        return getToFocus();
+      }
+
+      public Component getLastComponent(final Container aContainer) {
+        return getToFocus();
+      }
+
+      public Component getDefaultComponent(final Container aContainer) {
+        return getToFocus();
+      }
+    });
   }
 
   public void dispose() {
