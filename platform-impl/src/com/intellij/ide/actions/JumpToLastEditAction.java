@@ -1,7 +1,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 
@@ -17,11 +16,6 @@ public class JumpToLastEditAction extends AnAction{
     DataContext dataContext = event.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
-      presentation.setEnabled(false);
-      return;
-    }
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    if (editor == null){
       presentation.setEnabled(false);
       return;
     }
