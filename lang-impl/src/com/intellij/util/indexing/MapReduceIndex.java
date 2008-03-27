@@ -1,6 +1,8 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.impl.search.CachesBasedRefSearcher;
 import com.intellij.util.Alarm;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
@@ -149,11 +151,17 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         try {
           if (oldData.containsKey(key)) {
             final Value oldValue = oldData.get(key);
+            if (CachesBasedRefSearcher.DEBUG && !Comparing.equal(oldValue, newData.get(key))) {
+              System.out.println("MapReduceIndex.updateWithMap: inputId=" + inputId + "; REMOVE key='" + key + "'; value=" + oldValue);
+            }
             myStorage.removeValue(key, inputId, oldValue);
           }
           // add new values
           if (newData.containsKey(key)) {
             final Value newValue = newData.get(key);
+            if (CachesBasedRefSearcher.DEBUG && !Comparing.equal(oldData.get(key), newValue)) {
+              System.out.println("MapReduceIndex.updateWithMap: inputId=" + inputId + "; ADD key='" + key + "'; value=" + newValue);
+            }
             myStorage.addValue(key, inputId, newValue);
           }
         }
