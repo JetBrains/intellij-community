@@ -192,21 +192,6 @@ public abstract class DynamicDialog extends DialogWrapper {
 
 
     final EditorTextField editorTextField = (EditorTextField) myTypeComboBox.getEditor().getEditorComponent();
-    myTypeComboBox.addKeyListener(new KeyAdapter() {
-      public void keyTyped(KeyEvent e) {
-        System.out.println("");
-      }
-
-      public void keyPressed(KeyEvent e) {
-        if (KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, KeyEvent.CTRL_MASK).getKeyCode() == e.getKeyCode()) {
-          trimDocumentText();
-        }
-      }
-
-      public void keyReleased(KeyEvent e) {
-        System.out.println("");
-      }
-    });
 
     editorTextField.addDocumentListener(new DocumentListener() {
       public void beforeDocumentChange(DocumentEvent event) {
@@ -224,15 +209,6 @@ public abstract class DynamicDialog extends DialogWrapper {
 
   protected void addDataChangeListener() {
     myListenerList.add(DataChangedListener.class, new DataChangedListener());
-  }
-
-  private void trimDocumentText() {
-    final Document typeEditorDocument = getTypeEditorDocument();
-
-    if (typeEditorDocument == null) return;
-
-    final String text = typeEditorDocument.getText();
-    typeEditorDocument.setText(text.trim());
   }
 
   class DataChangedListener implements EventListener {
