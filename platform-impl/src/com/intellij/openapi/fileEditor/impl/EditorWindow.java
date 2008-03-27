@@ -120,12 +120,6 @@ public class EditorWindow {
               editorManager.disposeComposite(editor);
             }
           });
-
-          // Dirty hack [max].
-          final VirtualFile selectedFile = getSelectedFile();
-          if (selectedFile != null) {
-            editorManager.openFileImpl3(this, selectedFile, false, null);
-          }
         }
       }
       else {

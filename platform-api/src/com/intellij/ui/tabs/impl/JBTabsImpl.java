@@ -736,7 +736,12 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   }
 
   private void resetPopup() {
-    myPopupInfo = null;
+//todo [kirillk] dirty hack, should rely on ActionManager to understand that menu item was either chosen on or cancelled
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        myPopupInfo = null;
+      }
+    });
   }
 
   public void setPaintBlocked(boolean blocked) {
