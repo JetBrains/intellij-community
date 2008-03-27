@@ -32,14 +32,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author yole
  */
 public class PaletteManager implements ProjectComponent {
-  private Project myProject;
-  private FileEditorManager myFileEditorManager;
+  private final Project myProject;
+  private final FileEditorManager myFileEditorManager;
   private PaletteWindow myPaletteWindow;
   private ToolWindow myPaletteToolWindow;
-  private PaletteManager.MyFileEditorManagerListener myListener;
-  private List<KeyListener> myKeyListeners = new CopyOnWriteArrayList<KeyListener>();
-  private List<PaletteDragEventListener> myDragEventListeners = new CopyOnWriteArrayList<PaletteDragEventListener>();
-  private List<ListSelectionListener> mySelectionListeners = new CopyOnWriteArrayList<ListSelectionListener>();
+  private final MyFileEditorManagerListener myListener;
+  private final List<KeyListener> myKeyListeners = new CopyOnWriteArrayList<KeyListener>();
+  private final List<PaletteDragEventListener> myDragEventListeners = new CopyOnWriteArrayList<PaletteDragEventListener>();
+  private final List<ListSelectionListener> mySelectionListeners = new CopyOnWriteArrayList<ListSelectionListener>();
 
   public PaletteManager(Project project, FileEditorManager fileEditorManager) {
     myProject = project;

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 public class ErrorTreeViewConfiguration implements JDOMExternalizable, ProjectComponent {
   public boolean IS_AUTOSCROLL_TO_SOURCE = false;
@@ -36,6 +37,7 @@ public class ErrorTreeViewConfiguration implements JDOMExternalizable, ProjectCo
   public void disposeComponent() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "ErrorTreeViewConfiguration";
   }

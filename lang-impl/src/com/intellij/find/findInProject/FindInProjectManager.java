@@ -17,12 +17,8 @@ import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-
 public class FindInProjectManager {
-  private Project myProject;
-  private ArrayList<Content> myUsagesContents = new ArrayList<Content>();
+  private final Project myProject;
   private boolean myToOpenInNewTab = false;
   private volatile boolean myIsFindInProgress = false;
 
@@ -35,14 +31,6 @@ public class FindInProjectManager {
   }
 
   public void findInProject(DataContext dataContext) {
-    Iterator<Content> iterator = myUsagesContents.iterator();
-    while (iterator.hasNext()) {
-      Content content = iterator.next();
-      if (content.getComponent().getParent() == null) {
-        iterator.remove();
-      }
-    }
-
     boolean isOpenInNewTabEnabled;
     final boolean[] toOpenInNewTab = new boolean[1];
     Content selectedContent = UsageViewManager.getInstance(myProject).getSelectedContent(true);
