@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -219,12 +220,12 @@ public class SetPropertyDialog extends DialogWrapper {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void fillProperties(final Collection<String> names) {
-    names.add("svn:eol-style");
-    names.add("svn:keywords");
-    names.add("svn:needs-lock");
-    names.add("svn:mime-type");
-    names.add("svn:executable");
-    names.add("svn:ignore");
-    names.add("svn:externals");
+    names.add(SvnPropertyKeys.SVN_EOL_STYLE);
+    names.add(SvnPropertyKeys.SVN_KEYWORDS);
+    names.add(SvnPropertyKeys.SVN_NEEDS_LOCK);
+    names.add(SvnPropertyKeys.SVN_MIME_TYPE);
+    names.add(SvnPropertyKeys.SVN_EXECUTABLE);
+    names.add(SvnPropertyKeys.SVN_IGNORE);
+    names.add(SvnPropertyKeys.SVN_EXTERNALS);
   }
 }

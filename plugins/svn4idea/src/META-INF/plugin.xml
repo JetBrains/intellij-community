@@ -72,6 +72,10 @@
       <add-to-group group-id="UpdateActionGroup" anchor="first"/>
     </group>
 
+    <group id="IgnoreChoicesGroup" popup="true" class="org.jetbrains.idea.svn.actions.IgnoreActionGroup">
+      <add-to-group group-id="SubversionGroup" relative-to-action="Subversion.Add" anchor="after"/>
+    </group>
+
     <action class="org.jetbrains.idea.svn.actions.CleanupProjectAction" id="Subversion.CleanupProject">
       <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.IntegrateProject"/>
     </action>
