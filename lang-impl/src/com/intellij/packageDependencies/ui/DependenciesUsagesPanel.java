@@ -28,6 +28,7 @@ public class DependenciesUsagesPanel extends UsagesPanel {
   public DependenciesUsagesPanel(Project project, final List<DependenciesBuilder> builders) {
     super(project);
     myBuilders = builders;
+    setToInitialPosition();
   }
 
   public String getInitialPositionText() {

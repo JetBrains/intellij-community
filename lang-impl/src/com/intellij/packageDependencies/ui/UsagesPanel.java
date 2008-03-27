@@ -30,7 +30,6 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
   public UsagesPanel(Project project) {
     super(new BorderLayout());
     myProject = project;
-    setToInitialPosition();
   }
 
   public void setToInitialPosition() {
