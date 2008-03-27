@@ -148,6 +148,7 @@ public class GroovyOverrideImplementUtil {
     }
   }
 
+  //TODO: use such special method wich will be implemented in Diana 
   private static void positionCaret(Editor editor, GrMethod result) {
     final GrOpenBlock body = result.getBlock();
     if (body == null) return;
