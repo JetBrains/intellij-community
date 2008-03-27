@@ -1,17 +1,17 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
+import com.intellij.codeInsight.completion.simple.CompletionCharHandler;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandlerFactory;
-import com.intellij.codeInsight.completion.simple.CompletionCharHandler;
+import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.generation.PsiMethodMember;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -29,6 +29,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -172,12 +173,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     myEditor.getSelectionModel().removeSelection();
 
-    try{
-      addImportForItem(myFile, myContext.getStartOffset(), myLookupItem);
-    }
-    catch(IncorrectOperationException e){
-      LOG.error(e);
-    }
+    qualifyIfNeeded();
+
 
     if (needLeftParenth && hasParams){
       // Invoke parameters popup
@@ -225,6 +222,28 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       }
     }
     return true;
+  }
+
+  private void qualifyIfNeeded() {
+    try{
+      if (myLookupItem.getObject() instanceof PsiField) {
+        PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
+        PsiReference reference = myFile.findReferenceAt(myContext.getStartOffset());
+        if (reference instanceof PsiReferenceExpression && !((PsiReferenceExpression) reference).isQualified()) {
+          final PsiMember member = (PsiMember)myLookupItem.getObject();
+          if (member.getManager().areElementsEquivalent(reference.resolve(), CompletionUtil.getOriginalElement(member))) return;
+          
+          final PsiClass psiClass = member.getContainingClass();
+          if (psiClass != null && StringUtil.isNotEmpty(psiClass.getName())) {
+            myDocument.insertString(myContext.getStartOffset(), psiClass.getName() + ".");
+          }
+        }
+      }
+      addImportForItem(myFile, myContext.getStartOffset(), myLookupItem);
+    }
+    catch(IncorrectOperationException e){
+      LOG.error(e);
+    }                                                                       
   }
 
   private boolean isAtTokenNeeded() {
@@ -630,10 +649,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     else if (o instanceof PsiMethod){
       PsiMethod method = (PsiMethod)o;
       if (method.isConstructor()){
-        PsiClass aClass = (PsiClass)item.getAttribute(LookupItem.CONTAINING_CLASS_ATTR);
-        if (aClass == null){
-          aClass = method.getContainingClass();
-        }
+        PsiClass aClass = method.getContainingClass();
         if (aClass != null){
           int length = method.getName().length();
           addImportForClass(file, startOffset, startOffset + length, aClass);
