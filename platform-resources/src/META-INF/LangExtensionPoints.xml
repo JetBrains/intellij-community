@@ -275,4 +275,7 @@
   <extensionPoint name="codeInsight.gotoSuper" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="codeInsight.lineMarkerProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="codeInsight.surroundWithRangeAdjuster" interface="com.intellij.codeInsight.generation.surroundWith.SurroundWithRangeAdjuster"/>
+
+  <extensionPoint name="createFromTemplateActionReplacer"
+                  interface="com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer"/>
 </extensionPoints>
