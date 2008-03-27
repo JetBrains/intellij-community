@@ -113,7 +113,8 @@ final class EditorTabbedContainer  {
   }
 
   public ActionCallback removeTabAt(final int componentIndex) {
-    return myTabs.removeTab(myTabs.getTabAt(componentIndex));
+    final ActionCallback callback = myTabs.removeTab(myTabs.getTabAt(componentIndex));
+    return myProject.isOpen() ? callback : new ActionCallback.Done();
   }
 
   public int getSelectedIndex() {
