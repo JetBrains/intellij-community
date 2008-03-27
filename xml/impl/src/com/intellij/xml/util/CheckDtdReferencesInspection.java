@@ -10,7 +10,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInspection.*;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -119,7 +119,7 @@ public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool 
       PsiElement anchor = PsiTreeUtil.getParentOfType(element, XmlElementDecl.class, XmlAttlistDecl.class, XmlEntityDecl.class, XmlConditionalSection.class);
       if (anchor != null) anchorOffset = anchor.getTextRange().getStartOffset();
 
-      if (anchorOffset == UNDEFINED_OFFSET && containingFile.getLanguage() == StdLanguages.XML) {
+      if (anchorOffset == UNDEFINED_OFFSET && containingFile.getLanguage() == XMLLanguage.INSTANCE) {
         XmlFile file = (XmlFile)containingFile;
         final XmlProlog prolog = file.getDocument().getProlog();
         assert prolog != null;

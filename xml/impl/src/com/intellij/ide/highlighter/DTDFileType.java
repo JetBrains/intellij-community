@@ -43,7 +43,7 @@ public class DTDFileType extends LanguageFileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/dtd.png");
 
   public DTDFileType() {
-    super(new DTDLanguage());
+    super(DTDLanguage.INSTANCE);
   }
 
   @NotNull

@@ -8,7 +8,8 @@ import com.intellij.javaee.UriUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -863,7 +864,7 @@ public class XmlUtil {
     if (file != null) {
 
       final Language language = file.getLanguage();
-      if (language == StdLanguages.HTML || language == StdLanguages.XHTML) {
+      if (language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE) {
         return new String[][]{new String[]{"", XHTML_URI}};
       }
     }

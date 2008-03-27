@@ -2,7 +2,7 @@ package com.intellij.xml.impl.dtd;
 
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.openapi.util.SimpleFieldCache;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ClassFilter;
@@ -160,7 +160,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
   }
 
   public void validate(XmlDocument document, ValidationHost host) {
-    if (document.getLanguage() == StdLanguages.DTD) {
+    if (document.getLanguage() == DTDLanguage.INSTANCE) {
       final List<XmlElementDecl> decls = new ArrayList<XmlElementDecl>(3);
 
       XmlUtil.processXmlElements(document, new PsiElementProcessor() {

@@ -42,7 +42,7 @@ public class XHtmlFileType extends XmlLikeFileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/xhtml.png");
 
   public XHtmlFileType() {
-    super(new XHTMLLanguage());
+    super(XHTMLLanguage.INSTANCE);
   }
 
   @NotNull

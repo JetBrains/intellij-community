@@ -4,10 +4,11 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
@@ -246,9 +247,9 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     final PsiFile containingFile = element.getContainingFile();
 
     if (containingFile instanceof JspFile ||
-        containingFile.getLanguage() == StdLanguages.HTML ||
+        containingFile.getLanguage() == HTMLLanguage.INSTANCE ||
         containingFile.getLanguage() == StdLanguages.JSP ||
-        containingFile.getLanguage() == StdLanguages.XHTML
+        containingFile.getLanguage() == XHTMLLanguage.INSTANCE
       ) {
       return false;
     }

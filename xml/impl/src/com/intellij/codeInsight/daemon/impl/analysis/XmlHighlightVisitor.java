@@ -13,7 +13,7 @@ import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.idea.LoggerFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
@@ -481,7 +481,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @Override public void visitXmlDocument(final XmlDocument document) {
-    if (document.getLanguage() == StdLanguages.DTD) {
+    if (document.getLanguage() == DTDLanguage.INSTANCE) {
       final PsiMetaData psiMetaData = document.getMetaData();
       if (psiMetaData instanceof Validator) {
         ((Validator<XmlDocument>)psiMetaData).validate(document, this);

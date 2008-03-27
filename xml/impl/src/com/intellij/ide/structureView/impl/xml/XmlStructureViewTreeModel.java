@@ -36,7 +36,7 @@ import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
 import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.Grouper;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +52,7 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
 
   @NotNull
   public StructureViewTreeElement getRoot() {
-    if (myFile.getLanguage() == StdLanguages.DTD) return new DtdFileTreeElement(myFile);
+    if (myFile.getLanguage() == DTDLanguage.INSTANCE) return new DtdFileTreeElement(myFile);
     return new XmlFileTreeElement(myFile);
   }
 

@@ -6,8 +6,11 @@
  */
 package com.intellij.xml.breadcrumbs;
 
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
@@ -26,7 +29,7 @@ class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
   }
 
   public Language[] getLanguages() {
-    return new Language[]{/*StdLanguages.XML,*/ StdLanguages.XHTML, StdLanguages.HTML, StdLanguages.JSP, StdLanguages.JSPX};
+    return new Language[]{/*XMLLanguage.INSTANCE,*/ XHTMLLanguage.INSTANCE, HTMLLanguage.INSTANCE, StdLanguages.JSP, StdLanguages.JSPX};
   }
 
   @NotNull
@@ -36,7 +39,7 @@ class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
 
     sb.append(tag.getName());
 
-    final boolean addHtmlInfo = e.getContainingFile().getLanguage() != StdLanguages.XML;
+    final boolean addHtmlInfo = e.getContainingFile().getLanguage() != XMLLanguage.INSTANCE;
 
     if (addHtmlInfo) {
       final String id_value = tag.getAttributeValue(ID_ATTRIBUTE_NAME);

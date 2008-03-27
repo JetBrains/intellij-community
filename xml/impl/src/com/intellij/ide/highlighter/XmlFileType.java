@@ -46,7 +46,7 @@ public class XmlFileType extends XmlLikeFileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/xml.png");
 
   public XmlFileType() {
-    super(new XMLLanguage());
+    super(XMLLanguage.INSTANCE);
     TypedHandler.registerBaseLanguageQuoteHandler(XMLLanguage.class, TypedHandler.getQuoteHandlerForType(this));
   }
 

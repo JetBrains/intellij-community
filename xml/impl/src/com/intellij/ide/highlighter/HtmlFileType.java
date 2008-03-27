@@ -50,7 +50,7 @@ public class HtmlFileType extends XmlLikeFileType {
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/html.png");
 
   public HtmlFileType() {
-    super(new HTMLLanguage());
+    super(HTMLLanguage.INSTANCE);
   }
 
   @NotNull

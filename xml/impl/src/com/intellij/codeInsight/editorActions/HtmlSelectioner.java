@@ -15,6 +15,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -44,7 +45,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
   static boolean canSelectElement(final PsiElement e) {
     if (e instanceof XmlToken) {
       Language language = e.getLanguage();
-      if (language == StdLanguages.XML) language = e.getParent().getLanguage();
+      if (language == XMLLanguage.INSTANCE) language = e.getParent().getLanguage();
 
       return language instanceof HTMLLanguage ||
              language instanceof XHTMLLanguage ||

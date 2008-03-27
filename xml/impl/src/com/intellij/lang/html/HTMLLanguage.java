@@ -16,7 +16,10 @@ import org.jetbrains.annotations.NotNull;
  * To change this template use File | Settings | File Templates.
  */
 public class HTMLLanguage extends XMLLanguage {
-  public HTMLLanguage() {
+
+  public static final HTMLLanguage INSTANCE = new HTMLLanguage();
+
+  private HTMLLanguage() {
     super("HTML", "text/html","text/htmlh");
     SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExpicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
       @NotNull

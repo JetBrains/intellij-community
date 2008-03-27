@@ -6,7 +6,8 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -57,7 +58,7 @@ public class CheckEmptyScriptTagInspection extends XmlSuppressableInspectionTool
                 try {
                   final FileType fileType = tag.getContainingFile().getFileType();
                   PsiFile file = PsiFileFactory.getInstance(tag.getProject()).createFileFromText(
-                    "dummy." + (fileType == StdFileTypes.JSP || tag.getContainingFile().getLanguage() == StdLanguages.HTML ? "html" : "xml"), builder.toString());
+                    "dummy." + (fileType == StdFileTypes.JSP || tag.getContainingFile().getLanguage() == HTMLLanguage.INSTANCE ? "html" : "xml"), builder.toString());
 
                   tag.replace(((XmlFile)file).getDocument().getRootTag());
                 }
@@ -85,7 +86,7 @@ public class CheckEmptyScriptTagInspection extends XmlSuppressableInspectionTool
   static boolean isScriptTag(final XmlTag tag) {
     return ( SCRIPT_TAG_NAME.equals(tag.getName()) ||
           (tag instanceof HtmlTag && SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getLocalName()))
-        ) && tag.getLanguage() != StdLanguages.XML;
+        ) && tag.getLanguage() != XMLLanguage.INSTANCE;
   }
 
   @NotNull

@@ -31,18 +31,16 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class PlainTextFileType extends LanguageFileType {
-  private static final Language ourLanguage = new PlainTextLanguage();
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/text.png");
 
   public PlainTextFileType() {
-    super(ourLanguage);
+    super(PlainTextLanguage.INSTANCE);
   }
 
   @NotNull

@@ -14,6 +14,8 @@ import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.jsp.impl.TldAttributeDescriptor;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -127,7 +129,7 @@ class XmlTagInsertHandler extends BasicInsertHandler {
 
     // temp code
     final Language language = tag.getContainingFile().getLanguage();
-    boolean htmlCode = language == StdLanguages.HTML || language == StdLanguages.XHTML;
+    boolean htmlCode = language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE;
     boolean jspCode = language == StdLanguages.JSP || language == StdLanguages.JSPX;
     Set<String> notRequiredAttributes = Collections.emptySet();
 

@@ -6,12 +6,11 @@ package com.intellij.lang.xml;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.ide.structureView.xml.XmlStructureViewBuilderProvider;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
+import com.intellij.ide.structureView.xml.XmlStructureViewBuilderProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
@@ -51,7 +50,7 @@ public class XmlStructureViewBuilderFactory implements PsiStructureViewFactory {
   }
 
   private static StructureViewBuilder getStructureViewBuilderForExtensions(final PsiFile psiFile) {
-    for (Language language : ((XMLLanguage)StdLanguages.XML).getLanguageExtensionsForFile(psiFile)) {
+    for (Language language : ((XMLLanguage)XMLLanguage.INSTANCE).getLanguageExtensionsForFile(psiFile)) {
       final StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.forLanguage(language).getStructureViewBuilder(psiFile);
       if (builder != null) {
         return builder;

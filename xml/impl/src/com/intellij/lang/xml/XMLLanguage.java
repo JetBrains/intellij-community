@@ -31,6 +31,9 @@ import org.jetbrains.annotations.NotNull;
  * To change this template use File | Settings | File Templates.
  */
 public class XMLLanguage extends CompositeLanguage {
+
+  public final static XMLLanguage INSTANCE = new XMLLanguage();
+
   protected static final CDATAOnAnyEncodedPolicy CDATA_ON_ANY_ENCODED_POLICY = new CDATAOnAnyEncodedPolicy();
   protected static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
 
@@ -52,7 +55,7 @@ public class XMLLanguage extends CompositeLanguage {
     });
   }
 
-  public XMLLanguage() {
+  private XMLLanguage() {
     this("XML", "text/xml");
 
     SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExpicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {

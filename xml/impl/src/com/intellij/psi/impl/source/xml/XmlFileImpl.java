@@ -1,7 +1,10 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.dtd.DTDLanguage;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,10 +39,10 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile, XmlElementType 
   private static IElementType getElementType(final FileViewProvider fileViewProvider) {
     final Language dataLanguage = fileViewProvider.getBaseLanguage();
 
-    if (dataLanguage == StdLanguages.XML) return XML_FILE;
-    if (dataLanguage == StdLanguages.XHTML) return XHTML_FILE;
-    if (dataLanguage == StdLanguages.HTML) return HTML_FILE;
-    if (dataLanguage == StdLanguages.DTD) return DTD_FILE;
+    if (dataLanguage == XMLLanguage.INSTANCE) return XML_FILE;
+    if (dataLanguage == XHTMLLanguage.INSTANCE) return XHTML_FILE;
+    if (dataLanguage == HTMLLanguage.INSTANCE) return HTML_FILE;
+    if (dataLanguage == DTDLanguage.INSTANCE) return DTD_FILE;
     return XML_FILE;
   }
 
@@ -92,7 +95,7 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile, XmlElementType 
   }
 
   private boolean isWebFileType() {
-    return getLanguage() == StdLanguages.XHTML || getLanguage() == StdLanguages.HTML;
+    return getLanguage() == XHTMLLanguage.INSTANCE || getLanguage() == HTMLLanguage.INSTANCE;
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {

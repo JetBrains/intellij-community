@@ -15,7 +15,10 @@ import org.jetbrains.annotations.NotNull;
  * To change this template use File | Settings | File Templates.
  */
 public class DTDLanguage extends Language {
-  public DTDLanguage() {
+
+  public static final DTDLanguage INSTANCE = new DTDLanguage();
+
+  protected DTDLanguage() {
     super("DTD", "text/dtd", "text/x-dtd");
     SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExpicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
       @NotNull

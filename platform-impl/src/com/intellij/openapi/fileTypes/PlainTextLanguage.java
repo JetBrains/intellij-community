@@ -14,7 +14,10 @@ import com.intellij.lang.Language;
  * To change this template use File | Settings | File Templates.
  */
 public class PlainTextLanguage extends Language {
-  protected PlainTextLanguage() {
+
+  public static final PlainTextLanguage INSTANCE = new PlainTextLanguage();
+
+  private PlainTextLanguage() {
     super("TEXT", "text/plain");
   }
 }

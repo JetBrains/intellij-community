@@ -4,7 +4,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -164,7 +164,7 @@ public class XmlCompletionData extends CompletionData {
 
       final Document document = editor.getDocument();
       final int caretOffset = editor.getCaretModel().getOffset();
-      if (PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(document).getLanguage() == StdLanguages.HTML &&
+      if (PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(document).getLanguage() == HTMLLanguage.INSTANCE &&
           HtmlUtil.isSingleHtmlAttribute((String)item.getObject())) {
         return;
       }

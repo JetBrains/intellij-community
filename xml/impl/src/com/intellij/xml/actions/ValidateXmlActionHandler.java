@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -225,7 +224,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
           myProject, new Runnable() {
             public void run() {
               MessageView messageView = myProject.getComponent(MessageView.class);
-              Content content = PeerFactory.getInstance().getContentFactory().createContent(myErrorsView.getComponent(), CONTENT_NAME, true);
+              final Content content = ContentFactory.SERVICE.getInstance().createContent(myErrorsView.getComponent(), CONTENT_NAME, true);
               content.putUserData(KEY, myErrorsView);
               messageView.getContentManager().addContent(content);
               messageView.getContentManager().setSelectedContent(content);

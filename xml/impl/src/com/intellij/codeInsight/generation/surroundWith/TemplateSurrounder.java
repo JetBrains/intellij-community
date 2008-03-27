@@ -3,9 +3,12 @@ package com.intellij.codeInsight.generation.surroundWith;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -95,15 +98,15 @@ public class TemplateSurrounder implements Surrounder {
   }
 
   private static boolean isLanguageWithWSSignificant(Language lang) {
-    return lang == StdLanguages.HTML ||
-           lang == StdLanguages.XHTML ||
+    return lang == HTMLLanguage.INSTANCE ||
+           lang == XHTMLLanguage.INSTANCE ||
            lang == StdLanguages.JSP ||
            lang == StdLanguages.JSPX;
   }
 
   private static Language getLanguage(PsiElement element) {
     Language lang = element.getLanguage();
-    if (lang == StdLanguages.XML) lang = element.getParent().getLanguage();
+    if (lang == XMLLanguage.INSTANCE) lang = element.getParent().getLanguage();
     return lang;
   }
 

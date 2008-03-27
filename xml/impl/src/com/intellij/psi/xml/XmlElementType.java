@@ -1,7 +1,10 @@
 package com.intellij.psi.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.dtd.DTDLanguage;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lexer.OldXmlLexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.parsing.xml.XmlParsingContext;
@@ -41,15 +44,15 @@ public interface XmlElementType extends XmlTokenType {
   //todo: move to html
   IElementType HTML_DOCUMENT = new IXmlElementType("HTML_DOCUMENT");
   IElementType HTML_TAG = new IXmlElementType("HTML_TAG");
-  IFileElementType HTML_FILE = new IFileElementType(StdLanguages.HTML);
+  IFileElementType HTML_FILE = new IFileElementType(HTMLLanguage.INSTANCE);
 
   IElementType XML_TEXT = new XmlTextElementType();
 
-  IFileElementType XML_FILE = new IFileElementType(StdLanguages.XML);
-  IElementType XHTML_FILE = new IFileElementType(StdLanguages.XHTML);
+  IFileElementType XML_FILE = new IFileElementType(XMLLanguage.INSTANCE);
+  IElementType XHTML_FILE = new IFileElementType(XHTMLLanguage.INSTANCE);
 
 
-  IElementType DTD_FILE = new IChameleonElementType("DTD_FILE", StdLanguages.DTD){
+  IElementType DTD_FILE = new IChameleonElementType("DTD_FILE", DTDLanguage.INSTANCE){
     public ASTNode parseContents(ASTNode chameleon) {
       final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
@@ -59,7 +62,7 @@ public interface XmlElementType extends XmlTokenType {
     public boolean isParsable(CharSequence buffer, final Project project) {return true;}
   };
 
-  IElementType XML_MARKUP = new IChameleonElementType("XML_MARKUP_DECL", StdLanguages.XML){
+  IElementType XML_MARKUP = new IChameleonElementType("XML_MARKUP_DECL", XMLLanguage.INSTANCE){
     public ASTNode parseContents(ASTNode chameleon) {
       final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);

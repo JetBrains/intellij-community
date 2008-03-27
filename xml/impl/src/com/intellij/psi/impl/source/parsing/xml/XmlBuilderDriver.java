@@ -6,8 +6,8 @@ package com.intellij.psi.impl.source.parsing.xml;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.impl.PsiBuilderImpl;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -115,7 +115,7 @@ public class XmlBuilderDriver {
   }
 
   protected PsiBuilderImpl createBuilderAndParse() {
-    final ParserDefinition xmlParserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(StdLanguages.XML);
+    final ParserDefinition xmlParserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(XMLLanguage.INSTANCE);
     assert xmlParserDefinition != null;
 
     PsiBuilderImpl b = new PsiBuilderImpl(xmlParserDefinition.createLexer(null), xmlParserDefinition.getWhitespaceTokens(), TokenSet.EMPTY,
