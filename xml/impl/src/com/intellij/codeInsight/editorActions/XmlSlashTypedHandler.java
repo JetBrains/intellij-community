@@ -22,10 +22,10 @@ import com.intellij.xml.util.XmlUtil;
 
 public class XmlSlashTypedHandler extends TypedHandlerDelegate {
   public Result beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile, final FileType fileType) {
-    if (editedFile instanceof XmlFile && c == '/') {
+    if (editedFile.getViewProvider().getBaseLanguage() instanceof XMLLanguage && c == '/') {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-      XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       final int offset = editor.getCaretModel().getOffset();
       FileViewProvider provider = file.getViewProvider();
       PsiElement element = provider.findElementAt(offset, XMLLanguage.class);
@@ -55,10 +55,10 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
   }
 
   public Result charTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile) {
-    if (editedFile instanceof XmlFile && c == '/') {
+    if (editedFile.getViewProvider().getBaseLanguage() instanceof XMLLanguage && c == '/') {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-      XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       FileViewProvider provider = file.getViewProvider();
       final int offset = editor.getCaretModel().getOffset();
       PsiElement element = provider.findElementAt(offset - 1, XMLLanguage.class);
@@ -72,7 +72,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
       }
       while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
       if(prevLeaf instanceof OuterLanguageElement) {
-        element = file.getDocument().findElementAt(offset - 1);
+        element = file.findElementAt(offset - 1);
         prevLeaf = element.getNode();
         while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
       }

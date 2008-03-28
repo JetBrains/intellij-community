@@ -27,10 +27,10 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.TypedHandler");
 
   public Result beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile, final FileType fileType) {
-    if (c == '>' && editedFile instanceof XmlFile) {
+    if (c == '>' && editedFile.getViewProvider().getBaseLanguage() instanceof XMLLanguage) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-      XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       FileViewProvider provider = file.getViewProvider();
       int offset = editor.getCaretModel().getOffset();
 
