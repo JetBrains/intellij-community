@@ -7,10 +7,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.openapi.vfs.ex.http.HttpVirtualFileListener;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +33,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   private final Project myProject;
   private final XDebuggerManagerImpl myDebuggerManager;
   private final XDependentBreakpointManager myDependentBreakpointManager;
+  private HttpVirtualFileListener myHttpVirtualFileListener;
 
   public XBreakpointManagerImpl(final Project project, final XDebuggerManagerImpl debuggerManager, StartupManager startupManager) {
     myProject = project;
@@ -37,10 +41,35 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     myAllBreakpointsDispatcher = EventDispatcher.create(XBreakpointListener.class);
     myDependentBreakpointManager = new XDependentBreakpointManager(this);
     myLineBreakpointManager = new XLineBreakpointManager(project, myDependentBreakpointManager, startupManager);
+    if (!project.isDefault()) {
+      myHttpVirtualFileListener = new HttpVirtualFileListener() {
+        public void fileDownloaded(@NotNull final VirtualFile file) {
+          updateBreakpointInFile(file);
+        }
+      };
+      HttpFileSystem.getInstance().addFileListener(myHttpVirtualFileListener);
+    }
+  }
+
+  private void updateBreakpointInFile(final VirtualFile file) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        XBreakpointBase<?, ?, ?>[] breakpoints = getAllBreakpoints();
+        for (XBreakpointBase<?, ?, ?> breakpoint : breakpoints) {
+          XSourcePosition position = breakpoint.getSourcePosition();
+          if (position != null && position.getFile() == file) {
+            fireBreakpointChanged(breakpoint);
+          }
+        }
+      }
+    });
   }
 
   public void dispose() {
     myLineBreakpointManager.dispose();
+    if (!myProject.isDefault()) {
+      HttpFileSystem.getInstance().removeFileListener(myHttpVirtualFileListener);
+    }
   }
 
   public XLineBreakpointManager getLineBreakpointManager() {

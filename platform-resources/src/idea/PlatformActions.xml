@@ -97,6 +97,7 @@
         <group id="FileOpenGroup">
           <action id="NewDummyProject" class="com.intellij.ide.actions.NewDummyProjectAction" text="New Dummy Project"/>
           <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="/actions/menu-open.png"/>
+          <action id="OpenRemoteFile" class="com.intellij.ide.actions.OpenRemoteFileAction" text="Open Remote File..." internal="true"/>
           <group id="$LRU" class="com.intellij.ide.actions.RecentProjectsGroup" popup="true"/>
           <action id="CloseProject" class="com.intellij.ide.actions.CloseProjectAction"/>
         </group>
@@ -284,6 +285,7 @@
 
     <group id="EditorPopupMenu" configurable="true">
       <reference ref="CutCopyPasteGroup"/>
+      <action id="RefreshRemoteFile" class="com.intellij.ide.actions.RefreshRemoteFileAction" text="Refresh remote file" internal="true"/>
       <separator/>
       <reference ref="CloseEditor"/>
       <separator/>

@@ -5,6 +5,8 @@ import com.intellij.mock.MockVirtualFileManager;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.impl.http.HttpFileSystemImpl;
+import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.testFramework.LiteFixture;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.xdebugger.breakpoints.*;
@@ -28,6 +30,7 @@ public abstract class XDebuggerTestCase extends LiteFixture {
     MutablePicoContainer container = getApplication().getPicoContainer();
     registerComponentImplementation(container, EditorFactory.class, MockEditorFactory.class);
     registerComponentImplementation(container, VirtualFileManager.class, MockVirtualFileManager.class);
+    registerComponentImplementation(container, HttpFileSystem.class, HttpFileSystemImpl.class);
   }
 
   public static class MyLineBreakpointType extends XLineBreakpointType<MyBreakpointProperties> {

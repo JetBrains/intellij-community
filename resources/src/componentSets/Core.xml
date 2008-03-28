@@ -15,9 +15,6 @@
       <implementation-class>com.intellij.ide.XmlRpcServerImpl</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.vfs.ex.http.HttpFileSystem</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.projectRoots.ProjectJdkTable</interface-class>
       <implementation-class>com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl</implementation-class>
     </component>

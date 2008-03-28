@@ -6,7 +6,7 @@ import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 /**
  * @author Vladimir Kondratyev
  */
-final class TextEditorState implements FileEditorState {
+public final class TextEditorState implements FileEditorState {
 
   public int LINE;
   public int COLUMN;
