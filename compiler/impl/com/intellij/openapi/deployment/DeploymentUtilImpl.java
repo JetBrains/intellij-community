@@ -56,7 +56,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     String[] sourceRoots = getSourceRootUrlsInReadAction(sourceModule);
     boolean ok = true;
     if (outputPath != null && sourceRoots.length != 0) {
-      ok = checkModuleOutputExists(outputPath, sourceModule, context);
+      ok = outputPath.exists();
       boolean added = addItemsRecursively(items, outputPath, targetModule, outputRelativePath, fileFilter, possibleBaseOuputPath);
       if (!added) {
         LOG.assertTrue(possibleBaseOuputPath != null);
@@ -89,18 +89,6 @@ public class DeploymentUtilImpl extends DeploymentUtil {
         return new File(PathUtil.toPresentableUrl(url));
       }
     });
-  }
-
-  private static boolean checkModuleOutputExists(final File outputPath, final Module sourceModule, CompileContext context) {
-    if (outputPath == null || !outputPath.exists()) {
-      String moduleName = ModuleUtil.getModuleNameInReadAction(sourceModule);
-      final String message = CompilerBundle.message("message.text.directory.not.found.please.recompile",
-                                                outputPath == null ? moduleName : FileUtil.toSystemDependentName(outputPath.getPath()),
-                                                moduleName);
-      context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
-      return false;
-    }
-    return true;
   }
 
   public void addLibraryLink(@NotNull final CompileContext context,
@@ -433,7 +421,6 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     final String[] sourceUrls = getSourceRootUrlsInReadAction(module);
     if (sourceUrls.length > 0) {
       final File outputPath = getModuleOutputPath(module);
-      checkModuleOutputExists(outputPath, module, context);
       if (outputPath != null) {
         if ("/".equals(relativePath) || "".equals(relativePath) || getRelativePathForManifestLinking("/").equals(relativePath)) {
           context.addMessage(CompilerMessageCategory.ERROR, CompilerBundle.message("message.text.invalid.output.path.for.module.jar", relativePath, module.getName(), linkContainerDescription), null, -1, -1);
