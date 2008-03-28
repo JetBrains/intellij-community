@@ -72,7 +72,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
       }
       while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
       if(prevLeaf instanceof OuterLanguageElement) {
-        element = file.findElementAt(offset - 1);
+        element = file.getViewProvider().findElementAt(offset - 1, file.getLanguage());
         prevLeaf = element.getNode();
         while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
       }
