@@ -39,7 +39,7 @@ class FoldingPolicy {
       final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(node, document);
       for (FoldingDescriptor descriptor : foldingDescriptors) {
         ASTNode descriptorNode = descriptor.getElement();
-        if (descriptorNode instanceof LeafElement) descriptorNode = ChameleonTransforming.transform((LeafElement)node);
+        if (descriptorNode instanceof LeafElement) descriptorNode = ChameleonTransforming.transform((LeafElement)descriptorNode);
         map.put(SourceTreeToPsiMap.treeElementToPsi(descriptorNode), descriptor.getRange());
       }
     }
