@@ -1,7 +1,6 @@
 package com.intellij.xml.util;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.paths.PathReferenceManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -9,6 +8,7 @@ import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
 import com.intellij.pom.xml.impl.events.XmlElementChangedImpl;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.impl.source.xml.XmlElementImpl;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NonNls;
@@ -107,9 +107,9 @@ public class XmlIncludeHandler implements PsiIncludeManager.PsiIncludeHandler {
     final XmlAttributeValue xmlAttributeValue = hrefAttribute.getValueElement();
     if (xmlAttributeValue == null) return null;
 
-    final PsiReference[] references = PathReferenceManager.getInstance().createReferences(xmlAttributeValue, false, true, true);
+    final FileReferenceSet referenceSet = FileReferenceSet.createSet(xmlAttributeValue, false, true, false);
 
-    final PsiReference reference = references.length > 0 ? references[0] : null;
+    final PsiReference reference = referenceSet.getLastReference();
     if (reference == null) return null;
 
     final PsiElement target = reference.resolve();
