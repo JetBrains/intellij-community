@@ -128,7 +128,8 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
                                                                         restrictedSeachScope,
                                                                         propertyName,
                                                                         UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
-      } else {
+      }
+      else {
         toContinue = psiManager.getSearchHelper().processElementsWithWord(processor1,
                                                                         searchScope,
                                                                         propertyName,

@@ -30,7 +30,7 @@ import com.intellij.util.Query;
  * (method in original class, overriding method)
  */
 public class AllOverridingMethodsSearch extends ExtensibleQueryFactory<Pair<PsiMethod, PsiMethod>, AllOverridingMethodsSearch.SearchParameters> {
-  public static AllOverridingMethodsSearch INSTANCE = new AllOverridingMethodsSearch();
+  public static final AllOverridingMethodsSearch INSTANCE = new AllOverridingMethodsSearch();
 
   public static class SearchParameters {
     private final PsiClass myClass;

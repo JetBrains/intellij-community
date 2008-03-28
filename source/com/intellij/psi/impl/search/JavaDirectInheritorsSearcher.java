@@ -47,55 +47,50 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     });
 
     if ("java.lang.Object".equals(qualifiedName)) {
-      final SearchScope scope = useScope.intersectWith(
-        GlobalSearchScope.notScope(
-          GlobalSearchScope.getScopeRestrictedByFileTypes(
-            GlobalSearchScope.allScope(psiManager.getProject()), StdFileTypes.JSP, StdFileTypes.JSPX)));
+      final SearchScope scope = useScope.intersectWith(GlobalSearchScope.notScope(GlobalSearchScope.getScopeRestrictedByFileTypes(
+          GlobalSearchScope.allScope(psiManager.getProject()), StdFileTypes.JSP, StdFileTypes.JSPX)));
 
       return AllClassesSearch.search(scope, aClass.getProject()).forEach(new Processor<PsiClass>() {
         public boolean process(final PsiClass psiClass) {
-            return consumer.process(psiClass);
-          }
+          return consumer.process(psiClass);
         }
-      );
+      });
     }
-    else {
-      final RepositoryManager repositoryManager = psiManager.getRepositoryManager();
-      final RepositoryElementsManager repositoryElementsManager = psiManager.getRepositoryElementsManager();
+    final RepositoryManager repositoryManager = psiManager.getRepositoryManager();
+    final RepositoryElementsManager repositoryElementsManager = psiManager.getRepositoryElementsManager();
 
-      long[] candidateIds = ApplicationManager.getApplication().runReadAction(new Computable<long[]>() {
-        public long[] compute() {
-          RepositoryIndex repositoryIndex = repositoryManager.getIndex();
-          final VirtualFileFilter rootFilter;
-          if (useScope instanceof GlobalSearchScope) {
-            rootFilter = repositoryIndex.rootFilterBySearchScope((GlobalSearchScope)useScope);
-          }
-          else {
-            rootFilter = null;
-          }
-          final String qName = aClass.getQualifiedName();
-          return repositoryIndex.getNameOccurrencesInExtendsLists(qName != null ? qName : aClass.getName(), rootFilter);
+    long[] candidateIds = ApplicationManager.getApplication().runReadAction(new Computable<long[]>() {
+      public long[] compute() {
+        RepositoryIndex repositoryIndex = repositoryManager.getIndex();
+        final VirtualFileFilter rootFilter;
+        if (useScope instanceof GlobalSearchScope) {
+          rootFilter = repositoryIndex.rootFilterBySearchScope((GlobalSearchScope)useScope);
+        }
+        else {
+          rootFilter = null;
+        }
+        final String qName = aClass.getQualifiedName();
+        return repositoryIndex.getNameOccurrencesInExtendsLists(qName != null ? qName : aClass.getName(), rootFilter);
+      }
+    });
+
+    final boolean includeAnonymous = p.includeAnonymous();
+    final ClassView classView = repositoryManager.getClassView();
+
+    for (final long candidateId : candidateIds) {
+      ProgressManager.getInstance().checkCanceled();
+      PsiClass candidate = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+        public PsiClass compute() {
+          if (!includeAnonymous && classView.isAnonymous(candidateId)) return null;
+
+          final RepositoryPsiElement candidate = repositoryElementsManager.findOrCreatePsiElementById(candidateId);
+          LOG.assertTrue(candidate == null || candidate.isValid());
+          return (PsiClass)candidate;
         }
       });
 
-      final boolean includeAnonymous = p.includeAnonymous();
-      final ClassView classView = repositoryManager.getClassView();
-
-      for (final long candidateId : candidateIds) {
-        ProgressManager.getInstance().checkCanceled();
-        PsiClass candidate = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-          public PsiClass compute() {
-            if (!includeAnonymous && classView.isAnonymous(candidateId)) return null;
-
-            final RepositoryPsiElement candidate = repositoryElementsManager.findOrCreatePsiElementById(candidateId);
-            LOG.assertTrue(candidate == null || candidate.isValid());
-            return (PsiClass)candidate;
-          }
-        });
-
-        if (candidate != null && !consumer.process(candidate)) {
-          return false;
-        }
+      if (candidate != null && !consumer.process(candidate)) {
+        return false;
       }
     }
 

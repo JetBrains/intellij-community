@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class AnnotatedPackagesSearch extends ExtensibleQueryFactory<PsiPackage, AnnotatedPackagesSearch.Parameters> {
-  public static AnnotatedPackagesSearch INSTANCE = new AnnotatedPackagesSearch();
+  public static final AnnotatedPackagesSearch INSTANCE = new AnnotatedPackagesSearch();
 
   public static class Parameters {
     private final PsiClass myAnnotationClass;

@@ -22,7 +22,7 @@ import com.intellij.util.Query;
  * @author max
  */
 public class DeepestSuperMethodsSearch extends ExtensibleQueryFactory<PsiMethod, PsiMethod> {
-  public static DeepestSuperMethodsSearch DEEPEST_SUPER_METHODS_SEARCH_INSTANCE = new DeepestSuperMethodsSearch();
+  public static final DeepestSuperMethodsSearch DEEPEST_SUPER_METHODS_SEARCH_INSTANCE = new DeepestSuperMethodsSearch();
 
   private DeepestSuperMethodsSearch() {
   }
@@ -30,5 +30,4 @@ public class DeepestSuperMethodsSearch extends ExtensibleQueryFactory<PsiMethod,
   public static Query<PsiMethod> search(PsiMethod method) {
     return DEEPEST_SUPER_METHODS_SEARCH_INSTANCE.createQuery(method);
   }
-
 }

@@ -27,7 +27,7 @@ import com.intellij.util.Query;
  * @author max
  */
 public class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMethod, OverridingMethodsSearch.SearchParameters> {
-  public static OverridingMethodsSearch INSTANCE = new OverridingMethodsSearch();
+  public static final OverridingMethodsSearch INSTANCE = new OverridingMethodsSearch();
 
   public static class SearchParameters {
     private final PsiMethod myMethod;

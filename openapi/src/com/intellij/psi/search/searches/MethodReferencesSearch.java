@@ -25,7 +25,7 @@ import com.intellij.util.Query;
  * @author max
  */
 public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference, MethodReferencesSearch.SearchParameters> {
-  public static MethodReferencesSearch INSTANCE = new MethodReferencesSearch();
+  public static final MethodReferencesSearch INSTANCE = new MethodReferencesSearch();
 
   public static class SearchParameters {
     private final PsiMethod myMethod;

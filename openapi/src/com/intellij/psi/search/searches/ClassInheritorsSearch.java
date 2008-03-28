@@ -42,7 +42,7 @@ import java.util.HashSet;
 public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, ClassInheritorsSearch.SearchParameters> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.searches.ClassInheritorsSearch");
 
-  public static ClassInheritorsSearch INSTANCE = new ClassInheritorsSearch();
+  public static final ClassInheritorsSearch INSTANCE = new ClassInheritorsSearch();
 
 
   static {

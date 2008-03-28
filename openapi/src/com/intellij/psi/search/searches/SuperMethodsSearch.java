@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSignatureBackedByPsiMethod, SuperMethodsSearch.SearchParameters> {
-  public static SuperMethodsSearch SUPER_METHODS_SEARCH_INSTANCE = new SuperMethodsSearch();
+  public static final SuperMethodsSearch SUPER_METHODS_SEARCH_INSTANCE = new SuperMethodsSearch();
 
   public static class SearchParameters {
     private final PsiMethod myMethod;

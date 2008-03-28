@@ -8,8 +8,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class IdeFocusManagerImpl extends IdeFocusManager {
-
-  private ToolWindowManagerImpl myToolWindowManager;
+  private final ToolWindowManagerImpl myToolWindowManager;
 
   public IdeFocusManagerImpl(ToolWindowManagerImpl toolWindowManager) {
     myToolWindowManager = toolWindowManager;
