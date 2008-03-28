@@ -503,6 +503,9 @@ public class FrameDebuggerTree extends DebuggerTree {
           if (method == null || !DebuggerUtils.isSimpleGetter(method)) {
             rv.set(true);
           }
+          else {
+            super.visitCallExpression(callExpression);
+          }
         }
       });
       return rv.get();
