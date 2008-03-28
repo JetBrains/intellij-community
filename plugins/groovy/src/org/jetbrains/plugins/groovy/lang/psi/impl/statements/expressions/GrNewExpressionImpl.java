@@ -80,7 +80,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     final GroovyResolveResult[] classResults = ref.multiResolve(false);
     if (classResults.length == 0) return GroovyResolveResult.EMPTY_ARRAY;
 
-    final PsiType[] argTypes = PsiUtil.getArgumentTypes(ref, true);
+    final PsiType[] argTypes = PsiUtil.getArgumentTypes(ref, true, false);
     List<GroovyResolveResult> constructorResults = new ArrayList<GroovyResolveResult>();
     for (GroovyResolveResult classResult : classResults) {
       final PsiElement element = classResult.getElement();

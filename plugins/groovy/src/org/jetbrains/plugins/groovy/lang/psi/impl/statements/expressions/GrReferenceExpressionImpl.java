@@ -503,7 +503,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     Kind kind = ((GrReferenceExpressionImpl) refExpr).getKind();
     ResolverProcessor processor;
     if (kind == Kind.METHOD_OR_PROPERTY) {
-      final PsiType[] argTypes = checkArguments ? PsiUtil.getArgumentTypes(refExpr, false) : null;
+      final PsiType[] argTypes = checkArguments ? PsiUtil.getArgumentTypes(refExpr, false, false) : null;
       processor = new MethodResolverProcessor(name, refExpr, forCompletion, false, argTypes, refExpr.getTypeArguments());
     } else {
       processor = new PropertyResolverProcessor(name, refExpr, forCompletion);

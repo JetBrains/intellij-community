@@ -94,7 +94,7 @@ public abstract class DynamicDialog extends DialogWrapper {
   protected DItemElement createItemElement() {
     DItemElement myDynamicElement;
     if (QuickfixUtil.isCall(myReferenceExpression)) {
-      final PsiType[] types = PsiUtil.getArgumentTypes(myReferenceExpression, false);
+      final PsiType[] types = PsiUtil.getArgumentTypes(myReferenceExpression, false, false);
       final String[] names = QuickfixUtil.getMethodArgumentsNames(myProject, types);
       final List<MyPair> pairs = QuickfixUtil.swapArgumentsAndTypes(names, types);
 

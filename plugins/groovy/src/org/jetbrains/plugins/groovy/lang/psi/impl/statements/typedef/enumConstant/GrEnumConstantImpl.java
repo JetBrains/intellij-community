@@ -98,7 +98,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   }
 
   public GroovyResolveResult[] multiResolveConstructor() {
-    PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false);
+    PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false, false);
     PsiClass clazz = getContainingClass();
     MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, false, true, argTypes, PsiType.EMPTY_ARRAY);
     clazz.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);

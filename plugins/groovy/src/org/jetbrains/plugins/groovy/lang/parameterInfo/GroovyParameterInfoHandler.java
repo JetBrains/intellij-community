@@ -127,8 +127,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
       if (!namedElement.isValid()) {
         context.setUIComponentEnabled(i, false);
       } else {
-        final PsiType[] constructorTypes = PsiUtil.getArgumentTypes(place, true);
-        final PsiType[] methodTypes = PsiUtil.getArgumentTypes(place, false);
+        final PsiType[] constructorTypes = PsiUtil.getArgumentTypes(place, true, false);
+        final PsiType[] methodTypes = PsiUtil.getArgumentTypes(place, false, false);
         PsiType[] argTypes = null;
         PsiParameter[] parameters = null;
         if (namedElement instanceof PsiMethod) {

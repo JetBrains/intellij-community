@@ -73,7 +73,7 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
   public GroovyResolveResult[] multiResolveConstructor() {
     PsiClass clazz = getDelegatedClass();
     if (clazz != null) {
-      PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false);
+      PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false, false);
       MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, false, true, argTypes, PsiType.EMPTY_ARRAY);
       clazz.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);
       return processor.getCandidates();

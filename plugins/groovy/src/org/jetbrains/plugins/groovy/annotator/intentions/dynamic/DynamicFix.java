@@ -29,30 +29,23 @@ public class DynamicFix implements IntentionAction {
 
   @NotNull
   public String getText() {
-    if (!myIsMethod) {
+    if (!myIsMethod){
       return GroovyBundle.message("add.dynamic.property", myReferenceExpression.getName());
     }
 
-    final PsiType[] methodArgumentsTypes = PsiUtil.getArgumentTypes(myReferenceExpression, false);
+    final PsiType[] methodArgumentsTypes = PsiUtil.getArgumentTypes(myReferenceExpression, false, false);
     StringBuilder builder = new StringBuilder(" '").append(myReferenceExpression.getName());
     builder.append("(");
 
-    if (methodArgumentsTypes != null) {
-      for (int i = 0; i < methodArgumentsTypes.length; i++) {
-        PsiType type = methodArgumentsTypes[i];
+    assert methodArgumentsTypes != null;
+    for (int i = 0; i < methodArgumentsTypes.length; i++) {
+      PsiType type = methodArgumentsTypes[i];
 
-        if (i > 0) {
-          builder.append(", ");
-        }
-        
-        if (PsiType.NULL.equals(type)) {
-          builder.append(PsiType.getJavaLangObject(myReferenceExpression.getManager(), myReferenceExpression.getProject().getAllScope()).getPresentableText());
-        } else {
-          builder.append(type.getPresentableText());
-        }
+      if (i > 0){
+        builder.append(", ");
       }
+      builder.append(type.getPresentableText());
     }
-
     builder.append(")");
     builder.append("' ");
 
@@ -70,8 +63,8 @@ public class DynamicFix implements IntentionAction {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     DynamicDialog dialog = myIsMethod ?
-        new DynamicMethodDialog(myReferenceExpression) :
-        new DynamicPropertyDialog(myReferenceExpression);
+                           new DynamicMethodDialog(myReferenceExpression) :
+                           new DynamicPropertyDialog(myReferenceExpression);
 
     dialog.show();
   }

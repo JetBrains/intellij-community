@@ -107,7 +107,7 @@ public class QuickfixUtil {
       String name = names[i];
       final PsiType type = types[i];
 
-      result.add(new MyPair(name, PsiType.NULL.equals(type) ? "java.lang.Object" : type.getCanonicalText()));
+      result.add(new MyPair(name, type.getCanonicalText()));
     }
 
     return result;

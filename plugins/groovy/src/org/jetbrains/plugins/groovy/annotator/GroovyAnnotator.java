@@ -258,7 +258,7 @@ public class GroovyAnnotator implements Annotator {
         final PsiClass clazz = invocation.getDelegatedClass();
         if (clazz != null) {
           //default constructor invocation
-          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(invocation.getThisOrSuperKeyword(), true);
+          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(invocation.getThisOrSuperKeyword(), true, true);
           if (argumentTypes != null && argumentTypes.length > 0) {
             String message = GroovyBundle.message("cannot.find.default.constructor", clazz.getName());
             holder.createWarningAnnotation(argList, message);
@@ -799,7 +799,7 @@ public class GroovyAnnotator implements Annotator {
     final PsiElement element = methodResolveResult.getElement();
     if (!(element instanceof PsiMethod)) return;
     final PsiMethod method = (PsiMethod) element;
-    PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, method.isConstructor());
+    PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, method.isConstructor(), true);
     if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(), methodResolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)) {
       PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
       if (elementToHighlight == null) {
@@ -893,7 +893,7 @@ public class GroovyAnnotator implements Annotator {
       } else {
         if (element instanceof PsiClass) {
           //default constructor invocation
-          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refElement, true);
+          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refElement, true, true);
           if (argumentTypes != null && argumentTypes.length > 0) {
             String message = GroovyBundle.message("cannot.find.default.constructor", ((PsiClass) element).getName());
             holder.createWarningAnnotation(toHighlight, message);
@@ -910,7 +910,7 @@ public class GroovyAnnotator implements Annotator {
     final PsiType type = variable.getTypeGroovy();
     if (!(type instanceof GrClosureType)) return;
     PsiParameter[] parameters = ((GrClosureType) type).getClosureParameters();
-    PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, false);
+    PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, false, true);
     if (argumentTypes == null) return;
 
     final PsiType[] paramTypes = PsiUtil.skipOptionalParametersAndSubstitute(argumentTypes.length, parameters, PsiSubstitutor.EMPTY);

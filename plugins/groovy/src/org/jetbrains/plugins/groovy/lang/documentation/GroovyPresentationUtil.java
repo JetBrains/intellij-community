@@ -16,15 +16,12 @@ package org.jetbrains.plugins.groovy.lang.documentation;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.Processor;
 
 import java.util.Set;
@@ -56,7 +53,7 @@ public class GroovyPresentationUtil {
 
             StringBuilder builder1 = new StringBuilder();
             builder1.append(((GrReferenceElement) parent).getReferenceName());
-            PsiType[] argTypes = PsiUtil.getArgumentTypes(parent, false);
+            PsiType[] argTypes = PsiUtil.getArgumentTypes(parent, false, true);
             if (argTypes != null) {
               builder1.append("(");
               if (argTypes.length > 0) {

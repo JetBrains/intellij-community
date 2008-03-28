@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -42,6 +43,48 @@ import java.util.Arrays;
  * @author ilyas
  */
 public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements GrMethodCallExpression {
+  private static final Function<GrMethodCallExpressionImpl, PsiType> TYPES_CALCULATOR = new Function<GrMethodCallExpressionImpl, PsiType>() {
+    public PsiType fun(GrMethodCallExpressionImpl callExpression) {
+      GrExpression invoked = callExpression.getInvokedExpression();
+      if (invoked instanceof GrReferenceExpression) {
+        GrReferenceExpression refExpr = (GrReferenceExpression) invoked;
+        final GroovyResolveResult[] resolveResults = refExpr.multiResolve(false);
+        PsiManager manager = callExpression.getManager();
+        GlobalSearchScope scope = callExpression.getResolveScope();
+        PsiType result = null;
+        for (GroovyResolveResult resolveResult : resolveResults) {
+          PsiElement resolved = resolveResult.getElement();
+          PsiType returnType = null;
+          if (resolved instanceof PsiMethod && !GroovyPsiManager.getInstance(resolved.getProject()).isTypeBeingInferred(resolved)) {
+            returnType = ((PsiMethod) resolved).getReturnType();
+          } else if (resolved instanceof GrVariable) {
+            final PsiType type = ((GrVariable) resolved).getTypeGroovy();
+            if (type instanceof GrClosureType) {
+              returnType = ((GrClosureType) type).getClosureReturnType();
+            }
+          }
+          if (returnType == null) return null;
+          returnType = resolveResult.getSubstitutor().substitute(returnType);
+          returnType = TypesUtil.boxPrimitiveType(returnType, manager, scope);
+
+          if (result == null || returnType.isAssignableFrom(result)) result = returnType;
+          else if (!result.isAssignableFrom(returnType))
+            result = GenericsUtil.getLeastUpperBound(result, returnType, manager);
+        }
+
+        if (result == null) return null;
+
+        if (refExpr.getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
+          return result;
+        } else {
+          return ResolveUtil.getListTypeForSpreadOperator(refExpr, result);
+        }
+      }
+
+      return null;
+    }
+  };
+
   public GrMethodCallExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -55,42 +98,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
   }
 
   public PsiType getType() {
-    GrExpression invoked = getInvokedExpression();
-    if (invoked instanceof GrReferenceExpression) {
-      GrReferenceExpression refExpr = (GrReferenceExpression) invoked;
-      final GroovyResolveResult[] resolveResults = refExpr.multiResolve(false);
-      PsiManager manager = getManager();
-      GlobalSearchScope scope = getResolveScope();
-      PsiType result = null;
-      for (GroovyResolveResult resolveResult : resolveResults) {
-        PsiElement resolved = resolveResult.getElement();
-        PsiType returnType = null;
-        if (resolved instanceof PsiMethod && !GroovyPsiManager.getInstance(resolved.getProject()).isTypeBeingInferred(resolved)) {
-          returnType = ((PsiMethod) resolved).getReturnType();
-        } else if (resolved instanceof GrVariable) {
-          final PsiType type = ((GrVariable) resolved).getTypeGroovy();
-          if (type instanceof GrClosureType) {
-            returnType = ((GrClosureType) type).getClosureReturnType();
-          }
-        }
-        if (returnType == null) return null;
-        returnType = resolveResult.getSubstitutor().substitute(returnType);
-        returnType = TypesUtil.boxPrimitiveType(returnType, manager, scope);
-
-        if (result == null || returnType.isAssignableFrom(result)) result = returnType;
-        else if (!result.isAssignableFrom(returnType)) result = GenericsUtil.getLeastUpperBound(result, returnType, manager);
-      }
-
-      if (result == null) return null;
-
-      if (refExpr.getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
-        return result;
-      } else {
-        return ResolveUtil.getListTypeForSpreadOperator(refExpr, result);
-      }
-    }
-
-    return null;
+    return GroovyPsiManager.getInstance(getProject()).getType(this, TYPES_CALCULATOR);
   }
 
   public GrExpression getInvokedExpression() {

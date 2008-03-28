@@ -179,7 +179,7 @@ public class PsiUtil {
 
   // Returns arguments types not including Map for named arguments
   @Nullable
-  public static PsiType[] getArgumentTypes(PsiElement place, boolean forConstructor) {
+  public static PsiType[] getArgumentTypes(PsiElement place, boolean forConstructor, boolean nullAsBottom) {
     PsiElementFactory factory = place.getManager().getElementFactory();
     PsiElement parent = place.getParent();
     if (parent instanceof GrCallExpression) {
@@ -197,7 +197,7 @@ public class PsiUtil {
       for (GrExpression expression : expressions) {
         PsiType type = getArgumentType(expression);
         if (type == null) {
-          result.add(PsiType.NULL);
+          result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(call));
         } else {
           result.add(type);
         }
@@ -219,7 +219,7 @@ public class PsiUtil {
       for (int i = 0; i < result.length; i++) {
         PsiType argType = getArgumentType(args[i]);
         if (argType == null) {
-          result[i] = PsiType.NULL;
+          result[i] = nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject((GroovyPsiElement) parent);
         } else {
           result[i] = argType;
         }
@@ -239,7 +239,7 @@ public class PsiUtil {
       for (GrExpression expression : expressions) {
         PsiType type = getArgumentType(expression);
         if (type == null) {
-          result.add(PsiType.NULL);
+          result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(argList));
         } else {
           result.add(type);
         }
