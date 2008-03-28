@@ -241,7 +241,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     }
 
     if (needsUpdate) {
-      relayout(true);
+      relayout(true, false);
     }
   }
 
@@ -288,7 +288,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
         validate();
         paintImmediately(0, 0, getWidth(), getHeight());
       } else {
-        revalidateAndRepaint();
+        revalidateAndRepaint(false);
       }
     }
   }
@@ -387,6 +387,10 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
   @NotNull
   public TabInfo addTab(TabInfo info, int index) {
+    if (getTabs().contains(info)) {
+      return getTabs().get(getTabs().indexOf(info));
+    }
+
     info.getChangeSupport().addPropertyChangeListener(this);
     final TabLabel label = new TabLabel(info);
     myInfo2Label.put(info, label);
@@ -410,7 +414,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     updateSideComponent(info);
     updateTabActions(info);
 
-    updateAll(false);
+    updateAll(false, true);
 
     if (info.isHidden()) {
       updateHiding();
@@ -419,7 +423,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
     adjust(info);
 
-    revalidateAndRepaint();
+    revalidateAndRepaint(false);
 
     return info;
   }
@@ -453,9 +457,9 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     return this;
   }
 
-  private void updateAll(final boolean forcedRelayout) {
+  private void updateAll(final boolean forcedRelayout, final boolean now) {
     mySelectedInfo = getSelectedInfo();
-    removeDeferred(updateContainer(forcedRelayout));
+    removeDeferred(updateContainer(forcedRelayout, now));
     updateListeners();
     updateTabActions(false);
   }
@@ -480,6 +484,9 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   }
 
   private ActionCallback _setSelected(final TabInfo info, final boolean requestFocus) {
+    if (mySelectedInfo != null && mySelectedInfo.equals(info)) return new ActionCallback.Done();
+
+
     if (myRequestFocusOnLastFocusedComponent && mySelectedInfo != null) {
       if (isMyChildIsFocusedNow()) {
         mySelectedInfo.setLastFocusOwner(getFocusOwner());
@@ -490,7 +497,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     mySelectedInfo = info;
     final TabInfo newInfo = getSelectedInfo();
 
-    final Component deferredRemove = updateContainer(false);
+    final Component deferredRemove = updateContainer(false, true);
 
     if (oldInfo != newInfo) {
       for (TabsListener eachListener : myTabListeners) {
@@ -600,7 +607,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       updateHiding();
     }
 
-    relayout(false);
+    relayout(false, false);
   }
 
   private void updateHiding() {
@@ -633,19 +640,16 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       if (mySelectedInfo != null && myHiddenInfos.contains(mySelectedInfo)) {
         mySelectedInfo = getToSelectOnRemoveOf(mySelectedInfo);
       }
-      updateAll(true);
+      updateAll(true, false);
     }
   }
 
   private void updateIcon(final TabInfo tabInfo) {
     myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
-    revalidateAndRepaint();
+    revalidateAndRepaint(false);
   }
 
-  private void revalidateAndRepaint() {
-    revalidate();
-    repaint();
-
+  private void revalidateAndRepaint(final boolean layoutNow) {
     if (myVisibleInfos.size() == 0) {
       setOpaque(false);
       final Component nonOpaque = UIUtil.findUltimateParent(this);
@@ -656,6 +660,14 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     } else {
       setOpaque(true);
     }
+
+    if (layoutNow) {
+      validate();
+    } else {
+      revalidate();
+    }
+
+    repaint();
   }
 
 
@@ -681,7 +693,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     final JBTabsImpl.TabLabel label = myInfo2Label.get(tabInfo);
     label.setText(tabInfo.getColoredText());
     label.setToolTipText(tabInfo.getTooltipText());
-    revalidateAndRepaint();
+    revalidateAndRepaint(false);
   }
 
   private void updateSideComponent(final TabInfo tabInfo) {
@@ -998,7 +1010,9 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
         myLastSingRowLayout.laayoutSize.equals(getSize())) {
       for (TabInfo each : myVisibleInfos) {
         final TabLabel eachLabel = myInfo2Label.get(each);
-        if (!eachLabel.isValid()) break;
+        if (!eachLabel.isValid()) {
+          break;
+        }
         if (getSelectedInfo() == each) {
           if (eachLabel.getBounds().width != 0) {
             data = myLastSingRowLayout;
@@ -1528,7 +1542,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   }
 
   public ActionCallback removeTab(final TabInfo info, boolean transferFocus) {
-    if (info == null) return new ActionCallback.Done();
+    if (info == null || !getTabs().contains(info)) return new ActionCallback.Done();
 
     final ActionCallback result = new ActionCallback();
 
@@ -1550,7 +1564,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       removeCurrentDeferred();
     }
 
-    revalidateAndRepaint();
+    revalidateAndRepaint(true);
 
     return result;
   }
@@ -1578,7 +1592,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     myInfo2Toolbar.remove(info);
     myAllTabs = null;
 
-    updateAll(false);
+    updateAll(false, false);
 
     return tabComponent;
   }
@@ -1650,7 +1664,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   }
 
   @Nullable
-  private Component updateContainer(boolean forced) {
+  private Component updateContainer(boolean forced, final boolean layoutNow) {
     Component deferredRemove = null;
 
     for (TabInfo each : myVisibleInfos) {
@@ -1680,7 +1694,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     }
 
 
-    relayout(forced);
+    relayout(forced, layoutNow);
 
     return deferredRemove;
   }
@@ -1700,11 +1714,11 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     return focusOwner != null && (focusOwner == c || SwingUtilities.isDescendingFrom(focusOwner, c));
   }
 
-  private void relayout(boolean forced) {
+  private void relayout(boolean forced, final boolean layoutNow) {
     if (!myForcedRelayout) {
       myForcedRelayout = forced;
     }
-    revalidateAndRepaint();
+    revalidateAndRepaint(layoutNow);
   }
 
   ActionManager getActionManager() {
@@ -1847,22 +1861,25 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       if (text != null) {
         text.appendToComponent(myLabel);
       }
-      invalidate();
-    }
-
-    public void setToolTipText(final String text) {
-      super.setToolTipText(text);
+      invalidateIfNeeded();
     }
 
     private void clear() {
       myLabel.clear();
       myLabel.setIcon(myIcon);
+      invalidateIfNeeded();
+    }
+
+    private void invalidateIfNeeded() {
+      if (myLabel.getSize() != null && myLabel.getSize().equals(myLabel.getPreferredSize())) return;
       invalidate();
+
+      revalidateAndRepaint(false);
     }
 
     public void setIcon(final Icon icon) {
       getLayeredIcon().setIcon(icon, 0);
-      invalidate();
+      invalidateIfNeeded();
     }
 
     private LayeredIcon getLayeredIcon() {
@@ -1912,7 +1929,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
       add(wrapper, BorderLayout.EAST);
 
-      revalidateAndRepaint();
+      revalidateAndRepaint(false);
     }
 
     private void removeOldActionPanel() {
@@ -2002,7 +2019,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
     myHideTabs = hideTabs;
 
-    relayout(true);
+    relayout(true, false);
   }
 
   public JBTabs setPaintBorder(int top, int left, int right, int bottom) {
@@ -2013,7 +2030,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     myRightBorderSize = getBorder(right);
     myBottomBorderSize = getBorder(bottom);
 
-    revalidateAndRepaint();
+    revalidateAndRepaint(false);
 
     return this;
   }
@@ -2138,7 +2155,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   public void setStealthTabMode(final boolean stealthTabMode) {
     myStealthTabMode = stealthTabMode;
 
-    relayout(true);
+    relayout(true, false);
   }
 
   public boolean isStealthTabMode() {
@@ -2153,13 +2170,13 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     }
 
 
-    relayout(true);
+    relayout(true, false);
   }
 
   public void setSingleRow(boolean singleRow) {
     mySingleRow = singleRow;
 
-    relayout(true);
+    relayout(true, false);
   }
 
   public boolean isSingleRow() {
@@ -2186,7 +2203,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       public void run() {
         applyDecoration();
 
-        revalidateAndRepaint();
+        revalidateAndRepaint(false);
       }
     });
   }
@@ -2204,7 +2221,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       adjust(each);
     }
 
-    relayout(true);
+    relayout(true, false);
   }
 
   private void adjust(final TabInfo each) {
@@ -2216,7 +2233,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   public void sortTabs(Comparator<TabInfo> comparator) {
     Collections.sort(myVisibleInfos, comparator);
 
-    relayout(true);
+    relayout(true, false);
   }
 
   public boolean isRequestFocusOnLastFocusedComponent() {
