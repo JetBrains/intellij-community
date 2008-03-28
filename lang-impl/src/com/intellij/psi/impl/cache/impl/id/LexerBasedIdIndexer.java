@@ -3,7 +3,7 @@ package com.intellij.psi.impl.cache.impl.id;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
 import com.intellij.psi.search.IndexPattern;
-import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.IdDataConsumer;
 
 import java.util.Map;
@@ -14,10 +14,10 @@ import java.util.Map;
  */
 public abstract class LexerBasedIdIndexer extends FileTypeIdIndexer {
   
-  public final Map<IdIndexEntry,Integer> map(final FileBasedIndex.FileContent inputData) {
+  public final Map<IdIndexEntry,Integer> map(final FileContent inputData) {
     final IdDataConsumer consumer = new IdDataConsumer();
     final Lexer lexer = createLexer(new OccurrenceToIdDataConsumerAdapter(consumer));
-    final CharSequence chars = inputData.content;
+    final CharSequence chars = inputData.getContentAsText();
     lexer.start(chars, 0, chars.length(),0);
     while (lexer.getTokenType() != null) {
       lexer.advance();

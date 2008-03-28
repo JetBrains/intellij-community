@@ -51,11 +51,14 @@ public class UnindexedFilesUpdater implements CacheUpdater {
       OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
-          VirtualFile[] roots = orderEntry.getFiles(OrderRootType.SOURCES);
-          for (VirtualFile root : roots) {
-            if (!visitedRoots.contains(root)) {
-              visitedRoots.add(root);
-              iterateRecursively(root, processor);
+          final VirtualFile[] libSources = orderEntry.getFiles(OrderRootType.SOURCES);
+          final VirtualFile[] libClasses = orderEntry.getFiles(OrderRootType.CLASSES);
+          for (VirtualFile[] roots : new VirtualFile[][]{libSources, libClasses}) {
+            for (VirtualFile root : roots) {
+              if (!visitedRoots.contains(root)) {
+                visitedRoots.add(root);
+                iterateRecursively(root, processor);
+              }
             }
           }
         }

@@ -29,7 +29,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.IdDataConsumer;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,9 +50,9 @@ public class IdTableBuilding {
   }
 
   public static class PlainTextIndexer extends FileTypeIdIndexer {
-    public Map<IdIndexEntry, Integer> map(final FileBasedIndex.FileContent inputData) {
+    public Map<IdIndexEntry, Integer> map(final FileContent inputData) {
       final IdDataConsumer consumer = new IdDataConsumer();
-      final CharSequence chars = inputData.content;
+      final CharSequence chars = inputData.getContentAsText();
       scanWords(new ScanWordProcessor(){
         public void run(final CharSequence chars11, final int start, final int end, char[] charsArray) {
           if (charsArray != null) {
@@ -67,9 +67,9 @@ public class IdTableBuilding {
     }
   }
 
-  public static class PlainTextTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> {
-    public Map<TodoIndexEntry, Integer> map(final FileBasedIndex.FileContent inputData) {
-      final CharSequence chars = inputData.content;
+  public static class PlainTextTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent> {
+    public Map<TodoIndexEntry, Integer> map(final FileContent inputData) {
+      final CharSequence chars = inputData.getContentAsText();
 
 
       final IndexPattern[] indexPatterns = CacheUtil.getIndexPatterns();
@@ -101,12 +101,12 @@ public class IdTableBuilding {
   }
 
   private static final HashMap<FileType,FileTypeIdIndexer> ourIdIndexers = new HashMap<FileType, FileTypeIdIndexer>();
-  private static final HashMap<FileType,DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent>> ourTodoIndexers = new HashMap<FileType, DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent>>();
+  private static final HashMap<FileType,DataIndexer<TodoIndexEntry, Integer, FileContent>> ourTodoIndexers = new HashMap<FileType, DataIndexer<TodoIndexEntry, Integer, FileContent>>();
 
   public static void registerIdIndexer(FileType fileType,FileTypeIdIndexer indexer) {
     ourIdIndexers.put(fileType, indexer);
   }
-  public static void registerTodoIndexer(FileType fileType, DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> indexer) {
+  public static void registerTodoIndexer(FileType fileType, DataIndexer<TodoIndexEntry, Integer, FileContent> indexer) {
     ourTodoIndexers.put(fileType, indexer);
   }
 
@@ -162,8 +162,8 @@ public class IdTableBuilding {
   }
 
   @Nullable
-  public static DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> getTodoIndexer(FileType fileType, final VirtualFile virtualFile) {
-    final DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> indexer = ourTodoIndexers.get(fileType);
+  public static DataIndexer<TodoIndexEntry, Integer, FileContent> getTodoIndexer(FileType fileType, final VirtualFile virtualFile) {
+    final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = ourTodoIndexers.get(fileType);
 
     if (indexer != null) {
       return indexer;
@@ -193,8 +193,8 @@ public class IdTableBuilding {
       myScanner = scanner;
     }
     
-    public Map<IdIndexEntry, Integer> map(final FileBasedIndex.FileContent inputData) {
-      final CharSequence chars = inputData.content;
+    public Map<IdIndexEntry, Integer> map(final FileContent inputData) {
+      final CharSequence chars = inputData.getContentAsText();
       final char[] charsArray = CharArrayUtil.fromSequenceWithoutCopying(chars);
       final IdDataConsumer consumer = new IdDataConsumer();
       myScanner.processWords(chars, new Processor<WordOccurrence>() {
@@ -221,7 +221,7 @@ public class IdTableBuilding {
     }
   }
   
-  private static class TokenSetTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent>{
+  private static class TokenSetTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent>{
     @NotNull private final TokenSet myCommentTokens;
     private final VirtualFile myFile;
 
@@ -230,8 +230,8 @@ public class IdTableBuilding {
       myFile = file;
     }
 
-    public Map<TodoIndexEntry,Integer> map(final FileBasedIndex.FileContent inputData) {
-      final CharSequence chars = inputData.content;
+    public Map<TodoIndexEntry,Integer> map(final FileContent inputData) {
+      final CharSequence chars = inputData.getContentAsText();
       if (CacheUtil.getIndexPatternCount() > 0) {
         final TodoOccurrenceConsumer occurrenceConsumer = new TodoOccurrenceConsumer();
         final EditorHighlighter highlighter = HighlighterFactory.createHighlighter(null, myFile);

@@ -13,10 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexExtension;
-import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.annotations.NonNls;
@@ -78,10 +75,10 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
     }
   };
 
-  private DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> myIndexer = new DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent>() {
-    public Map<TodoIndexEntry,Integer> map(final FileBasedIndex.FileContent inputData) {
-      final VirtualFile file = inputData.file;
-      final DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> indexer = IdTableBuilding.getTodoIndexer(file.getFileType(), file);
+  private DataIndexer<TodoIndexEntry, Integer, FileContent> myIndexer = new DataIndexer<TodoIndexEntry, Integer, FileContent>() {
+    public Map<TodoIndexEntry,Integer> map(final FileContent inputData) {
+      final VirtualFile file = inputData.getFile();
+      final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = IdTableBuilding.getTodoIndexer(file.getFileType(), file);
       if (indexer != null) {
         return indexer.map(inputData);
       }
@@ -122,7 +119,7 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
     return NAME;
   }
 
-  public DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> getIndexer() {
+  public DataIndexer<TodoIndexEntry, Integer, FileContent> getIndexer() {
     return myIndexer;
   }
 

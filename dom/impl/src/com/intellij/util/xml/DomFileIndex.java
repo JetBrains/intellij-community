@@ -14,10 +14,7 @@ import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.ID;
-import com.intellij.util.indexing.ScalarIndexExtension;
+import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentEnumerator;
 import com.intellij.util.xml.impl.DomApplicationComponent;
@@ -37,12 +34,12 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
       return file.getFileType() == StdFileTypes.XML;
     }
   };
-  private final DataIndexer<String,Void,FileBasedIndex.FileContent> myDataIndexer;
+  private final DataIndexer<String,Void, FileContent> myDataIndexer;
 
   public DomFileIndex() {
-    myDataIndexer = new DataIndexer<String, Void, FileBasedIndex.FileContent>() {
-      public Map<String, Void> map(final FileBasedIndex.FileContent inputData) {
-        final CharSequence content = inputData.content;
+    myDataIndexer = new DataIndexer<String, Void, FileContent>() {
+      public Map<String, Void> map(final FileContent inputData) {
+        final CharSequence content = inputData.getContentAsText();
         final Ref<String> rootTagName = Ref.create(null);
         final Set<String> namespaces = new THashSet<String>();
         try {
@@ -121,7 +118,7 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
     return FileBasedIndex.getInstance().getContainingFiles(NAME, description.getName(), project);
   }
 
-  public DataIndexer<String, Void, FileBasedIndex.FileContent> getIndexer() {
+  public DataIndexer<String, Void, FileContent> getIndexer() {
     return myDataIndexer;
   }
 

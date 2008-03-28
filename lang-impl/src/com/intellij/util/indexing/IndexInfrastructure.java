@@ -109,7 +109,7 @@ public class IndexInfrastructure {
 
     final boolean isDirectory = fs.isDirectory(id);
     final DirectoryInfo directoryInfo = isDirectory ? dirIndex.getInfoForDirectoryId(id) : dirIndex.getInfoForDirectoryId(fs.getParent(id));
-    if (directoryInfo != null && (directoryInfo.contentRoot != null || directoryInfo.sourceRoot != null)) {
+    if (directoryInfo != null && (directoryInfo.contentRoot != null || directoryInfo.sourceRoot != null || directoryInfo.libraryClassRoot != null)) {
       return isDirectory? directoryInfo.directory : directoryInfo.directory.findChild(fs.getName(id));
     }
     return null;

@@ -31,8 +31,8 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.search.CachesBasedRefSearcher;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
@@ -86,19 +86,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   
   public static interface InputFilter {
     boolean acceptInput(VirtualFile file);
-  }
-
-  public static final class FileContent {
-    public final VirtualFile file;
-    public final String fileName;
-    public final CharSequence content;
-
-    public FileContent(final VirtualFile file, final CharSequence content) {
-      this.file = file;
-      // remember name explicitly because the file could be renamed afterwards
-      fileName = file.getName();
-      this.content = content;
-    }
   }
 
   public FileBasedIndex(final VirtualFileManagerEx vfManager) throws IOException {
@@ -419,7 +406,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
                 getIndex(indexId).update(inputId, newFc, oldFc);
               }
             }
-            myLastIndexedUnsavedContent.put(document, newFc.content);
+            myLastIndexedUnsavedContent.put(document, newFc.getContentAsText());
           }
         }
       }
@@ -481,13 +468,20 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     final VirtualFile file = content.getVirtualFile();
     FileContent fc = null;
     FileContent oldContent = null;
-    final byte[] bytes = myFileContentAttic.remove(file);
+    final byte[] oldBytes = myFileContentAttic.remove(file);
  
     for (ID<?, ?> indexId : myIndices.keySet()) {
       if (getInputFilter(indexId).acceptInput(file)) {
         if (fc == null) {
-          fc = new FileContent(file, CacheUtil.getContentText(content));
-          oldContent = bytes != null? new FileContent(file, LoadTextUtil.getTextByBinaryPresentation(bytes, file, false)) : null;
+          byte[] currentBytes;
+          try {
+            currentBytes = content.getBytes();
+          }
+          catch (IOException e) {
+            currentBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
+          }
+          fc = new FileContent(file, currentBytes);
+          oldContent = oldBytes != null? new FileContent(file, oldBytes) : null;
         }
         try {
           updateSingleIndex(indexId, file, fc, oldContent);
@@ -602,7 +596,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
               }
               else {
                 try {
-                  updateSingleIndex(indexId, file, new FileContent(file, null), null);
+                  updateSingleIndex(indexId, file, new FileContent(file, (byte[])null), null);
                 }
                 catch (StorageException e) {
                   LOG.error(e);
@@ -634,7 +628,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
             else {
               // invalidate it synchronously
               try {
-                updateSingleIndex(indexId, file, null, new FileContent(file, null));
+                updateSingleIndex(indexId, file, null, new FileContent(file, (byte[])null));
               }
               catch (StorageException e) {
                 LOG.error(e);
@@ -655,7 +649,14 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
             myFileContentAttic.offer(file);
           }
           else {
-            final FileContent fc = new FileContent(file, loadContent(file));
+            byte[] content;
+            try {
+              content = file.contentsToByteArray();
+            }
+            catch (IOException e) {
+              content = ArrayUtil.EMPTY_BYTE_ARRAY;
+            }
+            final FileContent fc = new FileContent(file, content);
             final FutureTask<?> future = (FutureTask<?>)myInvalidationService.submit(new Runnable() {
               public void run() {
                 for (ID<?, ?> indexId : affectedIndices) {
@@ -787,7 +788,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
         for (ID<?, ?> indexId : mySkipContentLoading) {
           if (shouldIndexFile(file, indexId)) {
             try {
-              updateSingleIndex(indexId, file, new FileContent(file, null), null);
+              updateSingleIndex(indexId, file, new FileContent(file, (byte[])null), null);
             }
             catch (StorageException e) {
               LOG.info(e);

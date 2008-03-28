@@ -6,13 +6,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexExtension;
-import com.intellij.util.indexing.ID;
+import com.intellij.psi.impl.search.CachesBasedRefSearcher;
+import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
-import com.intellij.psi.impl.search.CachesBasedRefSearcher;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.DataInput;
@@ -63,12 +60,12 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
     }
   };
   
-  private final DataIndexer<IdIndexEntry, Integer, FileBasedIndex.FileContent> myIndexer = new DataIndexer<IdIndexEntry, Integer, FileBasedIndex.FileContent>() {
-    public Map<IdIndexEntry, Integer> map(final FileBasedIndex.FileContent inputData) {
-      final VirtualFile file = inputData.file;
+  private final DataIndexer<IdIndexEntry, Integer, FileContent> myIndexer = new DataIndexer<IdIndexEntry, Integer, FileContent>() {
+    public Map<IdIndexEntry, Integer> map(final FileContent inputData) {
+      final VirtualFile file = inputData.getFile();
       final FileTypeIdIndexer indexer = IdTableBuilding.getFileTypeIndexer(file.getFileType());
       if (CachesBasedRefSearcher.DEBUG) {
-        System.out.println("fileName = " + inputData.fileName);
+        System.out.println("fileName = " + inputData.getFileName());
       }
       if (indexer != null) {
         return indexer.map(inputData);
@@ -90,7 +87,7 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
     return NAME;
   }
 
-  public DataIndexer<IdIndexEntry, Integer, FileBasedIndex.FileContent> getIndexer() {
+  public DataIndexer<IdIndexEntry, Integer, FileContent> getIndexer() {
     return myIndexer;
   }
 

@@ -4,10 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.ID;
-import com.intellij.util.indexing.ScalarIndexExtension;
+import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.annotations.NonNls;
@@ -27,7 +24,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     return NAME;
   }
 
-  public DataIndexer<String, Void, FileBasedIndex.FileContent> getIndexer() {
+  public DataIndexer<String, Void, FileContent> getIndexer() {
     return myDataIndexer;
   }
 
@@ -66,9 +63,9 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     return result.toArray(new PsiFile[result.size()]);
   }
 
-  private static class MyDataIndexer implements DataIndexer<String, Void, FileBasedIndex.FileContent> {
-    public Map<String, Void> map(final FileBasedIndex.FileContent inputData) {
-      return Collections.singletonMap(inputData.fileName, null);
+  private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
+    public Map<String, Void> map(final FileContent inputData) {
+      return Collections.singletonMap(inputData.getFileName(), null);
     }
   }
 

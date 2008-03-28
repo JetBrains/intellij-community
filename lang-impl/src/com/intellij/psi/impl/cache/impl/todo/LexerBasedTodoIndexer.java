@@ -4,7 +4,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileContent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,12 +13,12 @@ import java.util.Map;
  * @author Eugene Zhuravlev
  *         Date: Jan 20, 2008
  */
-public abstract class LexerBasedTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> {
-  public Map<TodoIndexEntry,Integer> map(final FileBasedIndex.FileContent inputData) {
+public abstract class LexerBasedTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent> {
+  public Map<TodoIndexEntry,Integer> map(final FileContent inputData) {
     
     final TodoOccurrenceConsumer todoOccurrenceConsumer = new TodoOccurrenceConsumer();
     final Lexer filterLexer = createLexer(todoOccurrenceConsumer);
-    final CharSequence chars = inputData.content;
+    final CharSequence chars = inputData.getContentAsText();
     filterLexer.start(chars, 0, chars.length(),0);
     while (filterLexer.getTokenType() != null) {
       filterLexer.advance();

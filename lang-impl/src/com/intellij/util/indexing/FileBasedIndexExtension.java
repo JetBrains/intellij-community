@@ -13,7 +13,7 @@ public interface FileBasedIndexExtension<K, V> {
   
   ID<K, V> getName();
   
-  DataIndexer<K, V, FileBasedIndex.FileContent> getIndexer();
+  DataIndexer<K, V, FileContent> getIndexer();
   
   PersistentEnumerator.DataDescriptor<K> getKeyDescriptor();
   

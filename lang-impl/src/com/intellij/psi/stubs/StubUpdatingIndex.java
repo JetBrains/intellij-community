@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.util.*;
 
-public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileBasedIndex.FileContent> {
+public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileContent> {
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("StubUpdatingIndex");
   private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
     public void save(final DataOutput out, final SerializedStubTree v) throws IOException {
@@ -75,25 +75,25 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     return INDEX_ID;
   }
 
-  public DataIndexer<Integer, SerializedStubTree, FileBasedIndex.FileContent> getIndexer() {
-    return new DataIndexer<Integer, SerializedStubTree, FileBasedIndex.FileContent>() {
-      public Map<Integer, SerializedStubTree> map(final FileBasedIndex.FileContent inputData) {
+  public DataIndexer<Integer, SerializedStubTree, FileContent> getIndexer() {
+    return new DataIndexer<Integer, SerializedStubTree, FileContent>() {
+      public Map<Integer, SerializedStubTree> map(final FileContent inputData) {
         final Map<Integer, SerializedStubTree> result = new HashMap<Integer, SerializedStubTree>();
-        if (!(inputData.file instanceof NewVirtualFile)) return result;
+        if (!(inputData.getFile() instanceof NewVirtualFile)) return result;
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            final int key = Math.abs(FileBasedIndex.getFileId(inputData.file));
+            final int key = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
             final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             DataOutputStream stream = new DataOutputStream(bytes);
-            final LanguageFileType filetype = (LanguageFileType)inputData.file.getFileType();
+            final LanguageFileType filetype = (LanguageFileType)inputData.getFile().getFileType();
             Language l = filetype.getLanguage();
             final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
 
             Project project = ProjectManager.getInstance().getDefaultProject(); // TODO
 
             PsiFile copy =
-              PsiFileFactory.getInstance(project).createFileFromText(inputData.fileName, filetype, inputData.content, 1, false, false);
+              PsiFileFactory.getInstance(project).createFileFromText(inputData.getFileName(), filetype, inputData.getContentAsText(), 1, false, false);
 
             final StubElement stub = ((IStubFileElementType)type).getBuilder().buildStubTree(copy);
 
@@ -127,22 +127,22 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     return 2;
   }
 
-  public UpdatableIndex<Integer, SerializedStubTree, FileBasedIndex.FileContent> createIndexImplementation(final IndexStorage<Integer, SerializedStubTree> storage) {
+  public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(final IndexStorage<Integer, SerializedStubTree> storage) {
     return new MyIndex(storage, getIndexer());
   }
 
-  private static class MyIndex extends MapReduceIndex<Integer, SerializedStubTree, FileBasedIndex.FileContent> {
+  private static class MyIndex extends MapReduceIndex<Integer, SerializedStubTree, FileContent> {
     private Map<StubIndexKey, Map<Object, TIntArrayList>> myOld;
     private Map<StubIndexKey, Map<Object, TIntArrayList>> myNew;
 
     public MyIndex(final IndexStorage<Integer, SerializedStubTree> storage,
-                   final DataIndexer<Integer, SerializedStubTree, FileBasedIndex.FileContent> indexer) {
+                   final DataIndexer<Integer, SerializedStubTree, FileContent> indexer) {
       super(indexer, storage);
     }
 
     public void update(final int inputId,
-                       @Nullable final FileBasedIndex.FileContent content,
-                       @Nullable final FileBasedIndex.FileContent oldContent) throws StorageException {
+                       @Nullable final FileContent content,
+                       @Nullable final FileContent oldContent) throws StorageException {
       super.update(inputId, content, oldContent);
       Set<StubIndexKey> allIndices = new HashSet<StubIndexKey>();
       if (myOld == null) myOld = Collections.emptyMap();
@@ -158,7 +158,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
       }
     }
 
-    protected Map<Integer, SerializedStubTree> mapOld(final FileBasedIndex.FileContent oldContent) {
+    protected Map<Integer, SerializedStubTree> mapOld(final FileContent oldContent) {
       myOld = null;
       final Map<Integer, SerializedStubTree> result = super.mapOld(oldContent);
       if (!result.isEmpty()) {
@@ -169,7 +169,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
       return result;
     }
 
-    protected Map<Integer, SerializedStubTree> mapNew(final FileBasedIndex.FileContent content) {
+    protected Map<Integer, SerializedStubTree> mapNew(final FileContent content) {
       myNew = null;
       final Map<Integer, SerializedStubTree> result = super.mapNew(content);
       if (!result.isEmpty()) {
