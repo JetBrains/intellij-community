@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 
 /**
  * @author Eugene Zhuravlev
@@ -57,7 +58,8 @@ public final class FileContent {
     if (myContent == null) {
       if (myContentAsText != null) {
         try {
-          myContent = myContentAsText.toString().getBytes(myFile.getCharset().name());
+          final Charset charset = myFile.getCharset();
+          myContent = charset != null? myContentAsText.toString().getBytes(charset.name()) : myContentAsText.toString().getBytes();
         }
         catch (UnsupportedEncodingException e) {
           throw new RuntimeException(e);
