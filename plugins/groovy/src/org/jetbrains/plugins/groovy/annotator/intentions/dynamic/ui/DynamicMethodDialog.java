@@ -114,10 +114,11 @@ public class DynamicMethodDialog extends DynamicDialog {
     }
 
     public void setValue(MyPair pair, String value) {
-      PsiType type = null;
+      PsiType type;
       try {
         type = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(value).getType();
       } catch (IncorrectOperationException e) {
+        return;
       }
 
       if (type == null) return;
