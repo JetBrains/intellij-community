@@ -46,7 +46,6 @@ public class FileReferenceSet {
   private final boolean myEndingSlashNotAllowed;
   private @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
 
-  @Nullable
   public static FileReferenceSet createSet(PsiElement element, final boolean soft, boolean endingSlashNotAllowed, final boolean urlEncoded) {
 
     String text;
