@@ -208,7 +208,7 @@ public class CompletionData {
     return substr.substring(i).trim();
   }
 
-  private static LookupItem objectToLookupItem(Object object) {
+  public static LookupItem objectToLookupItem(Object object) {
     if (object instanceof LookupItem) return (LookupItem)object;
 
     String s = null;

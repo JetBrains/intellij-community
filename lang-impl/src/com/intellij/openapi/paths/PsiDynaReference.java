@@ -4,17 +4,16 @@
 
 package com.intellij.openapi.paths;
 
+import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,10 +150,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
           if (refVariants != null) {
             for(Object refVariant : refVariants) {
               if (prefix != null) {
-                if (refVariant instanceof CandidateInfo) {
-                  refVariant = ((CandidateInfo)refVariant).getElement();
-                }
-                final LookupItem item = LookupItemUtil.objectToLookupItem(refVariant);
+                final LookupItem item = CompletionData.objectToLookupItem(refVariant);
                 final String s = item.getLookupString();
                 item.setLookupString(prefix + s);
                 variants.add(item);
