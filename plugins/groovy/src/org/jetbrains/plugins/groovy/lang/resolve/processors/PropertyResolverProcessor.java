@@ -52,7 +52,8 @@ public class PropertyResolverProcessor extends ResolverProcessor {
         return false;
       }
     } else if (myName == null || myName.equals(((PsiNamedElement) element).getName())) {
-      if (element instanceof GrField && ((GrField) element).isProperty()) {
+      if (!myForCompletion &&
+          element instanceof GrField && ((GrField) element).isProperty()) {
         if (myProperty == null) {
           boolean isAccessible = isAccessible((PsiNamedElement) element);
           boolean isStaticsOK = isStaticsOK((PsiNamedElement) element);
