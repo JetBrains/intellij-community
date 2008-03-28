@@ -5,6 +5,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -15,6 +16,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
   private final PsiMethodCallExpression myMethodCall;
@@ -39,26 +42,41 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
 
   @Nullable
   private PsiExpression getExpression(PsiElement element) {
-    final PsiElement method = myMethodCall.getMethodExpression().resolve();
+    final PsiReferenceExpression methodExpression = myMethodCall.getMethodExpression();
+    final PsiElement method = methodExpression.resolve();
     if (method != null) {
       final PsiMethod psiMethod = (PsiMethod)method;
-      final PsiParameter[] psiParameters = psiMethod.getParameterList().getParameters();
-      final PsiExpressionList argumentList = myMethodCall.getArgumentList();
-      int idx = 0;
-      for (PsiExpression expression : argumentList.getExpressions()) {
-        if (element != null && PsiTreeUtil.isAncestor(expression, element, false)) {
-          if (psiParameters.length > idx) {
-            final PsiType paramType = psiParameters[idx].getType();
-            if (paramType instanceof PsiArrayType) {
-              final PsiType expressionType = expression.getType();
-              if (expressionType != null && expressionType.isAssignableFrom(((PsiArrayType)paramType).getComponentType())) {
-                return expression;
-              }
+      return checkMethod(element, psiMethod);
+    } else {
+      final Collection<PsiElement> psiElements = TargetElementUtil.getInstance().getTargetCandidates(methodExpression);
+      for (PsiElement psiElement : psiElements) {
+        if (psiElement instanceof PsiMethod) {
+          final PsiExpression expression = checkMethod(element, (PsiMethod)psiElement);
+          if (expression != null) return expression;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private PsiExpression checkMethod(final PsiElement element, final PsiMethod psiMethod) {
+    final PsiParameter[] psiParameters = psiMethod.getParameterList().getParameters();
+    final PsiExpressionList argumentList = myMethodCall.getArgumentList();
+    int idx = 0;
+    for (PsiExpression expression : argumentList.getExpressions()) {
+      if (element != null && PsiTreeUtil.isAncestor(expression, element, false)) {
+        if (psiParameters.length > idx) {
+          final PsiType paramType = psiParameters[idx].getType();
+          if (paramType instanceof PsiArrayType) {
+            final PsiType expressionType = expression.getType();
+            if (expressionType != null && expressionType.isAssignableFrom(((PsiArrayType)paramType).getComponentType())) {
+              return expression;
             }
           }
         }
-        idx++;
       }
+      idx++;
     }
     return null;
   }
