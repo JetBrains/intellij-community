@@ -10,6 +10,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -332,8 +333,8 @@ public class XDebugSessionImpl implements XDebugSession {
     }
 
     if (breakpoint.isLogMessage()) {
-      String message = XDebuggerBundle.message("xbreakpoint.reached.at.0", XBreakpointUtil.getDisplayText(breakpoint));
-      printMessage(message);
+      String text = StringUtil.decapitalize(XBreakpointUtil.getDisplayText(breakpoint));
+      printMessage(XDebuggerBundle.message("xbreakpoint.reached.at.0", text));
     }
     String expression = breakpoint.getLogExpression();
     if (expression != null && evaluator != null) {
@@ -378,7 +379,7 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   private void printMessage(final String message) {
-    ((ConsoleView)mySessionTab.getConsole()).print(message, ConsoleViewContentType.SYSTEM_OUTPUT);
+    ((ConsoleView)mySessionTab.getConsole()).print(message + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
   }
 
   public void positionReached(@NotNull final XSourcePosition position, @NotNull final XSuspendContext suspendContext) {
