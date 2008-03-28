@@ -342,7 +342,7 @@ public class TestNGUtil implements TestFramework
   }
 
   public static PsiClass[] getAllTestClasses(final TestClassFilter filter) {
-    final PsiClass holder[][] = new PsiClass[1][];
+    final PsiClass[][] holder = new PsiClass[1][];
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable()
     {
       public void run() {
