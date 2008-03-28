@@ -2,8 +2,8 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DNamedElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DTypedElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DNamedElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DTypedElement;
 
 /**
  * User: Dmitry.Krasilschikov

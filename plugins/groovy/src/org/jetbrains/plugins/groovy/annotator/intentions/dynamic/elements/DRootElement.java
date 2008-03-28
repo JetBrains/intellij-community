@@ -1,8 +1,6 @@
-package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
+package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 
 import java.util.Collection;
 import java.util.HashMap;

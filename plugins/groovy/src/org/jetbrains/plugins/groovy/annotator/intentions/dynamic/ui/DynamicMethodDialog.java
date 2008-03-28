@@ -146,10 +146,10 @@ public class DynamicMethodDialog extends DynamicDialog {
   }
 
   private static class MySuggestedNameCellEditor extends AbstractTableCellEditor {
-    final JTextField myNameField;
+    JTextField myNameField;
 
     public MySuggestedNameCellEditor(String[] names) {
-      myNameField = new JTextField(names[0]);
+      myNameField = names.length == 0 ? new JTextField() : new JTextField(names[0]);
     }
 
     public String getCellEditorValue() {

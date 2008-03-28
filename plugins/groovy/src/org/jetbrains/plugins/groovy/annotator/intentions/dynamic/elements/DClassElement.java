@@ -1,11 +1,10 @@
-package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
+package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 
 import java.util.*;
 
@@ -29,15 +28,15 @@ public class DClassElement implements DNamedElement {
     DynamicManager.getInstance(myProject).getRootElement().mergeAddClass(this);
   }
 
-  protected void addMethod(DMethodElement methodElement) {
+  public void addMethod(DMethodElement methodElement) {
     myMethods.add(methodElement);
   }
 
-  protected void addMethods(Collection<DMethodElement> methods) {
+   void addMethods(Collection<DMethodElement> methods) {
     myMethods.addAll(methods);
   }
 
-  protected void addProperty(DPropertyElement propertyElement) {
+  public void addProperty(DPropertyElement propertyElement) {
     myNamesToProperties.put(propertyElement.getName(), propertyElement);
   }
 
@@ -67,11 +66,11 @@ public class DClassElement implements DNamedElement {
     myName = name;
   }
 
-  protected DPropertyElement removeProperty(String name) {
+  public DPropertyElement removeProperty(String name) {
     return myNamesToProperties.remove(name);
   }
 
-  protected boolean removeMethod(DMethodElement methodElement) {
+  public boolean removeMethod(DMethodElement methodElement) {
     return myMethods.remove(methodElement);
   }
 

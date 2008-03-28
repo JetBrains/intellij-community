@@ -1,4 +1,6 @@
-package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
+package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
+
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DElement;
 
 /**
  * User: Dmitry.Krasilschikov

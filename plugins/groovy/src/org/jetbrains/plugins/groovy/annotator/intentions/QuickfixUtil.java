@@ -132,7 +132,7 @@ public class QuickfixUtil {
       result.add(listOfPair.first);
     }
 
-    return result.toArray(new String[]{""});
+    return result.toArray(new String[result.size()]);
   }
 
   public static String shortenType(String typeText) {
