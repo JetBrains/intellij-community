@@ -10,14 +10,15 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
 public class WrapExpressionFix implements IntentionAction {
 
-  private PsiExpression myExpression;
-  private PsiClassType myExpectedType;
+  private final PsiExpression myExpression;
+  private final PsiClassType myExpectedType;
 
   public WrapExpressionFix(PsiClassType expectedType, PsiExpression expression) {
     myExpression = expression;
@@ -26,12 +27,12 @@ public class WrapExpressionFix implements IntentionAction {
 
   @NotNull
   public String getText() {
-    PsiMethod wrapper = findWrapper(myExpression.getType(), myExpectedType);
-    PsiClass aClass = wrapper.getContainingClass();
-    String methodPresentation = aClass.getName() + "." + wrapper.getName();
+    final PsiMethod wrapper = findWrapper(myExpression.getType(), myExpectedType);
+    final String methodPresentation = wrapper != null ? (wrapper.getContainingClass().getName() + "." + wrapper.getName()) : "";
     return QuickFixBundle.message("wrap.expression.using.static.accessor.text", methodPresentation);
   }
 
+  @Nullable
   private static PsiMethod findWrapper(PsiType type, PsiClassType expectedType) {
     PsiClass aClass = expectedType.resolve();
     if (aClass != null) {
@@ -54,7 +55,7 @@ public class WrapExpressionFix implements IntentionAction {
     return QuickFixBundle.message("wrap.expression.using.static.accessor.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myExpression.isValid()
            && myExpression.getManager().isInProject(myExpression)
            && myExpectedType.isValid()
@@ -62,9 +63,10 @@ public class WrapExpressionFix implements IntentionAction {
            && findWrapper(myExpression.getType(), myExpectedType) != null;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiMethod wrapper = findWrapper(myExpression.getType(), myExpectedType);
+    assert wrapper != null;
     PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
     @NonNls String methodCallText = "Foo." + wrapper.getName() + "()";
     PsiMethodCallExpression call = (PsiMethodCallExpression) factory.createExpressionFromText(methodCallText,
