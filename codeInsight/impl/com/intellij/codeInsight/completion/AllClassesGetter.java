@@ -195,7 +195,11 @@ public class AllClassesGetter {
     final PsiShortNamesCache cache = facade.getShortNamesCache();
 
     final GlobalSearchScope scope = context.getContainingFile().getResolveScope();
-    final String[] names = cache.getAllClassNames(true);
+    final String[] names = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
+      public String[] compute() {
+        return cache.getAllClassNames(true);
+      }
+    });
     Arrays.sort(names, new Comparator<String>() {
       public int compare(final String o1, final String o2) {
         return o1.compareToIgnoreCase(o2);
