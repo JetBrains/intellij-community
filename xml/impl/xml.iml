@@ -6,15 +6,17 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="xml-openapi" />
     <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="resources" />
     <orderEntry type="library" name="Xerces" level="project" />
-    <orderEntry type="module" module-name="ui-impl" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="commons-collections" level="project" />
-    <orderEntry type="module" module-name="refactoring-impl" />
     <orderEntry type="module" module-name="dom-openapi" />
+    <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="jsp-openapi" />
+    <orderEntry type="module" module-name="jsp-spi" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

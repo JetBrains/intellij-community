@@ -11,8 +11,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.ParsingContext;
-import com.intellij.psi.impl.source.parsing.ParseUtil;
+import com.intellij.psi.impl.source.parsing.TokenProcessor;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
@@ -55,7 +57,7 @@ public class OldXmlParsing implements XmlElementType {
     TreeUtil.addChildren(root, parseProlog(lexer));
     parseGenericXml(lexer, root, new HashSet<String>());
 
-    ParseUtil.insertMissingTokens(root,
+    insertMissingTokens(root,
                                   originalLexer,
                                   startOffset,
                                   endOffset,
@@ -78,7 +80,7 @@ public class OldXmlParsing implements XmlElementType {
     while (filterLexer.getTokenType() != null) {
       context.getXmlParsing().addToken(holderElement, filterLexer);
     }
-    ParseUtil.insertMissingTokens(holderElement, lexer, startOffset, endOffset, -1, WhiteSpaceAndCommentsProcessor.INSTANCE, context);
+    insertMissingTokens(holderElement, lexer, startOffset, endOffset, -1, WhiteSpaceAndCommentsProcessor.INSTANCE, context);
     ASTNode result = holderElement.getFirstChildNode();
     return result;
   }
@@ -124,7 +126,7 @@ public class OldXmlParsing implements XmlElementType {
       rootTagChecked = true;
     }
 
-    ParseUtil.insertMissingTokens(root, ((FilterLexer)lexer).getOriginal(), 
+    insertMissingTokens(root, ((FilterLexer)lexer).getOriginal(),
                                   0,
                                   lexer.getBufferEnd(),
                                   -1, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
@@ -334,7 +336,7 @@ public class OldXmlParsing implements XmlElementType {
 
         return false;
       }
-      TreeElement endTagStart = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
+      TreeElement endTagStart = createTokenElement(lexer, myContext.getCharTable());
       lexer.advance();
 
       if (lexer.getTokenType() != XML_TAG_NAME) {
@@ -376,6 +378,13 @@ public class OldXmlParsing implements XmlElementType {
 
     return true;
   }
+
+  public static TreeElement createTokenElement(Lexer lexer, CharTable table) {
+    IElementType tokenType = lexer.getTokenType();
+    if (tokenType == null) return null;
+    return ASTFactory.leaf(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), table);
+  }
+
 
   private TreeElement parseEntityRef(Lexer lexer) {
     CompositeElement ref = ASTFactory.composite(XML_ENTITY_REF);
@@ -877,7 +886,7 @@ public class OldXmlParsing implements XmlElementType {
   }
 
   private TreeElement addToken(CompositeElement decl, Lexer lexer) {
-    final TreeElement element = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
+    final TreeElement element = createTokenElement(lexer, myContext.getCharTable());
     if (element != null) {
       TreeUtil.addChildren(decl, element);
       myLastTokenEnd = lexer.getTokenEnd();
@@ -900,20 +909,20 @@ public class OldXmlParsing implements XmlElementType {
       } else if (lexer.getTokenType() == XML_ENTITY_DECL_START) {
         children = parseEntityDecl(lexer);
       } else {
-        children = ParseUtil.createTokenElement(lexer, dummyRoot.getCharTable());
+        children = createTokenElement(lexer, dummyRoot.getCharTable());
         lexer.advance();
       }
 
       TreeUtil.addChildren(dummyRoot, children);
     }
     originalLexer.start(text, start, end, _OldXmlLexer.DOCTYPE);
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, start, end, _OldXmlLexer.DOCTYPE,
+    insertMissingTokens(dummyRoot, originalLexer, start, end, _OldXmlLexer.DOCTYPE,
                                   WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return (TreeElement)dummyRoot.getFirstChildNode();
   }
 
-  public static class WhiteSpaceAndCommentsProcessor implements ParseUtil.TokenProcessor {
-    public static final ParseUtil.TokenProcessor INSTANCE = new WhiteSpaceAndCommentsProcessor();
+  public static class WhiteSpaceAndCommentsProcessor implements TokenProcessor {
+    public static final TokenProcessor INSTANCE = new WhiteSpaceAndCommentsProcessor();
 
     private WhiteSpaceAndCommentsProcessor() {
     }
@@ -934,7 +943,7 @@ public class OldXmlParsing implements XmlElementType {
           tokenElement = parseComment(lexer, context);
         }
         else {
-          tokenElement = ParseUtil.createTokenElement(lexer, context.getCharTable());
+          tokenElement = createTokenElement(lexer, context.getCharTable());
           lexer.advance();
         }
 
@@ -958,7 +967,7 @@ public class OldXmlParsing implements XmlElementType {
       final CompositeElement comment = ASTFactory.composite(XML_COMMENT);
 
       while (lexer.getTokenType() != null && XML_COMMENT_BIT_SET.contains(lexer.getTokenType())) {
-        final TreeElement tokenElement = ParseUtil.createTokenElement(lexer, context.getCharTable());
+        final TreeElement tokenElement = createTokenElement(lexer, context.getCharTable());
         lexer.advance();
         TreeUtil.addChildren(comment, tokenElement);
       }
@@ -966,4 +975,123 @@ public class OldXmlParsing implements XmlElementType {
       return comment;
     }
   }
+
+  public static void insertMissingTokens(CompositeElement root,
+                                         Lexer lexer,
+                                         int startOffset,
+                                         int endOffset,
+                                         int state,
+                                         TokenProcessor processor,
+                                         ParsingContext context) {
+    if (state < 0) {
+      lexer.start(lexer.getBufferSequence(), startOffset, endOffset,0);
+    }
+    else {
+      lexer.start(lexer.getBufferSequence(), startOffset, endOffset, state);
+    }
+
+    LeafElement leaf = TreeUtil.findFirstLeaf(root);
+    if (leaf == null) {
+      final TreeElement firstMissing = processor.process(lexer, context);
+      if (firstMissing != null) {
+        TreeUtil.addChildren(root, firstMissing);
+      }
+      return;
+    }
+    {
+      // Missing in the begining
+      final IElementType tokenType = lexer.getTokenType();
+      if (tokenType != leaf.getElementType() && processor.isTokenValid(tokenType)) {
+        final TreeElement firstMissing = processor.process(lexer, context);
+        if (firstMissing != null) {
+          TreeUtil.insertBefore(root.getFirstChildNode(), firstMissing);
+        }
+      }
+      passTokenOrChameleon(leaf, lexer);
+    }
+    // Missing in tree body
+    insertMissingTokensInTreeBody(leaf, lexer, processor, context, null);
+    if (lexer.getTokenType() != null) {
+      // whitespaces at the end of the file
+      final TreeElement firstMissing = processor.process(lexer, context);
+      if (firstMissing != null) {
+        ASTNode current = root;
+        while (current instanceof CompositeElement) {
+          if (current.getUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY) != null) break;
+          current = current.getLastChildNode();
+        }
+        if (current instanceof CompositeElement) {
+          TreeUtil.addChildren((CompositeElement)current, firstMissing);
+        }
+        else {
+          TreeUtil.insertAfter(root.getLastChildNode(), firstMissing);
+        }
+      }
+    }
+  }
+
+  public static void insertMissingTokensInTreeBody(TreeElement leaf, Lexer lexer,
+                                                   TokenProcessor processor,
+                                                   ParsingContext context,
+                                                   ASTNode endToken) {
+    final TreeUtil.CommonParentState commonParents = new TreeUtil.CommonParentState();
+    while (leaf != null) {
+      commonParents.strongWhiteSpaceHolder = null;
+      final IElementType tokenType = lexer.getTokenType();
+      final TreeElement next;
+      if (tokenType instanceof IChameleonElementType) {
+        next = TreeUtil.nextLeaf(leaf, commonParents, tokenType);
+      }
+      else {
+        next = TreeUtil.nextLeaf(leaf, commonParents, null);
+      }
+
+      if (next == null || tokenType == null || next == endToken) break;
+      if (tokenType != next.getElementType() && processor.isTokenValid(tokenType)) {
+        final TreeElement firstMissing = processor.process(lexer, context);
+        final CompositeElement unclosedElement = commonParents.strongWhiteSpaceHolder;
+        if (unclosedElement != null) {
+          if (commonParents.isStrongElementOnRisingSlope || unclosedElement.getFirstChildNode() == null) {
+            TreeUtil.addChildren(unclosedElement, firstMissing);
+          }
+          else {
+            TreeUtil.insertBefore(unclosedElement.getFirstChildNode(), firstMissing);
+          }
+        }
+        else {
+          final ASTNode insertBefore = commonParents.nextLeafBranchStart;
+          TreeElement insertAfter = commonParents.startLeafBranchStart;
+          TreeElement current = commonParents.startLeafBranchStart;
+          while (current != insertBefore) {
+            final TreeElement treeNext = current.getTreeNext();
+            if (treeNext == insertBefore) {
+              insertAfter = current;
+              break;
+            }
+            if (treeNext.getUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY) != null) {
+              insertAfter = null;
+              TreeUtil.addChildren((CompositeElement)treeNext, firstMissing);
+              break;
+            }
+            current = treeNext;
+          }
+          if (insertAfter != null) TreeUtil.insertAfter(insertAfter, firstMissing);
+        }
+      }
+      passTokenOrChameleon(next, lexer);
+      leaf = next;
+    }
+  }
+
+  private static void passTokenOrChameleon(final ASTNode next, Lexer lexer) {
+    if (next instanceof LeafElement && (((LeafElement)next).isChameleon() || next instanceof OuterLanguageElement)) {
+      final int endOfChameleon = next.getTextLength() + lexer.getTokenStart();
+      while (lexer.getTokenType() != null && lexer.getTokenEnd() < endOfChameleon) {
+        lexer.advance();
+      }
+    }
+    lexer.advance();
+  }
+
+
 }

@@ -18,7 +18,6 @@ import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
-import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -35,13 +34,6 @@ public class ParseUtil implements Constants {
     else {
       return ASTFactory.leaf(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), table);
     }
-  }
-
-  public static interface TokenProcessor {
-    @Nullable
-    TreeElement process(Lexer lexer, ParsingContext context);
-
-    boolean isTokenValid(IElementType tokenType);
   }
 
   public static abstract class DefaultWhiteSpaceTokenProcessorImpl implements TokenProcessor {

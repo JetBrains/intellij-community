@@ -309,7 +309,7 @@ public class JavadocParsing extends Parsing {
     return ASTFactory.leaf(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), myContext.getCharTable());
   }
 
-  private static class TokenProcessor implements ParseUtil.TokenProcessor {
+  private static class TokenProcessor implements com.intellij.psi.impl.source.parsing.TokenProcessor {
     private JavadocParsing myParsing;
 
     private TokenProcessor(JavadocParsing theParsing) {
