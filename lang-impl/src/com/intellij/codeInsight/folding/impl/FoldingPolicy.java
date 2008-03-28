@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.lang.Language;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.LanguageFolding;
@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -37,7 +38,9 @@ class FoldingPolicy {
       ChameleonTransforming.transformChildren(node, true);
       final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(node, document);
       for (FoldingDescriptor descriptor : foldingDescriptors) {
-        map.put(SourceTreeToPsiMap.treeElementToPsi(descriptor.getElement()), descriptor.getRange());
+        ASTNode descriptorNode = descriptor.getElement();
+        if (descriptorNode instanceof LeafElement) descriptorNode = ChameleonTransforming.transform((LeafElement)node);
+        map.put(SourceTreeToPsiMap.treeElementToPsi(descriptorNode), descriptor.getRange());
       }
     }
 
