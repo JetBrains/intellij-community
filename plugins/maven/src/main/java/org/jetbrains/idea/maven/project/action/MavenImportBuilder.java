@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.apache.maven.embedder.MavenEmbedder;
+import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
@@ -117,9 +118,10 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
       final MavenProjectsState projectsState = MavenProjectsState.getInstance(project);
       myImportProcessor.getMavenProjectModel().visit(new MavenProjectModel.MavenProjectVisitorPlain() {
         public void visit(MavenProjectModel.Node node) {
-          final Set<String> projectProfiles = ProjectUtil.collectProfileIds(node.getMavenProject(), new HashSet<String>());
-          projectProfiles.retainAll(myProfiles);
-          projectsState.setProfiles(node.getFile(), projectProfiles);
+          MavenProject p = node.getMavenProject();
+          Set<String> profiles = ProjectUtil.collectProfileIds(p.getModel(), new HashSet<String>());
+          profiles.retainAll(myProfiles);
+          projectsState.setProfiles(node.getFile(), profiles);
         }
       });
     }
@@ -164,14 +166,18 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   }
 
   private List<String> collectProfiles(Collection<VirtualFile> files) throws MavenException {
-    final SortedSet<String> profiles = new TreeSet<String>();
+    SortedSet<String> profiles = new TreeSet<String>();
 
-    final MavenEmbedder embedder = MavenFactory.createEmbedderForRead(getCoreState());
-    final MavenProjectReader reader = new MavenProjectReader(embedder);
-    for (VirtualFile file : files) {
-      ProjectUtil.collectProfileIds(reader.readBare(file.getPath()), profiles);
+    try {
+      MavenEmbedder e = MavenFactory.createEmbedderForRead(getCoreState());
+      MavenProjectReader r = new MavenProjectReader(e);
+      for (VirtualFile f : files) {
+        ProjectUtil.collectProfileIds(r.readModel(f.getPath()), profiles);
+      }
+      MavenFactory.releaseEmbedder(e);
     }
-    MavenFactory.releaseEmbedder(embedder);
+    catch (MavenException ignore) {
+    }
 
     return new ArrayList<String>(profiles);
   }
@@ -290,7 +296,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   public String getSuggestedProjectName() {
     final List<MavenProjectModel.Node> list = myImportProcessor.getMavenProjectModel().getRootProjects();
     if(list.size()==1){
-      return list.get(0).getMavenProject().getArtifactId();
+      return list.get(0).getId().artifactId;
     }
     return null;
   }

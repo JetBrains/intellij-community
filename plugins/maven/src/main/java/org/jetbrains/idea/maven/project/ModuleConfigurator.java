@@ -68,7 +68,7 @@ public class ModuleConfigurator {
 
       boolean isExportable = ProjectUtil.isExportableDependency(artifact);
 
-      String moduleName = myMapping.getModuleName(artifact);
+      String moduleName = myMapping.getModuleName(id);
       if (moduleName != null) {
         myModel.createModuleDependency(moduleName, isExportable);
       }

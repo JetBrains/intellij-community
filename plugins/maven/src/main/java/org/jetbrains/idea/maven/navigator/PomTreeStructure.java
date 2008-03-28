@@ -17,6 +17,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -715,7 +716,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
       nonModulePomsNode.clear();
     }
 
-    public boolean containsAsModule(final PomNode node) {
+    public boolean containsAsModule(PomNode node) {
       if (mavenProject != null) {
         File myParent = new File(virtualFile.getPath()).getParentFile();
         File itsParent = new File(node.virtualFile.getPath()).getParentFile();
@@ -723,8 +724,13 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
         if (relPath != null) {
           relPath = FileUtil.toSystemIndependentName(relPath);
-          for (String moduleName : ProjectUtil
-            .collectRelativeModulePaths(mavenProject, myProjectsState.getProfiles(virtualFile), new HashSet<String>())) {
+
+          Set<String> moduleNames = ProjectUtil.collectRelativeModulePaths(
+              mavenProject.getModel(),
+              myProjectsState.getProfiles(virtualFile),
+              new HashSet<String>());
+
+          for (String moduleName : moduleNames) {
             if (relPath.equals(moduleName)) {
               return true;
             }
@@ -751,7 +757,8 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     private void createProfileNodes() {
       profilesNode.clear();
-      for (String id : ProjectUtil.collectProfileIds(mavenProject, new TreeSet<String>())) {
+      Model m = mavenProject == null ? null : mavenProject.getModel();
+      for (String id : ProjectUtil.collectProfileIds(m, new TreeSet<String>())) {
         profilesNode.add(id);
       }
       profilesNode.updateActive(myProjectsState.getProfiles(virtualFile), true);

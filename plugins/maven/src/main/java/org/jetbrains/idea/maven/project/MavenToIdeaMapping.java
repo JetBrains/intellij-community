@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.util.MavenId;
 
@@ -41,9 +40,10 @@ public class MavenToIdeaMapping {
 
     mavenProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
       public void visit(MavenProjectModel.Node node) {
-        final MavenId id = node.getId();
-        final String name =
-          node.getLinkedModule() != null ? node.getLinkedModule().getName() : generateModuleName(id, duplicateNames);
+        MavenId id = node.getId();
+        String name = node.getLinkedModule() != null
+                      ? node.getLinkedModule().getName()
+                      : generateModuleName(id, duplicateNames);
 
         projectIdToModuleName.put(id, name);
 
@@ -123,7 +123,7 @@ public class MavenToIdeaMapping {
     return name;
   }
 
-  private String generateModulePath(final MavenProjectModel.Node node, final String dedicatedModuleDir) {
+  private String generateModulePath(MavenProjectModel.Node node, String dedicatedModuleDir) {
     return new File(StringUtil.isEmptyOrSpaces(dedicatedModuleDir) ? node.getDirectory() : dedicatedModuleDir,
                     projectToModuleName.get(node) + IML_EXT).getPath();
   }
@@ -136,8 +136,8 @@ public class MavenToIdeaMapping {
     return id.toString();
   }
 
-  public String getModuleName(Artifact a) {
-    String name = projectIdToModuleName.get(new MavenId(a));
+  public String getModuleName(MavenId id) {
+    String name = projectIdToModuleName.get(id);
     if (nameToModule.containsKey(name) || projectNames.contains(name)) return name;
     return null;
   }

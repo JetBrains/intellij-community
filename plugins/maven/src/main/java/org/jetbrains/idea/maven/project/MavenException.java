@@ -29,6 +29,7 @@ public class MavenException extends Exception {
   }
 
   public MavenException(List<Exception> ee, String pomPath) {
+    super(ee.get(0));
     myPomPath = pomPath;
 
     for (Exception exception : ee) {

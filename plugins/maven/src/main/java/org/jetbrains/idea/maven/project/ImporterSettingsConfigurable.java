@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -11,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
+import org.apache.maven.project.MavenProject;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -98,18 +98,12 @@ public class ImporterSettingsConfigurable implements Configurable {
     return files;
   }
 
-  private Collection<String> collectPaths(final Collection<VirtualFile> files, final Collection<String> paths) {
-    for (VirtualFile file : files) {
-      paths.add(FileUtil.toSystemDependentName(file.getPath()));
-    }
-    return paths;
-  }
-
   private static Set<String> collectProfiles(final MavenProjectsState projectsState,
                                              final Collection<VirtualFile> files,
                                              final Set<String> profiles) {
     for (VirtualFile file : files) {
-      ProjectUtil.collectProfileIds(projectsState.getMavenProject(file), profiles);
+      MavenProject p = projectsState.getMavenProject(file);
+      ProjectUtil.collectProfileIds(p == null ? null : p.getModel(), profiles);
     }
     return profiles;
   }

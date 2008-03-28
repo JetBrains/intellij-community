@@ -14,12 +14,16 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
+import hidden.org.codehaus.plexus.util.FileUtils;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.repo.MavenRepository;
+import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
+import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
+import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import java.io.File;
@@ -36,10 +40,17 @@ public abstract class ImportingTestCase extends MavenTestCase {
     super.setUpInWriteAction();
     MavenWorkspaceSettingsComponent c = myProject.getComponent(MavenWorkspaceSettingsComponent.class);
     myPrefs = c.getState().myImporterSettings;
+    removeFromLocalRepository("test");
   }
 
   @Override
   protected void setUpModule() {
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    removeFromLocalRepository("test");
+    super.tearDown();
   }
 
   protected PomTreeStructure.RootNode createMavenTree() {
@@ -232,34 +243,6 @@ public abstract class ImportingTestCase extends MavenTestCase {
     assertOrderedElementsAreEqual(actual, expectedDeps);
   }
 
-  protected <T, U> void assertUnorderedElementsAreEqual(Collection<U> actual, T... expected) {
-    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + actual;
-    assertEquals(s, expected.length, actual.size());
-
-    for (T eachExpected : expected) {
-      boolean found = false;
-      for (U eachActual : actual) {
-        if (eachExpected.equals(eachActual)) {
-          found = true;
-          break;
-        }
-      }
-      assertTrue(s, found);
-    }
-  }
-
-  protected <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, T... expected) {
-    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + actual;
-    assertEquals(s, expected.length, actual.size());
-
-    List<U> actualList = new ArrayList<U>(actual);
-    for (int i = 0; i < expected.length; i++) {
-      T expectedElement = expected[i];
-      U actualElement = actualList.get(i);
-      assertEquals(s, expectedElement, actualElement);
-    }
-  }
-
   protected Module getModule(String name) {
     Module m = ModuleManager.getInstance(myProject).findModuleByName(name);
     assertNotNull("Module " + name + " not found", m);
@@ -321,5 +304,20 @@ public abstract class ImportingTestCase extends MavenTestCase {
     catch (CanceledException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  protected void executeGoal(String relativePath, String goal) {
+    VirtualFile pom = projectRoot.findFileByRelativePath(relativePath + "/pom.xml");
+
+    MavenRunnerParameters rp = new MavenRunnerParameters(pom.getPath(), Arrays.asList(goal), null);
+    MavenRunnerSettings rs = new MavenRunnerSettings();
+    MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(rp, getMavenCoreState(), rs);
+
+    e.execute();
+  }
+
+  protected void removeFromLocalRepository(String groupId) throws IOException {
+    String path = getRepositoryPath() + "/" + groupId;
+    FileUtils.deleteDirectory(path);
   }
 }

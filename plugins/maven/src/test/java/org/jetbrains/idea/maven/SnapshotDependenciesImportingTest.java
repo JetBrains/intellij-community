@@ -1,14 +1,7 @@
 package org.jetbrains.idea.maven;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import hidden.org.codehaus.plexus.util.FileUtils;
-import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
-import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
-import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
-
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 
 public class SnapshotDependenciesImportingTest extends ImportingTestCase {
   private File remoteRepoDir;
@@ -19,14 +12,6 @@ public class SnapshotDependenciesImportingTest extends ImportingTestCase {
 
     remoteRepoDir = new File(dir, "remote");
     remoteRepoDir.mkdirs();
-
-    removeFromLocalRepository("test");
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    removeFromLocalRepository("test");
-    super.tearDown();
   }
 
   public void testSnapshotVersionDependencyToModule() throws Exception {
@@ -120,18 +105,7 @@ public class SnapshotDependenciesImportingTest extends ImportingTestCase {
   }
 
   private void deploy(String modulePath) {
-    VirtualFile pom = projectRoot.findFileByRelativePath(modulePath + "/pom.xml");
-
-    MavenRunnerParameters rp = new MavenRunnerParameters(pom.getPath(), Arrays.asList("deploy"), null);
-    MavenRunnerSettings rs = new MavenRunnerSettings();
-    MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(rp, getMavenCoreState(), rs);
-
-    e.execute();
-  }
-
-  private void removeFromLocalRepository(String groupId) throws IOException {
-    String path = getRepositoryPath() + "/" + groupId;
-    FileUtils.deleteDirectory(path);
+    executeGoal(modulePath, "deploy");
   }
 
   private String repositoriesSection() {

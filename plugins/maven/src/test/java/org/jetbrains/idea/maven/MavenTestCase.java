@@ -12,6 +12,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
+import java.util.Arrays;
 
 public abstract class MavenTestCase extends IdeaTestCase {
   protected File dir;
@@ -138,5 +140,33 @@ public abstract class MavenTestCase extends IdeaTestCase {
     f.getParentFile().mkdirs();
     f.createNewFile();
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
+  }
+
+  protected <T, U> void assertUnorderedElementsAreEqual(Collection<U> actual, T... expected) {
+    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + actual;
+    assertEquals(s, expected.length, actual.size());
+
+    for (T eachExpected : expected) {
+      boolean found = false;
+      for (U eachActual : actual) {
+        if (eachExpected.equals(eachActual)) {
+          found = true;
+          break;
+        }
+      }
+      assertTrue(s, found);
+    }
+  }
+
+  protected <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, T... expected) {
+    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + actual;
+    assertEquals(s, expected.length, actual.size());
+
+    List<U> actualList = new ArrayList<U>(actual);
+    for (int i = 0; i < expected.length; i++) {
+      T expectedElement = expected[i];
+      U actualElement = actualList.get(i);
+      assertEquals(s, expectedElement, actualElement);
+    }
   }
 }

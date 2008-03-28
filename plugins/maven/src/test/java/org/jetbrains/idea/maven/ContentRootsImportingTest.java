@@ -458,11 +458,10 @@ public class ContentRootsImportingTest extends ImportingTestCase {
 
     assertModules("project");
 
-    // todo should fail when maven embedder is fixed
     assertExcludes("project");
     assertModuleOutput("project",
-                       getProjectPath() + "/${project.build.directory}/outputCustom",
-                       getProjectPath() + "/${project.build.directory}/testCustom");
+                       getProjectPath() + "/target/outputCustom",
+                       getProjectPath() + "/target/testCustom");
   }
 
   public void testOutputDirsOutsideOfContentRoot() throws Exception {

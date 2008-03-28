@@ -3,9 +3,9 @@ package org.jetbrains.idea.maven;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
-import org.jetbrains.idea.maven.project.MavenException;
 
 import java.io.File;
 import java.util.List;
@@ -102,37 +102,6 @@ public class BasicImportingTest extends ImportingTestCase {
     assertModules("project", "m1", "m2");
 
     assertModuleModuleDeps("m1", "m2");
-  }
-
-  public void testParentWithoutARelativePath() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
-
-                     "<modules>" +
-                     "  <module>modules/m</module>" +
-                     "</modules>");
-
-    createModulePom("modules/m", "<groupId>test</groupId>" +
-                                 "<artifactId>m1</artifactId>" +
-                                 "<version>1</version>" +
-
-                                 "<parent>" +
-                                 "  <groupId>test</groupId>" +
-                                 "  <artifactId>project</artifactId>" +
-                                 "  <version>1</version>" +
-                                 "</parent>");
-
-    try {
-      // shouldn't throw the 'parent pom not found' exception.
-      importProject();
-      fail();
-    }
-    catch (MavenException e) {
-      // todo: not sure if we should support such configurations.
-      // strictly speaking the configuration is invalid.
-    }
   }
 
   public void testOptionalLibraryDependencyIsNotExportable() throws Exception {
@@ -502,6 +471,73 @@ public class BasicImportingTest extends ImportingTestCase {
     assertModules("project");
   }
 
+  public void testParentWithoutARelativePath() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>modules/m</module>" +
+                     "</modules>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <version>4.0</version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    createModulePom("modules/m", "<groupId>test</groupId>" +
+                                 "<artifactId>m</artifactId>" +
+                                 "<version>1</version>" +
+
+                                 "<parent>" +
+                                 "  <groupId>test</groupId>" +
+                                 "  <artifactId>project</artifactId>" +
+                                 "  <version>1</version>" +
+                                 "</parent>");
+
+    importProject();
+    assertModules("project", "m");
+
+    assertModuleLibDeps("m", "junit:junit:4.0");
+  }
+
+  public void testParentInRepository() throws Exception {
+    VirtualFile parent = createModulePom("parent",
+                                         "<groupId>test</groupId>" +
+                                         "<artifactId>parent</artifactId>" +
+                                         "<version>1</version>" +
+
+                                         "<dependencies>" +
+                                         "  <dependency>" +
+                                         "    <groupId>junit</groupId>" +
+                                         "    <artifactId>junit</artifactId>" +
+                                         "    <version>4.0</version>" +
+                                         "  </dependency>" +
+                                         "</dependencies>");
+    executeGoal("parent", "install");
+    parent.delete(null);
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>m</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "</parent>");
+
+    importProject();
+    assertModules("m");
+    assertModuleLibDeps("m", "junit:junit:4.0");
+  }
+
+
   public void testTestJarDependencies() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -743,22 +779,16 @@ public class BasicImportingTest extends ImportingTestCase {
                          "  </dependency>" +
                          "</dependencies>");
 
-    try {
-      importProject();
-      fail();
-    } catch(MavenException e) {
-      // todo until the bug in the embedder is fixed.
-    }
+    importProject();
+
+    assertModules("project", "m");
     
-    //assertModules("project", "m");
-    //
-    //assertEquals(1, unresolvedArtifacts.size());
-    //assertEquals(1, unresolvedArtifacts.get(0).second.size());
-    //assertEquals("yyy", unresolvedArtifacts.get(0).second.get(0).getArtifactId());
+    assertEquals(1, resolutionProblems.size());
+    assertEquals(1, resolutionProblems.get(0).second.size());
+    assertEquals("Unresolved dependency: xxx:yyy:pom:1:compile", resolutionProblems.get(0).second.get(0));
   }
 
-  public void ignoreTestPomTypeDependency() throws Exception {
-    // Not sure how to make maven to resolve the necessary artifact
+  public void testPomTypeDependency() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -772,8 +802,7 @@ public class BasicImportingTest extends ImportingTestCase {
                      "  </dependency>" +
                      "</dependencies>");
 
-    importProject();
-    assertModuleLibDeps("project", "junit:junit:4.0");
+    importProject(); // shouldn't throw any exception
   }
 
   public void testUnresolvedPomTypeDependency() throws Exception {

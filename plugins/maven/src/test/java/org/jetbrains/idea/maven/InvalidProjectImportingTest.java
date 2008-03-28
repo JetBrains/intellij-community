@@ -11,7 +11,7 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
       fail();
     }
     catch (MavenException e) {
-      assertExceptionHasPomFileContains(e, "java.lang.NullPointerException");
+      assertExceptionHasPomFileAndContains(e, "java.lang.NullPointerException");
     }
   }
 
@@ -29,7 +29,7 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
       fail();
     }
     catch (MavenException e) {
-      assertExceptionHasPomFileContains(e, "Cannot find artifact for parent POM: test:parent::1");
+      assertExceptionHasPomFileAndContains(e, "Cannot find artifact for parent POM: test:parent::1");
     }
   }
 
@@ -50,7 +50,7 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
       fail();
     }
     catch (MavenException e) {
-      assertExceptionHasPomFileContains(e, "Packaging 'jar' is invalid");
+      assertExceptionHasPomFileAndContains(e, "Packaging 'jar' is invalid");
     }
   }
 
@@ -71,7 +71,7 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
       fail();
     }
     catch (MavenException e) {
-      assertExceptionHasPomFileContains(e, "Failed to parse model", "foo\\pom.xml");
+      assertExceptionHasPomFileAndContains(e, "end tag name </project> must be the same as start tag <version>");
     }
   }
 
@@ -91,7 +91,7 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
       fail();
     }
     catch (MavenException e) {
-      assertExceptionHasPomFileContains(e, "Cannot find ArtifactRepositoryLayout instance for: nothing");
+      assertExceptionHasPomFileAndContains(e, "Cannot find ArtifactRepositoryLayout instance for: nothing");
     }
   }
   
@@ -293,7 +293,7 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
     }
   }
 
-  private void assertExceptionHasPomFileContains(MavenException e, String... parts) {
+  private void assertExceptionHasPomFileAndContains(MavenException e, String... parts) {
     assertNotNull(e.getPomPath());
     assertExceptionContains(e, parts);
   }

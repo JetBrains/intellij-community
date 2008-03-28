@@ -8,12 +8,15 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Stack;
 
 
@@ -82,18 +85,19 @@ public class ProjectConfigurator {
   }
 
   private void configModules() {
+    final List<Pair<Module, MavenProject>> modulesToConfig = new ArrayList<Pair<Module, MavenProject>>();
     myProjectModel.visit(new MavenProjectModel.MavenProjectVisitorRoot() {
       public void visit(MavenProjectModel.Node node) {
-        convertNode(node);
-        for (MavenProjectModel.Node child : node.mavenModulesTopoSorted) {
-          convertNode(child);
+        collectModule(node, modulesToConfig);
+        for (MavenProjectModel.Node child : node.mySubProjectsTopoSorted) {
+          collectModule(child, modulesToConfig);
         }
       }
     });
   }
 
-  private void convertNode(MavenProjectModel.Node node) {
-    final MavenProject mavenProject = node.getMavenProject();
+  private void collectModule(MavenProjectModel.Node node, List<Pair<Module, MavenProject>> result) {
+    MavenProject mavenProject = node.getMavenProject();
 
     Module module = myMapping.getModule(node);
     if (module == null) {
@@ -101,6 +105,7 @@ public class ProjectConfigurator {
     }
 
     new ModuleConfigurator(myModuleModel, myMapping, myProfiles, mySettings, module, mavenProject).config();
+    //result.add(new Pair<Module, MavenProject>(module, mavenProject));
   }
 
   private void configModuleGroups() {
@@ -109,10 +114,10 @@ public class ProjectConfigurator {
 
     myProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
       public void visit(MavenProjectModel.Node node) {
-        String name = myMapping.getModuleName(node.getArtifact());
+        String name = myMapping.getModuleName(node.getId());
         LOG.assertTrue(name != null);
 
-        if (createModuleGroups && !node.mavenModules.isEmpty()) {
+        if (createModuleGroups && !node.mySubProjects.isEmpty()) {
           groups.push(ProjectBundle.message("module.group.name", name));
         }
 
@@ -126,7 +131,7 @@ public class ProjectConfigurator {
       }
 
       public void leave(MavenProjectModel.Node node) {
-        if (createModuleGroups && !node.mavenModules.isEmpty()) {
+        if (createModuleGroups && !node.mySubProjects.isEmpty()) {
           groups.pop();
         }
       }
