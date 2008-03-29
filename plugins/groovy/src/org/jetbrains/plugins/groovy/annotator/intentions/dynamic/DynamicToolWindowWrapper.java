@@ -83,14 +83,10 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
 
   private MyTreeTable myTreeTable;
 
-  private boolean doesTreeTableInit() {
-    return myBigPanel != null && myTreeTableModel != null && myTreeTablePanel != null;
-  }
-
   public TreeTable getTreeTable() {
     getToolWindow();
 
-    return returnTreeTable();
+    return myTreeTable;
   }
 
   public ToolWindow getToolWindow() {
@@ -475,10 +471,6 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     return myBigPanel;
   }
 
-  private TreeTable returnTreeTable() {
-    return myTreeTable;
-  }
-
   public void projectOpened() {
   }
 
@@ -621,10 +613,6 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
   public ListTreeTableModelOnColumns getTreeTableModel() {
     getToolWindow();
 
-    return returnTreeTableModel();
-  }
-
-  private ListTreeTableModelOnColumns returnTreeTableModel() {
     return myTreeTableModel;
   }
 
