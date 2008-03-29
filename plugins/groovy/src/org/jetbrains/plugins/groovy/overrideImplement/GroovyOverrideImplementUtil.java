@@ -16,6 +16,7 @@ import com.intellij.psi.impl.compiled.ClsParameterImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -154,20 +155,24 @@ public class GroovyOverrideImplementUtil {
     if (body == null) return;
 
     final PsiElement lBrace = body.getLBrace();
-    if (lBrace == null) return;
 
+    assert lBrace != null;
     PsiElement l = lBrace.getNextSibling();
-    while (l instanceof PsiWhiteSpace) l = l.getNextSibling();
-    if (l == null) l = body;
-    final PsiElement rBrace = body.getRBrace();
-    if (rBrace == null) return;
+    assert l != null;
 
+    final PsiElement rBrace = body.getRBrace();
+
+    assert rBrace != null;
     PsiElement r = rBrace.getPrevSibling();
-    while (r instanceof PsiWhiteSpace) r = r.getPrevSibling();
-    if (r == null) r = body;
+    assert r != null;
+
+    LOG.assertTrue(!PsiDocumentManager.getInstance(result.getProject()).isUncommited(editor.getDocument()));
+    String text = editor.getDocument().getText();
 
     int start = l.getTextRange().getStartOffset();
+    start = CharArrayUtil.shiftForward(text, start, "\n\t ");
     int end = r.getTextRange().getEndOffset();
+    end = CharArrayUtil.shiftBackward(text, end - 1, "\n\t ") + 1;
 
     editor.getCaretModel().moveToOffset(Math.min(start, end));
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
