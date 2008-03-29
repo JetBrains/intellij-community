@@ -7,8 +7,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,8 +45,15 @@ public class DynamicManagerImpl extends DynamicManager {
   private List<DynamicChangeListener> myListeners = new ArrayList<DynamicChangeListener>();
   private DRootElement myRootElement = new DRootElement();
 
-  public DynamicManagerImpl(Project project) {
+  public DynamicManagerImpl(final Project project) {
     myProject = project;
+    StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+      public void run() {
+        if (myRootElement.getContainingClasses().size() > 0) {
+          DynamicToolWindowWrapper.getInstance(project).getToolWindow(); //initialize window
+        }
+      }
+    });
   }
 
   public Project getProject() {
@@ -60,14 +67,14 @@ public class DynamicManagerImpl extends DynamicManager {
   public void addProperty(DClassElement classElement, DPropertyElement propertyElement) {
     if (classElement == null) return;
 
+    ToolWindow window = DynamicToolWindowWrapper.getInstance(myProject).getToolWindow(); //important to fetch window before adding
     classElement.addProperty(propertyElement);
-    addItemInTree(classElement, propertyElement);
+    addItemInTree(classElement, propertyElement, window);
   }
 
   private void removeItemFromTree(DItemElement itemElement, DClassElement classElement) {
-    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID);
     DynamicToolWindowWrapper wrapper = DynamicToolWindowWrapper.getInstance(myProject);
-    ListTreeTableModelOnColumns model = wrapper.getTreeTableModel(window);
+    ListTreeTableModelOnColumns model = wrapper.getTreeTableModel();
     Object classNode = TreeUtil.findNodeWithObject(classElement, model, model.getRoot());
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode) TreeUtil.findNodeWithObject(itemElement, model, classNode);
     if (node == null) return;
@@ -77,9 +84,8 @@ public class DynamicManagerImpl extends DynamicManager {
   }
 
   private void removeClassFromTree(DClassElement classElement) {
-    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID);
     DynamicToolWindowWrapper wrapper = DynamicToolWindowWrapper.getInstance(myProject);
-    ListTreeTableModelOnColumns model = wrapper.getTreeTableModel(window);
+    ListTreeTableModelOnColumns model = wrapper.getTreeTableModel();
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode) TreeUtil.findNodeWithObject(classElement, model, model.getRoot());
     if (node == null) return;
     DefaultMutableTreeNode parent = (DefaultMutableTreeNode) node.getParent();
@@ -99,9 +105,8 @@ public class DynamicManagerImpl extends DynamicManager {
     }
   }
 
-  private void addItemInTree(final DClassElement classElement, final DItemElement itemElement) {
-    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID);
-    final ListTreeTableModelOnColumns myTreeTableModel = DynamicToolWindowWrapper.getInstance(myProject).getTreeTableModel(window);
+  private void addItemInTree(final DClassElement classElement, final DItemElement itemElement, final ToolWindow window) {
+    final ListTreeTableModelOnColumns myTreeTableModel = DynamicToolWindowWrapper.getInstance(myProject).getTreeTableModel();
 
     window.activate(new Runnable() {
       public void run() {
@@ -164,8 +169,9 @@ public class DynamicManagerImpl extends DynamicManager {
   public void addMethod(DClassElement classElement, DMethodElement methodElement) {
     if (classElement == null) return;
 
+    ToolWindow window = DynamicToolWindowWrapper.getInstance(myProject).getToolWindow(); //important to fetch window before adding
     classElement.addMethod(methodElement);
-    addItemInTree(classElement, methodElement);
+    addItemInTree(classElement, methodElement, window);
   }
 
   public void removeClassElement(DClassElement classElement) {

@@ -4,7 +4,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
@@ -21,9 +20,9 @@ import com.intellij.util.ui.treetable.TreeTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -240,13 +239,12 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
   }
 
   public void navigate(boolean requestFocus) {
-    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID);
 
-    window.activate(new Runnable() {
+    DynamicToolWindowWrapper.getInstance(myProject).getToolWindow().activate(new Runnable() {
       public void run() {
         DynamicToolWindowWrapper toolWindowWrapper = DynamicToolWindowWrapper.getInstance(myProject);
-        final TreeTable treeTable = toolWindowWrapper.getTreeTable(window);
-        final ListTreeTableModelOnColumns model = toolWindowWrapper.getTreeTableModel(window);
+        final TreeTable treeTable = toolWindowWrapper.getTreeTable();
+        final ListTreeTableModelOnColumns model = toolWindowWrapper.getTreeTableModel();
 
         Object root = model.getRoot();
 

@@ -10,6 +10,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -56,6 +58,7 @@ import java.util.Set;
  */
 public class DynamicToolWindowWrapper implements ProjectComponent {
   private Project myProject;
+  private ToolWindow myToolWindow = null;
 
   public DynamicToolWindowWrapper(Project project) {
     myProject = project;
@@ -84,24 +87,24 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     return myBigPanel != null && myTreeTableModel != null && myTreeTablePanel != null;
   }
 
-  public TreeTable getTreeTable(ToolWindow window) {
-    if (!doesTreeTableInit()) {
-      reconfigureWindow(window);
-    }
+  public TreeTable getTreeTable() {
+    getToolWindow();
 
     return returnTreeTable();
   }
 
-  public void configureWindow(ToolWindow window) {
-    reconfigureWindow(window);
-  }
+  public ToolWindow getToolWindow() {
+    if (myToolWindow == null) {
+      myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(DYNAMIC_TOOLWINDOW_ID, true, ToolWindowAnchor.RIGHT);
+      myToolWindow.setIcon(IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/dynamicProperty.png"));
+      myToolWindow.setTitle(GroovyBundle.message("dynamic.window"));
+      myToolWindow.setToHideOnEmptyContent(true);
 
-  private void reconfigureWindow(ToolWindow window) {
-    window.setTitle(GroovyBundle.message("toolwindow.dynamic.properties"));
-    window.setToHideOnEmptyContent(true);
+      buildBigPanel();
+      myToolWindow.getComponent().add(getContentPane());
+    }
 
-    buildBigPanel();
-    window.getComponent().add(getContentPane());
+    return myToolWindow;
   }
 
   private JPanel buildBigPanel() {
@@ -467,9 +470,7 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
   }
 
   private JPanel getContentPane() {
-    if (!doesTreeTableInit()) {
-      buildBigPanel();
-    }
+    getToolWindow();
 
     return myBigPanel;
   }
@@ -617,10 +618,8 @@ public class DynamicToolWindowWrapper implements ProjectComponent {
     }
   }
 
-  public ListTreeTableModelOnColumns getTreeTableModel(ToolWindow window) {
-    if (!doesTreeTableInit()) {
-      reconfigureWindow(window);
-    }
+  public ListTreeTableModelOnColumns getTreeTableModel() {
+    getToolWindow();
 
     return returnTreeTableModel();
   }
