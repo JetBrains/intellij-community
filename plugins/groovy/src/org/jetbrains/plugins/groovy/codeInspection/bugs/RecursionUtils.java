@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -217,7 +218,7 @@ class RecursionUtils {
           (GrMethodCallExpression) exp, method);
     }
     if (exp instanceof GrNewExpression) {
-      return newExpressionDefinitelyRecurses(
+      return callExpressionDefinitelyRecurses(
           (GrNewExpression) exp, method);
     }
     if (exp instanceof GrAssignmentExpression) {
@@ -234,10 +235,6 @@ class RecursionUtils {
     }
     if (exp instanceof GrIndexProperty) {
       return arrayAccessExpressionDefinitelyRecurses((GrIndexProperty) exp, method);
-    }
-    if (exp instanceof GrPostfixExpression) {
-      return postfixExpressionDefinitelyRecurses(
-          (GrPostfixExpression) exp, method);
     }
     if (exp instanceof GrUnaryExpression) {
       return unaryExpressionDefinitelyRecurses(
@@ -327,12 +324,6 @@ class RecursionUtils {
     return expressionDefinitelyRecurses(operand, method);
   }
 
-  private static boolean postfixExpressionDefinitelyRecurses(
-      GrPostfixExpression expression, GrMethod method) {
-    final GrExpression operand = expression.getOperand();
-    return expressionDefinitelyRecurses(operand, method);
-  }
-
   private static boolean instanceOfExpressionDefinitelyRecurses(
       GrInstanceOfExpression expression, GrMethod method) {
     final GrExpression operand = expression.getOperand();
@@ -370,7 +361,7 @@ class RecursionUtils {
         expressionDefinitelyRecurses(lhs, method);
   }
 
-  private static boolean newExpressionDefinitelyRecurses(GrNewExpression exp,
+  private static boolean callExpressionDefinitelyRecurses(GrCallExpression exp,
                                                          GrMethod method) {
     final GrArgumentList argumentList = exp.getArgumentList();
     if (argumentList != null) {
@@ -414,22 +405,7 @@ class RecursionUtils {
         return true;
       }
     }
-    final GrArgumentList argumentList = exp.getArgumentList();
-    if (argumentList != null) {
-      final GrExpression[] args = argumentList.getExpressionArguments();
-      for (final GrExpression arg : args) {
-        if (expressionDefinitelyRecurses(arg, method)) {
-          return true;
-        }
-      }
-      final GrNamedArgument[] namedArgs = argumentList.getNamedArguments();
-      for (final GrNamedArgument arg : namedArgs) {
-        if (expressionDefinitelyRecurses(arg.getExpression(), method)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return callExpressionDefinitelyRecurses(exp, method);
   }
 
   private static boolean statementDefinitelyRecurses(GrStatement statement,
