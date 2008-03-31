@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
@@ -102,7 +103,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
             }
           }
 
-          if (vFile != null && !vFile.isDirectory()) {
+          if (vFile != null && !vFile.isDirectory() && !(vFile.getFileSystem() instanceof HttpFileSystem)) {
             baseFile = PsiManager.getInstance(myProject).findFile(vFile);
           }
         }
