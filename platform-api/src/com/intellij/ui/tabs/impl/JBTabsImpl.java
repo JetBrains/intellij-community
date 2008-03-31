@@ -1869,17 +1869,20 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
 
     public void setText(final SimpleColoredText text) {
-      clear();
+      clear(false);
       if (text != null) {
         text.appendToComponent(myLabel);
       }
       invalidateIfNeeded();
     }
 
-    private void clear() {
+    private void clear(final boolean invalidate) {
       myLabel.clear();
       myLabel.setIcon(myIcon);
-      invalidateIfNeeded();
+
+      if (invalidate) {
+        invalidateIfNeeded();
+      }
     }
 
     private void invalidateIfNeeded() {

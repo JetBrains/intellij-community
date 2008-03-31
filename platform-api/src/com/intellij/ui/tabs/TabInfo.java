@@ -63,7 +63,7 @@ public final class TabInfo {
   }
 
   public TabInfo setText(String text) {
-    clearText();
+    clearText(false);
     SimpleTextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
     if (myDefaultForeground != null) {
       attributes = new SimpleTextAttributes(attributes.getBgColor(), myDefaultForeground, attributes.getWaveColor(), attributes.getStyle());
@@ -73,10 +73,12 @@ public final class TabInfo {
     return this;
   }
 
-  public TabInfo clearText() {
+  public TabInfo clearText(final boolean invalidate) {
     final String old = myText.toString();
     myText.clear();
-    myChangeSupport.firePropertyChange(TEXT, old, myText.toString());
+    if (invalidate) {
+      myChangeSupport.firePropertyChange(TEXT, old, myText.toString());
+    }
     return this;
   }
 
@@ -257,7 +259,7 @@ public final class TabInfo {
     final SimpleTextAttributes[] attrs = myText.getAttributes().toArray(new SimpleTextAttributes[myText.getAttributes().size()]);
     final String[] texts = myText.getTexts().toArray(new String[myText.getTexts().size()]);
 
-    clearText();
+    clearText(false);
 
     for (int i = 0; i < attrs.length; i++) {
       SimpleTextAttributes each = attrs[i];

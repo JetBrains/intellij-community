@@ -110,14 +110,14 @@ public class EditorWindow {
       if (myTabbedPane != null) {
         final int componentIndex = findComponentIndex(editor.getComponent());
         if (componentIndex >= 0) { // editor could close itself on decomposition
-          int indexToSelect = calcIndexToSelect(file, componentIndex);
-          if (indexToSelect >= 0 && indexToSelect < myTabbedPane.getTabCount()) {
-            myTabbedPane.setSelectedIndex(indexToSelect);
-          }
-
+          final int indexToSelect = calcIndexToSelect(file, componentIndex);
           myTabbedPane.removeTabAt(componentIndex).doWhenDone(new Runnable() {
             public void run() {
               editorManager.disposeComposite(editor);
+
+              if (indexToSelect >= 0 && indexToSelect < myTabbedPane.getTabCount()) {
+                myTabbedPane.setSelectedIndex(indexToSelect);
+              }
             }
           });
         }
