@@ -484,7 +484,13 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   }
 
   private ActionCallback _setSelected(final TabInfo info, final boolean requestFocus) {
-    if (mySelectedInfo != null && mySelectedInfo.equals(info)) return new ActionCallback.Done();
+    if (mySelectedInfo != null && mySelectedInfo.equals(info)) {
+      if (!requestFocus) {
+        return new ActionCallback.Done();
+      } else {
+        requestFocus(getToFocus());
+      }
+    }
 
 
     if (myRequestFocusOnLastFocusedComponent && mySelectedInfo != null) {
@@ -511,12 +517,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
       final JComponent toFocus = getToFocus();
       if (myProject != null && toFocus != null) {
         final ActionCallback result = new ActionCallback();
-        myFocusManager.requestFocus(new ActionCallback.Runnable() {
-          public ActionCallback run() {
-            toFocus.requestFocus();
-            return new ActionCallback.Done();
-          }
-        }, true).doWhenProcessed(new Runnable() {
+        requestFocus(toFocus).doWhenProcessed(new Runnable() {
           public void run() {
             removeDeferred(deferredRemove).notifyWhenDone(result);
           }
@@ -530,6 +531,17 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     } else {
       return removeDeferred(deferredRemove);
     }
+  }
+
+  private ActionCallback requestFocus(final JComponent toFocus) {
+    if (toFocus == null) return new ActionCallback.Done();
+    
+    return myFocusManager.requestFocus(new ActionCallback.Runnable(toFocus) {
+      public ActionCallback run() {
+        toFocus.requestFocus();
+        return new ActionCallback.Done();
+      }
+    }, true);
   }
 
   private ActionCallback removeDeferred(final Component deferredRemove) {

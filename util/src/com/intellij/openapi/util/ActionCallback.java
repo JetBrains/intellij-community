@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.util;
 
+import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.NotNull;
 
 public class ActionCallback {
@@ -47,8 +48,8 @@ public class ActionCallback {
     return this;
   }
 
-  public final void notifyWhenDone(final ActionCallback child) {
-    doWhenDone(new java.lang.Runnable() {
+  public final ActionCallback notifyWhenDone(final ActionCallback child) {
+    return doWhenDone(new java.lang.Runnable() {
       public void run() {
         child.setDone();
       }
@@ -62,7 +63,19 @@ public class ActionCallback {
   }
 
   
-  public interface Runnable {
-    ActionCallback run();
+  public static abstract class Runnable extends ComparableObject.Impl {
+
+    protected Runnable() {
+    }
+
+    protected Runnable(final Object object) {
+      super(object);
+    }
+
+    protected Runnable(final Object[] objects) {
+      super(objects);
+    }
+
+    public abstract ActionCallback run();
   }
 }

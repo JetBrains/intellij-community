@@ -30,6 +30,7 @@ import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -75,9 +76,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final Alarm myFocusedComponentAlaram;
 
   private final Alarm myForcedFocusRequestsAlarm;
-  private boolean myUnforcedFocusRequestsAllowed = true;
 
   private ActionCallback.Runnable myRequestFocusCmd;
+  private WeakReference<ActionCallback.Runnable> myLastForcedRequest = new WeakReference<ActionCallback.Runnable>(null);
 
   /**
    * invoked by reflection
@@ -271,7 +272,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void activateToolWindowImpl(final String id, final ArrayList<FinalizableCommand> commandList, boolean forced, boolean autoFocusContents) {
-    if (!myUnforcedFocusRequestsAllowed && !forced) return;
+    if (!isUnforcedRequestAllowed() && !forced) return;
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: activateToolWindowImpl(" + id + ")");
@@ -1344,7 +1345,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public ActionCallback requestFocus(final Component c, final boolean forced) {
-    return requestFocus(new ActionCallback.Runnable() {
+    return requestFocus(new ActionCallback.Runnable(c) {
       public ActionCallback run() {
         final ActionCallback result = new ActionCallback();
         if (!c.requestFocusInWindow()) {
@@ -1378,23 +1379,17 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void _requestFocus(final ActionCallback.Runnable command, final boolean forced, final ActionCallback result) {
-    if (!forced && !myUnforcedFocusRequestsAllowed) {
-      result.setRejected();
-      return;
-    }
+    if (checkForRejectOrByPass(command, forced, result)) return;
 
     myRequestFocusCmd = command;
     if (forced) {
       myForcedFocusRequestsAlarm.cancelAllRequests();
-      myUnforcedFocusRequestsAllowed = false;
+      setLastEffectiveForcedRequest(command);
     }
 
     LaterInvocator.invokeLater(new Runnable() {
       public void run() {
-        if (!forced && !myUnforcedFocusRequestsAllowed) {
-          result.setRejected();
-          return;
-        }
+        if (checkForRejectOrByPass(command, forced, result)) return;
 
         if (myRequestFocusCmd == command) {
           myRequestFocusCmd = null;
@@ -1404,7 +1399,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
           if (forced) {
             myForcedFocusRequestsAlarm.addRequest(new Runnable() {
               public void run() {
-                myUnforcedFocusRequestsAllowed = true;
+                setLastEffectiveForcedRequest(null);
               }
             }, 250);
           }
@@ -1413,6 +1408,30 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         }
       }
     });
+  }
+
+  private boolean checkForRejectOrByPass(final ActionCallback.Runnable cmd, final boolean forced, final ActionCallback result) {
+    if (!forced && !isUnforcedRequestAllowed()) {
+      if (cmd.equals(getLastEffectiveForcedRequest())) {
+        result.setDone();
+      } else {
+        result.setRejected();
+      }
+      return true;
+    }
+    return false;
+  }
+
+  private void setLastEffectiveForcedRequest(ActionCallback.Runnable command) {
+    myLastForcedRequest = new WeakReference<ActionCallback.Runnable>(command);
+  }
+
+  private ActionCallback.Runnable getLastEffectiveForcedRequest() {
+    return myLastForcedRequest != null ? myLastForcedRequest.get() : null;   
+  }
+
+  private boolean isUnforcedRequestAllowed() {
+    return myLastForcedRequest == null || myLastForcedRequest.get() == null;
   }
 
   public JComponent getFocusTargetFor(final JComponent comp) {
