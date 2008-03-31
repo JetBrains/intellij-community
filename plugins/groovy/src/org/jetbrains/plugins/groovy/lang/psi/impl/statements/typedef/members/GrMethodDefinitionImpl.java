@@ -350,7 +350,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     return list;
   }
 
-  @Nullable
+  @NotNull
   public PsiModifierList getModifierList() {
     return getModifierListGroovy();
   }

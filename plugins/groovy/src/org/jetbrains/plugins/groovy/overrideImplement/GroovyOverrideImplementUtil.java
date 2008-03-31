@@ -89,8 +89,9 @@ public class GroovyOverrideImplementUtil {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           try {
-            result.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, false/*aClass.isInterface()*/);
-            result.getModifierList().setModifierProperty(PsiModifier.NATIVE, false);
+            PsiModifierList modifierList = result.getModifierList();
+            modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
+            modifierList.setModifierProperty(PsiModifier.NATIVE, false);
 
             setupOverridingMethodBody(project, method, result, template, substitutor, editor);
 
@@ -275,12 +276,6 @@ public class GroovyOverrideImplementUtil {
       final GrCodeBlock newBody = GroovyPsiElementFactory.getInstance(project).createMethodBodyFormText("\n" + bodyText + "\n");
 
       resultMethod.setBlock(newBody);
-      final GrOpenBlock newBlock = resultMethod.getBlock();
-
-      final int startChildOffset = newBlock.getLBrace().getTextRange().getEndOffset();
-      final int endChildOffset = newBlock.getRBrace().getTextRange().getStartOffset();
-
-      editor.getSelectionModel().setSelection(startChildOffset, endChildOffset);
     } catch (IOException e) {
       LOG.error(e);
     }
