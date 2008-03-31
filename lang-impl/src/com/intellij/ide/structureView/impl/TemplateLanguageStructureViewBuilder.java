@@ -9,7 +9,7 @@ import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.structureView.*;
-import com.intellij.ide.structureView.impl.jsp.StructureViewComposite;
+import com.intellij.ide.structureView.impl.StructureViewComposite;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;

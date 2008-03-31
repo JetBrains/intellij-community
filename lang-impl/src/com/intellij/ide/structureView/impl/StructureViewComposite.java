@@ -1,4 +1,4 @@
-package com.intellij.ide.structureView.impl.jsp;
+package com.intellij.ide.structureView.impl;
 
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewModel;
