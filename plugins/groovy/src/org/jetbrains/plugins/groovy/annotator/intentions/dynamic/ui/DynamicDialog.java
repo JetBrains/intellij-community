@@ -91,18 +91,19 @@ public abstract class DynamicDialog extends DialogWrapper {
 
     init();
 
+    myItemElement = createItemElement();
+
     setUpTypeComboBox();
     setUpContainingClassComboBox();
     setUpStatusLabel();
-    setUpTableNameLabel();
+    myTableLabel.setLabelFor(myParametersTable);
+    setUpTableNameLabel(GroovyBundle.message("dynamic.properties.table.name"));
 
     final Border border2 = BorderFactory.createLineBorder(Color.BLACK);
     myParametersTable.setBorder(border2);
 
     myTypeLabel.setLabelFor(myTypeComboBox);
     myClassLabel.setLabelFor(myClassComboBox);
-
-    myItemElement = createItemElement();
   }
 
   protected DItemElement createItemElement() {
@@ -119,12 +120,10 @@ public abstract class DynamicDialog extends DialogWrapper {
     return myDynamicElement;
   }
 
-  private void setUpTableNameLabel() {
-    myTableLabel.setLabelFor(myParametersTable);
-    myTableLabel.setText(GroovyBundle.message("dynamic.properties.table.name"));
+  protected void setUpTableNameLabel(String text) {
+    myTableLabel.setText(text);
   }
 
-  
   private void setUpStatusLabel() {
     if (!isTypeChekerPanelEnable()) {
       myTypeStatusPanel.setVisible(false);
@@ -387,7 +386,6 @@ public abstract class DynamicDialog extends DialogWrapper {
     }
   }
 
-  
   public void doCancelAction() {
     super.doCancelAction();
 
@@ -422,7 +420,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     myTypeLabel.setText(typeLabelText);
   }
 
-  public DItemElement getItemElement() {
+  protected DItemElement getItemElement() {
     return myItemElement;
   }
 }

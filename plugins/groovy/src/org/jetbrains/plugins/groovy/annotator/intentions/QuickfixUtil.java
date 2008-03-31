@@ -24,10 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -101,7 +98,7 @@ public class QuickfixUtil {
   public static List<MyPair> swapArgumentsAndTypes(String[] names, PsiType[] types) {
     List<MyPair> result = new ArrayList<MyPair>();
 
-    if (names.length != types.length) return null;
+    if (names.length != types.length) return Collections.emptyList();
 
     for (int i = 0; i < names.length; i++) {
       String name = names[i];

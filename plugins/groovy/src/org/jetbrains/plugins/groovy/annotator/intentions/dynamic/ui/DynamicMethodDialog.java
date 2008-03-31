@@ -55,6 +55,10 @@ public class DynamicMethodDialog extends DynamicDialog {
     setUpTypeLabel(GroovyBundle.message("dynamic.method.return.type"));
   }
 
+  protected void setUpTableNameLabel(String text) {
+    super.setUpTableNameLabel(getItemElement().getPairs().isEmpty() ? GroovyBundle.message("dynamic.properties.table.no.arguments") : text);
+  }
+
   private void setupParameterTable(final List<MyPair> pairs) {
     final JTable table = getParametersTable();
 
@@ -78,6 +82,10 @@ public class DynamicMethodDialog extends DynamicDialog {
       public void editingCanceled(ChangeEvent e) {
       }
     });
+  }
+
+  protected DMethodElement getItemElement() {
+    return ((DMethodElement) super.getItemElement());
   }
 
   protected boolean isTableVisible() {
