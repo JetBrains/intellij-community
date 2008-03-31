@@ -94,6 +94,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     List<GenerationItem> generationItems = new ArrayList<GenerationItem>();
     GenerationItem item;
     for (VirtualFile file : getGroovyFilesToGenerate(context)) {
+      if (CompilerManager.getInstance(myProject).isExcludedFromCompilation(file)) continue;
+
       final GroovyFileBase psiFile = findPsiFile(file);
       boolean isInTestSources = ModuleRootManager.getInstance(getModuleByFile(context, file)).getFileIndex().isInTestSourceContent(file);
 
