@@ -37,17 +37,14 @@ public class GroovyWithWhileSurrounder extends GroovyOpenBlockSurrounder {
   }
 
   public boolean isApplicable(@NotNull PsiElement[] elements) {
-    if (elements.length == 0) return false;
+    if (!super.isApplicable(elements)) return false;
     if (elements.length == 1 && elements[0] instanceof GrStatement) {
       if (elements[0] instanceof GrExpression) {
         PsiType type = ((GrExpression) elements[0]).getType();
-        if (type == null) return true;
-        return !((PsiPrimitiveType) PsiType.BOOLEAN).getBoxedTypeName().equals(type.getCanonicalText());
+        return type == null || !((PsiPrimitiveType) PsiType.BOOLEAN).getBoxedTypeName().equals(type.getCanonicalText());
       }
-
-      return true;
     }
-    return isStatements(elements);
+    return true;
   }
 
   public String getTemplateDescription() {

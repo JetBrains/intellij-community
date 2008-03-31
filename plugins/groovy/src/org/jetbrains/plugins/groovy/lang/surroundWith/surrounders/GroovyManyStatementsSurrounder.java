@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 
 /**
@@ -34,7 +35,7 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
 
   public boolean isApplicable(@NotNull PsiElement[] elements) {
     if (elements.length == 0) return false;
-    if (elements.length == 1) return elements[0] instanceof GrStatement;
+    if (elements.length == 1) return elements[0] instanceof GrStatement && !(elements[0] instanceof GrBlockStatement);
     return isStatements(elements);
   }
 
