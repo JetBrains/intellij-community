@@ -395,7 +395,14 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
         parameters.getVMParametersList().replaceOrPrepend("-classic", classicVM ? "-classic" : "");
 
         final String debugKey = System.getProperty(DEBUG_KEY_NAME, "-Xdebug");
-        parameters.getVMParametersList().replaceOrAppend(debugKey, debugKey);
+        if (shouldAddXdebugKey(parameters.getJdk()) || !"-Xdebug".equals(debugKey) /*the key is non-standard*/) {
+          parameters.getVMParametersList().replaceOrAppend(debugKey, debugKey);
+        }
+        else {
+          // deliberately skip outdated parameter because it can disable full-speed debugging for some jdk builds
+          // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6272174
+          parameters.getVMParametersList().replaceOrAppend("-Xdebug", "");
+        }
 
         if (shouldForceNoJIT(parameters.getJdk())) {
           parameters.getVMParametersList().replaceOrAppend("-Xnoagent", "-Xnoagent");
@@ -429,6 +436,25 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     if (jdk != null) {
       final String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
       if (version != null && (version.startsWith("1.2") || version.startsWith("1.3"))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean shouldAddXdebugKey(Sdk jdk) {
+    if (DebuggerSettings.getInstance().DISABLE_JIT) {
+      return true;
+    }
+    if (jdk != null) {
+      final String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
+      if (version == null           ||
+          version.startsWith("1.0") || 
+          version.startsWith("1.1") || 
+          version.startsWith("1.2") || 
+          version.startsWith("1.3") || 
+          version.startsWith("1.4") || 
+          version.startsWith("1.5")   ) {
         return true;
       }
     }
