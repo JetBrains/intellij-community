@@ -67,8 +67,10 @@ public abstract class PathMacroMap {
         t.setText(substitute(t.getText(), caseSensitive, usedMacros));
       }
       else if (child instanceof Comment) {
+        /*do not substitute in comments
         Comment c = (Comment)child;
         c.setText(substitute(c.getText(), caseSensitive, usedMacros));
+        */
       }
       else {
         LOG.error("Wrong content: " + child.getClass());
