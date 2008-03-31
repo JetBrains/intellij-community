@@ -216,7 +216,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     HighlightInfo info;
 
     if (parent instanceof PsiLocalVariable && unusedSymbolInspection.LOCAL_VARIABLE) {
-      info = processLocalVariable((PsiLocalVariable)parent);
+      info = processLocalVariable((PsiLocalVariable)parent, unusedSymbolInspection);
     }
     else if (parent instanceof PsiField && unusedSymbolInspection.FIELD) {
       final PsiField psiField = (PsiField)parent;
@@ -229,7 +229,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       info = processMethod((PsiMethod)parent, unusedSymbolInspection);
     }
     else if (parent instanceof PsiClass && identifier.equals(((PsiClass)parent).getNameIdentifier()) && unusedSymbolInspection.CLASS) {
-      info = processClass((PsiClass)parent);
+      info = processClass((PsiClass)parent, unusedSymbolInspection);
     }
     else {
       return null;
@@ -239,10 +239,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
 
   @Nullable
-  private HighlightInfo processLocalVariable(PsiLocalVariable variable) {
+  private HighlightInfo processLocalVariable(PsiLocalVariable variable, final UnusedSymbolLocalInspection unusedSymbolInspection) {
     PsiIdentifier identifier = variable.getNameIdentifier();
     if (identifier == null) return null;
-
+    if (UnusedSymbolLocalInspection.isInjected(variable, unusedSymbolInspection)) return null;
     if (!myRefCountHolder.isReferenced(variable) && !isImplicitUsage(variable)) {
       String message = MessageFormat.format(JavaErrorMessages.message("local.variable.is.never.used"), identifier.getText());
       HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
@@ -309,6 +309,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private HighlightInfo processField(final PsiField field, final UnusedSymbolLocalInspection unusedSymbolInspection,
                                      final PsiIdentifier identifier) {
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
+      if (UnusedSymbolLocalInspection.isInjected(field, unusedSymbolInspection)) return null;
       final HighlightDisplayKey key = HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME);
       if (!myRefCountHolder.isReferenced(field) && !isImplicitUsage(field)) {
         if (HighlightUtil.isSerializationImplicitlyUsedField(field)) {
@@ -376,7 +377,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           && !HighlightMethodUtil.isSerializationRelatedMethod(method)
           && !isMainMethod(method)
       ) {
-        HighlightInfo highlightInfo = checkUnusedParameter(parameter);
+        HighlightInfo highlightInfo = checkUnusedParameter(parameter, unusedSymbolInspection);
         if (highlightInfo != null) {
           QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedParameterFix(parameter), HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME));
           return highlightInfo;
@@ -384,7 +385,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
     }
     else if (declarationScope instanceof PsiForeachStatement) {
-      HighlightInfo highlightInfo = checkUnusedParameter(parameter);
+      HighlightInfo highlightInfo = checkUnusedParameter(parameter, unusedSymbolInspection);
       if (highlightInfo != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(UnusedSymbolLocalInspection.DISPLAY_NAME), HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME));
         return highlightInfo;
@@ -395,8 +396,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   @Nullable
-  private HighlightInfo checkUnusedParameter(final PsiParameter parameter) {
-    if (!myRefCountHolder.isReferenced(parameter) && !isImplicitUsage(parameter)) {
+  private HighlightInfo checkUnusedParameter(final PsiParameter parameter, final UnusedSymbolLocalInspection unusedSymbolInspection) {
+    final boolean isInjected = UnusedSymbolLocalInspection.isInjected(parameter, unusedSymbolInspection);
+    if (!isInjected && !myRefCountHolder.isReferenced(parameter) && !isImplicitUsage(parameter)) {
       PsiIdentifier identifier = parameter.getNameIdentifier();
       assert identifier != null;
       String message = MessageFormat.format(JavaErrorMessages.message("parameter.is.not.used"), identifier.getText());
@@ -438,7 +440,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   @Nullable
-  private HighlightInfo processClass(PsiClass aClass) {
+  private HighlightInfo processClass(PsiClass aClass, final UnusedSymbolLocalInspection unusedSymbolInspection) {
+    if (UnusedSymbolLocalInspection.isInjected(aClass, unusedSymbolInspection)) return null;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME);
     if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
       if (!myRefCountHolder.isReferenced(aClass) && !isImplicitUsage(aClass)) {

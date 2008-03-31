@@ -18,8 +18,8 @@ import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -152,13 +152,13 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
     return ANNOTATIONS;
   }
 
-  public static boolean isInjected(final PsiMember member, final UnusedSymbolLocalInspection unusedSymbolInspection) {
-    if (member instanceof PsiMethod && !PropertyUtil.isSimplePropertySetter(((PsiMethod)member))) {
-      return AnnotationUtil.isAnnotated(member, getRegisteredAnnotations()) ||
-             AnnotationUtil.isAnnotated(member, unusedSymbolInspection.INJECTION_ANNOS);
+  public static boolean isInjected(final PsiModifierListOwner modifierListOwner, final UnusedSymbolLocalInspection unusedSymbolInspection) {
+    if (modifierListOwner instanceof PsiMethod && !PropertyUtil.isSimplePropertySetter(((PsiMethod)modifierListOwner))) {
+      return AnnotationUtil.isAnnotated(modifierListOwner, getRegisteredAnnotations()) ||
+             AnnotationUtil.isAnnotated(modifierListOwner, unusedSymbolInspection.INJECTION_ANNOS);
     }
-    return AnnotationUtil.isAnnotated(member, getRegisteredAnnotations()) ||
-           AnnotationUtil.isAnnotated(member, unusedSymbolInspection.INJECTION_ANNOS) ||
-           AnnotationUtil.isAnnotated(member, STANDARD_INJECTION_ANNOS);
+    return AnnotationUtil.isAnnotated(modifierListOwner, getRegisteredAnnotations()) ||
+           AnnotationUtil.isAnnotated(modifierListOwner, unusedSymbolInspection.INJECTION_ANNOS) ||
+           AnnotationUtil.isAnnotated(modifierListOwner, STANDARD_INJECTION_ANNOS);
   }
 }
