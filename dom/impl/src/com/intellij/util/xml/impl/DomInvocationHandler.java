@@ -220,7 +220,9 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   public <T extends DomElement> T createStableCopy() {
     XmlTag tag = getXmlTag();
     if (tag != null && tag.isPhysical()) {
-      assert getProxy().equals(myManager.getDomElement(tag)) : myManager.getDomElement(tag) + "\n\n" + tag.getParent().getText();
+      final DomElement existing = myManager.getDomElement(tag);
+      assert getProxy().equals(existing) : existing + "\n---------\n" + tag.getParent().getText() + "\n-----------\n" + tag.getText() + "\n----\n" + this + " != " +
+                                           DomManagerImpl.getDomInvocationHandler(existing);
       final SmartPsiElementPointer<XmlTag> pointer = SmartPointerManager.getInstance(myManager.getProject()).createLazyPointer(tag);
       return myManager.createStableValue(new StableCopyFactory<T>(pointer, myType, getClass()));
     }
@@ -274,6 +276,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   public XmlElement getXmlElement() {
     if (myXmlElement == null && getCurrentModCount() != myModCount) {
       setXmlElement(recomputeXmlElement());
+      myModCount = getCurrentModCount();
     }
 
     return myXmlElement;
