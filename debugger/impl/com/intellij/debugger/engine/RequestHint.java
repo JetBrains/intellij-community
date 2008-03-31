@@ -176,17 +176,18 @@ public class RequestHint {
       }
       // the rest of the code makes sence for depth == STEP_INTO only
 
-      if (myDepth == StepRequest.STEP_INTO) {
-        DebuggerSettings settings = DebuggerSettings.getInstance();
-        if (settings.SKIP_SYNTHETIC_METHODS) {
-          Location location = context.getFrameProxy().location();
-          Method method = location.method();
-          if (method != null) {
-            if (myVirtualMachineProxy.canGetSyntheticAttribute()? method.isSynthetic() : method.name().indexOf('$') >= 0) {
-              return myDepth;
-            }
+      DebuggerSettings settings = DebuggerSettings.getInstance();
+      if (settings.SKIP_SYNTHETIC_METHODS) {
+        Location location = context.getFrameProxy().location();
+        Method method = location.method();
+        if (method != null) {
+          if (myVirtualMachineProxy.canGetSyntheticAttribute()? method.isSynthetic() : method.name().indexOf('$') >= 0) {
+            return myDepth;
           }
         }
+      }
+
+      if (myDepth == StepRequest.STEP_INTO) {
         if (!myIgnoreFilters) {
           if(settings.SKIP_GETTERS) {
             boolean isGetter = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
