@@ -144,12 +144,13 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   }
 
   private DomElementsProblemsHolderImpl _getOrCreateProblemsHolder(final DomFileElement element) {
-    final DomElementsProblemsHolderImpl holder;
+    DomElementsProblemsHolderImpl holder;
     final DomElement rootElement = element.getRootElement();
     final XmlTag rootTag = rootElement.getXmlTag();
     if (rootTag == null) return new DomElementsProblemsHolderImpl(element);
 
-    if (isHolderOutdated(element)) {
+    holder = rootTag.getUserData(DOM_PROBLEM_HOLDER_KEY);
+    if (isHolderOutdated(element) || holder == null) {
       holder = new DomElementsProblemsHolderImpl(element);
       rootTag.putUserData(DOM_PROBLEM_HOLDER_KEY, holder);
       final CachedValue<Boolean> cachedValue = myCachedValuesManager.createCachedValue(new CachedValueProvider<Boolean>() {
@@ -159,10 +160,6 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       }, false);
       cachedValue.getValue();
       element.getFile().putUserData(CACHED_VALUE_KEY, cachedValue);
-    }
-    else {
-      holder = rootTag.getUserData(DOM_PROBLEM_HOLDER_KEY);
-      LOG.assertTrue(holder != null);
     }
     return holder;
   }
