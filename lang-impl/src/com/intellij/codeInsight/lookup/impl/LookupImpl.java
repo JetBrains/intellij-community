@@ -732,4 +732,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       HintManager.getInstance().adjustEditorHintPosition(this, myEditor, getComponent().getLocation());
     }
   }
+
+  public LookupItem[] getSortedItems() {
+    final LookupItem[] result = new LookupItem[myList.getModel().getSize()];
+    ((DefaultListModel)myList.getModel()).copyInto(result);
+    return result;
+  }
 }

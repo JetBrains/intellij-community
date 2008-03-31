@@ -8,10 +8,10 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,18 +25,20 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.AsyncConsumer;
+import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
@@ -117,53 +119,87 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, adText, this, insertedInfo.getFirst());
 
+    final Semaphore startSemaphore = new Semaphore();
+    startSemaphore.down();
+
+    final Ref<LookupData> data = Ref.create(null);
+
     final Runnable computeRunnable = new Runnable() {
       public void run() {
         ProgressManager.getInstance().runProcess(new Runnable() {
           public void run() {
             try {
-              final LookupData data = computeLookupData(insertedElement, insertedInfo.getFirst(), parameters, indicator);
-              if (data == null) {
-                indicator.cancel();
-                return; //cancelled
-              }
-
-              final LookupItem[] items = data.items;
-              if (items.length == 0) {
-                indicator.cancel();
-                invokeAndWait(new Runnable() {
-                  public void run() {
-                    HintManager.getInstance().hideAllHints();
-                    handleEmptyLookup(context, data, parameters);
-                  }
-                }, context.editor);
-                return;
-              }
-
-              final String prefix = data.prefix;
-              context.setPrefix(data.prefix);
-              context.setStartOffset(offset1 - prefix.length());
-
-              if (shouldAutoComplete(items, context)) {
-                LookupItem item = items[0];
-                computingFinished(data, null, prefix, item.getLookupString(), item, false, indicator, offset2, context, offset1);
-              } else {
-                computingFinished(data, items, prefix, null, null, true, indicator, offset2, context, offset1);
-              }
+              startSemaphore.up();
+              final LookupData value = computeLookupData(insertedElement, insertedInfo.getFirst(), parameters, indicator);
+              data.set(value);
             }
             catch (ProcessCanceledException e) {
-            }
-            finally {
-              insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, null);
             }
           }
         }, indicator);
       }
     };
+
+    final Queue<AWTEvent> queue = new Queue<AWTEvent>(10);
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       computeRunnable.run();
     } else {
       ApplicationManager.getApplication().executeOnPooledThread(computeRunnable);
+
+      startSemaphore.waitFor();
+
+      IdeEventQueue.getInstance().pumpEventsForHierarchy(indicator.getLookup().getComponent(), new Condition<AWTEvent>() {
+        public boolean value(final AWTEvent object) {
+          if (object instanceof KeyEvent && !indicator.isInitialized()) {
+            final KeyEvent event = (KeyEvent)object;
+            queue.addLast(new KeyEvent(event.getComponent(), event.getID(), event.getWhen(), event.getModifiers(), event.getKeyCode(),
+                                       event.getKeyChar(), event.getKeyLocation()));
+          } else if (indicator.getLookup().isVisible()) {
+            flushQueue(queue);
+          }
+
+          return !indicator.isRunning();
+        }
+      });
+    }
+
+    computingFinished(data.get(), indicator, context, parameters, offset1, offset2);
+
+    flushQueue(queue);
+  }
+
+  private static void flushQueue(final Queue<AWTEvent> queue) {
+    while (!queue.isEmpty()) {
+      IdeEventQueue.getInstance().dispatchEvent(queue.pullFirst());
+    }
+  }
+
+  protected void computingFinished(final LookupData data, final CompletionProgressIndicator indicator, final CompletionContext context,
+                                   final CompletionParametersImpl parameters, final int offset1, final int offset2) {
+    if (data == null) {
+      indicator.closeAndFinish();
+      return;
+    }
+
+    final LookupItem[] items = data.items;
+    if (items.length == 0) {
+      indicator.closeAndFinish();
+      HintManager.getInstance().hideAllHints();
+      handleEmptyLookup(context, data, parameters);
+      return;
+    }
+
+    final String prefix = data.prefix;
+    context.setPrefix(data.prefix);
+    context.setStartOffset(offset1 - prefix.length());
+
+    if (shouldAutoComplete(items, context)) {
+      LookupItem item = items[0];
+      indicator.closeAndFinish();
+      handleSingleItem(offset2, context, data, prefix, item.getLookupString(), item);
+    } else {
+      handleMultipleItems(offset1, context, items, prefix, indicator.getShownLookup());
     }
   }
 
@@ -178,37 +214,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) == context.getSelectionEndOffset(); //give a chance to use tab
   }
 
-  public static void invokeAndWait(final Runnable runnable, Editor editor) {
-    ProgressManager.getInstance().checkCanceled();
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      runnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.stateForComponent(editor.getComponent()));
-    }
-  }
-
-  protected void computingFinished(final LookupData data, final LookupItem[] items, final String prefix, final String uniqueText, final LookupItem item,
-                                   final boolean doNotAutocomplete,
-                                   final CompletionProgressIndicator indicator,
-                                   final int offset2,
-                                   final CompletionContext context,
-                                   final int offset1) {
-    ProgressManager.getInstance().checkCanceled();
-    invokeAndWait(new Runnable() {
-      public void run() {
-        if (indicator.isCanceled()) return;
-        if (item != null) {
-          indicator.closeAndFinish();
-          handleSingleItem(offset2, context, data, prefix, uniqueText, item);
-        }
-        else {
-          handleMultipleItems(offset1, context, items, prefix, indicator.getLookup());
-        }
-      }
-    }, context.editor);
-  }
-
-  private void handleSingleItem(final int offset2, final CompletionContext context, final LookupData data,
+  protected void handleSingleItem(final int offset2, final CompletionContext context, final LookupData data,
                                 final String prefix,
                                 final String _uniqueText,
                                 final LookupItem item) {
@@ -246,7 +252,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final String newPrefix = new WriteCommandAction<String>(project) {
       protected void run(Result<String> result) throws Throwable {
         if (isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {
-          result.setResult(fillInCommonPrefix(items, prefix, context.editor));
+          result.setResult(fillInCommonPrefix(items, prefix, context.editor, lookup));
         } else {
           result.setResult(prefix);
         }
@@ -291,7 +297,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     lookupItemSelected(context, data, item, signatureSelected, completionChar);
   }
 
-  protected String fillInCommonPrefix(LookupItem[] items, final String prefix, final Editor editor) {
+  protected String fillInCommonPrefix(LookupItem[] items, final String prefix, final Editor editor, final LookupImpl lookup) {
     String commonPrefix = null;
     boolean isStrict = false;
 
@@ -320,6 +326,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
 
     if (!isStrict) return prefix;
+    
+    lookup.setPrefix(commonPrefix);
 
     int offset =
         editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionStart() : editor.getCaretModel().getOffset();

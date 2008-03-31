@@ -176,6 +176,7 @@ public class BreakpointsConfigurationDialogFactory {
         if (myPreparePreferredComponent != null) {
           myPreparePreferredComponent.run();
         }
+        myPreparePreferredComponent = null;
         return myPreferredComponent;
       }
       return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myTabbedPane.getComponent());

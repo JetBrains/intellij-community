@@ -65,7 +65,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     });
     myLookup.setCalculating(true);
 
-    myQueue = new MergingUpdateQueue("completion lookup progress", 400, true, myLookup.getComponent());
+    myQueue = new MergingUpdateQueue("completion lookup progress", 400, true, myEditor.getContentComponent());
     Disposer.register(this, myQueue);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -77,7 +77,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     super.start();
     myQueue.queue(new Update("initialShow") {
       public void run() {
-        final AsyncProcessIcon processIcon = getLookup().getProcessIcon();
+        final AsyncProcessIcon processIcon = getShownLookup().getProcessIcon();
         processIcon.setVisible(true);
         processIcon.resume();
         updateLookup();
@@ -90,8 +90,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myHandler;
   }
 
-  public LookupImpl getLookup() {
+  public LookupImpl getShownLookup() {
     updateLookup();
+    return myLookup;
+  }
+
+  public LookupImpl getLookup() {
     return myLookup;
   }
 
@@ -110,6 +114,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup.adaptSize();
   }
 
+  public int getCount() {
+    return myCount;
+  }
+
   public static CompletionProgressIndicator getCurrentCompletion() {
     return ourCurrentCompletion;
   }
@@ -122,11 +130,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       assert !ApplicationManager.getApplication().isDispatchThread();
     }
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        myLookup.addItem(item);
-      }
-    });
+    myLookup.addItem(item);
     myCount++;
     if (myCount > 42) {
       myQueue.queue(new Update("update") {
@@ -183,7 +187,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (application.isDispatchThread() || application.isUnitTestMode()) {
       runnable.run();
     } else {
-      application.invokeLater(runnable, getModalityState());
+      application.invokeLater(runnable, myQueue.getModalityState());
     }
   }
 
@@ -204,4 +208,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     });
   }
 
+  public boolean isInitialized() {
+    return myInitialized;
+  }
 }

@@ -75,10 +75,6 @@ public class TypedAction {
     return myHandler;
   }
 
-  public TypedActionHandler getBaseHandler() {
-    return myBaseHandler;
-  }
-
   /**
    * Replaces the typing handler with the specified handler. The handler should pass
    * unprocessed typing to the previously registered handler.

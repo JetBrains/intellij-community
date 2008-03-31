@@ -8,9 +8,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.completion.CodeCompletionHandler;
-import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.CompletionProgressIndicator;
-import com.intellij.codeInsight.completion.LookupData;
 import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
@@ -21,6 +18,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -501,19 +499,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                 }
                 return copy;
               }
-
-              protected void computingFinished(final LookupData data, final LookupItem[] items, final String prefix, final String uniqueText,
-                                               final LookupItem item, final boolean doNotAutocomplete, final CompletionProgressIndicator indicator,
-                                               final int offset2,
-                                               final CompletionContext context,
-                                               final int offset1) {
-                super.computingFinished(data, items, prefix, uniqueText, item, doNotAutocomplete, indicator, offset2, context, offset1);
-                result.setResult(items);
-              }
             };
           }
         }.actionPerformedImpl(getProject(), InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, myFile));
-
+        LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
+        result.setResult(lookup == null ? null : lookup.getSortedItems());
       }
     }.execute().getResultObject();
   }
