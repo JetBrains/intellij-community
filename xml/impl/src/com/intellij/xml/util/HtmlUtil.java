@@ -25,6 +25,9 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
+import com.intellij.lang.Language;
+import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.lang.html.HTMLLanguage;
 import gnu.trove.THashSet;
 import org.apache.commons.collections.Bag;
 import org.apache.commons.collections.bag.HashBag;
@@ -369,5 +372,19 @@ public class HtmlUtil {
 
   public static boolean isTagWithoutAttributes(@NonNls String tagName) {
     return tagName != null && "br".equalsIgnoreCase(tagName);
+  }
+
+  public static boolean hasHtml(PsiFile file) {
+    if (isHtmlFile(file)) return true;
+    final PsiFile templateFile = TemplateLanguageUtil.getTemplateFile(file);
+    return templateFile != null && isHtmlFile(templateFile);
+  }
+
+  private static boolean isHtmlFile(final PsiFile file) {
+    final Language language = file.getLanguage();
+    if (language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE) {
+      return true;
+    }
+    return false;
   }
 }

@@ -4,7 +4,6 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.lang.xhtml.XHTMLLanguage;
@@ -27,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class TemplateSurrounder implements Surrounder {
 
-  private final TemplateImpl myTemplate;
+  protected final TemplateImpl myTemplate;
 
   public TemplateSurrounder(final TemplateImpl template) {
     myTemplate = template;
@@ -41,7 +40,6 @@ public class TemplateSurrounder implements Surrounder {
     final TemplateContext templateContext = myTemplate.getTemplateContext();
 
     if (templateContext.HTML && (fileType == StdFileTypes.XHTML || fileType == StdFileTypes.HTML)) return true;
-    if (templateContext.JSP && (fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX)) return true;
 
     if (templateContext.XML) {
       return fileType == StdFileTypes.XML;
@@ -92,16 +90,14 @@ public class TemplateSurrounder implements Surrounder {
     return null;
   }
 
-  public static boolean isLanguageWithWSSignificant(PsiElement element) {
+  private boolean isLanguageWithWSSignificant(PsiElement element) {
     return isLanguageWithWSSignificant(getLanguage(element)) ||
            element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS;
   }
 
-  private static boolean isLanguageWithWSSignificant(Language lang) {
+  protected boolean isLanguageWithWSSignificant(Language lang) {
     return lang == HTMLLanguage.INSTANCE ||
-           lang == XHTMLLanguage.INSTANCE ||
-           lang == StdLanguages.JSP ||
-           lang == StdLanguages.JSPX;
+           lang == XHTMLLanguage.INSTANCE;
   }
 
   private static Language getLanguage(PsiElement element) {

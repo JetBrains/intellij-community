@@ -3,14 +3,13 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -246,10 +245,9 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
   private static boolean canHaveAdequateFix(PsiElement element) {
     final PsiFile containingFile = element.getContainingFile();
 
-    if (containingFile instanceof JspFile ||
-        containingFile.getLanguage() == HTMLLanguage.INSTANCE ||
-        containingFile.getLanguage() == StdLanguages.JSP ||
-        containingFile.getLanguage() == XHTMLLanguage.INSTANCE
+    if (containingFile.getLanguage() == HTMLLanguage.INSTANCE ||
+        containingFile.getLanguage() == XHTMLLanguage.INSTANCE ||
+        containingFile.getViewProvider() instanceof TemplateLanguageFileViewProvider
       ) {
       return false;
     }

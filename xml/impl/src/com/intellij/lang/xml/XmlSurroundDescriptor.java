@@ -52,10 +52,14 @@ public class XmlSurroundDescriptor implements SurroundDescriptor {
     for (TemplateImpl template : templates) {
       if (template.isDeactivated() || !template.isSelectionTemplate()) continue;
       if (isEnabled(template)) {
-        surrounders.add(new TemplateSurrounder(template));
+        surrounders.add(createSurrounder(template));
       }
     }
     return surrounders.toArray(new Surrounder[surrounders.size()]);
+  }
+
+  protected TemplateSurrounder createSurrounder(final TemplateImpl template) {
+    return new TemplateSurrounder(template);
   }
 
   protected boolean isEnabled(final TemplateImpl template) {

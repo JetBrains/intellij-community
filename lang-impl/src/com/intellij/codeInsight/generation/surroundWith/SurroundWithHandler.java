@@ -69,7 +69,11 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
           return;
         }
         else {
-          invokeSurrondInTestMode(project, editor, surrounder, descriptor, elements);
+          if (surroundDescriptors.size() == 1) {
+            doSurround(project, editor, surrounder, elements);
+          } else {
+            invokeSurrondInTestMode(project, editor, surrounder, descriptor, elements);
+          }
         }
       }
     }

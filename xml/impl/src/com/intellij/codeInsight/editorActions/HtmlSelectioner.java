@@ -12,10 +12,6 @@ import com.intellij.codeInsight.editorActions.wordSelection.AbstractWordSelectio
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
-import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.lang.xhtml.XHTMLLanguage;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -27,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.xml.util.HtmlUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,12 +42,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
   static boolean canSelectElement(final PsiElement e) {
     if (e instanceof XmlToken) {
       Language language = e.getLanguage();
-      if (language == XMLLanguage.INSTANCE) language = e.getParent().getLanguage();
-
-      return language instanceof HTMLLanguage ||
-             language instanceof XHTMLLanguage ||
-             language == StdLanguages.JSP ||
-             language == StdLanguages.JSPX ||
+      return HtmlUtil.hasHtml(e.getContainingFile()) ||
              (ourStyleSelectioner != null && ourStyleSelectioner.canSelect(e));
     }
     return false;

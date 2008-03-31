@@ -12,10 +12,6 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.jsp.impl.TldAttributeDescriptor;
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
-import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -128,9 +124,7 @@ class XmlTagInsertHandler extends BasicInsertHandler {
     template.setToIndent(true);
 
     // temp code
-    final Language language = tag.getContainingFile().getLanguage();
-    boolean htmlCode = language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE;
-    boolean jspCode = language == StdLanguages.JSP || language == StdLanguages.JSPX;
+    boolean htmlCode = HtmlUtil.hasHtml(tag.getContainingFile());
     Set<String> notRequiredAttributes = Collections.emptySet();
 
     if (tag instanceof HtmlTag) {
@@ -150,7 +144,7 @@ class XmlTagInsertHandler extends BasicInsertHandler {
 
     boolean toReformat = true;
     boolean weInsertedSomeCodeThatCouldBeInvalidated = false;
-    if (htmlCode || jspCode) {
+    if (htmlCode) {
       toReformat = false;
     }
     template.setToReformat(toReformat);
