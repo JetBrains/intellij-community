@@ -31,11 +31,11 @@ public class LegacyCompletionContributor extends CompletionContributor{
     final PsiElementPattern.Capture<PsiElement> everywhere = PlatformPatterns.psiElement();
     registrar.extend(CompletionType.BASIC, everywhere, new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
-        CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
+        final CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         final PsiFile file = parameters.getOriginalFile();
         final int startOffset = context.getStartOffset();
         final PsiElement lastElement = file.findElementAt(startOffset - 1);
-        PsiElement insertedElement = parameters.getPosition();
+        final PsiElement insertedElement = parameters.getPosition();
         CompletionData completionData = ApplicationManager.getApplication().runReadAction(new Computable<CompletionData>() {
           public CompletionData compute() {
             return CompletionUtil.getCompletionDataByElement(lastElement, file, startOffset);
@@ -54,7 +54,11 @@ public class LegacyCompletionContributor extends CompletionContributor{
         if (completionData == null) return;
 
         final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
-        final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(context.getStartOffset());
+        final PsiReference ref = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
+          public PsiReference compute() {
+            return insertedElement.getContainingFile().findReferenceAt(context.getStartOffset());
+          }
+        });
         if (ref != null) {
           completionData.completeReference(ref, lookupSet, insertedElement, result.getPrefixMatcher(), context.file, context.getStartOffset());
         }
