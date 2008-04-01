@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.update.ComparableObjectCheck;
 import com.intellij.util.containers.ArrayListSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -518,20 +519,23 @@ public final class EditorsSplitters extends JPanel {
 
   private final class MyFocusWatcher extends FocusWatcher {
     protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
-      if (myInsideChange > 0) {
-        return;
+      EditorWindow newWindow = null;
+      VirtualFile newFile = null;
+
+      if (component != null) {
+        newWindow = findWindowWith(component);
+        if (newWindow != null) {
+          newFile = newWindow.getSelectedFile();
+        }
       }
-      final EditorWindow oldActiveWindow = getCurrentWindow();
-      final EditorWindow newActiveWindow = findWindowWith(component);
-      final boolean currentFileChanged = getCurrentFile() != myCurrentFile;
-      if (oldActiveWindow != newActiveWindow || currentFileChanged) {
-        if (currentFileChanged) {
-          getManager().updateFileName(newActiveWindow == null ? null : newActiveWindow.getSelectedFile());
-          myCurrentFile = getCurrentFile();
-        }
-        if (component != null) {
-          setCurrentWindow(newActiveWindow, false);
-        }
+
+      boolean changed = !ComparableObjectCheck.equals(newWindow, myCurrentWindow) || !ComparableObjectCheck.equals(newFile, myCurrentFile);
+
+      myCurrentFile = newFile;
+      myCurrentWindow = newWindow;
+
+      if (changed) {
+        setCurrentWindow(newWindow, false);
       }
     }
   }
