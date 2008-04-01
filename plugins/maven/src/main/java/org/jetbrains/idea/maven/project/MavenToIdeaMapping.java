@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.core.util.ProjectId;
 
 import java.io.File;
 import java.util.*;
@@ -15,10 +16,11 @@ import java.util.*;
 public class MavenToIdeaMapping {
   @NonNls private static final String IML_EXT = ".iml";
 
-  private Map<MavenId, VirtualFile> mavenProjectsFiles = new HashMap<MavenId, VirtualFile>();
-  private Map<MavenId, String> projectIdToModuleName = new HashMap<MavenId, String>();
+  private Map<ProjectId, VirtualFile> projectIdToFile = new HashMap<ProjectId, VirtualFile>();
+  private Map<ProjectId, String> projectIdToModuleName = new HashMap<ProjectId, String>();
+
   private Set<String> projectNames = new HashSet<String>();
-  private Map<MavenProjectModel.Node, String> projectToModuleName = new HashMap<MavenProjectModel.Node, String>();
+  private Map<MavenProjectModel.Node, String> projectNodeToModuleName = new HashMap<MavenProjectModel.Node, String>();
   private Map<MavenProjectModel.Node, String> projectToModulePath = new HashMap<MavenProjectModel.Node, String>();
   private Map<String, Module> nameToModule = new HashMap<String, Module>();
   private Map<String, String> libraryNameToModuleName = new HashMap<String, String>();
@@ -45,14 +47,16 @@ public class MavenToIdeaMapping {
                       ? node.getLinkedModule().getName()
                       : generateModuleName(id, duplicateNames);
 
-        projectIdToModuleName.put(id, name);
 
-        projectToModuleName.put(node, name);
+        projectNodeToModuleName.put(node, name);
 
         libraryNameToModuleName.put(getLibraryName(id), name);
 
         projectNames.add(name);
-        mavenProjectsFiles.put(id, node.getFile());
+
+        ProjectId projectId = new ProjectId(id);
+        projectIdToModuleName.put(projectId, name);
+        projectIdToFile.put(projectId, node.getFile());
       }
     });
   }
@@ -90,7 +94,7 @@ public class MavenToIdeaMapping {
       public void visit(MavenProjectModel.Node node) {
         Module module = node.getLinkedModule() != null
                         ? node.getLinkedModule()
-                        : nameToModule.get(projectToModuleName.get(node));
+                        : nameToModule.get(projectNodeToModuleName.get(node));
         if (module == null) return;
 
         String modulePath = FileUtil.toSystemIndependentName(module.getModuleFilePath());
@@ -125,11 +129,11 @@ public class MavenToIdeaMapping {
 
   private String generateModulePath(MavenProjectModel.Node node, String dedicatedModuleDir) {
     return new File(StringUtil.isEmptyOrSpaces(dedicatedModuleDir) ? node.getDirectory() : dedicatedModuleDir,
-                    projectToModuleName.get(node) + IML_EXT).getPath();
+                    projectNodeToModuleName.get(node) + IML_EXT).getPath();
   }
 
-  public Map<MavenId, VirtualFile> getProjectMapping() {
-    return mavenProjectsFiles;
+  public Map<ProjectId, VirtualFile> getProjectMapping() {
+    return projectIdToFile;
   }
 
   public String getLibraryName(MavenId id) {
@@ -137,12 +141,12 @@ public class MavenToIdeaMapping {
   }
 
   public String getModuleName(MavenId id) {
-    String name = projectIdToModuleName.get(id);
+    String name = projectIdToModuleName.get(new ProjectId(id));
     if (nameToModule.containsKey(name) || projectNames.contains(name)) return name;
     return null;
   }
 
-  public Collection<MavenId> getMappedToModules() {
+  public Collection<ProjectId> getProjectIds() {
     return projectIdToModuleName.keySet();
   }
 

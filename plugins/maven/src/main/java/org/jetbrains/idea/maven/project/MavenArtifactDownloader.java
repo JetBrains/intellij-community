@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenFactory;
 import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.core.util.ProjectId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
@@ -75,12 +76,12 @@ public class MavenArtifactDownloader {
 
       Progress.run(project, ProjectBundle.message("maven.downloading"), new Progress.Process() {
         public void run(Progress p) throws MavenException, CanceledException {
-          Collection<MavenId> moduleIds = new ArrayList<MavenId>();
+          Collection<ProjectId> projectIds = new ArrayList<ProjectId>();
           for (MavenProject mavenProject : projectsToModules.keySet()) {
-            moduleIds.add(new MavenId(mavenProject.getArtifact()));
+            projectIds.add(new ProjectId(mavenProject.getArtifact()));
           }
           new MavenArtifactDownloader(importer.getArtifactSettings(), e, p)
-            .download(project, mavenProjects, fileToProject, moduleIds, true);
+            .download(project, mavenProjects, fileToProject, projectIds, true);
         }
       });
     } finally {
@@ -93,9 +94,9 @@ public class MavenArtifactDownloader {
   public void download(Project project,
                        Map<MavenProject, Collection<String>> projectsWithProfiles,
                        Map<VirtualFile, MavenProject> projectToFile,
-                       Collection<MavenId> mappedToModules,
+                       Collection<ProjectId> projectIds,
                        boolean demand) throws CanceledException, MavenException {
-    Map<MavenId, Set<ArtifactRepository>> libraryArtifacts = collectLibraryArtifacts(projectsWithProfiles.keySet(), mappedToModules);
+    Map<MavenId, Set<ArtifactRepository>> libraryArtifacts = collectLibraryArtifacts(projectsWithProfiles.keySet(), projectIds);
 
     myProgress.checkCanceled();
 
@@ -143,7 +144,7 @@ public class MavenArtifactDownloader {
     return level == MavenArtifactSettings.UPDATE_MODE.ALWAYS || (level == MavenArtifactSettings.UPDATE_MODE.ON_DEMAND && demand);
   }
 
-  private static Map<MavenId, Set<ArtifactRepository>> collectLibraryArtifacts(Collection<MavenProject> mavenProjects, Collection<MavenId> mappedToModules) {
+  private static Map<MavenId, Set<ArtifactRepository>> collectLibraryArtifacts(Collection<MavenProject> mavenProjects, Collection<ProjectId> projectIds) {
     Map<MavenId, Set<ArtifactRepository>> result = new TreeMap<MavenId, Set<ArtifactRepository>>();
 
     for (MavenProject mavenProject : mavenProjects) {
@@ -155,7 +156,7 @@ public class MavenArtifactDownloader {
           if (artifact.getType().equalsIgnoreCase(Constants.JAR_TYPE) &&
               !artifact.getScope().equalsIgnoreCase(Artifact.SCOPE_SYSTEM)) {
             MavenId id = new MavenId(artifact);
-            if (!mappedToModules.contains(id)) {
+            if (!projectIds.contains(id)) {
               Set<ArtifactRepository> repos = result.get(id);
               if (repos == null) {
                 repos = new HashSet<ArtifactRepository>();

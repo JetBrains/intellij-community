@@ -12,7 +12,7 @@ import org.codehaus.plexus.component.repository.exception.ComponentLookupExcepti
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.JDOMReader;
-import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.core.util.ProjectId;
 import org.jetbrains.idea.maven.project.MavenException;
 
 import java.io.File;
@@ -163,7 +163,7 @@ public class MavenFactory {
     return createEmbedder(settings, new EmbedderCustomizer(null));
   }
 
-  public static MavenEmbedder createEmbedderForResolve(MavenCoreSettings settings, Map<MavenId, VirtualFile> projectMapping) throws MavenException {
+  public static MavenEmbedder createEmbedderForResolve(MavenCoreSettings settings, Map<ProjectId, VirtualFile> projectMapping) throws MavenException {
     return createEmbedder(settings, new EmbedderCustomizer(projectMapping));
   }
 
@@ -249,9 +249,9 @@ public class MavenFactory {
   }
 
   private static class EmbedderCustomizer implements ContainerCustomizer {
-    private Map<MavenId, VirtualFile> myMapping;
+    private Map<ProjectId, VirtualFile> myMapping;
 
-    public EmbedderCustomizer(Map<MavenId, VirtualFile> projectMapping) {
+    public EmbedderCustomizer(Map<ProjectId, VirtualFile> projectMapping) {
       myMapping = projectMapping;
     }
 
