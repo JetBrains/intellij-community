@@ -113,7 +113,9 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     if (valueObject instanceof PsiClass) {
       ExtendClass extend = element.getAnnotation(ExtendClass.class);
       if (extend != null) {
-        return checkExtendClass(element, (PsiClass)valueObject, extend.value(), extend.instantiatable(), extend.canBeDecorator(), holder);
+        return checkExtendClass(element, (PsiClass)valueObject, extend.value(),
+                                extend.instantiatable(), extend.canBeDecorator(), extend.allowInterface(),
+                                extend.allowAbstract(), holder);
       }
       else {
         final PsiReference[] references = myProvider.getReferencesByElement(DomUtil.getValueElement(element), new ProcessingContext());
@@ -125,7 +127,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
             if (value != null && value.length != 0) {
               for (String className : value) {
                 final List<DomElementProblemDescriptor> problemDescriptors =
-                  checkExtendClass(element, ((PsiClass)valueObject), className, false, false, holder);
+                  checkExtendClass(element, ((PsiClass)valueObject), className, false, false, true, true, holder);
                 if (!problemDescriptors.isEmpty()) {
                   return problemDescriptors;
                 }
@@ -139,52 +141,63 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   }
 
   @NotNull
-  private List<DomElementProblemDescriptor> checkExtendClass(final GenericDomValue element, final PsiClass value, final String name, final boolean instantiatable,
-                                                             final boolean canBeDecorator,
-                                                             final DomElementAnnotationHolder holder) {
+  private static List<DomElementProblemDescriptor> checkExtendClass(final GenericDomValue element,
+                                                                    final PsiClass value,
+                                                                    final String name,
+                                                                    final boolean instantiatable,
+                                                                    final boolean canBeDecorator,
+                                                                    final boolean allowInterface,
+                                                                    final boolean allowAbstract,
+                                                                    final DomElementAnnotationHolder holder) {
     final Project project = element.getManager().getProject();
     PsiClass extendClass = JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
+    final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
     if (extendClass != null) {
-      final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
       if (!name.equals(value.getQualifiedName()) && !value.isInheritor(extendClass, true)) {
-        String message = IdeBundle.message("class.is.not.a.subclass", value.getQualifiedName(), extendClass.getQualifiedName());
+        String message = DomBundle.message("class.is.not.a.subclass", value.getQualifiedName(), extendClass.getQualifiedName());
         list.add(holder.createProblem(element, message));
       }
-      else if (instantiatable) {
-        if (value.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          list.add(holder.createProblem(element, IdeBundle.message("class.is.not.concrete", value.getQualifiedName())));
-        }
-        else if (!value.hasModifierProperty(PsiModifier.PUBLIC)) {
-          list.add(holder.createProblem(element, IdeBundle.message("class.is.not.public", value.getQualifiedName())));
-        }
-        else if (!hasDefaultConstructor(value)) {
-          if (canBeDecorator) {
-            boolean hasConstructor = false;
+    }
 
-            for (PsiMethod method : value.getConstructors()) {
-              final PsiParameterList psiParameterList = method.getParameterList();
-              if (psiParameterList.getParametersCount() != 1) continue;
-              final PsiType psiType = psiParameterList.getParameters()[0].getTypeElement().getType();
-              if (psiType instanceof PsiClassType) {
-                final PsiClass psiClass = ((PsiClassType)psiType).resolve();
-                if (psiClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, extendClass, true)) {
-                  hasConstructor = true;
-                  break;
-                }
+    if (instantiatable) {
+      if (value.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        list.add(holder.createProblem(element, DomBundle.message("class.is.not.concrete", value.getQualifiedName())));
+      }
+      else if (!value.hasModifierProperty(PsiModifier.PUBLIC)) {
+        list.add(holder.createProblem(element, DomBundle.message("class.is.not.public", value.getQualifiedName())));
+      }
+      else if (!hasDefaultConstructor(value)) {
+        if (canBeDecorator) {
+          boolean hasConstructor = false;
+
+          for (PsiMethod method : value.getConstructors()) {
+            final PsiParameterList psiParameterList = method.getParameterList();
+            if (psiParameterList.getParametersCount() != 1) continue;
+            final PsiType psiType = psiParameterList.getParameters()[0].getTypeElement().getType();
+            if (psiType instanceof PsiClassType) {
+              final PsiClass psiClass = ((PsiClassType)psiType).resolve();
+              if (psiClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, extendClass, true)) {
+                hasConstructor = true;
+                break;
               }
             }
-            if (!hasConstructor) {
-              list.add(holder.createProblem(element, IdeBundle.message("class.decorator.or.has.default.constructor", value.getQualifiedName())));
-            }
           }
-          else {
-            list.add(holder.createProblem(element, IdeBundle.message("class.has.no.default.constructor", value.getQualifiedName())));
+          if (!hasConstructor) {
+            list.add(holder.createProblem(element, DomBundle.message("class.decorator.or.has.default.constructor", value.getQualifiedName())));
           }
         }
+        else {
+          list.add(holder.createProblem(element, DomBundle.message("class.has.no.default.constructor", value.getQualifiedName())));
+        }
       }
-      return list;
     }
-    return Collections.emptyList();
+    if (!allowInterface && value.isInterface()) {
+      list.add(holder.createProblem(element, DomBundle.message("interface.not.allowed", value.getQualifiedName())));
+    }
+    if (!allowAbstract && value.hasModifierProperty(PsiModifier.ABSTRACT) && !value.isInterface()) {
+      list.add(holder.createProblem(element, DomBundle.message("abstract.class.not.allowed", value.getQualifiedName())));
+    }
+    return list;
   }
 
   @NotNull
