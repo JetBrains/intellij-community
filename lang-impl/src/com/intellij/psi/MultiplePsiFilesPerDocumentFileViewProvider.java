@@ -53,6 +53,13 @@ public class MultiplePsiFilesPerDocumentFileViewProvider extends SingleRootFileV
   protected PsiFile getPsiInner(final Language target) {
     PsiFile file = myRoots.get(target);
     if (file == null) {
+      if (isPhysical()) {
+        VirtualFile virtualFile = getVirtualFile();
+        VirtualFile parent = virtualFile.getParent();
+        if (parent != null) {
+          getManager().findDirectory(parent);
+        }
+      }
       file = createFile(target);
       if (file == null) return null;
       /*

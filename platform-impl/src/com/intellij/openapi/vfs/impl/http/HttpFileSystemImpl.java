@@ -21,8 +21,12 @@ public class HttpFileSystemImpl extends HttpFileSystem {
   }
 
   public VirtualFile findFileByPath(@NotNull String path) {
+    return findFileByPath(path, false);
+  }
+
+  public VirtualFile findFileByPath(@NotNull String path, boolean isDirectory) {
     try {
-      return myRemoteFileManager.getOrCreateFile(path);
+      return myRemoteFileManager.getOrCreateFile(path, isDirectory);
     }
     catch (IOException e) {
       return null;
