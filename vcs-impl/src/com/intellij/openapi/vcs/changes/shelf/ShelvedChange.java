@@ -107,6 +107,17 @@ public class ShelvedChange {
     return file;
   }
 
+  @Nullable
+  public TextFilePatch loadFilePatch() throws IOException, PatchSyntaxException {
+    List<TextFilePatch> filePatches = ShelveChangesManager.loadPatches(myPatchPath);
+    for(TextFilePatch patch: filePatches) {
+      if (myBeforePath.equals(patch.getBeforeName())) {
+        return patch;
+      }
+    }
+    return null;
+  }
+
   private class PatchedContentRevision implements ContentRevision {
     private final FilePath myBeforeFilePath;
     private final FilePath myAfterFilePath;
@@ -133,21 +144,23 @@ public class ShelvedChange {
 
     @Nullable
     private String loadContent() throws IOException, PatchSyntaxException, ApplyPatchException {
-      List<TextFilePatch> filePatches = ShelveChangesManager.loadPatches(myPatchPath);
-      for(TextFilePatch patch: filePatches) {
-        if (myBeforePath.equals(patch.getBeforeName())) {
-          if (patch.isNewFile()) {
-            return patch.getNewFileText();
-          }
-          if (patch.isDeletedFile()) {
-            return null;
-          }
-          StringBuilder newText = new StringBuilder();
-          patch.applyModifications(getBaseContent(), newText);
-          return newText.toString();
-        }
+      TextFilePatch patch = loadFilePatch();
+      if (patch != null) {
+        return loadContent(patch);
       }
       return null;
+    }
+
+    private String loadContent(final TextFilePatch patch) throws ApplyPatchException {
+      if (patch.isNewFile()) {
+        return patch.getNewFileText();
+      }
+      if (patch.isDeletedFile()) {
+        return null;
+      }
+      StringBuilder newText = new StringBuilder();
+      patch.applyModifications(getBaseContent(), newText);
+      return newText.toString();
     }
 
     private String getBaseContent() {

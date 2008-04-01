@@ -43,6 +43,8 @@ import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -184,42 +186,11 @@ public class ApplyPatchAction extends AnAction {
       return patch.apply(file, context);
     }
     catch(ApplyPatchException ex) {
-      if (!patch.isNewFile() && !patch.isDeletedFile()) {
-        FilePath pathBeforeRename = context.getPathBeforeRename(file);
-        final DefaultPatchBaseVersionProvider provider = new DefaultPatchBaseVersionProvider(project);
-        if (provider.canProvideContent(file, patch.getBeforeVersionId()) && patch instanceof TextFilePatch) {
-          final StringBuilder newText = new StringBuilder();
-          final Ref<CharSequence> contentRef = new Ref<CharSequence>();
-          final Ref<ApplyPatchStatus> statusRef = new Ref<ApplyPatchStatus>();
-          try {
-            provider.getBaseVersionContent(file, pathBeforeRename, patch.getBeforeVersionId(), new Processor<CharSequence>() {
-              public boolean process(final CharSequence text) {
-                newText.setLength(0);
-                try {
-                  statusRef.set(((TextFilePatch) patch).applyModifications(text, newText));
-                }
-                catch(ApplyPatchException ex) {
-                  return true;  // continue to older versions
-                }
-                contentRef.set(text);
-                return false;
-              }
-            });
-          }
-          catch (VcsException vcsEx) {
-            Messages.showErrorDialog(project, VcsBundle.message("patch.load.base.revision.error", patch.getBeforeName(), vcsEx.getMessage()),
-                                     VcsBundle.message("patch.apply.dialog.title"));
-            return ApplyPatchStatus.FAILURE;
-          }
-          ApplyPatchStatus status = statusRef.get();
-          if (status != null) {
-            if (status != ApplyPatchStatus.ALREADY_APPLIED) {
-              return showMergeDialog(project, file, contentRef.get(), newText.toString());
-            }
-            else {
-              return status;
-            }
-          }
+      if (!patch.isNewFile() && !patch.isDeletedFile() && patch instanceof TextFilePatch) {
+        ApplyPatchStatus mergeStatus = mergeAgainstBaseVersion(project, file, context, (TextFilePatch) patch,
+                                                               ApplyPatchMergeRequestFactory.INSTANCE);
+        if (mergeStatus != null) {
+          return mergeStatus;
         }
       }
       Messages.showErrorDialog(project, VcsBundle.message("patch.apply.error", patch.getBeforeName(), ex.getMessage()),
@@ -231,17 +202,55 @@ public class ApplyPatchAction extends AnAction {
     return ApplyPatchStatus.FAILURE;
   }
 
-  private static ApplyPatchStatus showMergeDialog(Project project, VirtualFile file, CharSequence content, final String patchedContent) {
-    final DiffRequestFactory diffRequestFactory = DiffRequestFactory.getInstance();
+  @Nullable
+  public static ApplyPatchStatus mergeAgainstBaseVersion(Project project, VirtualFile file, ApplyPatchContext context,
+                                                         final TextFilePatch patch,
+                                                         final PatchMergeRequestFactory mergeRequestFactory) {
+    FilePath pathBeforeRename = context.getPathBeforeRename(file);
+    final DefaultPatchBaseVersionProvider provider = new DefaultPatchBaseVersionProvider(project);
+    if (provider.canProvideContent(file, patch.getBeforeVersionId())) {
+      final StringBuilder newText = new StringBuilder();
+      final Ref<CharSequence> contentRef = new Ref<CharSequence>();
+      final Ref<ApplyPatchStatus> statusRef = new Ref<ApplyPatchStatus>();
+      try {
+        provider.getBaseVersionContent(file, pathBeforeRename, patch.getBeforeVersionId(), new Processor<CharSequence>() {
+          public boolean process(final CharSequence text) {
+            newText.setLength(0);
+            try {
+              statusRef.set(patch.applyModifications(text, newText));
+            }
+            catch(ApplyPatchException ex) {
+              return true;  // continue to older versions
+            }
+            contentRef.set(text);
+            return false;
+          }
+        });
+      }
+      catch (VcsException vcsEx) {
+        Messages.showErrorDialog(project, VcsBundle.message("patch.load.base.revision.error", patch.getBeforeName(), vcsEx.getMessage()),
+                                 VcsBundle.message("patch.apply.dialog.title"));
+        return ApplyPatchStatus.FAILURE;
+      }
+      ApplyPatchStatus status = statusRef.get();
+      if (status != null) {
+        if (status != ApplyPatchStatus.ALREADY_APPLIED) {
+          return showMergeDialog(project, file, contentRef.get(), newText.toString(), mergeRequestFactory);
+        }
+        else {
+          return status;
+        }
+      }
+    }
+    return null;
+  }
+
+  private static ApplyPatchStatus showMergeDialog(Project project, VirtualFile file, CharSequence content, final String patchedContent,
+                                                  final PatchMergeRequestFactory mergeRequestFactory) {
     CharSequence fileContent = LoadTextUtil.loadText(file);
-    final MergeRequest request = diffRequestFactory.createMergeRequest(fileContent.toString(), patchedContent, content.toString(), file,
-                                                                       project, ActionButtonPresentation.createApplyButton());
-    request.setVersionTitles(new String[] {
-      VcsBundle.message("patch.apply.conflict.local.version"),
-      VcsBundle.message("patch.apply.conflict.merged.version"),
-      VcsBundle.message("patch.apply.conflict.patched.version")
-    });
-    request.setWindowTitle(VcsBundle.message("patch.apply.conflict.title", file.getPresentableUrl()));
+
+    final MergeRequest request = mergeRequestFactory.createMergeRequest(fileContent.toString(), patchedContent, content.toString(), file,
+                                                      project);
     DiffManager.getInstance().getDiffTool().show(request);
     if (request.getResult() == DialogWrapper.OK_EXIT_CODE) {
       return ApplyPatchStatus.SUCCESS;
@@ -252,7 +261,7 @@ public class ApplyPatchAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (e.getPlace() == ActionPlaces.PROJECT_VIEW_POPUP) {
+    if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
       VirtualFile vFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
       e.getPresentation().setVisible(project != null && vFile != null && vFile.getFileType() == StdFileTypes.PATCH);
     }
@@ -273,6 +282,23 @@ public class ApplyPatchAction extends AnAction {
         }
       }
       changeListManager.moveChangesTo(targetChangeList, changes.toArray(new Change[changes.size()]));
+    }
+  }
+
+  private static class ApplyPatchMergeRequestFactory implements PatchMergeRequestFactory {
+    public static final ApplyPatchMergeRequestFactory INSTANCE = new ApplyPatchMergeRequestFactory();
+
+    public MergeRequest createMergeRequest(final String leftText, final String rightText, final String originalContent, @NotNull final VirtualFile file,
+                                           final Project project) {
+      MergeRequest request = DiffRequestFactory.getInstance().createMergeRequest(leftText, rightText, originalContent,
+                                                                                 file, project, ActionButtonPresentation.createApplyButton());
+      request.setVersionTitles(new String[] {
+        VcsBundle.message("patch.apply.conflict.local.version"),
+        VcsBundle.message("patch.apply.conflict.merged.version"),
+        VcsBundle.message("patch.apply.conflict.patched.version")
+      });
+      request.setWindowTitle(VcsBundle.message("patch.apply.conflict.title", file.getPresentableUrl()));
+      return request;
     }
   }
 }

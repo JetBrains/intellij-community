@@ -64,5 +64,6 @@ public abstract class MergeRequest extends DiffRequest {
    *
    * @return the merged text.
    */
+  @Nullable
   public abstract DiffContent getResultContent();
 }

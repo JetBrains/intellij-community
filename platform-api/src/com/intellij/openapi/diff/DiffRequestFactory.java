@@ -15,10 +15,11 @@
  */
 package com.intellij.openapi.diff;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows to initiate 3-way merge operations for multiple versions of content of a particular virtual file.
@@ -43,5 +44,8 @@ public abstract class DiffRequestFactory {
    * @return The merge operation request.
    */
   public abstract MergeRequest createMergeRequest(String leftText, String rightText, String originalContent, @NotNull VirtualFile file, Project project,
-                                  ActionButtonPresentation actionButtonPresentation);
+                                  @Nullable ActionButtonPresentation actionButtonPresentation);
+
+  public abstract MergeRequest create3WayDiffRequest(String leftText, String rightText, String originalContent,
+                                                     Project project, @Nullable ActionButtonPresentation actionButtonPresentation);
 }

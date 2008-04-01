@@ -46,6 +46,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -58,9 +59,14 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                          String originalContent,
                                          @NotNull VirtualFile file,
                                          Project project,
-                                         final ActionButtonPresentation actionButtonPresentation) {
+                                         @Nullable final ActionButtonPresentation actionButtonPresentation) {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     return new MergeRequestImpl(leftText, createMergeVersion(file, document, originalContent), rightText, project, actionButtonPresentation);
+  }
+
+  public MergeRequest create3WayDiffRequest(final String leftText, final String rightText, final String originalContent, final Project project,
+                                            @Nullable final ActionButtonPresentation actionButtonPresentation) {
+    return new MergeRequestImpl(leftText, originalContent, rightText, project, actionButtonPresentation);
   }
 
   private MergeVersion createMergeVersion(VirtualFile file,

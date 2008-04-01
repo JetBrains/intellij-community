@@ -111,7 +111,8 @@
 
     <group id="ShelvedChangesPopupMenu">
       <action id="ShelvedChanges.Unshelve" class="com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction"/>
-      <reference ref="ChangesView.Diff"/>
+      <action id="ShelvedChanges.Diff" class="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesAction"
+          icon="/actions/diff.png"/>
       <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction"
               icon="/actions/createPatch.png"/>
       <separator/>
