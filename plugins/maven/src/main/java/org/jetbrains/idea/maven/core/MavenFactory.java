@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven.core;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.embedder.*;
 import org.apache.maven.extension.ExtensionManager;
@@ -11,8 +12,8 @@ import org.codehaus.plexus.component.repository.exception.ComponentLookupExcepti
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.JDOMReader;
+import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.project.MavenException;
-import org.jetbrains.idea.maven.project.MavenToIdeaMapping;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class MavenFactory {
   private static final Logger LOG = Logger.getInstance("#" + MavenFactory.class.getName());
@@ -161,8 +163,8 @@ public class MavenFactory {
     return createEmbedder(settings, new EmbedderCustomizer(null));
   }
 
-  public static MavenEmbedder createEmbedderForResolve(MavenCoreSettings settings, MavenToIdeaMapping mapping) throws MavenException {
-    return createEmbedder(settings, new EmbedderCustomizer(mapping));
+  public static MavenEmbedder createEmbedderForResolve(MavenCoreSettings settings, Map<MavenId, VirtualFile> projectMapping) throws MavenException {
+    return createEmbedder(settings, new EmbedderCustomizer(projectMapping));
   }
 
   private static MavenEmbedder createEmbedder(MavenCoreSettings settings, EmbedderCustomizer customizer) throws MavenException {
@@ -247,10 +249,10 @@ public class MavenFactory {
   }
 
   private static class EmbedderCustomizer implements ContainerCustomizer {
-    private MavenToIdeaMapping myMapping;
+    private Map<MavenId, VirtualFile> myMapping;
 
-    public EmbedderCustomizer(MavenToIdeaMapping mapping) {
-      myMapping = mapping;
+    public EmbedderCustomizer(Map<MavenId, VirtualFile> projectMapping) {
+      myMapping = projectMapping;
     }
 
     public void customize(PlexusContainer c) {

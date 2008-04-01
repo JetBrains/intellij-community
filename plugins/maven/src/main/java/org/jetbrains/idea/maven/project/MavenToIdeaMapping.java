@@ -128,8 +128,8 @@ public class MavenToIdeaMapping {
                     projectToModuleName.get(node) + IML_EXT).getPath();
   }
 
-  public VirtualFile getMavenProjectFile(MavenId id) {
-    return mavenProjectsFiles.get(id);
+  public Map<MavenId, VirtualFile> getProjectMapping() {
+    return mavenProjectsFiles;
   }
 
   public String getLibraryName(MavenId id) {

@@ -4,13 +4,13 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.apache.maven.model.Model;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
-import org.apache.maven.project.MavenProject;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -102,8 +102,8 @@ public class ImporterSettingsConfigurable implements Configurable {
                                              final Collection<VirtualFile> files,
                                              final Set<String> profiles) {
     for (VirtualFile file : files) {
-      MavenProject p = projectsState.getMavenProject(file);
-      ProjectUtil.collectProfileIds(p == null ? null : p.getModel(), profiles);
+      Model model = projectsState.getMavenModel(file);
+      ProjectUtil.collectProfileIds(model, profiles);
     }
     return profiles;
   }

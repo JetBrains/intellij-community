@@ -10,7 +10,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
-import org.apache.maven.project.MavenProject;
+import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.core.MavenFactory;
 import org.jetbrains.idea.maven.core.util.MavenId;
@@ -107,25 +107,29 @@ public class MavenKeymapExtension implements KeymapExtension {
 
   private static String getMavenProjectName(MavenProjectsState projectsState, VirtualFile file) {
     if (file != null) {
-      final MavenProject mavenProject = projectsState.getMavenProject(file);
-      if (mavenProject != null) {
-        return mavenProject.getName();
+      final Model model = projectsState.getMavenModel(file);
+      if (model != null) {
+        return model.getName();
       }
     }
     return EventsBundle.message("maven.event.unknown.project");
   }
 
   private static Collection<String> getGoals(MavenProjectsState projectsState, MavenRepository repository, VirtualFile file) {
-    Collection<String> list = new HashSet<String>();
-    list.addAll(MavenFactory.getStandardGoalsList());
-    for (MavenId mavenId : ProjectUtil
-      .collectPluginIds(projectsState.getMavenProject(file), projectsState.getProfiles(file), new HashSet<MavenId>())) {
-      collectGoals(repository, mavenId, list);
+    Collection<String> result = new HashSet<String>();
+    result.addAll(MavenFactory.getStandardGoalsList());
+
+    Model model = projectsState.getMavenModel(file);
+    Collection<String> activeProfiles = projectsState.getProfiles(file);
+    for (MavenId plugin : ProjectUtil.collectPluginIds(model, activeProfiles)) {
+      collectGoals(repository, plugin, result);
     }
+
     for (MavenId mavenId : projectsState.getAttachedPlugins(file)) {
-      collectGoals(repository, mavenId, list);
+      collectGoals(repository, mavenId, result);
     }
-    return list;
+
+    return result;
   }
 
   private static void collectGoals(final MavenRepository repository, final MavenId mavenId, final Collection<String> list) {

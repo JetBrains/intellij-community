@@ -352,7 +352,7 @@ public class BasicImportingTest extends ImportingTestCase {
     PomTreeStructure.RootNode r = createMavenTree();
 
     assertEquals(1, r.pomNodes.size());
-    assertEquals("project", r.pomNodes.get(0).mavenProject.getArtifactId());
+    assertEquals("project", r.pomNodes.get(0).getId());
 
     assertEquals(2, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
   }

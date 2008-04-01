@@ -19,7 +19,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.maven.project.MavenProject;
+import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -238,11 +238,11 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     if (mavenTask != null) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mavenTask.pomPath);
       if (file != null) {
-        final MavenProject mavenProject = myProjectsState.getMavenProject(file);
-        if (mavenProject != null) {
+        Model model = myProjectsState.getMavenModel(file);
+        if (model != null) {
           StringBuilder stringBuilder = new StringBuilder();
           stringBuilder.append("'");
-          stringBuilder.append(mavenProject.getArtifactId());
+          stringBuilder.append(model.getArtifactId());
           stringBuilder.append(" ");
           stringBuilder.append(mavenTask.goal);
           stringBuilder.append("'");

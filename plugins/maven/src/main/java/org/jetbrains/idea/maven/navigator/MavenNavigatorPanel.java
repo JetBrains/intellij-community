@@ -14,7 +14,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import org.apache.maven.project.MavenProject;
+import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenDataKeys;
@@ -152,7 +152,7 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
   private List<String> extractGoals() {
     final PomTreeStructure.PomNode pomNode = getSelectedPomNode();
     if (pomNode != null) {
-      final MavenProject mavenProject = myProjectsState.getMavenProject(pomNode.getFile());
+      final Model mavenProject = myProjectsState.getMavenModel(pomNode.getFile());
       if (mavenProject != null) {
         final String goal = mavenProject.getBuild().getDefaultGoal();
         if (!StringUtil.isEmptyOrSpaces(goal)) {

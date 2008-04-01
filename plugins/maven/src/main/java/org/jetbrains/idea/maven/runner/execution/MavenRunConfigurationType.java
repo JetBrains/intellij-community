@@ -13,7 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import org.apache.maven.project.MavenProject;
+import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.runner.RunnerBundle;
@@ -102,10 +102,10 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
     LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     final VirtualFile virtualFile = localFileSystem.findFileByPath(runnerParameters.getPomPath());
     if (virtualFile != null) {
-      MavenProject mavenProject = MavenProjectsState.getInstance(project).getMavenProject(virtualFile);
-      if (mavenProject != null) {
-        if (!StringUtil.isEmptyOrSpaces(mavenProject.getArtifactId())) {
-          return mavenProject.getArtifactId();
+      Model model = MavenProjectsState.getInstance(project).getMavenModel(virtualFile);
+      if (model != null) {
+        if (!StringUtil.isEmptyOrSpaces(model.getArtifactId())) {
+          return model.getArtifactId();
         }
       }
     }
