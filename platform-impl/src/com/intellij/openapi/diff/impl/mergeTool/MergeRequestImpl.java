@@ -125,19 +125,19 @@ public class MergeRequestImpl extends MergeRequest {
 
   private class MergeContent extends DiffContent {
     private final MergeVersion myTarget;
-    private final Document myWorikingDocument;
+    private final Document myWorkingDocument;
 
     public MergeContent(MergeVersion target) {
       myTarget = target;
-      myWorikingDocument = myTarget.createWorkingDocument(getProject());
-      LOG.assertTrue(myWorikingDocument.isWritable());
+      myWorkingDocument = myTarget.createWorkingDocument(getProject());
+      LOG.assertTrue(myWorkingDocument.isWritable());
     }
 
     public void applyChanges() {
-      myTarget.applyText(myWorikingDocument.getText(), getProject());
+      myTarget.applyText(myWorkingDocument.getText(), getProject());
     }
 
-    public Document getDocument() { return myWorikingDocument; }
+    public Document getDocument() { return myWorkingDocument; }
 
     public OpenFileDescriptor getOpenFileDescriptor(int offset) {
       VirtualFile file = getFile();
