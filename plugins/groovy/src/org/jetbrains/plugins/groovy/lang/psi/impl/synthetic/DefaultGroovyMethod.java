@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -32,11 +31,8 @@ import java.util.LinkedHashSet;
  * @author ven
  */
 public class DefaultGroovyMethod extends LightMethod {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod");
-
   private PsiMethod myMethod;
 
-  private LightReferenceList myThrowsList;
   private LightParameterList myParameterList = null;
 
   private LightModifierList myModifierList;
