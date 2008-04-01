@@ -10,17 +10,16 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SystemProperties;
 
 import java.io.File;
 import java.util.Collection;
@@ -34,10 +33,6 @@ import java.util.ArrayList;
 public class CvsCheckinEnvironment implements CheckinEnvironment {
 
   private final Project myProject;
-
-  public boolean showCheckinDialogInAnyCase() {
-    return false;
-  }
 
   public CvsCheckinEnvironment(Project project) {
     myProject = project;
@@ -57,22 +52,6 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
       return null;
     }
     return CvsUtil.getTemplateFor(filesToCheckin[0]);
-  }
-
-  public String prepareCheckinMessage(String text) {
-    if (text == null) return null;
-    String[] lines = LineTokenizer.tokenize(text.toCharArray(), false);
-    StringBuffer buffer = new StringBuffer();
-    boolean firstLine = true;
-    for (String line : lines) {
-      //noinspection HardCodedStringLiteral
-      if (!line.startsWith("CVS:")) {
-        if (!firstLine) buffer.append(SystemProperties.getLineSeparator());
-        buffer.append(line);
-        firstLine = false;
-      }
-    }
-    return buffer.toString();
   }
 
   public String getHelpId() {
@@ -129,5 +108,9 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
     return Collections.emptyList();
+  }
+
+  public boolean keepChangeListAfterCommit(ChangeList changeList) {
+    return false;
   }
 }

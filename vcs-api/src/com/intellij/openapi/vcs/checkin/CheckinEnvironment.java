@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -39,18 +40,11 @@ public interface CheckinEnvironment {
   @Nullable
   String getDefaultMessageFor(FilePath[] filesToCheckin);
 
-  String prepareCheckinMessage(String text);
-
   @Nullable
   @NonNls
   String getHelpId();
 
   String getCheckinOperationName();
-
-  /**
-   * @return true if check in dialog should be shown even if there are no files to check in
-   */
-  boolean showCheckinDialogInAnyCase();
 
   @Nullable
   List<VcsException> commit(List<Change> changes, String preparedComment);
@@ -60,4 +54,6 @@ public interface CheckinEnvironment {
 
   @Nullable
   List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files);
+
+  boolean keepChangeListAfterCommit(ChangeList changeList);
 }

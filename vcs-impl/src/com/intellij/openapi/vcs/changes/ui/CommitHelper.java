@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
@@ -22,6 +23,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ui.ConfirmationDialog;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -76,7 +78,7 @@ public class CommitHelper {
     else {
       Task.Backgroundable task =
         new Task.Backgroundable(myProject, myActionName, true, myConfiguration.getCommitOption()) {
-          public void run(final ProgressIndicator indicator) {
+          public void run(@NotNull final ProgressIndicator indicator) {
             final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
             vcsManager.startBackgroundVcsOperation();
             try {
@@ -121,6 +123,7 @@ public class CommitHelper {
   private void performCommit(final List<VcsException> vcsExceptions,
                              final List<Change> changesFailedToCommit,
                              final ChangeList changeList) {
+    final Ref<Boolean> refKeepChangeList = new Ref<Boolean>();
     try {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
@@ -134,6 +137,9 @@ public class CommitHelper {
           if (environment != null) {
             Collection<FilePath> paths = ChangesUtil.getPaths(changes);
             pathsToRefresh.addAll(paths);
+            if (environment.keepChangeListAfterCommit(changeList)) {
+              refKeepChangeList.set(Boolean.TRUE);
+            }
             final List<VcsException> exceptions = environment.commit(changes, myCommitMessage);
             if (exceptions != null && exceptions.size() > 0) {
               vcsExceptions.addAll(exceptions);
@@ -168,7 +174,7 @@ public class CommitHelper {
       AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, myActionName);
     }
     finally {
-      commitCompleted(vcsExceptions, changeList, changesFailedToCommit, myHandlers, myCommitMessage);
+      commitCompleted(vcsExceptions, changeList, changesFailedToCommit, myHandlers, myCommitMessage, !refKeepChangeList.isNull());
     }
   }
 
@@ -193,7 +199,8 @@ public class CommitHelper {
                                final ChangeList changeList,
                                final List<Change> failedChanges,
                                final List<CheckinHandler> checkinHandlers,
-                               final String commitMessage) {
+                               final String commitMessage,
+                               final boolean keepChangeList) {
     final List<VcsException> errors = collectErrors(allExceptions);
     final int errorsSize = errors.size();
     final int warningsSize = allExceptions.size() - errorsSize;
@@ -208,7 +215,9 @@ public class CommitHelper {
       if (list instanceof LocalChangeList) {
         final LocalChangeList localList = (LocalChangeList)list;
         if (includedChanges.containsAll(list.getChanges()) && !localList.isDefault() && !localList.isReadOnly()) {
-          changeListManager.removeChangeList(localList);
+          if (!keepChangeList) {
+            changeListManager.removeChangeList(localList);
+          }
         }
         else if (myConfiguration.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT && !includedChanges.containsAll(list.getChanges()) &&
                  localList.isDefault() && myAllOfDefaultChangeListChangesIncluded) {
