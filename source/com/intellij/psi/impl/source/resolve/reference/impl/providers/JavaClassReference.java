@@ -12,14 +12,12 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.TextRange;
@@ -56,15 +54,6 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   private final String myText;
   private final boolean myInStaticImport;
   private final JavaClassReferenceSet myJavaClassReferenceSet;
-  private static final SimpleInsertHandler FQN_INSERT_HANDLER = new SimpleInsertHandler() {
-    public int handleInsert(final Editor editor, final int startOffset, final LookupElement item, final LookupElement[] allItems, final TailType tailType) {
-      final String qname = ((PsiClass)item.getObject()).getQualifiedName();
-      editor.getDocument().replaceString(startOffset, item.getLookupString().length() + startOffset, qname);
-      final int tailOffset = startOffset + qname.length();
-      editor.getCaretModel().moveToOffset(tailOffset);
-      return tailOffset;
-    }
-  };
 
   public JavaClassReference(final JavaClassReferenceSet referenceSet, TextRange range, int index, String text, final boolean staticImport) {
     super(referenceSet.getProvider());
@@ -473,8 +462,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       else return null;
     }
     final LookupItem<PsiClass> lookup = LookupElementFactoryImpl.getInstance().createLookupElement(clazz, name);
-    lookup.setInsertHandler(FQN_INSERT_HANDLER);
-    lookup.setLookupString(clazz.getName());
+    lookup.setInsertHandler(SimpleInsertHandler.EMPTY_HANDLER);
+    lookup.addLookupStrings(clazz.getName());
     return JavaAwareCompletionData.setShowFQN(lookup).setTailType(TailType.NONE);
    }
 
