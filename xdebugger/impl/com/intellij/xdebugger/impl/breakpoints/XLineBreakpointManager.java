@@ -166,11 +166,13 @@ public class XLineBreakpointManager {
         public void run() {
           final int line = editor.xyToLogicalPosition(mouseEvent.getPoint()).line;
           final Document document = editor.getDocument();
-          if (line >= 0 && line < document.getLineCount()) {
+          final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+          if (line >= 0 && line < document.getLineCount() && file != null) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-                XDebuggerUtil.getInstance().toggleLineBreakpoint(myProject, file, line);
+                if (!myProject.isDisposed() && file.isValid()) {
+                  XDebuggerUtil.getInstance().toggleLineBreakpoint(myProject, file, line);
+                }
               }
             });
           }
