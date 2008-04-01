@@ -21,7 +21,7 @@ import org.jetbrains.idea.maven.core.MavenDataKeys;
 import org.jetbrains.idea.maven.core.MavenFactory;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.runner.execution.MavenGoalLocation;
-import org.jetbrains.idea.maven.state.MavenProjectsState;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,7 +32,7 @@ import java.util.List;
 public class MavenNavigatorPanel extends JPanel implements DataProvider {
 
   private final Project myProject;
-  private final MavenProjectsState myProjectsState;
+  private final MavenProjectsManager myProjectsManager;
   private final SimpleTree myTree;
 
   private Map<String, Integer> standardGoalOrder;
@@ -43,9 +43,9 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
     }
   };
 
-  public MavenNavigatorPanel(Project project, MavenProjectsState projectsState, SimpleTree tree) {
+  public MavenNavigatorPanel(Project project, MavenProjectsManager projectsManager, SimpleTree tree) {
     myProject = project;
-    myProjectsState = projectsState;
+    myProjectsManager = projectsManager;
     myTree = tree;
 
     setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
@@ -152,7 +152,7 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
   private List<String> extractGoals() {
     final PomTreeStructure.PomNode pomNode = getSelectedPomNode();
     if (pomNode != null) {
-      final Model mavenProject = myProjectsState.getMavenModel(pomNode.getFile());
+      final Model mavenProject = myProjectsManager.getModel(pomNode.getFile());
       if (mavenProject != null) {
         final String goal = mavenProject.getBuild().getDefaultGoal();
         if (!StringUtil.isEmptyOrSpaces(goal)) {

@@ -24,23 +24,23 @@ public class MavenIgnoreConfigurable implements Configurable {
   private ElementsChooser<VirtualFile> myFileChooser;
   private JTextArea myMaskEditor;
 
-  private final MavenProjectsState myState;
+  private final MavenProjectsManager myManager;
   private final Collection<VirtualFile> myOriginalFiles;
   private String myOriginalMasks;
 
   private static final char SEPARATOR = ',';
 
-  public MavenIgnoreConfigurable(MavenProjectsState state) {
-    myState = state;
+  public MavenIgnoreConfigurable(MavenProjectsManager manager) {
+    myManager = manager;
 
     myOriginalFiles = new HashSet<VirtualFile>();
-    for (VirtualFile file : myState.getFiles()) {
-      if (myState.getIgnoredFlag(file)) {
+    for (VirtualFile file : myManager.getFiles()) {
+      if (myManager.getIgnoredFlag(file)) {
         myOriginalFiles.add(file);
       }
     }
 
-    myOriginalMasks = Strings.detokenize(myState.getIgnoredPathMasks(), SEPARATOR);
+    myOriginalMasks = Strings.detokenize(myManager.getIgnoredPathMasks(), SEPARATOR);
   }
 
   private void createUIComponents() {
@@ -78,15 +78,15 @@ public class MavenIgnoreConfigurable implements Configurable {
 
   public void apply() throws ConfigurationException {
     final List<VirtualFile> marked = myFileChooser.getMarkedElements();
-    for (VirtualFile file : myState.getFiles()) {
-      myState.setIgnoredFlag(file, marked.contains(file));
+    for (VirtualFile file : myManager.getFiles()) {
+      myManager.setIgnoredFlag(file, marked.contains(file));
     }
 
-    myState.setIgnoredPathMasks(Strings.tokenize(myMaskEditor.getText(), Strings.WHITESPACE + SEPARATOR));
+    myManager.setIgnoredPathMasks(Strings.tokenize(myMaskEditor.getText(), Strings.WHITESPACE + SEPARATOR));
   }
 
   public void reset() {
-    IdeaAPIHelper.addElements( myFileChooser, myState.getFiles(), myOriginalFiles, ProjectUtil.ourProjectDirComparator);
+    IdeaAPIHelper.addElements( myFileChooser, myManager.getFiles(), myOriginalFiles, ProjectUtil.ourProjectDirComparator);
 
     myMaskEditor.setText(myOriginalMasks);
   }

@@ -24,7 +24,7 @@ import org.jetbrains.idea.maven.repo.MavenRepository;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
-import org.jetbrains.idea.maven.state.MavenProjectsState;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,7 +54,7 @@ public abstract class ImportingTestCase extends MavenTestCase {
   }
 
   protected PomTreeStructure.RootNode createMavenTree() {
-    PomTreeStructure s = new PomTreeStructure(myProject, myProject.getComponent(MavenProjectsState.class),
+    PomTreeStructure s = new PomTreeStructure(myProject, myProject.getComponent(MavenProjectsManager.class),
                                               myProject.getComponent(MavenRepository.class),
                                               myProject.getComponent(MavenEventsHandler.class)) {
       {

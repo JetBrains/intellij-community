@@ -7,52 +7,52 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.state.MavenIgnoreConfigurable;
-import org.jetbrains.idea.maven.state.MavenProjectsState;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 import org.jetbrains.idea.maven.state.StateBundle;
 
 public class IgnoreProjectAction extends AnAction {
 
   public void update(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final MavenProjectsState projectsState = project != null ? MavenProjectsState.getInstance(project) : null;
+    final MavenProjectsManager projectsManager = project != null ? MavenProjectsManager.getInstance(project) : null;
     final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
 
-    final boolean enabled = projectsState != null && files != null && isEnabled(projectsState, files);
+    final boolean enabled = projectsManager != null && files != null && isEnabled(projectsManager, files);
     e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setText((enabled && projectsState.getIgnoredFlag(files[0]))
+    e.getPresentation().setText((enabled && projectsManager.getIgnoredFlag(files[0]))
                                 ? StateBundle.message("maven.ignore.clear")
-                                : (enabled && projectsState.isIgnored(files[0]))
+                                : (enabled && projectsManager.isIgnored(files[0]))
                                   ? StateBundle.message("maven.ignore.edit")
                                   : StateBundle.message("maven.ignore"));
   }
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final MavenProjectsState projectsState = project != null ? MavenProjectsState.getInstance(project) : null;
+    final MavenProjectsManager projectsManager = project != null ? MavenProjectsManager.getInstance(project) : null;
     final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
 
-    if (projectsState != null && files != null && isEnabled(projectsState, files)) {
-      final boolean flag = projectsState.getIgnoredFlag(files[0]);
-      if (flag == projectsState.isIgnored(files[0])) {
+    if (projectsManager != null && files != null && isEnabled(projectsManager, files)) {
+      final boolean flag = projectsManager.getIgnoredFlag(files[0]);
+      if (flag == projectsManager.isIgnored(files[0])) {
         for (VirtualFile file : files) {
-          projectsState.setIgnoredFlag(file, !flag);
+          projectsManager.setIgnoredFlag(file, !flag);
         }
       }
       else {
-        ShowSettingsUtil.getInstance().editConfigurable(project, new MavenIgnoreConfigurable(projectsState));
+        ShowSettingsUtil.getInstance().editConfigurable(project, new MavenIgnoreConfigurable(projectsManager));
       }
     }
   }
 
-  private boolean isEnabled(final MavenProjectsState projectsState, final VirtualFile[] files) {
+  private boolean isEnabled(final MavenProjectsManager projectsManager, final VirtualFile[] files) {
     int ignoredCount = 0;
     int individuallyIgnoredCount = 0;
 
     for (VirtualFile file : files) {
-      if (projectsState.isIgnored(file)) {
+      if (projectsManager.isIgnored(file)) {
         ignoredCount++;
       }
-      if (projectsState.getIgnoredFlag(file)) {
+      if (projectsManager.getIgnoredFlag(file)) {
         individuallyIgnoredCount++;
       }
     }

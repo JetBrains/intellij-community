@@ -19,7 +19,7 @@ import org.jetbrains.idea.maven.repo.MavenRepository;
 import org.jetbrains.idea.maven.repo.PluginDocument;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
-import org.jetbrains.idea.maven.state.MavenProjectsState;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;
 import java.util.*;
@@ -49,7 +49,7 @@ public class MavenKeymapExtension implements KeymapExtension {
           final String pomPath = ((MavenGoalAction)anAction).myPomPath;
           KeymapGroup subGroup = pomPathToActionId.get(pomPath);
           if (subGroup == null) {
-            String name = getMavenProjectName(MavenProjectsState.getInstance(project),
+            String name = getMavenProjectName(MavenProjectsManager.getInstance(project),
                                               LocalFileSystem.getInstance().findFileByPath(pomPath));
             subGroup = KeymapGroupFactory.getInstance().createGroup(name);
             pomPathToActionId.put(pomPath, subGroup);
@@ -68,18 +68,18 @@ public class MavenKeymapExtension implements KeymapExtension {
   }
 
   public static void createActions(@NotNull Project project) {
-    final MavenProjectsState projectsState = MavenProjectsState.getInstance(project);
+    final MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
     final MavenRepository repository = project.getComponent(MavenRepository.class);
     final MavenEventsHandler eventsHandler = project.getComponent(MavenEventsHandler.class);
 
     final List<MavenGoalAction> actionList = new ArrayList<MavenGoalAction>();
 
-    for (VirtualFile file : projectsState.getFiles()) {
-      if (!projectsState.isIgnored(file)) {
-        final String mavenProjectName = getMavenProjectName(projectsState, file);
+    for (VirtualFile file : projectsManager.getFiles()) {
+      if (!projectsManager.isIgnored(file)) {
+        final String mavenProjectName = getMavenProjectName(projectsManager, file);
         final String pomPath = file.getPath();
         final String actionIdPrefix = eventsHandler.getActionId(pomPath, null);
-        for (String goal : getGoals(projectsState, repository, file)) {
+        for (String goal : getGoals(projectsManager, repository, file)) {
           actionList.add(new MavenGoalAction(mavenProjectName, actionIdPrefix, pomPath, goal));
         }
       }
@@ -105,9 +105,9 @@ public class MavenKeymapExtension implements KeymapExtension {
     }
   }
 
-  private static String getMavenProjectName(MavenProjectsState projectsState, VirtualFile file) {
+  private static String getMavenProjectName(MavenProjectsManager projectsManager, VirtualFile file) {
     if (file != null) {
-      final Model model = projectsState.getMavenModel(file);
+      final Model model = projectsManager.getModel(file);
       if (model != null) {
         return model.getName();
       }
@@ -115,17 +115,17 @@ public class MavenKeymapExtension implements KeymapExtension {
     return EventsBundle.message("maven.event.unknown.project");
   }
 
-  private static Collection<String> getGoals(MavenProjectsState projectsState, MavenRepository repository, VirtualFile file) {
+  private static Collection<String> getGoals(MavenProjectsManager projectsManager, MavenRepository repository, VirtualFile file) {
     Collection<String> result = new HashSet<String>();
     result.addAll(MavenFactory.getStandardGoalsList());
 
-    Model model = projectsState.getMavenModel(file);
-    Collection<String> activeProfiles = projectsState.getProfiles(file);
+    Model model = projectsManager.getModel(file);
+    Collection<String> activeProfiles = projectsManager.getProfiles(file);
     for (MavenId plugin : ProjectUtil.collectPluginIds(model, activeProfiles)) {
       collectGoals(repository, plugin, result);
     }
 
-    for (MavenId mavenId : projectsState.getAttachedPlugins(file)) {
+    for (MavenId mavenId : projectsManager.getAttachedPlugins(file)) {
       collectGoals(repository, mavenId, result);
     }
 
@@ -163,7 +163,7 @@ public class MavenKeymapExtension implements KeymapExtension {
         final MavenRunner runner = project.getComponent(MavenRunner.class);
         if (!runner.isRunning()) {
           final MavenRunnerParameters runnerParameters =
-            new MavenTask(myPomPath, myGoal).createBuildParameters(MavenProjectsState.getInstance(project));
+            new MavenTask(myPomPath, myGoal).createBuildParameters(MavenProjectsManager.getInstance(project));
           if (runnerParameters != null) {
             runner.run(runnerParameters);
           }

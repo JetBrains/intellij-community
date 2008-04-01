@@ -45,7 +45,7 @@
       <option name="workspace" value="true"/>
     </component>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.state.MavenProjectsState</implementation-class>
+      <implementation-class>org.jetbrains.idea.maven.state.MavenProjectsManager</implementation-class>
     </component>
     <component>
       <interface-class>org.jetbrains.idea.maven.runner.MavenRunner</interface-class>

@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.core.MavenDataKeys;
-import org.jetbrains.idea.maven.state.MavenProjectsState;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 import org.jetbrains.idea.maven.state.StateBundle;
 
 import java.util.ArrayList;
@@ -20,38 +20,38 @@ public class ToggleProfileAction extends AnAction {
 
   public void update(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final MavenProjectsState projectsState = project != null ? project.getComponent(MavenProjectsState.class) : null;
+    final MavenProjectsManager projectsManager = project != null ? project.getComponent(MavenProjectsManager.class) : null;
     final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     final List<String> profiles = e.getData(MavenDataKeys.MAVEN_PROFILES_KEY);
 
-    final boolean enabled = projectsState != null && file != null && profiles != null && isEnabled(projectsState, file, profiles);
+    final boolean enabled = projectsManager != null && file != null && profiles != null && isEnabled(projectsManager, file, profiles);
 
     e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setText((enabled && projectsState.getProfiles(file).contains(profiles.get(0)))
+    e.getPresentation().setText((enabled && projectsManager.getProfiles(file).contains(profiles.get(0)))
                                 ? StateBundle.message("maven.profile.deactivate")
                                 : StateBundle.message("maven.profile.activate"));
   }
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final MavenProjectsState projectsState = project != null ? MavenProjectsState.getInstance(project) : null;
+    final MavenProjectsManager projectsManager = project != null ? MavenProjectsManager.getInstance(project) : null;
     final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     final List<String> profiles = e.getData(MavenDataKeys.MAVEN_PROFILES_KEY);
 
-    if (projectsState != null && file != null && profiles != null && isEnabled(projectsState, file, profiles)) {
-      final Collection<String> activeProfiles = new ArrayList<String>(projectsState.getProfiles(file));
+    if (projectsManager != null && file != null && profiles != null && isEnabled(projectsManager, file, profiles)) {
+      final Collection<String> activeProfiles = new ArrayList<String>(projectsManager.getProfiles(file));
       if (activeProfiles.contains(profiles.get(0))) {
         activeProfiles.removeAll(profiles);
       }
       else {
         activeProfiles.addAll(profiles);
       }
-      projectsState.setProfiles(file, activeProfiles);
+      projectsManager.setProfiles(file, activeProfiles);
     }
   }
 
-  private boolean isEnabled(final MavenProjectsState projectsState, final VirtualFile file, final List<String> profiles) {
-    final Collection<String> activeProfiles = new ArrayList<String>(projectsState.getProfiles(file));
+  private boolean isEnabled(final MavenProjectsManager projectsManager, final VirtualFile file, final List<String> profiles) {
+    final Collection<String> activeProfiles = new ArrayList<String>(projectsManager.getProfiles(file));
     int count = 0;
     for (String profile : profiles) {
       if (activeProfiles.contains(profile)) {

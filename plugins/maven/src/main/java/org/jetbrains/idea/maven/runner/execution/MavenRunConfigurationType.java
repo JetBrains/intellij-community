@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.runner.RunnerBundle;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
-import org.jetbrains.idea.maven.state.MavenProjectsState;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -102,7 +102,7 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
     LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     final VirtualFile virtualFile = localFileSystem.findFileByPath(runnerParameters.getPomPath());
     if (virtualFile != null) {
-      Model model = MavenProjectsState.getInstance(project).getMavenModel(virtualFile);
+      Model model = MavenProjectsManager.getInstance(project).getModel(virtualFile);
       if (model != null) {
         if (!StringUtil.isEmptyOrSpaces(model.getArtifactId())) {
           return model.getArtifactId();
@@ -133,7 +133,7 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
 
     VirtualFile f = ((PsiFile)l.getPsiElement()).getVirtualFile();
     List<String> goals = ((MavenGoalLocation)l).getGoals();
-    Collection<String> profiles = MavenProjectsState.getInstance(l.getProject()).getProfiles(f);
+    Collection<String> profiles = MavenProjectsManager.getInstance(l.getProject()).getProfiles(f);
 
     return new MavenRunnerParameters(f.getPath(), goals, profiles);
   }

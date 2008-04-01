@@ -10,7 +10,7 @@ import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.repo.MavenRepository;
-import org.jetbrains.idea.maven.state.MavenProjectsState;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -88,7 +88,7 @@ public class SelectMavenGoalDialog extends DialogWrapper {
     private PomTreeViewSettings myTreeViewSettings;
 
     public PopupPomTreeStructure(final Project project) {
-      super(project, MavenProjectsState.getInstance(project),
+      super(project, MavenProjectsManager.getInstance(project),
             project.getComponent(MavenRepository.class),
             project.getComponent(MavenEventsHandler.class));
       myTreeViewSettings = project.getComponent(MavenProjectNavigator.class).getTreeViewSettings();
@@ -108,7 +108,7 @@ public class SelectMavenGoalDialog extends DialogWrapper {
     @Nullable
     GoalNode init(final String pomPath, final String goalName) {
       GoalNode goalNode = null;
-      for (VirtualFile file : myProjectsState.getFiles()) {
+      for (VirtualFile file : myProjectsManager.getFiles()) {
         final PomNode pomNode = new PomNode(file);
         root.addToStructure(pomNode);
 

@@ -27,7 +27,7 @@ import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
-import org.jetbrains.idea.maven.state.MavenProjectsState;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -54,7 +54,7 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
   private static final String BEFORE_RUN = EventsBundle.message("maven.event.text.before.run");
 
   private final Project myProject;
-  private final MavenProjectsState myProjectsState;
+  private final MavenProjectsManager myProjectsManager;
   private final MavenRunner myRunner;
 
   private MavenEventsState myState = new MavenEventsState();
@@ -63,12 +63,12 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
   private Collection<Listener> myListeners = new HashSet<Listener>();
   private TaskSelector myTaskSelector;
 
-  public MavenEventsComponent(final Project project, final MavenProjectsState projectsState, final MavenRunner runner) {
+  public MavenEventsComponent(final Project project, final MavenProjectsManager projectsManager, final MavenRunner runner) {
     myProject = project;
-    myProjectsState = projectsState;
+    myProjectsManager = projectsManager;
     myRunner = runner;
 
-    myProjectsState.addListener(new MyProjectStateListener(project));
+    myProjectsManager.addListener(new MyProjectStateListener(project));
   }
 
   public void addListener(Listener listener) {
@@ -91,7 +91,7 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
   public boolean execute(@NotNull Collection<MavenTask> mavenTasks) {
     final List<MavenRunnerParameters> parametersList = new ArrayList<MavenRunnerParameters>();
     for (MavenTask mavenTask : mavenTasks) {
-      final MavenRunnerParameters runnerParameters = mavenTask.createBuildParameters(myProjectsState);
+      final MavenRunnerParameters runnerParameters = mavenTask.createBuildParameters(myProjectsManager);
       if (runnerParameters == null) {
         return false;
       }
@@ -238,7 +238,7 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     if (mavenTask != null) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mavenTask.pomPath);
       if (file != null) {
-        Model model = myProjectsState.getMavenModel(file);
+        Model model = myProjectsManager.getModel(file);
         if (model != null) {
           StringBuilder stringBuilder = new StringBuilder();
           stringBuilder.append("'");
@@ -289,7 +289,7 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     }
   }
 
-  private class MyProjectStateListener implements MavenProjectsState.Listener {
+  private class MyProjectStateListener implements MavenProjectsManager.Listener {
 
     boolean updateScheduled;
     private final Project myProject;

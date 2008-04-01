@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
-import org.jetbrains.idea.maven.state.MavenProjectsState;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -25,7 +25,7 @@ public class ImporterSettingsConfigurable implements Configurable {
   private MavenImporterSettings myImporterSettings;
 
   private MavenImporterState myImporterState;
-  private MavenProjectsState myProjectsState;
+  private MavenProjectsManager myProjectsManager;
 
   private JPanel panel;
   private ImporterSettingsForm mySettingsForm;
@@ -35,10 +35,10 @@ public class ImporterSettingsConfigurable implements Configurable {
 
   public ImporterSettingsConfigurable(MavenImporterSettings importerSettings,
                                       MavenImporterState importerState,
-                                      MavenProjectsState projectsState) {
+                                      MavenProjectsManager projectsManager) {
     myImporterSettings = importerSettings;
     myImporterState = importerState;
-    myProjectsState = projectsState;
+    myProjectsManager = projectsManager;
     myOriginalProfiles = myImporterState.getMemorizedProfiles();
   }
 
@@ -80,29 +80,29 @@ public class ImporterSettingsConfigurable implements Configurable {
     mySettingsForm.setData(myImporterSettings);
 
     final Collection<VirtualFile> files =
-      collectVisibleProjects(myProjectsState, new TreeSet<VirtualFile>(ProjectUtil.ourProjectDirComparator));
+      collectVisibleProjects(myProjectsManager, new TreeSet<VirtualFile>(ProjectUtil.ourProjectDirComparator));
 
-    IdeaAPIHelper.addElements(profileChooser, collectProfiles(myProjectsState, files, new TreeSet<String>()), myOriginalProfiles);
+    IdeaAPIHelper.addElements(profileChooser, collectProfiles(myProjectsManager, files, new TreeSet<String>()), myOriginalProfiles);
   }
 
   public void disposeUIResources() {
   }
 
-  private static Collection<VirtualFile> collectVisibleProjects(final MavenProjectsState projectsState,
+  private static Collection<VirtualFile> collectVisibleProjects(final MavenProjectsManager projectsManager,
                                                                 final Collection<VirtualFile> files) {
-    for (VirtualFile file : projectsState.getFiles()) {
-      if (!projectsState.isIgnored(file)) {
+    for (VirtualFile file : projectsManager.getFiles()) {
+      if (!projectsManager.isIgnored(file)) {
         files.add(file);
       }
     }
     return files;
   }
 
-  private static Set<String> collectProfiles(final MavenProjectsState projectsState,
+  private static Set<String> collectProfiles(final MavenProjectsManager projectsManager,
                                              final Collection<VirtualFile> files,
                                              final Set<String> profiles) {
     for (VirtualFile file : files) {
-      Model model = projectsState.getMavenModel(file);
+      Model model = projectsManager.getModel(file);
       ProjectUtil.collectProfileIds(model, profiles);
     }
     return profiles;

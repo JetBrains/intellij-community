@@ -27,7 +27,7 @@ import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.repo.MavenRepository;
 import org.jetbrains.idea.maven.repo.PluginDocument;
-import org.jetbrains.idea.maven.state.MavenProjectsState;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -43,7 +43,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
   final Project project;
 
-  protected MavenProjectsState myProjectsState;
+  protected MavenProjectsManager myProjectsManager;
 
   private final MavenRepository myRepository;
   protected final MavenEventsHandler myEventsHandler;
@@ -67,9 +67,9 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
   private static final Icon iconProfilesOpen = IconLoader.getIcon("/images/profilesOpen.png");
   private static final Icon iconProfilesClosed = IconLoader.getIcon("/images/profilesClosed.png");
 
-  public PomTreeStructure(Project project, MavenProjectsState cache, MavenRepository repository, final MavenEventsHandler eventsHandler) {
+  public PomTreeStructure(Project project, MavenProjectsManager cache, MavenRepository repository, final MavenEventsHandler eventsHandler) {
     this.project = project;
-    myProjectsState = cache;
+    myProjectsManager = cache;
     myRepository = repository;
     myEventsHandler = eventsHandler;
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -287,7 +287,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
 
     void addToStructure(PomNode pomNode) {
-      if (!getTreeViewSettings().showIgnored && myProjectsState.isIgnored(pomNode.virtualFile)) {
+      if (!getTreeViewSettings().showIgnored && myProjectsManager.isIgnored(pomNode.virtualFile)) {
         return;
       }
       if (getTreeViewSettings().groupByModule) {
@@ -566,7 +566,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
 
     private void updateNode() {
-      mavenModel = myProjectsState.getMavenModel(virtualFile);
+      mavenModel = myProjectsManager.getModel(virtualFile);
 
       updateText();
 
@@ -600,7 +600,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     private void createPomPluginNodes() {
       pomPluginNodes.clear();
-      for (MavenId mavenId : ProjectUtil.collectPluginIds(mavenModel, myProjectsState.getProfiles(virtualFile))) {
+      for (MavenId mavenId : ProjectUtil.collectPluginIds(mavenModel, myProjectsManager.getProfiles(virtualFile))) {
         addPlugin(pomPluginNodes, mavenId, false);
       }
     }
@@ -616,11 +616,11 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     private void createExtraPluginNodes() {
       extraPluginNodes.clear();
-      attachPlugins(myProjectsState.getAttachedPlugins(getFile()));
+      attachPlugins(myProjectsManager.getAttachedPlugins(getFile()));
     }
 
     public void attachPlugins(final Collection<MavenId> plugins) {
-      final Collection<MavenId> commonPlugins = myProjectsState.getCommonPlugins();
+      final Collection<MavenId> commonPlugins = myProjectsManager.getCommonPlugins();
       for (MavenId pluginId : plugins) {
         addPlugin(extraPluginNodes, pluginId, !commonPlugins.contains(pluginId));
       }
@@ -660,7 +660,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     private void updateText() {
       clearColoredText();
-      if (myProjectsState.isIgnored(virtualFile)) {
+      if (myProjectsManager.isIgnored(virtualFile)) {
         addColoredFragment(getId(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, Color.GRAY));
       }
       else {
@@ -726,7 +726,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
           Set<String> moduleNames = ProjectUtil.collectRelativeModulePaths(
               mavenModel,
-              myProjectsState.getProfiles(virtualFile),
+              myProjectsManager.getProfiles(virtualFile),
               new HashSet<String>());
 
           for (String moduleName : moduleNames) {
@@ -759,7 +759,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
       for (String id : ProjectUtil.collectProfileIds(mavenModel, new TreeSet<String>())) {
         profilesNode.add(id);
       }
-      profilesNode.updateActive(myProjectsState.getProfiles(virtualFile), true);
+      profilesNode.updateActive(myProjectsManager.getProfiles(virtualFile), true);
     }
 
     public void setProfiles(final Collection<String> profiles) {

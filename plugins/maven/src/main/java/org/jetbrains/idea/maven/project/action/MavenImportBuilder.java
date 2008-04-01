@@ -21,7 +21,7 @@ import org.jetbrains.idea.maven.core.MavenLog;
 import org.jetbrains.idea.maven.core.util.FileFinder;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.state.MavenProjectsState;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;
 import java.io.File;
@@ -115,13 +115,13 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
         importerState.memorizeProfile(profile);
       }
 
-      final MavenProjectsState projectsState = MavenProjectsState.getInstance(project);
+      final MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
       myImportProcessor.getMavenProjectModel().visit(new MavenProjectModel.MavenProjectVisitorPlain() {
         public void visit(MavenProjectModel.Node node) {
           MavenProject p = node.getMavenProject();
           Set<String> profiles = ProjectUtil.collectProfileIds(p.getModel(), new HashSet<String>());
           profiles.retainAll(myProfiles);
-          projectsState.setProfiles(node.getFile(), profiles);
+          projectsManager.setProfiles(node.getFile(), profiles);
         }
       });
     }

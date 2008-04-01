@@ -23,7 +23,7 @@ import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.repo.MavenRepository;
-import org.jetbrains.idea.maven.state.MavenProjectsState;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -54,8 +54,8 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
 
   private Map<VirtualFile, PomNode> fileToNode = new HashMap<VirtualFile, PomNode>();
 
-  public MavenProjectNavigator(Project project, MavenProjectsState projectsState, MavenRepository repository, MavenEventsHandler eventsHandler) {
-    super(project, projectsState, repository, eventsHandler);
+  public MavenProjectNavigator(Project project, MavenProjectsManager projectsManager, MavenRepository repository, MavenEventsHandler eventsHandler) {
+    super(project, projectsManager, repository, eventsHandler);
 
     tree = new SimpleTree();
     tree.setRootVisible(false);
@@ -65,11 +65,11 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
     treeBuilder.initRoot();
     Disposer.register(project, treeBuilder);
 
-    myProjectsState.addListener(new MavenProjectsState.Listener() {
+    myProjectsManager.addListener(new MavenProjectsManager.Listener() {
       public void activate() {
         MavenProjectNavigator.LOG.assertTrue(fileToNode.isEmpty());
 
-        for (VirtualFile file : myProjectsState.getFiles()) {
+        for (VirtualFile file : myProjectsManager.getFiles()) {
           fileToNode.put(file, new PomNode(file));
         }
 
@@ -210,7 +210,7 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
   }
 
   public void projectOpened() {
-    final JPanel navigatorPanel = new MavenNavigatorPanel(project, myProjectsState, tree);
+    final JPanel navigatorPanel = new MavenNavigatorPanel(project, myProjectsManager, tree);
 
     ToolWindow pomToolWindow = ToolWindowManager.getInstance(project)
       .registerToolWindow(MAVEN_NAVIGATOR_TOOLWINDOW_ID, navigatorPanel, ToolWindowAnchor.RIGHT, project);
