@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
@@ -28,7 +29,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   private LibrariesValidatorContext myContext;
   private final FacetValidatorsManager myValidatorsManager;
   private RequiredLibrariesInfo myRequiredLibraries;
-  private final FacetLibrariesValidatorDescription myDescription;
+  private FacetLibrariesValidatorDescription myDescription;
   private LibraryCompositionSettings myLibraryCompositionSettings;
 
   public FacetLibrariesValidatorImpl(LibraryInfo[] requiredLibraries, FacetLibrariesValidatorDescription description,
@@ -41,6 +42,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
   public void setRequiredLibraries(final LibraryInfo[] requiredLibraries) {
     myRequiredLibraries = new RequiredLibrariesInfo(requiredLibraries);
+    myLibraryCompositionSettings = null;
     onChange();
   }
 
@@ -49,8 +51,10 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
            (!myLibraryCompositionSettings.getUsedLibraries().isEmpty() || !myLibraryCompositionSettings.getAddedJars().isEmpty());
   }
 
-  public FacetLibrariesValidatorDescription getDescription() {
-    return myDescription;
+  public void setDescription(@NotNull final FacetLibrariesValidatorDescription description) {
+    myDescription = description;
+    myLibraryCompositionSettings = null;
+    onChange();
   }
 
   public ValidationResult check() {
@@ -69,7 +73,14 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     final String text = IdeBundle.message("label.missed.libraries.text", missingJars, info.getClassNames()[0]);
     LibraryInfo[] missingLibraries = info.getLibraryInfos();
     final String baseDir = myContext.getProject().getBaseDir().getPath();
+    Set<VirtualFile> addedJars = null;
+    if (myLibraryCompositionSettings != null) {
+      addedJars = myLibraryCompositionSettings.getAddedJars();
+    }
     myLibraryCompositionSettings = new LibraryCompositionSettings(missingLibraries, myDescription.getDefaultLibraryName(), baseDir, myDescription.getDefaultLibraryName(), null);
+    if (addedJars != null) {
+      myLibraryCompositionSettings.setAddedJars(usedLibraries);
+    }
     return new ValidationResult(text, new LibrariesQuickFix(this, myLibraryCompositionSettings, myContext.getLibrariesContainer()));
   }
 

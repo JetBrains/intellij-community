@@ -25,13 +25,9 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class FacetLibrariesValidatorDescription {
-  private String myDefaultLibraryName;
+  private final String myDefaultLibraryName;
 
   public FacetLibrariesValidatorDescription(final @NonNls String defaultLibraryName) {
-    myDefaultLibraryName = defaultLibraryName;
-  }
-
-  public void setDefaultLibraryName(final @NonNls String defaultLibraryName) {
     myDefaultLibraryName = defaultLibraryName;
   }
 
