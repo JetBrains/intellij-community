@@ -172,7 +172,7 @@ public class TreeModelBuilder {
       for(int i=oldNode.getChildCount()-1; i >= 0; i--) {
         MutableTreeNode child = (MutableTreeNode) model.getChild(oldNode, i);
         model.removeNodeFromParent(child);
-        model.insertNodeInto(child, node, 0);
+        model.insertNodeInto(child, node, model.getChildCount(child));
       }
       final MutableTreeNode parent = (MutableTreeNode)oldNode.getParent();
       int index = model.getIndexOfChild(parent, oldNode);
@@ -182,7 +182,7 @@ public class TreeModelBuilder {
     }
     else {
       final ChangesBrowserNode node = ChangesBrowserNode.create(myProject, change);
-      model.insertNodeInto(node, getParentNodeFor(node, foldersCache, policy, listNode), 0);
+      model.insertNodeInto(node, getParentNodeFor(node, foldersCache, policy, listNode), model.getChildCount(node));
       foldersCache.put(nodePath, node);
     }
   }
@@ -192,13 +192,11 @@ public class TreeModelBuilder {
       public int compare(final Object n1, final Object n2) {
         final ChangesBrowserNode node1 = (ChangesBrowserNode)n1;
         final ChangesBrowserNode node2 = (ChangesBrowserNode)n2;
-        Object o1 = node1.getUserObject();
-        Object o2 = node2.getUserObject();
 
         final int classdiff = node1.getSortWeight() - node2.getSortWeight();
         if (classdiff != 0) return classdiff;
 
-        return node1.compareUserObjects(o2);
+        return node1.compareUserObjects(node2.getUserObject());
       }
    });
 
