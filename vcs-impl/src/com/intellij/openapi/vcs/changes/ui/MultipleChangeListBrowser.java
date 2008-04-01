@@ -186,8 +186,10 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
       myChooser.setRenderer(new ColoredListCellRenderer() {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           final LocalChangeList l = ((LocalChangeList)value);
-          append(l.getName(),
-                 l.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          if (l != null) {
+            append(l.getName(),
+                   l.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          }
         }
       });
 
