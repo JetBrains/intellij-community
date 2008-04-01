@@ -54,7 +54,7 @@ public class RollbackAction extends AnAction {
 
   private static boolean isEnabled(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null) {
+    if (project == null || project.isDisposed()) {
       return false;
     }
     Change[] changes = getChanges(project, e);
