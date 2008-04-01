@@ -49,25 +49,17 @@ public class MavenArtifactDownloader {
 
     final Map<MavenProject, Collection<String>> mavenProjects = new HashMap<MavenProject, Collection<String>>();
 
-    Map<MavenId, VirtualFile> projectMapping = projectsManager.getProjectMapping();
     final Map<VirtualFile, MavenProject> fileToProject = new HashMap<VirtualFile, MavenProject>();
-    final MavenEmbedder e = MavenFactory.createEmbedderForResolve(MavenCore.getInstance(project).getState(),
-                                                                  projectMapping);
-    final MavenProjectReader reader = new MavenProjectReader(e);
-
+    final MavenEmbedder e = MavenFactory.createEmbedderForRead(MavenCore.getInstance(project).getState());
     try {
-      Progress.run(project, ProjectBundle.message("maven.reading"), new Progress.Process() {
-        public void run(Progress p) throws MavenException, CanceledException {
-          for (VirtualFile file : projectsManager.getFiles()) {
-            if (!projectsManager.isIgnored(file)) {
-              MavenProject project = reader.readBare(file.getPath());
-              mavenProjects.put(project, projectsManager.getProfiles(file));
-              fileToProject.put(file, project);
-              p.checkCanceled();
-            }
-          }
+      for (VirtualFile file : projectsManager.getFiles()) {
+        if (!projectsManager.isIgnored(file)) {
+          MavenProject p = projectsManager.getResolvedProject(file);
+          if (p == null) continue;
+          mavenProjects.put(p, projectsManager.getProfiles(file));
+          fileToProject.put(file, p);
         }
-      });
+      }
 
       final Map<MavenProject, Module> projectsToModules = new HashMap<MavenProject, Module>();
 
@@ -103,8 +95,7 @@ public class MavenArtifactDownloader {
                        Map<VirtualFile, MavenProject> projectToFile,
                        Collection<MavenId> mappedToModules,
                        boolean demand) throws CanceledException, MavenException {
-    final MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    final Map<MavenId, Set<ArtifactRepository>> libraryArtifacts = collectLibraryArtifacts(projectsManager, projectsWithProfiles.keySet(), mappedToModules);
+    Map<MavenId, Set<ArtifactRepository>> libraryArtifacts = collectLibraryArtifacts(projectsWithProfiles.keySet(), mappedToModules);
 
     myProgress.checkCanceled();
 
@@ -121,7 +112,9 @@ public class MavenArtifactDownloader {
     myProgress.checkCanceled();
 
     if (isEnabled(mySettings.getDownloadPlugins(), demand)) {
-      final Map<Plugin, MavenProject> plugins = ProjectUtil.collectPlugins(projectsWithProfiles);
+      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+
+      Map<Plugin, MavenProject> plugins = ProjectUtil.collectPlugins(projectsWithProfiles);
       collectAttachedPlugins(projectsManager, projectToFile, plugins);
       downloadPlugins(plugins);
       projectsManager.updateAllFiles();
@@ -150,24 +143,23 @@ public class MavenArtifactDownloader {
     return level == MavenArtifactSettings.UPDATE_MODE.ALWAYS || (level == MavenArtifactSettings.UPDATE_MODE.ON_DEMAND && demand);
   }
 
-  private static Map<MavenId, Set<ArtifactRepository>> collectLibraryArtifacts(MavenProjectsManager projectsManager,
-                                                                       Collection<MavenProject> mavenProjects,
-                                                                       Collection<MavenId> mappedToModules) {
-    final Map<MavenId, Set<ArtifactRepository>> repositoryArtifacts = new TreeMap<MavenId, Set<ArtifactRepository>>();
+  private static Map<MavenId, Set<ArtifactRepository>> collectLibraryArtifacts(Collection<MavenProject> mavenProjects, Collection<MavenId> mappedToModules) {
+    Map<MavenId, Set<ArtifactRepository>> result = new TreeMap<MavenId, Set<ArtifactRepository>>();
 
     for (MavenProject mavenProject : mavenProjects) {
-      Collection<Artifact> artifacts = projectsManager.getArtifacts(mavenProject);
+      Collection<Artifact> artifacts = mavenProject.getArtifacts();
       if (artifacts != null) {
-        final List remoteRepositories = mavenProject.getRemoteArtifactRepositories();
+        List remoteRepositories = mavenProject.getRemoteArtifactRepositories();
+
         for (Artifact artifact : artifacts) {
           if (artifact.getType().equalsIgnoreCase(Constants.JAR_TYPE) &&
               !artifact.getScope().equalsIgnoreCase(Artifact.SCOPE_SYSTEM)) {
             MavenId id = new MavenId(artifact);
             if (!mappedToModules.contains(id)) {
-              Set<ArtifactRepository> repos = repositoryArtifacts.get(id);
+              Set<ArtifactRepository> repos = result.get(id);
               if (repos == null) {
                 repos = new HashSet<ArtifactRepository>();
-                repositoryArtifacts.put(id, repos);
+                result.put(id, repos);
               }
               //noinspection unchecked
               repos.addAll(remoteRepositories);
@@ -176,7 +168,7 @@ public class MavenArtifactDownloader {
         }
       }
     }
-    return repositoryArtifacts;
+    return result;
   }
 
   private void download(Map<MavenId, Set<ArtifactRepository>> libraryArtifacts, String classifier) throws CanceledException {

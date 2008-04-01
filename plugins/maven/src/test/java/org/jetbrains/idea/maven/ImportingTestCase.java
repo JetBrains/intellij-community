@@ -316,8 +316,8 @@ public abstract class ImportingTestCase extends MavenTestCase {
     e.execute();
   }
 
-  protected void removeFromLocalRepository(String groupId) throws IOException {
-    String path = getRepositoryPath() + "/" + groupId;
+  protected void removeFromLocalRepository(String relativePath) throws IOException {
+    String path = getRepositoryPath() + "/" + relativePath;
     FileUtils.deleteDirectory(path);
   }
 }
