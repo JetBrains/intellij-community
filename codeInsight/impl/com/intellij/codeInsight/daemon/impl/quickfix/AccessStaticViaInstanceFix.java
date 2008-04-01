@@ -68,7 +68,10 @@ public class AccessStaticViaInstanceFix implements LocalQuickFix {
         qualifierExpression.replace(factory.createReferenceExpression(containingClass));
       }
 
-      UndoUtil.markPsiFileForUndo(myMember.getContainingFile());
+      PsiFile containingFile = myMember.getContainingFile();
+      if (containingFile != null) {
+        UndoUtil.markPsiFileForUndo(containingFile);
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
