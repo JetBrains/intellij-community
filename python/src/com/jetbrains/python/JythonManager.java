@@ -32,17 +32,15 @@ public class JythonManager {
 
   public void execScriptFromResource(@NonNls String resourcePath) {
     final InputStream stream = getClass().getClassLoader().getResourceAsStream(resourcePath);
-    if (stream != null) { // TODO: stream == null seems to indicate some build problem?
+    try {
+      myInterpreter.execfile(stream);
+    }
+    finally {
       try {
-        myInterpreter.execfile(stream);
+        stream.close();
       }
-      finally {
-        try {
-          stream.close();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+      catch (IOException e) {
+        LOG.error(e);
       }
     }
   }
