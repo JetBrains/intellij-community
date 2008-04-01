@@ -172,7 +172,7 @@ public class TreeModelBuilder {
       for(int i=oldNode.getChildCount()-1; i >= 0; i--) {
         MutableTreeNode child = (MutableTreeNode) model.getChild(oldNode, i);
         model.removeNodeFromParent(child);
-        model.insertNodeInto(child, node, model.getChildCount(child));
+        model.insertNodeInto(child, node, model.getChildCount(node));
       }
       final MutableTreeNode parent = (MutableTreeNode)oldNode.getParent();
       int index = model.getIndexOfChild(parent, oldNode);
@@ -182,7 +182,8 @@ public class TreeModelBuilder {
     }
     else {
       final ChangesBrowserNode node = ChangesBrowserNode.create(myProject, change);
-      model.insertNodeInto(node, getParentNodeFor(node, foldersCache, policy, listNode), model.getChildCount(node));
+      ChangesBrowserNode parentNode = getParentNodeFor(node, foldersCache, policy, listNode);
+      model.insertNodeInto(node, parentNode, model.getChildCount(parentNode));
       foldersCache.put(nodePath, node);
     }
   }
