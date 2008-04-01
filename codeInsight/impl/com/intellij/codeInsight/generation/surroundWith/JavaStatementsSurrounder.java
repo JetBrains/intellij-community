@@ -20,8 +20,10 @@ abstract class JavaStatementsSurrounder implements Surrounder {
   @Nullable public TextRange surroundElements(@NotNull Project project,
                                               @NotNull Editor editor,
                                               @NotNull PsiElement[] elements) throws IncorrectOperationException {
-    return surroundStatements (project, editor, elements[0].getParent(), elements);
+    PsiElement container = elements[0].getParent();
+    if (container == null) return null;
+    return surroundStatements (project, editor, container, elements);
   }
 
- @Nullable protected abstract TextRange surroundStatements(final Project project, final Editor editor, final PsiElement parent, final PsiElement[] statements) throws IncorrectOperationException;
+ @Nullable protected abstract TextRange surroundStatements(final Project project, final Editor editor, final PsiElement container, final PsiElement[] statements) throws IncorrectOperationException;
 }

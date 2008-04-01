@@ -66,11 +66,13 @@ public abstract class FileDocumentManager {
       if (file != null) {
         final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file);
         return !operationStatus.hasReadonlyFiles();
-      } else {
+      }
+      else {
         document.fireReadOnlyModificationAttempt();
         return false;
       }
-    } else {
+    }
+    else {
       document.fireReadOnlyModificationAttempt();
       return false;
     }
