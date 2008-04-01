@@ -231,7 +231,9 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
         PsiReference reference = myFile.findReferenceAt(myContext.getStartOffset());
         if (reference instanceof PsiReferenceExpression && !((PsiReferenceExpression) reference).isQualified()) {
           final PsiMember member = (PsiMember)myLookupItem.getObject();
-          if (member.getManager().areElementsEquivalent(reference.resolve(), CompletionUtil.getOriginalElement(member))) return;
+          final PsiVariable target =
+              JavaPsiFacade.getInstance(myProject).getResolveHelper().resolveReferencedVariable(member.getName(), (PsiElement)reference);
+          if (member.getManager().areElementsEquivalent(target, CompletionUtil.getOriginalElement(member))) return;
           
           final PsiClass psiClass = member.getContainingClass();
           if (psiClass != null && StringUtil.isNotEmpty(psiClass.getName())) {

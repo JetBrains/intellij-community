@@ -295,7 +295,9 @@ public class DeclarationParsing extends Parsing {
     CompositeElement variable1 = variable;
     boolean unclosed = false;
     boolean eatSemicolon = true;
+    boolean shouldRollback;
     while(true){
+      shouldRollback = true;
       while(lexer.getTokenType() == LBRACKET){
         TreeUtil.addChildren(variable1, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         lexer.advance();
@@ -315,6 +317,7 @@ public class DeclarationParsing extends Parsing {
 
         TreeElement expr = myContext.getExpressionParsing().parseExpression(lexer);
         if (expr != null){
+          shouldRollback = false;
           TreeUtil.addChildren(variable1, expr);
         }
         else{
@@ -350,7 +353,7 @@ public class DeclarationParsing extends Parsing {
     }
     else{
       // special treatment (see testMultiLineUnclosed())
-      if (lexer.getTokenType() != null){
+      if (lexer.getTokenType() != null && shouldRollback){
         int spaceStart = lexer instanceof StoppableLexerAdapter
                          ? ((StoppableLexerAdapter)lexer).getPrevTokenEnd()
                          : ((FilterLexer)lexer).getPrevTokenEnd();
