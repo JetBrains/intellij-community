@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -53,10 +54,6 @@ import java.util.List;
 public class SvnCheckinEnvironment implements CheckinEnvironment {
   private final SvnVcs mySvnVcs;
 
-  public boolean showCheckinDialogInAnyCase() {
-    return false;
-  }
-
   public SvnCheckinEnvironment(SvnVcs svnVcs) {
     mySvnVcs = svnVcs;
   }
@@ -68,10 +65,6 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     return null;
-  }
-
-  public String prepareCheckinMessage(String text) {
-    return text;
   }
 
   @Nullable
@@ -292,6 +285,10 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
 
     return exceptions;
+  }
+
+  public boolean keepChangeListAfterCommit(ChangeList changeList) {
+    return false;
   }
 
   private class KeepLocksComponent implements RefreshableOnComponent {
