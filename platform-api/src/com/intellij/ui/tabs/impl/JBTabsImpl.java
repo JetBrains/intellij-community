@@ -118,6 +118,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
   private int myRightBorderSize;
   private int myBottomBorderSize;
   private boolean myAddNavigationGroup = true;
+  private Layout myLastLayoutData;
 
 
   public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
@@ -845,7 +846,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     }
   }
 
-  class LineLayoutData {
+  class LineLayoutData extends Layout {
     Dimension laayoutSize = getSize();
     int contentCount = getTabCount();
     int eachX;
@@ -858,21 +859,60 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     Rectangle moreRect;
     public boolean displayedHToolbar;
     public int yComp;
+
+    public TabInfo getPreviousFor(final TabInfo info) {
+      return getPrevious(myVisibleInfos, myVisibleInfos.indexOf(info));
+    }
+
+    public TabInfo getNextFor(final TabInfo info) {
+      return getNext(myVisibleInfos, myVisibleInfos.indexOf(info));
+    }
   }
 
-  class TableLayoutData {
+  class TableLayoutData extends Layout {
     List<TableRow> table = new ArrayList<TableRow>();
     public Rectangle toFitRec;
+    Map<TabInfo, TableRow> myInfo2Row = new HashMap<TabInfo, TableRow>();
+
+    public TabInfo getPreviousFor(final TabInfo info) {
+      final TableRow row = myInfo2Row.get(info);
+      return getPrevious(row.myColumns, row.myColumns.indexOf(info));
+    }
+
+    public TabInfo getNextFor(final TabInfo info) {
+      final TableRow row = myInfo2Row.get(info);
+      return getNext(row.myColumns, row.myColumns.indexOf(info));
+    }
+  }
+
+  private abstract class Layout {
+    abstract TabInfo getPreviousFor(TabInfo info);
+    abstract TabInfo getNextFor(TabInfo info);
+
+    public TabInfo getPrevious(List<TabInfo> list, int i) {
+      return i > 0 ? list.get(i - 1) : null;
+    }
+
+    public TabInfo getNext(List<TabInfo> list, int i) {
+      return i < list.size() - 1 ? list.get(i + 1) : null;
+    }
+
   }
 
   private class TableRow {
 
+    private TableLayoutData myData;
     private List<TabInfo> myColumns = new ArrayList<TabInfo>();
     private int width;
+
+    private TableRow(final TableLayoutData data) {
+      myData = data;
+    }
 
     void add(TabInfo info) {
       myColumns.add(info);
       width += myInfo2Label.get(info).getPreferredSize().width;
+      myData.myInfo2Row.put(info, this);
     }
 
   }
@@ -884,11 +924,11 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
         new Dimension(getSize().width, myHorizontalSide ? Math.max(max.myLabel.height, max.myToolbar.height) : max.myLabel.height);
 
       if (mySingleRow) {
-        layoutSingleRow();
+        myLastLayoutData = layoutSingleRow();
         myLastTableLayout = null;
       }
       else {
-        layoutTable();
+        myLastLayoutData = layoutTable();
         myLastSingRowLayout = null;
       }
 
@@ -919,7 +959,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     return super.isValid();
   }
 
-  private void layoutTable() {
+  private Layout layoutTable() {
     resetLayout(true);
     final TableLayoutData data = computeLayoutTable();
     final Insets insets = getLayoutInsets();
@@ -934,7 +974,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
         label.setBounds(eachX, eachY, width, myHeaderFitSize.height);
         eachX += width;
       }
-      eachY += myHeaderFitSize.height;
+      eachY += myHeaderFitSize.height - 1;
     }
 
     if (getSelectedInfo() != null) {
@@ -947,10 +987,11 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
           .setBounds(insets.left + 1, eachY + 1, selectedToolbar.getPreferredSize().width, getHeight() - eachY - insets.bottom - 2);
       }
 
-      layoutComp(xAddin, eachY, getSelectedInfo().getComponent());
+      layoutComp(xAddin, eachY + 3, getSelectedInfo().getComponent());
     }
 
     myLastTableLayout = data;
+    return data;
   }
 
   private TableLayoutData computeLayoutTable() {
@@ -960,7 +1001,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     data.toFitRec =
       new Rectangle(insets.left, insets.top, getWidth() - insets.left - insets.right, getHeight() - insets.top - insets.bottom);
     int eachRow = 0, eachX = data.toFitRec.x;
-    TableRow eachTableRow = new TableRow();
+    TableRow eachTableRow = new TableRow(data);
     data.table.add(eachTableRow);
 
     int selectedRow = -1;
@@ -975,7 +1016,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
         eachX += size.width;
       }
       else {
-        eachTableRow = new TableRow();
+        eachTableRow = new TableRow(data);
         data.table.add(eachTableRow);
         eachRow++;
         eachX = insets.left;
@@ -987,7 +1028,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
           eachX += size.width;
         }
         else {
-          eachTableRow = new TableRow();
+          eachTableRow = new TableRow(data);
           eachRow++;
           eachX = insets.left;
         }
@@ -1008,7 +1049,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     return data;
   }
 
-  private void layoutSingleRow() {
+  private Layout layoutSingleRow() {
     final TabInfo selected = getSelectedInfo();
 
     final JComponent selectedToolbar = myInfo2Toolbar.get(selected);
@@ -1086,6 +1127,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
 
     myLastSingRowLayout = data;
+    return data;
   }
 
   private void layoutComp(int xAddin, int yComp, final JComponent comp) {
@@ -1231,6 +1273,7 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     return 4;
   }
 
+
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
 
@@ -1259,9 +1302,9 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
         final TabLabel eachLabel = myInfo2Label.get(each);
         if (eachLabel.getBounds().width == 0) continue;
 
-        
-        TabInfo prev = i > 0 ? myVisibleInfos.get(i - 1) : null;
-        TabInfo next = i < myVisibleInfos.size() - 1 ? myVisibleInfos.get(i + 1) : null;
+
+        final TabInfo prev = myLastLayoutData.getPreviousFor(myVisibleInfos.get(i));
+        final TabInfo next = myLastLayoutData.getNextFor(myVisibleInfos.get(i));
 
         final Rectangle eachBounds = eachLabel.getBounds();
         final GeneralPath path = new GeneralPath();
@@ -2514,19 +2557,19 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
 
 
     tabs.addTab(toAnimate1).append("Tree2", new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.black, Color.red));
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 1").setActions(new DefaultActionGroup(), null);
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 2").setActions(new DefaultActionGroup(), null);
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 3").setActions(new DefaultActionGroup(), null);
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 4").setActions(new DefaultActionGroup(), null);
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 5").setActions(new DefaultActionGroup(), null);
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 6").setActions(new DefaultActionGroup(), null);
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 7").setActions(new DefaultActionGroup(), null);
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 8").setActions(new DefaultActionGroup(), null);
-    //tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 1").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 2").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 3").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 4").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 5").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 6").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 7").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 8").setActions(new DefaultActionGroup(), null);
+    tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
 
 
     //tabs.getComponent().setBorder(new EmptyBorder(5, 5, 5, 5));
-    //tabs.setPaintBorder(10, -1, -1, -1);
+    tabs.setPaintBorder(10, -1, -1, -1);
 
     tabs.setUiDecorator(new UiDecorator() {
       public UiDecoration getDecoration() {

@@ -142,6 +142,16 @@ final class EditorTabbedContainer  {
   }
 
   public void setTabLayoutPolicy(final int policy) {
+    switch (policy) {
+      case JTabbedPane.SCROLL_TAB_LAYOUT:
+        myTabs.setSingleRow(true);
+        break;
+      case JTabbedPane.WRAP_TAB_LAYOUT:
+        myTabs.setSingleRow(false);
+        break;
+      default:
+        throw new IllegalArgumentException("Unsupported tab layout policy: " + policy);
+    }
   }
 
   public void setTabPlacement(final int tabPlacement) {
