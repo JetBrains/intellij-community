@@ -251,9 +251,12 @@ public class FramesPanel extends UpdatableDebuggerView {
         return;
       }
 
-      final SuspendContextImpl threadContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(), threadToSelect);
-      context.getDebugProcess().getManagerThread().invokeLater(new RebuildFramesListCommand(context, threadContext));
-      refillThreadsCombo(threadToSelect);
+      final SuspendContextImpl suspendContext = context.getSuspendContext();
+      if (!suspendContext.isResumed()) {
+        final SuspendContextImpl threadContext = SuspendManagerUtil.getSuspendContextForThread(suspendContext, threadToSelect);
+        context.getDebugProcess().getManagerThread().invokeLater(new RebuildFramesListCommand(context, threadContext));
+        refillThreadsCombo(threadToSelect);
+      }
     }
 
     private void refillThreadsCombo(final ThreadReferenceProxyImpl threadToSelect) {
