@@ -45,17 +45,17 @@ public abstract class VcsVFSListener {
   }
 
   protected final Project myProject;
-  private final AbstractVcs myVcs;
-  private final ChangeListManager myChangeListManager;
-  private final MyVirtualFileAdapter myVFSListener;
-  private final MyCommandAdapter myCommandListener;
-  private final VcsShowConfirmationOption myAddOption;
-  private final VcsShowConfirmationOption myRemoveOption;
-  private final List<VirtualFile> myAddedFiles = new ArrayList<VirtualFile>();
-  private final Map<VirtualFile, VirtualFile> myCopyFromMap = new HashMap<VirtualFile, VirtualFile>();
-  private final List<FilePath> myDeletedFiles = new ArrayList<FilePath>();
-  private final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<FilePath>();
-  private final List<MovedFileInfo> myMovedFiles = new ArrayList<MovedFileInfo>();
+  protected final AbstractVcs myVcs;
+  protected final ChangeListManager myChangeListManager;
+  protected final MyVirtualFileAdapter myVFSListener;
+  protected final MyCommandAdapter myCommandListener;
+  protected final VcsShowConfirmationOption myAddOption;
+  protected final VcsShowConfirmationOption myRemoveOption;
+  protected final List<VirtualFile> myAddedFiles = new ArrayList<VirtualFile>();
+  protected final Map<VirtualFile, VirtualFile> myCopyFromMap = new HashMap<VirtualFile, VirtualFile>();
+  protected final List<FilePath> myDeletedFiles = new ArrayList<FilePath>();
+  protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<FilePath>();
+  protected final List<MovedFileInfo> myMovedFiles = new ArrayList<MovedFileInfo>();
 
   protected enum VcsDeleteType { SILENT, CONFIRM, IGNORE }
 
