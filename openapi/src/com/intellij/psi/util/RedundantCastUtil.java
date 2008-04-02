@@ -340,25 +340,32 @@ public class RedundantCastUtil {
 
       PsiTypeElement typeElement = typeCast.getCastType();
       if (typeElement == null) return;
-      PsiType toType = typeElement.getType();
-      PsiType fromType = typeCast.getOperand().getType();
-      if (fromType == null) return;
+      PsiType castType = typeElement.getType();
+      PsiType opType = typeCast.getOperand().getType();
+      if (opType == null) return;
       if (parent instanceof PsiReferenceExpression) {
-        if (toType instanceof PsiClassType && fromType instanceof PsiPrimitiveType) return; //explicit boxing
+        if (castType instanceof PsiClassType && opType instanceof PsiPrimitiveType) return; //explicit boxing
         //Check accessibility
-        if (fromType instanceof PsiClassType) {
+        if (opType instanceof PsiClassType) {
           final PsiReferenceExpression refExpression = (PsiReferenceExpression)parent;
           PsiElement element = refExpression.resolve();
           if (!(element instanceof PsiMember)) return;
-          PsiClass accessClass = ((PsiClassType)fromType).resolve();
+          PsiClass accessClass = ((PsiClassType)opType).resolve();
           if (accessClass == null) return;
           if (!JavaPsiFacade.getInstance(parent.getProject()).getResolveHelper().isAccessible((PsiMember)element, typeCast, accessClass)) return;
           if (!isCastRedundantInRefExpression(refExpression, typeCast.getOperand())) return;
         }
       }
 
-      if (TypeConversionUtil.isAssignable(toType, fromType, false)) {
-        addToResults(typeCast);
+      if (!(parent instanceof PsiExpression) || !TypeConversionUtil.isLValue((PsiExpression)parent)) {
+        if (TypeConversionUtil.isAssignable(castType, opType, false)) {
+          addToResults(typeCast);
+        }
+      }
+      else {
+        if (TypeConversionUtil.isAssignable(opType, castType, false)) {
+          addToResults(typeCast);
+        }
       }
     }
   }
