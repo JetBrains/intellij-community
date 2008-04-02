@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
@@ -16,16 +15,16 @@ import com.intellij.psi.impl.CachedValueImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlUtil;
@@ -180,12 +179,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
       XmlNSDescriptor descr = getNsDescriptorFormDocType(doctype, containingFile);
 
       if (descr != null) {
-        final String prefix = containingFile.getDocument().getRootTag().getPrefixByNamespace(XmlUtil.FACELETS_URI);
-
-        if (containingFile instanceof JspFile || prefix != null) {
-          descr = new HtmlNSDescriptorImpl(descr, true, containingFile.getFileType() == StdFileTypes.JSP);
-        }
-        return descr;
+        return XmlExtension.getExtension(containingFile).getDescriptorFromDoctype(containingFile, descr);
       }
     }
 

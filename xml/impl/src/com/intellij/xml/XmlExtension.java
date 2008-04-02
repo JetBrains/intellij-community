@@ -150,4 +150,8 @@ public abstract class XmlExtension {
     return psiFile instanceof XmlFile ? (XmlFile)psiFile : null;
   }
 
+  public XmlNSDescriptor getDescriptorFromDoctype(final XmlFile containingFile, XmlNSDescriptor descr) {
+    return descr;
+  }
+
 }
