@@ -104,6 +104,10 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
     doTest("A", "B", false);
   }
 
+  public void testIDEADEV25669() throws Exception {
+    doTest("p.A", "p.Base", false);
+  }
+
   private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf) throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {

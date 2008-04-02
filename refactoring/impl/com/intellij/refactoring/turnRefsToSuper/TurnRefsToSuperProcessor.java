@@ -74,6 +74,11 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     return super.preprocessUsages(refUsages);
   }
 
+  protected boolean canTurnToSuper(final PsiElement refElement) {
+    return super.canTurnToSuper(refElement) &&
+           JavaPsiFacade.getInstance(myProject).getResolveHelper().isAccessible(mySuper, refElement, null);
+  }
+
   protected void performRefactoring(UsageInfo[] usages) {
     try {
       final PsiClass aSuper = mySuper;
