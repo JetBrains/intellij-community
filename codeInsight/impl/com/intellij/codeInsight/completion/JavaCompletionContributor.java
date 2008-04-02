@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.patterns.PlatformPatterns;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.pom.java.LanguageLevel;
@@ -49,7 +50,11 @@ public class JavaCompletionContributor extends CompletionContributor{
         final int startOffset = context.getStartOffset();
         final PsiElement lastElement = file.findElementAt(startOffset - 1);
         PsiElement insertedElement = parameters.getPosition();
-        CompletionData completionData = CompletionUtil.getCompletionData(lastElement, file, startOffset, getCompletionDataByElementInner(lastElement));
+        CompletionData completionData = ApplicationManager.getApplication().runReadAction(new Computable<CompletionData>() {
+          public CompletionData compute() {
+            return CompletionUtil.getCompletionData(lastElement, file, startOffset, getCompletionDataByElementInner(lastElement));
+          }
+        });
         result.setPrefixMatcher(completionData.findPrefix(insertedElement, startOffset));
 
         final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
