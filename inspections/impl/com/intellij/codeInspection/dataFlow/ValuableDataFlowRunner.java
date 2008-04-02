@@ -5,14 +5,12 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.psi.PsiCallExpression;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,8 +22,7 @@ import java.util.Map;
  * @author Gregory.Shrago
  */
 public class ValuableDataFlowRunner extends DataFlowRunner {
-
-  public ValuableDataFlowRunner(final PsiMethodCallExpression context) {
+  public ValuableDataFlowRunner(final PsiExpression context) {
     super(new MyInstructionFactory(context));
   }
 
@@ -53,19 +50,28 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
   public static class MyInstructionFactory extends InstructionFactory {
     private final MultiValuesMap<PsiVariable, PsiExpression> myValues = new MultiValuesMap<PsiVariable, PsiExpression>();
 
-    private final PsiMethodCallExpression myContext;
+    private final PsiExpression myContext;
 
-    public MyInstructionFactory(final PsiMethodCallExpression context) {
+    public MyInstructionFactory(final PsiExpression context) {
       myContext = context;
     }
 
-    public MethodCallInstruction createMethodCallInstruction(@NotNull final PsiCallExpression callExpression, final DfaValueFactory factory) {
-      return new MyMethodCallInstruction(callExpression, factory);
-    }
-
-    public MethodCallInstruction createMethodCallInstruction(@NotNull final PsiExpression context, final DfaValueFactory factory,
-                                                             final MethodCallInstruction.MethodType methodType) {
-      return new MyMethodCallInstruction(context, factory, methodType);
+    public PushInstruction createPushInstruction(final DfaValue value, final PsiExpression expression) {
+      return new PushInstruction(value){
+        public DfaInstructionState[] apply(final DataFlowRunner runner, final DfaMemoryState memState) {
+          if (myContext == expression) {
+            final Map<DfaVariableValue,DfaVariableState> map = ((MyDfaMemoryState)memState).getVariableStates();
+            for (DfaVariableValue value : map.keySet()) {
+              MyDfaVariableState state = (MyDfaVariableState)map.get(value);
+              final PsiExpression psiExpression = state.myExpression;
+              if (psiExpression != null) {
+                myValues.put(value.getPsiVariable(), psiExpression);
+              }
+            }
+          }
+          return super.apply(runner, memState);
+        }
+      };
     }
 
     public AssignInstruction createAssignInstruction(final PsiExpression RExpression) {
@@ -83,31 +89,6 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
         }
       };
     }
-
-    private class MyMethodCallInstruction extends MethodCallInstruction {
-
-      public MyMethodCallInstruction(final PsiExpression context, final DfaValueFactory factory, final MethodType methodType) {
-        super(context, factory, methodType);
-      }
-
-      public MyMethodCallInstruction(final PsiCallExpression callExpression, final DfaValueFactory factory) {
-        super(callExpression, factory);
-      }
-
-      public DfaInstructionState[] apply(final DataFlowRunner runner, final DfaMemoryState memState) {
-        if (getCallExpression() == myContext) {
-          final Map<DfaVariableValue,DfaVariableState> map = ((MyDfaMemoryState)memState).getVariableStates();
-          for (DfaVariableValue value : map.keySet()) {
-            final PsiExpression psiExpression = ((MyDfaVariableState)map.get(value)).myExpression;
-            if (psiExpression != null) {
-              myValues.put(value.getPsiVariable(), psiExpression);
-            }
-          }
-        }
-        return super.apply(runner, memState);
-      }
-    }
-
   }
 
   private static class MyDfaMemoryState extends DfaMemoryStateImpl {
@@ -149,7 +130,5 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
     protected Object clone() throws CloneNotSupportedException {
       return new MyDfaVariableState(this);
     }
-
   }
-
 }

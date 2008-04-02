@@ -9,8 +9,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
  * @author max
  */
 public class SwapInstruction extends Instruction {
-  public SwapInstruction() {}
-
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
     final DfaValue a = memState.pop();
     final DfaValue b = memState.pop();

@@ -220,8 +220,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myStack.peek();
   }
 
-  public void push(DfaValue value) {
-    myStack.push(value != null ? value : DfaUnknownValue.getInstance());
+  public void push(@NotNull DfaValue value) {
+    myStack.push(value);
   }
 
   public int popOffset() {
@@ -482,8 +482,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     final DfaVariableState varState = getVariableState(dfaVar);
     varState.setNullable(varState.isNullable() || dfaType.isNullable());
-    if (!isNotNull(dfaVar)) return true;
-    return varState.setInstanceofValue(dfaType);
+    return !isNotNull(dfaVar) || varState.setInstanceofValue(dfaType);
   }
 
   public boolean applyCondition(DfaValue dfaCond) {
@@ -509,9 +508,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     if (dfaCond instanceof DfaConstValue) {
-      if (dfaCond == myFactory.getConstFactory().getTrue()) return true;
-      if (dfaCond == myFactory.getConstFactory().getFalse()) return false;
-      return true;
+      return dfaCond == myFactory.getConstFactory().getTrue() || dfaCond != myFactory.getConstFactory().getFalse();
     }
 
     if (!(dfaCond instanceof DfaRelationValue)) return true;

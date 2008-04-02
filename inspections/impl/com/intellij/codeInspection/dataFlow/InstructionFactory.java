@@ -81,7 +81,7 @@ public class InstructionFactory {
     return new PopInstruction();
   }
 
-  public PushInstruction createPushInstruction(DfaValue value) {
+  public PushInstruction createPushInstruction(DfaValue value, final PsiExpression expression) {
     return new PushInstruction(value);
   }
 

@@ -1,8 +1,9 @@
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,7 +17,7 @@ public interface DfaMemoryState {
 
   DfaValue pop();
   DfaValue peek();
-  void push(DfaValue value);
+  void push(@NotNull DfaValue value);
 
   int popOffset();
   void pushOffset(int offset);

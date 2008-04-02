@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
+import com.intellij.usageView.UsageInfo;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 
@@ -21,21 +22,20 @@ import java.util.Map;
  */
 public class SliceBackwardHandler implements CodeInsightActionHandler {
   public void invoke(final Project project, final Editor editor, final PsiFile file) {
-    PsiParameter parameter = getParameterAtCaret(editor, file);
-    if (parameter == null) {
-      HintManager.getInstance().showErrorHint(editor, "Cannot find what to slice. Please stand on the method parameter and try again.");
+    PsiExpression expression = getExpressionAtCaret(editor, file);
+    if (expression == null) {
+      HintManager.getInstance().showErrorHint(editor, "Cannot find what to slice. Please stand on the expression and try again.");
       return;
     }
-    PsiMethod method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
-    slice(parameter, method);
+    slice(expression);
   }
 
   public boolean startInWriteAction() {
     return false;
   }
 
-  private static void slice(final PsiParameter parameter, final PsiMethod method) {
-    final Project project = method.getProject();
+  private static void slice(final PsiExpression expression) {
+    final Project project = expression.getProject();
 
     PsiDocumentManager.getInstance(project).commitAllDocuments(); // prevents problems with smart pointers creation
 
@@ -49,11 +49,11 @@ public class SliceBackwardHandler implements CodeInsightActionHandler {
             return o1.getUsageInfo().equals(o2.getUsageInfo());
           }
         });
-
+                                                     
     final Content[] myContent = new Content[1];
     final ContentManager contentManager = SliceManager.getInstance(project).getContentManager();
     final SliceToolwindowSettings sliceToolwindowSettings = SliceToolwindowSettings.getInstance(project);
-    SlicePanel slicePanel = new SlicePanel(project, new SliceUsageRoot(parameter, targetEqualUsages)) {
+    SlicePanel slicePanel = new SlicePanel(project, new SliceUsage(new UsageInfo(expression), targetEqualUsages, null)) {
       public void dispose() {
         super.dispose();
         contentManager.removeContent(myContent[0], true);
@@ -86,15 +86,8 @@ public class SliceBackwardHandler implements CodeInsightActionHandler {
     });
   }
 
-  private static PsiParameter getParameterAtCaret(final Editor editor, final PsiFile file) {
+  private static PsiExpression getExpressionAtCaret(final Editor editor, final PsiFile file) {
     PsiElement element = BaseRefactoringAction.getElementAtCaret(editor, file);
-    PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
-    return isMethodParameter(parameter) ? parameter : null;
-  }
-
-  private static boolean isMethodParameter(PsiElement element) {
-    if (!(element instanceof PsiParameter)) return false;
-    PsiParameter parameter = (PsiParameter)element;
-    return parameter.getDeclarationScope() instanceof PsiMethod;
+    return PsiTreeUtil.getParentOfType(element, PsiExpression.class);
   }
 }

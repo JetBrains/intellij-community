@@ -11,13 +11,11 @@ import java.util.Collections;
  * @author cdr
  */
 public class SliceTreeStructure extends AbstractTreeStructureBase {
-  private final SliceUsage mySliceUsage;
   private final SliceNode myRoot;
 
-  public SliceTreeStructure(Project project, SliceUsage sliceUsage) {
+  public SliceTreeStructure(Project project, SliceUsage root) {
     super(project);
-    mySliceUsage = sliceUsage;
-    myRoot = new SliceNode(project, mySliceUsage);
+    myRoot = new SliceNode(project, root);
   }
 
   public List<TreeStructureProvider> getProviders() {
@@ -35,5 +33,4 @@ public class SliceTreeStructure extends AbstractTreeStructureBase {
   public boolean hasSomethingToCommit() {
     return false;
   }
-
 }

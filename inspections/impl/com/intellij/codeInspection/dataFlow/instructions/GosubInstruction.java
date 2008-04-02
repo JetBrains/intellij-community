@@ -8,7 +8,7 @@ import com.intellij.codeInspection.dataFlow.DfaMemoryState;
  * @author max
  */
 public class GosubInstruction extends Instruction {
-  private int mySubprogramOffset;
+  private final int mySubprogramOffset;
 
   public GosubInstruction(int subprogramOffset) {
     mySubprogramOffset = subprogramOffset;
