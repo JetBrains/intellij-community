@@ -7,7 +7,6 @@
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
@@ -20,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.StringTokenizer;
 
-class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
+public class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
   @NonNls private static final String CLASS_ATTRIBUTE_NAME = "class";
   @NonNls private static final String ID_ATTRIBUTE_NAME = "id";
 
@@ -29,7 +28,7 @@ class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
   }
 
   public Language[] getLanguages() {
-    return new Language[]{/*XMLLanguage.INSTANCE,*/ XHTMLLanguage.INSTANCE, HTMLLanguage.INSTANCE, StdLanguages.JSP, StdLanguages.JSPX};
+    return new Language[]{XHTMLLanguage.INSTANCE, HTMLLanguage.INSTANCE};
   }
 
   @NotNull

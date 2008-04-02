@@ -1,11 +1,10 @@
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.lang.StdLanguages;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.meta.MetaRegistry;
-import com.intellij.psi.jsp.JspSpiUtil;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.IElementType;
@@ -54,10 +53,7 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
 
   @NotNull
   public PsiReference[] getReferences() {
-    if (getParent().getLanguage() == StdLanguages.JSPX) {
-      return JspSpiUtil.getReferencesForXmlCommentInJspx(this);
-    }
-    return super.getReferences();
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlComment.class);
   }
 
   @Nullable

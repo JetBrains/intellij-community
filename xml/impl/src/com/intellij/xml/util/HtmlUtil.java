@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -376,8 +377,8 @@ public class HtmlUtil {
 
   public static boolean hasHtml(PsiFile file) {
     if (isHtmlFile(file)) return true;
-    final PsiFile templateFile = TemplateLanguageUtil.getTemplateFile(file);
-    return templateFile != null && isHtmlFile(templateFile);
+    if (file.getViewProvider() instanceof TemplateLanguageFileViewProvider) return true;
+    return false;
   }
 
   private static boolean isHtmlFile(final PsiFile file) {
