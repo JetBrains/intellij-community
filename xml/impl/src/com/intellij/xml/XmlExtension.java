@@ -154,4 +154,7 @@ public abstract class XmlExtension {
     return descr;
   }
 
+  public boolean hasDynamicComponents(final PsiElement element) {
+    return false;
+  }
 }

@@ -7,15 +7,13 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProviderBase;
-import com.intellij.psi.jsp.el.ELExpressionHolder;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.xml.XmlExtension;
+import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +65,8 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     if (element instanceof XmlAttributeValue) {
-      if (PsiTreeUtil.getChildOfAnyType(element, JspXmlTagBase.class, ELExpressionHolder.class) != null) {
+      final XmlExtension extension = XmlExtension.getExtensionByElement(element);
+      if (extension != null && extension.hasDynamicComponents(element)) {
         return PsiReference.EMPTY_ARRAY;
       }
 
@@ -75,7 +74,7 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
       if (!(parentElement instanceof XmlAttribute)) return PsiReference.EMPTY_ARRAY;
       final String name = ((XmlAttribute)parentElement).getName();
       final String ns = ((XmlAttribute)parentElement).getParent().getNamespace();
-      final boolean jsfNs = com.intellij.xml.util.XmlUtil.JSF_CORE_URI.equals(ns) || com.intellij.xml.util.XmlUtil.JSF_HTML_URI.equals(ns);
+      final boolean jsfNs = XmlUtil.JSF_CORE_URI.equals(ns) || XmlUtil.JSF_HTML_URI.equals(ns);
 
       if (FOR_ATTR_NAME.equals(name)) {
         return new PsiReference[]{
