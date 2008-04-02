@@ -57,16 +57,24 @@ public abstract class BaseCompleteMacro implements Macro {
     new WriteCommandAction.Simple(project, psiFile) {
         public void run() {
           PsiDocumentManager.getInstance(project).commitAllDocuments();
-          getCompletionHandler().invoke(project, editor, psiFile);
         }
       }.execute();
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      getCompletionHandler().invoke(project, editor, psiFile);
+    }
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (!project.isOpen()) return;
+
         CommandProcessor.getInstance().executeCommand(
             project, new Runnable() {
             public void run() {
+              if (!ApplicationManager.getApplication().isUnitTestMode()) {
+                getCompletionHandler().invoke(project, editor, psiFile);
+              }
+
               final LookupManager lookupManager = LookupManager.getInstance(project);
               Lookup lookup = lookupManager.getActiveLookup();
 
