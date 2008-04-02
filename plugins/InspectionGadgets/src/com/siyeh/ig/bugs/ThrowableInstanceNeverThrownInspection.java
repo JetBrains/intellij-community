@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2008 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,20 +69,23 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
                     "java.lang.Throwable")) {
                 return;
             }
-            final PsiThrowStatement throwStatement =
-                    PsiTreeUtil.getParentOfType(expression,
-                            PsiThrowStatement.class);
-            if (throwStatement != null) {
+            PsiElement parent = expression.getParent();
+            while (parent instanceof PsiParenthesizedExpression) {
+                parent = parent.getParent();
+            }
+            if (parent instanceof PsiThrowStatement) {
+                return;
+            } else if (parent instanceof PsiReturnStatement) {
                 return;
             }
-            final PsiElement parent =
+            final PsiElement typedParent =
                     PsiTreeUtil.getParentOfType(expression,
                             PsiAssignmentExpression.class,
                             PsiVariable.class);
             final PsiLocalVariable variable;
-            if (parent instanceof PsiAssignmentExpression) {
+            if (typedParent instanceof PsiAssignmentExpression) {
                 final PsiAssignmentExpression assignmentExpression =
-                        (PsiAssignmentExpression)parent;
+                        (PsiAssignmentExpression)typedParent;
                 final PsiExpression rhs = assignmentExpression.getRExpression();
                 if (!PsiTreeUtil.isAncestor(rhs, expression, false)) {
                     return;
@@ -98,11 +101,11 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
                     return;
                 }
                 variable = (PsiLocalVariable)target;
-            } else if (parent instanceof PsiVariable) {
-                if (!(parent instanceof PsiLocalVariable)) {
+            } else if (typedParent instanceof PsiVariable) {
+                if (!(typedParent instanceof PsiLocalVariable)) {
                     return;
                 }
-                variable = (PsiLocalVariable)parent;
+                variable = (PsiLocalVariable)typedParent;
             } else {
                 variable = null;
             }
@@ -112,8 +115,13 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
                                 variable.getUseScope());
                 for (PsiReference reference : query) {
                     final PsiElement usage = reference.getElement();
-                    if (PsiTreeUtil.getParentOfType(usage,
-                            PsiThrowStatement.class) != null) {
+                    PsiElement usageParent = usage.getParent();
+                    while (usageParent instanceof PsiParenthesizedExpression) {
+                        usageParent = usageParent.getParent();
+                    }
+                    if (usageParent instanceof PsiThrowStatement) {
+                        return;
+                    } else if (usageParent instanceof PsiReturnStatement) {
                         return;
                     }
                 }
