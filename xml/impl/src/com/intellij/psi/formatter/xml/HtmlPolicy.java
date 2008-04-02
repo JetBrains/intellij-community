@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HtmlPolicy extends XmlFormattingPolicy {
+  
   protected final CodeStyleSettings mySettings;
 
   public HtmlPolicy(final CodeStyleSettings settings, final FormattingDocumentModel documentModel) {
