@@ -2,8 +2,10 @@ package com.intellij.debugger.impl.descriptors.data;
 
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.watch.MethodsTracker;
+import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -18,7 +20,7 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
   public StackFrameData(StackFrameProxyImpl frame) {
     super();
     myFrame = frame;
-    myDisplayKey = new FrameDisplayKey(frame.getIndexFromBottom());
+    myDisplayKey = new FrameDisplayKey(NodeManagerImpl.getContextKey(frame));
     myMethodsTracker = new MethodsTracker();
     
   }
@@ -42,10 +44,10 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
   }
 
   private static class FrameDisplayKey implements DisplayKey<StackFrameDescriptorImpl>{
-    private final int myFrameIndex;
-    
-    public FrameDisplayKey(final int frameIndex) {
-      myFrameIndex = frameIndex;
+    private final String myContextKey;
+
+    public FrameDisplayKey(final String contextKey) {
+      myContextKey = contextKey;
     }
 
     public boolean equals(final Object o) {
@@ -54,13 +56,13 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
 
       final FrameDisplayKey that = (FrameDisplayKey)o;
 
-      if (myFrameIndex != that.myFrameIndex) return false;
-
+      if (!Comparing.equal(myContextKey, that.myContextKey)) return false;
+      
       return true;
     }
 
     public int hashCode() {
-      return myFrameIndex;
+      return myContextKey == null? 0 : myContextKey.hashCode();
     }
   } 
   

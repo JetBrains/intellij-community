@@ -64,7 +64,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
       myHistories.put(myHistoryKey, getCurrentHistoryTree());
     }
 
-    final String historyKey = getHistoryKey(context);
+    final String historyKey = getContextKey(context.getFrameProxy());
     final DescriptorTree descriptorTree;
     if (historyKey != null) {
       final DescriptorTree historyTree = myHistories.get(historyKey);
@@ -79,8 +79,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
   }
   
   @Nullable
-  private static String getHistoryKey(DebuggerContextImpl context) {
-    final StackFrameProxyImpl frame = context.getFrameProxy();
+  public static String getContextKey(final StackFrameProxyImpl frame) {
     if (frame == null) {
       return null;
     }
