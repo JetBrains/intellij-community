@@ -244,14 +244,14 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     group.add(restarAction);
     restarAction.registerShortcut(myUi.getComponent());
 
-    addActionToGroup(group, DebuggerActions.RESUME);
-    addActionToGroup(group, DebuggerActions.PAUSE);
+    addActionToGroup(group, XDebuggerActions.RESUME);
+    addActionToGroup(group, XDebuggerActions.PAUSE);
     addActionToGroup(group, IdeActions.ACTION_STOP_PROGRAM);
 
     group.addSeparator();
 
     addActionToGroup(group, XDebuggerActions.VIEW_BREAKPOINTS);
-    addActionToGroup(group, DebuggerActions.MUTE_BREAKPOINTS);
+    addActionToGroup(group, XDebuggerActions.MUTE_BREAKPOINTS);
 
     group.addSeparator();
     addAction(group, DebuggerActions.EXPORT_THREADS);

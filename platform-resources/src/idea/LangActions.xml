@@ -498,6 +498,8 @@
       <action id="XDebugger.AddToWatches" class="com.intellij.xdebugger.impl.ui.tree.actions.XAddToWatchesAction"/>
       <action id="XDebugger.NewWatch" class="com.intellij.xdebugger.impl.frame.actions.XNewWatchAction" icon="/debugger/newWatch.png"/>
       <action id="XDebugger.RemoveWatch" class="com.intellij.xdebugger.impl.frame.actions.XRemoveWatchAction" icon="/actions/delete.png"/>
+      <action id="XDebugger.MuteBreakpoints" class="com.intellij.xdebugger.impl.actions.MuteBreakpointAction"
+              icon="/debugger/muteBreakpoints.png"/>
     </group>
 
     <group id="XDebugger.Evaluation.Dialog.Tree.Popup">

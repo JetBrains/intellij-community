@@ -101,6 +101,9 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       }
     }
     else {
+      if (session.areBreakpointsMuted()) {
+        return myType.getDisabledIcon();
+      }
       if (session.isDisabledSlaveBreakpoint(this)) {
         return myType.getDisabledDependentIcon();
       }
@@ -108,7 +111,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       if (presentation != null) {
         Icon icon = presentation.getIcon();
         if (icon != null) {
-          return icon;
+          return icon;                  
         }
       }
     }

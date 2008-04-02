@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
+import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
 import com.intellij.xdebugger.impl.actions.handlers.*;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointPanelProvider;
@@ -32,6 +33,7 @@ public class XDebuggerSupport extends DebuggerSupport {
   private XDebuggerEvaluateActionHandler myEvaluateHandler;
   private XQuickEvaluateHandler myQuickEvaluateHandler;
   private final XDebuggerSettingsPanelProviderImpl mySettingsPanelProvider;
+  private DebuggerToggleActionHandler myMuteBreakpointsHandler;
 
   public XDebuggerSupport() {
     myBreakpointPanelProvider = new XBreakpointPanelProvider();
@@ -78,6 +80,7 @@ public class XDebuggerSupport extends DebuggerSupport {
         session.showExecutionPoint();
       }
     };
+    myMuteBreakpointsHandler = new XDebuggerMuteBreakpointsHandler();
     myEvaluateHandler = new XDebuggerEvaluateActionHandler();
     myQuickEvaluateHandler = new XQuickEvaluateHandler();
     mySettingsPanelProvider = new XDebuggerSettingsPanelProviderImpl();
@@ -153,8 +156,13 @@ public class XDebuggerSupport extends DebuggerSupport {
     return myQuickEvaluateHandler;
   }
 
+  public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
+    return myMuteBreakpointsHandler;
+  }
+
   @NotNull
   public DebuggerSettingsPanelProvider getSettingsPanelProvider() {
     return mySettingsPanelProvider;
   }
+
 }

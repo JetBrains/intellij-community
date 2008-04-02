@@ -40,28 +40,67 @@ public abstract class XDebugProcess {
     return mySession;
   }
 
+  /**
+   * @return breakpoint handlers which will be used to set/clear breakpoints in the underlying debugging process
+   */
   public XBreakpointHandler<?>[] getBreakpointHandlers() {
     return XBreakpointHandler.EMPTY_ARRAY;
   }
 
+  /**
+   * @return editor provider which will be used to produce editors for "Evaluate" and "Set Value" actions
+   */
   @Nullable
   public XDebuggerEditorsProvider getEditorsProvider() {
     return null;
   }
 
+  /**
+   * Called when {@link com.intellij.xdebugger.XDebugSession} is initialized and breakpoints are registered in
+   * {@link com.intellij.xdebugger.breakpoints.XBreakpointHandler}
+   */
   public void sessionInitialized() {
   }
 
+  /**
+   * Interrupt debugging process and call {@link com.intellij.xdebugger.XDebugSession#positionReached(XSourcePosition, com.intellij.xdebugger.frame.XSuspendContext)}
+   * when next line in current method/function is reached 
+   */
+  public abstract void startPausing();
+
+  /**
+   * Resume execution and call {@link com.intellij.xdebugger.XDebugSession#positionReached(XSourcePosition, com.intellij.xdebugger.frame.XSuspendContext)}
+   * when next line in current method/function is reached  
+   */
   public abstract void startStepOver();
 
+  /**
+   * Resume execution and call {@link com.intellij.xdebugger.XDebugSession#positionReached(XSourcePosition, com.intellij.xdebugger.frame.XSuspendContext)}
+   * when next line is reached
+   */
   public abstract void startStepInto();
 
+  /**
+   * Resume execution and call {@link com.intellij.xdebugger.XDebugSession#positionReached(XSourcePosition, com.intellij.xdebugger.frame.XSuspendContext)}
+   * after returning from current method/function
+   */
   public abstract void startStepOut();
 
+  /**
+   * Stop debugging and dispose resources
+   */
   public abstract void stop();
 
+  /**
+   * Resume execution
+   */
   public abstract void resume();
 
+  /**
+   * Resume execution and call {@link com.intellij.xdebugger.XDebugSession#positionReached(XSourcePosition, com.intellij.xdebugger.frame.XSuspendContext)}
+   * when <code>position</code> is reached
+   * @param position position in source code
+   */
   public abstract void runToPosition(@NotNull XSourcePosition position);
 
   @Nullable
@@ -86,8 +125,12 @@ public abstract class XDebugProcess {
     return consoleBuilder.getConsole();
   }
 
+  /**
+   * @return message to show in Variables View when debugger isn't paused
+   */
   public String getCurrentStateMessage() {
     return mySession.isStopped() ? XDebuggerBundle.message("debugger.state.message.disconnected")
            : XDebuggerBundle.message("debugger.state.message.connected");
   }
+
 }

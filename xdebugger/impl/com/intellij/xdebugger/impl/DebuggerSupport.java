@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
+import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
@@ -66,5 +67,8 @@ public abstract class DebuggerSupport {
   public abstract DebuggerActionHandler getEvaluateHandler();
 
   @NotNull
-  public abstract QuickEvaluateHandler getQuickEvaluateHandler();  
+  public abstract QuickEvaluateHandler getQuickEvaluateHandler();
+
+
+  public abstract DebuggerToggleActionHandler getMuteBreakpointsHandler();
 }

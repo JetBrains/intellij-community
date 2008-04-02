@@ -54,6 +54,7 @@ public interface XDebugSession {
   void forceStepInto();
   void runToPosition(@NotNull XSourcePosition position, final boolean ignoreBreakpoints);
 
+  void pause();
   void resume();
 
   void showExecutionPoint();

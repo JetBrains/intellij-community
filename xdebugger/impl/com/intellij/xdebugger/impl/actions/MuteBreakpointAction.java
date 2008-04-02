@@ -1,0 +1,53 @@
+package com.intellij.xdebugger.impl.actions;
+
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.impl.DebuggerSupport;
+
+/**
+ * @author nik
+ */
+public class MuteBreakpointAction extends ToggleAction {
+  public boolean isSelected(final AnActionEvent e) {
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project != null) {
+      for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
+        DebuggerToggleActionHandler handler = support.getMuteBreakpointsHandler();
+        if (handler.isEnabled(project, e)) {
+          return handler.isSelected(project, e);
+        }
+      }
+    }
+    return false;
+  }
+
+  public void setSelected(final AnActionEvent e, final boolean state) {
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project != null) {
+      for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
+        DebuggerToggleActionHandler handler = support.getMuteBreakpointsHandler();
+        if (handler.isEnabled(project, e)) {
+          handler.setSelected(project, e, state);
+          return;
+        }
+      }
+    }
+  }
+
+  public void update(final AnActionEvent e) {
+    super.update(e);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project != null) {
+      for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
+        DebuggerToggleActionHandler handler = support.getMuteBreakpointsHandler();
+        if (handler.isEnabled(project, e)) {
+          e.getPresentation().setEnabled(true);
+          return;
+        }
+      }
+    }
+    e.getPresentation().setEnabled(false);
+  }
+}

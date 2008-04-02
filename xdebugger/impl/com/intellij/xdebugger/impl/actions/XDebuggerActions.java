@@ -30,4 +30,6 @@ public interface XDebuggerActions {
   @NonNls String WATCHES_TREE_TOOLBAR_GROUP = "XDebugger.Watches.Tree.Toolbar";
 
   @NonNls String SET_VALUE = "XDebugger.SetValue";
+
+  @NonNls String MUTE_BREAKPOINTS = "XDebugger.MuteBreakpoints";
 }

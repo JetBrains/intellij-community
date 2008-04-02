@@ -17,6 +17,7 @@ import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
+import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +45,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   private EvaluateActionHandler myEvaluateActionHandler;
   private QuickEvaluateActionHandler myQuickEvaluateHandler;
   private JavaDebuggerSettingsPanelProvider myDebuggerSettingsPanelProvider;
+  private MuteBreakpointsActionHandler myMuteBreakpointsHandler;
 
   public JavaDebuggerSupport() {
     myBreakpointPanelProvider = new JavaBreakpointPanelProvider();
@@ -61,6 +63,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     myEvaluateActionHandler = new EvaluateActionHandler();
     myQuickEvaluateHandler = new QuickEvaluateActionHandler();
     myDebuggerSettingsPanelProvider = new JavaDebuggerSettingsPanelProvider();
+    myMuteBreakpointsHandler = new MuteBreakpointsActionHandler();
   }
 
   @NotNull
@@ -131,6 +134,10 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   @NotNull
   public QuickEvaluateHandler getQuickEvaluateHandler() {
     return myQuickEvaluateHandler;
+  }
+
+  public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
+    return myMuteBreakpointsHandler;
   }
 
   @NotNull

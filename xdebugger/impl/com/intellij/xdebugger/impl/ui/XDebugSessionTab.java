@@ -175,13 +175,13 @@ public class XDebugSessionTab implements Disposable {
     restarAction.registerShortcut(myUi.getComponent());
 
     addActionToGroup(group, XDebuggerActions.RESUME);
-    //addActionToGroup(group, DebuggerActions.PAUSE);
+    addActionToGroup(group, XDebuggerActions.PAUSE);
     addActionToGroup(group, IdeActions.ACTION_STOP_PROGRAM);
 
     group.addSeparator();
 
     addActionToGroup(group, XDebuggerActions.VIEW_BREAKPOINTS);
-    //addActionToGroup(group, DebuggerActions.MUTE_BREAKPOINTS);
+    addActionToGroup(group, XDebuggerActions.MUTE_BREAKPOINTS);
 
     group.addSeparator();
     //addAction(group, DebuggerActions.EXPORT_THREADS);

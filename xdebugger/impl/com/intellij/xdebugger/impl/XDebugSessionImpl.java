@@ -222,6 +222,7 @@ public class XDebugSessionImpl implements XDebugSession {
     if (myBreakpointsMuted == muted) return;
     myBreakpointsMuted = muted;
     processAllBreakpoints(!muted, muted);
+    myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueAllBreakpointsUpdate();
   }
 
   public void stepOver(final boolean ignoreBreakpoints) {
@@ -252,6 +253,10 @@ public class XDebugSessionImpl implements XDebugSession {
     }
     doResume();
     myDebugProcess.runToPosition(position);
+  }
+
+  public void pause() {
+    myDebugProcess.startPausing();
   }
 
   private void processAllBreakpoints(final boolean register, final boolean temporary) {

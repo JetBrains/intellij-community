@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 */
 public class XDebuggerPauseActionHandler extends XDebuggerActionHandler {
   protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+    session.pause();
   }
 
   protected boolean isEnabled(@NotNull final XDebugSession session, final DataContext dataContext) {
