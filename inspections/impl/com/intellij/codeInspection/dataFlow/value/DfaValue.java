@@ -4,14 +4,14 @@ public class DfaValue {
   private final int myID;
   protected final DfaValueFactory myFactory;
 
-  public DfaValue(final DfaValueFactory factory) {
+  protected DfaValue(final DfaValueFactory factory) {
     myFactory = factory;
-    if (factory != null) {
-      myID = factory.createID();
-      factory.registerValue(this);
+    if (factory == null) {
+      myID = 0;
     }
     else {
-      myID = 0;
+      myID = factory.createID();
+      factory.registerValue(this);
     }
   }
 

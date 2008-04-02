@@ -11,9 +11,6 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.*;
 
 public class EmptyStackInstruction extends Instruction {
-  public EmptyStackInstruction() {
-  }
-
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState dfaMemoryState) {
     dfaMemoryState.emptyStack();
     Instruction nextInstruction = runner.getInstruction(getIndex() + 1);

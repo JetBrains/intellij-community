@@ -35,21 +35,17 @@ public class DataFlowRunner {
   private Instruction[] myInstructions;
   private DfaVariableValue[] myFields;
   private final DfaValueFactory myValueFactory;
+  private final InstructionFactory myInstructionFactory;
 
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
   public static final int MAX_STATES_PER_BRANCH = 300;
-  private final InstructionFactory myInstructionFactory;
 
   public Instruction getInstruction(int index) {
     return myInstructions[index];
   }
 
-  public Instruction[] getInstructions() {
-    return myInstructions;
-  }
-
-  public DataFlowRunner(final InstructionFactory instructionFactory) {
+  protected DataFlowRunner(final InstructionFactory instructionFactory) {
     myInstructionFactory = instructionFactory;
     myValueFactory = new DfaValueFactory();
   }
@@ -58,7 +54,7 @@ public class DataFlowRunner {
     return myValueFactory;
   }
 
-  public InstructionFactory getInstructionFactory() {
+  protected InstructionFactory getInstructionFactory() {
     return myInstructionFactory;
   }
 

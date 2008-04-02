@@ -350,8 +350,7 @@ public class PsiUtilBase {
       if (containingFile == psiRoot) return true;
     }
     PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(root.getProject()).getInjectionHost(element);
-    if (host != null) return isUnderPsiRoot(root, host);
-    return false;
+    return host != null && isUnderPsiRoot(root, host);
   }
 
   @Nullable

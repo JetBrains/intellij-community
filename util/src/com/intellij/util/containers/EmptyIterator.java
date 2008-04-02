@@ -19,6 +19,10 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class EmptyIterator<T> implements Iterator<T> {
+  private static final EmptyIterator INSTANCE = new EmptyIterator();
+  public static <T> EmptyIterator<T> getInstance() {
+    return INSTANCE;
+  }
   public boolean hasNext() {
     return false;
   }

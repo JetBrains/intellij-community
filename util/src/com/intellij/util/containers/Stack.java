@@ -40,6 +40,6 @@ public class Stack<T> extends ArrayList<T> {
   }
 
   public boolean empty() {
-    return size() == 0;
+    return isEmpty();
   }
 }

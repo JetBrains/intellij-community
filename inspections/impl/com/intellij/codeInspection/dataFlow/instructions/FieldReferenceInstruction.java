@@ -14,8 +14,8 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class FieldReferenceInstruction extends Instruction {
-  private PsiExpression myExpression;
-  private boolean myIsPhysical;
+  private final PsiExpression myExpression;
+  private final boolean myIsPhysical;
   @Nullable private final String mySyntheticFieldName;
 
   public FieldReferenceInstruction(PsiExpression expression, @Nullable @NonNls String syntheticFieldName) {

@@ -106,11 +106,7 @@ public class ContainerUtil {
   }
 
   public static <T> Iterator<T> emptyIterator() {
-    return new Iterator<T>() {
-      public boolean hasNext() { return false; }
-      public T next() { throw new NoSuchElementException(); }
-      public void remove() { throw new IllegalStateException(); }
-    };
+    return EmptyIterator.getInstance();
   }
 
   public static <T> int findByEquals(T[] array, T element) {

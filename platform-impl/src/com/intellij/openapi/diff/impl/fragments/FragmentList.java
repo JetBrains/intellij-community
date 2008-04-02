@@ -21,7 +21,7 @@ public interface FragmentList {
     }
 
     public Iterator<Fragment> iterator() {
-      return new EmptyIterator<Fragment>();
+      return EmptyIterator.getInstance();
     }
 
     public Fragment getFragmentAt(int offset, FragmentSide side, Condition<Fragment> condition) {

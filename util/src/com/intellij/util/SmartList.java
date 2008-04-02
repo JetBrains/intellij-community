@@ -133,9 +133,8 @@ public class SmartList<E> extends AbstractList<E> {
     return oldValue;
   }
 
-  private static final Iterator EMPTY = new EmptyIterator();
   public Iterator<E> iterator() {
-    return mySize == 0 ? EMPTY : super.iterator();
+    return mySize == 0 ? EmptyIterator.<E>getInstance() : super.iterator();
   }
 
   public boolean isEmpty() {

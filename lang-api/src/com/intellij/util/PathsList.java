@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import static com.intellij.util.containers.ContainerUtil.*;
-import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
@@ -35,8 +34,6 @@ public class PathsList  {
   private final List<String>  myPath = new ArrayList<String>();
   private final List<String> myPathTail = new ArrayList<String>();
   private final Set<String> myPathSet = new HashSet<String>();
-
-  private static final EmptyIterator<String> ADD_NOTHING = new EmptyIterator<String>();
 
   private static final Function<String, VirtualFile> PATH_TO_LOCAL_VFILE = new Function<String, VirtualFile>() {
     public VirtualFile fun(String path) {
@@ -87,7 +84,7 @@ public class PathsList  {
 
   private Iterator<String> chooseFirstTimeItems(String path) {
     if (path == null) {
-      return ADD_NOTHING;
+      return emptyIterator();
     }
     final StringTokenizer tokenizer = new StringTokenizer(path, File.pathSeparator);
     // in JDK 1.5 StringTokenizer implements Enumeration<Object> rather then Enumeration<String>, need to convert

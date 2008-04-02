@@ -34,10 +34,10 @@ public class DfaNotNullValue extends DfaValue {
       if (conditions == null) {
         conditions = new ArrayList<DfaNotNullValue>();
         myStringToObject.put(id, conditions);
-      } else {
-        for (int i = 0; i < conditions.size(); i++) {
-          DfaNotNullValue aNotNull = conditions.get(i);
-          if (aNotNull.hardEquals(mySharedInstance)) return aNotNull;
+      }
+      else {
+        for (DfaNotNullValue value : conditions) {
+          if (value.hardEquals(mySharedInstance)) return value;
         }
       }
 

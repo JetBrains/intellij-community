@@ -9,8 +9,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
  * @author max
  */
 public class DupInstruction extends Instruction {
-  public DupInstruction() {}
-
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
     final DfaValue a = memState.pop();
     memState.push(a);
