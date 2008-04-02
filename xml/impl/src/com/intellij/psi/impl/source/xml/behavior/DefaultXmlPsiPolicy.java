@@ -1,44 +1,23 @@
 package com.intellij.psi.impl.source.xml.behavior;
 
-import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.CharTable;
 
 public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
   public ASTNode encodeXmlTextContents(String displayText, XmlText text, CharTable table) {
     final PsiFile containingFile = text.getContainingFile();
     final FileElement dummyParent = DummyHolderFactory.createHolder(text.getManager(), null, table).getTreeElement();
-
-    if (containingFile instanceof JspFile) {
-      boolean wsChars = false;
-      int fragmentStart = 0;
-
-      for(int i = 0; i < displayText.length(); i++){
-        if(wsChars != Character.isWhitespace(displayText.charAt(i))){
-          final ASTNode next = createNextToken(fragmentStart, i, wsChars, dummyParent, displayText);
-          if(next != null){
-            TreeUtil.addChildren(dummyParent, (TreeElement)next);
-            fragmentStart = i;
-          }
-          wsChars = Character.isWhitespace(displayText.charAt(i));
-        }
-      }
-      final ASTNode next = createNextToken(fragmentStart, displayText.length(), wsChars, dummyParent, displayText);
-      if(next != null) TreeUtil.addChildren(dummyParent, (TreeElement)next);
-      dummyParent.acceptTree(new GeneratedMarkerVisitor());
-      return dummyParent.getFirstChildNode();
-    } else {
       final XmlTag rootTag =
         ((XmlFile)PsiFileFactory.getInstance(containingFile.getProject())
           .createFileFromText("a.xml", "<a>" + displayText + "</a>")).getDocument().getRootTag();
@@ -53,23 +32,6 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
       TreeUtil.addChildren(dummyParent, element);
       TreeUtil.clearCaches(dummyParent);
       return element.getFirstChildNode();
-    }
-  }
-
-  private static LeafElement createNextToken(final int startOffset,
-                                      final int endOffset,
-                                      final boolean isWhitespace,
-                                      final FileElement dummyParent,
-                                      final CharSequence chars) {
-    if(startOffset != endOffset){
-      if(isWhitespace){
-        return ASTFactory.leaf(XmlTokenType.XML_WHITE_SPACE, chars, startOffset, endOffset, dummyParent.getCharTable());
-      }
-      else{
-        return ASTFactory.leaf(XmlTokenType.XML_DATA_CHARACTERS, chars, startOffset, endOffset, dummyParent.getCharTable());
-      }
-    }
-    return null;
   }
 
 }
