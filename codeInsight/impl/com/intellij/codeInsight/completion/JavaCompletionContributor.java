@@ -105,6 +105,9 @@ public class JavaCompletionContributor extends CompletionContributor{
             return new String(data[i]);
           }
         }
+        if (parameters.getPosition().getTextLength() > 42) {
+          return new String(data[new Random().nextInt(data.length)]);
+        }
 
         return _advertise(parameters);
       }
