@@ -6,15 +6,14 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ProcessingContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -25,7 +24,6 @@ import java.util.Set;
  * @author peter
  */
 public class LegacyCompletionContributor extends CompletionContributor{
-  @NonNls public static final String LEGACY = "Legacy";
 
   public void registerCompletionProviders(final CompletionRegistrar registrar) {
     final PsiElementPattern.Capture<PsiElement> everywhere = PlatformPatterns.psiElement();

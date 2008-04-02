@@ -10,7 +10,6 @@ import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -466,11 +465,10 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     Editor editor = context.editor;
 
     LOG.assertTrue(lookupData.items.length == 0);
-    String text = CompletionService.getCompletionService().getEmptyLookupText(parameters);
-    if (StringUtil.isEmpty(text)) {
-      text = LangBundle.message("completion.no.suggestions");
+    final String text = CompletionService.getCompletionService().getEmptyLookupText(parameters);
+    if (StringUtil.isNotEmpty(text)) {
+      HintManager.getInstance().showErrorHint(editor, text);
     }
-    HintManager.getInstance().showErrorHint(editor, text);
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     if (codeAnalyzer != null) {
       codeAnalyzer.updateVisibleHighlighters(editor);
