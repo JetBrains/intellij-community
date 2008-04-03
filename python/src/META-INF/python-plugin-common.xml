@@ -19,6 +19,7 @@
   </application-components>
 
   <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="com.jetbrains.python.PythonFileTypeFactory"/>
     <lang.syntaxHighlighterFactory key="Python" implementationClass="com.jetbrains.python.PySyntaxHighlighterFactory"/>
     <lang.braceMatcher language="Python" implementationClass="com.jetbrains.python.PyBraceMatcher"/>
