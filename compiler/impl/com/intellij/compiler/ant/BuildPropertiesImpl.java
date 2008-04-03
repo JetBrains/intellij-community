@@ -121,7 +121,7 @@ public class BuildPropertiesImpl extends BuildProperties {
         final String jdkName = jdk.getName();
         final String jdkHomeProperty = getJdkHomeProperty(jdkName);
         final FileSet fileSet = new FileSet(propertyRef(jdkHomeProperty));
-        final String[] urls = jdk.getRootProvider().getUrls(OrderRootType.COMPILATION_CLASSES);
+        final String[] urls = jdk.getRootProvider().getUrls(OrderRootType.CLASSES);
         for (String url : urls) {
           final String path = GenerationUtils.trimJarSeparator(VirtualFileManager.extractPath(url));
           final File pathElement = new File(path);
