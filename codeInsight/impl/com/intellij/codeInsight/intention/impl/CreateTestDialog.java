@@ -7,15 +7,24 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.refactoring.PackageWrapper;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -185,36 +194,59 @@ public class CreateTestDialog extends DialogWrapper {
 
   protected void doOKAction() {
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, myTargetPackageField.getText());
-    final String packageName = getPackageName();
 
-    final String[] errorString = new String[1];
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      public void run() {
+    String errorString = new WriteCommandAction<String>(myProject, CodeInsightBundle.message("create.directory.command")) {
+      protected void run(Result<String> result) throws Throwable {
         try {
-          final PsiDirectory baseDir =
-              myTargetModule == null ? null : PackageUtil.findPossiblePackageDirectoryInModule(myTargetModule, packageName);
-          myTargetDirectory = myTargetModule == null
-                              ? PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, baseDir, true)
-                              : PackageUtil.findOrCreateDirectoryForPackage(myTargetModule, packageName, baseDir, true);
+          myTargetDirectory = selectTargetDirectory();
           if (myTargetDirectory == null) {
-            errorString[0] = ""; // message already reported by PackageUtil
+            result.setResult("You have to choose a directory");
             return;
           }
-          errorString[0] = RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName());
+          result.setResult(RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName()));
         }
         catch (IncorrectOperationException e) {
-          errorString[0] = e.getMessage();
+          result.setResult(e.getMessage());
         }
       }
-    }, CodeInsightBundle.message("create.directory.command"), null);
+    }.execute().getResultObject();
 
-    if (errorString[0] != null) {
-      if (errorString[0].length() > 0) {
-        Messages.showMessageDialog(myProject, errorString[0], CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-      }
+    if (errorString != null) {
+      Messages.showMessageDialog(myProject, errorString, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return;
     }
+    
     super.doOKAction();
+  }
+
+  private PsiDirectory selectTargetDirectory() throws IncorrectOperationException {
+    VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentSourceRoots();
+    if (roots.length == 0) return null;
+
+    String packageName = getPackageName();
+    PackageWrapper targetPackage = new PackageWrapper(PsiManager.getInstance(myProject), packageName);
+
+    VirtualFile selectedRoot;
+    if (roots.length == 1) {
+      selectedRoot = roots[0];
+    } else {
+      PsiDirectory defaultDir = chooseDefaultDirectory(packageName);
+      selectedRoot = MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir);
+      if (selectedRoot == null) return null;
+    }
+
+    return RefactoringUtil.createPackageDirectoryInSourceRoot(targetPackage, selectedRoot);
+  }
+
+  private PsiDirectory chooseDefaultDirectory(String packageName) {
+    for (ContentEntry e : ModuleRootManager.getInstance(myTargetModule).getContentEntries()) {
+      for (SourceFolder f : e.getSourceFolders()) {
+        if (f.getFile() != null && f.isTestSource()) {
+          return PsiManager.getInstance(myProject).findDirectory(f.getFile());
+        }
+      }
+    }
+    return PackageUtil.findPossiblePackageDirectoryInModule(myTargetModule, packageName);
   }
 
   private String getPackageName() {
