@@ -577,7 +577,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         filesToProcess = vcsHelper.selectFilePathsToProcess(deletedFiles, SvnBundle.message("confirmation.title.delete.multiple.files"),
                                                             null,
                                                             SvnBundle.message("confirmation.title.delete.file"), singleFilePrompt,
-                                                            vcs.getAddConfirmation());
+                                                            vcs.getDeleteConfirmation());
       }
       if (filesToProcess != null) {
         List<VcsException> exceptions = new ArrayList<VcsException>();
