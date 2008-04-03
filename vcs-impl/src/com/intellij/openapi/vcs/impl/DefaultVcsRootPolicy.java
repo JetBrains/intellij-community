@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ public abstract class DefaultVcsRootPolicy {
     return ServiceManager.getService(project, DefaultVcsRootPolicy.class);
   }
 
-  public abstract void addDefaultVcsRoots(final VcsDirectoryMappingList mappingList, String vcsName, List<VirtualFile> result);
+  public abstract void addDefaultVcsRoots(final VcsDirectoryMappingList mappingList, AbstractVcs vcs, List<VirtualFile> result);
 
   public abstract boolean matchesDefaultMapping(final VirtualFile file, final Object matchContext);
 

@@ -30,8 +30,8 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     myBaseDir = project.getBaseDir();
   }
 
-  public void addDefaultVcsRoots(final VcsDirectoryMappingList mappingList, final String vcsName, final List<VirtualFile> result) {
-    if (myBaseDir != null && vcsName.equals(mappingList.getVcsFor(myBaseDir))) {
+  public void addDefaultVcsRoots(final VcsDirectoryMappingList mappingList, final AbstractVcs vcs, final List<VirtualFile> result) {
+    if (myBaseDir != null && vcs.getName().equals(mappingList.getVcsFor(myBaseDir)) && vcs.fileIsUnderVcs(new FilePathImpl(myBaseDir))) {
       result.add(myBaseDir);
     }
     final Module[] modules = ModuleManager.getInstance(myProject).getModules();
@@ -41,8 +41,8 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
         // if we're currently processing moduleAdded notification, getModuleForFile() will return null, so we pass the module
         // explicitly (we know it anyway)
         VcsDirectoryMapping mapping = mappingList.getMappingFor(file, module);
-        final String vcs = mapping != null ? mapping.getVcs() : null;
-        if (vcsName.equals(vcs)) {
+        final String mappingVcs = mapping != null ? mapping.getVcs() : null;
+        if (vcs.getName().equals(mappingVcs)) {
           result.add(file);
         }
       }

@@ -714,7 +714,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public VirtualFile[] getRootsUnderVcs(AbstractVcs vcs) {
-    return myDirectoryMappingList.getRootsUnderVcs(vcs.getName());
+    return myDirectoryMappingList.getRootsUnderVcs(vcs);
   }
 
   public VirtualFile[] getAllVersionedRoots() {
