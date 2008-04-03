@@ -12,6 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -19,8 +20,12 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 
 public class CreateTestAction extends PsiElementBaseIntentionAction {
   @NotNull
@@ -97,18 +102,59 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   }
 
   private void ensureJuntLibraryAttached(Project project, final Module srcModule) {
-    if (findClass(project, "junit.framework.TestCase") != null) return;
+    if (findClass(project, "junit.framework.TestCase") != null
+        || findClass(project, "org.testng.annotations.Test") != null) return;
 
-    int result = Messages.showYesNoDialog("You don't have JUnit library attached to the module.\n" +
-                                          "Do you want to add it?",
-                                          "Create Test", Messages.getQuestionIcon());
+    JLabel label = new JLabel("<html>You have no testing library attached to the module.<br>Do you want to add one?</html>");
+
+    JRadioButton junit3Button = new JRadioButton("JUnit3");
+    JRadioButton junit4Button = new JRadioButton("JUnit4");
+    JRadioButton testngButton = new JRadioButton("TestNG");
+    ButtonGroup group = new ButtonGroup();
+    group.add(junit3Button);
+    group.add(junit4Button);
+    group.add(testngButton);
+    junit3Button.setSelected(true);
+
+    testngButton.setEnabled(getTestNGJarPath() != null);
+
+    JPanel buttonsPanel = new JPanel();
+    BoxLayout l = new BoxLayout(buttonsPanel, BoxLayout.Y_AXIS);
+    buttonsPanel.setLayout(l);
+    buttonsPanel.add(junit3Button);
+    buttonsPanel.add(junit4Button);
+    buttonsPanel.add(testngButton);
+
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(label, BorderLayout.NORTH);
+    panel.add(buttonsPanel, BorderLayout.CENTER);
+
+    DialogBuilder builder = new DialogBuilder(project);
+    builder.setTitle(getText());
+    builder.setCenterPanel(panel);
+    int result = builder.show();
+
     if (result != 0) return;
+
+    final String[] path = new String[1];
+    if (junit3Button.isSelected()) path[0] = JavaSdkUtil.getJunit3JarPath();
+    if (junit4Button.isSelected()) path[0] = JavaSdkUtil.getJunit4JarPath();
+    if (testngButton.isSelected()) path[0] = getTestNGJarPath();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        OrderEntryFix.addJarToRoots(JavaSdkUtil.getJunit4JarPath(), srcModule);
+        OrderEntryFix.addJarToRoots(path[0], srcModule);
       }
     });
+  }
+
+  private static String getTestNGJarPath() {
+    try {
+      return PathUtil.getJarPathForClass(Class.forName("org.testng.annotations.Test"));
+    }
+    catch (ClassNotFoundException e) {
+      return null;
+    }
   }
 
   private void addSuperClass(PsiClass targetClass, Project project, String superClassName) throws IncorrectOperationException {
