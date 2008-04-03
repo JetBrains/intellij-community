@@ -61,36 +61,16 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   }
 
   public HtmlHighlightingLexer() {
-    this(new MergingLexerAdapter(new FlexAdapter(new _HtmlLexer()),TOKENS_TO_MERGE),true, false);
+    this(new MergingLexerAdapter(new FlexAdapter(new _HtmlLexer()),TOKENS_TO_MERGE),true);
   }
 
-  protected HtmlHighlightingLexer(Lexer lexer, boolean caseInsensitive, boolean withEl) {
+  protected HtmlHighlightingLexer(Lexer lexer, boolean caseInsensitive) {
     super(lexer,caseInsensitive);
 
     XmlEmbeddmentHandler value = new XmlEmbeddmentHandler();
     registerHandler(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,value);
     registerHandler(XmlTokenType.XML_DATA_CHARACTERS,value);
     registerHandler(XmlTokenType.XML_COMMENT_CHARACTERS,value);
-
-    if (withEl) {
-      activateElSupport();
-    }
-  }
-
-  public void activateElSupport() {
-    registerHandler(ELTokenType.JSP_EL_CONTENT, new ElEmbeddmentHandler());
-    Lexer baseLexer = getBaseLexer();
-
-    if (baseLexer instanceof MergingLexerAdapter) {
-      baseLexer = ((MergingLexerAdapter)baseLexer).getOriginal();
-      if (baseLexer instanceof FlexAdapter) {
-        final FlexLexer flex = ((FlexAdapter)baseLexer).getFlex();
-
-        if (flex instanceof ELHostLexer) {
-          ((ELHostLexer)flex).setElTypes(ELTokenType.JSP_EL_CONTENT,ELTokenType.JSP_EL_CONTENT);
-        }
-      }
-    }
   }
 
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {

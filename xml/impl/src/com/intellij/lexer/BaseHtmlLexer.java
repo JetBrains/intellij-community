@@ -18,7 +18,7 @@ import java.util.HashMap;
  * To change this template use File | Settings | File Templates.
  */
 abstract class BaseHtmlLexer extends LexerBase {
-  private Lexer baseLexer;
+  protected Lexer baseLexer;
   protected static final int BASE_STATE_MASK = 0x3F;
   private static final int SEEN_STYLE = 0x40;
   private static final int SEEN_TAG = 0x80;
