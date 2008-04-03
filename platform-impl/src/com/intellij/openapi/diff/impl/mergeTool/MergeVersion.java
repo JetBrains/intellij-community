@@ -33,10 +33,13 @@ public interface MergeVersion {
 
   FileType getContentType();
 
+  String getTextBeforeMerge();
+
   class MergeDocumentVersion implements MergeVersion {
     private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.mergeTool.MergeVersion.MergeDocumentVersion");
     private final Document myDocument;
     private final String myOriginalText;
+    private String myTextBeforeMerge;
 
     public MergeDocumentVersion(Document document, String originalText) {
       LOG.assertTrue(originalText != null, "text should not be null");
@@ -52,6 +55,7 @@ public interface MergeVersion {
       //LOG.assertTrue(workingDocument != myDocument);
       workingDocument.setReadOnly(false);
       final DocumentReference ref = DocumentReferenceByDocument.createDocumentReference(workingDocument);
+      myTextBeforeMerge = myDocument.getText();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           setDocumentText(workingDocument, myOriginalText, DiffBundle.message("merge.init.merge.content.command.name"), project);
@@ -102,12 +106,16 @@ public interface MergeVersion {
       return FileTypeManager.getInstance().getFileTypeByFile(file);
     }
 
-    private void setDocumentText(final Document document, final String startingText, String name, Project project) {
+    private static void setDocumentText(final Document document, final String startingText, String name, Project project) {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         public void run() {
           document.replaceString(0, document.getTextLength(), startingText);
         }
       }, name, null);
+    }
+
+    public String getTextBeforeMerge() {
+      return myTextBeforeMerge;
     }
   }
 }

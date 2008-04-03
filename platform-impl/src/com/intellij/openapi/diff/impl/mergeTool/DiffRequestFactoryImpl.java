@@ -93,6 +93,10 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
       return FileTypeManager.getInstance().getFileTypeByFile(myFile);
     }
 
+    public String getTextBeforeMerge() {
+      return myCenterText;
+    }
+
     public byte[] getBytes() throws IOException {
       return myCenterText.getBytes(myFile.getCharset().name());
     }

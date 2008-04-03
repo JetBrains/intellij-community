@@ -255,6 +255,7 @@ public class ApplyPatchAction extends AnAction {
     if (request.getResult() == DialogWrapper.OK_EXIT_CODE) {
       return ApplyPatchStatus.SUCCESS;
     }
+    request.restoreOriginalContent();
     return ApplyPatchStatus.FAILURE;
   }
 

@@ -9,12 +9,14 @@ import com.intellij.openapi.diff.impl.incrementalMerge.ChangeCounter;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.command.CommandProcessor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,7 +87,25 @@ public class MergeRequestImpl extends MergeRequest {
   }
 
   @Nullable
-  public DiffContent getResultContent() { return getMergeContent(); }
+  public DiffContent getResultContent() {
+    return getMergeContent();
+  }
+
+  public void restoreOriginalContent() {
+    final MergeContent mergeContent = getMergeContent();
+    if (mergeContent == null) return;
+    CommandProcessor.getInstance().executeCommand(
+      getProject(),
+      new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              FileDocumentManager.getInstance().getDocument(mergeContent.getFile()).setText(mergeContent.getOriginalText());
+            }
+          });
+        }
+      }, "", null);
+  }
 
   public void setActions(final DialogBuilder builder, MergePanel2 mergePanel, boolean initial) {
     if (builder.getOkAction() == null && myActionButtonPresentation != null) {
@@ -177,6 +197,10 @@ public class MergeRequestImpl extends MergeRequest {
 
     public byte[] getBytes() throws IOException {
       return myTarget.getBytes();
+    }
+
+    public String getOriginalText() {
+      return myTarget.getTextBeforeMerge();
     }
   }
 

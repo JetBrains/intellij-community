@@ -6,7 +6,6 @@ package com.intellij.openapi.vcs.merge;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diff.ActionButtonPresentation;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequestFactory;
@@ -271,7 +270,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
         checkMarkModifiedProject(file);
       }
       else {
-        restoreOriginalContent(file, contentWithMergeMarkers);
+        request.restoreOriginalContent();
       }
     }
     updateModelFromFiles();
@@ -283,20 +282,6 @@ public class MultipleFileMergeDialog extends DialogWrapper {
         file.getFileType() == StdFileTypes.IDEA_WORKSPACE) {
       myProjectManager.saveChangedProjectFile(file, myProject);
     }
-  }
-
-  private void restoreOriginalContent(final VirtualFile file, final String contentWithMergeMarkers) {
-    CommandProcessor.getInstance().executeCommand(
-      myProject,
-      new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              FileDocumentManager.getInstance().getDocument(file).setText(contentWithMergeMarkers);
-            }
-          });
-        }
-      }, "", null);
   }
 
   private static String decodeContent(final VirtualFile file, final byte[] content) {

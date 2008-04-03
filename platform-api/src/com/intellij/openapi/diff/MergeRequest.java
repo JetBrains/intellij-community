@@ -66,4 +66,6 @@ public abstract class MergeRequest extends DiffRequest {
    */
   @Nullable
   public abstract DiffContent getResultContent();
+
+  public abstract void restoreOriginalContent();
 }
