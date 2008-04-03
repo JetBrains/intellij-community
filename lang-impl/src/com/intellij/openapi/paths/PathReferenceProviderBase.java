@@ -4,6 +4,7 @@
 
 package com.intellij.openapi.paths;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulator;
@@ -18,6 +19,8 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public abstract class PathReferenceProviderBase implements PathReferenceProvider {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.paths.PathReferenceProviderBase");
 
   public boolean createReferences(@NotNull final PsiElement psiElement, final @NotNull List<PsiReference> references, final boolean soft) {
 
@@ -42,9 +45,13 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
     if (pos != -1 && pos < endOffset) {
       endOffset = pos;
     }
-
-    final String text = elementText.substring(offset, endOffset);
-    return createReferences(psiElement, offset, text, references, soft || dynamicContext);
+    try {
+      final String text = elementText.substring(offset, endOffset);
+      return createReferences(psiElement, offset, text, references, soft || dynamicContext);
+    } catch (StringIndexOutOfBoundsException e) {
+      LOG.error("Cannot process string: '" + elementText + "'", e);
+      return false;
+    }
   }
 
   public abstract boolean createReferences(@NotNull final PsiElement psiElement,
