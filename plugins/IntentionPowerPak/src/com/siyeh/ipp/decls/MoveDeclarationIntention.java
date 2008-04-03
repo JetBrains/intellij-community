@@ -47,7 +47,7 @@ public class MoveDeclarationIntention extends Intention {
         final PsiLocalVariable variable = (PsiLocalVariable)element;
         final PsiManager manager = variable.getManager();
         final PsiSearchHelper searchHelper = manager.getSearchHelper();
-      final PsiReference[] references = ReferencesSearch.search(variable, variable.getUseScope(), false).toArray(new PsiReference[0]);
+      final PsiReference[] references = ReferencesSearch.search(variable, variable.getUseScope(), false).toArray(PsiReference.EMPTY_ARRAY);
         final PsiCodeBlock tightestBlock =
                 MoveDeclarationPredicate.getTightestBlock(references);
         assert tightestBlock != null;
