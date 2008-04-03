@@ -44,7 +44,7 @@
       <keyboard-shortcut first-keystroke="alt F8"/>
     </action>
     <action id="QuickEvaluateExpression">
-      <keyboard-shortcut first-keystroke="alt shift F8"/>
+      <keyboard-shortcut first-keystroke="control alt F8"/>
       <mouse-shortcut keystroke="alt button1"/>
     </action>
     <action id="ShowExecutionPoint">
@@ -63,7 +63,7 @@
       <keyboard-shortcut first-keystroke="alt shift F7"/>
     </action>
     <action id="ForceStepOver">
-      <keyboard-shortcut first-keystroke="control alt F8"/>
+      <keyboard-shortcut first-keystroke="alt shift F8"/>
     </action>
     <action id="FindUsages">
       <keyboard-shortcut first-keystroke="alt F7"/>
