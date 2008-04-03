@@ -588,11 +588,18 @@ public class ExpectedTypeUtils{
                 final PsiType[] parameterTypes = classType.getParameters();
                 if (parameterTypes.length > 0) {
                     typeString.append('<');
-                    parameterTypes[0].accept(this);
+                    final PsiType parameterType1 = parameterTypes[0];
+                    // IDEADEV-25549 says this can be null
+                    if (parameterType1 != null) {
+                        parameterType1.accept(this);
+                    }
                     for (int i = 1; i < parameterTypes.length; i++) {
                         typeString.append(',');
                         PsiType parameterType = parameterTypes[i];
-                        parameterType.accept(this);
+                        // IDEADEV-25549 again
+                        if (parameterType != null) {
+                            parameterType.accept(this);
+                        }
                     }
                     typeString.append('>');
                 }
