@@ -37,7 +37,8 @@ public class PsiImplUtil {
   private PsiImplUtil() {
   }
 
-  @NotNull public static PsiMethod[] getConstructors(PsiClass aClass) {
+  @NotNull
+  public static PsiMethod[] getConstructors(PsiClass aClass) {
     final List<PsiMethod> constructorsList = new SmartList<PsiMethod>();
     final PsiMethod[] methods = aClass.getMethods();
     for (final PsiMethod method : methods) {
@@ -52,24 +53,26 @@ public class PsiImplUtil {
     PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     for (PsiNameValuePair attribute : attributes) {
       @NonNls final String name = attribute.getName();
-      if (ObjectUtils.equals(name, attributeName)
-          || attributeName == null && name.equals("value")) return attribute.getValue();
+      if (ObjectUtils.equals(name, attributeName) || attributeName == null && name.equals("value")) return attribute.getValue();
     }
     return null;
   }
-  
+
   @Nullable
   public static PsiAnnotationMemberValue findAttributeValue(PsiAnnotation annotation, @NonNls String attributeName) {
     final PsiAnnotationMemberValue value = findDeclaredAttributeValue(annotation, attributeName);
     if (value != null) return value;
 
     if (attributeName == null) attributeName = "value";
-    PsiElement resolved = annotation.getNameReferenceElement().resolve();
-    if (resolved != null) {
-      PsiMethod[] methods = ((PsiClass)resolved).getMethods();
-      for (PsiMethod method : methods) {
-        if (method instanceof PsiAnnotationMethod && ObjectUtils.equals(method.getName(), attributeName)) {
-          return ((PsiAnnotationMethod)method).getDefaultValue();
+    final PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
+    if (referenceElement != null) {
+      PsiElement resolved = referenceElement.resolve();
+      if (resolved != null) {
+        PsiMethod[] methods = ((PsiClass)resolved).getMethods();
+        for (PsiMethod method : methods) {
+          if (method instanceof PsiAnnotationMethod && ObjectUtils.equals(method.getName(), attributeName)) {
+            return ((PsiAnnotationMethod)method).getDefaultValue();
+          }
         }
       }
     }
@@ -84,7 +87,8 @@ public class PsiImplUtil {
     return PsiTypeParameter.EMPTY_ARRAY;
   }
 
-  @NotNull public static PsiJavaCodeReferenceElement[] namesToPackageReferences(PsiManager manager, String[] names) {
+  @NotNull
+  public static PsiJavaCodeReferenceElement[] namesToPackageReferences(PsiManager manager, String[] names) {
     PsiJavaCodeReferenceElement[] refs = new PsiJavaCodeReferenceElement[names.length];
     for (int i = 0; i < names.length; i++) {
       String name = names[i];
@@ -116,15 +120,18 @@ public class PsiImplUtil {
     return -1;
   }
 
-  @NotNull public static Object[] getReferenceVariantsByFilter(PsiJavaCodeReferenceElement reference,
-                                                      ElementFilter filter) {
+  @NotNull
+  public static Object[] getReferenceVariantsByFilter(PsiJavaCodeReferenceElement reference, ElementFilter filter) {
     FilterScopeProcessor processor = new FilterScopeProcessor(filter);
     PsiScopesUtil.resolveAndWalk(processor, reference, null, true);
     return processor.getResults().toArray();
   }
 
-  public static boolean processDeclarationsInMethod(PsiMethod method, PsiScopeProcessor processor, ResolveState state,
-                                                    PsiElement lastParent, PsiElement place) {
+  public static boolean processDeclarationsInMethod(PsiMethod method,
+                                                    PsiScopeProcessor processor,
+                                                    ResolveState state,
+                                                    PsiElement lastParent,
+                                                    PsiElement place) {
     final ElementClassHint hint = processor.getHint(ElementClassHint.class);
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, method);
     if (hint == null || hint.shouldProcess(PsiClass.class)) {
@@ -146,25 +153,27 @@ public class PsiImplUtil {
     return typeParameterList != null && typeParameterList.getTypeParameters().length != 0;
   }
 
-  @NotNull public static PsiType[] typesByReferenceParameterList(final PsiReferenceParameterList parameterList) {
+  @NotNull
+  public static PsiType[] typesByReferenceParameterList(final PsiReferenceParameterList parameterList) {
     PsiTypeElement[] typeElements = parameterList.getTypeParameterElements();
 
     return typesByTypeElements(typeElements);
   }
 
-  @NotNull public static PsiType[] typesByTypeElements(PsiTypeElement[] typeElements) {
+  @NotNull
+  public static PsiType[] typesByTypeElements(PsiTypeElement[] typeElements) {
     PsiType[] types = new PsiType[typeElements.length];
-    for(int i = 0; i < types.length; i++){
+    for (int i = 0; i < types.length; i++) {
       types[i] = typeElements[i].getType();
     }
     return types;
   }
 
-  public static PsiType getType (PsiClassObjectAccessExpression classAccessExpression) {
+  public static PsiType getType(PsiClassObjectAccessExpression classAccessExpression) {
     GlobalSearchScope resolveScope = classAccessExpression.getResolveScope();
     PsiManager manager = classAccessExpression.getManager();
     final PsiClass classClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Class", resolveScope);
-    if (classClass == null){
+    if (classClass == null) {
       return new PsiClassReferenceType(new LightClassReference(manager, "Class", "java.lang.Class", resolveScope));
     }
     if (PsiUtil.getLanguageLevel(classAccessExpression).compareTo(LanguageLevel.JDK_1_5) < 0) {
@@ -176,7 +185,8 @@ public class PsiImplUtil {
     PsiType operandType = classAccessExpression.getOperand().getType();
     if (operandType instanceof PsiPrimitiveType && !PsiType.NULL.equals(operandType)) {
       if (PsiType.VOID.equals(operandType)) {
-        operandType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Void", classAccessExpression.getResolveScope());
+        operandType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()
+            .createTypeByFQClassName("java.lang.Void", classAccessExpression.getResolveScope());
       }
       else {
         operandType = ((PsiPrimitiveType)operandType).getBoxedType(classAccessExpression);
@@ -202,9 +212,10 @@ public class PsiImplUtil {
   @Nullable
   public static ASTNode findDocComment(final CompositeElement element) {
     TreeElement node = element.getFirstChildNode();
-    while(node != null && (ElementType.WHITE_SPACE_BIT_SET.contains(node.getElementType()) ||
-                           node.getElementType() == JavaTokenType.C_STYLE_COMMENT ||
-                           node.getElementType() == JavaTokenType.END_OF_LINE_COMMENT)) {
+    while (node != null &&
+           (ElementType.WHITE_SPACE_BIT_SET.contains(node.getElementType()) ||
+            node.getElementType() == JavaTokenType.C_STYLE_COMMENT ||
+            node.getElementType() == JavaTokenType.END_OF_LINE_COMMENT)) {
       node = node.getTreeNext();
     }
 
@@ -301,7 +312,7 @@ public class PsiImplUtil {
     }
   }
 
-  public static PsiElement setName(PsiElement element, String name) throws IncorrectOperationException{
+  public static PsiElement setName(PsiElement element, String name) throws IncorrectOperationException {
     PsiManager manager = element.getManager();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     PsiIdentifier newNameIdentifier = factory.createIdentifier(name);
