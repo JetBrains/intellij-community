@@ -170,11 +170,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       public void run() {
         if (isCanceled()) return;
 
-        if (myLookup != null && myLookup.isVisible()) {
+        myLookup.setCalculating(false);
+        if (myLookup.isVisible()) {
           myLookup.getProcessIcon().suspend();
           myLookup.getProcessIcon().setVisible(false);
-
-          myLookup.setCalculating(false);
           updateLookup();
         }
       }
