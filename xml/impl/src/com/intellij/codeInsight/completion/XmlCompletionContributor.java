@@ -32,6 +32,9 @@ public class XmlCompletionContributor extends CompletionContributor{
         result.stopHere();
         CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         final PsiElement element = parameters.getPosition();
+        if (!(element.getParent() instanceof XmlTag)) {
+          return;
+        }
         final XmlTag parent = (XmlTag)element.getParent();
         final String namespace = parent.getNamespace();
         final XmlElementDescriptor parentDescriptor =
