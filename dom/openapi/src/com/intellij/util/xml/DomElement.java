@@ -36,8 +36,13 @@ import java.lang.reflect.Type;
 public interface DomElement extends AnnotatedElement, UserDataHolder {
   DomElement[] EMPTY_ARRAY = new DomElement[0];
 
-  @Nullable
   XmlTag getXmlTag();
+
+  /**
+   * @return XmlFile, XmlTag or XmlAttribute
+   */
+  @Nullable
+  XmlElement getXmlElement();
 
   @NotNull
   <T extends DomElement> DomFileElement<T> getRoot();
@@ -46,12 +51,6 @@ public interface DomElement extends AnnotatedElement, UserDataHolder {
   DomElement getParent();
 
   XmlTag ensureTagExists();
-
-  /**
-   * @return XmlFile, XmlTag or XmlAttribute
-   */
-  @Nullable
-  XmlElement getXmlElement();
 
   XmlElement ensureXmlElementExists();
 
