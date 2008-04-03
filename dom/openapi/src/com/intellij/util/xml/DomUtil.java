@@ -16,10 +16,7 @@ import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.reflect.DomAttributeChildDescription;
-import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.util.xml.reflect.DomFixedChildDescription;
-import com.intellij.util.xml.reflect.DomGenericInfo;
+import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -344,4 +341,13 @@ public class DomUtil {
     return (T)current;
   }
 
+  public static <T extends DomElement> T addElementAfter(@NotNull final T anchor) {
+    final DomElement parent = anchor.getParent();
+    final DomCollectionChildDescription childDescription = (DomCollectionChildDescription)anchor.getChildDescription();
+    assert parent != null;
+    final List<? extends DomElement> list = childDescription.getValues(parent);
+    final int i = list.indexOf(anchor);
+    assert i >= 0;
+    return (T)childDescription.addValue(parent, i + 1);
+  }
 }
