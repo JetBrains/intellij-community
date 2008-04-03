@@ -1,5 +1,6 @@
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -75,7 +76,11 @@ public final class FileContent {
     }
     if (myContentAsText == null) {
       if (myContent != null) {
-        myContentAsText = LoadTextUtil.getTextByBinaryPresentation(myContent, myFile, false);
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            myContentAsText = LoadTextUtil.getTextByBinaryPresentation(myContent, myFile, false);
+          }
+        });
       }
     }
     return myContentAsText;
