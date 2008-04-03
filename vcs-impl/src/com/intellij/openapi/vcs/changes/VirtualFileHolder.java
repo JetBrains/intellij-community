@@ -36,10 +36,19 @@ public class VirtualFileHolder {
           final List<VirtualFile> currentFiles = new ArrayList<VirtualFile>(myFiles);
           if (scope.getRecursivelyDirtyDirectories().size() == 0) {
             final Set<FilePath> dirtyFiles = scope.getDirtyFiles();
+            boolean cleanedDroppedFiles = false;
             for(FilePath dirtyFile: dirtyFiles) {
               VirtualFile f = dirtyFile.getVirtualFile();
               if (f != null) {
                 myFiles.remove(f);
+              }
+              else {
+                if (!cleanedDroppedFiles) {
+                  cleanedDroppedFiles = true;
+                  for(VirtualFile file: currentFiles) {
+                    if (fileDropped(file)) myFiles.remove(file);
+                  }
+                }
               }
             }
           }
