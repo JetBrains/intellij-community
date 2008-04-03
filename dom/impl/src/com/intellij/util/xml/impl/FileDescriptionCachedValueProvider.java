@@ -3,9 +3,7 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
@@ -16,13 +14,13 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
+import com.intellij.util.xml.XmlFileHeader;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -31,20 +29,12 @@ import java.util.List;
  * @author peter
  */
 class FileDescriptionCachedValueProvider<T extends DomElement> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.FileDescriptionCachedValueProvider");
-  private static final Key<CachedValue<String>> ROOT_TAG_NS_KEY = Key.create("rootTag&ns");
-  private static final UserDataCache<CachedValue<String>,XmlFile,Object> ourRootTagCache = new UserDataCache<CachedValue<String>, XmlFile, Object>() {
-    protected CachedValue<String> compute(final XmlFile file, final Object o) {
-      return file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<String>() {
-        public Result<String> compute() {
-          String rootTagAndNs = null;
-          try {
-            rootTagAndNs = DomImplUtil.getRootTagName(file);
-          }
-          catch (IOException e) {
-            LOG.info(e);
-          }
-          return new Result<String>(rootTagAndNs, file);
+  private static final Key<CachedValue<XmlFileHeader>> ROOT_TAG_NS_KEY = Key.create("rootTag&ns");
+  private static final UserDataCache<CachedValue<XmlFileHeader>,XmlFile,Object> ourRootTagCache = new UserDataCache<CachedValue<XmlFileHeader>, XmlFile, Object>() {
+    protected CachedValue<XmlFileHeader> compute(final XmlFile file, final Object o) {
+      return file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlFileHeader>() {
+        public Result<XmlFileHeader> compute() {
+          return new Result<XmlFileHeader>(DomImplUtil.getXmlFileHeader(file), file);
         }
       }, false);
     }
@@ -66,9 +56,9 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
   public final DomFileElementImpl<T> getFileElement() {
     if (myComputed) return myLastResult;
 
-    final String rootTagName = getRootTag();
+    final XmlFileHeader rootTagName = getRootTag();
     try {
-      _computeFileElement(false, false, rootTagName);
+      _computeFileElement(false, rootTagName);
     }
     finally {
       myXmlFile.putUserData(DomManagerImpl.CACHED_FILE_ELEMENT, myLastResult);
@@ -77,7 +67,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
     return myLastResult;
   }
 
-  private List<DomEvent> _computeFileElement(final boolean fireEvents, boolean fireChanged, final String rootTagName) {
+  private List<DomEvent> _computeFileElement(final boolean fireEvents, final XmlFileHeader rootTagName) {
     final DomFileElementImpl<T> lastResult = myLastResult;
     if (!myXmlFile.isValid()) {
       myLastResult = null;
@@ -87,8 +77,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
       return Collections.emptyList();
     }
 
-    final Module module = ModuleUtil.findModuleForPsiElement(myXmlFile);
-    final DomFileDescription<T> description = findFileDescription(module, rootTagName);
+    final DomFileDescription<T> description = findFileDescription(rootTagName);
 
     final DomFileElementImpl oldValue = getLastValue();
     final List<DomEvent> events = fireEvents ? new SmartList<DomEvent>() : Collections.<DomEvent>emptyList();
@@ -116,7 +105,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
   }
 
   @Nullable
-  private DomFileDescription<T> findFileDescription(Module module, final String rootTagName) {
+  private DomFileDescription<T> findFileDescription(final XmlFileHeader rootTagName) {
     final DomFileDescription<T> mockDescription = myXmlFile.getUserData(DomManagerImpl.MOCK_DESCIPRTION);
     if (mockDescription != null) return mockDescription;
 
@@ -128,7 +117,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
     }
 
     //noinspection unchecked
-    DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(rootTagName), myCondition);
+    DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(rootTagName.getRootTagLocalName()), myCondition);
     if (description == null) {
       description = ContainerUtil.find(myDomManager.getAcceptingOtherRootTagNameDescriptions(), myCondition);
     }
@@ -136,8 +125,8 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
   }
 
   @Nullable
-  private String getRootTag() {
-    return myXmlFile.isValid() ? ourRootTagCache.get(ROOT_TAG_NS_KEY, myXmlFile, null).getValue() : null;
+  private XmlFileHeader getRootTag() {
+    return myXmlFile.isValid() ? ourRootTagCache.get(ROOT_TAG_NS_KEY, myXmlFile, null).getValue() : XmlFileHeader.EMPTY;
   }
 
   @Nullable

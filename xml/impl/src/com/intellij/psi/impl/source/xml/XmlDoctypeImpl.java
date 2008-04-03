@@ -125,10 +125,18 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
 
   @Nullable
   public String getPublicId() {
-    PsiElement docTypePublic = findChildByRoleAsPsiElement(XmlChildRole.XML_DOCTYPE_PUBLIC);
+    return getSomeId(XmlChildRole.XML_DOCTYPE_PUBLIC);
+  }
 
-    if (docTypePublic != null) {
-      PsiElement element = docTypePublic.getNextSibling();
+  public String getSystemId() {
+    return getSomeId(XmlChildRole.XML_DOCTYPE_SYSTEM);
+  }
+
+  private String getSomeId(final int role) {
+    PsiElement docTypeSystem = findChildByRoleAsPsiElement(role);
+
+    if (docTypeSystem != null) {
+      PsiElement element = docTypeSystem.getNextSibling();
 
       while (element instanceof PsiWhiteSpace || element instanceof XmlComment) {
         element = element.getNextSibling();

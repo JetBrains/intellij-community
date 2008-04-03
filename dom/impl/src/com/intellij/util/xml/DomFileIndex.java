@@ -7,11 +7,8 @@ package com.intellij.util.xml;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
-import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
@@ -20,7 +17,6 @@ import com.intellij.util.io.PersistentEnumerator;
 import com.intellij.util.xml.impl.DomApplicationComponent;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -39,47 +35,12 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
   public DomFileIndex() {
     myDataIndexer = new DataIndexer<String, Void, FileContent>() {
       public Map<String, Void> map(final FileContent inputData) {
-        final CharSequence content = inputData.getContentAsText();
-        final Ref<String> rootTagName = Ref.create(null);
         final Set<String> namespaces = new THashSet<String>();
-        try {
-          new XmlBuilderDriver(content).build(new XmlBuilder() {
-            public void doctype(@Nullable final CharSequence publicId, @Nullable final CharSequence systemId, final int startOffset, final int endOffset) {
-              if (publicId != null) {
-                namespaces.add(publicId.toString());
-              }
-              if (systemId != null) {
-                namespaces.add(systemId.toString());
-              }
-            }
-
-            public ProcessingOrder startTag(final CharSequence localName,
-                                            final String namespace,
-                                            final int startoffset,
-                                            final int endoffset,
-                                            final int headerEndOffset) {
-              rootTagName.set(localName.toString());
-              ContainerUtil.addIfNotNull(namespace, namespaces);
-              throw new RootTagReachedException();
-            }
-
-            public void endTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset) {
-              throw new UnsupportedOperationException("Method endTag is not yet implemented in " + getClass().getName());
-            }
-
-            public void attribute(final CharSequence name, final CharSequence value, final int startoffset, final int endoffset) {
-            }
-
-            public void textElement(final CharSequence display, final CharSequence physical, final int startoffset, final int endoffset) {
-            }
-
-            public void entityRef(final CharSequence ref, final int startOffset, final int endOffset) {
-            }
-          });
-        }
-        catch (RootTagReachedException e) {
-        }
-        final String tagName = rootTagName.get();
+        final XmlFileHeader header = NanoXmlUtil.parseHeader(inputData.getFile());
+        ContainerUtil.addIfNotNull(header.getPublicId(), namespaces);
+        ContainerUtil.addIfNotNull(header.getSystemId(), namespaces);
+        ContainerUtil.addIfNotNull(header.getRootTagNamespace(), namespaces);
+        final String tagName = header.getRootTagLocalName();
         if (StringUtil.isNotEmpty(tagName)) {
           final THashMap<String, Void> result = new THashMap<String, Void>();
           final DomApplicationComponent component = DomApplicationComponent.getInstance();

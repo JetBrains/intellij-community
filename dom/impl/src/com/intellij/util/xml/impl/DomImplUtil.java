@@ -8,9 +8,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,7 +20,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.lang.reflect.*;
 import java.util.List;
 import java.util.Set;
@@ -145,23 +142,32 @@ public class DomImplUtil {
     }) != null;
   }
 
-  @Nullable
-  public static String getRootTagName(final PsiFile file) throws IOException {
+  @NotNull 
+  public static XmlFileHeader getXmlFileHeader(final PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile instanceof LightVirtualFile && file instanceof XmlFile && FileDocumentManager.getInstance().getCachedDocument(virtualFile) == null) {
       final XmlDocument document = ((XmlFile)file).getDocument();
       if (document != null) {
+        String publicId = null;
+        String systemId = null;
+        final XmlProlog prolog = document.getProlog();
+        if (prolog != null) {
+          final XmlDoctype doctype = prolog.getDoctype();
+          if (doctype != null) {
+            publicId = doctype.getPublicId();
+            systemId = doctype.getSystemId();
+          }
+        }
+
         final XmlTag tag = document.getRootTag();
         if (tag != null) {
-          return tag.getLocalName();
+          return new XmlFileHeader(tag.getLocalName(), tag.getNamespace(), publicId, systemId);
         }
       }
-      return null;
+      return XmlFileHeader.EMPTY;
     }
 
-    final NanoXmlUtil.RootTagNameBuilder builder = new NanoXmlUtil.RootTagNameBuilder();
-    NanoXmlUtil.parseFile(file, builder);
-    return builder.getResult();
+    return NanoXmlUtil.parseHeader(file);
   }
 
   @Nullable

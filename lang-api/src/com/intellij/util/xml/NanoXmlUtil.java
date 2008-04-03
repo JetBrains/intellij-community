@@ -20,15 +20,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharSequenceReader;
 import net.n3.nanoxml.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.Properties;
 
 /**
@@ -40,75 +45,65 @@ public class NanoXmlUtil {
   private NanoXmlUtil() {
   }
 
+  private static MyXMLReader createReader(PsiFile psiFile) throws IOException {
+    final VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) {
+      return new MyXMLReader(new StringReader(psiFile.getText()));
+    }
+
+    final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+
+    if (document != null) {
+      return new MyXMLReader(new CharSequenceReader(document.getCharsSequence()));
+    }
+    else {
+      return new MyXMLReader(virtualFile.getInputStream());
+    }
+
+  }
+
   public static void parseFile(PsiFile psiFile, final IXMLBuilder builder) {
+    MyXMLReader reader = null;
     try {
-      final VirtualFile virtualFile = psiFile.getVirtualFile();
-      if (virtualFile == null) {
-        parse(new StringReader(psiFile.getText()), builder);
-        return;
-      }
-
-      final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
-
-      if (document != null) {
-        parse(new CharSequenceReader(document.getCharsSequence()), builder);
-      }
-      else {
-        final InputStream inputStream;
-        try {
-          inputStream = virtualFile.getInputStream();
-        }
-        catch (FileNotFoundException e) {
-          return;
-        }
-        parse(inputStream, builder);
-      }
+      reader = createReader(psiFile);
+      if (reader == null) return;
+      
+      parse(reader, builder);
     }
     catch (IOException e) {
       LOG.error(e);
     }
+    finally {
+      if (reader != null) {
+        try {
+          reader.close();
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+    }
   }
 
   public static void parse(final InputStream is, final IXMLBuilder builder) {
-    IXMLReader r;
-
     try {
-      r = new MyXMLReader(is);
-      parse(r, builder);
+      parse(new MyXMLReader(is), builder);
     }
     catch(IOException e) {
       LOG.error(e);
     }
-    finally {
-      try {
-        is.close();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
   }
 
   public static void parse(final Reader reader, final IXMLBuilder builder) {
-    IXMLReader r = new MyXMLReader(reader);
-
     try {
-      parse(r, builder);
+      parse(new MyXMLReader(reader), builder);
     }
     catch (Exception e) {
       LOG.error(e);
     }
-    finally {
-      try {
-        reader.close();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
   }
 
-  private static void parse(final IXMLReader r, final IXMLBuilder builder) {
+  private static void parse(final MyXMLReader r, final IXMLBuilder builder) {
     try {
       final IXMLParser parser = XMLParserFactory.createDefaultXMLParser();
       parser.setReader(r);
@@ -132,6 +127,43 @@ public class NanoXmlUtil {
     catch (IllegalAccessException e) {
       LOG.error(e);
     }
+    finally {
+      try {
+        r.close();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+  }
+
+  @NotNull
+  public static XmlFileHeader parseHeader(VirtualFile file) {
+    try {
+      return parseHeader(new MyXMLReader(file.getInputStream()));
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
+  @NotNull
+  public static XmlFileHeader parseHeader(PsiFile file) {
+    try {
+      return parseHeader(createReader(file));
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
+  @NotNull
+  private static XmlFileHeader parseHeader(final MyXMLReader r) {
+    final RootTagInfoBuilder builder = new RootTagInfoBuilder();
+    parse(r, builder);
+    return new XmlFileHeader(builder.getRootTagName(), builder.getNamespace(), r.publicId, r.systemId);
   }
 
   public static String createLocation(@NonNls String ...tagNames) {
@@ -255,26 +287,41 @@ public class NanoXmlUtil {
   }
 
   private static class MyXMLReader extends StdXMLReader {
+    private String publicId;
+    private String systemId;
+    private Reader myDocumentReader;
+    private InputStream myStream;
+
     public MyXMLReader(final Reader documentReader) {
       super(documentReader);
+      myDocumentReader = documentReader;
     }
-
 
     public MyXMLReader(InputStream stream) throws IOException {
       super(stream);
+      myStream = stream;
     }
 
     @Override
-    public Reader openStream(String publicID, String systemID) throws IOException {
+    public Reader openStream(String publicId, String systemId) throws IOException {
+      this.publicId = StringUtil.isEmpty(publicId) ? null : publicId;
+      this.systemId = StringUtil.isEmpty(systemId) ? null : systemId;
+
       return new StringReader(" ");
+    }
+
+    public void close() throws IOException {
+      if (myStream != null) myStream.close();
+      if (myDocumentReader != null) myDocumentReader.close();
     }
   }
 
   public static class ParserStoppedException extends RuntimeException {
   }
 
-  public static class RootTagNameBuilder implements IXMLBuilder {
+  private static class RootTagInfoBuilder implements IXMLBuilder {
     private String myRootTagName;
+    private String myNamespace;
 
     public void startBuilding(final String systemID, final int lineNr) throws Exception {
     }
@@ -284,6 +331,7 @@ public class NanoXmlUtil {
 
     public void startElement(final String name, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) throws Exception {
       myRootTagName = name;
+      myNamespace = nsURI;
       throw new NanoXmlUtil.ParserStoppedException();
     }
 
@@ -297,6 +345,14 @@ public class NanoXmlUtil {
     }
 
     public void addPCData(final Reader reader, final String systemID, final int lineNr) throws Exception {
+    }
+
+    public String getNamespace() {
+      return myNamespace;
+    }
+
+    public String getRootTagName() {
+      return myRootTagName;
     }
 
     public String getResult() {
