@@ -69,8 +69,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       try {
         final MapIndexStorage<K, TIntArrayList> storage = new MapIndexStorage<K, TIntArrayList>(IndexInfrastructure.getStorageFile(name), extension.getKeyDescriptor(), new StubIdExternalizer());
         final MemoryIndexStorage<K, TIntArrayList> memStorage = new MemoryIndexStorage<K, TIntArrayList>(storage);
-        final MyIndex index = createIndex(extension, memStorage);
-        myIndicies.put(name, index);
+        myIndicies.put(name, new MyIndex<K>(memStorage));
         break;
       }
       catch (IOException e) {
@@ -109,10 +108,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         return result;
       }
     }
-  }
-
-  private MyIndex createIndex(final StubIndexExtension extension, final MemoryIndexStorage memStorage) {
-    return new MyIndex(memStorage);
   }
 
   public <Key, Psi extends PsiElement> Collection<Psi> get(final StubIndexKey<Key, Psi> indexKey, final Key key, final Project project,
@@ -209,10 +204,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     myPreviouslyRegistered = state;
   }
 
-  public void updateIndex(StubIndexKey key,
-                          int fileId,
-                          Map<?, TIntArrayList> oldValues,
-                          Map<?, TIntArrayList> newValues) {
+  public void updateIndex(StubIndexKey key, int fileId, Map<?, TIntArrayList> oldValues, Map<?, TIntArrayList> newValues) {
     try {
       final MyIndex index = myIndicies.get(key);
       index.updateWithMap(fileId, oldValues, newValues);
@@ -223,8 +215,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   private static class MyIndex<K> extends MapReduceIndex<K, TIntArrayList, Void> {
-    public MyIndex(final MemoryIndexStorage memStorage) {
-      super(null, memStorage);
+    public MyIndex(final IndexStorage<K, TIntArrayList> storage) {
+      super(null, storage);
     }
 
     public void updateWithMap(final int inputId, final Map<K, TIntArrayList> oldData, final Map<K, TIntArrayList> newData) throws StorageException {

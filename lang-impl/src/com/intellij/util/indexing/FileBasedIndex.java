@@ -127,7 +127,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
         final MapIndexStorage<K, V> storage = new MapIndexStorage<K, V>(IndexInfrastructure.getStorageFile(name), extension.getKeyDescriptor(), extension.getValueExternalizer());
-        final MemoryIndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
+        final IndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
         final UpdatableIndex<K, V, FileContent> index = createIndex(extension, memStorage);
         myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, extension.getInputFilter()));
         break;
@@ -139,13 +139,11 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
   }
 
-  private static <K, V> UpdatableIndex<K, V, FileContent> createIndex(final FileBasedIndexExtension<K, V> extension, final MemoryIndexStorage<K, V> memStorage) {
+  private static <K, V> UpdatableIndex<K, V, FileContent> createIndex(final FileBasedIndexExtension<K, V> extension, final IndexStorage<K, V> storage) {
     if (extension instanceof CustomImplementationFileBasedIndexExtension) {
-      return ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(memStorage);
+      return ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(storage);
     }
-    else {
-      return new MapReduceIndex<K, V, FileContent>(extension.getIndexer(), memStorage);
-    }
+    return new MapReduceIndex<K, V, FileContent>(extension.getIndexer(), storage);
   }
 
   @NonNls
