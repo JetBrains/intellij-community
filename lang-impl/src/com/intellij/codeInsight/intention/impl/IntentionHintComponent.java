@@ -82,6 +82,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   private final MyComponentHint myComponentHint;
   private static final Color BACKGROUND_COLOR = new Color(255, 255, 255, 0);
   private boolean myPopupShown = false;
+  private boolean myDisposed = false;
   private ListPopup myPopup;
   private static final TObjectHashingStrategy<IntentionActionWithTextCaching> ACTION_TEXT_AND_CLASS_EQUALS = new TObjectHashingStrategy<IntentionActionWithTextCaching>() {
     public int computeHashCode(final IntentionActionWithTextCaching object) {
@@ -249,7 +250,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     }
 
     public void canceled() {
-      if (myPopup.getListStep() == this) {
+      if (myPopup.getListStep() == this && !myDisposed) {
         // Root canceled. Create new popup. This one cannot be reused.
         myPopup = JBPopupFactory.getInstance().createListPopup(this);
       }
@@ -372,6 +373,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   }
 
   public void dispose() {
+    myDisposed = true;
     closePopup();
     myComponentHint.hide();
     super.hide();
