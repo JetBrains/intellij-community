@@ -252,14 +252,11 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   }
 
   public static void addBundledJarToRoots(final Project project,
-                                          @Nullable final Editor editor, final Module currentModule,
+                                          @Nullable final Editor editor,
+                                          final Module currentModule,
                                           final PsiReference reference,
-                                           @NonNls final String className,
-                                           @NonNls final String libPath) {
-    String url = VfsUtil.getUrlForLibraryRoot(new File(libPath));
-    VirtualFile libVirtFile = VirtualFileManager.getInstance().findFileByUrl(url);
-    assert libVirtFile != null : libPath;
-
+                                          @NonNls final String className,
+                                          @NonNls final String libVirtFile) {
     addJarToRoots(libVirtFile, currentModule);
 
     GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
@@ -269,12 +266,16 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     }
   }
 
-  private static void addJarToRoots(VirtualFile jarFile, final Module module) {
+  public static void addJarToRoots(String libPath, final Module module) {
+    String url = VfsUtil.getUrlForLibraryRoot(new File(libPath));
+    VirtualFile libVirtFile = VirtualFileManager.getInstance().findFileByUrl(url);
+    assert libVirtFile != null : libPath;
+
     final ModuleRootManager manager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = manager.getModifiableModel();
     final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
     final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
-    libraryModel.addRoot(jarFile, OrderRootType.CLASSES);
+    libraryModel.addRoot(libVirtFile, OrderRootType.CLASSES);
     libraryModel.commit();
     rootModel.commit();
   }
