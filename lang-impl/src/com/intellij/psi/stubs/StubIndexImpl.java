@@ -125,33 +125,39 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       final List<Psi> result = new ArrayList<Psi>();
       final MyIndex<Key> index = (MyIndex<Key>)myIndicies.get(indexKey);
 
-      final ValueContainer<TIntArrayList> container = index.getData(key);
-      container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
-        public void perform(final int id, final TIntArrayList value) {
-          final VirtualFile file = IndexInfrastructure.findFileById(dirIndex, fs, id);
-          if (file != null && (scope == null || scope.contains(file))) {
-            final PsiFileImpl psiFile = (PsiFileImpl)psiManager.findFile(file);
-            if (psiFile != null) {
-              StubTree stubTree = psiFile.getStubTree();
-              if (stubTree == null) {
-                stubTree = StubTree.readFromVFile(file, project);
-                final List<StubElement<?>> plained = stubTree.getPlainList();
-                for (int i = 0; i < value.size(); i++) {
-                  final StubElement<?> stub = plained.get(value.get(i));
-                  final ASTNode tree = psiFile.findTreeForStub(stubTree, stub);
-                  result.add((Psi)tree.getPsi());
+      index.getReadLock().lock();
+      try {
+        final ValueContainer<TIntArrayList> container = index.getData(key);
+        container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
+          public void perform(final int id, final TIntArrayList value) {
+            final VirtualFile file = IndexInfrastructure.findFileById(dirIndex, fs, id);
+            if (file != null && (scope == null || scope.contains(file))) {
+              final PsiFileImpl psiFile = (PsiFileImpl)psiManager.findFile(file);
+              if (psiFile != null) {
+                StubTree stubTree = psiFile.getStubTree();
+                if (stubTree == null) {
+                  stubTree = StubTree.readFromVFile(file, project);
+                  final List<StubElement<?>> plained = stubTree.getPlainList();
+                  for (int i = 0; i < value.size(); i++) {
+                    final StubElement<?> stub = plained.get(value.get(i));
+                    final ASTNode tree = psiFile.findTreeForStub(stubTree, stub);
+                    result.add((Psi)tree.getPsi());
+                  }
                 }
-              }
-              else {
-                final List<StubElement<?>> plained = stubTree.getPlainList();
-                for (int i = 0; i < value.size(); i++) {
-                  result.add((Psi)plained.get(value.get(i)).getPsi());
+                else {
+                  final List<StubElement<?>> plained = stubTree.getPlainList();
+                  for (int i = 0; i < value.size(); i++) {
+                    result.add((Psi)plained.get(value.get(i)).getPsi());
+                  }
                 }
               }
             }
           }
-        }
-      });
+        });
+      }
+      finally {
+        index.getReadLock().unlock();
+      }
 
       return result;
     }

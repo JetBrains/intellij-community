@@ -168,4 +168,10 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       return psiElements;
     }
   }
+
+  protected Object clone() {
+    final StubBasedPsiElementBase stubbless = (StubBasedPsiElementBase)super.clone();
+    stubbless.myStub = null;
+    return stubbless;
+  }
 }

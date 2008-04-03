@@ -45,6 +45,7 @@ public class StubTree {
     return myPlainList;
   }
 
+  @NotNull
   public Map<StubIndexKey, Map<Object, TIntArrayList>> indexStubTree() {
     final Map<StubIndexKey, Map<Object, TIntArrayList>> result = new HashMap<StubIndexKey, Map<Object, TIntArrayList>>();
 

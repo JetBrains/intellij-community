@@ -20,7 +20,6 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
@@ -132,51 +131,40 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
   }
 
   private static class MyIndex extends MapReduceIndex<Integer, SerializedStubTree, FileContent> {
-    private Map<StubIndexKey, Map<Object, TIntArrayList>> myOld;
-    private Map<StubIndexKey, Map<Object, TIntArrayList>> myNew;
-
     public MyIndex(final IndexStorage<Integer, SerializedStubTree> storage,
                    final DataIndexer<Integer, SerializedStubTree, FileContent> indexer) {
       super(indexer, storage);
     }
 
-    public void update(final int inputId,
-                       @Nullable final FileContent content,
-                       @Nullable final FileContent oldContent) throws StorageException {
-      super.update(inputId, content, oldContent);
+    protected void updateWithMap(final int inputId, final Map<Integer, SerializedStubTree> oldData, final Map<Integer, SerializedStubTree> newData)
+        throws StorageException {
+      super.updateWithMap(inputId, oldData, newData);
+
+      final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree = getStubTree(oldData);
+      final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree = getStubTree(newData);
+
       Set<StubIndexKey> allIndices = new HashSet<StubIndexKey>();
-      if (myOld == null) myOld = Collections.emptyMap();
-      if (myNew == null) myNew = Collections.emptyMap();
-      allIndices.addAll(myOld.keySet());
-      allIndices.addAll(myNew.keySet());
+      allIndices.addAll(oldStubTree.keySet());
+      allIndices.addAll(newStubTree.keySet());
       for (StubIndexKey key : allIndices) {
-        final Map oldMap = myOld.get(key);
-        final Map newMap = myNew.get(key);
+        final Map oldMap = oldStubTree.get(key);
+        final Map newMap = newStubTree.get(key);
 
         ((StubIndexImpl)StubIndex.getInstance()).updateIndex(key, inputId, oldMap != null ? oldMap : Collections.emptyMap(),
                                                              newMap != null ? newMap : Collections.emptyMap());
       }
     }
 
-    protected Map<Integer, SerializedStubTree> mapOld(final FileContent oldContent) {
-      myOld = null;
-      final Map<Integer, SerializedStubTree> result = super.mapOld(oldContent);
-      if (!result.isEmpty()) {
-        final SerializedStubTree stub = result.values().iterator().next();
-        myOld = new StubTree((PsiFileStub)stub.getStub()).indexStubTree();
+    private Map<StubIndexKey, Map<Object, TIntArrayList>> getStubTree(final Map<Integer, SerializedStubTree> oldData) {
+      final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree;
+      if (!oldData.isEmpty()) {
+        final SerializedStubTree stub = oldData.values().iterator().next();
+        oldStubTree = new StubTree((PsiFileStub)stub.getStub()).indexStubTree();
       }
-
-      return result;
-    }
-
-    protected Map<Integer, SerializedStubTree> mapNew(final FileContent content) {
-      myNew = null;
-      final Map<Integer, SerializedStubTree> result = super.mapNew(content);
-      if (!result.isEmpty()) {
-        final SerializedStubTree stub = result.values().iterator().next();
-        myNew = new StubTree((PsiFileStub)stub.getStub()).indexStubTree();
+      else {
+        oldStubTree = Collections.emptyMap();
       }
-      return super.mapNew(content);
+      return oldStubTree;
     }
   }
 }

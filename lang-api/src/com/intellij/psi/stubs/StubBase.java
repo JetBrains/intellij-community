@@ -3,6 +3,7 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
@@ -74,5 +75,9 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
 
   public IStubElementType getStubType() {
     return myElementType;
+  }
+
+  public Project getProject() {
+    return getPsi().getProject();
   }
 }
