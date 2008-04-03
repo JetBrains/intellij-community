@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
 
@@ -20,5 +20,5 @@ public interface JoinLinesHandlerDelegate {
    * @return the position to place the caret after the operation, or -1 if this handler was not able
    *         to perform the operation.
    */
-  int tryJoinLines(DocumentEx document, PsiFile file, int start, final int end);
+  int tryJoinLines(Document document, PsiFile file, int start, final int end);
 }

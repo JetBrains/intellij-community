@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
@@ -12,7 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler");
 
-  public int tryJoinLines(final DocumentEx document, final PsiFile file, final int start, final int end) {
+  public int tryJoinLines(final Document document, final PsiFile file, final int start, final int end) {
     PsiElement elementAtStartLineEnd = file.findElementAt(start);
     PsiElement elementAtNextLineStart = file.findElementAt(end);
     if (elementAtStartLineEnd == null || elementAtNextLineStart == null) return -1;

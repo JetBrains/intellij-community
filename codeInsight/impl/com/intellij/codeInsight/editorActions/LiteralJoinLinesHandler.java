@@ -1,13 +1,13 @@
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaToken;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaToken;
 
 public class LiteralJoinLinesHandler implements JoinLinesHandlerDelegate {
-  public int tryJoinLines(final DocumentEx doc, final PsiFile psiFile, final int offsetNear, final int end) {
+  public int tryJoinLines(final Document doc, final PsiFile psiFile, final int offsetNear, final int end) {
     CharSequence text = doc.getCharsSequence();
 
     int start = offsetNear;
