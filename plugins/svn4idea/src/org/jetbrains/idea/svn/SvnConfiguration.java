@@ -128,7 +128,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   public ISVNAuthenticationManager getAuthenticationManager(Project project) {
     if (myAuthManager == null) {
       // reloaded when configuration directory changes
-        myAuthManager = new SvnAuthenticationManager(new File(myConfigurationDirectory));
+        myAuthManager = new SvnAuthenticationManager(new File(getConfigurationDirectory()));
         myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(project));
         myAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
     }
@@ -137,10 +137,10 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public void getServerFilesManagers(final Ref<SvnServerFileManager> systemManager, final Ref<SvnServerFileManager> userManager) {
     // created only if does not exist
-    SVNConfigFile.createDefaultConfiguration(new File(myConfigurationDirectory));
+    SVNConfigFile.createDefaultConfiguration(new File(getConfigurationDirectory()));
 
     systemManager.set(new SvnServerFileManagerImpl(new IdeaSVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), SERVERS_FILE_NAME))));
-    userManager.set(new SvnServerFileManagerImpl(new IdeaSVNConfigFile(new File(myConfigurationDirectory, SERVERS_FILE_NAME))));
+    userManager.set(new SvnServerFileManagerImpl(new IdeaSVNConfigFile(new File(getConfigurationDirectory(), SERVERS_FILE_NAME))));
   }
 
   public String getUpgradeMode() {
