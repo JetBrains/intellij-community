@@ -40,27 +40,27 @@ public class GroovyClassFinder implements ProjectComponent, PsiElementFinder {
   }
 
   @Nullable
-  public PsiClass findClass(@NotNull String qualifiedName, GlobalSearchScope scope) {
+  public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     return GroovyCachesManager.getInstance(myProject).getClassByName(qualifiedName, scope);
   }
 
   @NotNull
-  public PsiClass[] findClasses(String qualifiedName, GlobalSearchScope scope) {
+  public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     return GroovyCachesManager.getInstance(myProject).getClassesByName(qualifiedName, scope);
   }
 
   @Nullable
-  public PsiPackage findPackage(String qualifiedName) {
+  public PsiPackage findPackage(@NotNull String qualifiedName) {
     return null;
   }
 
   @NotNull
-  public PsiPackage[] getSubPackages(PsiPackage psiPackage, GlobalSearchScope scope) {
+  public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     return new PsiPackage[0];
   }
 
   @NotNull
-  public PsiClass[] getClasses(PsiPackage psiPackage, GlobalSearchScope scope) {
+  public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     List<PsiClass> result = new ArrayList<PsiClass>();
     for (final PsiDirectory dir : psiPackage.getDirectories(scope)) {
       for (final PsiFile file : dir.getFiles()) {
