@@ -1,11 +1,12 @@
 package com.intellij.util.graph;
 
+import com.intellij.util.containers.EmptyIterator;
 import junit.framework.TestCase;
 
-import java.util.Iterator;
 import java.util.Arrays;
-import java.util.NoSuchElementException;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  *  @author dsl
@@ -20,7 +21,7 @@ public class GraphGeneratorTest extends TestCase {
         }
 
         public Iterator<TestNode> getIn(TestNode n) {
-          return GraphTestUtil.EmptyNodeIterator.INSTANCE;
+          return EmptyIterator.getInstance();
         }
       });
 

@@ -5,6 +5,7 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.util.containers.StringInterner;
+import com.intellij.util.containers.EmptyIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -171,7 +172,7 @@ public class TreeBasedMap<T> {
       final HashMap<String, Node<T>> childrenMap = node.myChildren;
       final boolean hasChildren = childrenMap != null && childrenMap.size() > 0;
       if (hasChildren || node.mappingExists()) {
-        myCurrentNodePath.push(new PathElement<T>(node, hasChildren? childrenMap.keySet().iterator() : EMPTY_ITERATOR));
+        myCurrentNodePath.push(new PathElement<T>(node, hasChildren? childrenMap.keySet().iterator() : EmptyIterator.<String>getInstance()));
         if (myCurrentNodePath.size() > 2) {
           // do not add separator before the Root and its direct child nodes 
           myCurrentName.append(mySeparator);
@@ -223,16 +224,5 @@ public class TreeBasedMap<T> {
       this.iterator = iterator;
     }
   }
-
-  public static final Iterator<String> EMPTY_ITERATOR = new Iterator<String>() {
-    public boolean hasNext() {
-      return false;
-    }
-    public String next() {
-      return null;
-    }
-    public void remove() {
-    }
-  };
 
 }

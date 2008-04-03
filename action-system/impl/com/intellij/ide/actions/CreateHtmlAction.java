@@ -105,7 +105,7 @@ public class CreateHtmlAction extends CreateElementActionBase {
       LOG.error(e);
     }
 
-    return new PsiElement[0];
+    return PsiElement.EMPTY_ARRAY;
   }
 
   protected String getErrorTitle() {

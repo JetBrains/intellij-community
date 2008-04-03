@@ -113,7 +113,7 @@ public class RecursionDlg extends DialogWrapper
         ProjectRootManager prm = ProjectRootManager.getInstance(project);
         ProjectFileIndex pfi = prm.getFileIndex();
 
-        VirtualFile[] children = check != null ? check.getChildren() : new VirtualFile[0];
+        VirtualFile[] children = check != null ? check.getChildren() : VirtualFile.EMPTY_ARRAY;
         boolean hasSubdirs = false;
         for (int i = 0; i < children.length && !hasSubdirs; i++)
         {
