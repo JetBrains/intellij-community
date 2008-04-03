@@ -35,10 +35,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -48,6 +45,7 @@ import org.jetbrains.idea.svn.update.UpdateRootInfo;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
@@ -57,9 +55,11 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
-public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
+public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnConfiguration");
 
+  private final static String SERVERS_FILE_NAME = "servers";
+  
   public static final String UPGRADE_AUTO = "auto";
   public static final String UPGRADE_NONE = "none"; 
 
@@ -72,7 +72,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
   private ISVNOptions myOptions;
   private boolean myIsKeepLocks;
   private boolean myRemoteStatus;
-  private ISVNAuthenticationManager myAuthManager;
+  private SvnAuthenticationManager myAuthManager;
   private String myUpgradeMode;
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
@@ -127,11 +127,20 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
 
   public ISVNAuthenticationManager getAuthenticationManager(Project project) {
     if (myAuthManager == null) {
-        myAuthManager = new SvnAuthenticationManager();
+      // reloaded when configuration directory changes
+        myAuthManager = new SvnAuthenticationManager(new File(myConfigurationDirectory));
         myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(project));
         myAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
     }
     return myAuthManager;
+  }
+
+  public void getServerFilesManagers(final Ref<SvnServerFileManager> systemManager, final Ref<SvnServerFileManager> userManager) {
+    // created only if does not exist
+    SVNConfigFile.createDefaultConfiguration(new File(myConfigurationDirectory));
+
+    systemManager.set(new SvnServerFileManagerImpl(new IdeaSVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), SERVERS_FILE_NAME))));
+    userManager.set(new SvnServerFileManagerImpl(new IdeaSVNConfigFile(new File(myConfigurationDirectory, SERVERS_FILE_NAME))));
   }
 
   public String getUpgradeMode() {

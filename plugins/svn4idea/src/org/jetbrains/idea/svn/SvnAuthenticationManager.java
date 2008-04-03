@@ -1,13 +1,13 @@
 package org.jetbrains.idea.svn;
 
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.*;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.*;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 
 import java.io.File;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,9 +17,8 @@ import java.util.HashMap;
  * To change this template use File | Settings | File Templates.
  */
 public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
-
-    public SvnAuthenticationManager() {
-        super(null, true, null, null);
+    public SvnAuthenticationManager(final File configDirectory) {
+        super(configDirectory, true, null, null);
     }
 
     protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir) {
@@ -37,7 +36,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
         };
     }
 
-    static class ApplicationAuthenticationProvider implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
+  static class ApplicationAuthenticationProvider implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
 
         public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
             // get from key-ring, use realm.

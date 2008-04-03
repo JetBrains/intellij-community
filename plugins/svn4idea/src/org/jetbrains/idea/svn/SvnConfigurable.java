@@ -39,11 +39,12 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.config.ConfigureProxiesListener;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 import javax.swing.*;
@@ -58,6 +59,7 @@ public class SvnConfigurable implements Configurable, ActionListener {
   private JCheckBox myUseDefaultCheckBox;
   private TextFieldWithBrowseButton myConfigurationDirectoryText;
   private JButton myClearAuthButton;
+  private JButton myEditProxiesButton;
   private JPanel myComponent;
 
   private JLabel myConfigurationDirectoryLabel;
@@ -177,6 +179,19 @@ public class SvnConfigurable implements Configurable, ActionListener {
     gb.gridx = 1;
     gb.fill = GridBagConstraints.HORIZONTAL;
     label = new JLabel(SvnBundle.message("label.text.delete.stored.credentials"));
+    label.setEnabled(false);
+    add(label, gb);
+
+    gb.gridx = 0;
+    gb.gridy += 1;
+    gb.gridwidth = 1;
+    myEditProxiesButton = new JButton(SvnBundle.message("button.text.edit.proxies"));
+    myEditProxiesButton.addActionListener(new ConfigureProxiesListener(myProject));
+    add(myEditProxiesButton, gb);
+    gb.gridwidth = 2;
+    gb.gridx = 1;
+    gb.fill = GridBagConstraints.HORIZONTAL;
+    label = new JLabel(SvnBundle.message("label.text.edit.proxies"));
     label.setEnabled(false);
     add(label, gb);
 
