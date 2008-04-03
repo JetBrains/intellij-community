@@ -115,7 +115,7 @@ public class CreateTestDialog extends DialogWrapper {
     gbConstraints.gridwidth = 1;
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.anchor = GridBagConstraints.WEST;
-    panel.add(new JLabel("Class name"), gbConstraints);
+    panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.class.name")), gbConstraints);
 
     gbConstraints.insets = new Insets(4, 8, 4, 8);
     gbConstraints.gridx = 1;
@@ -138,7 +138,7 @@ public class CreateTestDialog extends DialogWrapper {
     gbConstraints.gridwidth = 1;
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.anchor = GridBagConstraints.WEST;
-    panel.add(new JLabel("Super Class"), gbConstraints);
+    panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.super.class")), gbConstraints);
 
     gbConstraints.insets = new Insets(4, 8, 4, 8);
     gbConstraints.gridx = 1;
@@ -200,7 +200,7 @@ public class CreateTestDialog extends DialogWrapper {
         try {
           myTargetDirectory = selectTargetDirectory();
           if (myTargetDirectory == null) {
-            result.setResult("You have to choose a directory");
+            result.setResult("");
             return;
           }
           result.setResult(RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName()));
@@ -212,7 +212,9 @@ public class CreateTestDialog extends DialogWrapper {
     }.execute().getResultObject();
 
     if (errorString != null) {
-      Messages.showMessageDialog(myProject, errorString, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+      if (errorString.length() != 0) {
+        Messages.showMessageDialog(myProject, errorString, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+      }
       return;
     }
     

@@ -105,7 +105,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     if (findClass(project, "junit.framework.TestCase") != null
         || findClass(project, "org.testng.annotations.Test") != null) return;
 
-    JLabel label = new JLabel("<html>You have no testing library attached to the module.<br>Do you want to add one?</html>");
+    JLabel label = new JLabel(CodeInsightBundle.message("intention.create.test.no.testing.library"));
 
     JRadioButton junit3Button = new JRadioButton("JUnit3");
     JRadioButton junit4Button = new JRadioButton("JUnit4");
