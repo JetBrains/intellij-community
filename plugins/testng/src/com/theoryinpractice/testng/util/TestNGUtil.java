@@ -38,7 +38,6 @@ import org.testng.TestNG;
 import org.testng.annotations.*;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -493,16 +492,9 @@ public class TestNGUtil implements TestFramework
 
   public static boolean isTestngXML(final VirtualFile virtualFile) {
     if (virtualFile.getName().endsWith("xml")) {
-      final NanoXmlUtil.RootTagNameBuilder rootTagNameBuilder = new NanoXmlUtil.RootTagNameBuilder();
-      try {
-        NanoXmlUtil.parse(virtualFile.getInputStream(), rootTagNameBuilder);
-        final String result = rootTagNameBuilder.getResult();
-        if (result != null && result.equals(SUITE_TAG_NAME)) {
-          return true;
-        }
-      }
-      catch (IOException e) {
-        return false;
+      final String result = NanoXmlUtil.parseHeader(virtualFile).getRootTagLocalName();
+      if (result != null && result.equals(SUITE_TAG_NAME)) {
+        return true;
       }
     }
     return false;
