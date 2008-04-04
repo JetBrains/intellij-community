@@ -20,9 +20,11 @@ public class ClsBuilderTest extends LightIdeaTestCase {
     doTest("java/util/List.class", "UtilList.txt");
   }
 
+  /*
   public void testManyGenerics() throws Exception {
     doTest("java/util/Collections.class", "UtilCollections.txt");
   }
+  */
 
   public void testWithAnnotations() throws Exception {
     doTest("org/jetbrains/annotations/Nullable.class", "Nullable.txt");
