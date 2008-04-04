@@ -103,11 +103,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       HighlightVisitor highlightVisitor = highlightVisitors[i];
       if (!highlightVisitor.init(myUpdateAll, myFile)) {
         progress.cancel();
-        for (int j = i - 1; j >= 0; j--) {
-          HighlightVisitor visitor = highlightVisitors[j];
-          visitor.cleanup(false, myFile);
-        }
-        incVisitorUsageCount(-1);
+        releaseHighlightVisitors(highlightVisitors, false, 0, i);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             DaemonCodeAnalyzer.getInstance(myProject).restart();
@@ -119,8 +115,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return highlightVisitors;
   }
 
-  private void releaseHighlightVisitors(HighlightVisitor[] highlightVisitors, final boolean finishedSuccessfully) {
-    for (HighlightVisitor visitor : highlightVisitors) {
+  private void releaseHighlightVisitors(HighlightVisitor[] highlightVisitors, final boolean finishedSuccessfully, final int start,
+                                        final int end) {
+    for (int i = start; i < end; i++) {
+      HighlightVisitor visitor = highlightVisitors[i];
       visitor.cleanup(finishedSuccessfully, myFile);
     }
     incVisitorUsageCount(-1);
@@ -165,7 +163,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       finishedSuccessfully = true;
     }
     finally {
-      releaseHighlightVisitors(highlightVisitors, finishedSuccessfully);
+      releaseHighlightVisitors(highlightVisitors, finishedSuccessfully, 0, highlightVisitors.length);
     }
     myHighlights = result;
   }
