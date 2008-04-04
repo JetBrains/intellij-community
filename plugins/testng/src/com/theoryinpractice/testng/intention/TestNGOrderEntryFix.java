@@ -56,7 +56,7 @@ public class TestNGOrderEntryFix implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement)file.findReferenceAt(editor.getCaretModel().getOffset());
+    final PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement)TargetElementUtil.findReference(editor);
     LOG.assertTrue(reference != null);
     String jarPath = PathUtil.getJarPathForClass(Test.class);
     final VirtualFile virtualFile = file.getVirtualFile();
