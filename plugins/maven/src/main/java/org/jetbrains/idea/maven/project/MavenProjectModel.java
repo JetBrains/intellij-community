@@ -186,10 +186,10 @@ public class MavenProjectModel {
     final List<Node> mySubProjects = new ArrayList<Node>();
     final List<Node> mySubProjectsTopoSorted = new ArrayList<Node>(); // recursive
 
-    private Node(@NotNull VirtualFile pomFile, @NotNull Model mavenModel, Module linkedModule) {
+    private Node(@NotNull VirtualFile pomFile, @NotNull Model mavenModel, Module module) {
       myPomFile = pomFile;
       myMavenModel = mavenModel;
-      myLinkedModule = linkedModule;
+      myLinkedModule = module;
     }
 
     public VirtualFile getFile() {
@@ -228,10 +228,6 @@ public class MavenProjectModel {
 
     public Module getLinkedModule() {
       return myLinkedModule;
-    }
-
-    public boolean isLinked() {
-      return myLinkedModule != null;
     }
 
     public void unlinkModule() {

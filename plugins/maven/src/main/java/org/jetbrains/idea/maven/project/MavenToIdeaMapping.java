@@ -162,8 +162,8 @@ public class MavenToIdeaMapping {
     return projectToModulePath.get(node);
   }
 
-  public Collection<Module> getObsoleteModules() {
-    return obsoleteModules;
+  public List<Module> getObsoleteModules() {
+    return new ArrayList<Module>(obsoleteModules);
   }
 
   public Map<String, String> getLibraryNameToModuleName() {

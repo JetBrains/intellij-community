@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -8,11 +7,11 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,8 +20,6 @@ import java.util.Stack;
 
 
 public class ProjectConfigurator {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.project.MavenToIdeaConfigurator");
-
   private Project myProject;
   private ModifiableModuleModel myModuleModel;
   private MavenProjectModel myProjectModel;
@@ -62,10 +59,19 @@ public class ProjectConfigurator {
   }
 
   private void deleteObsoleteModules() {
-    Collection<Module> modules = myMapping.getObsoleteModules();
-    if (modules.isEmpty()) return;
+    List<Module> obsolete = new ArrayList<Module>();
 
-    String formatted = StringUtil.join(modules, new Function<Module, String>() {
+    for (Module m : myMapping.getObsoleteModules()) {
+      if (MavenProjectsManager.getInstance(myProject).isImportedModule(m)) {
+        obsolete.add(m);
+      }
+    }
+
+    if (obsolete.isEmpty()) return;
+
+    MavenProjectsManager.getInstance(myProject).setUserModules(obsolete);
+
+    String formatted = StringUtil.join(obsolete, new Function<Module, String>() {
       public String fun(Module m) {
         return "'" + m.getName() + "'";
       }
@@ -85,18 +91,21 @@ public class ProjectConfigurator {
   }
 
   private void configModules() {
-    final List<Pair<Module, MavenProject>> modulesToConfig = new ArrayList<Pair<Module, MavenProject>>();
+    final List<Module> modules = new ArrayList<Module>();
+
     myProjectModel.visit(new MavenProjectModel.MavenProjectVisitorRoot() {
       public void visit(MavenProjectModel.Node node) {
-        collectModule(node, modulesToConfig);
+        modules.add(configModule(node));
         for (MavenProjectModel.Node child : node.mySubProjectsTopoSorted) {
-          collectModule(child, modulesToConfig);
+          modules.add(configModule(child));
         }
       }
     });
+
+    MavenProjectsManager.getInstance(myProject).setImportedModules(modules);
   }
 
-  private void collectModule(MavenProjectModel.Node node, List<Pair<Module, MavenProject>> result) {
+  private Module configModule(MavenProjectModel.Node node) {
     MavenProject mavenProject = node.getMavenProject();
 
     Module module = myMapping.getModule(node);
@@ -105,6 +114,7 @@ public class ProjectConfigurator {
     }
 
     new ModuleConfigurator(myModuleModel, myMapping, myProfiles, mySettings, module, mavenProject).config();
+    return module;
   }
 
   private void configModuleGroups() {
@@ -115,19 +125,13 @@ public class ProjectConfigurator {
     myProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
       public void visit(MavenProjectModel.Node node) {
         String name = myMapping.getModuleName(node.getId());
-        LOG.assertTrue(name != null);
 
         if (!node.mySubProjects.isEmpty()) {
           groups.push(ProjectBundle.message("module.group.name", name));
         }
 
         Module module = myModuleModel.findModuleByName(name);
-        if (module != null) {
-          myModuleModel.setModuleGroupPath(module, groups.isEmpty() ? null : groups.toArray(new String[groups.size()]));
-        }
-        else {
-          LOG.info("Cannot find module " + name);
-        }
+        myModuleModel.setModuleGroupPath(module, groups.isEmpty() ? null : groups.toArray(new String[groups.size()]));
       }
 
       public void leave(MavenProjectModel.Node node) {
