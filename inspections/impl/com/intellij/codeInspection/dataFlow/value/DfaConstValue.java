@@ -13,6 +13,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -65,6 +66,7 @@ public class DfaConstValue extends DfaValue {
       return "TRUE".equals(name) ? Boolean.TRUE : "FALSE".equals(name) ? Boolean.FALSE : null;
     }
 
+    @NotNull
     public DfaConstValue createFromValue(Object value, final PsiType type) {
       if (value == Boolean.TRUE) return dfaTrue;
       if (value == Boolean.FALSE) return dfaFalse;

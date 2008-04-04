@@ -4,6 +4,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -53,6 +54,7 @@ public class DfaBoxedValue extends DfaValue {
     private final Map<PsiVariable, DfaUnboxedValue> cachedUnboxedValues = new THashMap<PsiVariable, DfaUnboxedValue>();
     private final Map<PsiVariable, DfaUnboxedValue> cachedNegatedUnboxedValues = new THashMap<PsiVariable, DfaUnboxedValue>();
 
+    @NotNull
     public DfaValue createUnboxed(DfaValue value) {
       if (value instanceof DfaBoxedValue) {
         return ((DfaBoxedValue)value).getWrappedValue();

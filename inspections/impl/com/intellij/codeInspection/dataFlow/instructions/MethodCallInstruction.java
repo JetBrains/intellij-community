@@ -150,7 +150,7 @@ public class MethodCallInstruction extends Instruction {
         dfaValue = myFactory.getConstFactory().createFromValue(o, myType);
       }
       else {
-        dfaValue = oldValue;
+        dfaValue = oldValue == null ? DfaUnknownValue.getInstance() : oldValue;
       }
     }
     else {

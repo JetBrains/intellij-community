@@ -13,6 +13,7 @@ import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -28,6 +29,7 @@ public class DfaTypeValue extends DfaValue {
       myStringToObject = new HashMap<String, ArrayList<DfaTypeValue>>();
     }
 
+    @NotNull
     public DfaTypeValue create(PsiType type, boolean nullable) {
       mySharedInstance.myType = type;
       mySharedInstance.myCanonicalText = type.getCanonicalText();
