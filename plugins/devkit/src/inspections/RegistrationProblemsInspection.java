@@ -48,7 +48,6 @@ import java.util.Set;
  * @author swr
  */
 public class RegistrationProblemsInspection extends DevKitInspectionBase {
-  private static final LocalQuickFix[] NO_FIX = new LocalQuickFix[0];
 
   public boolean CHECK_PLUGIN_XML = true;
   public boolean CHECK_JAVA_CODE = true;
@@ -164,8 +163,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
         }
         if (isAbstract(checkedClass)) {
           problems = addProblem(problems, manager.createProblemDescriptor(nameIdentifier,
-                  DevKitBundle.message("inspections.registration.problems.abstract"),
-                  NO_FIX, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                  DevKitBundle.message("inspections.registration.problems.abstract"), LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
         return problems != null ? problems.toArray(new ProblemDescriptor[problems.size()]) : null;
       }

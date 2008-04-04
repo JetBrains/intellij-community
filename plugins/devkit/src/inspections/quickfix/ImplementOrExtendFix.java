@@ -29,7 +29,6 @@ import org.jetbrains.idea.devkit.DevKitBundle;
  * @author swr
  */
 public class ImplementOrExtendFix extends BaseFix {
-  private static final LocalQuickFix[] NO_FIX = new LocalQuickFix[0];
 
   private final PsiClass myCompClass;
 
@@ -58,7 +57,7 @@ public class ImplementOrExtendFix extends BaseFix {
         }
       }
     }
-    return fix != null ? new LocalQuickFix[]{fix} : NO_FIX;
+    return fix != null ? new LocalQuickFix[]{fix} : LocalQuickFix.EMPTY_ARRAY;
   }
 
   @NotNull

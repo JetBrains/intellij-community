@@ -47,7 +47,7 @@ public class NewActionAction extends GeneratePluginClassAction {
       return validator.getCreatedElements();
     }
     myDialog = null;
-    return new PsiElement[0];
+    return PsiElement.EMPTY_ARRAY;
   }
 
   protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
