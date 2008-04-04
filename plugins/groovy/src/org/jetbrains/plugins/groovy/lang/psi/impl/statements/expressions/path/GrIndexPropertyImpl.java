@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiPrimitiveType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -58,7 +59,8 @@ public class GrIndexPropertyImpl extends GrCallExpressionImpl implements GrIndex
 
     if (thisType != null) {
       if (thisType instanceof PsiArrayType) {
-        return ((PsiArrayType) thisType).getComponentType();
+        PsiType componentType = ((PsiArrayType) thisType).getComponentType();
+        return TypesUtil.boxPrimitiveType(componentType, getManager(), getResolveScope());
       }
       
       PsiType[] argTypes = PsiUtil.getArgumentTypes(selected, false, true);
