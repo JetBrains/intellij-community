@@ -4,9 +4,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.events.ElementChangedEvent;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +21,20 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
   public CollectionElementInvocationHandler(final Type type, @NotNull final XmlTag tag,
                                             final AbstractCollectionChildDescription description,
                                             final DomInvocationHandler parent) {
-    super(type, tag, parent, description.createEvaluatedXmlName(parent, tag), (AbstractDomChildDescriptionImpl)description, parent.getManager());
+    super(type, new PhysicalDomParentStrategy(tag) {
+      @NotNull
+      public DomParentStrategy clearXmlElement() {
+        throw new UnsupportedOperationException();
+      }
+
+      public boolean isValid() {
+        return getXmlElement().isValid();
+      }
+    }, description.createEvaluatedXmlName(parent, tag), (AbstractDomChildDescriptionImpl)description, parent.getManager(), true);
+  }
+
+  protected Type narrowType(@NotNull final Type nominalType) {
+    return getManager().getTypeChooserManager().getTypeChooser(nominalType).chooseType(getXmlTag());
   }
 
   protected final XmlTag setEmptyXmlTag() {
@@ -31,24 +42,6 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
                                             "\nparent=" + getParent() + ";\n" +
                                             "xmlElementName=" + getXmlElementName());
   }
-
-  public boolean equals(final Object obj) {
-    if (!(obj instanceof CollectionElementInvocationHandler)) return false;
-
-    final DomInvocationHandler handler = (DomInvocationHandler)obj;
-    return getXmlTag().equals(handler.getXmlTag());
-  }
-
-  public int hashCode() {
-    return getXmlTag().hashCode();
-  }
-
-  public boolean isValid() {
-    ProgressManager.getInstance().checkCanceled();
-    final XmlElement element = getXmlElement();
-    return element != null && element.isValid();
-  }
-
 
   public final void undefineInternal() {
     final DomElement parent = getParent();

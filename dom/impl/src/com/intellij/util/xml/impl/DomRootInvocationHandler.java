@@ -13,8 +13,11 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomNameStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author peter
@@ -24,11 +27,20 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
   private final DomFileElementImpl<?> myParent;
 
   public DomRootInvocationHandler(final Class aClass,
-                                  final XmlTag tag,
+                                  final RootDomParentStrategy strategy,
                                   @NotNull final DomFileElementImpl fileElement,
                                   @NotNull final EvaluatedXmlName tagName
   ) {
-    super(aClass, tag, null, tagName, null, fileElement.getManager());
+    super(aClass, strategy, tagName, new AbstractDomChildDescriptionImpl(aClass) {
+      @NotNull
+      public List<? extends DomElement> getValues(@NotNull final DomElement parent) {
+        throw new UnsupportedOperationException();
+      }
+
+      public int compareTo(final AbstractDomChildDescriptionImpl o) {
+        throw new UnsupportedOperationException();
+      }
+    }, fileElement.getManager(), true);
     myParent = fileElement;
   }
 
@@ -55,12 +67,6 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
 
   public int hashCode() {
     return myParent.hashCode();
-  }
-
-  public boolean isValid() {
-    if (!myParent.isValid()) return false;
-    final XmlTag tag = getXmlTag();
-    return tag == null || tag.isValid();
   }
 
   @NotNull
@@ -105,5 +111,16 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
     });
     return result[0];
   }
+
+  @NotNull
+  public final DomNameStrategy getNameStrategy() {
+    final Class<?> rawType = getRawType();
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(rawType, isAttribute());
+    if (strategy != null) {
+      return strategy;
+    }
+    return DomNameStrategy.HYPHEN_STRATEGY;
+  }
+
 
 }

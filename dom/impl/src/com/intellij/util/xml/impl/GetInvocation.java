@@ -3,16 +3,15 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.SubTag;
 import org.jetbrains.annotations.Nullable;
@@ -70,10 +69,9 @@ public class GetInvocation implements Invocation {
 
   @Nullable
   private static Object getValueInner(final DomInvocationHandler<?> handler, Converter converter) {
-    final XmlTag tag = handler.getXmlTag();
-    final boolean tagNotNull = tag != null;
     final SubTag annotation = handler.getAnnotation(SubTag.class);
     if (annotation != null && annotation.indicator()) {
+      final boolean tagNotNull = handler.getXmlTag() != null;
       if (converter == Converter.EMPTY_CONVERTER) {
         return tagNotNull ? "" : null;
       }

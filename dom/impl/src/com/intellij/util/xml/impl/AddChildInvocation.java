@@ -4,7 +4,6 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.Function;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
 
 import java.lang.reflect.Type;
@@ -29,16 +28,6 @@ public class AddChildInvocation implements Invocation{
   }
 
   public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
-    final Type type = myClassGetter.fun(args);
-    final DomElement domElement = handler.addCollectionChild(myDescription, type, myIndexGetter.fun(args));
-    final DomManagerImpl manager = handler.getManager();
-    final boolean b = manager.setChanging(true);
-    try {
-      manager.getTypeChooserManager().getTypeChooser(myType).distinguishTag(domElement.getXmlTag(), ReflectionUtil.getRawType(type));
-    }
-    finally {
-      handler.getManager().setChanging(b);
-    }
-    return domElement;
+    return handler.addCollectionChild(myDescription, myClassGetter.fun(args), myIndexGetter.fun(args));
   }
 }

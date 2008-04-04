@@ -14,6 +14,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementChangedEvent;
+import com.intellij.util.xml.DomElement;
 
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -44,12 +45,13 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
   }
 
   public void addChange(XmlTag tag) {
+    final PsiFile file = tag.getContainingFile();
+
     DomInvocationHandler handler = myChangeSets.get(tag);
     if (handler != null) return;
 
-    assert tag != null;
     while (tag != null) {
-      final DomInvocationHandler data = tag.getUserData(DomManagerImpl.CACHED_DOM_HANDLER);
+      final DomInvocationHandler data = myDomManager.getCachedHandler(tag);
       if (data != null) {
         if (handler == null) {
           handler = data;
@@ -64,6 +66,13 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
       }
       tag = tag.getParentTag();
     }
+    if (handler == null && file instanceof XmlFile) {
+      final DomFileElementImpl<DomElement> element = DomManagerImpl.getCachedFileElement((XmlFile)file);
+      if (element != null) {
+        handler = element.getRootHandler();
+      }
+    }
+
     if (handler != null) {
       myChangeSets.put(tag, handler);
     }

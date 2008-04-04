@@ -1,0 +1,69 @@
+/*
+ * Copyright (c) 2000-2005 by JetBrains s.r.o. All Rights Reserved.
+ * Use is subject to license terms.
+ */
+package com.intellij.util.xml.impl;
+
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * @author peter
+ */
+public class PhysicalDomParentStrategy implements DomParentStrategy {
+  private XmlElement myElement;
+
+  public PhysicalDomParentStrategy(@NotNull final XmlElement element) {
+    myElement = element;
+  }
+
+  @NotNull
+  public DomInvocationHandler getParentHandler() {
+    final XmlTag parentTag = (XmlTag)myElement.getParent();
+    assert parentTag != null;
+    final DomInvocationHandler handler = DomManagerImpl.getDomManager(myElement.getProject()).getDomHandler(parentTag);
+    assert handler != null : parentTag.getText() + Thread.currentThread().hashCode();
+    return handler;
+  }
+
+  @NotNull
+  public final XmlElement getXmlElement() {
+    return myElement;
+  }
+
+  @NotNull
+  public DomParentStrategy refreshStrategy(final DomInvocationHandler handler) {
+    return this;
+  }
+
+  @NotNull
+  public DomParentStrategy setXmlElement(@NotNull final XmlElement element) {
+    myElement = element;
+    return this;
+  }
+
+  @NotNull
+  public DomParentStrategy clearXmlElement() {
+    return new VirtualDomParentStrategy(getParentHandler());
+  }
+
+  public boolean isValid() {
+    return myElement.isValid();
+  }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (!(o instanceof PhysicalDomParentStrategy)) return false;
+
+    final PhysicalDomParentStrategy that = (PhysicalDomParentStrategy)o;
+
+    if (!myElement.equals(that.myElement)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return myElement.hashCode();
+  }
+}

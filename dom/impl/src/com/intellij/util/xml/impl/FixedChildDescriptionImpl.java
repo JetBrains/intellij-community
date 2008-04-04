@@ -43,12 +43,6 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     return methods == null || methods.isEmpty() ? null : methods.iterator().next();
   }
 
-  public void initConcreteClass(final DomElement parent, final Class<? extends DomElement> aClass) {
-    final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(parent);
-    assert handler != null;
-    handler.setFixedChildClass(this, aClass);
-  }
-
   @Nullable
   public <T extends Annotation> T getAnnotation(int index, Class<? extends T> annotationClass) {
     final JavaMethod method = getGetterMethod(index);

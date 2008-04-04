@@ -11,7 +11,6 @@ import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.XmlElementFactory;
@@ -21,8 +20,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.JBReentrantReadWriteLock;
-import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.ElementChangedEvent;
@@ -32,7 +29,6 @@ import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
-import gnu.trove.THashMap;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +42,6 @@ import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author peter
@@ -58,19 +53,16 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   private final Type myAbstractType;
   private final Type myType;
-  private final DomInvocationHandler myParent;
   private final DomManagerImpl myManager;
   private final EvaluatedXmlName myTagName;
   private final T myChildDescription;
   private final Converter myGenericConverter;
-  private long myModCount;
-  private XmlElement myXmlElement;
+  private DomParentStrategy myParentStrategy;
 
   private XmlFile myFile;
   private DomFileElementImpl myRoot;
   private final DomElement myProxy;
   private DomGenericInfoEx myGenericInfo;
-  private Map<FixedChildDescriptionImpl, Class> myFixedChildrenClasses;
   private final InvocationCache myInvocationCache;
   private final FactoryMap<JavaMethod, Converter> myScalarConverters = new FactoryMap<JavaMethod, Converter>() {
     protected Converter create(final JavaMethod method) {
@@ -84,29 +76,22 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     }
   };
 
-  private static final JBReentrantReadWriteLock rwl = LockFactory.createReadWriteLock();
-
-  protected DomInvocationHandler(final Type type,
-                                 final XmlTag tag,
-                                 final DomInvocationHandler parent,
+  protected DomInvocationHandler(Type type, DomParentStrategy parentStrategy,
                                  final EvaluatedXmlName tagName,
                                  final T childDescription,
-                                 final DomManagerImpl manager) {
+                                 final DomManagerImpl manager,
+                                 boolean dynamic) {
     myManager = manager;
-    myParent = parent;
+    myParentStrategy = parentStrategy;
     myTagName = tagName;
     myChildDescription = childDescription;
     myAbstractType = type;
+    myType = narrowType(type);
 
-    final Type concreteInterface = manager.getTypeChooserManager().getTypeChooser(type).chooseType(tag);
-    myType = concreteInterface;
-
-    myModCount = getCurrentModCount();
-
-    final Converter converter = getConverter(this, DomUtil.getGenericValueParameter(concreteInterface), null);
+    final Converter converter = getConverter(this, DomUtil.getGenericValueParameter(myType), null);
     myGenericConverter = converter;
     myInvocationCache =
-      manager.getInvocationCache(new Pair<Type, Type>(concreteInterface, converter == null ? null : converter.getClass()));
+        manager.getInvocationCache(new Pair<Type, Type>(myType, converter == null ? null : converter.getClass()));
     final Class<?> rawType = getRawType();
     Class<? extends DomElement> implementation = manager.getImplementation(rawType);
     final boolean isInterface = ReflectionCache.isInterface(rawType);
@@ -114,11 +99,11 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       implementation = (Class<? extends DomElement>)rawType;
     }
     myProxy = AdvancedProxy.createProxy(this, implementation, isInterface ? new Class[]{rawType} : ArrayUtil.EMPTY_CLASS_ARRAY);
-    setXmlElement(tag);
+    refreshGenericInfo(dynamic);
   }
 
-  private long getCurrentModCount() {
-    return PsiManager.getInstance(myManager.getProject()).getModificationTracker().getModificationCount();
+  protected Type narrowType(@NotNull Type nominalType) {
+    return nominalType;
   }
 
   @NotNull
@@ -129,7 +114,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   protected <T extends DomElement> DomFileElementImpl<T> _getRoot() {
     if (myRoot == null) {
-      myRoot = myParent._getRoot();
+      myRoot = getParentHandler()._getRoot();
     }
     return myRoot;
   }
@@ -138,16 +123,16 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   public DomElement getParent() {
     checkIsValid();
 
-    return myParent.getProxy();
+    return getParentHandler().getProxy();
   }
 
   protected final void checkIsValid() {
     LOG.assertTrue(isValid());
   }
 
-  @Nullable
+  @NotNull
   final DomInvocationHandler getParentHandler() {
-    return myParent;
+    return getParentStrategy().getParentHandler();
   }
 
   @NotNull
@@ -175,7 +160,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     myManager.fireEvent(new ElementChangedEvent(getProxy()));
   }
 
-  public final void copyFrom(DomElement other) {
+  public void copyFrom(DomElement other) {
     if (other == getProxy()) return;
     assert other.getDomElementType().equals(myType);
 
@@ -184,36 +169,45 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       return;
     }
 
-    ensureXmlElementExists();
-    final DomGenericInfoEx genericInfo = getGenericInfo();
-    for (final AttributeChildDescriptionImpl description : genericInfo.getAttributeChildrenDescriptions()) {
-      description.getDomAttributeValue(this).setStringValue(description.getDomAttributeValue(other).getStringValue());
-    }
-    for (final DomFixedChildDescription description : genericInfo.getFixedChildrenDescriptions()) {
-      final List<? extends DomElement> list = description.getValues(getProxy());
-      final List<? extends DomElement> otherValues = description.getValues(other);
-      for (int i = 0; i < list.size(); i++) {
-        final DomElement otherValue = otherValues.get(i);
-        final DomElement value = list.get(i);
-        if (otherValue.getXmlElement() == null) {
-          value.undefine();
-        } else {
-          value.copyFrom(otherValue);
+    final boolean wasInBulkChange = myManager.setBulkChange(true);
+    try {
+      ensureXmlElementExists();
+      final DomGenericInfoEx genericInfo = getGenericInfo();
+      for (final AttributeChildDescriptionImpl description : genericInfo.getAttributeChildrenDescriptions()) {
+        description.getDomAttributeValue(this).setStringValue(description.getDomAttributeValue(other).getStringValue());
+      }
+      for (final DomFixedChildDescription description : genericInfo.getFixedChildrenDescriptions()) {
+        final List<? extends DomElement> list = description.getValues(getProxy());
+        final List<? extends DomElement> otherValues = description.getValues(other);
+        for (int i = 0; i < list.size(); i++) {
+          final DomElement otherValue = otherValues.get(i);
+          final DomElement value = list.get(i);
+          if (otherValue.getXmlElement() == null) {
+            value.undefine();
+          } else {
+            value.copyFrom(otherValue);
+          }
         }
       }
-    }
-    for (final DomCollectionChildDescription description : genericInfo.getCollectionChildrenDescriptions()) {
-      for (final DomElement value : description.getValues(getProxy())) {
-        value.undefine();
+      for (final DomCollectionChildDescription description : genericInfo.getCollectionChildrenDescriptions()) {
+        for (final DomElement value : description.getValues(getProxy())) {
+          value.undefine();
+        }
+        for (final DomElement otherValue : description.getValues(other)) {
+          description.addValue(getProxy(), otherValue.getDomElementType()).copyFrom(otherValue);
+        }
       }
-      for (final DomElement otherValue : description.getValues(other)) {
-        description.addValue(getProxy(), otherValue.getDomElementType()).copyFrom(otherValue);
-      }
-    }
 
-    final String stringValue = DomManagerImpl.getDomInvocationHandler(other).getValue();
-    if (StringUtil.isNotEmpty(stringValue)) {
-      setValue(stringValue);
+      final String stringValue = DomManagerImpl.getDomInvocationHandler(other).getValue();
+      if (StringUtil.isNotEmpty(stringValue)) {
+        setValue(stringValue);
+      }
+    }
+    finally {
+      myManager.setBulkChange(wasInBulkChange);
+      if (!wasInBulkChange) {
+        myManager.fireEvent(new ElementChangedEvent(myProxy));
+      }
     }
   }
 
@@ -268,18 +262,16 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     myManager.fireEvent(new ElementDefinedEvent(getProxy()));
     addRequiredChildren();
     myManager.cacheHandler(tag, this);
-    myModCount = getCurrentModCount();
-
     return getXmlTag();
   }
 
   public XmlElement getXmlElement() {
-    if (myXmlElement == null && getCurrentModCount() != myModCount) {
-      setXmlElement(recomputeXmlElement());
-      myModCount = getCurrentModCount();
-    }
+    return getParentStrategy().getXmlElement();
+  }
 
-    return myXmlElement;
+  private DomParentStrategy getParentStrategy() {
+    myParentStrategy = myParentStrategy.refreshStrategy(this);
+    return myParentStrategy;
   }
 
   public XmlElement ensureXmlElementExists() {
@@ -304,14 +296,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   public boolean isValid() {
     ProgressManager.getInstance().checkCanceled();
-    final XmlElement element = getXmlElement();
-    if (element != null) {
-      return element.isValid();
-    }
-    if (getCurrentModCount() != myModCount) {
-      return false;
-    }
-    return getParentHandler().isValid();
+    return getParentStrategy().isValid();
   }
 
   @NotNull
@@ -461,14 +446,13 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   @NotNull
-  public final DomNameStrategy getNameStrategy() {
+  public DomNameStrategy getNameStrategy() {
     final Class<?> rawType = getRawType();
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(rawType, isAttribute());
     if (strategy != null) {
       return strategy;
     }
-    final DomInvocationHandler parent = getParentHandler();
-    return parent != null ? parent.getNameStrategy() : DomNameStrategy.HYPHEN_STRATEGY;
+    return getParentHandler().getNameStrategy();
   }
 
   protected boolean isAttribute() {
@@ -530,14 +514,14 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       if (tags.size() > index) {
         XmlTag childTag = tags.get(index);
         DomInvocationHandler handler = myManager.getCachedHandler(childTag);
-        if (handler == null || !(handler instanceof IndexedElementInvocationHandler)) {
-          handler = createIndexedChild(childTag, evaluatedXmlName, info);
+        if (!(handler instanceof IndexedElementInvocationHandler)) {
+          handler = new IndexedElementInvocationHandler(evaluatedXmlName, description, index, new PhysicalDomParentStrategy(childTag), myManager);
           myManager.cacheHandler(childTag, handler);
         }
         return (IndexedElementInvocationHandler)handler;
       }
     }
-    return createIndexedChild(null, evaluatedXmlName, info);
+    return new IndexedElementInvocationHandler(evaluatedXmlName, description, index, new VirtualDomParentStrategy(this), myManager);
   }
 
   @NotNull
@@ -550,18 +534,14 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       if (attribute != null) {
         AttributeChildInvocationHandler handler = (AttributeChildInvocationHandler)myManager.getCachedHandler(attribute);
         if (handler == null) {
-          handler = createAttributeHandler(description, evaluatedXmlName, attribute);
+          handler = new AttributeChildInvocationHandler(evaluatedXmlName, description, myManager, new PhysicalDomParentStrategy(attribute));
           myManager.cacheHandler(attribute, handler);
         }
         return handler;
       }
 
     }
-    return createAttributeHandler(description, evaluatedXmlName, null);
-  }
-
-  private AttributeChildInvocationHandler createAttributeHandler(final AttributeChildDescriptionImpl description, final EvaluatedXmlName evaluatedXmlName, @Nullable final XmlAttribute attribute) {
-    return new AttributeChildInvocationHandler(description.getType(), getXmlTag(), this, evaluatedXmlName, description, myManager, attribute);
+    return new AttributeChildInvocationHandler(evaluatedXmlName, description, myManager, new VirtualDomParentStrategy(this));
   }
 
   @Nullable
@@ -599,22 +579,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     return myType.toString() + " @" + hashCode();
   }
 
-  private IndexedElementInvocationHandler createIndexedChild(final XmlTag subTag, EvaluatedXmlName qname, final Pair<FixedChildDescriptionImpl, Integer> pair) {
-    final FixedChildDescriptionImpl description = pair.first;
-    Type type = getFixedChildrenClass(description);
-    if (type == null) {
-      type = description.getType();
-    }
-    return new IndexedElementInvocationHandler(type, subTag, this, qname, description, pair.getSecond());
-  }
-
   protected final Class<?> getRawType() {
     return ReflectionUtil.getRawType(myType);
-  }
-
-  @Nullable
-  protected final Class getFixedChildrenClass(final FixedChildDescriptionImpl tagName) {
-    return myFixedChildrenClasses == null ? null : myFixedChildrenClasses.get(tagName);
   }
 
   @Nullable
@@ -623,21 +589,24 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   @Nullable
-  protected XmlElement recomputeXmlElement() {
+  protected XmlElement recomputeXmlElement(@NotNull final DomInvocationHandler parentHandler) {
     return null;
   }
 
   protected final void detach() {
     final XmlElement element = getXmlElement();
-    if (element != null) myManager.cacheHandler(element, null);
     setXmlElement(null);
+    if (element != null) myManager.cacheHandler(element, null);
   }
 
-  protected final void setXmlElement(final XmlElement tag) {
+  protected final void setXmlElement(final XmlElement element) {
+    refreshGenericInfo(element != null && !isAttribute());
+    myParentStrategy = element == null ? myParentStrategy.clearXmlElement() : myParentStrategy.setXmlElement(element);
+  }
+
+  private void refreshGenericInfo(final boolean dynamic) {
     final StaticGenericInfo staticInfo = myManager.getStaticGenericInfo(myType);
-    myGenericInfo = tag == null || isAttribute() ? staticInfo : new DynamicGenericInfo(this, staticInfo, myManager.getProject());
-    myXmlElement = tag;
-    myModCount = getCurrentModCount();
+    myGenericInfo = dynamic ? new DynamicGenericInfo(this, staticInfo, myManager.getProject()) : staticInfo;
   }
 
   @NotNull
@@ -687,11 +656,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     }
   }
 
-  public void setFixedChildClass(final FixedChildDescriptionImpl tagName, final Class<? extends DomElement> aClass) {
-    if (myFixedChildrenClasses == null) myFixedChildrenClasses = new THashMap<FixedChildDescriptionImpl, Class>();
-    myFixedChildrenClasses.put(tagName, aClass);
-  }
-
   @NotNull
   public final EvaluatedXmlName createEvaluatedXmlName(final XmlName xmlName) {
     return getXmlName().evaluateChildName(xmlName);
@@ -708,7 +672,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     List<DomElement> elements = new ArrayList<DomElement>(subTags.size());
     for (XmlTag subTag : subTags) {
       DomInvocationHandler handler = myManager.getCachedHandler(subTag);
-      if (handler == null || !(handler instanceof CollectionElementInvocationHandler)) {
+      if (!(handler instanceof CollectionElementInvocationHandler)) {
         handler = new CollectionElementInvocationHandler(description.getType(), subTag, description, this);
         myManager.cacheHandler(subTag, handler);
       }
@@ -741,6 +705,21 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
       return (T)element;
     }
+  }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || !o.getClass().equals(getClass())) return false;
+
+    final DomInvocationHandler that = (DomInvocationHandler)o;
+    if (!myChildDescription.equals(that.myChildDescription)) return false;
+    if (!getParentStrategy().equals(that.getParentStrategy())) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return myChildDescription.hashCode();
   }
 }
 

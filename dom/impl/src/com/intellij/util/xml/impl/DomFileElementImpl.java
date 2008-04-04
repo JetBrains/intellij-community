@@ -113,11 +113,11 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   private final XmlFile myFile;
   private final DomFileDescription<T> myFileDescription;
+  private final DomRootInvocationHandler myRootHandler;
   private final Class<T> myRootElementClass;
   private final EvaluatedXmlNameImpl myRootTagName;
   private final DomManagerImpl myManager;
   private final Map<Key,Object> myUserData = new HashMap<Key, Object>();
-  private long myModificationCount;
 
   protected DomFileElementImpl(final XmlFile file,
                                final Class<T> rootElementClass,
@@ -128,6 +128,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     myRootTagName = rootTagName;
     myManager = manager;
     myFileDescription = fileDescription;
+    myRootHandler = new DomRootInvocationHandler(rootElementClass, new RootDomParentStrategy(this), this, rootTagName);
   }
 
   @NotNull
@@ -150,7 +151,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     if (document != null) {
       final XmlTag tag = document.getRootTag();
       if (tag != null) {
-        if (tag.getTextLength() > 0 && ((DomElement)this).getRoot().getFileDescription().acceptsOtherRootTagNames()) return tag;
+        if (tag.getTextLength() > 0 && getFileDescription().acceptsOtherRootTagNames()) return tag;
         if (myRootTagName.getXmlName().getLocalName().equals(tag.getLocalName()) &&
             myRootTagName.isNamespaceAllowed(this, tag.getNamespace())) {
           return tag;
@@ -273,16 +274,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   protected final DomRootInvocationHandler getRootHandler() {
-    final XmlTag tag = getRootTag();
-    if (tag != null) {
-      DomInvocationHandler handler = myManager.getCachedHandler(tag);
-      if (!(handler instanceof DomRootInvocationHandler)) {
-        handler = new DomRootInvocationHandler(myRootElementClass, tag, this, myRootTagName);
-        myManager.cacheHandler(tag, handler);
-      }
-      return (DomRootInvocationHandler)handler;
-    }
-    return new DomRootInvocationHandler(myRootElementClass, null, this, myRootTagName);
+    return myRootHandler;
   }
 
   public @NonNls String toString() {
@@ -353,10 +345,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   public final long getModificationCount() {
-    return myModificationCount;
+    return myFile.getModificationStamp();
   }
 
-  public final void onModified() {
-    myModificationCount++;
-  }
 }

@@ -19,14 +19,15 @@ public class SetInvocation implements Invocation {
   public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
     handler.checkIsValid();
     final SubTag annotation = handler.getAnnotation(SubTag.class);
-    if (annotation != null && annotation.indicator()) {
-      if ((Boolean)args[0]) {
+    final Object arg = args[0];
+    if (annotation != null && annotation.indicator() && arg instanceof Boolean) {
+      if ((Boolean)arg) {
         handler.ensureTagExists();
       } else {
         handler.undefineInternal();
       }
     } else {
-      String value = myConverter.toString(args[0], new ConvertContextImpl(handler));
+      String value = myConverter.toString(arg, new ConvertContextImpl(handler));
       if (value == null) {
         handler.undefineInternal();
       } else {

@@ -9,17 +9,17 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
+import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.lang.reflect.Type;
 
 /**
  * @author peter
@@ -27,15 +27,11 @@ import java.lang.reflect.Type;
 public class AttributeChildInvocationHandler extends DomInvocationHandler<AttributeChildDescriptionImpl> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.AttributeChildInvocationHandler");
 
-  protected AttributeChildInvocationHandler(final Type type,
-                                            final XmlTag tag,
-                                            final DomInvocationHandler parent,
-                                            final EvaluatedXmlName attributeName,
+  protected AttributeChildInvocationHandler(final EvaluatedXmlName attributeName,
                                             final AttributeChildDescriptionImpl description,
                                             final DomManagerImpl manager,
-                                            final XmlAttribute attribute) {
-    super(type, tag, parent, attributeName, description, manager);
-    setXmlElement(attribute);
+                                            final DomParentStrategy strategy) {
+    super(description.getType(), strategy, attributeName, description, manager, false);
   }
 
   public void acceptChildren(DomElementVisitor visitor) {
@@ -49,25 +45,13 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     return true;
   }
 
-  public boolean equals(final Object obj) {
-    if (!(obj instanceof AttributeChildInvocationHandler)) return false;
+  protected XmlElement recomputeXmlElement(@NotNull final DomInvocationHandler parent) {
+    if (!parent.isValid()) return null;
 
-    final DomInvocationHandler handler = (DomInvocationHandler)obj;
-    return getParentHandler().equals(handler.getParentHandler()) && getChildDescription().equals(handler.getChildDescription());
-  }
-
-  public int hashCode() {
-    return getParentHandler().hashCode() * 239 + getChildDescription().hashCode() * 42;
-  }
-
-  protected XmlElement recomputeXmlElement() {
-    final DomInvocationHandler handler = getParentHandler();
-    if (!handler.isValid()) return null;
-
-    final XmlTag tag = handler.getXmlTag();
+    final XmlTag tag = parent.getXmlTag();
     if (tag == null) return null;
 
-    return tag.getAttribute(getXmlElementName(), getXmlElementNamespace());
+    return tag.getAttribute(getXmlElementName(), getXmlName().getNamespace(tag));
   }
 
   public final XmlAttribute ensureXmlElementExists() {
@@ -107,8 +91,8 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
       getManager().runChange(new Runnable() {
         public void run() {
           try {
-            tag.setAttribute(getXmlElementName(), getXmlElementNamespace(), null);
             setXmlElement(null);
+            tag.setAttribute(getXmlElementName(), getXmlElementNamespace(), null);
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
@@ -138,6 +122,10 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
       }
     }
     return null;
+  }
+
+  public void copyFrom(final DomElement other) {
+    setValue(((GenericAttributeValue) other).getStringValue());
   }
 
   protected void setValue(@Nullable final String value) {

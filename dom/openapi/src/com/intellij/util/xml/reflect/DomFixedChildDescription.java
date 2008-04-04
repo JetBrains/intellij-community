@@ -27,7 +27,6 @@ import java.lang.annotation.Annotation;
 public interface DomFixedChildDescription extends DomChildrenDescription {
   int getCount();
   JavaMethod getGetterMethod(int index);
-  void initConcreteClass(final DomElement parent, final Class<? extends DomElement> aClass);
 
   @Nullable
   <T extends Annotation> T getAnnotation(int index, Class<? extends T> annotationClass);
