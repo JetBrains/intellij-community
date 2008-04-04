@@ -31,6 +31,7 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIHelper;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -319,7 +320,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   protected void processRevisions(final RevisionProcessingTask t) {
     new Task.Modal(getProject(), message("message.processing.revisions"), false) {
-      public void run(ProgressIndicator i) {
+      public void run(@NotNull ProgressIndicator i) {
         t.run(new RevisionProcessingProgressAdapter(i));
       }
     }.queue();
