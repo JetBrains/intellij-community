@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.util.Function;
@@ -111,5 +112,9 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase{
 
   protected void assertNoVariants(final FileType fileType, final String text) throws Throwable {
     checkCompleted(fileType, text, text);
+  }
+
+  protected PsiManager getPsiManager() {
+    return PsiManager.getInstance(getProject());
   }
 }
