@@ -125,6 +125,10 @@
             text="Grails Controller" description="Generate Grails Controller">
       <add-to-group group-id="GenerateGroup" anchor="last"/>
     </action>
+    <action id="Grails.GenerateDomainClass" class="org.jetbrains.plugins.grails.actions.GenerateDomainClassAction"
+            text="Grails Domain Class" description="Generate Grails Domain Class">
+      <add-to-group group-id="GenerateGroup" anchor="last"/>
+    </action>
     <action id="Grails.GenerateTests" class="org.jetbrains.plugins.grails.actions.GenerateTestsAction"
             text="Grails Tests" description="Create Tests">
       <add-to-group group-id="GenerateGroup" anchor="last"/>
