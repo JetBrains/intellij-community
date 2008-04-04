@@ -128,6 +128,10 @@ public class DefaultGroovyMethod extends LightMethod {
     return myMethod.canNavigate();
   }
 
+  public PsiElement getNavigationElement() {
+    return myMethod.getNavigationElement();
+  }
+
   public void navigate(boolean requestFocus) {
     myMethod.navigate(requestFocus);
   }
