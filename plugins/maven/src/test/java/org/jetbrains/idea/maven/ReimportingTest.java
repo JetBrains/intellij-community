@@ -1,13 +1,36 @@
 package org.jetbrains.idea.maven;
 
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+
+import java.util.Arrays;
 
 public class ReimportingTest extends ImportingTestCase {
   @Override
   protected void tearDown() throws Exception {
     Messages.setTestDialog(TestDialog.DEFAULT);
     super.tearDown();
+  }
+
+  public void testKeepingModuleGroups() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    Module m = getModule("project");
+
+    ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
+    model.setModuleGroupPath(m, new String[] {"group"});
+    model.commit();
+
+    importProject();
+
+    String[] path = ModuleManager.getInstance(myProject).getModuleGroupPath(m);
+    assertNotNull(path);
+    assertOrderedElementsAreEqual(Arrays.asList(path), "group");
   }
 
   public void testAddingNewModule() throws Exception {

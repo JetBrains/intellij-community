@@ -105,11 +105,11 @@ public class ProjectConfigurator {
     }
 
     new ModuleConfigurator(myModuleModel, myMapping, myProfiles, mySettings, module, mavenProject).config();
-    //result.add(new Pair<Module, MavenProject>(module, mavenProject));
   }
 
   private void configModuleGroups() {
-    final boolean createModuleGroups = mySettings.isCreateModuleGroups();
+    if (!mySettings.isCreateModuleGroups()) return;
+
     final Stack<String> groups = new Stack<String>();
 
     myProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
@@ -117,7 +117,7 @@ public class ProjectConfigurator {
         String name = myMapping.getModuleName(node.getId());
         LOG.assertTrue(name != null);
 
-        if (createModuleGroups && !node.mySubProjects.isEmpty()) {
+        if (!node.mySubProjects.isEmpty()) {
           groups.push(ProjectBundle.message("module.group.name", name));
         }
 
@@ -131,7 +131,7 @@ public class ProjectConfigurator {
       }
 
       public void leave(MavenProjectModel.Node node) {
-        if (createModuleGroups && !node.mySubProjects.isEmpty()) {
+        if (!node.mySubProjects.isEmpty()) {
           groups.pop();
         }
       }
