@@ -17,7 +17,9 @@ package org.jetbrains.plugins.groovy.lang.completion.filters.types;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
@@ -56,8 +58,14 @@ public class BuiltInTypeFilter implements ElementFilter {
         context.getParent() instanceof GrReferenceElement &&
             !(context.getParent().getParent() instanceof GrImportStatement) &&
             !(context.getParent().getParent() instanceof GrPackageDefinition)) {
-      return !(previous != null &&
-          GroovyTokenTypes.mAT.equals(previous.getNode().getElementType()));
+      PsiElement prevSibling = context.getPrevSibling();
+      if (context.getParent() instanceof GrReferenceElement && prevSibling != null && prevSibling.getNode() != null) {
+        ASTNode node = prevSibling.getNode();
+        return !GroovyTokenTypes.DOTS.contains(node.getElementType());
+      } else {
+        return !(previous != null &&
+            GroovyTokenTypes.mAT.equals(previous.getNode().getElementType()));
+      }
     }
     if (PsiImplUtil.realPrevious(context.getParent().getPrevSibling()) instanceof GrModifierList) {
       return true;

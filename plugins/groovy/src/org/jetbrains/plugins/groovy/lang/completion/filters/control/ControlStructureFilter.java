@@ -17,9 +17,11 @@ package org.jetbrains.plugins.groovy.lang.completion.filters.control;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
@@ -29,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author ilyas
@@ -38,6 +41,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 public class ControlStructureFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
     final int offset = context.getTextRange().getStartOffset();
+    PsiElement prevSibling = context.getPrevSibling();
+    if (context.getParent() instanceof GrReferenceElement && prevSibling != null && prevSibling.getNode() != null) {
+      ASTNode node = prevSibling.getNode();
+      return !GroovyTokenTypes.DOTS.contains(node.getElementType());
+    }
     if (GroovyCompletionUtil.isNewStatement(context, true)) {
       final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(offset - 1, context);
       if (leaf != null) {
