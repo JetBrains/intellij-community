@@ -36,7 +36,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,8 +46,10 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -61,35 +64,8 @@ public class AddAction extends BasicAction {
   }
 
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
-    SvnVcs.SVNStatusHolder cachedStatus = vcs.getCachedStatus(file);
-    SVNStatus status;
-    try {
-      if (cachedStatus != null) {
-        status = cachedStatus.getStatus();
-      } else {
-        SVNStatusClient stClient = vcs.createStatusClient();
-        status = stClient.doStatus(new File(file.getPath()), false);
-        vcs.cacheStatus(file, status);
-      }
-      return status != null &&
-             (status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
-              status.getContentsStatus() == SVNStatusType.STATUS_IGNORED);
-    }
-    catch (SVNException e) {
-      //
-      if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-        // check for root.
-        File parent = new File(file.getPath());
-        parent = parent.getParentFile();
-        while(parent != null) {
-          if (SVNWCUtil.isVersionedDirectory(parent)) {
-            return true;
-          }
-          parent = parent.getParentFile();
-        }
-      }
-    }
-    return false;
+    FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(file);
+    return fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.IGNORED;
   }
 
   protected boolean needsFiles() {
