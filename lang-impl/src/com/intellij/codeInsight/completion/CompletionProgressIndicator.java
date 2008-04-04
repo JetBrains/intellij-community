@@ -47,7 +47,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, new LookupItem[0], prefix, new CompletionPreferencePolicy(
         prefix, parameters), adText);
 
-    Disposer.register(this, myLookup);
     myLookup.addLookupListener(new LookupAdapter() {
       public void itemSelected(LookupEvent event) {
         cancel();
