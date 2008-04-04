@@ -83,7 +83,7 @@ public class SurroundWithUtil {
     for (PsiElement element : elements) {
       if (element instanceof PsiVariable) {
         GlobalSearchScope projectScope = GlobalSearchScope.projectScope(element.getProject());
-        PsiReference[] refs = ReferencesSearch.search(element, projectScope, false).toArray(new PsiReference[0]);
+        PsiReference[] refs = ReferencesSearch.search(element, projectScope, false).toArray(PsiReference.EMPTY_ARRAY);
         if (refs.length > 0) {
           PsiReference lastRef = refs[refs.length - 1];
           if (lastRef.getElement().getTextOffset() > endOffset) {

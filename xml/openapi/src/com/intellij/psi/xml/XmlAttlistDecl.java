@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Mike
  */
 public interface XmlAttlistDecl extends XmlElement {
-  XmlAttlistDecl[] EMPTY = new XmlAttlistDecl[0];
+  XmlAttlistDecl[] EMPTY_ARRAY = new XmlAttlistDecl[0];
 
   XmlElement getNameElement();
   @Nullable String getName();

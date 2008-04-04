@@ -6,8 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 public interface AntReference {
 
-  IntentionAction[] EMPTY_INTENTIONS = new IntentionAction[0];
-
   boolean shouldBeSkippedByAnnotator();
 
   void setShouldBeSkippedByAnnotator(boolean value);

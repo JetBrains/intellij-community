@@ -19,7 +19,7 @@ public interface AntTarget extends AntStructuredElement {
     }
   }
   
-  AntTarget[] EMPTY_TARGETS = new AntTarget[0];
+  AntTarget[] EMPTY_ARRAY = new AntTarget[0];
 
   /**
    * @return If project is named, target name prefixed with project name and the dot,

@@ -188,7 +188,7 @@ public class ExpectedTypesProvider {
     private PsiExpression myExpr;
     private boolean myForCompletion;
     private final ExpectedClassProvider myClassProvider;
-    private ExpectedTypeInfo[] myResult = ExpectedTypeInfo.EMPTY;
+    private ExpectedTypeInfo[] myResult = ExpectedTypeInfo.EMPTY_ARRAY;
     @NonNls private static final String LENGTH_SYNTHETIC_ARRAY_FIELD = "length";
 
     public MyParentVisitor(PsiExpression expr, boolean forCompletion, ExpectedClassProvider classProvider) {
@@ -269,7 +269,7 @@ public class ExpectedTypesProvider {
           myResult = new ExpectedTypeInfo[]{info};
         }
         else {
-          myResult = ExpectedTypeInfo.EMPTY;
+          myResult = ExpectedTypeInfo.EMPTY_ARRAY;
         }
       }
     }
@@ -389,7 +389,7 @@ public class ExpectedTypesProvider {
           myResult = new ExpectedTypeInfo[]{info};
         }
         else {
-          myResult = ExpectedTypeInfo.EMPTY;
+          myResult = ExpectedTypeInfo.EMPTY_ARRAY;
         }
       }
       else {
@@ -411,7 +411,7 @@ public class ExpectedTypesProvider {
             return;
           }
         }
-        myResult = ExpectedTypeInfo.EMPTY;
+        myResult = ExpectedTypeInfo.EMPTY_ARRAY;
       }
     }
 
@@ -499,7 +499,7 @@ public class ExpectedTypesProvider {
           i == JavaTokenType.LE ||
           i == JavaTokenType.GE) {
         if (anotherType == null) {
-          myResult = ExpectedTypeInfo.EMPTY;
+          myResult = ExpectedTypeInfo.EMPTY_ARRAY;
         }
         else {
           ExpectedTypeInfoImpl info = createInfoImpl(PsiType.DOUBLE, ExpectedTypeInfo.TYPE_OR_SUBTYPE,
@@ -509,7 +509,7 @@ public class ExpectedTypesProvider {
       }
       else if (i == JavaTokenType.PLUS) {
         if (anotherType == null) {
-          myResult = ExpectedTypeInfo.EMPTY;
+          myResult = ExpectedTypeInfo.EMPTY_ARRAY;
         }
         else {
           if (anotherType.equalsToText("java.lang.String")) {
@@ -534,7 +534,7 @@ public class ExpectedTypesProvider {
       }
       else if (i == JavaTokenType.EQEQ || i == JavaTokenType.NE) {
         if (anotherType == null) {
-          myResult = ExpectedTypeInfo.EMPTY;
+          myResult = ExpectedTypeInfo.EMPTY_ARRAY;
         }
         else {
           ExpectedTypeInfoImpl info;
@@ -566,7 +566,7 @@ public class ExpectedTypesProvider {
       }
       else if (i == JavaTokenType.LTLT || i == JavaTokenType.GTGT || i == JavaTokenType.GTGTGT) {
         if (anotherType == null) {
-          myResult = ExpectedTypeInfo.EMPTY;
+          myResult = ExpectedTypeInfo.EMPTY_ARRAY;
         }
         else {
           ExpectedTypeInfoImpl info = createInfoImpl(PsiType.DOUBLE, ExpectedTypeInfo.TYPE_OR_SUBTYPE,
@@ -581,7 +581,7 @@ public class ExpectedTypesProvider {
       }
       else if (i == JavaTokenType.OR || i == JavaTokenType.XOR || i == JavaTokenType.AND) {
         if (anotherType == null) {
-          myResult = ExpectedTypeInfo.EMPTY;
+          myResult = ExpectedTypeInfo.EMPTY_ARRAY;
         }
         else {
           ExpectedTypeInfoImpl info;
@@ -768,7 +768,7 @@ public class ExpectedTypesProvider {
                                                                      PsiExpression argument,
                                                                      boolean forCompletion) {
       if (methodCandidates.length == 0) {
-        return ExpectedTypeInfo.EMPTY;
+        return ExpectedTypeInfo.EMPTY_ARRAY;
       }
       final PsiExpression[] args = argumentList.getExpressions();
       final int index = ArrayUtil.indexOf(args, argument);

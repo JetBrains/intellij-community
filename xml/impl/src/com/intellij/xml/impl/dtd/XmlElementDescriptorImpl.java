@@ -196,9 +196,9 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   }
 
   public static @NotNull XmlAttlistDecl[] getCachedAttDecls(@Nullable XmlElement owner) {
-    if (owner == null) return XmlAttlistDecl.EMPTY;
+    if (owner == null) return XmlAttlistDecl.EMPTY_ARRAY;
     owner = (XmlElement)PsiTreeUtil.getParentOfType(owner, ourParentClassesToScanAttributes);
-    if (owner == null) return XmlAttlistDecl.EMPTY;
+    if (owner == null) return XmlAttlistDecl.EMPTY_ARRAY;
     return myAttlistDeclCache.get(ourCachedAttlistKeys, owner, null).getValue();
   }
 

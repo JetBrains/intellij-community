@@ -48,7 +48,7 @@ public class DummyCompileContext implements CompileContext {
   }
 
   public CompilerMessage[] getMessages(CompilerMessageCategory category) {
-    return new CompilerMessage[0];
+    return CompilerMessage.EMPTY_ARRAY;
   }
 
   public int getMessageCount(CompilerMessageCategory category) {

@@ -118,7 +118,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
     if (kind == TYPE_STRICTLY) {
       if (info1.kind == TYPE_STRICTLY) {
-        if (dimCount != info1.dimCount) return ExpectedTypeInfo.EMPTY;
+        if (dimCount != info1.dimCount) return ExpectedTypeInfo.EMPTY_ARRAY;
         if (info1.type.equals(type)) return new ExpectedTypeInfoImpl[] {this};
       }
       else {
@@ -127,7 +127,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     }
     else if (kind == TYPE_OR_SUBTYPE) {
       if (info1.kind == TYPE_STRICTLY) {
-        if (dimCount != info1.dimCount) return ExpectedTypeInfo.EMPTY;
+        if (dimCount != info1.dimCount) return ExpectedTypeInfo.EMPTY_ARRAY;
         if (type.isAssignableFrom(info1.type)) return new ExpectedTypeInfoImpl[] {info1};
       }
       else if (info1.kind == TYPE_OR_SUBTYPE) {
@@ -142,7 +142,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     }
     else if (kind == TYPE_OR_SUPERTYPE) {
       if (info1.kind == TYPE_STRICTLY) {
-        if (dimCount != info1.dimCount) return ExpectedTypeInfo.EMPTY;
+        if (dimCount != info1.dimCount) return ExpectedTypeInfo.EMPTY_ARRAY;
         if (info1.type.isAssignableFrom(type)) return new ExpectedTypeInfoImpl[] {info1};
       }
       else if (info1.kind == TYPE_OR_SUBTYPE) {
@@ -164,7 +164,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
     //todo: the following cases are not implemented: SUPERxSUB, SUBxSUPER
 
-    return ExpectedTypeInfo.EMPTY;
+    return ExpectedTypeInfo.EMPTY_ARRAY;
   }
 
   public boolean isArrayTypeInfo () {

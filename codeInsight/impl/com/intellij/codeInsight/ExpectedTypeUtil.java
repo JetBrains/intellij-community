@@ -11,7 +11,7 @@ public class ExpectedTypeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ExpectedTypeUtil");
 
   public static ExpectedTypeInfo[] intersect(List<ExpectedTypeInfo[]> typeInfos) {
-    if (typeInfos.isEmpty()) return ExpectedTypeInfo.EMPTY;
+    if (typeInfos.isEmpty()) return ExpectedTypeInfo.EMPTY_ARRAY;
 
     ExpectedTypeInfos result = new ExpectedTypeInfos(typeInfos.get(0));
     ExpectedTypeInfos acc = new ExpectedTypeInfos();
@@ -28,7 +28,7 @@ public class ExpectedTypeUtil {
         }
       }
       if (acc.isEmpty()) {
-        return ExpectedTypeInfo.EMPTY;
+        return ExpectedTypeInfo.EMPTY_ARRAY;
       }
       result = acc;
     }

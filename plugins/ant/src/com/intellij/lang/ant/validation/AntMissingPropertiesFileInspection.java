@@ -3,6 +3,7 @@ package com.intellij.lang.ant.validation;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
@@ -60,7 +61,7 @@ public class AntMissingPropertiesFileInspection extends AntInspection {
         if (AntFileImpl.PROPERTY.equals(prop.getSourceElement().getName())) {
           final String filename = prop.getFileName();
           if (filename != null && prop.getPropertiesFile() == null) {
-            problems.add(manager.createProblemDescriptor(prop, AntBundle.message("file.doesnt.exist", filename), EMPTY_FIXES,
+            problems.add(manager.createProblemDescriptor(prop, AntBundle.message("file.doesnt.exist", filename), LocalQuickFix.EMPTY_ARRAY,
                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
         }

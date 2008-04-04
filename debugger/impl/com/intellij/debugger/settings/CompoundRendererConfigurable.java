@@ -58,8 +58,8 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
   private JLabel myExpandedLabel;
   private JPanel myMainPanel;
   private Table myTable;
-  private static final @NonNls String EMPTY_PANEL_ID = "EMPTY";
-  private static final @NonNls String DATA_PANEL_ID = "DATA";
+  @NonNls private static final String EMPTY_PANEL_ID = "EMPTY";
+  @NonNls private static final String DATA_PANEL_ID = "DATA";
   private JButton myAddButton;
   private JButton myRemoveButton;
   private JButton myUpButton;

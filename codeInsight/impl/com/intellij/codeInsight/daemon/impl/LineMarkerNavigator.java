@@ -47,7 +47,7 @@ class LineMarkerNavigator {
     else if (element instanceof PsiClass) {
       PsiClass aClass = (PsiClass)element;
       if (type == MarkerType.SUBCLASSED_CLASS) {
-        PsiClass[] inheritors = ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).toArray(new PsiClass[0]);
+        PsiClass[] inheritors = ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).toArray(PsiClass.EMPTY_ARRAY);
         if (inheritors.length == 0) return;
         String title = aClass.isInterface()
                        ? CodeInsightBundle.message("goto.implementation.chooser.title", aClass.getName(), inheritors.length)

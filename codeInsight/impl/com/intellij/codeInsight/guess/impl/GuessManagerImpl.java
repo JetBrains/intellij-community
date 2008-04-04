@@ -195,7 +195,7 @@ public class GuessManagerImpl extends GuessManager {
     SearchScope searchScope = new LocalSearchScope(scopeFile);
 
     if ((flags & (CHECK_USAGE | CHECK_DOWN)) != 0){
-      PsiReference[] varRefs = ReferencesSearch.search(var, searchScope, false).toArray(new PsiReference[0]);
+      PsiReference[] varRefs = ReferencesSearch.search(var, searchScope, false).toArray(PsiReference.EMPTY_ARRAY);
       for (PsiReference varRef : varRefs) {
         PsiElement ref = varRef.getElement();
 
@@ -248,7 +248,7 @@ public class GuessManagerImpl extends GuessManager {
 
         PsiMethod method = (PsiMethod)var.getParent().getParent();
         //System.out.println("analyzing usages of " + method + " in file " + scopeFile);
-        PsiReference[] methodRefs = ReferencesSearch.search(method, searchScope, false).toArray(new PsiReference[0]);
+        PsiReference[] methodRefs = ReferencesSearch.search(method, searchScope, false).toArray(PsiReference.EMPTY_ARRAY);
         for (PsiReference methodRef : methodRefs) {
           PsiElement ref = methodRef.getElement();
           if (ref.getParent() instanceof PsiMethodCallExpression) {

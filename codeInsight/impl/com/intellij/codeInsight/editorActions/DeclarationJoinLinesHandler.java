@@ -42,7 +42,7 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
     PsiAssignmentExpression assignment = (PsiAssignmentExpression)ref.getParent();
     if (!(assignment.getParent() instanceof PsiExpressionStatement)) return -1;
 
-    if (ReferencesSearch.search(var, new LocalSearchScope(assignment.getRExpression()), false).toArray(new PsiReference[0]).length > 0) {
+    if (ReferencesSearch.search(var, new LocalSearchScope(assignment.getRExpression()), false).toArray(PsiReference.EMPTY_ARRAY).length > 0) {
       return -1;
     }
 

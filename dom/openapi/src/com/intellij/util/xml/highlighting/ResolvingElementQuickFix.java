@@ -173,6 +173,6 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
 
   public static LocalQuickFix[] createFixes(final String newName, Class<? extends DomElement> clazz, final DomElement scope) {
     final LocalQuickFix fix = createFix(newName, clazz, scope);
-    return fix != null ? new LocalQuickFix[] { fix } : EMPTY_ARRAY;
+    return fix != null ? new LocalQuickFix[] { fix } : LocalQuickFix.EMPTY_ARRAY;
   }
 }

@@ -34,20 +34,18 @@ package com.intellij.openapi.options.colors.pages;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
-import com.intellij.openapi.options.OptionsBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Map;
 
-import org.jetbrains.annotations.NotNull;
-
 public class XMLColorsPage implements ColorSettingsPage {
-  private static final ColorDescriptor[] COLORS = new ColorDescriptor[0];
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
     new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.prologue"), XmlHighlighterColors.XML_PROLOGUE),
     new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.comment"), XmlHighlighterColors.XML_COMMENT),
@@ -75,7 +73,7 @@ public class XMLColorsPage implements ColorSettingsPage {
 
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
-    return COLORS;
+    return ColorDescriptor.EMPTY_ARRAY;
   }
 
   @NotNull

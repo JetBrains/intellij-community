@@ -15,7 +15,7 @@ import java.util.List;
 
 public interface AntFile extends PsiFile, AntElement, PsiNamedElement, ModificationTracker {
 
-  AntFile[] NO_FILES = new AntFile[0];
+  AntFile[] EMPTY_ARRAY = new AntFile[0];
 
   @NotNull
   XmlFile getSourceElement();

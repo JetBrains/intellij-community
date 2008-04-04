@@ -57,8 +57,6 @@ public class PropertiesColorsPage implements ColorSettingsPage {
     }
   }
 
-  private static final ColorDescriptor[] COLORS = new ColorDescriptor[0];
-
   @NotNull
   public String getDisplayName() {
     return OptionsBundle.message("properties.options.display.name");
@@ -75,7 +73,7 @@ public class PropertiesColorsPage implements ColorSettingsPage {
 
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
-    return COLORS;
+    return ColorDescriptor.EMPTY_ARRAY;
   }
 
   @NotNull

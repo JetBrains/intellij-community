@@ -108,7 +108,7 @@ public abstract class SelectLocationStep extends WizardStep {
   }
 
   protected AnAction[] getActions(){
-    return new AnAction[0];
+    return AnAction.EMPTY_ARRAY;
   }
 
   public File getSelectedFile() {

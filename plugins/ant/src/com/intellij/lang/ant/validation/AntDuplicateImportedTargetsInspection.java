@@ -4,6 +4,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
@@ -54,7 +55,7 @@ public class AntDuplicateImportedTargetsInspection extends AntInspection {
               final String duplicatedMessage =
                 AntBundle.message("target.is.duplicated.in.imported.file", name, target.getAntFile().getName());
               problems
-                .add(manager.createProblemDescriptor(t, duplicatedMessage, EMPTY_FIXES, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                .add(manager.createProblemDescriptor(t, duplicatedMessage, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
           }
           final int prolemCount = problems.size();

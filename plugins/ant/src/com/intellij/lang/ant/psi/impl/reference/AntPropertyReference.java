@@ -123,7 +123,7 @@ public class AntPropertyReference extends AntGenericReference {
   @NotNull
   public IntentionAction[] getFixes() {
     final String name = getCanonicalRepresentationText();
-    if (name == null || name.length() == 0) return EMPTY_INTENTIONS;
+    if (name == null || name.length() == 0) return IntentionAction.EMPTY_ARRAY;
 
     final List<IntentionAction> result = new ArrayList<IntentionAction>();
     final AntProject project = getElement().getAntProject();

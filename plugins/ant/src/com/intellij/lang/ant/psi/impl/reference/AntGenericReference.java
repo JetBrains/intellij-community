@@ -56,7 +56,7 @@ public abstract class AntGenericReference extends CachingReference implements An
 
   @NotNull
   public IntentionAction[] getFixes() {
-    return EMPTY_INTENTIONS;
+    return IntentionAction.EMPTY_ARRAY;
   }
 
   protected XmlAttribute getAttribute() {

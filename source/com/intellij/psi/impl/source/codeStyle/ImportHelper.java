@@ -290,7 +290,7 @@ public class ImportHelper{
                       PsiClass conflictClass2 = facade.findClass(conflictClassName2, resolveScope);
                       if (conflictClass2 != null && helper.isAccessible(conflictClass2, file, null)) {
                         PsiReference[] usages =
-                          ReferencesSearch.search(conflictClass, new LocalSearchScope(file), false).toArray(new PsiReference[0]);
+                          ReferencesSearch.search(conflictClass, new LocalSearchScope(file), false).toArray(PsiReference.EMPTY_ARRAY);
                         if (usages.length > 0) {
                           classesToReimport.add(conflictClass);
                         }

@@ -162,7 +162,7 @@ public class AntTargetReference extends AntGenericReference {
   @NotNull
   public IntentionAction[] getFixes() {
     final String name = getCanonicalRepresentationText();
-    if (name == null || name.length() == 0) return EMPTY_INTENTIONS;
+    if (name == null || name.length() == 0) return IntentionAction.EMPTY_ARRAY;
 
     final AntProject project = getElement().getAntProject();
     final AntFile[] importedFiles = project.getImportedFiles();

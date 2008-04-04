@@ -34,17 +34,16 @@ package com.intellij.openapi.options.colors.pages;
 import com.intellij.ide.highlighter.HtmlFileHighlighter;
 import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
-import com.intellij.openapi.options.OptionsBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Map;
-
-import org.jetbrains.annotations.NotNull;
 
 public class HTMLColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
@@ -55,8 +54,6 @@ public class HTMLColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.attribute.value"), XmlHighlighterColors.HTML_ATTRIBUTE_VALUE),
     new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.entity.reference"), XmlHighlighterColors.HTML_ENTITY_REFERENCE),
   };
-
-  private static final ColorDescriptor[] COLORS = new ColorDescriptor[0];
 
   @NotNull
   public String getDisplayName() {
@@ -74,7 +71,7 @@ public class HTMLColorsPage implements ColorSettingsPage {
 
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
-    return COLORS;
+    return ColorDescriptor.EMPTY_ARRAY;
   }
 
   @NotNull

@@ -70,7 +70,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
   static boolean isParameterAssignedToField(final PsiParameter parameter) {
     final PsiSearchHelper searchHelper = parameter.getManager().getSearchHelper();
     final PsiReference[] references =
-      ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false).toArray(new PsiReference[0]);
+      ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false).toArray(PsiReference.EMPTY_ARRAY);
     for (PsiReference reference : references) {
       if (!(reference instanceof PsiReferenceExpression)) continue;
       final PsiReferenceExpression expression = (PsiReferenceExpression)reference;

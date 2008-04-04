@@ -101,13 +101,13 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     synchronized (PsiLock.LOCK) {
       if (myTargets != null) return myTargets;
       //noinspection NonPrivateFieldAccessedInSynchronizedContext
-      if (myInGettingChildren) return AntTarget.EMPTY_TARGETS;
+      if (myInGettingChildren) return AntTarget.EMPTY_ARRAY;
       final List<AntTarget> targets = new ArrayList<AntTarget>();
       for (final AntElement child : getChildren()) {
         if (child instanceof AntTarget) targets.add((AntTarget)child);
       }
       final int size = targets.size();
-      return myTargets = (size == 0) ? AntTarget.EMPTY_TARGETS : targets.toArray(new AntTarget[size]);
+      return myTargets = (size == 0) ? AntTarget.EMPTY_ARRAY : targets.toArray(new AntTarget[size]);
     }
   }
 
@@ -126,7 +126,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     synchronized (PsiLock.LOCK) {
       if (myImportedTargets == null) {
         if (getImportedFiles().length == 0) {
-          myImportedTargets = AntTarget.EMPTY_TARGETS;
+          myImportedTargets = AntTarget.EMPTY_ARRAY;
         }
         else {
           final Set<PsiElement> targets = PsiElementSetSpinAllocator.alloc();
@@ -139,7 +139,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
               PsiElementSetSpinAllocator.dispose(elementsDepthStack);
             }
             final int size = targets.size();
-            myImportedTargets = (size == 0) ? AntTarget.EMPTY_TARGETS : targets.toArray(new AntTarget[size]);
+            myImportedTargets = (size == 0) ? AntTarget.EMPTY_ARRAY : targets.toArray(new AntTarget[size]);
           }
           finally {
             PsiElementSetSpinAllocator.dispose(targets);

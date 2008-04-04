@@ -54,7 +54,7 @@ public class AntFileReference extends FileReference implements AntReference {
 
   @NotNull
   public IntentionAction[] getFixes() {
-    return EMPTY_INTENTIONS;
+    return IntentionAction.EMPTY_ARRAY;
   }
 
   @Nullable

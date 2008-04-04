@@ -78,7 +78,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider {
       if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataName)) {
         if (element instanceof ResourceBundle) {
           List<PropertiesFile> propertiesFiles = ((ResourceBundle)element).getPropertiesFiles(myProject);
-          return propertiesFiles.toArray(new PsiElement[0]);
+          return propertiesFiles.toArray(PsiElement.EMPTY_ARRAY);
         }
       }
       if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataName)) {

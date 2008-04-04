@@ -22,7 +22,7 @@ import java.util.List;
 public class ViewAsGroup extends ActionGroup{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.ViewAsGroup");
 
-  private AnAction [] myChildren      = new AnAction[0];
+  private AnAction[] myChildren = AnAction.EMPTY_ARRAY;
 
   public ViewAsGroup() {
     super(null, true);
@@ -97,7 +97,7 @@ public class ViewAsGroup extends ActionGroup{
       }
 
       if (!anyValueDescriptor) {
-        return new AnAction[0];
+        return AnAction.EMPTY_ARRAY;
       }
 
       if (allApp) {
