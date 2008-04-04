@@ -5,6 +5,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.compiled.ClsStubBuilder;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
@@ -33,7 +34,8 @@ public class ClsBuilderTest extends LightIdeaTestCase {
     final byte[] bytes = FileUtil.adaptiveLoadBytes(stream);
     final PsiClassStub stub = ClsStubBuilder.build(bytes);
     final String butWas = ((PsiClassStubImpl)stub).printTree();
-    final String expected = FileUtil.loadTextAndClose(new FileReader(PathManagerEx.getTestDataPath() + "/psi/cls/stubBuilder/" + goldFile));
+    String expected = FileUtil.loadTextAndClose(new FileReader(PathManagerEx.getTestDataPath() + "/psi/cls/stubBuilder/" + goldFile));
+    expected = StringUtil.convertLineSeparators(expected);
     assertEquals(expected, butWas);
   }
 }
