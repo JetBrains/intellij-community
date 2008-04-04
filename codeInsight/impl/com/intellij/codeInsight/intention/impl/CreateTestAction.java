@@ -70,7 +70,12 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
     ensureJuntLibraryAttached(project, srcModule);
 
-    CreateTestDialog d = new CreateTestDialog(project, getText(), srcClass.getName() + "Test", srcPackage, srcModule);
+    CreateTestDialog d = new CreateTestDialog(project,
+                                              getText(),
+                                              srcClass.getName() + "Test",
+                                              hasJUnitLib(project) ? "junit.framework.TestCase" : "",
+                                              srcPackage,
+                                              srcModule);
     d.show();
     if (!d.isOK()) return;
 
@@ -102,8 +107,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   }
 
   private void ensureJuntLibraryAttached(Project project, final Module srcModule) {
-    if (findClass(project, "junit.framework.TestCase") != null
-        || findClass(project, "org.testng.annotations.Test") != null) return;
+    if (hasJUnitLib(project) || hasTestNGLib(project)) return;
 
     JLabel label = new JLabel(CodeInsightBundle.message("intention.create.test.no.testing.library"));
 
@@ -146,6 +150,14 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
         OrderEntryFix.addJarToRoots(path[0], srcModule);
       }
     });
+  }
+
+  private boolean hasJUnitLib(Project project) {
+    return findClass(project, "junit.framework.TestCase") != null;
+  }
+
+  private boolean hasTestNGLib(Project project) {
+    return findClass(project, "org.testng.annotations.Test") != null;
   }
 
   private static String getTestNGJarPath() {

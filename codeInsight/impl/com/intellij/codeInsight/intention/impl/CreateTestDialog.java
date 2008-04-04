@@ -54,6 +54,7 @@ public class CreateTestDialog extends DialogWrapper {
   public CreateTestDialog(@NotNull Project project,
                           @NotNull String title,
                           String targetClassName,
+                          @NotNull String superClassName,
                           PsiPackage targetPackage,
                           Module targetModule) {
     super(project, true);
@@ -65,8 +66,7 @@ public class CreateTestDialog extends DialogWrapper {
     setPreferredSize(myTargetClassNameField);
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-    mySuperClassFieldCodeFragment = factory.createTypeCodeFragment("TestCase", targetPackage, true);
-    mySuperClassFieldCodeFragment.addImportsFromString("junit.framework.TestCase");
+    mySuperClassFieldCodeFragment = factory.createTypeCodeFragment(superClassName, targetPackage, true);
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(mySuperClassFieldCodeFragment);
     mySuperClassField = new EditorTextField(document, myProject, StdFileTypes.JAVA);
 
