@@ -2,6 +2,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.ArrayUtil;
 import com.intellij.ide.ui.UISettings;
 import org.jdom.Element;
@@ -285,9 +286,12 @@ public final class DesktopLayout implements JDOMExternalizable {
 
   public List<String> getVisibleIdsOn(final ToolWindowAnchor anchor, ToolWindowManagerImpl manager) {
     ArrayList<String> ids = new ArrayList<String>();
-    for (WindowInfoImpl each : myRegisteredInfos) {
+    for (WindowInfoImpl each : getInfos()) {
+      if (manager == null) break;
       if (each.getAnchor() == anchor) {
-        if (manager.getToolWindow(each.getId()).isAvailable() || UISettings.getInstance().ALWAYS_SHOW_WINDOW_BUTTONS) {
+        final ToolWindow window = manager.getToolWindow(each.getId());
+        if (window == null) continue;
+        if (window.isAvailable() || UISettings.getInstance().ALWAYS_SHOW_WINDOW_BUTTONS) {
           ids.add(each.getId());
         }
       }
