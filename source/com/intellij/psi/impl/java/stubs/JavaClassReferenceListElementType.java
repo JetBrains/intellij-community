@@ -28,7 +28,7 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
   }
 
   public PsiClassReferenceListStub createStub(final PsiReferenceList psi, final StubElement parentStub) {
-    return new PsiClassReferenceListStubImpl(parentStub, this, getTexts(psi), psi.getRole());
+    return new PsiClassReferenceListStubImpl(parentStub, getTexts(psi), psi.getRole());
   }
 
   private static String[] getTexts(PsiReferenceList psi) {
@@ -66,7 +66,7 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
       names[i] = DataInputOutputUtil.readNAME(dataStream, nameStorage);
     }
 
-    return new PsiClassReferenceListStubImpl(parentStub, this, names, role == 0
+    return new PsiClassReferenceListStubImpl(parentStub, names, role == 0
                                                                       ? PsiReferenceList.Role.EXTENDS_LIST
                                                                       : role == 1
                                                                         ? PsiReferenceList.Role.IMPLEMENTS_LIST

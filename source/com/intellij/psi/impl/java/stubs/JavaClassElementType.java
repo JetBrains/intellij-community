@@ -38,9 +38,11 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
                                             psi.isEnum(),
                                             psi instanceof PsiEnumConstantInitializer,
                                             psi instanceof PsiAnonymousClass,
-                                            psi.isAnnotationType());
+                                            psi.isAnnotationType(),
+                                            psi instanceof PsiAnonymousClass && ((PsiAnonymousClass)psi).isInQualifiedNew());
+
     String baseRef = psi instanceof PsiAnonymousClass ? ((PsiAnonymousClass)psi).getBaseClassReference().getText() : null;
-    return new PsiClassStubImpl(parentStub, this, psi.getQualifiedName(), psi.getName(), baseRef, flags);
+    return new PsiClassStubImpl(parentStub, psi.getQualifiedName(), psi.getName(), baseRef, flags);
   }
 
 
@@ -62,12 +64,12 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
 
     if (PsiClassStubImpl.isAnonymous(flags)) {
       String baseref = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-      return new PsiClassStubImpl(parentStub, this, null, null, baseref, flags);
+      return new PsiClassStubImpl(parentStub, null, null, baseref, flags);
     }
     else {
       String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
       String qname = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-      return new PsiClassStubImpl(parentStub, this, qname, name, null, flags);
+      return new PsiClassStubImpl(parentStub, qname, name, null, flags);
     }
   }
 

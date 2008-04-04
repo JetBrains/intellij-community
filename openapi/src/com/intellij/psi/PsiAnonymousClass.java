@@ -47,4 +47,6 @@ public interface PsiAnonymousClass extends PsiClass {
    */
   @Nullable
   PsiExpressionList getArgumentList();
+
+  boolean isInQualifiedNew();
 }

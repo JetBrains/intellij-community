@@ -3,6 +3,7 @@
  */
 package com.intellij.psi.impl.java.stubs;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.stubs.NamedStub;
 import org.jetbrains.annotations.NonNls;
@@ -22,5 +23,9 @@ public interface PsiClassStub extends NamedStub<PsiClass> {
   boolean isEnum();
   boolean isEnumConstantInitializer();
   boolean isAnonymous();
+  boolean isAnonymousInQualifiedNew();
   boolean isAnnotationType();
+
+  LanguageLevel getLanguageLevel();
+  String getSourceFileName();
 }

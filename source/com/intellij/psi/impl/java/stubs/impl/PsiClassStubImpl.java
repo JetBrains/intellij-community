@@ -3,9 +3,10 @@
  */
 package com.intellij.psi.impl.java.stubs.impl;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 
@@ -21,13 +22,16 @@ public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub
   private final static int ENUM_CONSTANT_INITIALIZER = 0x08;
   private final static int ANONYMOUS = 0x10;
   private final static int ANON_TYPE = 0x20;
+  private final static int IN_QUALIFIED_NEW = 0x40;
+  private LanguageLevel myLanguageLevel = null;
+  private String mySourceFileName = null;
 
-  public PsiClassStubImpl(final StubElement parent, final IStubElementType elementType,
+  public PsiClassStubImpl(final StubElement parent,
                           final String qualifiedName,
                           final String name,
                           final String baseRefText,
                           final byte flags) {
-    super(parent, elementType);
+    super(parent, JavaStubElementTypes.CLASS);
     myQualifiedName = qualifiedName;
     myName = name;
     myBaseRefText = baseRefText;
@@ -74,6 +78,26 @@ public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub
     return (myFlags & ANON_TYPE) != 0;
   }
 
+  public LanguageLevel getLanguageLevel() {
+    return myLanguageLevel;
+  }
+
+  public String getSourceFileName() {
+    return mySourceFileName;
+  }
+
+  public void setLanguageLevel(final LanguageLevel languageLevel) {
+    myLanguageLevel = languageLevel;
+  }
+
+  public void setSourceFileName(final String sourceFileName) {
+    mySourceFileName = sourceFileName;
+  }
+
+  public boolean isAnonymousInQualifiedNew() {
+    return (myFlags & IN_QUALIFIED_NEW) != 0;
+  }
+
   public byte getFlags() {
     return myFlags;
   }
@@ -83,7 +107,8 @@ public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub
                                boolean isEnum,
                                boolean isEnumConstantInitializer,
                                boolean isAnonymous,
-                               boolean isAnnotationType) {
+                               boolean isAnnotationType,
+                               boolean isInQualifiedNew) {
     byte flags = 0;
     if (isDeprecated) flags |= DEPRECATED;
     if (isInterface) flags |= INTERFACE;
@@ -91,6 +116,55 @@ public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub
     if (isEnumConstantInitializer) flags |= ENUM_CONSTANT_INITIALIZER;
     if (isAnonymous) flags |= ANONYMOUS;
     if (isAnnotationType) flags |= ANON_TYPE;
+    if (isInQualifiedNew) flags |= IN_QUALIFIED_NEW;
     return flags;
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.
+        append("PsiClassStub[");
+
+    if (isInterface()) {
+      builder.append("interface ");
+    }
+
+    if (isAnonymous()) {
+      builder.append("anonymous ");
+    }
+
+    if (isEnum()) {
+      builder.append("enum ");
+    }
+
+    if (isAnnotationType()) {
+      builder.append("annotation ");
+    }
+
+    if (isEnumConstantInitializer()) {
+      builder.append("enumInit ");
+    }
+
+    if (isDeprecated()) {
+      builder.append("deprecated ");
+    }
+
+    builder.
+        append("name=").append(getName()).
+        append(" fqn=").append(getQualifiedName());
+
+    if (getBaseClassReferenceText() != null) {
+      builder.append(" baseref=").append(getBaseClassReferenceText());
+    }
+
+
+    if (isAnonymousInQualifiedNew()) {
+      builder.append(" inqualifnew");
+    }
+
+    builder.append("]");
+
+    return builder.toString();
   }
 }

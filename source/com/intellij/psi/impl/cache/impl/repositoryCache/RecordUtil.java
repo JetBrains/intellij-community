@@ -391,6 +391,7 @@ public class RecordUtil {
   }
 
   public static String createTypeText(TypeInfo typeInfo) {
+    if (typeInfo == null) return null;
     if (typeInfo.arrayCount == 0) return typeInfo.text;
     if (typeInfo.text == null) return null;
 

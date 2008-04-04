@@ -33,4 +33,21 @@ public class TypeInfo {
 
     return result;
   }
+
+  public static TypeInfo fromString(String typeText) {
+    TypeInfo info = new TypeInfo();
+    if (typeText.endsWith("...")) {
+      info.isEllipsis = true;
+      typeText = typeText.substring(0, typeText.length() - 3);
+    }
+
+    while (typeText.endsWith("[]")) {
+      info.arrayCount++;
+      typeText = typeText.substring(0, typeText.length() - 2);
+    }
+
+    info.text = typeText;
+
+    return info;
+  }
 }

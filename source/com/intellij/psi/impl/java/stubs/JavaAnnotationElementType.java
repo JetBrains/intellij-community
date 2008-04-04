@@ -30,7 +30,7 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
   }
 
   public PsiAnnotationStub createStub(final PsiAnnotation psi, final StubElement parentStub) {
-    return new PsiAnnotationStubImpl(parentStub, this, psi.getText());
+    return new PsiAnnotationStubImpl(parentStub, psi.getText());
   }
 
   public void serialize(final PsiAnnotationStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)
@@ -40,7 +40,7 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
 
   public PsiAnnotationStub deserialize(final DataInputStream dataStream, final StubElement parentStub, final PersistentStringEnumerator nameStorage)
       throws IOException {
-    return new PsiAnnotationStubImpl(parentStub, this, DataInputOutputUtil.readNAME(dataStream, nameStorage));
+    return new PsiAnnotationStubImpl(parentStub, DataInputOutputUtil.readNAME(dataStream, nameStorage));
   }
 
   public void indexStub(final PsiAnnotationStub stub, final IndexSink sink) {

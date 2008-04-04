@@ -40,6 +40,10 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
     return ((PsiEnumConstant)parent).getArgumentList();
   }
 
+  public boolean isInQualifiedNew() {
+    return false;
+  }
+
   @NotNull
   public PsiJavaCodeReferenceElement getBaseClassReference() {
     PsiClass containingClass = getBaseClass();

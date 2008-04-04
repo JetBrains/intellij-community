@@ -80,4 +80,18 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
   public Project getProject() {
     return getPsi().getProject();
   }
+
+  public String printTree() {
+    StringBuilder builder = new StringBuilder();
+    printTree(builder, 0);
+    return builder.toString();
+  }
+
+  private void printTree(StringBuilder builder, int nestingLevel) {
+    for (int i = 0; i < nestingLevel; i++) builder.append("  ");
+    builder.append(toString()).append('\n');
+    for (StubElement child : getChildrenStubs()) {
+      ((StubBase)child).printTree(builder, nestingLevel + 1);
+    }
+  }
 }

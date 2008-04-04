@@ -43,8 +43,7 @@ public class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, Ps
       }
     }
 
-    return new PsiMethodStubImpl(parentStub, this,
-                                 psi.getName(),
+    return new PsiMethodStubImpl(parentStub, psi.getName(),
                                  TypeInfo.create(psi.getReturnType(), psi.getReturnTypeElement()),
                                  flags,
                                  defValueText);
@@ -68,9 +67,9 @@ public class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, Ps
     byte flags = dataStream.readByte();
     if (PsiMethodStubImpl.isAnnotationMethod(flags)) {
       final String defaultMethodValue = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-      return new PsiMethodStubImpl(parentStub, this, name, type, flags, defaultMethodValue);
+      return new PsiMethodStubImpl(parentStub, name, type, flags, defaultMethodValue);
     }
-    return new PsiMethodStubImpl(parentStub, this, name, type, flags, null);
+    return new PsiMethodStubImpl(parentStub, name, type, flags, null);
   }
 
   public void indexStub(final PsiMethodStub stub, final IndexSink sink) {

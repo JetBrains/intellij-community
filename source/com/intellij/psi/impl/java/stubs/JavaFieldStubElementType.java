@@ -33,7 +33,7 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
     final PsiExpression initializer = psi.getInitializer();
     final TypeInfo type = TypeInfo.create(psi.getType(), psi.getTypeElement());
     final byte flags = PsiFieldStubImpl.packFlags(psi instanceof PsiEnumConstant, psi.isDeprecated());
-    return new PsiFieldStubImpl(parentStub, this, psi.getName(), type, initializer != null ? initializer.getText() : null, flags);
+    return new PsiFieldStubImpl(parentStub, psi.getName(), type, initializer != null ? initializer.getText() : null, flags);
   }
 
   public String getExternalId() {
@@ -66,7 +66,7 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
 
     String initializerText = DataInputOutputUtil.readNAME(dataStream, nameStorage);
     byte flags = dataStream.readByte();
-    return new PsiFieldStubImpl(parentStub, this, name, type, initializerText, flags);
+    return new PsiFieldStubImpl(parentStub, name, type, initializerText, flags);
   }
 
   public void indexStub(final PsiFieldStub stub, final IndexSink sink) {

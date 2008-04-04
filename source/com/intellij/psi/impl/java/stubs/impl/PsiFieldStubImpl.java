@@ -5,9 +5,10 @@ package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.psi.PsiField;
 import com.intellij.psi.impl.cache.InitializerTooLongException;
+import com.intellij.psi.impl.cache.impl.repositoryCache.RecordUtil;
 import com.intellij.psi.impl.cache.impl.repositoryCache.TypeInfo;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NonNls;
@@ -24,12 +25,8 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
   private final static int ENUM_CONST = 0x01;
   private final static int DEPRECATED = 0x02;
 
-  public PsiFieldStubImpl(final StubElement parent, final IStubElementType elementType,
-                          final String name,
-                          final TypeInfo type,
-                          final String initializer,
-                          final byte flags) {
-    super(parent, elementType);
+  public PsiFieldStubImpl(final StubElement parent, final String name, final TypeInfo type, final String initializer, final byte flags) {
+    super(parent, JavaStubElementTypes.FIELD);
 
     if (initializer != null && initializer.length() > INITIALIZER_LENGTH_LIMIT) {
       myInitializer = INITIALIZER_TOO_LONG;
@@ -73,5 +70,28 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
     if (isEnumConst) flags |= ENUM_CONST;
     if (isDeprecated) flags |= DEPRECATED;
     return flags;
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.append("PsiFieldStub[");
+
+    if (isDeprecated()) {
+      builder.append("deprecated ");
+    }
+
+    if (isEnumConstant()) {
+      builder.append("enumconst ");
+    }
+
+    builder.append(getName()).append(':').append(RecordUtil.createTypeText(getType()));
+
+    if (myInitializer != null) {
+      builder.append('=').append(myInitializer);
+    }
+
+    builder.append("]");
+    return builder.toString();
   }
 }

@@ -23,7 +23,7 @@ public class JavaTypeParameterListElementType extends JavaStubElementType<PsiTyp
   }
 
   public PsiTypeParameterListStub createStub(final PsiTypeParameterList psi, final StubElement parentStub) {
-    return new PsiTypeParameterListStubImpl(parentStub, this);
+    return new PsiTypeParameterListStubImpl(parentStub);
   }
 
   public String getExternalId() {
@@ -36,7 +36,7 @@ public class JavaTypeParameterListElementType extends JavaStubElementType<PsiTyp
 
   public PsiTypeParameterListStub deserialize(final DataInputStream dataStream, final StubElement parentStub, final PersistentStringEnumerator nameStorage)
       throws IOException {
-    return new PsiTypeParameterListStubImpl(parentStub, this);
+    return new PsiTypeParameterListStubImpl(parentStub);
   }
 
   public void indexStub(final PsiTypeParameterListStub stub, final IndexSink sink) {

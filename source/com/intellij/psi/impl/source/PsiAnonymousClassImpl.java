@@ -42,6 +42,11 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     return (PsiExpressionList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.ARGUMENT_LIST);
   }
 
+  public boolean isInQualifiedNew() {
+    final PsiElement parent = getParent();
+    return parent instanceof PsiNewExpression && ((PsiNewExpression)parent).getQualifier() != null;
+  }
+
   @NotNull
   public PsiJavaCodeReferenceElement getBaseClassReference() {
     return (PsiJavaCodeReferenceElement)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.BASE_CLASS_REFERENCE);

@@ -27,8 +27,7 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
 
   public PsiParameterStub createStub(final PsiParameter psi, final StubElement parentStub) {
     final TypeInfo type = TypeInfo.create(psi.getType(), psi.getTypeElement());
-    return new PsiParameterStubImpl(parentStub, this,
-                                    psi.getName(), type, psi.isVarArgs());
+    return new PsiParameterStubImpl(parentStub, psi.getName(), type, psi.isVarArgs());
   }
 
   public String getExternalId() {
@@ -48,7 +47,7 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
     TypeInfo type = new TypeInfo();
     RecordUtil.readType(dataStream, type);
     boolean isEll = dataStream.readBoolean();
-    return new PsiParameterStubImpl(parentStub, this, name, type, isEll);
+    return new PsiParameterStubImpl(parentStub, name, type, isEll);
   }
 
   public void indexStub(final PsiParameterStub stub, final IndexSink sink) {

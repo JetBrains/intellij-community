@@ -29,7 +29,7 @@ public class JavaModifierListElementType extends JavaStubElementType<PsiModifier
   }
 
   public PsiModifierListStub createStub(final PsiModifierList psi, final StubElement parentStub) {
-    return new PsiModifierListStubImpl(parentStub, this, RecordUtil.packModifierList(psi));
+    return new PsiModifierListStubImpl(parentStub, RecordUtil.packModifierList(psi));
   }
 
   public void serialize(final PsiModifierListStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)
@@ -39,7 +39,7 @@ public class JavaModifierListElementType extends JavaStubElementType<PsiModifier
 
   public PsiModifierListStub deserialize(final DataInputStream dataStream, final StubElement parentStub, final PersistentStringEnumerator nameStorage)
       throws IOException {
-    return new PsiModifierListStubImpl(parentStub, this, DataInputOutputUtil.readINT(dataStream));
+    return new PsiModifierListStubImpl(parentStub, DataInputOutputUtil.readINT(dataStream));
   }
 
   public void indexStub(final PsiModifierListStub stub, final IndexSink sink) {

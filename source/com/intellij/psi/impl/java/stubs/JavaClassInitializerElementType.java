@@ -23,7 +23,7 @@ public class JavaClassInitializerElementType extends JavaStubElementType<PsiClas
   }
 
   public PsiClassInitializerStub createStub(final PsiClassInitializer psi, final StubElement parentStub) {
-    return new PsiClassInitializerStubImpl(parentStub, this);
+    return new PsiClassInitializerStubImpl(parentStub);
   }
 
   public String getExternalId() {
@@ -36,7 +36,7 @@ public class JavaClassInitializerElementType extends JavaStubElementType<PsiClas
 
   public PsiClassInitializerStub deserialize(final DataInputStream dataStream, final StubElement parentStub, final PersistentStringEnumerator nameStorage)
       throws IOException {
-    return new PsiClassInitializerStubImpl(parentStub, this);
+    return new PsiClassInitializerStubImpl(parentStub);
   }
 
   public void indexStub(final PsiClassInitializerStub stub, final IndexSink sink) {
