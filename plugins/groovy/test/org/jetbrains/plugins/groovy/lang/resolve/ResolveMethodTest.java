@@ -431,4 +431,14 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertNull(ref.resolve());
     assertTrue(((GrMethodCallExpression) ref.getParent()).getType().equalsToText("java.lang.String"));
   }
+
+  public void testDefaultOverloaded() throws Exception {
+    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("defaultOverloaded/A.groovy").getElement();
+    assertNotNull(ref.resolve());
+  }
+
+  public void testDefaultOverloaded2() throws Exception {
+    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("defaultOverloaded2/A.groovy").getElement();
+    assertNotNull(ref.resolve());
+  }
 }

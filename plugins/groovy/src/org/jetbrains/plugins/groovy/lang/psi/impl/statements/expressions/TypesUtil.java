@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Map;
 
@@ -54,6 +55,7 @@ public class TypesUtil {
         if (operatorName != null) {
           MethodResolverProcessor processor = new MethodResolverProcessor(operatorName, place, false, false, argumentTypes, PsiType.EMPTY_ARRAY);
           lClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, place);
+          ResolveUtil.processNonCodeMethods(thisType, processor, place.getProject());
           final GroovyResolveResult[] candidates = processor.getCandidates();
           if (candidates.length == 1) {
             final PsiElement element = candidates[0].getElement();
