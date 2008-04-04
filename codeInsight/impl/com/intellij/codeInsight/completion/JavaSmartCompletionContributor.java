@@ -104,7 +104,11 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
           }
         });
 
-        final PsiReference ref = identifierCopy.getContainingFile().findReferenceAt(identifierCopy.getTextRange().getStartOffset());
+        final PsiReference ref = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
+          public PsiReference compute() {
+            return identifierCopy.getContainingFile().findReferenceAt(identifierCopy.getTextRange().getStartOffset());
+          }
+        });
         if (ref != null) {
           SMART_DATA.completeReference(ref, set, identifierCopy, result.getPrefixMatcher(), file, context.getStartOffset());
         }
