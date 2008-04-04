@@ -37,13 +37,13 @@ import java.awt.*;
  * @author yole
  */
 public class UIDesignerToolWindowManager implements ProjectComponent {
-  private Project myProject;
+  private final Project myProject;
   private MyToolWindowPanel myToolWindowPanel;
   private ComponentTree myComponentTree;
   private ComponentTreeBuilder myComponentTreeBuilder;
   private PropertyInspector myPropertyInspector;
-  private FileEditorManager myFileEditorManager;
-  private MyFileEditorManagerListener myListener;
+  private final FileEditorManager myFileEditorManager;
+  private final MyFileEditorManagerListener myListener;
   private ToolWindow myToolWindow;
 
   public UIDesignerToolWindowManager(final Project project, final FileEditorManager fileEditorManager) {
@@ -171,7 +171,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
     }
 
     public void selectionChanged(FileEditorManagerEvent event) {
-      UIFormEditor newEditor = (event.getNewEditor() instanceof UIFormEditor) ? (UIFormEditor) event.getNewEditor() : null;
+      UIFormEditor newEditor = event.getNewEditor() instanceof UIFormEditor ? (UIFormEditor)event.getNewEditor() : null;
       processFileEditorChange(newEditor);
     }
   }
