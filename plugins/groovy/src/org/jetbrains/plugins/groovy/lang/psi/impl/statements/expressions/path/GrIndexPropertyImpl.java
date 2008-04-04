@@ -17,18 +17,21 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiArrayType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ilyas
  */
-public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProperty {
+public class GrIndexPropertyImpl extends GrCallExpressionImpl implements GrIndexProperty {
 
   public GrIndexPropertyImpl(@NotNull ASTNode node) {
     super(node);
@@ -42,18 +45,35 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     return "Property by index";
   }
 
+  @NotNull
+  public GrExpression getSelectedExpression() {
+    GrExpression result = findChildByClass(GrExpression.class);
+    assert result != null;
+    return result;
+  }
+
   public PsiType getType() {
-    final GrExpression arrayExpression = getArrayExpression();
-    if (arrayExpression != null) {
-      final PsiType type = arrayExpression.getType();
-      if (type instanceof PsiArrayType) {
-        return ((PsiArrayType) type).getComponentType();
+    GrExpression selected = getSelectedExpression();
+    PsiType thisType = selected.getType();
+
+    if (thisType != null) {
+      if (thisType instanceof PsiArrayType) {
+        return ((PsiArrayType) thisType).getComponentType();
       }
+      
+      PsiType[] argTypes = PsiUtil.getArgumentTypes(selected, false, true);
+      return TypesUtil.getOverloadedOperatorType(thisType, "getAt", this, argTypes);
     }
     return null;
   }
 
-  public GrExpression getArrayExpression() {
-    return findChildByClass(GrExpression.class);
+  @Nullable
+  public PsiMethod resolveMethod() {
+    return null; //todo
+  }
+
+  @NotNull
+  public GroovyResolveResult[] getMethodVariants() {
+    return GroovyResolveResult.EMPTY_ARRAY;
   }
 }

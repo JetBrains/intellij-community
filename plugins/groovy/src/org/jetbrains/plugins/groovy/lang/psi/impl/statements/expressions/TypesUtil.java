@@ -46,23 +46,27 @@ public class TypesUtil {
   }
 
   public static PsiType getOverloadedOperatorType(PsiType thisType, IElementType tokenType,
-                                                  GroovyPsiElement place, PsiType[] argumentTypes
-  ) {
-    if (thisType instanceof PsiClassType) {
-      final PsiClass lClass = ((PsiClassType) thisType).resolve();
-      if (lClass != null) {
-        final String operatorName = ourOperationsToOperatorNames.get(tokenType);
-        if (operatorName != null) {
-          MethodResolverProcessor processor = new MethodResolverProcessor(operatorName, place, false, false, argumentTypes, PsiType.EMPTY_ARRAY);
+                                                  GroovyPsiElement place, PsiType[] argumentTypes) {
+    return getOverloadedOperatorType(thisType, ourOperationsToOperatorNames.get(tokenType), place, argumentTypes);
+  }
+
+  public static PsiType getOverloadedOperatorType(PsiType thisType, String operatorName,
+                                                  GroovyPsiElement place, PsiType[] argumentTypes) {
+    if (operatorName != null) {
+      MethodResolverProcessor processor = new MethodResolverProcessor(operatorName, place, false, false, argumentTypes, PsiType.EMPTY_ARRAY);
+      if (thisType instanceof PsiClassType) {
+        final PsiClass lClass = ((PsiClassType) thisType).resolve();
+        if (lClass != null) {
           lClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, place);
-          ResolveUtil.processNonCodeMethods(thisType, processor, place.getProject());
-          final GroovyResolveResult[] candidates = processor.getCandidates();
-          if (candidates.length == 1) {
-            final PsiElement element = candidates[0].getElement();
-            if (element instanceof PsiMethod) {
-              return ((PsiMethod) element).getReturnType();
-            }
-          }
+        }
+      }
+
+      ResolveUtil.processNonCodeMethods(thisType, processor, place.getProject());
+      final GroovyResolveResult[] candidates = processor.getCandidates();
+      if (candidates.length == 1) {
+        final PsiElement element = candidates[0].getElement();
+        if (element instanceof PsiMethod) {
+          return ((PsiMethod) element).getReturnType();
         }
       }
     }

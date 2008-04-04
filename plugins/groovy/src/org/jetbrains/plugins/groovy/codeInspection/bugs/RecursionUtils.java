@@ -303,7 +303,7 @@ class RecursionUtils {
 
   private static boolean arrayAccessExpressionDefinitelyRecurses(
       GrIndexProperty expression, GrMethod method) {
-    final GrExpression arrayExp = expression.getArrayExpression();
+    final GrExpression arrayExp = expression.getSelectedExpression();
     return expressionDefinitelyRecurses(arrayExp, method);
   }
 
