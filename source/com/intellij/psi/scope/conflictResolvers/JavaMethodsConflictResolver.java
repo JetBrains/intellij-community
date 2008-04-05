@@ -1,11 +1,11 @@
 package com.intellij.psi.scope.conflictResolvers;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 
@@ -173,27 +173,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     CONFLICT
   }
 
-  private static boolean checkOverriding(final CandidateInfo one, final CandidateInfo two) {
-    final PsiMethod method1 = (PsiMethod)one.getElement();
-    final PsiMethod method2 = (PsiMethod)two.getElement();
-    PsiClass class1 = method1.getContainingClass();
-    PsiClass class2 = method2.getContainingClass();
-    if (method1 != method2 && class1 == class2) return false;
-    final PsiParameter[] params1 = method1.getParameterList().getParameters();
-    final PsiParameter[] params2 = method2.getParameterList().getParameters();
-    if (params1.length != params2.length) return false;
-    final PsiSubstitutor substitutor1 = one.getSubstitutor();
-    final PsiSubstitutor substitutor2 = two.getSubstitutor();
-    for (int i = 0; i < params1.length; i++) {
-      final PsiType type1 = substitutor1.substitute(params1[i].getType());
-      final PsiType type2 = substitutor2.substitute(params2[i].getType());
-      if (type1 == null || !type1.equals(type2)) {
-        return false;
-      }
-    }
-    
-    if (!Comparing.equal(method1.getReturnType(), method2.getReturnType())) return false;
-    return true;
+  private static boolean checkOverriding(final CandidateInfo subInfo, final CandidateInfo superInfo) {
+    PsiMethod method1 = (PsiMethod)superInfo.getElement();
+    PsiMethod method2 = (PsiMethod)subInfo.getElement();
+    assert method1 != null && method2 != null;
+    return MethodSignatureUtil.isSubsignature(method1.getSignature(superInfo.getSubstitutor()), method2.getSignature(subInfo.getSubstitutor()));
   }
 
   private static Specifics checkSubtyping(PsiType type1, PsiType type2) {
@@ -229,8 +213,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   private Specifics isMoreSpecific(final CandidateInfo info1, final CandidateInfo info2, final int applicabilityLevel) {
     PsiMethod method1 = (PsiMethod)info1.getElement();
     PsiMethod method2 = (PsiMethod)info2.getElement();
-    final PsiClass class1 = method1.getContainingClass();
-    final PsiClass class2 = method2.getContainingClass();
 
     final PsiParameter[] params1 = method1.getParameterList().getParameters();
     final PsiParameter[] params2 = method2.getParameterList().getParameters();
@@ -316,23 +298,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     if (isLessBoxing != null) return isLessBoxing;
 
-    if (isMoreSpecific == null) {
-      if (class1 != class2) {
-        if (class2.isInheritor(class1, true) || class1.isInterface() && !class2.isInterface()) {
-          isMoreSpecific = Specifics.FALSE;
-        }
-        else if (class1.isInheritor(class2, true) || class2.isInterface()) {
-          isMoreSpecific = Specifics.TRUE;
-        }
-      }
-    }
-    if (isMoreSpecific == null) {
-      if (typeParameters1.length < typeParameters2.length) return Specifics.TRUE;
-      if (typeParameters1.length > typeParameters2.length) return Specifics.FALSE;
-      return Specifics.CONFLICT;
-    }
-
-    return isMoreSpecific;
+    return isMoreSpecific == null ? Specifics.CONFLICT : isMoreSpecific;
   }
 
   private PsiSubstitutor calculateMethodSubstitutor(final PsiTypeParameter[] typeParameters,
