@@ -71,6 +71,10 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
     return Filter.EMPTY_ARRAY;
   }
 
+  public boolean shouldEnterElement(final Object element) {
+    return element instanceof XmlTag;
+  }
+
   protected PsiFile getPsiFile() {
     return myFile;
   }
