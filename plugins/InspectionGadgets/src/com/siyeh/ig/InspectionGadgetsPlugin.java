@@ -1,5 +1,5 @@
 /*
-* Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+* Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -534,6 +534,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(SuspiciousSystemArraycopyInspection.class);
         m_inspectionClasses.add(SuspiciousToArrayCallInspection.class);
         m_inspectionClasses.add(TextLabelInSwitchStatementInspection.class);
+        m_inspectionClasses.add(ThrowableResultOfMethodCallIgnoredInspection.class);
         m_inspectionClasses.add(UseOfPropertiesAsHashtableInspection.class);
 
     }
