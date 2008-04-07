@@ -241,6 +241,18 @@ public class AddSupportForFrameworksPanel {
     return list;
   }
 
+  private static void sortByTitle(List<FrameworkSupportProvider> providers) {
+    Collections.sort(providers, new Comparator<FrameworkSupportProvider>() {
+      public int compare(final FrameworkSupportProvider o1, final FrameworkSupportProvider o2) {
+        return getTitleWithoutMnemonic(o2).compareTo(getTitleWithoutMnemonic(o1));
+      }
+    });
+  }
+
+  private static String getTitleWithoutMnemonic(final FrameworkSupportProvider provider) {
+    return StringUtil.replace(provider.getTitle(), String.valueOf(UIUtil.MNEMONIC), "");
+  }
+
   private static void addChildFrameworks(final List<FrameworkSupportSettings> list, final ArrayList<FrameworkSupportSettings> selected,
                                          final boolean selectedOnly) {
     for (FrameworkSupportSettings settings : list) {
@@ -335,7 +347,7 @@ public class AddSupportForFrameworksPanel {
 
     public LibraryCompositionSettings getLibraryCompositionSettings() {
       if (myLibraryCompositionSettings == null || isObsolete(myLibraryCompositionSettings)) {
-        final String title = StringUtil.replace(myProvider.getTitle(), String.valueOf(UIUtil.MNEMONIC), "");
+        final String title = getTitleWithoutMnemonic(myProvider);
         myLibraryCompositionSettings = new LibraryCompositionSettings(myConfigurable.getLibraries(), myConfigurable.getLibraryName(), getBaseModuleDirectoryPath(),
                                                                       title, myProvider.getIcon());
       }
@@ -347,7 +359,8 @@ public class AddSupportForFrameworksPanel {
     private final List<FrameworkSupportProvider> myFrameworkSupportProviders;
 
     public ProvidersGraph(final List<FrameworkSupportProvider> frameworkSupportProviders) {
-      myFrameworkSupportProviders = frameworkSupportProviders;
+      myFrameworkSupportProviders = new ArrayList<FrameworkSupportProvider>(frameworkSupportProviders);
+      sortByTitle(myFrameworkSupportProviders);
     }
 
     public Collection<FrameworkSupportProvider> getNodes() {
@@ -370,6 +383,7 @@ public class AddSupportForFrameworksPanel {
           dependencies.add(dependency);
         }
       }
+      sortByTitle(dependencies);
       return dependencies.iterator();
     }
   }
