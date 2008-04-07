@@ -243,7 +243,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
 
-  private static void switchFromStubToAST(ASTNode tree, Iterator<StubElement<?>> stubs) {
+  private void switchFromStubToAST(ASTNode tree, Iterator<StubElement<?>> stubs) {
     if (tree instanceof ChameleonElement) {
       tree = ChameleonTransforming.transform((ChameleonElement)tree);
     }
@@ -252,11 +252,17 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
     if (type instanceof IStubElementType && ((IStubElementType) type).shouldCreateStub(tree)) {
       final StubElement stub = stubs.next();
+      if (stub.getStubType() != tree.getElementType()) {
+        assert false: "Stub and PSI element type mismatch in " + getName() + ": stub " + stub + ", AST " + tree.getElementType();
+      }
       final PsiElement psi = stub.getPsi();
       ((CompositeElement)tree).setPsi(psi);
       final StubBasedPsiElementBase<?> base = (StubBasedPsiElementBase)psi;
       base.setNode(tree);
       base.setStub(null);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Bound " + base + " to " + stub);
+      }
     }
 
     for (ASTNode node : tree.getChildren(null)) {
