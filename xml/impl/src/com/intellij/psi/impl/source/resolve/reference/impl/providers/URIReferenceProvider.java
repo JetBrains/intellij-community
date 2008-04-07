@@ -14,10 +14,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,7 +115,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
     }
 
     if (isUrlText(s) || (parent instanceof XmlAttribute && ((XmlAttribute)parent).isNamespaceDeclaration())) {
-      if (!s.startsWith(JspManager.TAG_DIR_NS_PREFIX)) {
+      if (!s.startsWith(XmlUtil.TAG_DIR_NS_PREFIX)) {
         final boolean namespaceSoftRef = parent instanceof XmlAttribute &&
           "namespace".equals(((XmlAttribute)parent).getName()) &&
           ((XmlAttribute)parent).getParent().getAttributeValue("schemaLocation") != null;
@@ -129,7 +129,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
   }
 
   public static int getPrefixLength(@NotNull final String s) {
-    if (s.startsWith(JspManager.TAG_DIR_NS_PREFIX)) return JspManager.TAG_DIR_NS_PREFIX.length();
+    if (s.startsWith(XmlUtil.TAG_DIR_NS_PREFIX)) return XmlUtil.TAG_DIR_NS_PREFIX.length();
     if (s.startsWith(FILE)) return FILE.length();
     if (s.startsWith(CLASSPATH)) return CLASSPATH.length();
     return 0;

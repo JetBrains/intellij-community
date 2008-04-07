@@ -14,7 +14,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +27,6 @@ import java.util.Set;
 public abstract class JspManager {
 
   public static final Key<VirtualFile[]> DIRECTORIES_KEY = Key.create("TagDirOriginalDirs");
-  public static final  @NonNls String TAG_DIR_NS_PREFIX = "urn:jsptagdir:";
 
   public static JspManager getInstance(@NotNull Project project) {
     return project.getComponent(JspManager.class);

@@ -125,6 +125,7 @@ public class XmlUtil {
   public static final List<String> ourSchemaUrisList = Arrays.asList(XmlUtil.SCHEMA_URIS);
   private static final ThreadLocal<String> XML_FILE_IN_PROGRESS = new ThreadLocal<String>();
   public static final Key<Boolean> ANT_FILE_SIGN = new Key<Boolean>("FORCED ANT FILE");
+  public static final  @NonNls String TAG_DIR_NS_PREFIX = "urn:jsptagdir:";
 
 
   private XmlUtil() {
