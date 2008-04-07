@@ -164,8 +164,16 @@ public final class PsiUtil extends PsiUtilBase {
     }
     else {
       PsiType type = accessObject.getType();
-      if (!(type instanceof PsiClassType)) return JavaResolveResult.EMPTY;
-      return ((PsiClassType)type).resolveGenerics();
+      if (type instanceof PsiClassType) {
+        return ((PsiClassType)type).resolveGenerics();
+      }
+      if (type == null && accessObject instanceof PsiReferenceExpression) {
+        JavaResolveResult resolveResult = ((PsiReferenceExpression)accessObject).advancedResolve(false);
+        if (resolveResult.getElement() instanceof PsiClass) {
+          return resolveResult;
+        }
+      }
+      return JavaResolveResult.EMPTY;
     }
   }
 
