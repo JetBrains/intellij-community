@@ -13,7 +13,7 @@ import com.intellij.psi.xml.XmlTokenType;
  * on 12/18/07 7:25 PM from the specification file
  * <tt>/Users/spleaner/workspace/IDEA/tools/lexer/_HtmlLexer.flex</tt>
  */
-public class _HtmlLexer implements FlexLexer,ELHostLexer {
+public class _HtmlLexer implements FlexLexer {
   /** initial size of the lookahead buffer */
   private static final int ZZ_BUFFERSIZE = 16384;
 
@@ -367,11 +367,6 @@ public class _HtmlLexer implements FlexLexer,ELHostLexer {
   /* user code: */
   private IElementType elTokenType = XmlTokenType.XML_DATA_CHARACTERS;
   private IElementType elTokenType2 = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;
-
-  public void setElTypes(IElementType _elTokenType,IElementType _elTokenType2) {
-    elTokenType = _elTokenType;
-    elTokenType2 = _elTokenType2;
-  }
 
   public _HtmlLexer() {
     this((java.io.Reader)null);

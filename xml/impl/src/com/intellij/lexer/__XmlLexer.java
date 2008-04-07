@@ -4,8 +4,8 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.*;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTokenType;
 
 
 /**
@@ -14,7 +14,7 @@ import com.intellij.psi.xml.*;
  * on 9/1/07 12:05 PM from the specification file
  * <tt>C:/work/Irida/tools/lexer/_XmlLexer.flex</tt>
  */
-public class __XmlLexer implements FlexLexer,ELHostLexer {
+public class __XmlLexer implements FlexLexer {
   /** initial size of the lookahead buffer */
   private static final int ZZ_BUFFERSIZE = 16384;
 
@@ -395,18 +395,9 @@ public class __XmlLexer implements FlexLexer,ELHostLexer {
   private boolean zzEOFDone;
 
   /* user code: */
-  private IElementType elTokenType = XmlTokenType.XML_DATA_CHARACTERS;
-  private IElementType elTokenType2 = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;
-  private IElementType javaEmbeddedTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;
-
-  public void setElTypes(IElementType _elTokenType,IElementType _elTokenType2) {
-    elTokenType = _elTokenType;
-    elTokenType2 = _elTokenType2;
-  }
-
-  public void setJavaEmbeddedType(IElementType _tokenType) {
-    javaEmbeddedTokenType = _tokenType;
-  }
+  protected IElementType elTokenType = XmlTokenType.XML_DATA_CHARACTERS;
+  protected IElementType elTokenType2 = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;
+  protected IElementType javaEmbeddedTokenType = XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;
 
   private int myPrevState = YYINITIAL;
 

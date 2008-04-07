@@ -4,6 +4,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
 
+import java.io.Reader;
+
 public class XmlLexer extends MergingLexerAdapter {
   private final static TokenSet TOKENS_TO_MERGE = TokenSet.create(new IElementType[]{
     XmlTokenType.XML_DATA_CHARACTERS,
@@ -13,7 +15,7 @@ public class XmlLexer extends MergingLexerAdapter {
   });
 
   public XmlLexer() {
-    this(new _XmlLexer());
+    this(new _XmlLexer(new __XmlLexer((Reader)null)));
   }
 
   public XmlLexer(Lexer baseLexer) {

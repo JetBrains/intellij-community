@@ -3,15 +3,11 @@
 /* It's an automatically generated code. Do not modify it. */
 package com.intellij.lexer;
 
-import com.intellij.psi.tree.IElementType;
-
-import java.io.Reader;
-
-public class _XmlLexer extends FlexAdapter implements ELHostLexer {
+public class _XmlLexer extends FlexAdapter {
   private int myState = __XmlLexer.YYINITIAL;
 
-  public _XmlLexer() {
-    super(new __XmlLexer((Reader)null));
+  public _XmlLexer(final __XmlLexer flexLexer) {
+    super(flexLexer);
   }
 
   private void packState() {
@@ -43,13 +39,5 @@ public class _XmlLexer extends FlexAdapter implements ELHostLexer {
   public void advance() {
     super.advance();
     packState();
-  }
-
-  public void setElTypes(final IElementType jspElContent, final IElementType jspElContent1) {
-    ((ELHostLexer)getFlex()).setElTypes(jspElContent, jspElContent1);
-  }
-
-  public void setJavaEmbeddedType(final IElementType javaEmbeddedType) {
-    ((__XmlLexer)getFlex()).setJavaEmbeddedType(javaEmbeddedType);
   }
 }

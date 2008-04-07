@@ -1,7 +1,6 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.TokenType;
-import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
@@ -74,21 +73,6 @@ public class HtmlLexer extends BaseHtmlLexer {
 
   public HtmlLexer() {
     this(new MergingLexerAdapter(new FlexAdapter(new _HtmlLexer()), TOKENS_TO_MERGE),true);
-  }
-
-  public void activateElSupport() {
-    Lexer baseLexer = getBaseLexer();
-
-    if (baseLexer instanceof MergingLexerAdapter) {
-      baseLexer = ((MergingLexerAdapter)baseLexer).getOriginal();
-      if (baseLexer instanceof FlexAdapter) {
-        final FlexLexer flex = ((FlexAdapter)baseLexer).getFlex();
-
-        if (flex instanceof ELHostLexer) {
-          ((ELHostLexer)flex).setElTypes(JspElementType.JSP_EL_HOLDER,JspElementType.JSP_EL_HOLDER);
-        }
-      }
-    }
   }
 
   protected boolean isValidAttributeValueTokenType(final IElementType tokenType) {
