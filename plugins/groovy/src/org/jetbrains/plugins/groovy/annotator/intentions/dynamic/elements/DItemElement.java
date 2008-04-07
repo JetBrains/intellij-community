@@ -18,6 +18,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DNamedElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DTypedElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -87,5 +88,6 @@ public abstract class DItemElement implements DNamedElement, DTypedElement {
     clearCache();
   }
 
+  @NotNull
   public abstract PsiNamedElement getPsi(PsiManager manager, String containingClassName);
 }

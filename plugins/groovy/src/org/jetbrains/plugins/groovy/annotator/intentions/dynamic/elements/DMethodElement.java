@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitMethod;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +52,7 @@ public class DMethodElement extends DItemElement implements Comparable {
     myImplicitMethod = null;
   }
 
+  @NotNull
   public PsiMethod getPsi(PsiManager manager, String containingClassName) {
     if (myImplicitMethod != null) return myImplicitMethod;
 
