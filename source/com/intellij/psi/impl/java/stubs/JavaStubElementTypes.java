@@ -16,4 +16,6 @@ public class JavaStubElementTypes {
   public static final JavaTypeParameterElementType TYPE_PARAMETER = new JavaTypeParameterElementType();
   public static final JavaTypeParameterListElementType TYPE_PARAMETER_LIST = new JavaTypeParameterListElementType();
   public static final JavaClassInitializerElementType CLASS_INITIALIZER = new JavaClassInitializerElementType();
+  public static final JavaImportListElementType IMPORT_LIST = new JavaImportListElementType();
+  public static final JavaImportStatementElementType IMPORT_STATEMENT = new JavaImportStatementElementType();
 }
