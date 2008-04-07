@@ -19,10 +19,13 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.RecursiveTreeElementVisitor;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
@@ -182,6 +185,8 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   }
 
   private static class MyUnwrapAction extends AnAction {
+    private static final Key<Integer> CARET_POS_KEY = new Key<Integer>("UNWRAP_HANDLER_CARET_POSITION");
+
     private Project myProject;
     private Editor myEditor;
     private Unwrapper myUnwrapper;
@@ -196,14 +201,17 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      if (!CodeInsightUtilBase.prepareFileForWrite(myElement.getContainingFile())) return;
+      final PsiFile file = myElement.getContainingFile();
+      if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               try {
+                saveCaretPosition(file);
                 myUnwrapper.unwrap(myEditor, myElement);
+                restoreCaretPosition(file);
               }
               catch (IncorrectOperationException ex) {
                 throw new RuntimeException(ex);
@@ -212,6 +220,30 @@ public class UnwrapHandler implements CodeInsightActionHandler {
           });
         }
       }, null, null);
+    }
+
+    private void saveCaretPosition(PsiFile file) {
+      int offset = myEditor.getCaretModel().getOffset();
+      PsiElement el = file.findElementAt(offset);
+
+      int innerOffset = offset - el.getTextOffset();
+      el.putCopyableUserData(CARET_POS_KEY, innerOffset);
+    }
+
+    private void restoreCaretPosition(final PsiFile file) {
+      ((TreeElement)file.getNode()).acceptTree(new RecursiveTreeElementVisitor() {
+        protected boolean visitNode(TreeElement element) {
+          PsiElement el = element.getPsi();
+          Integer offset = el.getCopyableUserData(CARET_POS_KEY);
+
+          if (offset == null) return true; // continue;
+
+          myEditor.getCaretModel().moveToOffset(el.getTextOffset() + offset);
+          el.putCopyableUserData(CARET_POS_KEY, null);
+
+          return false;
+        }
+      });
     }
 
     public String getName() {
