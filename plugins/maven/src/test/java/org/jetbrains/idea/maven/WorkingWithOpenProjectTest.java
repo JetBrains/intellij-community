@@ -9,9 +9,11 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.idea.maven.project.MavenImportProcessor;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class WorkingWithOpenProjectTest extends ImportingTestCase {
@@ -50,7 +52,7 @@ public class WorkingWithOpenProjectTest extends ImportingTestCase {
     PsiTestUtil.addContentRoot(getModule("project"), root);  // should not throw an exception
   }
   
-  public void ignoreTestSavingAllDocumentBeforeSynchronization() throws Exception {
+  public void testSavingAllDocumentBeforeSynchronization() throws Exception {
     Document d = FileDocumentManager.getInstance().getDocument(projectPom);
     d.setText(createValidPom("<groupId>test</groupId>" +
                              "<artifactId>project</artifactId>" +
@@ -64,6 +66,7 @@ public class WorkingWithOpenProjectTest extends ImportingTestCase {
                              "  </dependency>" +
                              "</dependencies>"));
     
+    MavenProjectsManager.getInstance(myProject).setOriginalFiles(Collections.singleton(projectPom));
     new MavenImportProcessor(myProject).synchronize(new ArrayList<Pair<File, List<String>>>());
 
     assertModuleLibDep("project", "junit:junit:4.0");
