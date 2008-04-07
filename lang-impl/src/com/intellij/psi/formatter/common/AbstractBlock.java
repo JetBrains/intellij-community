@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class AbstractBlock implements Block {
+public abstract class AbstractBlock implements ASTBlock {
   public static final List<Block> EMPTY = Collections.unmodifiableList(new ArrayList<Block>(0));
   protected final ASTNode myNode;
   private List<Block> mySubBlocks;
