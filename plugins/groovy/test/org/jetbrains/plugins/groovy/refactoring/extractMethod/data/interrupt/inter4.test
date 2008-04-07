@@ -23,7 +23,7 @@ while (true) {
 }
 
 private def testMethod() {
-  cl = {continue;}
+  cl = { continue; }
   cl.call()
 }
 
