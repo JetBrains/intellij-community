@@ -134,7 +134,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     final String namespace = getXmlElementNamespace();
     final String oldValue = StringUtil.unescapeXml(tag.getAttributeValue(attributeName, namespace));
     final String newValue = XmlStringUtil.escapeString(value);
-    if (Comparing.equal(oldValue, newValue)) return;
+    if (Comparing.equal(oldValue, newValue, true)) return;
 
     getManager().runChange(new Runnable() {
       public void run() {
