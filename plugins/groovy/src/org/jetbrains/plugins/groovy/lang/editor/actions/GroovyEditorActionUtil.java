@@ -24,10 +24,13 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.grails.fileType.GspFileType;
 import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
@@ -52,11 +55,11 @@ public abstract class GroovyEditorActionUtil {
   }
 
   public static boolean isPlainStringLiteral(ASTNode node) {
-    if (node.getElementType() != GroovyTokenTypes.mSTRING_LITERAL) {
+    if (!(node.getPsi() instanceof GrLiteral)) {
       return false;
     }
     String text = node.getText();
-    return text.length() < 3 && text.equals("''") || !text.substring(0, 3).equals("'''");
+    return text.length() < 3 && text.equals("''") || text.length() > 3 && !text.substring(0, 3).equals("'''");
   }
 
   public static boolean isPlainGString(ASTNode node) {
@@ -64,7 +67,38 @@ public abstract class GroovyEditorActionUtil {
       return false;
     }
     String text = node.getText();
-    return text.length() < 3 && text.equals("\"\"") || !text.substring(0, 3).equals("\"\"\"");
+    return text.length() < 3 && text.equals("\"\"") || text.length() > 3 && !text.substring(0, 3).equals("\"\"\"");
+  }
+
+  public static boolean isMultilineStringElement(ASTNode node) {
+    PsiElement element = node.getPsi();
+    if (element instanceof GrLiteral) {
+      if (element instanceof GrString) return !((GrString) element).isPlainString();
+      return isSimpleStringLiteral(((GrLiteral) element)) && !isPlainStringLiteral(node) ||
+          isSimpleGStringLiteral(((GrLiteral) element)) && !isPlainGString(node);
+    }
+    return false;
+  }
+
+  public static boolean isSimpleStringLiteral(GrLiteral literal) {
+    PsiElement child = literal.getFirstChild();
+    if (child != null && child.getNode() != null) {
+      ASTNode node = child.getNode();
+      assert node != null;
+      return node.getElementType() == GroovyTokenTypes.mSTRING_LITERAL ||
+          node.getElementType() == GroovyTokenTypes.mWRONG_STRING_LITERAL;
+    }
+    return false;
+  }
+
+  public static boolean isSimpleGStringLiteral(GrLiteral literal) {
+    PsiElement child = literal.getFirstChild();
+    if (child != null && child.getNode() != null) {
+      ASTNode node = child.getNode();
+      assert node != null;
+      return node.getElementType() == GroovyTokenTypes.mGSTRING_LITERAL;
+    }
+    return false;
   }
 
   public static TokenSet GSTRING_TOKENS = TokenSet.create(

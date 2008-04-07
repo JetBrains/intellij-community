@@ -170,8 +170,7 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
     // For Gstrings and regexes
     if (leftNode.getPsi().getParent() != null &&
         leftNode.getPsi().getParent().equals(rightNode.getPsi().getParent()) &&
-        leftNode.getPsi().getParent() instanceof GrString
-        ) {
+        leftNode.getPsi().getParent() instanceof GrString) {
       return null;
     }
 

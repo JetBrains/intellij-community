@@ -268,7 +268,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
 
     // For simple String literals like 'abcdef'
     if (GroovyTokenTypes.mSTRING_LITERAL == node.getElementType()) {
-      if (GroovyEditorActionUtil.isPlainStringLiteral(node)) {
+      if (GroovyEditorActionUtil.isPlainStringLiteral(node.getTreeParent())) {
         String text = node.getText();
         String innerText = text.equals("''") ? "" : text.substring(1, text.length() - 1);
         PsiElement literal = stringElement.getParent();

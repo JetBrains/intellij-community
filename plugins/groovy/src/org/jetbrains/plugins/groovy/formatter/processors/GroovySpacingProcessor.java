@@ -59,6 +59,7 @@ import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElemen
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_COMMA;
+import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionUtil;
 
 /**
  * @author ilyas
@@ -203,7 +204,8 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
     }
 
     public void visitOpenBlock(GrOpenBlock block) {
-      if (myChild1.getElementType() == mLCURLY || myChild2.getElementType() == mRCURLY) {
+      if (myChild1.getElementType() == mLCURLY && !GroovyEditorActionUtil.isMultilineStringElement(myChild2) ||
+          myChild2.getElementType() == mRCURLY && !GroovyEditorActionUtil.isMultilineStringElement(myChild1)) {
         myResult = Spacing.createDependentLFSpacing(0, 1, block.getTextRange(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
     }

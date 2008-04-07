@@ -1,0 +1,15 @@
+while (b){
+      """bugoga
+ aaaaaa     $i  bbbbb
+          $j
+              cccccc
+      ddddd"""
+}
+-----
+while (b) {
+  """bugoga
+ aaaaaa     $i  bbbbb
+          $j
+              cccccc
+      ddddd"""
+}
