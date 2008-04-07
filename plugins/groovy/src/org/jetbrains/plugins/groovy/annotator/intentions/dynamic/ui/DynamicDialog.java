@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
@@ -215,8 +216,9 @@ public abstract class DynamicDialog extends DialogWrapper {
       }
     });
 
-    final TypeConstraint[] constrants = GroovyExpectedTypesUtil.calculateTypeConstraints(myReferenceExpression);
-    PsiType type = constrants.length == 1 ? constrants[0].getType() : TypesUtil.getJavaLangObject(myReferenceExpression);
+    final TypeConstraint[] constrants = GroovyExpectedTypesUtil.calculateTypeConstraints(QuickfixUtil.isCall(myReferenceExpression) ? (GrExpression)myReferenceExpression.getParent() : myReferenceExpression);
+
+    PsiType type = constrants.length == 1 ? constrants[0].getDefaultType() : TypesUtil.getJavaLangObject(myReferenceExpression);
     myTypeComboBox.getEditor().setItem(createDocument(type.getPresentableText()));
   }
 
