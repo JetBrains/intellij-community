@@ -109,6 +109,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     });
 
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+    manager.setOriginalFiles(myFiles);
     if (!myFilesWithProfiles.isEmpty()) {
       for (Map.Entry<VirtualFile,Set<String>> each : myFilesWithProfiles.entrySet()) {
         manager.setActiveProfiles(each.getKey(), each.getValue());

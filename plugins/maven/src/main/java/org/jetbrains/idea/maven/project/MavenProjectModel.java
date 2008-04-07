@@ -23,24 +23,12 @@ public class MavenProjectModel {
 
   public MavenProjectModel(Collection<VirtualFile> filesToImport,
                            Map<VirtualFile, Module> existingModules,
-                           Collection<String> profiles,
+                           Collection<String> activeProfiles,
                            MavenProjectReader projectReader,
                            Progress p) throws MavenException, CanceledException {
-    Map<VirtualFile, Module> allFilesToImport = new HashMap<VirtualFile, Module>();
-
-    for (Map.Entry<VirtualFile, Module> entry : existingModules.entrySet()) {
-      allFilesToImport.put(entry.getKey(), entry.getValue());
-    }
-
-    for (VirtualFile file : filesToImport) {
-      allFilesToImport.put(file, null);
-    }
-
-    while (allFilesToImport.size() != 0) {
+    for (VirtualFile f : filesToImport) {
       p.checkCanceled();
-
-      VirtualFile nextFile = allFilesToImport.keySet().iterator().next();
-      MavenProjectModel.Node node = createMavenTree(projectReader, nextFile, allFilesToImport, profiles, true, p);
+      MavenProjectModel.Node node = createMavenTree(projectReader, f, existingModules, activeProfiles, true, p);
       rootProjects.add(node);
     }
   }
@@ -52,30 +40,28 @@ public class MavenProjectModel {
 
   private Node createMavenTree(MavenProjectReader reader,
                                VirtualFile pomFile,
-                               Map<VirtualFile, Module> unprocessedFiles,
+                               Map<VirtualFile, Module> existingModules,
                                Collection<String> profiles,
                                boolean isExistingModuleTree,
                                Progress p) throws MavenException, CanceledException {
-    Module existingModule = unprocessedFiles.get(pomFile);
-    unprocessedFiles.remove(pomFile);
-
     p.checkCanceled();
     p.setText(ProjectBundle.message("maven.reading", FileUtil.toSystemDependentName(pomFile.getPath())));
 
     Model mavenModel = reader.readModel(pomFile.getPath());
 
+    Module existingModule = existingModules.get(pomFile);
     if (existingModule == null) isExistingModuleTree = false;
     if (!isExistingModuleTree) existingModule = null;
 
     Node node = new Node(pomFile, mavenModel, existingModule);
 
-    createChildNodes(reader, pomFile, unprocessedFiles, profiles, mavenModel, node, isExistingModuleTree, p);
+    createChildNodes(reader, pomFile, existingModules, profiles, mavenModel, node, isExistingModuleTree, p);
     return node;
   }
 
   private void createChildNodes(MavenProjectReader reader,
                                 VirtualFile pomFile,
-                                Map<VirtualFile, Module> unprocessedFiles,
+                                Map<VirtualFile, Module> existingModules,
                                 Collection<String> profiles,
                                 Model mavenModel,
                                 Node parentNode,
@@ -97,7 +83,7 @@ public class MavenProjectModel {
         parentNode.mySubProjects.add(existingRoot);
       }
       else {
-        Node module = createMavenTree(reader, childFile, unprocessedFiles, profiles, isExistingModuleTree, p);
+        Node module = createMavenTree(reader, childFile, existingModules, profiles, isExistingModuleTree, p);
         parentNode.mySubProjects.add(module);
       }
     }
