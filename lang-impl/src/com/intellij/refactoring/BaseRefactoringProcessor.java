@@ -144,36 +144,46 @@ public abstract class BaseRefactoringProcessor {
       }
     }
     if (isPreview) {
-      final PsiElement[] elements = descriptor.getElements();
-      final PsiElement2UsageTargetAdapter[] targets = PsiElement2UsageTargetAdapter.convert(elements);
-      Factory<UsageSearcher> factory = new Factory<UsageSearcher>() {
-        public UsageSearcher create() {
-          return new UsageSearcher() {
-            public void generate(final Processor<Usage> processor) {
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
-                public void run() {
-                  for (int i = 0; i < elements.length; i++) {
-                    elements[i] = targets[i].getElement();
-                  }
-                  refreshElements(elements);
-                }
-              });
-              findUsagesRunnable.run();
-              final Usage[] usages = UsageInfo2UsageAdapter.convert(refUsages.get());
-
-              for (Usage usage : usages) {
-                processor.process(usage);
-              }
-            }
-          };
-        }
-      };
-
-      showUsageView(descriptor, factory, usages);
+      previewRefactoring(usages);
     }
     else {
       execute(usages);
     }
+  }
+
+  protected void previewRefactoring(final UsageInfo[] usages) {
+    final UsageViewDescriptor viewDescriptor = createUsageViewDescriptor(usages);
+    final PsiElement[] elements = viewDescriptor.getElements();
+    final PsiElement2UsageTargetAdapter[] targets = PsiElement2UsageTargetAdapter.convert(elements);
+    Factory<UsageSearcher> factory = new Factory<UsageSearcher>() {
+      public UsageSearcher create() {
+        return new UsageSearcher() {
+          public void generate(final Processor<Usage> processor) {
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                for (int i = 0; i < elements.length; i++) {
+                  elements[i] = targets[i].getElement();
+                }
+                refreshElements(elements);
+              }
+            });
+            final Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>();
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                refUsages.set(findUsages());
+              }
+            });
+            final Usage[] usages = UsageInfo2UsageAdapter.convert(refUsages.get());
+
+            for (Usage usage : usages) {
+              processor.process(usage);
+            }
+          }
+        };
+      }
+    };
+
+    showUsageView(viewDescriptor, factory, usages);
   }
 
   private boolean ensureElementsWritable(final UsageInfo[] usages, final UsageViewDescriptor descriptor) {
