@@ -49,9 +49,11 @@ public final class TabInfo {
   private SimpleColoredText myText = new SimpleColoredText();
   private String myTooltipText;
 
+  private int myDefaultStyle = -1;
   private Color myDefaultForeground;
-  private Color myWaveColor;
-  private String myAttributedByDefault;
+  private Color myDefaultWaveColor;
+
+  private SimpleTextAttributes myDefaultAttributes;
 
   public TabInfo(final JComponent component) {
     myComponent = component;
@@ -64,13 +66,17 @@ public final class TabInfo {
 
   public TabInfo setText(String text) {
     clearText(false);
-    SimpleTextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
-    if (myDefaultForeground != null) {
-      attributes = new SimpleTextAttributes(attributes.getBgColor(), myDefaultForeground, attributes.getWaveColor(), attributes.getStyle());
-    }
-    append(text, attributes);
-    myAttributedByDefault = text;
+    append(text, getDefaultAttributes());
     return this;
+  }
+
+  private SimpleTextAttributes getDefaultAttributes() {
+    if (myDefaultAttributes != null) return myDefaultAttributes;
+
+    myDefaultAttributes = new SimpleTextAttributes(myDefaultStyle != -1 ? myDefaultStyle : SimpleTextAttributes.STYLE_PLAIN,
+                                                   myDefaultForeground, myDefaultWaveColor);
+
+    return myDefaultAttributes;
   }
 
   public TabInfo clearText(final boolean invalidate) {
@@ -85,7 +91,6 @@ public final class TabInfo {
   public TabInfo append(String fragment, SimpleTextAttributes attributes) {
     final String old = myText.toString();
     myText.append(fragment, attributes);
-    myAttributedByDefault = null;
     myChangeSupport.firePropertyChange(TEXT, old, myText.toString());
     return this;
   }
@@ -242,41 +247,30 @@ public final class TabInfo {
     return myHidden;
   }
 
-  public TabInfo setDefaultForeground(@Nullable final Color color) {
-    myDefaultForeground = color;
-    if (myAttributedByDefault != null) {
-      setText(getText());
-    }
+  public TabInfo setDefaultStyle(final int style) {
+    myDefaultStyle = style;
+    myDefaultAttributes = null;
+    update();
     return this;
   }
 
-  public TabInfo setWaveColor(@Nullable Color color) {
-    if (myWaveColor == null && color == null) return this;
-    if (myWaveColor != null && myWaveColor.equals(color)) return this;
-                       
-    myWaveColor = color;
-
-    final SimpleTextAttributes[] attrs = myText.getAttributes().toArray(new SimpleTextAttributes[myText.getAttributes().size()]);
-    final String[] texts = myText.getTexts().toArray(new String[myText.getTexts().size()]);
-
-    clearText(false);
-
-    for (int i = 0; i < attrs.length; i++) {
-      SimpleTextAttributes each = attrs[i];
-
-      int style = each.getStyle();
-      if (color == null) {
-        style &= (~SimpleTextAttributes.STYLE_WAVED);
-      } else {
-        style |= SimpleTextAttributes.STYLE_WAVED;
-      }
-
-      final SimpleTextAttributes newStyle = each.derive(style, null, null, myWaveColor);
-      append(texts[i], newStyle);
-    }
-
-
+  public TabInfo setDefaultForeground(final Color fg) {
+    myDefaultForeground = fg;
+    myDefaultAttributes = null;
+    update();
     return this;
+  }
+
+  public TabInfo setDefaultWaveColor(final Color waveColor) {
+    myDefaultWaveColor = waveColor;
+    myDefaultAttributes = null;
+    update();
+    return this;
+  }
+
+
+  private void update() {
+    setText(getText());
   }
 
   public TabInfo setTooltipText(final String text) {

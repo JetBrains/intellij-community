@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -126,7 +127,9 @@ final class EditorTabbedContainer  {
   }
 
   public void setWaveColor(final int index, @Nullable final Color color) {
-    myTabs.getTabAt(index).setWaveColor(color);
+    final TabInfo tab = myTabs.getTabAt(index);
+    tab.setDefaultStyle(color == null ? SimpleTextAttributes.STYLE_PLAIN : SimpleTextAttributes.STYLE_WAVED);
+    tab.setDefaultWaveColor(color);
   }
 
   public void setIconAt(final int index, final Icon icon) {
