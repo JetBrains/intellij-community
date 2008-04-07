@@ -98,13 +98,13 @@ public class GroovyExpectedTypesUtil {
     public void visitIfStatement(GrIfStatement ifStatement) {
       if (myExpression.equals(ifStatement.getCondition())) {
         myResult = new TypeConstraint[] {new SubtypeConstraint(TypesUtil.getJavaLangObject(ifStatement), PsiType.BOOLEAN)};
-      }
+      } else makeDefault();
     }
 
     public void visitWhileStatement(GrWhileStatement whileStatement) {
       if (myExpression.equals(whileStatement.getCondition())) {
         myResult = new TypeConstraint[] {new SubtypeConstraint(TypesUtil.getJavaLangObject(whileStatement), PsiType.BOOLEAN)};
-      }
+      } else makeDefault();
     }
 
     public void visitTraditionalForClause(GrTraditionalForClause forClause) {
