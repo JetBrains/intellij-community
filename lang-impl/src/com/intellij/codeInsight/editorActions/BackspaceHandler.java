@@ -2,7 +2,6 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -30,7 +29,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
   }
 
   private boolean handleBackspace(Editor editor, DataContext dataContext){
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
 
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
