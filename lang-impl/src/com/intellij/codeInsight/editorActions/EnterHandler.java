@@ -7,7 +7,6 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -48,7 +47,7 @@ public class EnterHandler extends EditorWriteActionHandler {
   }
 
   public void executeWriteAction(final Editor editor, final DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
       PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(new Runnable() {
         public void run() {
