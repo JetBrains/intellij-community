@@ -124,7 +124,7 @@ public class MethodCallInstruction extends Instruction {
   }
 
   private void pushResult(DfaMemoryState state, final DfaValue oldValue) {
-    final DfaValue dfaValue;
+    DfaValue dfaValue = null;
     if (myType != null && (myType instanceof PsiClassType || myType.getArrayDimensions() > 0)) {
       dfaValue = myIsNotNull ? myFactory.getNotNullFactory().create(myType) : myFactory.getTypeFactory().create(myType, myIsNullable);
     }
@@ -150,14 +150,11 @@ public class MethodCallInstruction extends Instruction {
         dfaValue = myFactory.getConstFactory().createFromValue(o, myType);
       }
       else {
-        dfaValue = oldValue == null ? DfaUnknownValue.getInstance() : oldValue;
+        dfaValue = oldValue;
       }
     }
-    else {
-      dfaValue = DfaUnknownValue.getInstance();
-    }
 
-    state.push(dfaValue);
+    state.push(dfaValue == null ? DfaUnknownValue.getInstance() : dfaValue);
   }
 
   public PsiCallExpression getCallExpression() {
