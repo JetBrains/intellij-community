@@ -715,14 +715,15 @@ public class GroovyAnnotator implements Annotator {
     Annotation annotation = holder.createInfoAnnotation(elt, null);
 
     if (refExprType == null) {
-      if (resolved == null && refExpr.getQualifierExpression() == null) {
-        if (!(refExpr.getParent() instanceof GrCallExpression)) {
-          registerCreateClassByTypeFix(refExpr, annotation, false);
+      if (resolved == null) {
+        if (refExpr.getQualifierExpression() == null) {
+          if (!(refExpr.getParent() instanceof GrCallExpression)) {
+            registerCreateClassByTypeFix(refExpr, annotation, false);
+          }
+          registerAddImportFixes(refExpr, annotation);
         }
-        registerAddImportFixes(refExpr, annotation);
+        registerReferenceFixes(refExpr, annotation);
       }
-
-      registerReferenceFixes(refExpr, annotation);
 
       annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
     } else if (refExprType instanceof PsiClassType && ((PsiClassType) refExprType).resolve() == null) {
@@ -734,9 +735,7 @@ public class GroovyAnnotator implements Annotator {
     PsiClass targetClass = QuickfixUtil.findTargetClass(refExpr);
     if (targetClass == null) return;
 
-    if (refExpr.resolve() == null) {
-      addDynamicAnnotation(annotation, refExpr);
-    }
+    addDynamicAnnotation(annotation, refExpr);
     if (targetClass instanceof GrMemberOwner) {
       if (!(targetClass instanceof GroovyScriptClass)) {
         annotation.registerFix(new CreateFieldFromUsageFix(refExpr, (GrMemberOwner) targetClass));
