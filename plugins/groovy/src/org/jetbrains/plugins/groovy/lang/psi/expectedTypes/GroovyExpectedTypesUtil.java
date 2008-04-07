@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
@@ -94,8 +95,16 @@ public class GroovyExpectedTypesUtil {
       }
     }
 
+    public void visitIfStatement(GrIfStatement ifStatement) {
+      if (myExpression.equals(ifStatement.getCondition())) {
+        myResult = new TypeConstraint[] {new SubtypeConstraint(TypesUtil.getJavaLangObject(ifStatement), PsiType.BOOLEAN)};
+      }
+    }
+
     public void visitWhileStatement(GrWhileStatement whileStatement) {
-      myResult = new TypeConstraint[] {new SubtypeConstraint(TypesUtil.getJavaLangObject(whileStatement), PsiType.BOOLEAN)};
+      if (myExpression.equals(whileStatement.getCondition())) {
+        myResult = new TypeConstraint[] {new SubtypeConstraint(TypesUtil.getJavaLangObject(whileStatement), PsiType.BOOLEAN)};
+      }
     }
 
     public void visitTraditionalForClause(GrTraditionalForClause forClause) {
