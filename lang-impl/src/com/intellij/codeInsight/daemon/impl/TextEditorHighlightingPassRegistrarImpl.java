@@ -10,8 +10,10 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
@@ -93,6 +95,11 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       checkedForCycles = true;
       checkForCycles();
     }
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+    PsiFile fileFromDoc = documentManager.getPsiFile(editor.getDocument());
+    assert fileFromDoc == psiFile : "Files are different: " + psiFile + ";" + fileFromDoc;
+    Document documentFromFile = documentManager.getDocument(psiFile);
+    assert documentFromFile == editor.getDocument() : "Documents are different: "+ editor.getDocument() + ";" + documentFromFile;
     final TIntObjectHashMap<TextEditorHighlightingPass> id2Pass = new TIntObjectHashMap<TextEditorHighlightingPass>();
     myRegisteredPassFactories.forEachKey(new TIntProcedure() {
       public boolean execute(int passId) {
