@@ -600,7 +600,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     private void createPomPluginNodes() {
       pomPluginNodes.clear();
-      for (MavenId mavenId : ProjectUtil.collectPluginIds(mavenModel, myProjectsManager.getProfiles(virtualFile))) {
+      for (MavenId mavenId : ProjectUtil.collectPluginIds(mavenModel, myProjectsManager.getActiveProfiles(virtualFile))) {
         addPlugin(pomPluginNodes, mavenId, false);
       }
     }
@@ -726,7 +726,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
           Set<String> moduleNames = ProjectUtil.collectRelativeModulePaths(
               mavenModel,
-              myProjectsManager.getProfiles(virtualFile),
+              myProjectsManager.getActiveProfiles(virtualFile),
               new HashSet<String>());
 
           for (String moduleName : moduleNames) {
@@ -759,7 +759,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
       for (String id : ProjectUtil.collectProfileIds(mavenModel, new TreeSet<String>())) {
         profilesNode.add(id);
       }
-      profilesNode.updateActive(myProjectsManager.getProfiles(virtualFile), true);
+      profilesNode.updateActive(myProjectsManager.getActiveProfiles(virtualFile), true);
     }
 
     public void setProfiles(final Collection<String> profiles) {

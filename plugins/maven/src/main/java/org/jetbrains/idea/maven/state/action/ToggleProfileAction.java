@@ -27,7 +27,7 @@ public class ToggleProfileAction extends AnAction {
     final boolean enabled = projectsManager != null && file != null && profiles != null && isEnabled(projectsManager, file, profiles);
 
     e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setText((enabled && projectsManager.getProfiles(file).contains(profiles.get(0)))
+    e.getPresentation().setText((enabled && projectsManager.getActiveProfiles(file).contains(profiles.get(0)))
                                 ? StateBundle.message("maven.profile.deactivate")
                                 : StateBundle.message("maven.profile.activate"));
   }
@@ -39,19 +39,19 @@ public class ToggleProfileAction extends AnAction {
     final List<String> profiles = e.getData(MavenDataKeys.MAVEN_PROFILES_KEY);
 
     if (projectsManager != null && file != null && profiles != null && isEnabled(projectsManager, file, profiles)) {
-      final Collection<String> activeProfiles = new ArrayList<String>(projectsManager.getProfiles(file));
+      final Collection<String> activeProfiles = new ArrayList<String>(projectsManager.getActiveProfiles(file));
       if (activeProfiles.contains(profiles.get(0))) {
         activeProfiles.removeAll(profiles);
       }
       else {
         activeProfiles.addAll(profiles);
       }
-      projectsManager.setProfiles(file, activeProfiles);
+      projectsManager.setActiveProfiles(file, activeProfiles);
     }
   }
 
-  private boolean isEnabled(final MavenProjectsManager projectsManager, final VirtualFile file, final List<String> profiles) {
-    final Collection<String> activeProfiles = new ArrayList<String>(projectsManager.getProfiles(file));
+  private boolean isEnabled(MavenProjectsManager projectsManager, VirtualFile file, List<String> profiles) {
+    final Collection<String> activeProfiles = new ArrayList<String>(projectsManager.getActiveProfiles(file));
     int count = 0;
     for (String profile : profiles) {
       if (activeProfiles.contains(profile)) {

@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.apache.maven.embedder.MavenEmbedder;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
@@ -41,7 +40,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
 
   private VirtualFile importRoot;
   private Collection<VirtualFile> myFiles;
-  private List<String> myProfiles;
+  private Map<VirtualFile, Set<String>> myFilesWithProfiles = new HashMap<VirtualFile, Set<String>>();
   private MavenImportProcessor myImportProcessor;
 
   private boolean openModulesConfigurator;
@@ -66,7 +65,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   public boolean validate(Project current, Project dest) {
     try {
       myResolutionProblems = new ArrayList<Pair<File, List<String>>>();
-      myImportProcessor.resolve(dest, myProfiles, myResolutionProblems);
+      myImportProcessor.resolve(dest, getAllProfiles(), myResolutionProblems);
 
       if (ApplicationManager.getApplication().isHeadlessEnvironment()
           && !myResolutionProblems.isEmpty()) {
@@ -97,7 +96,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   }
 
   public void commit(final Project project) {
-    myImportProcessor.commit(project, myProfiles);
+    myImportProcessor.commit(project, getAllProfiles());
 
     MavenImporter importerComponent = MavenImporter.getInstance(project);
     importerComponent.setDoesNotRequireSynchronization();
@@ -109,22 +108,13 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
       }
     });
 
-    MavenImporterState importerState = importerComponent.getState();
-    if (!myProfiles.isEmpty()) {
-      for (String profile : myProfiles) {
-        importerState.memorizeProfile(profile);
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+    if (!myFilesWithProfiles.isEmpty()) {
+      for (Map.Entry<VirtualFile,Set<String>> each : myFilesWithProfiles.entrySet()) {
+        manager.setActiveProfiles(each.getKey(), each.getValue());
       }
-
-      final MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-      myImportProcessor.getMavenProjectModel().visit(new MavenProjectModel.MavenProjectVisitorPlain() {
-        public void visit(MavenProjectModel.Node node) {
-          MavenProject p = node.getMavenProject();
-          Set<String> profiles = ProjectUtil.collectProfileIds(p.getModel(), new HashSet<String>());
-          profiles.retainAll(myProfiles);
-          projectsManager.setProfiles(node.getFile(), profiles);
-        }
-      });
     }
+
     project.getComponent(MavenWorkspaceSettingsComponent.class).getState().myImporterSettings = getImporterPreferences();
     project.getComponent(MavenWorkspaceSettingsComponent.class).getState().myArtifactSettings = getArtifactPreferences();
     project.getComponent(MavenCore.class).loadState(myCoreSettings);
@@ -140,7 +130,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
 
   public boolean setRootDirectory(final String root) throws ConfigurationException {
     myFiles = null;
-    myProfiles = null;
+    myFilesWithProfiles.clear();
     myImportProcessor = null;
 
     importRoot = FileFinder.refreshRecursively(root);
@@ -154,9 +144,9 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
                                              p.getIndicator(),
                                              getImporterPreferences().isLookForNested());
 
-        myProfiles = collectProfiles(myFiles);
+        myFilesWithProfiles = collectProfiles(myFiles);
 
-        if (myProfiles.isEmpty()) {
+        if (myFilesWithProfiles.isEmpty()) {
           createImportProcessor(p);
         }
 
@@ -165,30 +155,41 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     });
   }
 
-  private List<String> collectProfiles(Collection<VirtualFile> files) throws MavenException {
-    SortedSet<String> profiles = new TreeSet<String>();
+  private Map<VirtualFile, Set<String>> collectProfiles(Collection<VirtualFile> files) throws MavenException {
+    Map<VirtualFile, Set<String>> result = new HashMap<VirtualFile, Set<String>>();
 
     try {
       MavenEmbedder e = MavenFactory.createEmbedderForRead(getCoreState());
       MavenProjectReader r = new MavenProjectReader(e);
+
       for (VirtualFile f : files) {
+        Set<String> profiles = new LinkedHashSet<String>();
         ProjectUtil.collectProfileIds(r.readModel(f.getPath()), profiles);
+        result.put(f, profiles);
       }
+
       MavenFactory.releaseEmbedder(e);
     }
     catch (MavenException ignore) {
     }
 
-    return new ArrayList<String>(profiles);
+    return result;
   }
 
-  public List<String> getProfiles() {
-    return myProfiles;
+  public List<String> getAllProfiles() {
+    Set<String> result = new LinkedHashSet<String>();
+    for (Set<String> each : myFilesWithProfiles.values()) {
+      result.addAll(each);
+    }
+    return new ArrayList<String>(result);
   }
 
-  public boolean setProfiles(final List<String> profiles) throws ConfigurationException {
+  public boolean setSelectedProfiles(List<String> profiles) throws ConfigurationException {
     myImportProcessor = null;
-    myProfiles = new ArrayList<String>(profiles);
+
+    for (Map.Entry<VirtualFile,Set<String>> each : myFilesWithProfiles.entrySet()) {
+      each.getValue().retainAll(profiles);
+    }
 
     return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new Progress.Process() {
       public void run(Progress p) throws MavenException, CanceledException {
@@ -218,7 +219,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
                                                  getImporterPreferences(),
                                                  getArtifactPreferences());
 
-    myImportProcessor.createMavenProjectModel(myFiles, new HashMap<VirtualFile, Module>(), myProfiles, p);
+    myImportProcessor.createMavenProjectModel(myFiles, new HashMap<VirtualFile, Module>(), getAllProfiles(), p);
   }
 
   public List<MavenProjectModel.Node> getList() {

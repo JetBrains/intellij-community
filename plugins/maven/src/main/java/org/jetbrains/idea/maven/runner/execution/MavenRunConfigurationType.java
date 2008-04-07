@@ -133,7 +133,7 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
 
     VirtualFile f = ((PsiFile)l.getPsiElement()).getVirtualFile();
     List<String> goals = ((MavenGoalLocation)l).getGoals();
-    Collection<String> profiles = MavenProjectsManager.getInstance(l.getProject()).getProfiles(f);
+    Collection<String> profiles = MavenProjectsManager.getInstance(l.getProject()).getActiveProfiles(f);
 
     return new MavenRunnerParameters(f.getPath(), goals, profiles);
   }

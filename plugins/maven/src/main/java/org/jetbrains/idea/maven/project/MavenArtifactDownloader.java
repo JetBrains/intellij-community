@@ -57,7 +57,7 @@ public class MavenArtifactDownloader {
         if (!projectsManager.isIgnored(file)) {
           MavenProject p = projectsManager.getResolvedProject(file);
           if (p == null) continue;
-          mavenProjects.put(p, projectsManager.getProfiles(file));
+          mavenProjects.put(p, projectsManager.getActiveProfiles(file));
           fileToProject.put(file, p);
         }
       }

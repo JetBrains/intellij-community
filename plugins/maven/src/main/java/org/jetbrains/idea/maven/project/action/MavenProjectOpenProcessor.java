@@ -35,7 +35,7 @@ public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase {
     getBuilder().setFiles(Arrays.asList(file));
 
     try {
-      if (!getBuilder().setProfiles(new ArrayList<String>())) return false;
+      if (!getBuilder().setSelectedProfiles(new ArrayList<String>())) return false;
 
       List<MavenProjectModel.Node> projects = getBuilder().getList();
       getBuilder().setList(projects);

@@ -140,6 +140,42 @@ public class ReimportingTest extends ImportingTestCase {
     assertModules("project", "m1", "m2", "userModule");
   }
 
+  public void testReimportingWithProfiles() throws Exception {
+    updateProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>profile1</id>" +
+                     "    <activation>" +
+                     "      <activeByDefault>false</activeByDefault>" +
+                     "    </activation>" +
+                     "    <modules>" +
+                     "      <module>m1</module>" +
+                     "    </modules>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>profile2</id>" +
+                     "    <activation>" +
+                     "      <activeByDefault>false</activeByDefault>" +
+                     "    </activation>" +
+                     "    <modules>" +
+                     "      <module>m2</module>" +
+                     "    </modules>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    configMessagesForYesAnswer(); // will ask about absent modules
+
+    importProjectWithProfiles("profile1");
+    assertModules("project", "m1");
+
+    importProjectWithProfiles("profile2");
+    assertModules("project", "m2");
+  }
+
   private void configMessagesForYesAnswer() {
     Messages.setTestDialog(new TestDialog() {
       public int show(String message) {

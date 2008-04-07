@@ -7,7 +7,6 @@ import com.intellij.projectImport.ProjectImportWizardStep;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.util.List;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -26,8 +25,7 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
     }
     final MavenImportBuilder importBuilder = getBuilder();
     if (importBuilder != null) {
-      final List<String> list = importBuilder.getProfiles();
-      return list != null && !list.isEmpty();
+      return !importBuilder.getAllProfiles().isEmpty();
     }
     return false;
   }
@@ -45,11 +43,11 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
   }
 
   public void updateStep() {
-    profileChooser.setElements(getBuilder().getProfiles(), false);
+    profileChooser.setElements(getBuilder().getAllProfiles(), false);
   }
 
   public boolean validate() throws ConfigurationException {
-    return getBuilder().setProfiles(profileChooser.getMarkedElements());
+    return getBuilder().setSelectedProfiles(profileChooser.getMarkedElements());
   }
 
   public void updateDataModel() {

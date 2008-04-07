@@ -120,7 +120,7 @@ public class MavenKeymapExtension implements KeymapExtension {
     result.addAll(MavenFactory.getStandardGoalsList());
 
     Model model = projectsManager.getModel(file);
-    Collection<String> activeProfiles = projectsManager.getProfiles(file);
+    Collection<String> activeProfiles = projectsManager.getActiveProfiles(file);
     for (MavenId plugin : ProjectUtil.collectPluginIds(model, activeProfiles)) {
       collectGoals(repository, plugin, result);
     }

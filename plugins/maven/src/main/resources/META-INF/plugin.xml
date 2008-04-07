@@ -48,6 +48,9 @@
       <implementation-class>org.jetbrains.idea.maven.state.MavenProjectsManager</implementation-class>
     </component>
     <component>
+      <implementation-class>org.jetbrains.idea.maven.project.MavenImporter</implementation-class>
+    </component>
+    <component>
       <interface-class>org.jetbrains.idea.maven.runner.MavenRunner</interface-class>
       <implementation-class>org.jetbrains.idea.maven.runner.MavenRunnerImpl</implementation-class>
       <option name="workspace" value="true"/>
@@ -60,10 +63,6 @@
       <implementation-class>org.jetbrains.idea.maven.events.MavenEventsComponent</implementation-class>
     </component>
     <component>
-      <interface-class>org.jetbrains.idea.maven.project.MavenImporter</interface-class>
-      <implementation-class>org.jetbrains.idea.maven.project.MavenImporterComponent</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent</implementation-class>
       <option name="workspace" value="true"/>
     </component>
@@ -72,16 +71,6 @@
       <implementation-class>org.jetbrains.idea.maven.repo.MavenRepositoryViewer</implementation-class>
     </component>
   </project-components>
-  <!--
-  <module-components>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.project.MavenModuleConfigurationProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.project.MavenDependenciesEditor</implementation-class>
-    </component>
-  </module-components>
-  -->
   <actions>
     <group id="Maven.Core">
       <action id="Maven.ShowSettings"

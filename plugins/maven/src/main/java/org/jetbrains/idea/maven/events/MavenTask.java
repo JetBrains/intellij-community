@@ -55,7 +55,7 @@ public class MavenTask implements Cloneable, Comparable {
   public MavenRunnerParameters createBuildParameters(final MavenProjectsManager projectsManager) {
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(pomPath);
     if (virtualFile != null) {
-      return new MavenRunnerParameters(pomPath, Arrays.asList(goal), projectsManager.getProfiles(virtualFile));
+      return new MavenRunnerParameters(pomPath, Arrays.asList(goal), projectsManager.getActiveProfiles(virtualFile));
     }
     return null;
   }

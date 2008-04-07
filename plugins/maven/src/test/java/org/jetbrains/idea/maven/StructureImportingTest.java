@@ -380,7 +380,7 @@ public class StructureImportingTest extends ImportingTestCase {
     importProject();
     assertModules("project", "m");
   }
-
+  
   public void testProjectWithProfilesXmlFile() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
