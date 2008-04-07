@@ -256,7 +256,7 @@ public class EditorActionUtil {
     }
   }
 
-  private static int findFirstNonspaceOffsetOnTheLine(Document document, int lineNumber) {
+  public static int findFirstNonspaceOffsetOnTheLine(Document document, int lineNumber) {
     int lineStart = document.getLineStartOffset(lineNumber);
     int lineEnd = document.getLineEndOffset(lineNumber);
     CharSequence text = document.getCharsSequence();
