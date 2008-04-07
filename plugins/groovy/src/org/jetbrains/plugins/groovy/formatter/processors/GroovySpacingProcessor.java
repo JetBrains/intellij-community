@@ -189,13 +189,6 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
       // todo add other cases
     }
 
-    public void visitClosure(GrClosableBlock closure) {
-      if ((myChild1.getElementType() == mLCURLY && myChild2.getElementType() != PARAMETERS_LIST) 
-          || myChild2.getElementType() == mRCURLY) {
-        myResult = Spacing.createSpacing(0, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
-      }
-    }
-
     public void visitOpenBlock(GrOpenBlock block) {
       if (myChild1.getElementType() == mLCURLY || myChild2.getElementType() == mRCURLY) {
         myResult = Spacing.createSpacing(0, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
