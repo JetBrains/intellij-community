@@ -5,19 +5,19 @@ package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiFile;
 
-public class PsiFileStubImpl extends StubBase<PsiFile> implements PsiFileStub {
-  private PsiFile myFile;
+public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements PsiFileStub<T> {
+  private T myFile;
 
-  public PsiFileStubImpl(final PsiFile file) {
+  public PsiFileStubImpl(final T file) {
     super(null, null);
     myFile = file;
   }
 
-  public PsiFile getPsi() {
+  public T getPsi() {
     return myFile;
   }
 
-  public void setPsi(final PsiFile psi) {
+  public void setPsi(final T psi) {
     myFile = psi;
   }
 

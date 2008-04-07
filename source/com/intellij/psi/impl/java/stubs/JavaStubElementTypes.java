@@ -3,8 +3,10 @@
  */
 package com.intellij.psi.impl.java.stubs;
 
-public class JavaStubElementTypes {
+import com.intellij.psi.impl.source.JavaFileElementType;
 
+public class JavaStubElementTypes {
+  public static final JavaFileElementType FILE = new JavaFileElementType();
   public static final JavaClassElementType CLASS = new JavaClassElementType();
   public static final JavaModifierListElementType MODIFIER_LIST = new JavaModifierListElementType();
   public static final JavaMethodElementType METHOD = new JavaMethodElementType();

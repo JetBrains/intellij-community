@@ -60,7 +60,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
         stub = stub.getParentStub();
       }
 
-      return ((PsiFileStub)stub).getPsi();
+      return (PsiFile)((PsiFileStub)stub).getPsi();
     }
 
     return super.getContainingFile();
