@@ -31,15 +31,20 @@
  */
 package com.intellij.ide.structureView.impl.xml;
 
+import com.intellij.ide.structureView.StructureViewExtension;
+import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
 import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.Grouper;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.lang.dtd.DTDLanguage;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel{
   private final XmlFile myFile;
@@ -72,7 +77,7 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
   }
 
   public boolean shouldEnterElement(final Object element) {
-    return element instanceof XmlTag;
+    return element instanceof XmlTag && ((XmlTag)element).getSubTags().length > 0;
   }
 
   protected PsiFile getPsiFile() {
@@ -82,5 +87,18 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
   @NotNull
   protected Class[] getSuitableClasses() {
     return myClasses;
+  }
+
+  public Object getCurrentEditorElement() {
+    final Object editorElement = super.getCurrentEditorElement();
+    if (editorElement instanceof XmlTag) {
+      final Collection<StructureViewExtension> structureViewExtensions =
+          StructureViewFactoryEx.getInstanceEx(myFile.getProject()).getAllExtensions(XmlTag.class);
+      for(StructureViewExtension extension:structureViewExtensions) {
+        final Object element = extension.getCurrentEditorElement(getEditor(), (PsiElement)editorElement);
+        if (element != null) return element;
+      }
+    }
+    return editorElement;
   }
 }

@@ -31,8 +31,12 @@
  */
 package com.intellij.ide.structureView;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 public interface StructureViewExtension {
   StructureViewTreeElement[] getChildren(PsiElement parent);
+  @Nullable
+  Object getCurrentEditorElement(Editor editor, PsiElement parent);
 }
