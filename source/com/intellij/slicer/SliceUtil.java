@@ -12,10 +12,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author cdr
@@ -25,22 +22,43 @@ public class SliceUtil {
                                                               final Map<SliceUsage, List<SliceUsage>> targetEqualUsages) {
     PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
     if (method == null) return true;
-    if (!(expression instanceof PsiReferenceExpression)) return true;
-    PsiReferenceExpression ref = (PsiReferenceExpression)expression;
-    PsiElement resolved = ref.resolve();
-    if (!(resolved instanceof PsiVariable)) return true;
+    if (expression instanceof PsiReferenceExpression) {
+      PsiReferenceExpression ref = (PsiReferenceExpression)expression;
+      PsiElement resolved = ref.resolve();
+      if (!(resolved instanceof PsiVariable)) return true;
 
+      Collection<PsiExpression> expressions = getExpressionsFlownTo(expression, method, (PsiVariable)resolved);
+
+      return processFlownFromExpressions(expressions, processor, parent, targetEqualUsages, ref);
+    }
+    else if (expression instanceof PsiMethodCallExpression) {
+      return processMethodReturnValue((PsiMethodCallExpression)expression, processor, parent, targetEqualUsages);
+    }
+    return true;
+  }
+
+  private static Collection<PsiExpression> getExpressionsFlownTo(final PsiExpression expression, final PsiMethod containingMethod, final PsiVariable variable) {
     ValuableDataFlowRunner runner = new ValuableDataFlowRunner(expression);
-    assert PsiTreeUtil.isAncestor(method, expression, true);
-    if (runner.analyzeMethod(method.getBody()) != RunnerResult.OK) return true;
+    assert PsiTreeUtil.isAncestor(containingMethod, expression, true);
+    if (runner.analyzeMethod(containingMethod.getBody()) != RunnerResult.OK) return Collections.emptyList();
 
-    Collection<PsiExpression> expressions = runner.getPossibleVariableValues((PsiVariable)resolved);
-    if (resolved instanceof PsiField || resolved instanceof PsiParameter) {
+    Collection<PsiExpression> expressions = runner.getPossibleVariableValues(variable);
+
+    if (variable instanceof PsiField || variable instanceof PsiParameter) {
       expressions = new THashSet<PsiExpression>(expressions);
       expressions.add(expression);
     }
+    return expressions;
+  }
 
+  private static boolean processFlownFromExpressions(final Collection<PsiExpression> expressions, final Processor<SliceUsage> processor,
+                                                     final SliceUsage parent,
+                                                     final Map<SliceUsage, List<SliceUsage>> targetEqualUsages, final PsiReferenceExpression ref) {
     for (PsiExpression flowFromExpression : expressions) {
+      while (flowFromExpression instanceof PsiParenthesizedExpression) {
+        flowFromExpression = ((PsiParenthesizedExpression)flowFromExpression).getExpression();
+      }
+
       if (flowFromExpression instanceof PsiReferenceExpression) {
         PsiElement element = ((PsiReferenceExpression)flowFromExpression).resolve();
         if (element instanceof PsiParameter) {
@@ -56,8 +74,33 @@ public class SliceUtil {
       SliceUsage usage = new SliceUsage(new UsageInfo(ref), targetEqualUsages, parent);
       if (!processor.process(usage)) return false;
     }
-    
+
     return true;
+  }
+
+  private static boolean processMethodReturnValue(final PsiMethodCallExpression methodCallExpr, final Processor<SliceUsage> processor,
+                                                  final SliceUsage parent, final Map<SliceUsage, List<SliceUsage>> targetEqualUsages) {
+    final PsiMethod methodCalled = methodCallExpr.resolveMethod();
+    if (methodCalled == null) return true;
+
+    PsiType returnType = methodCalled.getReturnType();
+    if (returnType == null) return true;
+    final PsiCodeBlock body = methodCalled.getBody();
+    if (body == null) return true;
+
+    final Collection<PsiExpression> expressions = new THashSet<PsiExpression>();
+    body.accept(new JavaRecursiveElementVisitor() {
+      public void visitReturnStatement(final PsiReturnStatement statement) {
+        PsiExpression returnValue = statement.getReturnValue();
+        if (!(returnValue instanceof PsiReferenceExpression)) return;
+        PsiElement resolved = ((PsiReferenceExpression)returnValue).resolve();
+        if (!(resolved instanceof PsiVariable)) return;
+
+        expressions.addAll(getExpressionsFlownTo(returnValue, methodCalled, (PsiVariable)resolved));
+      }
+    });
+
+    return processFlownFromExpressions(expressions, processor, parent, targetEqualUsages, methodCallExpr.getMethodExpression());
   }
 
   private static boolean processFieldUsages(final PsiField field, final Processor<SliceUsage> processor, final SliceUsage parent, final Map<SliceUsage, List<SliceUsage>> targetEqualUsages) {

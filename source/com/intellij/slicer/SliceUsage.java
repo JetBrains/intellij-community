@@ -18,7 +18,7 @@ import java.util.Map;
  * @author cdr
  */
 public class SliceUsage extends UsageInfo2UsageAdapter {
-  protected final SliceUsage myParent;
+  private final SliceUsage myParent;
   boolean duplicate;
   protected final Map<SliceUsage, List<SliceUsage>> targetEqualUsages;
 

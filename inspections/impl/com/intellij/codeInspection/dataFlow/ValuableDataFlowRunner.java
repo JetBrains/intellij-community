@@ -38,7 +38,7 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
 
   @NotNull
   public Collection<PsiExpression> getPossibleVariableValues(final PsiVariable psiVariable) {
-    final Collection<PsiExpression> psiExpressions = ((MyInstructionFactory)getInstructionFactory()).myValues.get(psiVariable);
+    Collection<PsiExpression> psiExpressions = ((MyInstructionFactory)getInstructionFactory()).myValues.get(psiVariable);
     return psiExpressions == null? Collections.<PsiExpression>emptyList() : psiExpressions;
   }
 
