@@ -46,6 +46,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -185,6 +187,19 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
         createSpaceInCode(mySettings.SPACE_WITHIN_BRACKETS);
       }
       // todo add other cases
+    }
+
+    public void visitClosure(GrClosableBlock closure) {
+      if ((myChild1.getElementType() == mLCURLY && myChild2.getElementType() != PARAMETERS_LIST) 
+          || myChild2.getElementType() == mRCURLY) {
+        myResult = Spacing.createSpacing(0, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      }
+    }
+
+    public void visitOpenBlock(GrOpenBlock block) {
+      if (myChild1.getElementType() == mLCURLY || myChild2.getElementType() == mRCURLY) {
+        myResult = Spacing.createSpacing(0, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      }
     }
 
     public void visitNewExpression(GrNewExpression newExpression) {

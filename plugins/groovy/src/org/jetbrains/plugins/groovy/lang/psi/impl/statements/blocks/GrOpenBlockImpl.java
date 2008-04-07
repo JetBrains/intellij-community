@@ -18,8 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
@@ -32,7 +30,7 @@ public class GrOpenBlockImpl extends GrBlockImpl implements GrOpenBlock {
   }
 
   public void accept(GroovyElementVisitor visitor) {
-    visitor.visitBlock(this);
+    visitor.visitOpenBlock(this);
   }
 
   public String toString() {

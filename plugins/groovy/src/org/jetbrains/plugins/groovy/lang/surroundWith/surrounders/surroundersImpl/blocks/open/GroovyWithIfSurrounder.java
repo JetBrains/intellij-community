@@ -10,16 +10,17 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovyManyStatementsSurrounder;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 23.05.2007
  */
-public class GroovyWithIfSurrounder extends GroovyOpenBlockSurrounder {
+public class GroovyWithIfSurrounder extends GroovyManyStatementsSurrounder {
   protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
-    GrIfStatement ifStatement = (GrIfStatement) factory.createTopElementFromText("if (a) {\n}");
+    GrIfStatement ifStatement = (GrIfStatement) factory.createTopElementFromText("if (a) {}");
     addStatements(((GrBlockStatement)ifStatement.getThenBranch()).getBlock(), elements);
     return ifStatement;
   }

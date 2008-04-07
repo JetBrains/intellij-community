@@ -67,7 +67,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  public void visitBlock(GrCodeBlock block) {
+  public void visitOpenBlock(GrOpenBlock block) {
     final PsiElement parent = block.getParent();
     final PsiElement lbrace = block.getLBrace();
     if (lbrace != null && parent instanceof GrMethod) {
@@ -76,7 +76,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         addNode(new ReadWriteVariableInstructionImpl(parameter, myInstructionNumber++));
       }
     }
-    super.visitBlock(block);
+    super.visitOpenBlock(block);
   }
 
   public Instruction[] buildControlFlow(GroovyPsiElement scope, GroovyPsiElement startInScope, GroovyPsiElement endInScope) {
