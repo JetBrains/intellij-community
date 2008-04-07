@@ -72,7 +72,7 @@ public interface JBTabs {
 
   boolean isSideComponentVertical();
 
-  void setUiDecorator(@Nullable UiDecorator decorator);
+  JBTabs setUiDecorator(@Nullable UiDecorator decorator);
 
   @Nullable
   DataProvider getDataProvider();
@@ -119,6 +119,10 @@ public interface JBTabs {
   JBTabs setInnerInsets(Insets innerInsets);
 
   Insets getInnerInsets();
+
+  JBTabs setGhostsAlwaysVisible(boolean visible);
+
+  boolean isGhostsAlwaysVisible();
 
   interface UiDecorator {
     @NotNull

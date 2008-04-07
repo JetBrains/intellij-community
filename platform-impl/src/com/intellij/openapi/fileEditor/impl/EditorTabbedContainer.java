@@ -73,7 +73,7 @@ final class EditorTabbedContainer  {
       public JBTabs.UiDecoration getDecoration() {
         return new JBTabs.UiDecoration(null, new Insets(1, 6, 1, 6));
       }
-    });
+    }).setGhostsAlwaysVisible(true);
 
     updateTabBorder();
 
