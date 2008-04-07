@@ -20,7 +20,8 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
   @Nullable
   public Object getData(final String dataId, final Editor e, final VirtualFile file) {
     if (dataId.equals(AnActionEvent.injectedId(DataConstants.EDITOR))) {
-      return InjectedLanguageUtil.getEditorForInjectedLanguage(e, getPsiFile(e, file));
+      assert !PsiDocumentManager.getInstance(e.getProject()).isUncommited(e.getDocument());
+      return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(e, getPsiFile(e, file));
     }
     if (dataId.equals(AnActionEvent.injectedId(DataConstants.PSI_ELEMENT))) {
       return getPsiElementIn((Editor)getData(AnActionEvent.injectedId(DataConstants.EDITOR), e, file), file);

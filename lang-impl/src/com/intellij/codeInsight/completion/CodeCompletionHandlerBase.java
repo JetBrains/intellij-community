@@ -398,7 +398,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     document.replaceString(context.getStartOffset(), context.getSelectionEndOffset(), dummyIdentifier);
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    PsiFile fileCopy = InjectedLanguageUtil.findInjectedPsiAt(hostFile, hostStartOffset);
+    PsiFile fileCopy = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, hostStartOffset);
     if (fileCopy == null) {
       PsiElement elementAfterCommit = findElementAt(hostFile, hostStartOffset);
       fileCopy = elementAfterCommit == null ? oldFileCopy : elementAfterCommit.getContainingFile();
@@ -408,7 +408,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       // newly inserted identifier can well end up in the injected language region
       Editor oldEditor = context.editor;
       Editor editor = EditorFactory.getInstance().createEditor(document, project);
-      Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, hostFile, context.getStartOffset());
+      Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, hostFile, context.getStartOffset());
       if (newEditor instanceof EditorWindow) {
         EditorWindow injectedEditor = (EditorWindow)newEditor;
         PsiFile injectedFile = injectedEditor.getInjectedFile();

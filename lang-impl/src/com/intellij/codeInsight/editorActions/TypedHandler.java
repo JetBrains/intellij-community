@@ -209,7 +209,7 @@ public class TypedHandler implements TypedActionHandler {
     if (PsiDocumentManager.getInstance(oldFile.getProject()).isUncommited(editor.getDocument())) {
       return editor;
     }
-    return InjectedLanguageUtil.getEditorForInjectedLanguage(editor, oldFile);
+    return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, oldFile);
   }
 
   private static void handleAfterLParen(Editor editor, FileType fileType, char lparenChar){

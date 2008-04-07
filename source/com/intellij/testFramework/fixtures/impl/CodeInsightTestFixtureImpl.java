@@ -367,7 +367,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     assert referenceTo != null && handler.canFindUsagesFor(referenceTo) : "Cannot find element in caret";
     final Project project = getProject();
-    return ReferencesSearch.search(referenceTo, GlobalSearchScope.projectScope(project), false).toArray(new PsiReference[0]);
+    return ReferencesSearch.search(referenceTo, GlobalSearchScope.projectScope(project), false).toArray(PsiReference.EMPTY_ARRAY);
   }
 
   public void moveFile(@NonNls final String filePath, @NonNls final String to, final String... additionalFiles) throws Throwable {
@@ -476,7 +476,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Nullable
   protected Editor getCompletionEditor() {
-    return InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, myFile);
+    return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
   }
 
 
@@ -501,7 +501,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
               }
             };
           }
-        }.actionPerformedImpl(getProject(), InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, myFile));
+        }.actionPerformedImpl(getProject(), InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile));
         LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
         result.setResult(lookup == null ? null : lookup.getSortedItems());
       }

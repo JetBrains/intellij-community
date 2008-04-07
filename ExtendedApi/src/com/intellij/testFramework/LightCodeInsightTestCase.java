@@ -176,7 +176,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
   }
 
   private static void setupEditorForInjectedLanguage() {
-    Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, myFile);
+    Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
     if (editor instanceof EditorWindow) {
       myFile = ((EditorWindow)editor).getInjectedFile();
       myEditor = editor;
@@ -376,13 +376,13 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
       return myEditor;
     }
     if (dataId.equals(AnActionEvent.injectedId(DataConstants.EDITOR))) {
-      return InjectedLanguageUtil.getEditorForInjectedLanguage(getEditor(), getFile());
+      return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
     }
     if (dataId.equals(DataConstants.PSI_FILE)) {
       return myFile;
     }
     if (dataId.equals(AnActionEvent.injectedId(DataConstants.PSI_FILE))) {
-      Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguage(getEditor(), getFile());
+      Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
       return editor instanceof EditorWindow ? ((EditorWindow)editor).getInjectedFile() : getFile();
     }
     return super.getData(dataId);

@@ -34,7 +34,7 @@ public abstract class BaseCodeInsightAction extends CodeInsightAction {
       PsiFile psiFile = documentManager.getCachedPsiFile(editor.getDocument());
       if (psiFile != null) {
         documentManager.commitAllDocuments();
-        injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, psiFile);
+        injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile);
       }
     }
     return injectedEditor;

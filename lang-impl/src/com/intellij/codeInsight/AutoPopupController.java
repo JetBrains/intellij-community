@@ -36,7 +36,7 @@ public class AutoPopupController implements Disposable {
     setupListeners();
   }
 
-  protected void setupListeners() {
+  private void setupListeners() {
     ActionManagerEx.getInstanceEx().addAnActionListener(new AnActionListener() {
       public void beforeActionPerformed(AnAction action, DataContext dataContext) {
         myAlarm.cancelAllRequests();
@@ -97,17 +97,21 @@ public class AutoPopupController implements Disposable {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (settings.AUTO_POPUP_PARAMETER_INFO) {
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+      PsiFile file = documentManager.getPsiFile(editor.getDocument());
       if (file == null) return;
 
-      final PsiFile injectedFile = PsiDocumentManager.getInstance(myProject).getPsiFile(InjectedLanguageUtil.getEditorForInjectedLanguage(editor, file).getDocument());
-      if (injectedFile == null) return;
+      if (!documentManager.isUncommited(editor.getDocument())) {
+        file = documentManager.getPsiFile(InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file).getDocument());
+        if (file == null) return;
+      }
 
+      final PsiFile file1 = file;
       final Runnable request = new Runnable(){
         public void run(){
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+          documentManager.commitAllDocuments();
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
-          new ShowParameterInfoHandler().invoke(myProject, editor, injectedFile, lbraceOffset, highlightedMethod);
+          new ShowParameterInfoHandler().invoke(myProject, editor, file1, lbraceOffset, highlightedMethod);
         }
       };
       // invoke later prevents cancelling request by keyPressed from the same action

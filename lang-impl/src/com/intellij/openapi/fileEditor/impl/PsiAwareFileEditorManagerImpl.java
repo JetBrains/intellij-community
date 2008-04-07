@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -22,7 +23,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.PsiAwareFileEditorManagerImpl");
 
   private final PsiManager myPsiManager;
-  private WolfTheProblemSolver myProblemSolver;
+  private final WolfTheProblemSolver myProblemSolver;
 
   /**
    * Updates icons for open files when project roots change
@@ -73,8 +74,14 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
 
   @Override
   protected Editor getOpenedEditor(final Editor editor, final boolean focusEditor) {
-    PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(editor.getDocument());
-    return focusEditor ? InjectedLanguageUtil.getEditorForInjectedLanguage(editor, psiFile) : editor;
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
+    Document document = editor.getDocument();
+    PsiFile psiFile = documentManager.getPsiFile(document);
+    if (!focusEditor || documentManager.isUncommited(document)) {
+      return editor;
+    }
+
+    return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile);
   }
 
   /**

@@ -124,7 +124,7 @@ public class InjectedLanguageUtil {
     return tokens;
   }
 
-  public static boolean isInjectedFragment(final PsiFile file) {
+  private static boolean isInjectedFragment(final PsiFile file) {
     return file.getViewProvider() instanceof MyFileViewProvider;
   }
 
@@ -353,21 +353,21 @@ public class InjectedLanguageUtil {
     }
   }
 
-  public static Editor getEditorForInjectedLanguage(@Nullable Editor editor, @Nullable PsiFile file) {
+  public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable PsiFile file) {
     if (editor == null || file == null || editor instanceof EditorWindow) return editor;
 
     int offset = editor.getCaretModel().getOffset();
-    return getEditorForInjectedLanguage(editor, file, offset);
+    return getEditorForInjectedLanguageNoCommit(editor, file, offset);
   }
 
-  public static Editor getEditorForInjectedLanguage(@Nullable Editor editor, @Nullable PsiFile file, final int offset) {
+  public static Editor getEditorForInjectedLanguageNoCommit(@Nullable Editor editor, @Nullable PsiFile file, final int offset) {
     if (editor == null || file == null || editor instanceof EditorWindow) return editor;
-    PsiFile injectedFile = findInjectedPsiAt(file, offset);
-    return getInjectedEditorForInjectedFileIfAny(editor, injectedFile);
+    PsiFile injectedFile = findInjectedPsiNoCommit(file, offset);
+    return getInjectedEditorForInjectedFile(editor, injectedFile);
   }
 
   @NotNull
-  public static Editor getInjectedEditorForInjectedFileIfAny(@NotNull Editor editor, final PsiFile injectedFile) {
+  public static Editor getInjectedEditorForInjectedFile(@NotNull Editor editor, final PsiFile injectedFile) {
     if (injectedFile == null || editor instanceof EditorWindow) return editor;
     Document document = PsiDocumentManager.getInstance(editor.getProject()).getDocument(injectedFile);
     if (!(document instanceof DocumentWindowImpl)) return editor;
@@ -384,8 +384,8 @@ public class InjectedLanguageUtil {
     return EditorWindow.create(documentWindow, (EditorImpl)editor, injectedFile);
   }
 
-  public static PsiFile findInjectedPsiAt(@NotNull PsiFile host, int offset) {
-    PsiElement injected = findInjectedElementAt(host, offset);
+  public static PsiFile findInjectedPsiNoCommit(@NotNull PsiFile host, int offset) {
+    PsiElement injected = findInjectedElementNoCommit(host, offset);
     if (injected != null) {
       return injected.getContainingFile();
     }
@@ -393,9 +393,9 @@ public class InjectedLanguageUtil {
   }
 
   // consider injected elements
-  public static PsiElement findElementAt(@NotNull PsiFile file, int offset) {
+  public static PsiElement findElementAtNoCommit(@NotNull PsiFile file, int offset) {
     if (!isInjectedFragment(file)) {
-      PsiElement injected = findInjectedElementAt(file, offset);
+      PsiElement injected = findInjectedElementNoCommit(file, offset);
       if (injected != null) {
         return injected;
       }
@@ -440,7 +440,7 @@ public class InjectedLanguageUtil {
     return null;
   }
 
-  public static PsiElement findInjectedElementAt(@NotNull PsiFile file, final int offset) {
+  public static PsiElement findInjectedElementNoCommit(@NotNull PsiFile file, final int offset) {
     if (isInjectedFragment(file)) return null;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
 

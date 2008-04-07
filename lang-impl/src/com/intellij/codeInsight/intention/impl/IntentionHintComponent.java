@@ -28,6 +28,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.RowIcon;
@@ -123,7 +124,15 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
         result &= !cachedActions.add(cachedAction);
         final int caretOffset = myEditor.getCaretModel().getOffset();
         final int fileOffset = caretOffset > 0 && caretOffset == myFile.getTextLength() ? caretOffset - 1 : caretOffset;
-        PsiElement element = InjectedLanguageUtil.findElementAt(myFile, fileOffset);
+        PsiElement element;
+        if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
+          //???
+          FileViewProvider viewProvider = myFile.getViewProvider();
+          element = viewProvider.findElementAt(fileOffset, viewProvider.getBaseLanguage());
+        }
+        else {
+          element = InjectedLanguageUtil.findElementAtNoCommit(myFile, fileOffset);
+        }
         final List<IntentionAction> options;
         if (element != null && (options = descriptor.getOptions(element)) != null) {
           for (IntentionAction option : options) {

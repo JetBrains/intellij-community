@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
@@ -76,8 +77,8 @@ public class PsiBasedFormattingModel implements FormattingModel {
   @Nullable
   protected ASTNode findElementAt(final int offset) {
     PsiFile containingFile = myASTNode.getPsi().getContainingFile();
-
-    PsiElement psiElement = InjectedLanguageUtil.findInjectedElementAt(containingFile, offset);
+    assert !PsiDocumentManager.getInstance(containingFile.getProject()).isUncommited(myDocumentModel.getDocument());
+    PsiElement psiElement = InjectedLanguageUtil.findInjectedElementNoCommit(containingFile, offset);
     if (psiElement == null) psiElement = containingFile.findElementAt(offset);
     if (psiElement instanceof PsiFile) {
       psiElement = myASTNode.getPsi().findElementAt(offset);
