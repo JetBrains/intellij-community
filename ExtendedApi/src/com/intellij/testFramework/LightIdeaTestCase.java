@@ -482,7 +482,7 @@ import java.util.Map;
   }
 
   private static boolean isJDKChanged(final Sdk newJDK) {
-    return ourJDK == null || !Comparing.equal(ourJDK.getVersionString(), newJDK.getVersionString());
+    return ourJDK == null || newJDK == null || !Comparing.equal(ourJDK.getVersionString(), newJDK.getVersionString());
   }
 
   protected Sdk getProjectJDK() {
