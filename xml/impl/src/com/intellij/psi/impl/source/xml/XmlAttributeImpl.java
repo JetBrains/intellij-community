@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
-import com.intellij.jsp.impl.TldAttributeDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -19,12 +18,13 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.XmlAttributeDescriptorEx;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -378,8 +378,9 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
     private void addVariants(final Collection<LookupElement<String>> variants, final XmlAttribute[] attributes, final XmlAttributeDescriptor[] descriptors) {
       final XmlTag tag = getParent();
+      final XmlExtension extension = XmlExtension.getExtension((XmlFile)tag.getContainingFile());
       for (XmlAttributeDescriptor descriptor : descriptors) {
-        if (isValidVariant(descriptor, attributes)) {
+        if (isValidVariant(descriptor, attributes, extension)) {
           final LookupElement<String> element = LookupElementFactory.getInstance().createLookupElement(descriptor.getName(tag));
           if (descriptor instanceof PsiPresentableMetaData) {
             element.setIcon(((PsiPresentableMetaData)descriptor).getIcon());
@@ -389,8 +390,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       }
     }
 
-    private boolean isValidVariant(XmlAttributeDescriptor descriptor, final XmlAttribute[] attributes) {
-      if (descriptor instanceof TldAttributeDescriptor && ((TldAttributeDescriptor)descriptor).isIndirectSyntax()) return false;
+    private boolean isValidVariant(XmlAttributeDescriptor descriptor, final XmlAttribute[] attributes, final XmlExtension extension) {
+      if (extension.isIndirectSyntax(descriptor)) return false;
       for (final XmlAttribute attribute : attributes) {
         if (attribute != XmlAttributeImpl.this && attribute.getName().equals(descriptor.getName())) return false;
       }

@@ -157,4 +157,8 @@ public abstract class XmlExtension {
   public boolean hasDynamicComponents(final PsiElement element) {
     return false;
   }
+
+  public boolean isIndirectSyntax(final XmlAttributeDescriptor descriptor) {
+    return false;
+  }
 }

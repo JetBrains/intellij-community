@@ -4,7 +4,10 @@ import com.intellij.jsp.impl.TldAttributeDescriptor;
 import com.intellij.jsp.impl.TldDescriptor;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.DocumentationUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -122,7 +125,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     }
   }
 
-  HtmlAttributeDescriptor getDescriptor(String name, XmlTag context) {
+  private static HtmlAttributeDescriptor getDescriptor(String name, XmlTag context) {
 
     HtmlAttributeDescriptor attributeDescriptor = HtmlDescriptorsTable.getAttributeDescriptor(name);
     if (attributeDescriptor instanceof CompositeAttributeTagDescriptor) {

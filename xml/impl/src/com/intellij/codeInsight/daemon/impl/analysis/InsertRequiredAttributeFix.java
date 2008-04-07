@@ -23,8 +23,6 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.jsp.impl.JspElementDescriptor;
-import com.intellij.jsp.impl.TldAttributeDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -34,9 +32,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlExtension;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,15 +83,13 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(myTag);
-    boolean indirectSyntax = false;
 
     final XmlElementDescriptor descriptor = myTag.getDescriptor();
-    if (descriptor instanceof JspElementDescriptor) {
-      final XmlAttributeDescriptor attrDescriptor = descriptor.getAttributeDescriptor(myAttrName, myTag);
-      if (attrDescriptor instanceof TldAttributeDescriptor && ((TldAttributeDescriptor)attrDescriptor).isIndirectSyntax()) {
-        indirectSyntax = true;
-      }
+    if (descriptor == null) {
+      return;
     }
+    final XmlAttributeDescriptor attrDescriptor = descriptor.getAttributeDescriptor(myAttrName, myTag);
+    boolean indirectSyntax = XmlExtension.getExtension((XmlFile)myTag.getContainingFile()).isIndirectSyntax(attrDescriptor);
 
     PsiElement anchor = SourceTreeToPsiMap.treeElementToPsi(
       XmlChildRole.EMPTY_TAG_END_FINDER.findChild(treeElement)

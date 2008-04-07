@@ -11,7 +11,6 @@ import com.intellij.codeInsight.template.macro.MacroFactory;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
-import com.intellij.jsp.impl.TldAttributeDescriptor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -21,12 +20,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementDescriptorWithCDataContent;
+import com.intellij.xml.XmlExtension;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 
@@ -151,13 +152,13 @@ class XmlTagInsertHandler extends BasicInsertHandler {
 
     XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors(tag);
     StringBuilder indirectRequiredAttrs = null;
-
+    final XmlExtension extension = XmlExtension.getExtension((XmlFile)tag.getContainingFile());
     for (XmlAttributeDescriptor attributeDecl : attributes) {
       String attributeName = attributeDecl.getName(tag);
 
       if (attributeDecl.isRequired() && tag.getAttributeValue(attributeName) == null) {
         if (!notRequiredAttributes.contains(attributeName)) {
-          if (!(attributeDecl instanceof TldAttributeDescriptor) || !((TldAttributeDescriptor)attributeDecl).isIndirectSyntax()) {
+          if (!extension.isIndirectSyntax(attributeDecl)) {
             template.addTextSegment(" " + attributeName + "=\"");
             Expression expression = new MacroCallNode(MacroFactory.createMacro("complete"));
             template.addVariable(attributeName, expression, expression, true);
