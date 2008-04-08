@@ -26,10 +26,7 @@ import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.DocumentFoldingInfo");
@@ -127,6 +124,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
   private static Map<PsiElement, TextRange> buildRanges(final Editor editor, final PsiFile psiFile) {
     final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(psiFile.getLanguage());
     final ASTNode node = psiFile.getNode();
+    if (node == null) return Collections.emptyMap();
     ChameleonTransforming.transformChildren(node, true);
     final FoldingDescriptor[] descriptors = foldingBuilder.buildFoldRegions(node, editor.getDocument());
     Map<PsiElement, TextRange> ranges = new HashMap<PsiElement, TextRange>();
