@@ -80,12 +80,6 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
       final PsiMetaData metaData = xmlTag.getMetaData();
       key = (metaData!=null)?metaData.getName():null;
       isTag = xmlTag.getLocalName().equals(ELEMENT_ELEMENT_NAME);
-
-      if (metaData instanceof TldAttributeDescriptor ||
-          metaData instanceof TldDescriptor
-         ) {
-        key = null;
-      }
     } else if (element.getParent() instanceof XmlAttributeValue) {
       isTag = false;
       key = ((XmlAttribute)element.getParent().getParent()).getName();
