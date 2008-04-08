@@ -149,5 +149,22 @@ public class FindUsagesTest extends IdeaTestCase {
 
     assertEquals(expectedUsagesCount, query.findAll().size());
   }
+  
+  public void testAnnotatedMemberSearch() throws Throwable {
 
+    final PsiReference ref = myFixture.getReferenceAtCaretPosition("annotatedMemberSearch/A.groovy");
+    assertNotNull("Did not find reference", ref);
+    final PsiElement resolved = ref.resolve();
+    assertNotNull("Could not resolve reference", resolved);
+
+    final Query<PsiReference> query;
+    final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myFixture.getProject());
+    if (resolved instanceof PsiMethod) {
+      query = MethodReferencesSearch.search((PsiMethod) resolved, projectScope, true);
+    } else {
+      query = ReferencesSearch.search(resolved, projectScope);
+    }
+
+    assertEquals(1, query.findAll().size());
+  }
 }
