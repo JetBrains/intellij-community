@@ -53,10 +53,10 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
   private static void registerExtensions(final Extensions extensions, final IdeaPlugin plugin, final DomExtensionsRegistrar registrar,
                                          final PsiManager psiManager) {
-    final List<ExtensionPoint> l = plugin.getExtensionPoints().getExtensionPoints();
-
-    for (ExtensionPoint extensionPoint : l) {
-      registerExtensionPoint(registrar, extensionPoint, psiManager);
+    for (ExtensionPoints points : plugin.getExtensionPoints()) {
+      for (ExtensionPoint point : points.getExtensionPoints()) {
+        registerExtensionPoint(registrar, point, psiManager);
+      }
     }
   }
 
