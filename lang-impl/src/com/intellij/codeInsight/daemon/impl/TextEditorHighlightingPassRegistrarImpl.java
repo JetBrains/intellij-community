@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
@@ -77,8 +78,8 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
                                                              int forcedPassId) {
     assert !checkedForCycles;
     PassConfig info = new PassConfig(factory, runIntentionsPassAfter,
-                                     runAfterCompletionOf == null ? ArrayUtil.EMPTY_INT_ARRAY : runAfterCompletionOf,
-                                     runAfterOfStartingOf == null ? ArrayUtil.EMPTY_INT_ARRAY : runAfterOfStartingOf);
+                                     runAfterCompletionOf == null || runAfterCompletionOf.length == 0 ? ArrayUtil.EMPTY_INT_ARRAY : runAfterCompletionOf,
+                                     runAfterOfStartingOf == null || runAfterOfStartingOf.length == 0 ? ArrayUtil.EMPTY_INT_ARRAY : runAfterOfStartingOf);
     int passId = forcedPassId == -1 ? nextAvailableId++ : forcedPassId;
     PassConfig registered = myRegisteredPassFactories.get(passId);
     assert registered == null: "Pass id "+passId +" has already been registered: "+ registered.passFactory;
@@ -97,9 +98,11 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     }
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     PsiFile fileFromDoc = documentManager.getPsiFile(editor.getDocument());
-    assert fileFromDoc == psiFile : "Files are different: " + psiFile + ";" + fileFromDoc;
-    Document documentFromFile = documentManager.getDocument(psiFile);
-    assert documentFromFile == editor.getDocument() : "Documents are different: "+ editor.getDocument() + ";" + documentFromFile;
+    if (!(fileFromDoc instanceof PsiCompiledElement)) {
+      assert fileFromDoc == psiFile : "Files are different: " + psiFile + ";" + fileFromDoc;
+      Document documentFromFile = documentManager.getDocument(psiFile);
+      assert documentFromFile == editor.getDocument() : "Documents are different: " + editor.getDocument() + ";" + documentFromFile;
+    }
     final TIntObjectHashMap<TextEditorHighlightingPass> id2Pass = new TIntObjectHashMap<TextEditorHighlightingPass>();
     myRegisteredPassFactories.forEachKey(new TIntProcedure() {
       public boolean execute(int passId) {
