@@ -215,6 +215,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     XmlTag tag = getXmlTag();
     if (tag != null && tag.isPhysical()) {
       final DomElement existing = myManager.getDomElement(tag);
+      assert existing != null : existing + "\n---------\n" + tag.getParent().getText() + "\n-----------\n" + tag.getText();
       assert getProxy().equals(existing) : existing + "\n---------\n" + tag.getParent().getText() + "\n-----------\n" + tag.getText() + "\n----\n" + this + " != " +
                                            DomManagerImpl.getDomInvocationHandler(existing);
       final SmartPsiElementPointer<XmlTag> pointer = SmartPointerManager.getInstance(myManager.getProject()).createLazyPointer(tag);
@@ -237,7 +238,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   public String getXmlElementNamespace() {
     final XmlElement element = getParentHandler().getXmlElement();
     assert element != null;
-    return getXmlName().getNamespace(element);
+    return getXmlName().getNamespace(element, getFile());
   }
 
   @Nullable
@@ -291,7 +292,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
     final XmlElement element = getXmlElement();
     assert element != null;
-    return getXmlTag().createChildTag(localName, tagName.getNamespace(element), "", false);
+    return getXmlTag().createChildTag(localName, tagName.getNamespace(element, getFile()), "", false);
   }
 
   public boolean isValid() {
@@ -530,7 +531,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(description.getXmlName());
     final XmlTag tag = getXmlTag();
     if (tag != null) {
-      final XmlAttribute attribute = tag.getAttribute(description.getXmlName().getLocalName(), evaluatedXmlName.getNamespace(tag));
+      final XmlAttribute attribute = tag.getAttribute(description.getXmlName().getLocalName(), evaluatedXmlName.getNamespace(tag, getFile()));
       if (attribute != null) {
         AttributeChildInvocationHandler handler = (AttributeChildInvocationHandler)myManager.getCachedHandler(attribute);
         if (handler == null) {

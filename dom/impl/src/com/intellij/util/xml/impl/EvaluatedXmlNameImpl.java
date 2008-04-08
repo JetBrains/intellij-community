@@ -118,10 +118,10 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   }
 
   @NotNull @NonNls
-  public final String getNamespace(@NotNull XmlElement parentElement) {
+  public final String getNamespace(@NotNull XmlElement parentElement, final XmlFile file) {
     final String xmlElementNamespace = getXmlElementNamespace(parentElement);
     if (myNamespaceKey != null) {
-      final List<String> strings = getAllowedNamespaces((XmlFile)parentElement.getContainingFile());
+      final List<String> strings = getAllowedNamespaces(file);
       if (!strings.isEmpty() && !strings.contains(xmlElementNamespace)) {
         return strings.get(0);
       }

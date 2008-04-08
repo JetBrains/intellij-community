@@ -39,7 +39,7 @@ public class DummyEvaluatedXmlName implements EvaluatedXmlName{
 
   @NotNull
   @NonNls
-  public String getNamespace(@NotNull final XmlElement parentElement) {
+  public String getNamespace(@NotNull final XmlElement parentElement, final XmlFile file) {
     return myNamespace;
   }
 

@@ -71,7 +71,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
 
   @NotNull
   public String getXmlElementNamespace() {
-    return getXmlName().getNamespace(getFile());
+    return getXmlName().getNamespace(getFile(), getFile());
   }
 
   @NotNull
@@ -98,7 +98,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
     getManager().runChange(new Runnable() {
       public void run() {
         try {
-          final String namespace = getXmlName().getNamespace(getFile());
+          final String namespace = getXmlElementNamespace();
           @NonNls final String nsDecl = StringUtil.isEmpty(namespace) ? "" : " xmlns=\"" + namespace + "\"";
           final XmlFile xmlFile = getFile();
           final XmlTag tag = XmlElementFactory.getInstance(xmlFile.getProject()).createTagFromText("<" + getXmlElementName() + nsDecl + "/>");

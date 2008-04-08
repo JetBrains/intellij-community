@@ -375,6 +375,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     //noinspection unchecked
     if (file.getUserData(MOCK_DESCIPRTION) == null) {
       file.putUserData(MOCK_DESCIPRTION, new MockDomFileDescription<T>(aClass, rootTagName, file));
+      file.putUserData(CACHED_FILE_ELEMENT_PROVIDER, null);
     }
     final DomFileElementImpl<T> fileElement = getFileElement(file);
     assert fileElement != null;

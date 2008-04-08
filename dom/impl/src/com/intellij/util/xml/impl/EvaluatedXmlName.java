@@ -21,5 +21,5 @@ public interface EvaluatedXmlName {
   boolean isNamespaceAllowed(String namespace, final XmlFile file);
 
   @NotNull @NonNls
-  String getNamespace(@NotNull XmlElement parentElement);
+  String getNamespace(@NotNull XmlElement parentElement, final XmlFile file);
 }

@@ -7,10 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
@@ -51,7 +48,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     final XmlTag tag = parent.getXmlTag();
     if (tag == null) return null;
 
-    return tag.getAttribute(getXmlElementName(), getXmlName().getNamespace(tag));
+    return tag.getAttribute(getXmlElementName(), getXmlName().getNamespace(tag, parent.getFile()));
   }
 
   public final XmlAttribute ensureXmlElementExists() {
