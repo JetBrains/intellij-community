@@ -19,4 +19,7 @@ public interface StubElement<T extends PsiElement> {
   T getPsi();
 
   <E> E[] getChildrenByType(final IElementType elementType, final E[] array);
+
+  @Nullable
+  <E extends PsiElement> E getParentStubOfType(final Class<E> parentClass);
 }

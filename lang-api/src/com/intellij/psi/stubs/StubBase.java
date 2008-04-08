@@ -73,6 +73,20 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
     return result.toArray(array);
   }
 
+  @Nullable
+  public <E extends PsiElement> E getParentStubOfType(final Class<E> parentClass) {
+    StubElement parent = myParent;
+    while(parent != null) {
+      PsiElement psi = parent.getPsi();
+      if (parentClass.isInstance(psi)) {
+        //noinspection unchecked
+        return (E)psi;
+      }
+      parent = parent.getParentStub();
+    }
+    return null;
+  }
+
   public IStubElementType getStubType() {
     return myElementType;
   }

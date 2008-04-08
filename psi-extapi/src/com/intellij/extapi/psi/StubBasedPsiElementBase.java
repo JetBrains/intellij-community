@@ -15,6 +15,7 @@ import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,6 +168,15 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       }
       return psiElements;
     }
+  }
+
+  @Nullable
+  protected <E extends PsiElement> E getStubOrPsiParentOfType(final Class<E> parentClass) {
+    if (myStub != null) {
+      //noinspection unchecked
+      return (E)myStub.getParentStubOfType(parentClass);
+    }
+    return PsiTreeUtil.getParentOfType(this, parentClass);
   }
 
   protected Object clone() {
