@@ -39,12 +39,13 @@ import java.util.Map;
 public class TypedHandler implements TypedActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.TypedHandler");
 
-  private TypedActionHandler myOriginalHandler;
+  private final TypedActionHandler myOriginalHandler;
 
   private static final Map<FileType,QuoteHandler> quoteHandlers = new HashMap<FileType, QuoteHandler>();
   private static final Map<Class<? extends Language>, QuoteHandler> ourBaseLanguageQuoteHandlers = new HashMap<Class<? extends Language>, QuoteHandler>();
 
-  public static @Nullable QuoteHandler getQuoteHandler(@NotNull PsiFile file) {
+  @Nullable
+  public static QuoteHandler getQuoteHandler(@NotNull PsiFile file) {
     QuoteHandler quoteHandler = getQuoteHandlerForType(file.getFileType());
     if (quoteHandler == null) {
       final Language baseLanguage = file.getViewProvider().getBaseLanguage();
@@ -225,7 +226,7 @@ public class TypedHandler implements TypedActionHandler {
     if (!iterator.atEnd()) {
       iterator.advance();
 
-      IElementType tokenType = !iterator.atEnd() ? iterator.getTokenType() : null;
+      IElementType tokenType = iterator.atEnd() ? null : iterator.getTokenType();
       if (!BraceMatchingUtil.isPairedBracesAllowedBeforeTypeInFileType(braceTokenType, tokenType, fileType)) {
         return;
       }
@@ -365,8 +366,8 @@ public class TypedHandler implements TypedActionHandler {
     if (offset == 0) return false;
     CharSequence chars = editor.getDocument().getCharsSequence();
     int offset1 = CharArrayUtil.shiftBackward(chars, offset - 1, "\\");
-    int slashCount = (offset - 1) - offset1;
-    return (slashCount % 2) != 0 && isInsideLiteral(editor, quoteHandler, offset);
+    int slashCount = offset - 1 - offset1;
+    return slashCount % 2 != 0 && isInsideLiteral(editor, quoteHandler, offset);
   }
 
   private static boolean isInsideLiteral(Editor editor, QuoteHandler quoteHandler, int offset){
@@ -385,7 +386,7 @@ public class TypedHandler implements TypedActionHandler {
     indentBrace(project, editor, '}');
   }
 
-  public static void indentOpenedBrace(final Project project, final Editor editor){
+  private static void indentOpenedBrace(final Project project, final Editor editor){
     indentBrace(project, editor, '{');
   }
 
