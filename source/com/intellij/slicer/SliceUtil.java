@@ -22,6 +22,7 @@ public class SliceUtil {
                                                               final Map<SliceUsage, List<SliceUsage>> targetEqualUsages) {
     PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
     if (method == null) return true;
+    expression = simplify(expression);
     if (expression instanceof PsiReferenceExpression) {
       PsiReferenceExpression ref = (PsiReferenceExpression)expression;
       PsiElement resolved = ref.resolve();
@@ -35,6 +36,16 @@ public class SliceUtil {
       return processMethodReturnValue((PsiMethodCallExpression)expression, processor, parent, targetEqualUsages);
     }
     return true;
+  }
+
+  private static PsiExpression simplify(final PsiExpression expression) {
+    if (expression instanceof PsiParenthesizedExpression) {
+      return simplify(((PsiParenthesizedExpression)expression).getExpression());
+    }
+    if (expression instanceof PsiTypeCastExpression) {
+      return simplify(((PsiTypeCastExpression)expression).getOperand());
+    }
+    return expression;
   }
 
   private static Collection<PsiExpression> getExpressionsFlownTo(final PsiExpression expression, final PsiMethod containingMethod, final PsiVariable variable) {
@@ -55,10 +66,6 @@ public class SliceUtil {
                                                      final SliceUsage parent,
                                                      final Map<SliceUsage, List<SliceUsage>> targetEqualUsages, final PsiReferenceExpression ref) {
     for (PsiExpression flowFromExpression : expressions) {
-      while (flowFromExpression instanceof PsiParenthesizedExpression) {
-        flowFromExpression = ((PsiParenthesizedExpression)flowFromExpression).getExpression();
-      }
-
       if (flowFromExpression instanceof PsiReferenceExpression) {
         PsiElement element = ((PsiReferenceExpression)flowFromExpression).resolve();
         if (element instanceof PsiParameter) {
@@ -71,7 +78,7 @@ public class SliceUtil {
         }
       }
       //generic usage
-      SliceUsage usage = new SliceUsage(new UsageInfo(ref), targetEqualUsages, parent);
+      SliceUsage usage = new SliceUsage(new UsageInfo(flowFromExpression), targetEqualUsages, parent);
       if (!processor.process(usage)) return false;
     }
 
@@ -128,9 +135,11 @@ public class SliceUtil {
 
     Collection<PsiMethod> superMethods = new THashSet<PsiMethod>(Arrays.asList(method.findDeepestSuperMethods()));
     superMethods.add(method);
+    final Set<PsiReference> processed = new THashSet<PsiReference>(); //usages of super method and overridden method can overlap
     for (final PsiMethod containingMethod : superMethods) {
       if (!MethodReferencesSearch.search(containingMethod).forEach(new Processor<PsiReference>() {
         public boolean process(final PsiReference reference) {
+          if (!processed.add(reference)) return true;
           PsiElement element = reference.getElement().getParent();
           if (!(element instanceof PsiCall)) return true;
           final PsiCall call = (PsiCall)element;
