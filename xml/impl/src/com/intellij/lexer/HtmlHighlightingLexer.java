@@ -23,7 +23,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   private static FileType ourStyleFileType;
   private static FileType ourScriptFileType;
 
-  class XmlEmbeddmentHandler implements TokenHandler {
+  public class XmlEmbeddmentHandler implements TokenHandler {
     public void handleElement(Lexer lexer) {
       if (!hasSeenStyle() && !hasSeenScript() || hasNoEmbeddments) return;
       final IElementType tokenType = lexer.getTokenType();
