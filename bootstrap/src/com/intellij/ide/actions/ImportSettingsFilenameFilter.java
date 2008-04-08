@@ -14,8 +14,10 @@ import java.io.Serializable;
 import java.util.Set;
 
 /**
+ * This class is serialized into StartupActionScript stream and must thus reside in bootstrap module.
+ *
  * @author mike
-*/
+ */
 public class ImportSettingsFilenameFilter implements FilenameFilter, Serializable {
   private final Set<String> myRelativeNamesToExtract;
   @NonNls static final String SETTINGS_JAR_MARKER = "IntelliJ IDEA Global Settings";
