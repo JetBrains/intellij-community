@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
 */
-class CreateFileFix implements IntentionAction, LocalQuickFix {
+public class CreateFileFix implements IntentionAction, LocalQuickFix {
   private final boolean myIsdirectory;
   private final String myNewFileName;
   private final PsiDirectory myDirectory;
