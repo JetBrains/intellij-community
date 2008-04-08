@@ -51,7 +51,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     }
   }
 
-  class ElEmbeddmentHandler implements TokenHandler {
+  public class ElEmbeddmentHandler implements TokenHandler {
     public void handleElement(Lexer lexer) {
       setEmbeddedLexer();
       if (embeddedLexer != null) {
