@@ -6,7 +6,7 @@ import com.intellij.openapi.util.IconLoader;
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class MoreIcon {
+abstract class MoreIcon {
 
   private ActiveIcon myLeft =
     new ActiveIcon(IconLoader.getIcon("/general/comboArrowLeft.png"), IconLoader.getIcon("/general/comboArrowLeftPassive.png"));
