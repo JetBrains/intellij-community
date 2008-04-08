@@ -56,7 +56,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     return result;
   }
 
-  private UnwrapDescriptor getUnwrapDescription(PsiFile file) {
+  private static UnwrapDescriptor getUnwrapDescription(PsiFile file) {
     return LanguageUnwrappers.INSTANCE.forLanguage(file.getLanguage());
   }
 
@@ -209,9 +209,12 @@ public class UnwrapHandler implements CodeInsightActionHandler {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               try {
-                saveCaretPosition(file);
+                UnwrapDescriptor d = getUnwrapDescription(file);
+                if (d.shouldTryToRestoreCaretPosition()) saveCaretPosition(file);
+
                 myUnwrapper.unwrap(myEditor, myElement);
-                restoreCaretPosition(file);
+                
+                if (d.shouldTryToRestoreCaretPosition()) restoreCaretPosition(file);
               }
               catch (IncorrectOperationException ex) {
                 throw new RuntimeException(ex);

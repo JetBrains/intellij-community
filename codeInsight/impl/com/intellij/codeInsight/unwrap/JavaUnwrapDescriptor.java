@@ -22,6 +22,7 @@ public class JavaUnwrapDescriptor implements UnwrapDescriptor {
     new JavaTryUnwrapper(),
     new JavaCatchRemover(),
     new JavaSynchronizedUnwrapper(),
+    new JavaAnonymousUnwrapper(),
   };
 
   public List<Pair<PsiElement, Unwrapper>> collectUnwrappers(Project project, Editor editor, PsiFile file) {
@@ -48,6 +49,10 @@ public class JavaUnwrapDescriptor implements UnwrapDescriptor {
   }
 
   public boolean showOptionsDialog() {
+    return true;
+  }
+
+  public boolean shouldTryToRestoreCaretPosition() {
     return true;
   }
 }

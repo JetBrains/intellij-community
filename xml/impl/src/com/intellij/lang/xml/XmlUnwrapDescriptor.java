@@ -30,4 +30,8 @@ public class XmlUnwrapDescriptor implements UnwrapDescriptor {
   public boolean showOptionsDialog() {
     return false;
   }
+
+  public boolean shouldTryToRestoreCaretPosition() {
+    return false;
+  }
 }
