@@ -82,8 +82,8 @@ public interface IdeaPlugin extends DomElement {
   Extensions addExtensions();
 
   @NotNull
-  @SubTag("extensionPoints")
-  ExtensionPoints getExtensionPoints();
+  @SubTagList("extensionPoints")
+  List<ExtensionPoints> getExtensionPoints();
 
 
   @NotNull
