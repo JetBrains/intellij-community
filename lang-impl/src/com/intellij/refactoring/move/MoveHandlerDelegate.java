@@ -3,6 +3,7 @@ package com.intellij.refactoring.move;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +32,7 @@ public abstract class MoveHandlerDelegate {
   }
 
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext,
-                           @Nullable final PsiReference reference) {
+                           @Nullable final PsiReference reference, final Editor editor) {
     return false;
   }
 }

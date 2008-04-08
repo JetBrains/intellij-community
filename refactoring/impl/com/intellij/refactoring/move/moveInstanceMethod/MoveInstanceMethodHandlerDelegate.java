@@ -6,6 +6,7 @@ import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveInstanceMethodHandlerDelegate extends MoveHandlerDelegate {
@@ -23,7 +24,8 @@ public class MoveInstanceMethodHandlerDelegate extends MoveHandlerDelegate {
     return psiElement instanceof PsiClass && !(psiElement instanceof PsiAnonymousClass);
   }
 
-  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference) {
+  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
+                           final Editor editor) {
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
       if (!method.hasModifierProperty(PsiModifier.STATIC))  {

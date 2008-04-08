@@ -5,6 +5,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveClassesHandler extends MoveClassesOrPackagesHandlerBase {
@@ -22,7 +23,8 @@ public class MoveClassesHandler extends MoveClassesOrPackagesHandlerBase {
            MovePackagesHandler.isPackageOrDirectory(psiElement);
   }
 
-  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference) {
+  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
+                           final Editor editor) {
     if (isReferenceInAnonymousClass(reference)) return false;
 
     if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass) && element.getParent() instanceof PsiFile) {

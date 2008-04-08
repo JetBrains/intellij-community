@@ -12,6 +12,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,8 @@ public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
     MoveInnerImpl.doMove(project, elements, callback);
   }
 
-  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference) {
+  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
+                           final Editor editor) {
     if (isNonStaticInnerClass(element) && !MoveClassesHandler.isReferenceInAnonymousClass(reference)) {
       PsiClass aClass = (PsiClass) element;
       FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.move.moveInner");

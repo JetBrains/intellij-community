@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.move.MoveCallback;
@@ -31,7 +32,8 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
     MoveFilesOrDirectoriesUtil.doMove(project, elements, targetContainer, callback);
   }
 
-  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference) {
+  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
+                           final Editor editor) {
     if ((element instanceof PsiFile && ((PsiFile)element).getVirtualFile() != null)
         || element instanceof PsiDirectory) {
       final PsiElement targetContainer = (PsiElement)dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT);

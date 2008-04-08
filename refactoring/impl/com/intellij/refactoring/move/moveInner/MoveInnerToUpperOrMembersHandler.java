@@ -3,6 +3,7 @@ package com.intellij.refactoring.move.moveInner;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
@@ -44,7 +45,8 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
     }
   }
 
-  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference) {
+  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
+                           final Editor editor) {
     if (isStaticInnerClass(element) && !MoveClassesHandler.isReferenceInAnonymousClass(reference)) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.move.moveInner");
       PsiClass aClass = (PsiClass) element;

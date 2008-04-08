@@ -6,6 +6,7 @@ import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveMembersHandler extends MoveHandlerDelegate {
@@ -24,7 +25,8 @@ public class MoveMembersHandler extends MoveHandlerDelegate {
     MoveMembersImpl.doMove(project, elements, targetContainer, callback);
   }
 
-  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference) {
+  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
+                           final Editor editor) {
     if (isFieldOrStaticMethod(element)) {
       MoveMembersImpl.doMove(project, new PsiElement[]{element}, null, null);
       return true;
