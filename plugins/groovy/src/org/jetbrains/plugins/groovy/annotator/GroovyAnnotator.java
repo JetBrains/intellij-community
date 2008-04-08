@@ -334,13 +334,13 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private void checkMethodDefinitionModifiers(AnnotationHolder holder, GrMethod grMethod) {
-    final PsiModifierList modifiersList = grMethod.getModifierList();
+  private void checkMethodDefinitionModifiers(AnnotationHolder holder, GrMethod method) {
+    final PsiModifierList modifiersList = method.getModifierListGroovy();
     checkAccessModifiers(holder, modifiersList);
 
     //script methods
     boolean isMethodAbstract = modifiersList.hasExplicitModifier(PsiModifier.ABSTRACT);
-    if (grMethod.getParent() instanceof GroovyFileBase) {
+    if (method.getParent() instanceof GroovyFileBase) {
       if (isMethodAbstract) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("script.cannot.have.modifier.abstract"));
       }
@@ -349,8 +349,8 @@ public class GroovyAnnotator implements Annotator {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("script.cannot.have.modifier.native"));
       }
     } else  //type definition methods
-      if (grMethod.getParent() != null && grMethod.getParent().getParent() instanceof GrTypeDefinition) {
-        GrTypeDefinition containingTypeDef = ((GrTypeDefinition) grMethod.getParent().getParent());
+      if (method.getParent() != null && method.getParent().getParent() instanceof GrTypeDefinition) {
+        GrTypeDefinition containingTypeDef = ((GrTypeDefinition) method.getParent().getParent());
 
         //interface
         if (containingTypeDef.isInterface()) {
@@ -380,8 +380,8 @@ public class GroovyAnnotator implements Annotator {
           }
 
           if (!isMethodAbstract) {
-            if (grMethod.getBlock() == null) {
-              holder.createErrorAnnotation(grMethod.getNameIdentifierGroovy(), GroovyBundle.message("not.abstract.method.should.have.body"));
+            if (method.getBlock() == null) {
+              holder.createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("not.abstract.method.should.have.body"));
             }
           }
 

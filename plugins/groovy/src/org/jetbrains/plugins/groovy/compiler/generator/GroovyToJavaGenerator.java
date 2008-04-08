@@ -468,7 +468,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     text.append("\n");
     text.append("  ");
     if (!isEnum) {
-      writeMethodModifiers(text, constructor.getModifierList(), JAVA_MODIFIERS);
+      writeMethodModifiers(text, constructor.getModifierListGroovy(), JAVA_MODIFIERS);
     }
 
     /************* name **********/

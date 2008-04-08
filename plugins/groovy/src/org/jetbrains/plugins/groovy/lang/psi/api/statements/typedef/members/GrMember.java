@@ -17,6 +17,8 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
 import com.intellij.psi.PsiMember;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -24,5 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  */
 public interface GrMember extends PsiMember, GroovyPsiElement {
   public static final GrMember[] EMPTY_ARRAY = new GrMember[0];
-  //GrTypeDefinition getContainingTypeDefinition();
+
+  @Nullable
+  GrModifierList getModifierList();
 }

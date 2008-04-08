@@ -89,7 +89,7 @@ public class GroovyOverrideImplementUtil {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           try {
-            PsiModifierList modifierList = result.getModifierList();
+            PsiModifierList modifierList = result.getModifierListGroovy();
             modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
             modifierList.setModifierProperty(PsiModifier.NATIVE, false);
 

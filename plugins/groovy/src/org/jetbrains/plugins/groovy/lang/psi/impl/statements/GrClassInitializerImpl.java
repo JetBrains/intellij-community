@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
@@ -66,7 +67,7 @@ public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrCl
   }
 
   @Nullable
-  public PsiModifierList getModifierList() {
+  public GrModifierList getModifierList() {
     return findChildByClass(GrModifierListImpl.class);
   }
 

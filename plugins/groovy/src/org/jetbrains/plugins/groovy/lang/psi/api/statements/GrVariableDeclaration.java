@@ -20,5 +20,4 @@ public interface GrVariableDeclaration extends GrStatement, GrMembersDeclaration
   GrTypeElement getTypeElementGroovy();
 
   GrVariable[] getVariables();
-
 }

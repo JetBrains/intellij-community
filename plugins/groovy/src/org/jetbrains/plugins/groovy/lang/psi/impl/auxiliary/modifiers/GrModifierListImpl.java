@@ -146,8 +146,8 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
   }
 
   @NotNull
-  public PsiAnnotation[] getAnnotations() {
-    return findChildrenByClass(PsiAnnotation.class);
+  public GrAnnotation[] getAnnotations() {
+    return findChildrenByClass(GrAnnotation.class);
   }
 
   @Nullable
