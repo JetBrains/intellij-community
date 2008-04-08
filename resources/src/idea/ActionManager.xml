@@ -382,7 +382,6 @@
       <reference ref="FindUsages"/>
       <reference ref="AnalyzeMenu"/>
       <reference ref="RefactoringMenu"/>
-      <action id="Add to migration roots" internal="true" class="com.intellij.refactoring.actions.TypeMigrationAddRootAction"/>
       <separator/>
       <reference ref="AddToFavorites"/>
       <separator/>
