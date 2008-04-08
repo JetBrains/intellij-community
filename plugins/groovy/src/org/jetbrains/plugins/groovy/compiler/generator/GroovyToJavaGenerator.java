@@ -468,7 +468,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     text.append("\n");
     text.append("  ");
     if (!isEnum) {
-      writeMethodModifiers(text, constructor.getModifierListGroovy(), JAVA_MODIFIERS);
+      writeMethodModifiers(text, constructor.getModifierList(), JAVA_MODIFIERS);
     }
 
     /************* name **********/
@@ -562,7 +562,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     String initValueText = getDefaultValueText(varQualifiedTypeName);
 
     //append method name
-    PsiModifierList modifierList = variableDeclaration.getModifierListGroovy();
+    PsiModifierList modifierList = variableDeclaration.getModifierList();
     GrVariable[] variables = variableDeclaration.getVariables();
     GrVariable variable;
     int i = 0;

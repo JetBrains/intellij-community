@@ -345,11 +345,6 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @NotNull
   public GrModifierList getModifierList() {
-    return getModifierListGroovy();
-  }
-
-  @NotNull
-  public GrModifierList getModifierListGroovy() {
     GrModifierListImpl list = findChildByClass(GrModifierListImpl.class);
     assert list != null;
     return list;
@@ -361,7 +356,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
       if (containingClass != null && containingClass.isInterface()) return true;
     }
 
-    return getModifierListGroovy().hasModifierProperty(name);
+    return getModifierList().hasModifierProperty(name);
   }
 
   @NotNull

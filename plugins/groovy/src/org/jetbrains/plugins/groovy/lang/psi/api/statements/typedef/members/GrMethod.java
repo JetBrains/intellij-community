@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -53,5 +54,8 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
 
   @NotNull
   GrParameterList getParameterList();
+
+  @NotNull
+  GrModifierList getModifierList();
 
 }

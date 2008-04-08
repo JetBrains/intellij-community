@@ -48,7 +48,7 @@ public class GrVariableDeclarationImpl extends GroovyPsiElementImpl implements G
   }
 
   @NotNull
-  public GrModifierList getModifierListGroovy() {
+  public GrModifierList getModifierList() {
     GrModifierList list = findChildByClass(GrModifierList.class);
     assert list != null;
     return list;

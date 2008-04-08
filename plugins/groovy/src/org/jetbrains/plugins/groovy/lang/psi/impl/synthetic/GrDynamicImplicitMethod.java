@@ -116,7 +116,7 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
 
   @NotNull
   public PsiModifierList getModifierList() {
-    return myMethod.getModifierListGroovy();
+    return myMethod.getModifierList();
   }
 
   public PsiType getReturnType() {

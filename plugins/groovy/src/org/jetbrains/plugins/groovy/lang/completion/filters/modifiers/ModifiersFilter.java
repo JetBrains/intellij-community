@@ -51,7 +51,7 @@ public class ModifiersFilter implements ElementFilter {
           (parent.getParent() instanceof GrTypeDefinitionBody ||
           parent.getParent() instanceof GroovyFile)
           || parent instanceof GrMethod) {
-        GrModifierList list = ((GrMembersDeclaration) parent).getModifierListGroovy();
+        GrModifierList list = ((GrMembersDeclaration) parent).getModifierList();
         for (PsiElement modifier : list.getModifiers()) {
           if (!(modifier instanceof GrAnnotation)) return false;
           if ("def".equals(modifier.getText())) return false;

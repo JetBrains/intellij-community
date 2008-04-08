@@ -13,5 +13,5 @@ public interface GrMembersDeclaration extends GroovyPsiElement {
   GrMember[] getMembers();
 
   @NotNull
-  GrModifierList getModifierListGroovy();
+  GrModifierList getModifierList();
 }
