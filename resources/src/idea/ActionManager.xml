@@ -238,6 +238,7 @@
       <separator/>
       <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction"/>
       <action id="Migrate" class="com.intellij.refactoring.actions.MigrateAction"/>
+      <action id="Type Migration" internal="true" class="com.intellij.refactoring.actions.TypeMigrationAction"/>
       <separator/>
       <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
       <separator/>
