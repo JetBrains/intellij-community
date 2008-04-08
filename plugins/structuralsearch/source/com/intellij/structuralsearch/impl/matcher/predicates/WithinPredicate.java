@@ -32,7 +32,7 @@ public class WithinPredicate extends AbstractStringBasedPredicate {
   }
 
   public boolean match(PsiElement node, PsiElement match, int start, int end, MatchContext context) {
-    final MatchResult result = matcher.isMatchedByDownUp(context.getCurrentContextNode(), myMatchOptions);
+    final MatchResult result = matcher.isMatchedByDownUp(match, myMatchOptions);
     return result != null;
   }
 }

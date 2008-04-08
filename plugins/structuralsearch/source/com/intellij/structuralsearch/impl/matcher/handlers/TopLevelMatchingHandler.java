@@ -19,46 +19,39 @@ public final class TopLevelMatchingHandler extends MatchingHandler {
   }
 
   public boolean match(final PsiElement patternNode, final PsiElement matchedNode, final MatchContext matchContext) {
-    final PsiElement saveCurrentContextNode = matchContext.getCurrentContextNode();
+    final boolean matched = delegate.match(patternNode, matchedNode, matchContext);
 
-    try {
-      matchContext.setCurrentContextNode(matchedNode);
-      final boolean matched = delegate.match(patternNode, matchedNode, matchContext);
-
-      if (matched) {
-        LinkedList<PsiElement> matchedNodes = matchContext.getMatchedNodes();
-        if (matchedNodes == null) {
-          matchedNodes = new LinkedList<PsiElement>();
-          matchContext.setMatchedNodes(matchedNodes);
-        }
-
-        PsiElement elementToAdd = matchedNode;
-
-        if (patternNode instanceof PsiComment && matchedNode instanceof PsiMember
-           ) {
-          // psicomment and psidoccomment are placed inside the psimember next to them so
-          // simple topdown matching should do additional "dances" to cover this case.
-          elementToAdd = matchedNode.getFirstChild();
-          assert elementToAdd instanceof PsiComment;
-        }
-
-        matchedNodes.add(elementToAdd);
-      } else {
-        //if (matchContext.hasResult()) matchContext.clearResult();
+    if (matched) {
+      LinkedList<PsiElement> matchedNodes = matchContext.getMatchedNodes();
+      if (matchedNodes == null) {
+        matchedNodes = new LinkedList<PsiElement>();
+        matchContext.setMatchedNodes(matchedNodes);
       }
-      
-      if ((!matched || matchContext.getOptions().isRecursiveSearch()) &&
-          matchContext.getPattern().getStrategy().continueMatching(matchedNode)) {
-        matchContext.getMatcher().matchContext(
-          new FilteringNodeIterator(
-            new ArrayBackedNodeIterator(matchedNode.getChildren())
-          )
-        );
+
+      PsiElement elementToAdd = matchedNode;
+
+      if (patternNode instanceof PsiComment && matchedNode instanceof PsiMember
+         ) {
+        // psicomment and psidoccomment are placed inside the psimember next to them so
+        // simple topdown matching should do additional "dances" to cover this case.
+        elementToAdd = matchedNode.getFirstChild();
+        assert elementToAdd instanceof PsiComment;
       }
-      return matched;
-    } finally {
-      matchContext.setCurrentContextNode(saveCurrentContextNode);
+
+      matchedNodes.add(elementToAdd);
+    } else {
+      //if (matchContext.hasResult()) matchContext.clearResult();
     }
+
+    if ((!matched || matchContext.getOptions().isRecursiveSearch()) &&
+        matchContext.getPattern().getStrategy().continueMatching(matchedNode)) {
+      matchContext.getMatcher().matchContext(
+        new FilteringNodeIterator(
+          new ArrayBackedNodeIterator(matchedNode.getChildren())
+        )
+      );
+    }
+    return matched;
   }
 
   @Override

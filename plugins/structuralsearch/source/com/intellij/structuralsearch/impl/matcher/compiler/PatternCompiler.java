@@ -24,6 +24,7 @@ import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.*;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -210,14 +211,31 @@ public class PatternCompiler {
         }
 
         if (constraint.getWithinConstraint() != null && constraint.getWithinConstraint().length() > 0) {
-          predicate = new WithinPredicate(name, constraint.getWithinConstraint(), project);
-          if (constraint.isInvertWithinConstraint()) {
-            predicate = new NotPredicate(predicate);
-          }
-          addPredicate(handler,predicate);
+          assert false;
         }
 
         prevOffset = offset;
+      }
+
+      MatchVariableConstraint constraint = options.getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+      if (constraint != null) {
+        if (constraint.getWithinConstraint() != null && constraint.getWithinConstraint().length() > 0) {
+          MatchPredicate predicate = new WithinPredicate(Configuration.CONTEXT_VAR_NAME, constraint.getWithinConstraint(), project);
+          if (constraint.isInvertWithinConstraint()) {
+            predicate = new NotPredicate(predicate);
+          }
+
+          SubstitutionHandler handler = result.createSubstitutionHandler(
+            Configuration.CONTEXT_VAR_NAME,
+            Configuration.CONTEXT_VAR_NAME,
+            constraint.isPartOfSearchResults(),
+            constraint.getMinCount(),
+            constraint.getMaxCount(),
+            constraint.isGreedy()
+          );
+          
+          addPredicate(handler,predicate);
+        }
       }
 
       buf.append(text.substring(prevOffset,text.length()));

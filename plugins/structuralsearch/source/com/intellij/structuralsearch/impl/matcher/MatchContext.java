@@ -18,16 +18,7 @@ public class MatchContext {
   private MatchOptions options;
   private MatchingVisitor matcher;
 
-  private PsiElement currentContextNode;
   private LinkedList<PsiElement> myMatchedNodes;
-
-  public void setCurrentContextNode(final PsiElement psiElement) {
-    currentContextNode = psiElement;
-  }
-
-  public PsiElement getCurrentContextNode() {
-    return currentContextNode;
-  }
 
   public LinkedList<PsiElement> getMatchedNodes() {
     return myMatchedNodes;

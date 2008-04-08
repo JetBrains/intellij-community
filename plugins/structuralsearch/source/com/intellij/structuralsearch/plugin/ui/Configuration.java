@@ -87,4 +87,6 @@ public abstract class Configuration implements JDOMExternalizable {
   public static ConfigurationCreator getConfigurationCreator() {
     return configurationCreator;
   }
+
+  @NonNls public static final String CONTEXT_VAR_NAME = "__context__";
 }

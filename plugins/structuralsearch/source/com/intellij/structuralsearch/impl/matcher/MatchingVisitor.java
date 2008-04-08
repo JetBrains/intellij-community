@@ -19,6 +19,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.ExprTypePredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
 
 import java.util.*;
 
@@ -359,8 +360,17 @@ public class MatchingVisitor {
       final MatchingHandler firstMatchingHandler = matchContext.getPattern().getHandler(patternNodes.current());
 
       for(;elements.hasNext();elements.advance()) {
-        final boolean matched =
+        final PsiElement elementNode = elements.current();
+        
+        boolean matched =
           firstMatchingHandler.matchSequentially(patternNodes, elements, matchContext);
+
+        if (matched) {
+          MatchingHandler matchingHandler = matchContext.getPattern().getHandler(Configuration.CONTEXT_VAR_NAME);
+          if (matchingHandler != null) {
+            matched = ((SubstitutionHandler)matchingHandler).handle(elementNode, matchContext);
+          }
+        }
 
         final LinkedList<PsiElement> matchedNodes = matchContext.getMatchedNodes();
 

@@ -2,6 +2,7 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.StringTokenizer;
@@ -123,7 +124,6 @@ class StringToConstraintsTransformer {
             if (constraint==null) {
               constraint = new MatchVariableConstraint();
               constraint.setName( typedVar );
-              options.addVariableConstraint(constraint);
               constraintCreated = true;
             }
 
@@ -184,6 +184,13 @@ class StringToConstraintsTransformer {
             }
 
             index = eatTypedVarCondition(index, pattern, miscBuffer, constraint);
+
+            if (constraintCreated) {
+              if (constraint.getWithinConstraint().length() > 0) {
+                constraint.setName(Configuration.CONTEXT_VAR_NAME);
+              }
+              options.addVariableConstraint(constraint);
+            }
 
             if (index == pattern.length()) break;
             // fall thri to append white space

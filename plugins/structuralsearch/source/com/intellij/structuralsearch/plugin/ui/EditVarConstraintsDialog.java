@@ -9,9 +9,11 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.ui.ComboboxWithBrowseButton;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -19,6 +21,8 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -54,10 +58,15 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private JCheckBox formalArgTypeWithinHierarchy;
   private JCheckBox invertFormalArgType;
   private CompletionTextField formalArgType;
-  private JTextField customScriptCode;
+  private TextFieldWithBrowseButton customScriptCode;
   private JCheckBox maxoccursUnlimited;
+  private ComboboxWithBrowseButton withinCombo;
+  private JPanel containedInConstraints;
+  private JCheckBox invertWithinIn;
+  private JPanel variableConstraints;
+  private JPanel expressionConstraints;
 
-  EditVarConstraintsDialog(Project project,SearchModel _model,List<Variable> _variables, boolean replaceContext, FileType fileType) {
+  EditVarConstraintsDialog(final Project project,SearchModel _model,List<Variable> _variables, boolean replaceContext, FileType fileType) {
     super(project,false);
 
     //regexp.getDocument().addDocumentListener(
@@ -90,6 +99,41 @@ class EditVarConstraintsDialog extends DialogWrapper {
     setTitle(SSRBundle.message("editvarcontraints.edit.variables"));
 
     partOfSearchResults.setEnabled(!replaceContext);
+    containedInConstraints.setVisible(false);
+    withinCombo.getComboBox().setEditable(true);
+
+    customScriptCode.getButton().addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+
+      }
+    });
+
+    withinCombo.getButton().addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        final SelectTemplateDialog dialog = new SelectTemplateDialog(project, false, false);
+        dialog.show();
+        if (dialog.getExitCode() == SelectTemplateDialog.OK_EXIT_CODE) {
+          final Configuration[] selectedConfigurations = dialog.getSelectedConfigurations();
+          if (selectedConfigurations.length == 1) {
+            withinCombo.getComboBox().getEditor().setItem(selectedConfigurations[0].getMatchOptions().getSearchPattern()); // TODO:
+          }
+        }
+      }
+    });
+
+
+
+    boolean hasContextVar = false;
+    for(Variable var:variables) {
+      if (Configuration.CONTEXT_VAR_NAME.equals(var.getName())) {
+        hasContextVar = true; break;
+      }
+    }
+
+    if (!hasContextVar) {
+      variables.add(new Variable(Configuration.CONTEXT_VAR_NAME, "", "", true));
+    }
+
     if (fileType == StdFileTypes.JAVA) {
 
       formalArgTypeWithinHierarchy.setEnabled(true);
@@ -236,7 +280,11 @@ class EditVarConstraintsDialog extends DialogWrapper {
     varInfo.setInvertFormalType(invertFormalArgType.isSelected());
     varInfo.setFormalArgTypeWithinHierarchy(formalArgTypeWithinHierarchy.isSelected());
     varInfo.setNameOfFormalArgType(formalArgType.getText());
-    varInfo.setScriptCodeConstraint("\"" + customScriptCode.getText() + "\"");
+    varInfo.setScriptCodeConstraint("\"" + customScriptCode.getTextField().getText() + "\"");
+
+    final String withinConstraint = (String)withinCombo.getComboBox().getEditor().getItem();
+    varInfo.setWithinConstraint(withinConstraint.length() > 0 ? "\"" + withinConstraint +"\"":"");
+    varInfo.setInvertWithinConstraint(invertWithinIn.isSelected());
   }
 
   void copyValuesToUI(Variable var) {
@@ -265,6 +313,9 @@ class EditVarConstraintsDialog extends DialogWrapper {
       formalArgTypeWithinHierarchy.setSelected(false);
       formalArgType.setText("");
       customScriptCode.setText("");
+
+      withinCombo.getComboBox().getEditor().setItem("");
+      invertWithinIn.setSelected(false);
     } else {
       notRead.setSelected(varInfo.isInvertReadAccess());
       read.setSelected(varInfo.isReadAccess());
@@ -300,7 +351,17 @@ class EditVarConstraintsDialog extends DialogWrapper {
       formalArgType.setText( varInfo.getNameOfFormalArgType() );
       doProcessing(formalArgTypeWithinHierarchy,formalArgType);
       customScriptCode.setText( StringUtil.stripQuotesAroundValue(varInfo.getScriptCodeConstraint()) );
+
+      withinCombo.getComboBox().getEditor().setItem(StringUtil.stripQuotesAroundValue(varInfo.getWithinConstraint()));
+      invertWithinIn.setSelected(varInfo.isInvertWithinConstraint());
     }
+
+    boolean isExprContext = true;
+    final boolean contextVar = Configuration.CONTEXT_VAR_NAME.equals(var.getName());
+    if (contextVar) isExprContext = false;
+    containedInConstraints.setVisible(contextVar);
+    expressionConstraints.setVisible(isExprContext);
+    partOfSearchResults.setEnabled(!contextVar); //?
   }
 
   protected String getDimensionServiceKey() {

@@ -2131,14 +2131,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     // b) hierarchy navigation support
     // c) or search support
-    // d) contains support
 
     // e) xml search (down-up, nested query), navigation from xml representation <-> java code
     // f) impl data conversion (jdk 1.5 style) <-> other from (replace support)
 
     // Directions:
     // @todo different navigation on sub/supertyping relation (fixed depth), methods implementing interface,
-    // g. contains, like predicates
+    // g.  like predicates
     // i. performance
     // more context for top level classes, difference with interface, etc
 

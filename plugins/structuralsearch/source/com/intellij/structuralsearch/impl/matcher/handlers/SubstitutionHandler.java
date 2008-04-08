@@ -7,6 +7,7 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.MatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 
 import java.util.LinkedList;
@@ -197,7 +198,7 @@ public class SubstitutionHandler extends MatchingHandler {
       return false;
     }
 
-    addResult(match, start, end, context);
+    if (!Configuration.CONTEXT_VAR_NAME.equals(name)) addResult(match, start, end, context);
 
     return true;
   }
