@@ -101,6 +101,14 @@ public abstract class JavaUnwrapper implements Unwrapper {
     public void delete(PsiElement e) throws IncorrectOperationException {
       if (myIsEffective) e.delete();
     }
+    
+    public void deleteExactly(PsiElement e) throws IncorrectOperationException {
+      if (myIsEffective) {
+        // have to use 'parent.deleteChildRange' since 'e.delete' is too smart:
+        // it attempts to remove not only the element but sometimes whole expression.
+        e.getParent().deleteChildRange(e, e);
+      }
+    }
 
     public void setElseBranch(PsiIfStatement ifStatement, PsiStatement elseBranch) throws IncorrectOperationException {
       if (myIsEffective) ifStatement.setElseBranch(copyElement(elseBranch));

@@ -2,7 +2,10 @@ package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+
+import java.util.List;
 
 public class JavaAnonymousUnwrapper extends JavaUnwrapper {
   public JavaAnonymousUnwrapper() {
@@ -10,20 +13,44 @@ public class JavaAnonymousUnwrapper extends JavaUnwrapper {
   }
 
   public boolean isApplicableTo(PsiElement e) {
-    return e instanceof PsiAnonymousClass;
+    return e instanceof PsiAnonymousClass
+           && ((PsiAnonymousClass)e).getMethods().length <= 1;
+  }
+
+  @Override
+  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
+    super.collectAffectedElements(e, toExtract);
+    return findElementToExtractFrom(e);
   }
 
   @Override
   protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
-    PsiMethod[] methods = ((PsiAnonymousClass)element).getMethods();
+    PsiElement from = findElementToExtractFrom(element);
 
-    PsiElement parent = element.getParent() instanceof PsiNewExpression
-                        ? element.getParent()
-                        : element;
-
-    for (PsiMethod m : methods) {
-      context.extractFromCodeBlock(m.getBody(), parent);
+    for (PsiMethod m : ((PsiAnonymousClass)element).getMethods()) {
+      context.extractFromCodeBlock(m.getBody(), from);
     }
-    context.delete(parent);
+
+    PsiElement next = from.getNextSibling();
+    if (next instanceof PsiJavaToken && ((PsiJavaToken)next).getTokenType() == JavaTokenType.SEMICOLON) {
+      context.deleteExactly(from.getNextSibling());
+    }
+    context.deleteExactly(from);
+  }                                     
+
+  private PsiElement findElementToExtractFrom(PsiElement el) {
+    if (el.getParent() instanceof PsiNewExpression) el = el.getParent();
+    el = findTopmostParentOfType(el, PsiMethodCallExpression.class);
+    el = findTopmostParentOfType(el, PsiAssignmentExpression.class);
+    el = findTopmostParentOfType(el, PsiDeclarationStatement.class);
+    return el;
+  }
+
+  private PsiElement findTopmostParentOfType(PsiElement el, Class clazz) {
+    while(true) {
+      PsiElement temp = PsiTreeUtil.getParentOfType(el, clazz);
+      if (temp == null || temp instanceof PsiFile) return el;
+      el = temp;
+    }
   }
 }
