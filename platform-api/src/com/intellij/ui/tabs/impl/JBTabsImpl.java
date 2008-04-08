@@ -986,11 +986,27 @@ public class JBTabsImpl extends JComponent implements JBTabs, PropertyChangeList
     int eachX;
     for (TableRow eachRow : data.table) {
       eachX = insets.left;
+
+      int deltaToFit = 0;
+      if (eachRow.width < data.toFitRec.width && data.table.size() > 1) {
+        deltaToFit = (int)Math.floor((double)(data.toFitRec.width - eachRow.width) / (double)eachRow.myColumns.size());
+      }
+
       for (int i = 0; i < eachRow.myColumns.size(); i++) {
         TabInfo tabInfo = eachRow.myColumns.get(i);
         final TabLabel label = myInfo2Label.get(tabInfo);
-        int width = label.getPreferredSize().width;
+
+        int width;
+        if (i < eachRow.myColumns.size() - 1 || deltaToFit == 0) {
+          width = label.getPreferredSize().width + deltaToFit;
+        } else {
+          width = data.toFitRec.width + insets.left - eachX - 1;
+        }
+
+
         label.setBounds(eachX, eachY, width, myHeaderFitSize.height);
+        label.setAligmentToCenter(deltaToFit > 0);
+
         eachX += width;
       }
       eachY += myHeaderFitSize.height - 1;
