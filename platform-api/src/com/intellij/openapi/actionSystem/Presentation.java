@@ -155,7 +155,7 @@ public final class Presentation implements Cloneable {
   }
 
   public String getTextWithMnemonic() {
-    if ((myText != null) && (myDisplayedMnemonicIndex > -1)) {
+    if (myText != null && myDisplayedMnemonicIndex > -1) {
       return myText.substring(0, myDisplayedMnemonicIndex) + "_" + myText.substring(myDisplayedMnemonicIndex);
     }
     return myText;

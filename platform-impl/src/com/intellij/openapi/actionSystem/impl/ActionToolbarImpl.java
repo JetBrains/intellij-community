@@ -38,10 +38,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
    */
   private final ArrayList<Rectangle> myComponentBounds = new ArrayList<Rectangle>();
 
-  /**
-   * protected for fabrique
-   */
-  protected Dimension myMinimumButtonSize;
+  private Dimension myMinimumButtonSize;
   /**
    * @see ActionToolbar#getLayoutPolicy()
    */
@@ -53,22 +50,19 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   @SuppressWarnings({"FieldCanBeLocal"}) private final MyTimerListener myTimerListener;
   private ArrayList<AnAction> myNewVisibleActions;
   protected ArrayList<AnAction> myVisibleActions;
-  /**
-   * protected for fabrique
-   */
-  protected final PresentationFactory myPresentationFactory;
+  private final PresentationFactory myPresentationFactory;
   /**
    * @see ActionToolbar#adjustTheSameSize(boolean)
    */
   private boolean myAdjustTheSameSize;
 
   private ActionButtonLook myButtonLook = null;
-  private DataManager myDataManager;
-  protected ActionManagerEx myActionManager;
+  private final DataManager myDataManager;
+  protected final ActionManagerEx myActionManager;
 
   private Rectangle myAutoPopupRec;
-  private Icon myAutoPopupIcon = IconLoader.getIcon("/ide/link.png");
-  private KeymapManagerEx myKeymapManager;
+  private final Icon myAutoPopupIcon = IconLoader.getIcon("/ide/link.png");
+  private final KeymapManagerEx myKeymapManager;
   private int myFirstOusideIndex = -1;
 
   private JBPopup myPopup;
@@ -159,7 +153,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
   }
 
-  protected ActionButton createToolbarButton(final AnAction action) {
+  private ActionButton createToolbarButton(final AnAction action) {
     if (action.displayTextInToolbar()) {
       return new ActionButtonWithText(action, myPresentationFactory.getPresentation(action), myPlace, DEFAULT_MINIMUM_BUTTON_SIZE);
     }
@@ -819,7 +813,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   abstract static class PopupToolbar extends ActionToolbarImpl implements AnActionListener, Disposable {
-
     public PopupToolbar(final String place,
                         final ActionGroup actionGroup,
                         final boolean horizontal,

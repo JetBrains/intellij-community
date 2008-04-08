@@ -96,7 +96,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
-  private void readExternal(Element element) throws InvalidDataException {
+  private void readExternal(Element element) {
     final PluginBean pluginBean = XmlSerializer.deserialize(element, PluginBean.class);
 
     url = pluginBean.url;
@@ -155,9 +155,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         }
       }
     }
-    myDependencies = dependentPlugins.toArray(new PluginId[dependentPlugins.size()]);
-    myOptionalDependencies = optionalDependentPlugins.toArray(new PluginId[optionalDependentPlugins.size()]);
-
+    myDependencies = dependentPlugins.isEmpty() ? PluginId.EMPTY_ARRAY : dependentPlugins.toArray(new PluginId[dependentPlugins.size()]);
+    myOptionalDependencies = optionalDependentPlugins.isEmpty() ? PluginId.EMPTY_ARRAY : optionalDependentPlugins.toArray(new PluginId[optionalDependentPlugins.size()]);
 
     List<HelpSetPath> hsPathes = new ArrayList<HelpSetPath>();
     if (pluginBean.helpSets != null) {
@@ -364,7 +363,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   public int hashCode() {
-    return (myName != null ? myName.hashCode() : 0);
+    return myName != null ? myName.hashCode() : 0;
   }
 
   @NotNull

@@ -35,7 +35,7 @@ public class EventDispatcher <T extends EventListener>{
 
   private final T myMulticaster;
 
-  private CopyOnWriteArrayList<T> myListeners = new CopyOnWriteArrayList<T>();
+  private final CopyOnWriteArrayList<T> myListeners = new CopyOnWriteArrayList<T>();
 
   public static <T extends EventListener> EventDispatcher<T> create(Class<T> listenerClass) {
     return new EventDispatcher<T>(listenerClass);

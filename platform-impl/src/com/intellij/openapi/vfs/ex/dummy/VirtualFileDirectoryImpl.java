@@ -28,7 +28,7 @@ class VirtualFileDirectoryImpl extends VirtualFileImpl {
   }
 
   public VirtualFile[] getChildren() {
-    return myChildren.toArray(new VirtualFile[myChildren.size()]);
+    return myChildren.isEmpty() ? EMPTY_ARRAY : myChildren.toArray(new VirtualFile[myChildren.size()]);
   }
 
   public InputStream getInputStream() throws IOException {

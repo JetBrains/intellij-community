@@ -3,13 +3,14 @@ package com.intellij.history.core.tree;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.storage.Stream;
+import com.intellij.util.SmartList;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DirectoryEntry extends Entry {
-  private List<Entry> myChildren;
+  private final List<Entry> myChildren;
 
   public DirectoryEntry(int id, String name) {
     super(id, name);
@@ -19,7 +20,7 @@ public class DirectoryEntry extends Entry {
   public DirectoryEntry(Stream s) throws IOException {
     super(s);
     int count = s.readInteger();
-    myChildren = new ArrayList<Entry>(count);
+    myChildren = count == 0 ? new SmartList<Entry>() : new ArrayList<Entry>(count);
     while (count-- > 0) {
       unsafeAddChild(s.readEntry());
     }
@@ -58,8 +59,7 @@ public class DirectoryEntry extends Entry {
     Entry found = findChild(name);
     if (found == null || found == e) return;
 
-    String m = "entry '%s' already exists in '%s'";
-    throw new RuntimeException(String.format(m, name, getPath()));
+    throw new RuntimeException(String.format("entry '%s' already exists in '%s'", name, getPath()));
   }
 
   @Override
@@ -132,7 +132,7 @@ public class DirectoryEntry extends Entry {
     }
   }
 
-  protected Entry findDirectChild(int id) {
+  Entry findDirectChild(int id) {
     for (Entry child : getChildren()) {
       if (child.getId() == id) return child;
     }

@@ -48,7 +48,7 @@ public class MessageBusImpl implements MessageBus {
   private final Map<Topic, List<MessageBusConnectionImpl>> mySubscribers = new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
   private final List<MessageBusImpl> myChildBusses = new CopyOnWriteArrayList<MessageBusImpl>();
 
-  private final static Object NA = new Object();
+  private static final Object NA = new Object();
   private final MessageBusImpl myParentBus;
 
   //is used for debugging purposes
@@ -166,9 +166,8 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private void pumpMessages() {
-    DeliveryJob job;
     do {
-      job = myMessageQueue.get().poll();
+      DeliveryJob job = myMessageQueue.get().poll();
       if (job == null) break;
       job.connection.deliverMessage(job.message);
     }

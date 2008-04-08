@@ -19,8 +19,8 @@ package com.intellij.ide.plugins;
  * @author max
  */
 public class HelpSetPath {
-  private String file;
-  private String path;
+  private final String file;
+  private final String path;
 
   public HelpSetPath(String file, String path) {
     this.file = file;

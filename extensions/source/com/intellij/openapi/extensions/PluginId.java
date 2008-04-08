@@ -24,6 +24,8 @@ import java.util.Map;
  * @author max
  */
 public class PluginId {
+  public static final PluginId[] EMPTY_ARRAY = new PluginId[0];
+
   private static final Map<String, PluginId> ourRegisteredIds = new HashMap<String, PluginId>();
 
   private final String myIdString;

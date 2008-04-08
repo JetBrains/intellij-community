@@ -89,14 +89,14 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   public synchronized void registerExtension(T extension, LoadingOrder order) {
-    assert (extension != null) : "Extension cannot be null";
+    assert extension != null : "Extension cannot be null";
 
     assert myExtensions.size() == myLoadedAdapters.size();
 
     if (LoadingOrder.ANY == order) {
       int index = myLoadedAdapters.size();
-      if (myLoadedAdapters.size() > 0) {
-        ExtensionComponentAdapter lastAdapter = myLoadedAdapters.get(myLoadedAdapters.size() - 1);
+      if (index > 0) {
+        ExtensionComponentAdapter lastAdapter = myLoadedAdapters.get(index - 1);
         if (lastAdapter.getOrder() == LoadingOrder.LAST) {
           index--;
         }
@@ -171,13 +171,13 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   private synchronized void processAdapters() {
-    if (myExtensionAdapters.size() > 0) {
+    if (!myExtensionAdapters.isEmpty()) {
       List<ExtensionComponentAdapter> allAdapters = new ArrayList<ExtensionComponentAdapter>(myExtensionAdapters.size() + myLoadedAdapters.size());
       allAdapters.addAll(myExtensionAdapters);
       allAdapters.addAll(myLoadedAdapters);
       myExtensions.clear();
       List<ExtensionComponentAdapter> loadedAdapters = myLoadedAdapters;
-      myLoadedAdapters = new ArrayList<ExtensionComponentAdapter>();
+      myLoadedAdapters = new CopyOnWriteArrayList<ExtensionComponentAdapter>();
       ExtensionComponentAdapter[] adapters = allAdapters.toArray(new ExtensionComponentAdapter[myExtensionAdapters.size()]);
       LoadingOrder.sort(adapters);
       for (int i = 0; i < adapters.length; i++) {
@@ -206,7 +206,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   public synchronized void unregisterExtension(final T extension) {
-    assert (extension != null) : "Extension cannot be null";
+    assert extension != null : "Extension cannot be null";
     final int index = getExtensionIndex(extension);
     final ExtensionComponentAdapter adapter = myLoadedAdapters.get(index);
 
