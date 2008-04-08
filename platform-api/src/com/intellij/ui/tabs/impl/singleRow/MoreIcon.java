@@ -1,4 +1,4 @@
-package com.intellij.ui.tabs.impl;
+package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.openapi.ui.popup.ActiveIcon;
 import com.intellij.openapi.util.IconLoader;
@@ -6,7 +6,7 @@ import com.intellij.openapi.util.IconLoader;
 import javax.swing.*;
 import java.awt.*;
 
-abstract class MoreIcon {
+public abstract class MoreIcon {
 
   private ActiveIcon myLeft =
     new ActiveIcon(IconLoader.getIcon("/general/comboArrowLeft.png"), IconLoader.getIcon("/general/comboArrowLeftPassive.png"));

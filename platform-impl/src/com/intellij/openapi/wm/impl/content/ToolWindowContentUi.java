@@ -7,7 +7,7 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.TabbedContentAction;
-import com.intellij.ui.tabs.impl.MoreIcon;
+import com.intellij.ui.tabs.impl.singleRow.MoreIcon;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;

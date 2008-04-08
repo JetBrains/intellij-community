@@ -20,7 +20,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-class TabLabel extends JPanel {
+public class TabLabel extends JPanel {
   private SimpleColoredComponent myLabel = new SimpleColoredComponent();
   private LayeredIcon myIcon;
   private TabInfo myInfo;
