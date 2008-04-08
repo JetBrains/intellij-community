@@ -7,11 +7,11 @@ import java.util.ArrayList;
 
 class TableRow {
 
-  TableLayoutData myData;
+  TablePassInfo myData;
   List<TabInfo> myColumns = new ArrayList<TabInfo>();
   int width;
 
-  public TableRow(final TableLayoutData data) {
+  public TableRow(final TablePassInfo data) {
     myData = data;
   }
 

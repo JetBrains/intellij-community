@@ -17,6 +17,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -71,10 +72,10 @@ public class GridCell implements Disposable {
         return null;
       }
     });
-    myTabs.setUiDecorator(new JBTabsImpl.UiDecorator() {
+    myTabs.setUiDecorator(new UiDecorator() {
       @NotNull
-      public JBTabsImpl.UiDecoration getDecoration() {
-        return new JBTabsImpl.UiDecoration(null, new Insets(1, -1, 1, -1));
+      public UiDecoration getDecoration() {
+        return new UiDecoration(null, new Insets(1, -1, 1, -1));
       }
     });
     myTabs.setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal());

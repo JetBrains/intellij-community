@@ -2,18 +2,19 @@ package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.TabLabel;
-import com.intellij.ui.tabs.impl.Layout;
+import com.intellij.ui.tabs.impl.TabLayout;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class SingleRowLayout {
+public class SingleRowLayout extends TabLayout {
 
   JBTabsImpl myTabs;
-  public LineLayoutData myLastSingRowLayout;
+  public SingleRowPassInfo myLastSingRowLayout;
 
   public MoreIcon myMoreIcon = new MoreIcon() {
     protected boolean isActive() {
@@ -41,12 +42,12 @@ public class SingleRowLayout {
     myTabs = tabs;
   }
 
-  public Layout layoutSingleRow() {
+  public LayoutPassInfo layoutSingleRow() {
     final TabInfo selected = myTabs.getSelectedInfo();
 
     final JComponent selectedToolbar = myTabs.myInfo2Toolbar.get(selected);
 
-    LineLayoutData data = new LineLayoutData(this);
+    SingleRowPassInfo data = new SingleRowPassInfo(this);
     boolean layoutLabels = true;
 
     if (!myTabs.myForcedRelayout &&
@@ -123,7 +124,7 @@ public class SingleRowLayout {
     return data;
   }
 
-  private void layoutLabelsAndGhosts(final LineLayoutData data) {
+  private void layoutLabelsAndGhosts(final SingleRowPassInfo data) {
     int y = data.insets.top;
     boolean reachedBounds = false;
 
@@ -176,7 +177,7 @@ public class SingleRowLayout {
   }
 
 
-  private void recomputeToLayout(final JComponent selectedToolbar, final LineLayoutData data) {
+  private void recomputeToLayout(final JComponent selectedToolbar, final SingleRowPassInfo data) {
     final int toolbarInset = myTabs.getToolbarInset();
     data.displayedHToolbar = myTabs.myHorizontalSide && selectedToolbar != null;
     data.toFitWidth = myTabs.getWidth() - data.insets.left - data.insets.right - (data.displayedHToolbar ? toolbarInset : 0);
@@ -268,7 +269,7 @@ public class SingleRowLayout {
     }
   }
 
-  private void processDrop(final LineLayoutData data, final TabInfo info, boolean isLeftSide) {
+  private void processDrop(final SingleRowPassInfo data, final TabInfo info, boolean isLeftSide) {
     data.requiredWidth -= myTabs.myInfo2Label.get(info).getPreferredSize().width;
     data.toDrop.add(info);
     data.toLayout.remove(info);

@@ -2,25 +2,26 @@ package com.intellij.ui.tabs.impl.table;
 
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.Layout;
+import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.ui.tabs.impl.TabLayout;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class TableLayout {
+public class TableLayout extends TabLayout {
 
   private JBTabsImpl myTabs;
 
-  public TableLayoutData myLastTableLayout;
+  public TablePassInfo myLastTableLayout;
 
   public TableLayout(final JBTabsImpl tabs) {
     myTabs = tabs;
   }
 
-  private TableLayoutData computeLayoutTable() {
-    final TableLayoutData data = new TableLayoutData(myTabs);
+  private TablePassInfo computeLayoutTable() {
+    final TablePassInfo data = new TablePassInfo(myTabs);
 
     final Insets insets = myTabs.getLayoutInsets();
     data.toFitRec =
@@ -75,9 +76,9 @@ public class TableLayout {
   }
 
 
-  public  Layout layoutTable() {
+  public LayoutPassInfo layoutTable() {
     myTabs.resetLayout(true);
-    final TableLayoutData data = computeLayoutTable();
+    final TablePassInfo data = computeLayoutTable();
     final Insets insets = myTabs.getLayoutInsets();
     int eachY = insets.top;
     int eachX;

@@ -2,7 +2,7 @@ package com.intellij.ui.tabs.impl.table;
 
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.Layout;
+import com.intellij.ui.tabs.impl.LayoutPassInfo;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -10,14 +10,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class TableLayoutData extends Layout {
+class TablePassInfo extends LayoutPassInfo {
     List<TableRow> table = new ArrayList<TableRow>();
     public Rectangle toFitRec;
     Map<TabInfo, TableRow> myInfo2Row = new HashMap<TabInfo, TableRow>();
 
   JBTabsImpl myTabs;
 
-  TableLayoutData(final JBTabsImpl tabs) {
+  TablePassInfo(final JBTabsImpl tabs) {
     myTabs = tabs;
   }
 

@@ -6,7 +6,7 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -171,7 +171,7 @@ public class TabLabel extends JPanel {
     return myInfo;
   }
 
-  public void apply(JBTabs.UiDecoration decoration) {
+  public void apply(UiDecorator.UiDecoration decoration) {
     if (decoration.getLabelFont() != null) {
       setFont(decoration.getLabelFont());
     }

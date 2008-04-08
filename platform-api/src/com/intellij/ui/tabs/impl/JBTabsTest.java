@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.SimpleTextAttributes;
 
 import javax.swing.*;
@@ -161,9 +161,9 @@ public class JBTabsTest {
     //tabs.getComponent().setBorder(new EmptyBorder(5, 5, 5, 5));
     tabs.setPaintBorder(10, -1, -1, -1);
 
-    tabs.setUiDecorator(new JBTabs.UiDecorator() {
-      public JBTabs.UiDecoration getDecoration() {
-        return new JBTabs.UiDecoration(null, new Insets(0, -1, 0, -1));
+    tabs.setUiDecorator(new UiDecorator() {
+      public UiDecoration getDecoration() {
+        return new UiDecoration(null, new Insets(0, -1, 0, -1));
       }
     });
 

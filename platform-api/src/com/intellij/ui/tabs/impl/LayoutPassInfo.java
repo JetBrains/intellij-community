@@ -4,7 +4,7 @@ import com.intellij.ui.tabs.TabInfo;
 
 import java.util.List;
 
-public abstract class Layout {
+public abstract class LayoutPassInfo {
   public abstract TabInfo getPreviousFor(TabInfo info);
 
   public abstract TabInfo getNextFor(TabInfo info);

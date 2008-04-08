@@ -1,13 +1,13 @@
 package com.intellij.ui.tabs.impl.singleRow;
 
-import com.intellij.ui.tabs.impl.Layout;
+import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.TabInfo;
 
 import java.awt.*;
 import java.util.ArrayList;
 
-public class LineLayoutData extends Layout {
+public class SingleRowPassInfo extends LayoutPassInfo {
   final Dimension laayoutSize;
   int contentCount;
   int eachX;
@@ -31,7 +31,7 @@ public class LineLayoutData extends Layout {
 
   private JBTabsImpl myTabs;
 
-  public LineLayoutData(SingleRowLayout layout) {
+  public SingleRowPassInfo(SingleRowLayout layout) {
     myTabs = layout.myTabs;
     laayoutSize = layout.myTabs.getSize();
     contentCount = myTabs.getTabCount();

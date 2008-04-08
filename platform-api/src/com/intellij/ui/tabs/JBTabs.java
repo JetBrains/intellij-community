@@ -124,32 +124,8 @@ public interface JBTabs {
 
   boolean isGhostsAlwaysVisible();
 
-  interface UiDecorator {
-    @NotNull
-    UiDecoration getDecoration();
-  }
-
   @NotNull
   JBTabs setAdjustBorders(boolean adjust);
 
 
-  class UiDecoration {
-    private @Nullable Font myLabelFont;
-    private @Nullable Insets myLabelInsets;
-
-    public UiDecoration(final Font labelFont, final Insets labelInsets) {
-      myLabelFont = labelFont;
-      myLabelInsets = labelInsets;
-    }
-
-    @Nullable
-    public Font getLabelFont() {
-      return myLabelFont;
-    }
-
-    @Nullable
-    public Insets getLabelInsets() {
-      return myLabelInsets;
-    }
-  }
 }

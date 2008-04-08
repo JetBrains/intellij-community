@@ -14,6 +14,7 @@ import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
+import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.ui.Animator;
@@ -77,7 +78,9 @@ public class JBTabsImpl extends JComponent
   SingleRowLayout mySingleRowLayout = new SingleRowLayout(this);
   TableLayout myTableLayout = new TableLayout(this);
 
-  private boolean mySingleRow = true;
+
+  private TabLayout myLayout = mySingleRowLayout;
+  private LayoutPassInfo myLastLayoutPass;
 
   public boolean myForcedRelayout;
 
@@ -100,12 +103,9 @@ public class JBTabsImpl extends JComponent
   IdeFocusManager myFocusManager;
   boolean myAdjustBorders = true;
 
-  int myTopBorderSize;
-  int myLeftBorderSize;
-  int myRightBorderSize;
-  int myBottomBorderSize;
+
+  private Insets myBorderSize = new Insets(0, 0, 0, 0);
   boolean myAddNavigationGroup = true;
-  Layout myLastLayoutData;
 
   boolean myGhostsAlwaysVisible = false;
 
@@ -114,6 +114,7 @@ public class JBTabsImpl extends JComponent
     myProject = project;
     myActionManager = actionManager;
     myFocusManager = focusManager;
+
     setOpaque(true);
     setPaintBorder(-1, -1, -1, -1);
 
@@ -861,12 +862,12 @@ public class JBTabsImpl extends JComponent
       myHeaderFitSize =
           new Dimension(getSize().width, myHorizontalSide ? Math.max(max.myLabel.height, max.myToolbar.height) : max.myLabel.height);
 
-      if (mySingleRow) {
-        myLastLayoutData = mySingleRowLayout.layoutSingleRow();
+      if (isSingleRow()) {
+        myLastLayoutPass = mySingleRowLayout.layoutSingleRow();
         myTableLayout.myLastTableLayout = null;
       }
       else {
-        myLastLayoutData = myTableLayout.layoutTable();
+        myLastLayoutPass = myTableLayout.layoutTable();
         mySingleRowLayout.myLastSingRowLayout = null;
       }
 
@@ -888,7 +889,7 @@ public class JBTabsImpl extends JComponent
     final Insets insets = getLayoutInsets();
 
     final Insets border =
-        isHideTabs() ? new Insets(0, 0, 0, 0) : new Insets(myTopBorderSize, myLeftBorderSize, myBottomBorderSize, myRightBorderSize);
+        isHideTabs() ? new Insets(0, 0, 0, 0) : (Insets)myBorderSize.clone();
     if (isStealthModeEffective() || isHideTabs()) {
       border.top = getBorder(-1);
       border.bottom = getBorder(-1);
@@ -1040,8 +1041,8 @@ public class JBTabsImpl extends JComponent
         if (eachLabel.getBounds().width == 0) continue;
 
 
-        final TabInfo prev = myLastLayoutData.getPreviousFor(myVisibleInfos.get(i));
-        final TabInfo next = myLastLayoutData.getNextFor(myVisibleInfos.get(i));
+        final TabInfo prev = myLastLayoutPass.getPreviousFor(myVisibleInfos.get(i));
+        final TabInfo next = myLastLayoutPass.getNextFor(myVisibleInfos.get(i));
 
         final Rectangle eachBounds = eachLabel.getBounds();
         final GeneralPath path = new GeneralPath();
@@ -1251,11 +1252,11 @@ public class JBTabsImpl extends JComponent
                            final Color fillTo,
                            boolean isFocused) {
     int topY = y + 1;
-    int bottomY = y + myTopBorderSize - 2;
+    int bottomY = y + myBorderSize.top - 2;
     int middleY = topY + (bottomY - topY) / 2;
 
 
-    if (myTopBorderSize > 0) {
+    if (myBorderSize.top > 0) {
       if (isHideTabs()) {
         g2d.setColor(borderColor);
         g2d.drawLine(x, y, x + width - 1, y);
@@ -1265,7 +1266,7 @@ public class JBTabsImpl extends JComponent
         g2d.drawLine(x, y - 1, x + width - 1, y - 1);
       }
       else {
-        if (myTopBorderSize > 1) {
+        if (myBorderSize.top > 1) {
           g2d.setColor(Color.white);
           g2d.fillRect(x, topY, width, bottomY - topY);
 
@@ -1284,7 +1285,7 @@ public class JBTabsImpl extends JComponent
           g2d.setColor(Color.lightGray);
           g2d.drawLine(x, bottomY, x + width - 1, bottomY);
         }
-        else if (myTopBorderSize == 1) {
+        else if (myBorderSize.top == 1) {
           g2d.setColor(borderColor);
           g2d.drawLine(x, y, x + width - 1, y);
         }
@@ -1292,10 +1293,10 @@ public class JBTabsImpl extends JComponent
     }
 
     g2d.setColor(borderColor);
-    g2d.fillRect(x, y + height - myBottomBorderSize, width, myBottomBorderSize);
+    g2d.fillRect(x, y + height - myBorderSize.bottom, width, myBorderSize.bottom);
 
-    g2d.fillRect(x, y, myLeftBorderSize, height);
-    g2d.fillRect(x + width - myRightBorderSize, y, myRightBorderSize, height);
+    g2d.fillRect(x, y, myBorderSize.left, height);
+    g2d.fillRect(x + width - myBorderSize.right, y, myBorderSize.right, height);
   }
 
   public boolean isStealthModeEffective() {
@@ -1651,12 +1652,9 @@ public class JBTabsImpl extends JComponent
   }
 
   public JBTabs setPaintBorder(int top, int left, int right, int bottom) {
-    if (myTopBorderSize == top && myLeftBorderSize == left && myRightBorderSize == right && myBottomBorderSize == bottom) return this;
+    if (myBorderSize.top == top && myBorderSize.left == left && myBorderSize.right == right && myBorderSize.bottom == bottom) return this;
 
-    myTopBorderSize = getBorder(top);
-    myLeftBorderSize = getBorder(left);
-    myRightBorderSize = getBorder(right);
-    myBottomBorderSize = getBorder(bottom);
+    myBorderSize = new Insets(getBorder(top), getBorder(left), getBorder(bottom), getBorder(right));
 
     revalidateAndRepaint(false);
 
@@ -1802,7 +1800,7 @@ public class JBTabsImpl extends JComponent
   }
 
   public void setSingleRow(boolean singleRow) {
-    mySingleRow = singleRow;
+    myLayout = singleRow ? mySingleRowLayout : myTableLayout;
 
     relayout(true, false);
   }
@@ -1820,7 +1818,7 @@ public class JBTabsImpl extends JComponent
   }
 
   public boolean isSingleRow() {
-    return mySingleRow;
+    return myLayout == mySingleRowLayout;
   }
 
   public boolean isSideComponentVertical() {
@@ -1851,7 +1849,7 @@ public class JBTabsImpl extends JComponent
 
   private void applyDecoration() {
     if (myUiDecorator != null) {
-      UiDecoration uiDecoration = myUiDecorator.getDecoration();
+      UiDecorator.UiDecoration uiDecoration = myUiDecorator.getDecoration();
       for (TabLabel each : myInfo2Label.values()) {
         each.apply(uiDecoration);
       }

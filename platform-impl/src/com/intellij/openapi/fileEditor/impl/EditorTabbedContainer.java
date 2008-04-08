@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
@@ -69,10 +70,10 @@ final class EditorTabbedContainer  {
           }
         }
       }
-    }).setUiDecorator(new JBTabs.UiDecorator() {
+    }).setUiDecorator(new UiDecorator() {
       @NotNull
-      public JBTabs.UiDecoration getDecoration() {
-        return new JBTabs.UiDecoration(null, new Insets(1, 6, 1, 6));
+      public UiDecoration getDecoration() {
+        return new UiDecoration(null, new Insets(1, 6, 1, 6));
       }
     }).setGhostsAlwaysVisible(true);
 
