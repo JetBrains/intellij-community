@@ -1,7 +1,5 @@
 package com.intellij.xml.util.documentation;
 
-import com.intellij.jsp.impl.TldAttributeDescriptor;
-import com.intellij.jsp.impl.TldDescriptor;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.DocumentationUtil;
 import com.intellij.psi.PsiElement;
@@ -86,21 +84,11 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     } else if (element instanceof XmlAttributeValue) {
       isTag = false;
       final XmlAttribute xmlAttribute = (XmlAttribute)element.getParent();
-
-      if (xmlAttribute.getDescriptor() instanceof TldAttributeDescriptor) {
-        key = null;
-      } else {
-        key = xmlAttribute.getName();
-      }
+      key = xmlAttribute.getName();
     } else if (element instanceof XmlAttribute) {
       final XmlAttribute xmlAttribute = (XmlAttribute)element;
       isTag = false;
-
-      if (xmlAttribute.getDescriptor() instanceof TldAttributeDescriptor) {
-        key = null;
-      } else {
-        key = xmlAttribute.getName();
-      }
+      key = xmlAttribute.getName();
     } else {
       nameElement = element;
       isTag = !(element.getParent() instanceof XmlAttribute);
