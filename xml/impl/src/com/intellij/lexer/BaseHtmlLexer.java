@@ -40,11 +40,11 @@ abstract class BaseHtmlLexer extends LexerBase {
     XmlTokenType.XML_TAG_CHARACTERS
   });
 
-  interface TokenHandler {
+  public interface TokenHandler {
     void handleElement(Lexer lexer);
   }
 
-  class XmlNameHandler implements TokenHandler {
+  public class XmlNameHandler implements TokenHandler {
     @NonNls private static final String TOKEN_SCRIPT = "script";
     @NonNls private static final String TOKEN_STYLE = "style";
     @NonNls private static final String TOKEN_ON = "on";
