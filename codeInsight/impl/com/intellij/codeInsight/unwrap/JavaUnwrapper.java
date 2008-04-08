@@ -118,9 +118,7 @@ public abstract class JavaUnwrapper implements Unwrapper {
     private PsiStatement copyElement(PsiStatement e) throws IncorrectOperationException {
       // We can not call el.copy() for 'else' since it sets context to parent 'if'.
       // This causes copy to be invalidated after parent 'if' is removed by setElseBranch method.
-
-      PsiManager manager = PsiManager.getInstance(e.getProject());
-      PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(e.getProject()).getElementFactory();
       return factory.createStatementFromText(e.getText(), null);
     }
   }

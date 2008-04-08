@@ -23,8 +23,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
+import com.intellij.refactoring.ui.MemberSelectionTable;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -42,6 +44,7 @@ public class CreateTestDialog extends DialogWrapper {
   @NonNls private static final String RECENTS_KEY = "CreateTestDialog.RecentsKey";
 
   private Project myProject;
+  private PsiClass myTargetClass;
   private Module myTargetModule;
 
   private PsiDirectory myTargetDirectory;
@@ -50,22 +53,30 @@ public class CreateTestDialog extends DialogWrapper {
   private EditorTextField mySuperClassField;
   private PsiTypeCodeFragment mySuperClassFieldCodeFragment;
   private ReferenceEditorComboWithBrowseButton myTargetPackageField;
+  private MemberSelectionTable myMembersTable;
 
   public CreateTestDialog(@NotNull Project project,
                           @NotNull String title,
-                          String targetClassName,
+                          PsiClass targetClass,
                           @NotNull String superClassName,
                           PsiPackage targetPackage,
                           Module targetModule) {
     super(project, true);
     myProject = project;
 
+    myTargetClass = targetClass;
     myTargetModule = targetModule;
 
-    myTargetClassNameField = new JTextField(targetClassName);
+    initControls(targetClass, superClassName, targetPackage);
+    setTitle(title);
+    init();
+  }
+
+  private void initControls(PsiClass targetClass, String superClassName, PsiPackage targetPackage) {
+    myTargetClassNameField = new JTextField(targetClass.getName() + "Test");
     setPreferredSize(myTargetClassNameField);
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     mySuperClassFieldCodeFragment = factory.createTypeCodeFragment(superClassName, targetPackage, true);
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(mySuperClassFieldCodeFragment);
     mySuperClassField = new EditorTextField(document, myProject, StdFileTypes.JAVA);
@@ -73,19 +84,11 @@ public class CreateTestDialog extends DialogWrapper {
     String targetPackageName = targetPackage != null ? targetPackage.getQualifiedName() : "";
     myTargetPackageField = new ReferenceEditorComboWithBrowseButton(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        PackageChooserDialog chooser =
-            new PackageChooserDialog(CodeInsightBundle.message("dialog.create.class.package.chooser.title"), myProject);
-        chooser.selectPackage(myTargetPackageField.getText());
-        chooser.show();
-        PsiPackage aPackage = chooser.getSelectedPackage();
-        if (aPackage != null) {
-          myTargetPackageField.setText(aPackage.getQualifiedName());
-        }
+        doSelectPackage();
       }
     }, targetPackageName, PsiManager.getInstance(myProject), false, RECENTS_KEY);
 
-    init();
-    setTitle(title);
+    myMembersTable = new MemberSelectionTable(collectMethods(), null);
   }
 
   private void setPreferredSize(JTextField field) {
@@ -93,6 +96,24 @@ public class CreateTestDialog extends DialogWrapper {
     FontMetrics fontMetrics = field.getFontMetrics(field.getFont());
     size.width = fontMetrics.charWidth('a') * 40;
     field.setPreferredSize(size);
+  }
+
+  private MemberInfo[] collectMethods() {
+    return MemberInfo.extractClassMembers(myTargetClass, new MemberInfo.Filter() {
+      public boolean includeMember(PsiMember member) {
+        if (!(member instanceof PsiMethod)) return false;
+        PsiModifierList list = member.getModifierList();
+        return list.hasModifierProperty(PsiModifier.PUBLIC);
+      }
+    }, false);
+  }
+
+  private void doSelectPackage() {
+    PackageChooserDialog d = new PackageChooserDialog(CodeInsightBundle.message("dialog.create.class.package.chooser.title"), myProject);
+    d.selectPackage(myTargetPackageField.getText());
+    d.show();
+    PsiPackage p = d.getSelectedPackage();
+    if (p != null) myTargetPackageField.setText(p.getQualifiedName());
   }
 
   protected Action[] createActions() {
@@ -105,25 +126,47 @@ public class CreateTestDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-
     panel.setBorder(IdeBorderFactory.createBorder());
 
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
-    gbConstraints.gridx = 0;
-    gbConstraints.weightx = 0;
-    gbConstraints.gridwidth = 1;
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.anchor = GridBagConstraints.WEST;
-    panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.class.name")), gbConstraints);
+    GridBagConstraints constr = new GridBagConstraints();
+    constr.insets = new Insets(4, 8, 4, 8);
+    constr.fill = GridBagConstraints.HORIZONTAL;
+    constr.anchor = GridBagConstraints.WEST;
 
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
-    gbConstraints.gridx = 1;
-    gbConstraints.weightx = 1;
-    gbConstraints.gridwidth = 1;
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.anchor = GridBagConstraints.WEST;
-    panel.add(myTargetClassNameField, gbConstraints);
+    constr.gridx = 0;
+    constr.weightx = 0;
+    panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.class.name")), constr);
+
+    constr.gridx = 1;
+    constr.weightx = 1;
+    panel.add(myTargetClassNameField, constr);
+
+    constr.gridx = 0;
+    constr.weightx = 0;
+    panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.super.class")), constr);
+
+    constr.gridx = 1;
+    constr.weightx = 1;
+    panel.add(mySuperClassField, constr);
+
+    constr.gridx = 0;
+    constr.weightx = 0;
+    panel.add(new JLabel(CodeInsightBundle.message("dialog.create.class.destination.package.label")), constr);
+
+    constr.gridx = 1;
+    constr.weightx = 1;
+
+    JPanel targetPackagePanel = new JPanel(new BorderLayout());
+    targetPackagePanel.add(myTargetPackageField, BorderLayout.CENTER);
+    panel.add(targetPackagePanel, constr);
+
+    constr.gridx = 0;
+    constr.gridwidth = GridBagConstraints.REMAINDER;
+    panel.add(new JLabel("Select methods to create tests for"), constr);
+
+    constr.gridx = 0;
+    constr.gridwidth = GridBagConstraints.REMAINDER;
+    panel.add(new JScrollPane(myMembersTable), constr);
 
     myTargetClassNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
@@ -131,43 +174,12 @@ public class CreateTestDialog extends DialogWrapper {
       }
     });
 
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
-    gbConstraints.gridx = 0;
-    gbConstraints.gridy = 2;
-    gbConstraints.weightx = 0;
-    gbConstraints.gridwidth = 1;
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.anchor = GridBagConstraints.WEST;
-    panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.super.class")), gbConstraints);
-
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
-    gbConstraints.gridx = 1;
-    gbConstraints.gridy = 2;
-    gbConstraints.weightx = 1;
-    gbConstraints.gridwidth = 1;
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.anchor = GridBagConstraints.WEST;
-    panel.add(mySuperClassField, gbConstraints);
-
-    gbConstraints.gridx = 0;
-    gbConstraints.gridy = 3;
-    gbConstraints.weightx = 0;
-    gbConstraints.gridwidth = 1;
-    panel.add(new JLabel(CodeInsightBundle.message("dialog.create.class.destination.package.label")), gbConstraints);
-
-    gbConstraints.gridx = 1;
-    gbConstraints.weightx = 1;
-
     new AnAction() {
       public void actionPerformed(AnActionEvent e) {
         myTargetPackageField.getButton().doClick();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)),
                                 myTargetPackageField.getChildComponent());
-
-    JPanel _panel = new JPanel(new BorderLayout());
-    _panel.add(myTargetPackageField, BorderLayout.CENTER);
-    panel.add(_panel, gbConstraints);
 
     return panel;
   }
@@ -190,6 +202,10 @@ public class CreateTestDialog extends DialogWrapper {
 
   public PsiDirectory getTargetDirectory() {
     return myTargetDirectory;
+  }
+
+  public MemberInfo[] getSelectedMethods() {
+    return myMembersTable.getSelectedMemberInfos();
   }
 
   protected void doOKAction() {

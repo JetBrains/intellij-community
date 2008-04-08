@@ -15,10 +15,12 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +74,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
     CreateTestDialog d = new CreateTestDialog(project,
                                               getText(),
-                                              srcClass.getName() + "Test",
+                                              srcClass,
                                               hasJUnitLib(project) ? "junit.framework.TestCase" : "",
                                               srcPackage,
                                               srcModule);
@@ -82,6 +84,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     final String targetClassName = d.getClassName();
     final String superClassName = d.getSuperClassName();
     final PsiDirectory targetDirectory = d.getTargetDirectory();
+    final MemberInfo[] methods = d.getSelectedMethods();
 
     if (targetDirectory == null) return;
 
@@ -94,6 +97,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
               PsiClass targetClass = JavaDirectoryService.getInstance().createClass(targetDirectory, targetClassName);
               addSuperClass(targetClass, project, superClassName);
+              addTestMethods(targetClass, methods);
 
               CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
             }
@@ -102,6 +106,16 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
             }
           }
         });
+      }
+    });
+  }
+
+  private void showErrorLater(final Project project, final String targetClassName) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        Messages.showErrorDialog(project,
+                                 CodeInsightBundle.message("intention.error.cannot.create.class.message", targetClassName),
+                                 CodeInsightBundle.message("intention.error.cannot.create.class.title"));
       }
     });
   }
@@ -190,14 +204,15 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     return JavaPsiFacade.getInstance(project).findClass(fqName, scope);
   }
 
-  private void showErrorLater(final Project project, final String targetClassName) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        Messages.showErrorDialog(project,
-                                 CodeInsightBundle.message("intention.error.cannot.create.class.message", targetClassName),
-                                 CodeInsightBundle.message("intention.error.cannot.create.class.title"));
-      }
-    });
+
+  private void addTestMethods(PsiClass targetClass, MemberInfo[] methods) throws IncorrectOperationException {
+    PsiElementFactory f = JavaPsiFacade.getInstance(targetClass.getProject()).getElementFactory();
+    for (MemberInfo m : methods) {
+      String name = m.getMember().getName();
+      PsiMethod test = f.createMethod("test" + StringUtil.capitalize(name), PsiType.VOID);
+      test.getBody().add(f.createCommentFromText("// Add your test code here", test));
+      targetClass.add(test);
+    }
   }
 
   public boolean startInWriteAction() {
