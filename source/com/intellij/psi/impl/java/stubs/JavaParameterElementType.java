@@ -45,7 +45,7 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
       throws IOException {
     String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
     TypeInfo type = new TypeInfo();
-    RecordUtil.readType(dataStream, type);
+    RecordUtil.readTYPE(dataStream, type, nameStorage);
     boolean isEll = dataStream.readBoolean();
     return new PsiParameterStubImpl(parentStub, name, type, isEll);
   }

@@ -20,6 +20,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
@@ -48,10 +49,15 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
         Language l = ((LanguageFileType)fileType).getLanguage();
         return LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType() instanceof IStubFileElementType;
       }
+      else if (fileType.isBinary()) {
+        final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
+        return builder != null && builder.acceptsFile(file);
+      }
 
       return false;
     }
   };
+
   private static final PersistentEnumerator.DataDescriptor<Integer> DATA_DESCRIPTOR = new PersistentEnumerator.DataDescriptor<Integer>() {
     public int getHashCode(final Integer value) {
       return value.hashCode();
@@ -82,21 +88,14 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            final int key = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
+            final StubElement rootStub = buildStubTree(inputData);
+            if (rootStub == null) return;
+
             final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             DataOutputStream stream = new DataOutputStream(bytes);
-            final LanguageFileType filetype = (LanguageFileType)inputData.getFile().getFileType();
-            Language l = filetype.getLanguage();
-            final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
+            SerializationManager.getInstance().serialize(rootStub, stream);
 
-            Project project = ProjectManager.getInstance().getDefaultProject(); // TODO
-
-            PsiFile copy =
-              PsiFileFactory.getInstance(project).createFileFromText(inputData.getFileName(), filetype, inputData.getContentAsText(), 1, false, false);
-
-            final StubElement stub = ((IStubFileElementType)type).getBuilder().buildStubTree(copy);
-
-            SerializationManager.getInstance().serialize(stub, stream);
+            final int key = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
             result.put(key, new SerializedStubTree(bytes.toByteArray()));
           }
         });
@@ -104,6 +103,28 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
         return result;
       }
     };
+  }
+
+  @Nullable
+  private static StubElement buildStubTree(final FileContent inputData) {
+    final FileType fileType = inputData.getFile().getFileType();
+    if (fileType.isBinary()) {
+      final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
+      assert builder != null;
+
+      return builder.buildStubTree(inputData.getContent());
+    }
+
+    final LanguageFileType filetype = (LanguageFileType)fileType;
+    Language l = filetype.getLanguage();
+    final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
+
+    Project project = ProjectManager.getInstance().getDefaultProject(); // TODO
+
+    PsiFile copy =
+      PsiFileFactory.getInstance(project).createFileFromText(inputData.getFileName(), filetype, inputData.getContentAsText(), 1, false, false);
+
+    return ((IStubFileElementType)type).getBuilder().buildStubTree(copy);
   }
 
   public PersistentEnumerator.DataDescriptor<Integer> getKeyDescriptor() {

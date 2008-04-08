@@ -13,6 +13,7 @@ import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
 import com.intellij.psi.impl.java.stubs.impl.*;
+import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.cls.ClsFormatException;
 import org.jetbrains.annotations.NonNls;
@@ -30,11 +31,20 @@ public class ClsStubBuilder {
   private ClsStubBuilder() {
   }
 
-  public static PsiClassStub build(byte[] bytes) {
-    ClassReader reader = new ClassReader(bytes);
-    final MyClassVisitor classVisitor = new MyClassVisitor(null);
-    reader.accept(classVisitor, ClassReader.SKIP_CODE);
-    return classVisitor.getResult();
+  @Nullable
+  public static PsiFileStub build(byte[] bytes) throws ClsFormatException {
+    final PsiJavaFileStubImpl file = new PsiJavaFileStubImpl("dont.know.yet");
+    try {
+      ClassReader reader = new ClassReader(bytes);
+
+      final MyClassVisitor classVisitor = new MyClassVisitor(file);
+      reader.accept(classVisitor, ClassReader.SKIP_CODE);
+      if (classVisitor.getResult() == null) return null;
+    }
+    catch (Exception e) {
+      throw new ClsFormatException();
+    }
+    return file;
   }
 
   private static class MyClassVisitor implements ClassVisitor {
@@ -60,59 +70,92 @@ public class ClsStubBuilder {
                       final String signature,
                       final String superName,
                       final String[] interfaces) {
-      try {
-        final String fqn = Type.getObjectType(name).getClassName();
-        final String shortName = PsiNameHelper.getShortClassName(fqn);
+      String fqn = Type.getObjectType(name).getClassName();
+      if (isAnonymousOrChildOf(name)) return;
+      fqn = fqn.replace('$', '.');
 
-        boolean isDeprecated = (access & Opcodes.ACC_DEPRECATED) != 0;
-        boolean isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
-        boolean isEnum = (access & Opcodes.ACC_ENUM) != 0;
-        boolean isAnnotationType = (access & Opcodes.ACC_ANNOTATION) != 0;
+      final String shortName = PsiNameHelper.getShortClassName(fqn);
 
-        final byte flags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false);
+      boolean isDeprecated = (access & Opcodes.ACC_DEPRECATED) != 0;
+      boolean isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
+      boolean isEnum = (access & Opcodes.ACC_ENUM) != 0;
+      boolean isAnnotationType = (access & Opcodes.ACC_ANNOTATION) != 0;
 
-        myResult = new PsiClassStubImpl(myParent, fqn, shortName, null, flags);
-        ((PsiClassStubImpl)myResult).setLanguageLevel(convertFromVersion(version));
-        myModlist = new PsiModifierListStubImpl(myResult, packModlistFlags(access));
+      final byte flags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false);
 
-        CharacterIterator signatureIterator = signature != null ? new StringCharacterIterator(signature) : null;
-        if (signatureIterator != null) {
+      myResult = new PsiClassStubImpl(myParent, fqn, shortName, null, flags);
+      ((PsiClassStubImpl)myResult).setLanguageLevel(convertFromVersion(version));
+      myModlist = new PsiModifierListStubImpl(myResult, packModlistFlags(access));
+
+      CharacterIterator signatureIterator = signature != null ? new StringCharacterIterator(signature) : null;
+      if (signatureIterator != null) {
+        try {
           SignatureParsing.parseTypeParametersDeclaration(signatureIterator, myResult);
         }
-
-        String convertedSuper;
-        List<String> convertedInterfaces = new ArrayList<String>();
-        if (signature == null) {
-          convertedSuper = Type.getObjectType(superName).getClassName();
-          for (String anInterface : interfaces) {
-            convertedInterfaces.add(Type.getObjectType(anInterface).getClassName());
-          }
-        }
-        else {
-          convertedSuper = SignatureParsing.parseToplevelClassRefSignature(signatureIterator);
-          while (signatureIterator.current() != CharacterIterator.DONE) {
-            convertedInterfaces.add(SignatureParsing.parseToplevelClassRefSignature(signatureIterator));
-          }
-        }
-
-        String[] interfacesArray = convertedInterfaces.toArray(new String[convertedInterfaces.size()]);
-        if (isInterface) {
-          new PsiClassReferenceListStubImpl(myResult, interfacesArray, PsiReferenceList.Role.EXTENDS_LIST);
-          new PsiClassReferenceListStubImpl(myResult, EMPTY_STRINGS, PsiReferenceList.Role.IMPLEMENTS_LIST);
-        }
-        else {
-          if (!"java.lang.Object".equals(convertedSuper)) {
-            new PsiClassReferenceListStubImpl(myResult, new String[] {convertedSuper}, PsiReferenceList.Role.EXTENDS_LIST);
-          }
-          else {
-            new PsiClassReferenceListStubImpl(myResult, EMPTY_STRINGS, PsiReferenceList.Role.EXTENDS_LIST);
-          }
-          new PsiClassReferenceListStubImpl(myResult, interfacesArray, PsiReferenceList.Role.IMPLEMENTS_LIST);
+        catch (ClsFormatException e) {
+          signatureIterator = null;
         }
       }
-      catch (ClsFormatException e) {
-        throw new RuntimeException(e);
+
+      String convertedSuper;
+      List<String> convertedInterfaces = new ArrayList<String>();
+      if (signatureIterator == null) {
+        convertedSuper = parseClassDescription(superName, interfaces, convertedInterfaces);
       }
+      else {
+        try {
+          convertedSuper = parseClassSignature(signatureIterator, convertedInterfaces);
+        }
+        catch (ClsFormatException e) {
+          convertedSuper = parseClassDescription(superName, interfaces, convertedInterfaces);
+        }
+      }
+
+      String[] interfacesArray = convertedInterfaces.toArray(new String[convertedInterfaces.size()]);
+      if (isInterface) {
+        new PsiClassReferenceListStubImpl(myResult, interfacesArray, PsiReferenceList.Role.EXTENDS_LIST);
+        new PsiClassReferenceListStubImpl(myResult, EMPTY_STRINGS, PsiReferenceList.Role.IMPLEMENTS_LIST);
+      }
+      else {
+        if (convertedSuper != null && !"java.lang.Object".equals(convertedSuper)) {
+          new PsiClassReferenceListStubImpl(myResult, new String[] {convertedSuper}, PsiReferenceList.Role.EXTENDS_LIST);
+        }
+        else {
+          new PsiClassReferenceListStubImpl(myResult, EMPTY_STRINGS, PsiReferenceList.Role.EXTENDS_LIST);
+        }
+        new PsiClassReferenceListStubImpl(myResult, interfacesArray, PsiReferenceList.Role.IMPLEMENTS_LIST);
+      }
+    }
+
+    private static boolean isAnonymousOrChildOf(final String name) {
+      int len = name.length();
+      int idx = name.indexOf('$');
+      while (idx > 0) {
+        if (idx >= len || Character.isDigit(name.charAt(idx + 1))) return true;
+        idx = name.indexOf('$', idx + 1);
+      }
+      return false;
+    }
+
+    @Nullable
+    private static String parseClassDescription(final String superName, final String[] interfaces, final List<String> convertedInterfaces) {
+      final String convertedSuper;
+      convertedSuper = superName != null ? Type.getObjectType(superName).getClassName() : null;
+      for (String anInterface : interfaces) {
+        convertedInterfaces.add(Type.getObjectType(anInterface).getClassName());
+      }
+      return convertedSuper;
+    }
+
+    @Nullable
+    private static String parseClassSignature(final CharacterIterator signatureIterator, final List<String> convertedInterfaces)
+        throws ClsFormatException {
+      final String convertedSuper;
+      convertedSuper = SignatureParsing.parseToplevelClassRefSignature(signatureIterator);
+      while (signatureIterator.current() != CharacterIterator.DONE) {
+        convertedInterfaces.add(SignatureParsing.parseToplevelClassRefSignature(signatureIterator));
+      }
+      return convertedSuper;
     }
 
     private static LanguageLevel convertFromVersion(final int version) {
@@ -194,7 +237,7 @@ public class ClsStubBuilder {
     }
 
     public void visitInnerClass(final String name, final String outerName, final String innerName, final int access) {
-      if (innerName != null && Type.getObjectType(outerName).getClassName().equals(myResult.getQualifiedName())) {
+      if (innerName != null && outerName != null && Type.getObjectType(outerName).getClassName().equals(myResult.getQualifiedName())) {
         final String fqn = Type.getObjectType(name.replace('$', '.')).getClassName();
 
         boolean isDeprecated = (access & Opcodes.ACC_DEPRECATED) != 0;
@@ -210,32 +253,36 @@ public class ClsStubBuilder {
 
     public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
       final byte flags = PsiFieldStubImpl.packFlags((access & Opcodes.ACC_ENUM) != 0, (access & Opcodes.ACC_DEPRECATED) != 0);
-      PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, type(desc, signature, false), constToString(value), flags);
+      PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, fieldType(desc, signature), constToString(value), flags);
       final PsiModifierListStub modlist = new PsiModifierListStubImpl(stub, packModlistFlags(access));
       return new AnnotationCollectingVisitor(stub, modlist);
     }
 
-    private static TypeInfo type(String desc, String signature, final boolean isVararg) {
+    private static TypeInfo fieldType(String desc, String signature) {
       if (signature != null) {
         try {
           return TypeInfo.fromString(SignatureParsing.parseTypeString(new StringCharacterIterator(signature, 0)));
         }
         catch (ClsFormatException e) {
-          throw new RuntimeException(e);
+          return fieldTypeViaDescription(desc);
         }
       }
       else {
-        Type type = Type.getType(desc);
-        final int dim = type.getSort() == Type.ARRAY ? type.getDimensions() : 0;
-        if (dim > 0) {
-          type = type.getElementType();
-        }
-        final TypeInfo info = new TypeInfo();
-        info.arrayCount = (byte)dim;
-        info.text = type.getClassName();
-        info.isEllipsis = isVararg;
-        return info;
+        return fieldTypeViaDescription(desc);
       }
+    }
+
+    private static TypeInfo fieldTypeViaDescription(final String desc) {
+      Type type = Type.getType(desc);
+      final int dim = type.getSort() == Type.ARRAY ? type.getDimensions() : 0;
+      if (dim > 0) {
+        type = type.getElementType();
+      }
+      final TypeInfo info = new TypeInfo();
+      info.arrayCount = (byte)dim;
+      info.text = type.getClassName();
+      info.isEllipsis = false;
+      return info;
     }
 
 
@@ -245,79 +292,98 @@ public class ClsStubBuilder {
                                      final String desc,
                                      final String signature,
                                      final String[] exceptions) {
-      try {
-        if ((access & Opcodes.ACC_SYNTHETIC) != 0) return null;
-        if ((access & Opcodes.ACC_BRIDGE) != 0) return null;
-        if (SYNTHETIC_CLINIT_METHOD.equals(name)) return null;
+      if ((access & Opcodes.ACC_SYNTHETIC) != 0) return null;
+      if ((access & Opcodes.ACC_BRIDGE) != 0) return null;
+      if (SYNTHETIC_CLINIT_METHOD.equals(name)) return null;
 
-        boolean isDeprecated = (access & Opcodes.ACC_DEPRECATED) != 0;
-        boolean isConstructor = SYNTHETIC_INIT_METHOD.equals(name);
-        boolean isVarargs = (access & Opcodes.ACC_VARARGS) != 0;
-        boolean isAnnotationMethod = myResult.isAnnotationType();
+      boolean isDeprecated = (access & Opcodes.ACC_DEPRECATED) != 0;
+      boolean isConstructor = SYNTHETIC_INIT_METHOD.equals(name);
+      boolean isVarargs = (access & Opcodes.ACC_VARARGS) != 0;
+      boolean isAnnotationMethod = myResult.isAnnotationType();
 
-        final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated);
+      final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated);
 
-        String canonicalMethodName = isConstructor ? myResult.getName() : name;
-        PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, canonicalMethodName, null, flags, null);
-        PsiModifierListStub modlist = new PsiModifierListStubImpl(stub, packModlistFlags(access));
+      String canonicalMethodName = isConstructor ? myResult.getName() : name;
+      PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, canonicalMethodName, null, flags, null);
+      PsiModifierListStub modlist = new PsiModifierListStubImpl(stub, packModlistFlags(access));
 
-        String returnType;
-        List<String> args = new ArrayList<String>();
-        if (signature == null) {
-          returnType = Type.getReturnType(desc).getClassName();
-          final Type[] argTypes = Type.getArgumentTypes(desc);
-          for (Type argType : argTypes) {
-            args.add(argType.getClassName());
-          }
-          new PsiTypeParameterListStubImpl(stub);
-        }
-        else {
-          StringCharacterIterator iterator = new StringCharacterIterator(signature);
-          SignatureParsing.parseTypeParametersDeclaration(iterator, stub);
-
-          assert iterator.current() == '(';
-          iterator.next();
-          while (iterator.current() != ')' && iterator.current() != CharacterIterator.DONE) {
-            args.add(SignatureParsing.parseTypeString(iterator));
-          }
-          assert iterator.current() == ')';
-          iterator.next();
-
-          returnType = SignatureParsing.parseTypeString(iterator);
-        }
-        stub.setReturnType(TypeInfo.fromString(returnType));
-
-        final PsiParameterListStubImpl parameterList = new PsiParameterListStubImpl(stub);
-        final int paramCount = args.size();
-        for (int i = 0; i < paramCount; i++) {
-          String arg = args.get(i);
-          boolean isEllipsisParam = isVarargs && i == (paramCount - 1);
-          final TypeInfo typeInfo = TypeInfo.fromString(arg);
-          if (isEllipsisParam) {
-            typeInfo.isEllipsis = true;
-            typeInfo.arrayCount--;
-          }
-
-          PsiParameterStubImpl parameterStub = new PsiParameterStubImpl(parameterList, "p" + (i + 1), typeInfo, isEllipsisParam);
-          new PsiModifierListStubImpl(parameterStub, 0);
-        }
-
-        if (exceptions != null) {
-          String[] converted = new String[exceptions.length];
-          for (int i = 0; i < converted.length; i++) {
-            converted[i] = Type.getObjectType(exceptions[i]).getClassName();
-          }
-          new PsiClassReferenceListStubImpl(stub, converted, PsiReferenceList.Role.THROWS_LIST);
-        }
-        else {
-          new PsiClassReferenceListStubImpl(stub, EMPTY_STRINGS, PsiReferenceList.Role.THROWS_LIST);          
-        }
-
-        return new AnnotationCollectingVisitor(stub, modlist);
+      String returnType;
+      List<String> args = new ArrayList<String>();
+      if (signature == null) {
+        returnType = parseMethodViaDescription(desc, stub, args);
       }
-      catch (ClsFormatException e) {
-        throw new RuntimeException(e);
+      else {
+        try {
+          returnType = parseMethodViaGenericSignature(signature, stub, args);
+        }
+        catch (ClsFormatException e) {
+          returnType = parseMethodViaDescription(desc, stub, args);
+        }
       }
+      stub.setReturnType(TypeInfo.fromString(returnType));
+
+      final PsiParameterListStubImpl parameterList = new PsiParameterListStubImpl(stub);
+      final int paramCount = args.size();
+      for (int i = 0; i < paramCount; i++) {
+        String arg = args.get(i);
+        boolean isEllipsisParam = isVarargs && i == (paramCount - 1);
+        final TypeInfo typeInfo = TypeInfo.fromString(arg);
+        if (isEllipsisParam) {
+          typeInfo.isEllipsis = true;
+          typeInfo.arrayCount--;
+        }
+
+        PsiParameterStubImpl parameterStub = new PsiParameterStubImpl(parameterList, "p" + (i + 1), typeInfo, isEllipsisParam);
+        new PsiModifierListStubImpl(parameterStub, 0);
+      }
+
+      if (exceptions != null) {
+        String[] converted = new String[exceptions.length];
+        for (int i = 0; i < converted.length; i++) {
+          converted[i] = Type.getObjectType(exceptions[i]).getClassName();
+        }
+        new PsiClassReferenceListStubImpl(stub, converted, PsiReferenceList.Role.THROWS_LIST);
+      }
+      else {
+        new PsiClassReferenceListStubImpl(stub, EMPTY_STRINGS, PsiReferenceList.Role.THROWS_LIST);
+      }
+
+      return new AnnotationCollectingVisitor(stub, modlist);
+    }
+
+    private static String parseMethodViaDescription(final String desc, final PsiMethodStubImpl stub, final List<String> args) {
+      final String returnType;
+      returnType = Type.getReturnType(desc).getClassName();
+      final Type[] argTypes = Type.getArgumentTypes(desc);
+      for (Type argType : argTypes) {
+        args.add(argType.getClassName());
+      }
+      new PsiTypeParameterListStubImpl(stub);
+      return returnType;
+    }
+
+    private static String parseMethodViaGenericSignature(final String signature, final PsiMethodStubImpl stub, final List<String> args)
+        throws ClsFormatException {
+      final String returnType;
+      StringCharacterIterator iterator = new StringCharacterIterator(signature);
+      SignatureParsing.parseTypeParametersDeclaration(iterator, stub);
+
+      if (iterator.current() != '(') {
+        throw new ClsFormatException();
+      }
+      iterator.next();
+
+      while (iterator.current() != ')' && iterator.current() != CharacterIterator.DONE) {
+        args.add(SignatureParsing.parseTypeString(iterator));
+      }
+
+      if (iterator.current() != ')') {
+        throw new ClsFormatException();
+      }
+      iterator.next();
+
+      returnType = SignatureParsing.parseTypeString(iterator);
+      return returnType;
     }
 
     public void visitEnd() {
@@ -328,7 +394,7 @@ public class ClsStubBuilder {
     private final StringBuilder myBuilder = new StringBuilder();
     private final AnnotationResultCallback myCallback;
     private boolean hasParams = false;
-    private String myDesc;
+    private final String myDesc;
 
     public AnnotationTextCollector(@Nullable String desc, AnnotationResultCallback callback) {
       myCallback = callback;

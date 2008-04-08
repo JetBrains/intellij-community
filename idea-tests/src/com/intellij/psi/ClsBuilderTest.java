@@ -7,9 +7,10 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.compiled.ClsStubBuilder;
-import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
+import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.util.cls.ClsFormatException;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -30,11 +31,11 @@ public class ClsBuilderTest extends LightIdeaTestCase {
     doTest("org/jetbrains/annotations/Nullable.class", "Nullable.txt");
   }
 
-  private void doTest(final String classname, final String goldFile) throws IOException {
+  private void doTest(final String classname, final String goldFile) throws IOException, ClsFormatException {
     final InputStream stream = getClass().getClassLoader().getResourceAsStream(classname);
 
     final byte[] bytes = FileUtil.adaptiveLoadBytes(stream);
-    final PsiClassStub stub = ClsStubBuilder.build(bytes);
+    final PsiFileStub stub = ClsStubBuilder.build(bytes);
     final String butWas = ((PsiClassStubImpl)stub).printTree();
     String expected = FileUtil.loadTextAndClose(new FileReader(PathManagerEx.getTestDataPath() + "/psi/cls/stubBuilder/" + goldFile));
     expected = StringUtil.convertLineSeparators(expected);

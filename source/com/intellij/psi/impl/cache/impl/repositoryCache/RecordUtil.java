@@ -360,25 +360,6 @@ public class RecordUtil {
     return (ourModifierNameToFlagMap.get(psiModifier) & packed) != 0;
   }
 
-  public static void readType(DataInput record, TypeInfo view) throws IOException {
-    int flags = record.readByte();
-
-    if (flags == 0x02) {
-      view.arrayCount = 0;
-      view.isEllipsis = false;
-      view.text = null;
-      return;
-    }
-
-    view.arrayCount = record.readByte();
-    view.isEllipsis = record.readBoolean();
-    if (flags == 0x00) {
-      view.text = record.readUTF();
-    }
-    else {
-      view.text = ourIndexFrequentType.get(flags >> 2);
-    }
-  }
 
   public static void skipType(DataInput record) throws IOException {
     byte flags = record.readByte();

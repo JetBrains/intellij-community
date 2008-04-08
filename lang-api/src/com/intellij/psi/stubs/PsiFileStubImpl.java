@@ -3,9 +3,12 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.lang.Language;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IStubFileElementType;
 
 public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements PsiFileStub<T> {
+  public static final IStubFileElementType TYPE = new IStubFileElementType(Language.ANY);
   private T myFile;
 
   public PsiFileStubImpl(final T file) {
@@ -22,6 +25,10 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
   }
 
   public IStubElementType getStubType() {
-    throw new UnsupportedOperationException("getStubType is not implemented");
+    return null;
+  }
+
+  public IStubFileElementType getType() {
+    return TYPE;
   }
 }

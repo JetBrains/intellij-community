@@ -284,4 +284,7 @@
 
   <extensionPoint name="createFromTemplateActionReplacer"
                   interface="com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer"/>
+
+  <extensionPoint name="filetype.stubBuilder"
+                  beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
 </extensionPoints>

@@ -23,7 +23,6 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
 
   private final PersistentStringEnumerator myNameStorage;
 
-  private final Map<Class, StubSerializer> myStubClassToSerializer = new HashMap<Class, StubSerializer>();
   private final Map<Integer, StubSerializer> myIdToSerializer = new HashMap<Integer, StubSerializer>();
   private final Map<StubSerializer, Integer> mySerializerToId = new HashMap<StubSerializer, Integer>();
 
@@ -35,43 +34,25 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
       throw new RuntimeException(e);
     }
 
-    registerSerializer(PsiFileStub.class, new StubSerializer<PsiFileStub>() {
-      public String getExternalId() {
-        return "PsiFile.basic";
-      }
-
-      public void serialize(final PsiFileStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)
-          throws IOException {
-      }
-
-      public PsiFileStub deserialize(final DataInputStream dataStream,
-                                     final StubElement parentStub, final PersistentStringEnumerator nameStorage) throws IOException {
-        return new PsiFileStubImpl(null);
-      }
-
-      public void indexStub(final PsiFileStub stub, final IndexSink sink) {
-      }
-    });
+    registerSerializer(PsiFileStubImpl.TYPE);
   }
 
-  public <T extends StubElement> void registerSerializer(Class<T> stubClass, StubSerializer<T> serializer) {
+  public <T extends StubElement> void registerSerializer(StubSerializer<T> serializer) {
     try {
-      myStubClassToSerializer.put(stubClass, serializer);
-      final int id = myNameStorage.enumerate(serializer.getExternalId());
-      myIdToSerializer.put(id, serializer);
-      mySerializerToId.put(serializer, id);
+      final int id = persistentId(serializer);
+      final StubSerializer old = myIdToSerializer.put(id, serializer);
+      assert old == null : "ID: " + serializer.getExternalId() + " is not unique";
+
+      final Integer oldId = mySerializerToId.put(serializer, id);
+      assert oldId == null : "Serializer " + serializer + " is already registered";
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public StubSerializer getSerializer(Class<? extends StubElement> stubClass) {
-    for (Map.Entry<Class, StubSerializer> entry : myStubClassToSerializer.entrySet()) {
-      if (entry.getKey().isAssignableFrom(stubClass)) return entry.getValue();
-    }
-
-    throw new IllegalStateException("Can't find stub serializer for " + stubClass.getName());
+  private <T extends StubElement> int persistentId(final StubSerializer<T> serializer) throws IOException {
+    return myNameStorage.enumerate(serializer.getExternalId());
   }
 
   public void serialize(StubElement rootStub, DataOutputStream stream) {
@@ -93,8 +74,12 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
   }
 
   public StubSerializer getSerializer(final StubElement rootStub) {
-    final Class<? extends StubElement> stubClass = rootStub.getClass();
-    return getSerializer(stubClass);
+    if (rootStub instanceof PsiFileStub) {
+      final PsiFileStub fileStub = (PsiFileStub)rootStub;
+      return fileStub.getType();
+    }
+
+    return rootStub.getStubType();
   }
 
   public StubElement deserialize(DataInputStream stream) {
@@ -107,7 +92,8 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
   }
 
   private StubElement deserialize(DataInputStream stream, StubElement parentStub) throws IOException {
-    final StubSerializer serializer = getClassById(DataInputOutputUtil.readINT(stream));
+    final int id = DataInputOutputUtil.readINT(stream);
+    final StubSerializer serializer = getClassById(id);
     StubElement stub = serializer.deserialize(stream, parentStub, myNameStorage);
     int childCount = DataInputOutputUtil.readINT(stream);
     for (int i = 0; i < childCount; i++) {

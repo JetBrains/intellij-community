@@ -62,7 +62,7 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
     String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
 
     final TypeInfo type = new TypeInfo();
-    RecordUtil.readType(dataStream, type);
+    RecordUtil.readTYPE(dataStream, type, nameStorage);
 
     String initializerText = DataInputOutputUtil.readNAME(dataStream, nameStorage);
     byte flags = dataStream.readByte();

@@ -62,14 +62,14 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
                                   final StubElement parentStub, final PersistentStringEnumerator nameStorage) throws IOException {
     byte flags = dataStream.readByte();
 
-    if (PsiClassStubImpl.isAnonymous(flags)) {
-      String baseref = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-      return new PsiClassStubImpl(parentStub, null, null, baseref, flags);
-    }
-    else {
+    if (!PsiClassStubImpl.isAnonymous(flags)) {
       String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
       String qname = DataInputOutputUtil.readNAME(dataStream, nameStorage);
       return new PsiClassStubImpl(parentStub, qname, name, null, flags);
+    }
+    else {
+      String baseref = DataInputOutputUtil.readNAME(dataStream, nameStorage);
+      return new PsiClassStubImpl(parentStub, null, null, baseref, flags);
     }
   }
 

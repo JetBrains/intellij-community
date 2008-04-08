@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.text.CharacterIterator;
 import java.util.ArrayList;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class SignatureParsing {
   private SignatureParsing() {
   }
@@ -153,8 +154,10 @@ public class SignatureParsing {
       arrayCount++;
       signature.next();
     }
-    if (signature.current() == 'T' || signature.current() == 'L') {
-      String ref = signature.current() == 'T' ? parseTypeVariableRefSignature(signature) : parseParameterizedClassRefSignature(signature);
+
+    final String type = parseTypeWithoutVariance(signature);
+    if (type != null) {
+      String ref = type;
       while (arrayCount > 0) {
         ref += "[]";
         arrayCount--;
@@ -213,7 +216,6 @@ public class SignatureParsing {
   }
 
   public static String parseTypeString(CharacterIterator signature) throws ClsFormatException {
-    @NonNls String text;
     int arrayDimensions = 0;
     while (signature.current() == '[') {
       arrayDimensions++;
@@ -221,6 +223,19 @@ public class SignatureParsing {
     }
 
     char variance = parseVariance(signature);
+    @NonNls String text = parseTypeWithoutVariance(signature);
+    if (text == null) throw new ClsFormatException();
+
+    for (int i = 0; i < arrayDimensions; i++) text += "[]";
+    if (variance != '\0') {
+      text = variance + text;
+    }
+    return text;
+  }
+
+  @Nullable
+  private static String parseTypeWithoutVariance(final CharacterIterator signature) throws ClsFormatException {
+    final String text;
     switch (signature.current()) {
 
       case 'L':
@@ -277,12 +292,7 @@ public class SignatureParsing {
         break;
 
       default:
-        throw new ClsFormatException();
-    }
-
-    for (int i = 0; i < arrayDimensions; i++) text += "[]";
-    if (variance != '\0') {
-      text = variance + text;
+        return null;
     }
     return text;
   }

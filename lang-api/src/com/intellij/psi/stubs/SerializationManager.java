@@ -13,7 +13,7 @@ public abstract class SerializationManager {
     return ApplicationManager.getApplication().getComponent(SerializationManager.class);
   }
 
-  public abstract <T extends StubElement> void registerSerializer(Class<T> stubClass, StubSerializer<T> serializer);
+  public abstract <T extends StubElement> void registerSerializer(StubSerializer<T> serializer);
 
   public abstract void serialize(StubElement rootStub, DataOutputStream stream);
 
