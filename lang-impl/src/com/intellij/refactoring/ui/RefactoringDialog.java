@@ -110,7 +110,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
     return true;
   }
 
-  protected final Action[] createActions() {
+  protected Action[] createActions() {
     if (hasHelpAction ())
       return new Action[]{getRefactorAction(), getPreviewAction(), getCancelAction(), getHelpAction()};
     else
