@@ -12,6 +12,16 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public interface TemplateLanguageFileViewProvider extends FileViewProvider {
+
+  /**
+   * @return instanceof {@link com.intellij.psi.templateLanguages.TemplateLanguage}
+   */
+  @NotNull
+  Language getBaseLanguage();
+
+  /**
+   * @return not instanceof {@link com.intellij.lang.DependentLanguage}
+   */
   @NotNull
   Language getTemplateDataLanguage();
 }

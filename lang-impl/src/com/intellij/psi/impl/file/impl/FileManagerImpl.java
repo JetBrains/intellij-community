@@ -728,10 +728,10 @@ public class FileManagerImpl implements FileManager {
       final String propertyName = event.getPropertyName();
       final VirtualFile vFile = event.getFile();
 
-      final FileViewProvider fileViewProvider = findViewProvider(vFile);
+      final FileViewProvider oldFileViewProvider = findViewProvider(vFile);
       final PsiFile oldPsiFile;
-      if (fileViewProvider instanceof SingleRootFileViewProvider) {
-        oldPsiFile = ((SingleRootFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage());
+      if (oldFileViewProvider instanceof SingleRootFileViewProvider) {
+        oldPsiFile = ((SingleRootFileViewProvider)oldFileViewProvider).getCachedPsi(oldFileViewProvider.getBaseLanguage());
       }
       else oldPsiFile = null;
 
@@ -779,7 +779,7 @@ public class FileManagerImpl implements FileManager {
                   }
                 }
               }
-              else if (fileViewProvider != null){
+              else if (oldFileViewProvider != null){
                 final FileViewProvider fileViewProvider = createFileViewProvider(vFile, true);
                 final PsiFile newPsiFile = fileViewProvider.getPsi(fileViewProvider.getBaseLanguage());
                 if(oldPsiFile != null) {
@@ -791,7 +791,9 @@ public class FileManagerImpl implements FileManager {
                   }
                   else if (!newPsiFile.getClass().equals(oldPsiFile.getClass()) ||
                            newPsiFile.getFileType() != myFileTypeManager.getFileTypeByFileName((String)event.getOldValue()) ||
-                           languageDialectChanged(newPsiFile, (String)event.getOldValue())
+                           languageDialectChanged(newPsiFile, (String)event.getOldValue()) ||
+                           !oldFileViewProvider.getPrimaryLanguages().equals(fileViewProvider.getPrimaryLanguages()) ||
+                           !oldFileViewProvider.getRelevantLanguages().equals(fileViewProvider.getRelevantLanguages())
                           ) {
                     myVFileToViewProviderMap.put(vFile, fileViewProvider);
 

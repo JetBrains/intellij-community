@@ -5,23 +5,28 @@
 package com.intellij.lang;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
+import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
 /**
  * @author peter
  */
-public abstract class LanguagePerFileMappings<T> {
+public abstract class LanguagePerFileMappings<T> implements PersistentStateComponent<Element> {
   private Map<VirtualFile, T> myMappings = new HashMap<VirtualFile, T>();
   private final Project myProject;
 
@@ -45,16 +50,19 @@ public abstract class LanguagePerFileMappings<T> {
 
   public void setMappings(final Map<VirtualFile, T> mappings) {
     myMappings = new HashMap<VirtualFile, T>(mappings);
+    final Set<VFilePropertyChangeEvent> list = new THashSet<VFilePropertyChangeEvent>();
     for (VirtualFile file : mappings.keySet()) {
-      saveOrReload(file);
+      saveOrReload(file, list);
     }
     for (VirtualFile open : FileEditorManager.getInstance(myProject).getOpenFiles()) {
       if (!mappings.containsKey(open)) {
-        saveOrReload(open);
+        saveOrReload(open, list);
       }
     }
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES).after(new ArrayList<VFileEvent>(list));
   }
 
+  @TestOnly
   public void setMapping(final VirtualFile file, T dialect) {
     if (dialect == null) {
       myMappings.remove(file);
@@ -62,10 +70,12 @@ public abstract class LanguagePerFileMappings<T> {
     else {
       myMappings.put(file, dialect);
     }
-    saveOrReload(file);
+    final SmartList<VFilePropertyChangeEvent> list = new SmartList<VFilePropertyChangeEvent>();
+    saveOrReload(file, list);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES).after(list);
   }
 
-  private static void saveOrReload(final VirtualFile virtualFile) {
+  private static void saveOrReload(final VirtualFile virtualFile, Collection<VFilePropertyChangeEvent> events) {
     if (virtualFile == null || virtualFile.isDirectory()) {
       return;
     }
@@ -76,9 +86,10 @@ public abstract class LanguagePerFileMappings<T> {
         documentManager.saveDocument(document);
       }
     }
-    ApplicationManager.getApplication().getMessageBus().asyncPublisher(VirtualFileManager.VFS_CHANGES).
-        after(Collections.singletonList(new VFilePropertyChangeEvent(null, virtualFile, VirtualFile.PROP_NAME, virtualFile.getName(),
-                                                                     virtualFile.getName(), false)));
+    events.add(new VFilePropertyChangeEvent(null, virtualFile, VirtualFile.PROP_NAME, virtualFile.getName(),
+                                                                     virtualFile.getName(), false));
+
+
   }
 
   protected abstract String serialize(T t);
@@ -102,7 +113,7 @@ public abstract class LanguagePerFileMappings<T> {
     return element;
   }
 
-  public abstract T[] getAvailableValues();
+  public abstract List<T> getAvailableValues();
 
   public void loadState(final Element state) {
     final THashMap<String, T> dialectMap = new THashMap<String, T>();

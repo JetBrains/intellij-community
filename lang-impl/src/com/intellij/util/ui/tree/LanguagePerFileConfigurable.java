@@ -22,6 +22,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -107,7 +110,7 @@ public abstract class LanguagePerFileConfigurable<T> implements FileOptionsProvi
           final Object o = table.getModel().getValueAt(row, 0);
           myVirtualFile = o instanceof Project ? null : (VirtualFile)o;
 
-          final ChooseSomethingDialectAction changeAction = new ChooseSomethingDialectAction(myVirtualFile) {
+          final ChooseSomethingAction changeAction = new ChooseSomethingAction(myVirtualFile) {
             public void update(final AnActionEvent e) {
               boolean enabled = isValueEditableForFile(myVirtualFile);
               if (myVirtualFile != null) {
@@ -138,8 +141,8 @@ public abstract class LanguagePerFileConfigurable<T> implements FileOptionsProvi
             }
           });
 
-          final T dialect = (T)getTableModel().getValueAt(new DefaultMutableTreeNode(myVirtualFile), 1);
-          templatePresentation.setText(dialect == null ? "" : visualize(dialect));
+          final T t = (T)getTableModel().getValueAt(new DefaultMutableTreeNode(myVirtualFile), 1);
+          templatePresentation.setText(t == null ? "" : visualize(t));
           comboComponent.revalidate();
 
           return editorComponent;
@@ -152,9 +155,9 @@ public abstract class LanguagePerFileConfigurable<T> implements FileOptionsProvi
                                              final boolean hasFocus,
                                              final int row,
                                              final int column) {
-          final T dialect = (T)value;
-          if (dialect != null) {
-            append(visualize(dialect), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          final T t = (T)value;
+          if (t != null) {
+            append(visualize(t), SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
           else {
             final Object userObject = table.getModel().getValueAt(row, 0);
@@ -184,10 +187,10 @@ public abstract class LanguagePerFileConfigurable<T> implements FileOptionsProvi
   }
 
 
-  private abstract class ChooseSomethingDialectAction extends ComboBoxAction {
+  private abstract class ChooseSomethingAction extends ComboBoxAction {
     private final VirtualFile myVirtualFile;
 
-    public ChooseSomethingDialectAction(final VirtualFile virtualFile) {
+    public ChooseSomethingAction(final VirtualFile virtualFile) {
       myVirtualFile = virtualFile;
     }
 
@@ -196,10 +199,10 @@ public abstract class LanguagePerFileConfigurable<T> implements FileOptionsProvi
       return createGroup(true);
     }
 
-    private ChangeSomethingAction createChooseAction(final VirtualFile virtualFile, final T dialect) {
-      return new ChangeSomethingAction(virtualFile, dialect){
-        protected void chosen(final VirtualFile file, final T dialect) {
-          ChooseSomethingDialectAction.this.chosen(file, dialect);
+    private ChangeSomethingAction createChooseAction(final VirtualFile virtualFile, final T t) {
+      return new ChangeSomethingAction(virtualFile, t){
+        protected void chosen(final VirtualFile file, final T t) {
+          ChooseSomethingAction.this.chosen(file, t);
         }
       };
     }
@@ -211,30 +214,34 @@ public abstract class LanguagePerFileConfigurable<T> implements FileOptionsProvi
       if (showClear) {
         group.add(createChooseAction(myVirtualFile, null));
       }
-      for (T dialect : myMappings.getAvailableValues()) {
-        group.add(createChooseAction(myVirtualFile, dialect));
+      final List<T> values = myMappings.getAvailableValues();
+      Collections.sort(values, new Comparator<T>() {
+        public int compare(final T o1, final T o2) {
+          return visualize(o1).compareTo(visualize(o2));
+        }
+      });
+      for (T t : values) {
+        group.add(createChooseAction(myVirtualFile, t));
       }
       return group;
     }
 
-    private class ChangeSomethingAction extends AnAction {
+    private abstract class ChangeSomethingAction extends AnAction {
       private final VirtualFile myFile;
       private final T myDialect;
 
-      ChangeSomethingAction(@Nullable final VirtualFile file, @Nullable final T dialect) {
+      ChangeSomethingAction(@Nullable final VirtualFile file, @Nullable final T t) {
         super("", "", null);
-        getTemplatePresentation().setText(dialect == null ? "Clear" : visualize(dialect));
+        getTemplatePresentation().setText(t == null ? "Clear" : visualize(t));
         myFile = file;
-        myDialect = dialect;
+        myDialect = t;
       }
 
       public void actionPerformed(final AnActionEvent e) {
         chosen(myFile, myDialect);
       }
 
-      protected void chosen(final VirtualFile file, final T dialect) {
-        myMappings.setMapping(file, dialect);
-      }
+      protected abstract void chosen(final VirtualFile file, final T t);
     }
 
   }

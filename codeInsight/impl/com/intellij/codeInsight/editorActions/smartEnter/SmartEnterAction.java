@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.text.CharArrayUtil;
 
@@ -50,7 +51,7 @@ public class SmartEnterAction extends EditorAction {
         return;
       }
 
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(doc);
+      PsiFile psiFile = PsiUtil.getPsiFileInEditor(editor, project);
 
       if (EnterAfterUnmatchedBraceHandler.isAfterUnmatchedLBrace(editor, caretOffset, psiFile.getFileType())) {
         EditorActionHandler enterHandler = EditorActionManager.getInstance().getActionHandler(

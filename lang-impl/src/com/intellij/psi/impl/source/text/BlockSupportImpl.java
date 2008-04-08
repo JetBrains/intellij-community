@@ -105,7 +105,7 @@ public class BlockSupportImpl extends BlockSupport {
     if (treeFileElement.getElementType() instanceof ITemplateDataElementType ||
         treeFileElement.getFirstChildNode() instanceof ChameleonElement
       ) { // Not able to perform incremental reparse for template data in JSP
-      makeFullParse(treeFileElement, newFileText, textLength, fileImpl, fileType);
+      makeFullParse(treeFileElement, newFileText, textLength, fileImpl);
       return;
     }
 
@@ -190,7 +190,7 @@ public class BlockSupportImpl extends BlockSupport {
 
       // file reparse
 
-      makeFullParse(parent, newFileText, textLength, fileImpl, fileType);
+      makeFullParse(parent, newFileText, textLength, fileImpl);
     }
   }
 
@@ -225,7 +225,7 @@ public class BlockSupportImpl extends BlockSupport {
     return true;
   }
 
-  private static void makeFullParse(ASTNode parent, CharSequence newFileText, int textLength, final PsiFileImpl fileImpl, FileType fileType) {
+  private static void makeFullParse(ASTNode parent, CharSequence newFileText, int textLength, final PsiFileImpl fileImpl) {
     if (parent instanceof CodeFragmentElement) {
       final FileElement holderElement = new DummyHolder(fileImpl.getManager(), null).getTreeElement();
       TreeUtil.addChildren(holderElement, fileImpl.createContentLeafElement(newFileText, 0, textLength, holderElement.getCharTable()));
@@ -233,8 +233,10 @@ public class BlockSupportImpl extends BlockSupport {
     }
     else {
       final PsiFileFactoryImpl fileFactory = (PsiFileFactoryImpl)PsiFileFactory.getInstance(fileImpl.getProject());
+      final FileViewProvider viewProvider = fileImpl.getViewProvider();
       final PsiFileImpl newFile = (PsiFileImpl) fileFactory.
-        createFileFromText(fileImpl.getName(), fileType, fileImpl.getViewProvider().getBaseLanguage(), fileImpl.getLanguage(), fileImpl.getLanguageDialect(), newFileText, fileImpl.getModificationStamp(), true, false);
+        createFileFromText(fileImpl.getName(), viewProvider.getVirtualFile().getFileType(), viewProvider.getBaseLanguage(), 
+                           fileImpl.getLanguage(), fileImpl.getLanguageDialect(), newFileText, fileImpl.getModificationStamp(), true, false);
       newFile.setOriginalFile(fileImpl);
 
       final FileElement newFileElement = (FileElement)newFile.getNode();

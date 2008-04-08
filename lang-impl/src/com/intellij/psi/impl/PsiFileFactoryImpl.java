@@ -107,28 +107,28 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
                                     boolean markAsCopy) {
     final LightVirtualFile virtualFile = new LightVirtualFile(name, fileType, text, modificationStamp);
 
-    if(fileType instanceof LanguageFileType){
-      final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-      final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
-      FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;
-      if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
-      if (parserDefinition != null){
-        final PsiFile psiFile = viewProvider.getPsi(targetLanguage);
-        if (psiFile != null) {
-          if (dialect != null) {
-            psiFile.putUserData(PsiManagerImpl.LANGUAGE_DIALECT, dialect);
-          }
-          if(markAsCopy) {
-            final TreeElement node = (TreeElement)psiFile.getNode();
-            assert node != null;
-            node.acceptTree(new GeneratedMarkerVisitor());
-          }
-          return psiFile;
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+    final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
+    FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;
+    if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
+
+    if (parserDefinition != null){
+      final PsiFile psiFile = viewProvider.getPsi(targetLanguage);
+      if (psiFile != null) {
+        if (dialect != null) {
+          psiFile.putUserData(PsiManagerImpl.LANGUAGE_DIALECT, dialect);
         }
+        if(markAsCopy) {
+          final TreeElement node = (TreeElement)psiFile.getNode();
+          assert node != null;
+          node.acceptTree(new GeneratedMarkerVisitor());
+        }
+        return psiFile;
       }
     }
+
     final SingleRootFileViewProvider singleRootFileViewProvider =
-      new SingleRootFileViewProvider(myManager, virtualFile, physical);
+        new SingleRootFileViewProvider(myManager, virtualFile, physical);
     final PsiPlainTextFileImpl plainTextFile = new PsiPlainTextFileImpl(singleRootFileViewProvider);
     if(markAsCopy) CodeEditUtil.setNodeGenerated(plainTextFile.getNode(), true);
     return plainTextFile;

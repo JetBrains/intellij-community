@@ -42,6 +42,10 @@ public class JavaLanguage extends Language {
     });
   }
 
+  public String getDisplayName() {
+    return "Java";
+  }
+
   public boolean isCaseSensitive() {
     return true;
   }

@@ -20,4 +20,8 @@ public class PlainTextLanguage extends Language {
   private PlainTextLanguage() {
     super("TEXT", "text/plain");
   }
+
+  public String getDisplayName() {
+    return "Plain text";
+  }
 }

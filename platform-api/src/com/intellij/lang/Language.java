@@ -117,14 +117,18 @@ public abstract class Language {
     myFileType = type;
   }
 
-  @Nullable
-  public LanguageDialect[] getAvailableLanguageDialects() {
-    return null;
+  @NotNull
+  public Collection<? extends LanguageDialect> getAvailableLanguageDialects() {
+    return Collections.emptyList();
   }
 
   @Nullable
   public Language getBaseLanguage() {
     return myBaseLanguage;
+  }
+
+  public String getDisplayName() {
+    return getID();
   }
 
   public final boolean is(Language another) {

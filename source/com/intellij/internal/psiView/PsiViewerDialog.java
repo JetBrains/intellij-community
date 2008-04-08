@@ -218,10 +218,7 @@ public class PsiViewerDialog extends DialogWrapper {
               result.add((LanguageDialect)dialect);
             }
           }
-          final LanguageDialect[] languageDialects = lang.getAvailableLanguageDialects();
-          if (languageDialects != null) {
-            result.addAll(Arrays.asList(languageDialects));
-          }
+          result.addAll(lang.getAvailableLanguageDialects());
           model.setAll(result);
         }
         break;

@@ -216,6 +216,11 @@
   <usageFilteringRuleProvider implementation="com.intellij.usages.impl.UsageFilteringRuleProviderImpl"/>
   <usageGroupingRuleProvider implementation="com.intellij.usages.impl.UsageGroupingRuleProviderImpl"/>
 
+  <projectService serviceInterface="com.intellij.psi.templateLanguages.TemplateDataLanguageMappings" serviceImplementation="com.intellij.psi.templateLanguages.TemplateDataLanguageMappings"/>
+  <projectConfigurable implementation="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable"/>
+
+  <errorQuickFixProvider implementation="com.intellij.psi.templateLanguages.TemplateLanguageErrorQuickFixProvider"/>
+
   <!-- execution -->
   <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>
 
