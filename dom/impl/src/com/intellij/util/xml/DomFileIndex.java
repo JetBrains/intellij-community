@@ -47,13 +47,13 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
           for (final DomFileDescription description : component.getFileDescriptions(tagName)) {
             final String[] strings = description.getAllPossibleRootTagNamespaces();
             if (strings.length == 0 || ContainerUtil.intersects(Arrays.asList(strings), namespaces)) {
-              result.put(description.getClass().getName(), null);
+              result.put(description.getRootElementClass().getName(), null);
             }
           }
           for (final DomFileDescription description : component.getAcceptingOtherRootTagNameDescriptions()) {
             final String[] strings = description.getAllPossibleRootTagNamespaces();
             if (strings.length == 0 || ContainerUtil.intersects(Arrays.asList(strings), namespaces)) {
-              result.put(description.getClass().getName(), null);
+              result.put(description.getRootElementClass().getName(), null);
             }
           }
           return result;
