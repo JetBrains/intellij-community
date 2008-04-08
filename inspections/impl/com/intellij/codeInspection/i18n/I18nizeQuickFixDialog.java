@@ -396,12 +396,19 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
 
   private void populatePropertiesFiles() {
     List<String> paths = suggestPropertiesFiles();
-    Collections.sort(paths);
+    final String lastUrl = suggestLastSelectedFileUrl();
+    final String lastPath = lastUrl != null ? FileUtil.toSystemDependentName(VfsUtil.urlToPath(lastUrl)) : null;
+    Collections.sort(paths, new Comparator<String>() {
+      public int compare(final String path1, final String path2) {
+        if (lastPath != null && lastPath.equals(path1)) return -1;
+        if (lastPath != null && lastPath.equals(path2)) return 1;
+        int r = LastSelectedPropertiesFileStore.getUseCount(path2) - LastSelectedPropertiesFileStore.getUseCount(path1);
+        return r != 0 ? r : path1.compareTo(path2);
+      }
+    });
     myPropertiesFile.setHistory(paths);
-    String lastUrl = suggestLastSelectedFileUrl();
-    if (lastUrl != null) {
-      String path = FileUtil.toSystemDependentName(VfsUtil.urlToPath(lastUrl));
-      myPropertiesFile.setSelectedItem(path);
+    if (lastPath != null) {
+      myPropertiesFile.setSelectedItem(lastPath);
     }
     if (myPropertiesFile.getSelectedIndex() == -1 && !paths.isEmpty()) {
       myPropertiesFile.setText(paths.get(0));

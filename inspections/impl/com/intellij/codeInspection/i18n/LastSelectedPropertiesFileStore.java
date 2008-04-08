@@ -10,10 +10,15 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.statistics.StatisticsInfo;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -32,6 +37,7 @@ import java.util.Map;
 public class LastSelectedPropertiesFileStore implements PersistentStateComponent<Element> {
   private final Map<String, String> lastSelectedUrls = new THashMap<String, String>();
   private String lastSelectedFileUrl;
+  @NonNls private static final String PROPERTIES_FILE_STATISTICS_KEY = "PROPERTIES_FILE";
 
   public static LastSelectedPropertiesFileStore getInstance() {
     return ServiceManager.getService(LastSelectedPropertiesFileStore.class);
@@ -58,6 +64,10 @@ public class LastSelectedPropertiesFileStore implements PersistentStateComponent
     return null;
   }
 
+  public static int getUseCount(@NotNull String path) {
+    return StatisticsManager.getInstance().getUseCount(new StatisticsInfo(PROPERTIES_FILE_STATISTICS_KEY, path));
+  }
+
   public void saveLastSelectedPropertiesFile(PsiFile context, PropertiesFile file) {
     VirtualFile virtualFile = context.getVirtualFile();
     assert virtualFile != null;
@@ -67,6 +77,7 @@ public class LastSelectedPropertiesFileStore implements PersistentStateComponent
     VirtualFile containingDir = virtualFile.getParent();
     lastSelectedUrls.put(containingDir.getUrl(), url);
     lastSelectedFileUrl = url;
+    StatisticsManager.getInstance().incUseCount(new StatisticsInfo(PROPERTIES_FILE_STATISTICS_KEY, FileUtil.toSystemDependentName(VfsUtil.urlToPath(url))));
   }
 
   public void readExternal(@NonNls Element element) {
