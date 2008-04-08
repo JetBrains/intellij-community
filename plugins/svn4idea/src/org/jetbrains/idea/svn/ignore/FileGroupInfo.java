@@ -25,7 +25,9 @@ public class FileGroupInfo implements FileIterationListener, IgnoreInfoGetter {
 
     if (sameExtensionCase) {
       final String extension = file.getExtension();
-      if (commonExtension == null) {
+      if (extension == null) {
+        sameExtensionCase = false;
+      } else if (commonExtension == null) {
         commonExtension = extension;
       } else {
         sameExtensionCase &= commonExtension.equals(extension);
