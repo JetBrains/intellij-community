@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Bas Leijdekkers
+ * Copyright 2006-2008 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,37 +40,42 @@ public class ReplaceForLoopWithWhileLoopIntention extends Intention {
             final PsiElement parent = forStatement.getParent();
             parent.addBefore(initialization, forStatement);
         }
-	    final PsiManager manager = element.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-	    final PsiWhileStatement whileStatement =
-			    (PsiWhileStatement)factory.createStatementFromText("while(true) {}", element);
-	    final PsiExpression forCondition = forStatement.getCondition();
-	    final PsiExpression whileCondition = whileStatement.getCondition();
-	    final PsiStatement body = forStatement.getBody();
-      if (forCondition != null) {
-        assert whileCondition != null;
-        whileCondition.replace(forCondition);
-      }
-      final PsiElement newBody;
-	    if (body instanceof PsiBlockStatement) {
-	        final PsiStatement whileBody = whileStatement.getBody();
-		    final PsiBlockStatement newWhileBody = (PsiBlockStatement)whileBody.replace(body);
-		    newBody = newWhileBody.getCodeBlock();
+        final JavaPsiFacade psiFacade =
+                JavaPsiFacade.getInstance(element.getProject());
+        final PsiElementFactory factory = psiFacade.getElementFactory();
+        final PsiWhileStatement whileStatement =
+                (PsiWhileStatement)factory.createStatementFromText(
+                        "while(true) {}", element);
+        final PsiExpression forCondition = forStatement.getCondition();
+        final PsiExpression whileCondition = whileStatement.getCondition();
+        final PsiStatement body = forStatement.getBody();
+        if (forCondition != null) {
+            assert whileCondition != null;
+            whileCondition.replace(forCondition);
+        }
+        final PsiBlockStatement blockStatement =
+                (PsiBlockStatement)whileStatement.getBody();
+        if (blockStatement == null) {
+            return;
+        }
+        final PsiElement newBody;
+        if (body instanceof PsiBlockStatement) {
+            final PsiBlockStatement newWhileBody =
+                    (PsiBlockStatement)blockStatement.replace(body);
+            newBody = newWhileBody.getCodeBlock();
         } else {
-	        final PsiBlockStatement blockStatement =
-			        (PsiBlockStatement)factory.createStatementFromText("{}", element);
-	        final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-		    if (body != null) {
-			    codeBlock.addAfter(body, codeBlock.getFirstChild());
-		    }
-		    newBody = codeBlock;
+            final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+            if (body != null && !(body instanceof PsiEmptyStatement)) {
+                codeBlock.addAfter(body, codeBlock.getFirstChild());
+            }
+            newBody = codeBlock;
         }
         final PsiStatement update = forStatement.getUpdate();
         if (update != null) {
-	        final PsiStatement updateStatement = factory.createStatementFromText(
-			        update.getText() + ';', element);
-	        newBody.addBefore(updateStatement, newBody.getLastChild());
+            final PsiStatement updateStatement = factory.createStatementFromText(
+                    update.getText() + ';', element);
+            newBody.addBefore(updateStatement, newBody.getLastChild());
         }
-	    forStatement.replace(whileStatement);
+        forStatement.replace(whileStatement);
     }
 }
