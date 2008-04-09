@@ -274,6 +274,7 @@ public class ImplementationViewComponent extends JPanel {
     PsiFile psiFile = getContainingFile(elt);
 
     final Document doc = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+    if (doc == null) return;
 
     final ImplementationTextSelectioner implementationTextSelectioner =
       LanguageImplementationTextSelectioner.INSTANCE.forLanguage(elt.getLanguage());
