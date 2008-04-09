@@ -8,8 +8,6 @@ import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.util.SmartList;
 
-import java.util.List;
-
 /**
  * Created by IntelliJ IDEA.
  * User: ik
@@ -20,7 +18,7 @@ import java.util.List;
 public class MethodCandidatesProcessor extends MethodsProcessor{
   protected boolean myHasAccessibleStaticCorrectCandidate = false;
 
-  protected MethodCandidatesProcessor(PsiElement place, PsiConflictResolver[] resolvers, List<CandidateInfo> container){
+  protected MethodCandidatesProcessor(PsiElement place, PsiConflictResolver[] resolvers, SmartList<CandidateInfo> container){
     super(resolvers, container, place);
   }
 

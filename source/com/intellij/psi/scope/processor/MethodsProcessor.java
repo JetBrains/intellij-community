@@ -5,8 +5,7 @@ import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiConflictResolver;
-
-import java.util.List;
+import com.intellij.util.SmartList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,7 +24,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor {
   private PsiExpressionList myArgumentList;
   private PsiType[] myTypeArguments;
 
-  public MethodsProcessor(PsiConflictResolver[] resolvers, List<CandidateInfo> container, final PsiElement place) {
+  public MethodsProcessor(PsiConflictResolver[] resolvers, SmartList<CandidateInfo> container, final PsiElement place) {
     super(null, ourFilter, resolvers, container, place);
   }
 

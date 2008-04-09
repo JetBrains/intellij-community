@@ -7,7 +7,6 @@ import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -20,9 +19,8 @@ import java.util.Map;
  */
 public class DuplicateConflictResolver implements PsiConflictResolver{
   public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
-    final Map<Object,PsiElement> uniqueItems = new HashMap<Object, PsiElement>();
-    for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext();) {
-      CandidateInfo info = iterator.next();
+    final Map<Object, CandidateInfo> uniqueItems = new HashMap<Object, CandidateInfo>();
+    for (CandidateInfo info : conflicts) {
       final PsiElement element = info.getElement();
       Object key;
       if (element instanceof PsiMethod) {
@@ -33,13 +31,11 @@ public class DuplicateConflictResolver implements PsiConflictResolver{
       }
 
       if (!uniqueItems.containsKey(key)) {
-        uniqueItems.put(key, element);
-      }
-      else {
-        iterator.remove();
+        uniqueItems.put(key, info);
       }
     }
-    if(uniqueItems.size() == 1) return conflicts.get(0);
+
+    if(uniqueItems.size() == 1) return uniqueItems.values().iterator().next();
     return null;
   }
 
