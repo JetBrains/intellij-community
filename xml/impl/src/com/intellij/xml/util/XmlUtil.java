@@ -36,6 +36,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -574,8 +575,9 @@ public class XmlUtil {
             final XmlTag[] includeTag = extractXpointer(rootTag, xincludeTag);
             result = ContainerUtil.map(includeTag, new Function<XmlTag, PsiElement>() {
               public PsiElement fun(final XmlTag xmlTag) {
-                final PsiElement psiElement = xmlTag.copy();
-                psiElement.putUserData(XmlElement.ORIGINAL_ELEMENT, xincludeTag.getParentTag());
+                final PsiElement psiElement = PsiUtil.copyElementPreservingOriginalLinks(xmlTag, XmlElement.ORIGINAL_ELEMENT);
+                psiElement.putUserData(XmlElement.INCLUDING_ELEMENT, xincludeTag.getParentTag());
+                psiElement.putUserData(XmlElement.ORIGINAL_ELEMENT, xmlTag);
                 return psiElement;
               }
             }, new PsiElement[includeTag.length]);
@@ -643,8 +645,8 @@ public class XmlUtil {
 
     PsiElement e = ref;
     while (e != null) {
-      if (e.getUserData(XmlElement.ORIGINAL_ELEMENT) != null) {
-        e = e.getUserData(XmlElement.ORIGINAL_ELEMENT);
+      if (e.getUserData(XmlElement.INCLUDING_ELEMENT) != null) {
+        e = e.getUserData(XmlElement.INCLUDING_ELEMENT);
         final PsiFile f = e.getContainingFile();
         if (f != null) {
           final XmlEntityDecl entityDecl = ref.resolve(targetFile);

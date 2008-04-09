@@ -268,7 +268,7 @@ public class TagNameReference implements PsiReference {
     if (XmlUtil.nsFromTemplateFramework(containedDescriptorNs)) return true;
     if (parentTag == null) return true;
     final XmlTag childTag = parentTag.createChildTag(containedDescriptor.getName(), containedDescriptorNs, "", false);
-    childTag.putUserData(XmlElement.ORIGINAL_ELEMENT, parentTag);
+    childTag.putUserData(XmlElement.INCLUDING_ELEMENT, parentTag);
     return elementDescriptor != null && elementDescriptor.getElementDescriptor(childTag) != null;
   }
 

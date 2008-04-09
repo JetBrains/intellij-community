@@ -186,7 +186,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
   private PsiElement setOriginalElement(PsiElement element, PsiElement valueElement) {
     PsiElement e = element;
     while (e != null) {
-      e.putUserData(XmlElement.ORIGINAL_ELEMENT, (XmlElement)valueElement);
+      e.putUserData(XmlElement.INCLUDING_ELEMENT, (XmlElement)valueElement);
       e = e.getNextSibling();
     }
     return element;

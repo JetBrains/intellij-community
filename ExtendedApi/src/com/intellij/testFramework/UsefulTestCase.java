@@ -122,7 +122,7 @@ public abstract class UsefulTestCase extends TestCase {
     return builder.toString();
   }
   
-  public static <T> void assertOrderedCollection(Collection<T> collection, Consumer<T>... checkers) {
+  public static <T> void assertOrderedCollection(Collection<? extends T> collection, Consumer<T>... checkers) {
     assertNotNull(collection);
     if (collection.size() != checkers.length) {
       fail(toString(collection));
