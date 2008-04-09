@@ -99,6 +99,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   @NonNls private static final String UNBALANCED_MESSAGE =
     "Unbalanced tree. Most probably caused by unbalanced markers. Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem";
   private PsiElement myInjectionHost;
+  private ITokenTypeRemapper myRemapper;
 
   public static void registerWhitespaceToken(IElementType type) {
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
@@ -425,6 +426,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return lex.getTokenType();
   }
 
+  public void setTokenTypeRemapper(final ITokenTypeRemapper remapper) {
+    myRemapper = remapper;
+  }
+
   public void advanceLexer() {
     myCurrentToken = null;
     myCurrentLexem++;
@@ -467,7 +472,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private boolean getTokenOrWhitespace() {
     while (myCurrentLexem >= myLexemCount) {
-      final IElementType type = myLexer.getTokenType();
+      IElementType type = myLexer.getTokenType();
+      if (myRemapper != null) {
+        type = myRemapper.filter(type, myLexer.getTokenStart(), myLexer.getTokenEnd(), myLexer.getBufferSequence());
+      }
       if (type == null) return true;
 
       if (myLexemCount + 1 >= myLexStarts.length) {

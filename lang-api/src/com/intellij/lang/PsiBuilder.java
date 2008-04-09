@@ -46,11 +46,18 @@ public interface PsiBuilder extends UserDataHolder {
 
   /**
    * Returns the type of current token from the lexer.
-   *
+   * @see #setTokenTypeRemapper(ITokenTypeRemapper).
    * @return the token type, or null when lexing is over.
    */
   @Nullable
   IElementType getTokenType();
+
+  /**
+   * Sets optional remapper that can changs the type of freshly lexed tokens.
+   * Output of getTokenType() is affected by it.
+   * @param remapper the remapper object, or null.
+   */
+  void setTokenTypeRemapper(ITokenTypeRemapper remapper);
 
   /**
    * Returns the text of the current token from the lexer.
