@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -81,6 +82,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
               PsiClass targetClass = JavaDirectoryService.getInstance().createClass(d.getTargetDirectory(), d.getClassName());
               addSuperClass(targetClass, project, d.getSuperClassName());
               addTestMethods(targetClass,
+                             d.getSelectedTestProvider(),
                              d.getSelectedMethods(),
                              d.shouldGeneratedBefore(),
                              d.shouldGeneratedAfter());
@@ -128,21 +130,35 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   }
 
   private void addTestMethods(PsiClass targetClass,
+                              CreateTestProvider provider,
                               MemberInfo[] methods,
                               boolean generateBefore,
                               boolean generateAfter) throws IncorrectOperationException {
-    if (generateBefore) addMethod(targetClass, "setUp");
-    if (generateAfter) addMethod(targetClass, "tearDown");
+    if (generateBefore) addMethod(targetClass, "setUp", provider.getSetUpAnnotation());
+    if (generateAfter) addMethod(targetClass, "tearDown", provider.getTearDownAnnotation());
 
     for (MemberInfo m : methods) {
-      addMethod(targetClass, "test" + StringUtil.capitalize(m.getMember().getName()));
+      addMethod(targetClass,
+                "test" + StringUtil.capitalize(m.getMember().getName()),
+                provider.getTestAnnotation());
     }
   }
 
-  private void addMethod(PsiClass targetClass, String name) throws IncorrectOperationException {
+  private void addMethod(PsiClass targetClass, String name, String annotation) throws IncorrectOperationException {
     PsiElementFactory f = JavaPsiFacade.getInstance(targetClass.getProject()).getElementFactory();
     PsiMethod test = f.createMethod(name, PsiType.VOID);
     test.getBody().add(f.createCommentFromText("// Add your code here", test));
+
+    if (annotation != null) {
+      PsiAnnotation a = f.createAnnotationFromText("@" + annotation, test);
+      PsiModifierList modifiers = test.getModifierList();
+      PsiElement first = modifiers.getFirstChild();
+      if (first == null) modifiers.add(a);
+      else modifiers.addBefore(a, first);
+
+      JavaCodeStyleManager.getInstance(targetClass.getProject()).shortenClassReferences(modifiers);
+    }
+
     targetClass.add(test);
   }
 

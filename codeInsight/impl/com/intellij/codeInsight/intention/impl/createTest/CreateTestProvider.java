@@ -15,4 +15,13 @@ public interface CreateTestProvider {
 
   @Nullable
   String getDefaultSuperClass();
+
+  @Nullable
+  String getSetUpAnnotation();
+
+  @Nullable
+  String getTearDownAnnotation();
+
+  @Nullable
+  String getTestAnnotation();
 }

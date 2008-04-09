@@ -8,8 +8,8 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
@@ -42,6 +42,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CreateTestDialog extends DialogWrapper {
   @NonNls private static final String RECENTS_KEY = "CreateTestDialog.RecentsKey";
@@ -51,7 +53,9 @@ public class CreateTestDialog extends DialogWrapper {
   private Module myTargetModule;
 
   private PsiDirectory myTargetDirectory;
+  private CreateTestProvider mySelectedTestProvider;
 
+  private List<JRadioButton> myLibraryButtons = new ArrayList<JRadioButton>();
   private JTextField myTargetClassNameField;
   private EditorTextField mySuperClassField;
   private PsiTypeCodeFragment mySuperClassFieldCodeFragment;
@@ -59,6 +63,9 @@ public class CreateTestDialog extends DialogWrapper {
   private JCheckBox myGenerateBeforeBox;
   private JCheckBox myGenerateAfterBox;
   private MemberSelectionTable myMembersTable;
+  private JButton myFixLibraryButton;
+  private JPanel myFixLibraryPanel;
+  private JLabel myFixLibraryLabel;
 
   public CreateTestDialog(@NotNull Project project,
                           @NotNull String title,
@@ -74,9 +81,36 @@ public class CreateTestDialog extends DialogWrapper {
     initControls(targetClass, targetPackage);
     setTitle(title);
     init();
+
+    myLibraryButtons.get(0).doClick();
   }
 
   private void initControls(PsiClass targetClass, PsiPackage targetPackage) {
+    ButtonGroup group = new ButtonGroup();
+    for (final CreateTestProvider p : Extensions.getExtensions(CreateTestProvider.EXTENSION_NAME)) {
+      final JRadioButton b = new JRadioButton(p.getName());
+      myLibraryButtons.add(b);
+      group.add(b);
+      
+      b.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          if (b.isSelected()) onLibrarySelected(p);
+        }
+      });
+    }
+
+    myFixLibraryButton = new JButton("Fix");
+    myFixLibraryButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            OrderEntryFix.addJarToRoots(mySelectedTestProvider.getLibraryPath(), myTargetModule);
+          }
+        });
+        myFixLibraryPanel.setVisible(false);
+      }
+    });
+
     myTargetClassNameField = new JTextField(targetClass.getName() + "Test");
     setPreferredSize(myTargetClassNameField);
     myTargetClassNameField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -108,6 +142,15 @@ public class CreateTestDialog extends DialogWrapper {
     myGenerateAfterBox = new JCheckBox("Generate 'tearDown/@After'");
 
     myMembersTable = new MemberSelectionTable(collectMethods(), null);
+  }
+
+  private void onLibrarySelected(CreateTestProvider p) {
+    myFixLibraryLabel.setText(p.getName() + " library not found in the module");
+    myFixLibraryPanel.setVisible(!p.isLibraryAttached(myTargetModule));
+
+    String superClass = p.getDefaultSuperClass();
+    mySuperClassField.setText(superClass == null ? "" : superClass);
+    mySelectedTestProvider = p;
   }
 
   private void setPreferredSize(JTextField field) {
@@ -156,38 +199,21 @@ public class CreateTestDialog extends DialogWrapper {
     BoxLayout l = new BoxLayout(librariesPanel, BoxLayout.X_AXIS);
     librariesPanel.setLayout(l);
 
-    ButtonGroup group = new ButtonGroup();
-    for (final CreateTestProvider p : Extensions.getExtensions(CreateTestProvider.EXTENSION_NAME)) {
-      final JRadioButton b = new JRadioButton(p.getName());
-      group.add(b);
+    for (JRadioButton b : myLibraryButtons) {
       librariesPanel.add(b);
-
-      b.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          if (b.isSelected() && !p.isLibraryAttached(myTargetModule)) {
-            int result = Messages.showYesNoDialog(myProject,
-                                                  "Do you wand to attach " + p.getName() + " library to the module?",
-                                                  "Library is not available",
-                                                  Messages.getQuestionIcon());
-            if (result == 0) {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                public void run() {
-                  OrderEntryFix.addJarToRoots(p.getLibraryPath(), myTargetModule);
-                }
-              });
-            }
-          }
-
-          String superClass = p.getDefaultSuperClass();
-          mySuperClassField.setText(superClass == null ? "" : superClass);
-        }
-      });
     }
 
     constr.gridx = 0;
     constr.weightx = 1;
     constr.gridwidth = GridBagConstraints.REMAINDER;
     panel.add(librariesPanel, constr);
+
+    myFixLibraryPanel = new JPanel(new BorderLayout());
+    myFixLibraryLabel = new JLabel();
+    myFixLibraryLabel.setIcon(Messages.getWarningIcon());
+    myFixLibraryPanel.add(myFixLibraryLabel, BorderLayout.CENTER);
+    myFixLibraryPanel.add(myFixLibraryButton, BorderLayout.EAST);
+    panel.add(myFixLibraryPanel, constr);
 
     constr.gridx = 0;
     constr.weightx = 0;
@@ -223,6 +249,8 @@ public class CreateTestDialog extends DialogWrapper {
     panel.add(myGenerateAfterBox, constr);
 
     panel.add(new JLabel("Select methods to create tests for:"), constr);
+    constr.fill = GridBagConstraints.BOTH;
+    constr.weighty = 1;
     panel.add(new JScrollPane(myMembersTable), constr);
 
     return panel;
@@ -258,6 +286,10 @@ public class CreateTestDialog extends DialogWrapper {
 
   public boolean shouldGeneratedBefore() {
     return myGenerateBeforeBox.isSelected();
+  }
+
+  public CreateTestProvider getSelectedTestProvider() {
+    return mySelectedTestProvider;
   }
 
   protected void doOKAction() {
