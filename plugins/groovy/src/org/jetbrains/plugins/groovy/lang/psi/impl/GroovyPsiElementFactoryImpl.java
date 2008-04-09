@@ -24,6 +24,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.sun.javaws.exceptions.InvalidArgumentException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,7 +139,11 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
     }
 
     PsiFile file = createGroovyFile(text.toString());
-    return ((GrVariableDeclaration) ((GroovyFileBase) file).getTopStatements()[0]);
+    GrTopStatement[] topStatements = ((GroovyFileBase) file).getTopStatements();
+    if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration)) {
+      throw new RuntimeException("Invalid arguments, text = " + text.toString()); 
+    }
+    return (GrVariableDeclaration) topStatements[0];
   }
 
   public GrVariableDeclaration createFieldDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type) {
