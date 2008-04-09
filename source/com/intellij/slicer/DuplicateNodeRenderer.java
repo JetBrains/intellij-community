@@ -1,6 +1,5 @@
 package com.intellij.slicer;
 
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.util.ui.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +17,7 @@ public class DuplicateNodeRenderer {
     //returns first duplicate node, if any, or null if there are none
     //duplicate nodes are painted gray
     @Nullable
-    AbstractTreeNode getDuplicate();
+    DefaultMutableTreeNode getDuplicate();
   }
 
   public static void paintDuplicateNodesBackground(Graphics g, Tree tree) {

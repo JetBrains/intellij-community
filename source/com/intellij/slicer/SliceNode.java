@@ -2,12 +2,14 @@ package com.intellij.slicer;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -20,12 +22,14 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   private List<SliceNode> myCachedChildren;
   private long storedModificationCount = -1;
   private boolean initialized;
-  private SliceNode duplicate;
+  private DefaultMutableTreeNode duplicate;
   private final Map<SliceUsage, List<SliceNode>> targetEqualUsages;
+  private final AbstractTreeBuilder myTreeBuilder;
 
-  protected SliceNode(@NotNull Project project, @NotNull SliceUsage sliceUsage, @NotNull Map<SliceUsage, List<SliceNode>> targetEqualUsages) {
+  protected SliceNode(@NotNull Project project, @NotNull SliceUsage sliceUsage, @NotNull Map<SliceUsage, List<SliceNode>> targetEqualUsages, AbstractTreeBuilder treeBuilder) {
     super(project, sliceUsage);
     this.targetEqualUsages = targetEqualUsages;
+    myTreeBuilder = treeBuilder;
   }
 
   @NotNull
@@ -37,7 +41,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
       if (isValid()) {
         getValue().processChildren(new Processor<SliceUsage>() {
           public boolean process(SliceUsage sliceUsage) {
-            SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages);
+            SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages, myTreeBuilder);
             myCachedChildren.add(node);
             return true;
           }
@@ -63,11 +67,12 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     }
     eq.add(this);
     if (eq.size() != 1) {
-      duplicate = eq.get(0);
+      SliceNode dup = eq.get(0);
+      duplicate = myTreeBuilder.getNodeForElement(dup);
     }
   }
   
-  public AbstractTreeNode getDuplicate() {
+  public DefaultMutableTreeNode getDuplicate() {
     return duplicate;
   }
 

@@ -20,6 +20,8 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashMap;
+import gnu.trove.TObjectHashingStrategy;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -31,6 +33,7 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author cdr
@@ -52,11 +55,25 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider{
   private final Project myProject;
   private boolean isDisposed;
 
-  public SlicePanel(Project project, SliceUsage root) {
+  public SlicePanel(Project project, final SliceUsage root) {
     super(new BorderLayout());
     myProject = project;
     myTree = createTree();
-    myBuilder = new SliceTreeBuilder(myTree, project, root);
+
+    final Map<SliceUsage, List<SliceNode>> targetEqualUsages =
+        new THashMap<SliceUsage, List<SliceNode>>(new TObjectHashingStrategy<SliceUsage>() {
+          public int computeHashCode(SliceUsage object) {
+            return object.getUsageInfo().hashCode();
+          }
+          public boolean equals(SliceUsage o1, SliceUsage o2) {
+            return o1.getUsageInfo().equals(o2.getUsageInfo());
+          }
+        });
+
+    myBuilder = new SliceTreeBuilder(myTree, project);
+    SliceNode rootNode = new SliceNode(project, root, targetEqualUsages, myBuilder);
+    myBuilder.setRoot(rootNode);
+
     layoutPanel();
     myBuilder.addSubtreeToUpdate((DefaultMutableTreeNode)myTree.getModel().getRoot(), new Runnable() {
       public void run() {

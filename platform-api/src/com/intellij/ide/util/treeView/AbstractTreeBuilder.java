@@ -172,7 +172,6 @@ public abstract class AbstractTreeBuilder implements Disposable {
     if (myWorker != null) {
       myWorker.dispose(true);
     }
-    myElementToNodeMap.clear();
     TREE_NODE_WRAPPER.setValue(null);
     if (myProgress != null) {
       myProgress.cancel();

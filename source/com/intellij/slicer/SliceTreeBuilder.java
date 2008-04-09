@@ -12,8 +12,8 @@ import javax.swing.tree.DefaultTreeModel;
  * @author cdr
  */
 public class SliceTreeBuilder extends AbstractTreeBuilder{
-  public SliceTreeBuilder(JTree tree, Project project, SliceUsage root) {
-    super(tree, (DefaultTreeModel)tree.getModel(), new SliceTreeStructure(project, root), AlphaComparator.INSTANCE, false);
+  public SliceTreeBuilder(JTree tree, Project project) {
+    super(tree, (DefaultTreeModel)tree.getModel(), new SliceTreeStructure(project), AlphaComparator.INSTANCE, false);
     initRootNode();
   }
 
@@ -23,5 +23,9 @@ public class SliceTreeBuilder extends AbstractTreeBuilder{
 
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     return false;
+  }
+
+  public void setRoot(SliceNode root) {
+    ((SliceTreeStructure)getTreeStructure()).setRoot(root);
   }
 }
