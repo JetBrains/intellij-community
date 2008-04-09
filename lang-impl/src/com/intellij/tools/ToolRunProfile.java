@@ -49,8 +49,9 @@ public class ToolRunProfile implements ModuleRunProfile{
   public void checkConfiguration() throws RuntimeConfigurationException {
   }
 
+  @NotNull
   public Module[] getModules() {
-    return null;
+    return Module.EMPTY_ARRAY;
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {

@@ -22,14 +22,16 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class RuntimeConfiguration extends RunConfigurationBase implements LocatableConfiguration, Cloneable, ModuleRunConfiguration {
   protected RuntimeConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(project, factory, name);
   }
 
+  @NotNull
   public Module[] getModules() {
-    return null;
+    return Module.EMPTY_ARRAY;
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {

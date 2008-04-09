@@ -25,6 +25,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -94,6 +95,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     }
   }
 
+  @NotNull
   public Module[] getModules() {
     return ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
       @SuppressWarnings({"ConstantConditions"})

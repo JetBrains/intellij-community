@@ -338,6 +338,7 @@ public final class PreviewFormAction extends AnAction{
     public void checkConfiguration() throws RuntimeConfigurationException {
     }
 
+    @NotNull
     public Module[] getModules() {
       return new Module[] {myModule};
     }

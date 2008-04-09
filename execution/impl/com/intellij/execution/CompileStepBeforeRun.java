@@ -10,7 +10,6 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
@@ -37,12 +36,8 @@ public class CompileStepBeforeRun implements StepsBeforeRunProvider {
   }
 
   public boolean hasTask(final RunConfiguration configuration) {
-    if (configuration instanceof ModuleRunProfile && !(configuration instanceof RemoteConfiguration)) {
-      final ModuleRunProfile moduleRunConfiguration = (ModuleRunProfile)configuration;
-      final Module[] modules = moduleRunConfiguration.getModules();
-      if (modules != null && modules.length > 0 && getConfig().isCompileBeforeRunning(configuration)) {
-        return true;
-      }
+    if (configuration instanceof ModuleRunProfile && !(configuration instanceof RemoteConfiguration) && getConfig().isCompileBeforeRunning(configuration)) {
+      return true;
     }
 
     return false;

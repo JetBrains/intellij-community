@@ -102,9 +102,9 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
     return new JavadocConfigurable(this);
   }
 
-  @Nullable
+  @NotNull
   public Module[] getModules() {
-    return null;
+    return Module.EMPTY_ARRAY;
   }
 
   public void readExternal(Element element) throws InvalidDataException {
