@@ -54,7 +54,7 @@ public class XmlCompletionData extends CompletionData {
       final CompletionVariant variant = new CompletionVariant(createTagCompletionFilter());
       variant.includeScopeClass(XmlTag.class);
       variant.addCompletionFilter(TrueFilter.INSTANCE);
-      variant.setInsertHandler(new XmlTagInsertHandler());
+      variant.setInsertHandler(createTagInsertHandler());
       registerVariant(variant);
     }
 
@@ -93,6 +93,10 @@ public class XmlCompletionData extends CompletionData {
       variant.setInsertHandler(new EntityRefInsertHandler());
       registerVariant(variant);
     }
+  }
+
+  protected XmlTagInsertHandler createTagInsertHandler() {
+    return new XmlTagInsertHandler();
   }
 
   protected ElementFilter createXmlEntityCompletionFilter() {

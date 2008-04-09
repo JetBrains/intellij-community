@@ -18,7 +18,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -57,7 +56,7 @@ class XmlTagInsertHandler extends BasicInsertHandler {
     editor.getDocument().deleteString(offset, offset + 1);
     final XmlTag tag = PsiTreeUtil.getContextOfType(current, XmlTag.class, true);
 
-    if (tag == null || tag instanceof JspXmlRootTag) return;
+    if (!isValidTag(tag)) return;
 
     final XmlElementDescriptor descriptor = tag.getDescriptor();
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) == null &&
@@ -100,6 +99,10 @@ class XmlTagInsertHandler extends BasicInsertHandler {
         editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 1);
       }
     }
+  }
+
+  protected boolean isValidTag(final XmlTag tag) {
+    return tag != null;
   }
 
   private static boolean isClosed(PsiElement current) {
