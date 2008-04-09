@@ -1,7 +1,8 @@
 package com.intellij.slicer;
 
-import com.intellij.util.ui.Tree;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.util.ui.Tree;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -36,7 +37,7 @@ public class DuplicateNodeRenderer {
         DuplicatableNode duplicatableNode = (DuplicatableNode)userObject;
         if (duplicatableNode.getDuplicate() == null) break;
         accumPath = accumRect == null ? path : accumPath.getParentPath();
-        accumRect = tree.getPathBounds(accumPath).union(accumRect == null ? new Rectangle() : accumRect);
+        accumRect = union(tree.getPathBounds(accumPath), accumRect);
         node = (DefaultMutableTreeNode)node.getParent();
       }
       if (accumRect != null) {
@@ -45,7 +46,7 @@ public class DuplicateNodeRenderer {
 
         //unite all expanded children node rectangles since they can stretch out of parent's
         node = (DefaultMutableTreeNode)accumPath.getLastPathComponent();
-        accumRect = accumRect.union(getExpandedNodesRect(tree, node, accumPath));
+        accumRect = union(accumRect, getExpandedNodesRect(tree, node, accumPath));
 
         g.setColor(new Color(230, 230, 230));
         g.fillRoundRect(accumRect.x, accumRect.y, accumRect.width, accumRect.height, 10, 10);
@@ -56,6 +57,13 @@ public class DuplicateNodeRenderer {
     g.setColor(old);
   }
 
+  @NotNull
+  private static Rectangle union(Rectangle r1, Rectangle r2) {
+    if (r1 == null) return r2;
+    if (r2 == null) return r1;
+    return r1.union(r2);
+  }
+
   private static Rectangle getExpandedNodesRect(Tree tree, DefaultMutableTreeNode node, TreePath path) {
     Rectangle rect = tree.getRowBounds(tree.getRowForPath(path));
     if (tree.isExpanded(path)) {
@@ -63,7 +71,8 @@ public class DuplicateNodeRenderer {
       while (children.hasMoreElements()) {
         DefaultMutableTreeNode child = children.nextElement();
         TreePath childPath = path.pathByAddingChild(child);
-        rect = rect.union(getExpandedNodesRect(tree, child, childPath));
+        assert !path.equals(childPath) : path+";"+child;
+        rect = union(rect, getExpandedNodesRect(tree, child, childPath));
       }
     }
     return rect;
