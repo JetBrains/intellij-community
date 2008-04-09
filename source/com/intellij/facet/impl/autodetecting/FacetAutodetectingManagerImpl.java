@@ -55,16 +55,17 @@ import java.util.EventListener;
 )
 public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager implements AutodetectionFilter, ProjectComponent, PersistentStateComponent<DisabledAutodetectionInfo> {
   @NonNls public static final String COMPONENT_NAME = "FacetAutodetectingManager";
-  private MultiValuesMap<FileType, FacetDetectorWrapper> myDetectors = new MultiValuesMap<FileType, FacetDetectorWrapper>();
+  private final MultiValuesMap<FileType, FacetDetectorWrapper> myDetectors = new MultiValuesMap<FileType, FacetDetectorWrapper>();
   private final Project myProject;
-  private PsiManager myPsiManager;
+  private final PsiManager myPsiManager;
   private final FacetPointersManager myFacetPointersManager;
   private FacetDetectionIndex myFileIndex;
   private MyPsiTreeChangeListener myPsiTreeChangeListener;
   private MergingUpdateQueue myMergingUpdateQueue;
   private ImplicitFacetManager myImplicitFacetManager;
   private DisabledAutodetectionInfo myDisabledAutodetectionInfo = new DisabledAutodetectionInfo();
-  private EventDispatcher<ImplicitFacetListener> myImplicitFacetDispatcher = EventDispatcher.create(ImplicitFacetListener.class);
+  private final EventDispatcher<ImplicitFacetListener> myImplicitFacetDispatcher = EventDispatcher.create(ImplicitFacetListener.class);
+  private boolean myDetectionInProgress;
 
   public FacetAutodetectingManagerImpl(final Project project, PsiManager psiManager, FacetPointersManager facetPointersManager) {
     myProject = project;
@@ -174,17 +175,23 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
 
   private List<Facet> process(final VirtualFile virtualFile, final FacetDetectorWrapper<?, ? extends FacetConfiguration, ?> detector,
                                                          List<Facet> facets) {
-    if (detector.getVirtualFileFilter().accept(virtualFile)) {
-      if (!ProjectFileVersion.getInstance(myProject).isFacetAdditionEnabled(detector.getFacetType().getId(), false)) {
-        return facets;
-      }
-      Facet facet = detector.detectFacet(virtualFile, myPsiManager);
-
-      if (facet != null) {
-        if (facets == null) {
-          facets = new SmartList<Facet>();
+    if (!myDetectionInProgress && detector.getVirtualFileFilter().accept(virtualFile)) {
+      try {
+        myDetectionInProgress = true;
+        if (!ProjectFileVersion.getInstance(myProject).isFacetAdditionEnabled(detector.getFacetType().getId(), false)) {
+          return facets;
         }
-        facets.add(facet);
+        Facet facet = detector.detectFacet(virtualFile, myPsiManager);
+
+        if (facet != null) {
+          if (facets == null) {
+            facets = new SmartList<Facet>();
+          }
+          facets.add(facet);
+        }
+      }
+      finally {
+        myDetectionInProgress = false;
       }
     }
     return facets;

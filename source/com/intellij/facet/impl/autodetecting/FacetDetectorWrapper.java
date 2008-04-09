@@ -29,11 +29,11 @@ import java.util.Map;
  */
 public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F extends Facet<C>> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.autodetecting.FacetDetectorWrapper");
-  private FileType myFileType;
+  private final FileType myFileType;
   private final AutodetectionFilter myAutodetectionFilter;
-  private VirtualFileFilter myVirtualFileFilter;
-  private FacetDetector<S,C> myFacetDetector;
-  private FacetType<F,C> myFacetType;
+  private final VirtualFileFilter myVirtualFileFilter;
+  private final FacetDetector<S,C> myFacetDetector;
+  private final FacetType<F,C> myFacetType;
 
   protected FacetDetectorWrapper(final FileType fileType, FacetType<F, C> facetType, final AutodetectionFilter autodetectionFilter, final VirtualFileFilter virtualFileFilter,
                                  final FacetDetector<S, C> facetDetector) {
