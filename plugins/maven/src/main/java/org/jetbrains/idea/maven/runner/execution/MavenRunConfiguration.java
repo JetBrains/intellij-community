@@ -68,6 +68,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     }
   }
 
+  @NotNull
   public Module[] getModules() {
     return Module.EMPTY_ARRAY;
   }

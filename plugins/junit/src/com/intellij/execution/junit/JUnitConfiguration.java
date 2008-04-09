@@ -44,10 +44,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 public class JUnitConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration, RefactoringListenerProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.JUnitConfiguration");
@@ -182,10 +179,11 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
     setGeneratedName();
   }
 
+  @NotNull
   public Module[] getModules() {
     if (TEST_PACKAGE.equals(myData.TEST_OBJECT) &&
         getPersistentData().getScope() == TestSearchScope.WHOLE_PROJECT) {
-      return null;
+      return Module.EMPTY_ARRAY;
     }
     return super.getModules();
   }

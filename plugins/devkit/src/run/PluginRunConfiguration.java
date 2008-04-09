@@ -178,6 +178,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
   }
 
 
+  @NotNull
   public Module[] getModules() {
     List<Module> modules = new ArrayList<Module>();
     Module[] allModules = ModuleManager.getInstance(getProject()).getModules();

@@ -116,6 +116,7 @@ public class RerunFailedTestsAction extends AnAction {
 
         }
 
+        @NotNull
         public Module[] getModules() {
           return Module.EMPTY_ARRAY;
         }

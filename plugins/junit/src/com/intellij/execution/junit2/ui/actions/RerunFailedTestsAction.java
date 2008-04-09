@@ -135,6 +135,7 @@ public class RerunFailedTestsAction extends AnAction {
 
     }
 
+    @NotNull
     public Module[] getModules() {
       return myTestMethods.getModulesToCompile();
     }
