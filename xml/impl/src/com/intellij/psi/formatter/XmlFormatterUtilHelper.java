@@ -5,12 +5,10 @@ package com.intellij.psi.formatter;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTokenType;
@@ -51,9 +49,8 @@ public class XmlFormatterUtilHelper implements FormatterUtilHelper {
     }
   }
 
-  private static boolean isInsideTagBody(ASTNode place) {
+  protected boolean isInsideTagBody(ASTNode place) {
     final ASTNode treeParent = place.getTreeParent();
-    if(treeParent instanceof JspXmlRootTag) return true;
     if(treeParent.getElementType() != XmlElementType.XML_TAG
        && treeParent.getElementType() != XmlElementType.HTML_TAG) return false;
     while(place != null){
@@ -73,7 +70,7 @@ public class XmlFormatterUtilHelper implements FormatterUtilHelper {
   }
 
   public boolean containsWhitespacesOnly(final ASTNode node) {
-    return (node.getElementType() == JspElementType.JSP_XML_TEXT || node.getElementType() == XmlTokenType.XML_DATA_CHARACTERS) &&
+    return (node.getElementType() == XmlTokenType.XML_DATA_CHARACTERS) &&
            node.getText().trim().length() == 0;
   }
 }
