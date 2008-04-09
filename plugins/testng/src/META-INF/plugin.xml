@@ -12,7 +12,8 @@
         <configurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGPackageConfigurationProducer"/>
         <testFramework implementation="com.theoryinpractice.testng.util.TestNGUtil"/>
         <inspectionToolProvider implementation="com.theoryinpractice.testng.inspection.TestNGInspectionsToolProvider"/>
-      <configurationType implementation="com.theoryinpractice.testng.configuration.TestNGConfigurationType"/>
+        <configurationType implementation="com.theoryinpractice.testng.configuration.TestNGConfigurationType"/>
+        <codeInsight.createTestProvider implementation="com.theoryinpractice.testng.CreateTestNGTestProvider"/>
     </extensions>
 
 

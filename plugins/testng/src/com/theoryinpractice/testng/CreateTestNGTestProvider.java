@@ -1,0 +1,29 @@
+package com.theoryinpractice.testng;
+
+import com.intellij.codeInsight.intention.impl.createTest.CreateTestBaseProvider;
+import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.Nullable;
+
+public class CreateTestNGTestProvider extends CreateTestBaseProvider {
+  public String getName() {
+    return "TestNG";
+  }
+
+  protected String getMarkerClassFQName() {
+    return "org.testng.annotations.Test";
+  }
+
+  public String getLibraryPath() {
+    try {
+      return PathUtil.getJarPathForClass(Class.forName("org.testng.annotations.Test"));
+    }
+    catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Nullable
+  public String getDefaultSuperClass() {
+    return null;
+  }
+}
