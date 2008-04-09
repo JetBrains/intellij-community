@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.util.xml.ui.actions.generate;
+package com.intellij.util.xml.actions.generate;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.ui.actions.generate.GenerateDomElementProvider;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.Nullable;
 
