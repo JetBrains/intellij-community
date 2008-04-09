@@ -555,8 +555,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       if (field instanceof GrField) {
         final GrField groovyField = (GrField) field;
         if (groovyField.isProperty()) {
-          PsiMethod getter = groovyField.getGetter();
-          if (getter != null) allMethods.add(getter);
+          PsiMethod[] getters = groovyField.getGetters();
+          if (getters.length > 0) allMethods.addAll(Arrays.asList(getters));
           PsiMethod setter = groovyField.getSetter();
           if (setter != null) allMethods.add(setter);
         }

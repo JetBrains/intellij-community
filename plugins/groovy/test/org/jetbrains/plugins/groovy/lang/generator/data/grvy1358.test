@@ -1,0 +1,20 @@
+class MyClass {
+  boolean enabled
+}
+-----
+public class MyClass extends groovy.lang.GroovyObjectSupport {
+  public boolean getEnabled() {
+    return false;
+  }
+
+  public boolean isEnabled() {
+    return false;
+  }
+
+  public void setEnabled(boolean enabled) {
+    return ;
+  }
+
+  private boolean enabled = false;
+}
+---

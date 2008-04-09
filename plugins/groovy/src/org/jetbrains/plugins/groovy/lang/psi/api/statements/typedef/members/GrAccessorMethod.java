@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public interface GrAccessorMethod extends PsiMethod {
+  public static final GrAccessorMethod[] EMPTY_ARRAY = new GrAccessorMethod[0];
+
   GrField getProperty();
 
   @Nullable

@@ -1,8 +1,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 
 /**
@@ -14,8 +15,8 @@ public interface GrField extends GrVariable, GrMember, PsiField, GrTopLevelDefin
   boolean isProperty();
 
   @Nullable
-  PsiMethod getSetter();
+  GrAccessorMethod getSetter();
 
-  @Nullable
-  PsiMethod getGetter();
+  @NotNull
+  GrAccessorMethod[] getGetters();
 }

@@ -18,7 +18,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
@@ -51,13 +50,15 @@ public class GrAccessorMethodImpl extends LightElement implements GrAccessorMeth
   private LightReferenceList myThrowsList;
   private LightParameterList myParameterList = null;
   private LightModifierList myModifierList = null;
+  private String myName;
 
 
-  public GrAccessorMethodImpl(GrField property, boolean isSetter) {
+  public GrAccessorMethodImpl(GrField property, boolean isSetter, String name) {
     super(property.getManager());
     myProperty = property;
     myIsSetter = isSetter;
     myThrowsList = new LightReferenceList(property.getManager());
+    myName = name;
   }
 
   @Nullable
@@ -185,12 +186,7 @@ public class GrAccessorMethodImpl extends LightElement implements GrAccessorMeth
 
   @NotNull
   public String getName() {
-    final String propName = myProperty.getName();
-    assert propName != null;
-    String capitalized = StringUtil.capitalize(propName);
-    if (myIsSetter) return "set" + capitalized;
-    if (PsiType.BOOLEAN.equals(myProperty.getDeclaredType())) return "is" + capitalized;
-    return "get" + capitalized;
+    return myName;
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {

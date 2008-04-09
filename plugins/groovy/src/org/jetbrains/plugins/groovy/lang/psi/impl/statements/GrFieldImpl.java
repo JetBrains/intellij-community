@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
@@ -42,7 +43,10 @@ import javax.swing.*;
  */
 public class GrFieldImpl extends GrVariableImpl implements GrField {
   private GrAccessorMethod mySetter;
-  private GrAccessorMethod myGetter;
+  private GrAccessorMethod[] myGetters;
+
+  private boolean mySetterInitialized = false;
+  private boolean myGettersInitialized = false;
 
   public GrFieldImpl(@NotNull ASTNode node) {
     super(node);
@@ -92,35 +96,63 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
     return modifierList != null && !modifierList.hasExplicitVisibilityModifiers();
   }
 
-  public PsiMethod getSetter() {
-    if (!isProperty()) return null;
-    final GrAccessorMethod setter = new GrAccessorMethodImpl(this, true);
-    final PsiClass clazz = getContainingClass();
-    if (!hasContradictingMethods(setter, clazz)) {
-      mySetter = setter;
-    } else {
-      mySetter = null;
+  public GrAccessorMethod getSetter() {
+    if (mySetterInitialized) return mySetter;
+
+    mySetter = null;
+
+    if (isProperty()) {
+      String name = getName();
+      if (name != null) {
+        name = "set" + StringUtil.capitalize(name);
+        final GrAccessorMethod setter = new GrAccessorMethodImpl(this, true, name);
+        final PsiClass clazz = getContainingClass();
+        if (!hasContradictingMethods(setter, clazz)) {
+          mySetter = setter;
+        }
+      }
+
     }
 
+    mySetterInitialized = true;
     return mySetter;
   }
 
   public void clearCaches() {
-    myGetter = null;
-    mySetter = null;
+    mySetterInitialized = myGettersInitialized = false;
   }
 
-  public PsiMethod getGetter() {
-    if (!isProperty()) return null;
-    final GrAccessorMethod getter = new GrAccessorMethodImpl(this, false);
-    final PsiClass clazz = getContainingClass();
-    if (!hasContradictingMethods(getter, clazz)) {
-      myGetter = getter;
-    } else {
-      myGetter = null;
+  @NotNull
+  public GrAccessorMethod[] getGetters() {
+    if (myGettersInitialized) return myGetters;
+
+    myGetters = GrAccessorMethod.EMPTY_ARRAY;
+
+    if (isProperty()) {
+      String name = getName();
+      if (name != null) {
+        final PsiClass clazz = getContainingClass();
+        name = StringUtil.capitalize(name);
+        GrAccessorMethod getter1 = new GrAccessorMethodImpl(this, false, "get" + name);
+        if (hasContradictingMethods(getter1, clazz)) getter1 = null;
+
+        GrAccessorMethod getter2 = null;
+        if (PsiType.BOOLEAN.equals(getTypeGroovy())) {
+          getter2 = new GrAccessorMethodImpl(this, false, "is" + name);
+          if (hasContradictingMethods(getter2, clazz)) getter2 = null;
+        }
+
+        if (getter1 != null || getter2 != null) {
+          if (getter1 != null && getter2 != null) myGetters = new GrAccessorMethod[] {getter1, getter2};
+          else if (getter1 != null) myGetters = new GrAccessorMethod[] {getter1};
+          else myGetters = new GrAccessorMethod[] {getter2};
+        }
+      }
+
     }
 
-    return myGetter;
+    myGettersInitialized = true;
+    return myGetters;
   }
 
   private boolean hasContradictingMethods(GrAccessorMethod proto, PsiClass clazz) {

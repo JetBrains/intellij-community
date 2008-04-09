@@ -77,8 +77,8 @@ public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements Gr
     result.addAll(Arrays.asList(groovyMethods));
     for (GrField field : fields) {
       if (field.isProperty()) {
-        PsiMethod getter = field.getGetter();
-        if (getter != null) result.add(getter);
+        PsiMethod[] getters = field.getGetters();
+        if (getters.length > 0) result.addAll(Arrays.asList(getters));
         PsiMethod setter = field.getSetter();
         if (setter != null) result.add(setter);
       }
