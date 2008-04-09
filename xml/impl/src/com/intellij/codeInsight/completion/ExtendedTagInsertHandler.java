@@ -25,7 +25,7 @@ import java.util.Set;
 /**
  * @author Dmitry Avdeev
 */
-class ExtendedTagInsertHandler extends XmlTagInsertHandler {
+public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.ExtendedTagInsertHandler");
 
