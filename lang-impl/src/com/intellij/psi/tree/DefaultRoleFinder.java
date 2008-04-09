@@ -4,7 +4,7 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
 public class DefaultRoleFinder implements RoleFinder{
-  final IElementType[] myElementTypes;
+  protected IElementType[] myElementTypes;
 
   public DefaultRoleFinder(IElementType... elementType) {
     myElementTypes = elementType;
