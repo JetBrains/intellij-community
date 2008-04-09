@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlTagUtil;
@@ -66,14 +65,12 @@ public class XmlFoldingBuilder implements FoldingBuilder {
   }
 
   protected void addElementsToFold(List<FoldingDescriptor> foldings, XmlElement tag, Document document) {
-    if (addToFold(foldings, tag, document) ||
-        tag instanceof JspXmlRootTag // has no name but has content
-      ) {
+    if (addToFold(foldings, tag, document)) {
       doAddForChildren(tag, foldings, document);
     }
   }
 
-  private void doAddForChildren(final XmlElement tag, final List<FoldingDescriptor> foldings, final Document document) {
+  protected void doAddForChildren(final XmlElement tag, final List<FoldingDescriptor> foldings, final Document document) {
     final PsiElement[] children = tag.getChildren();
 
     for (PsiElement child : children) {
