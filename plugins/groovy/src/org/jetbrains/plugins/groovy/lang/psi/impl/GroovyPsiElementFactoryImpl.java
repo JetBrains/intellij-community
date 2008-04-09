@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.javaws.exceptions.InvalidArgumentException;
@@ -166,8 +163,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
   }
 
   private String getTypeText(PsiType type) {
-    final String canonical = type.getCanonicalText();
-    return canonical != null ? canonical : type.getPresentableText();
+    if (!(type instanceof PsiArrayType)) {
+      final String canonical = type.getCanonicalText();
+      return canonical != null ? canonical : type.getPresentableText();
+    } else {
+      return getTypeText(((PsiArrayType) type).getComponentType()) + "[]";
+    }
   }
 
   @Nullable
