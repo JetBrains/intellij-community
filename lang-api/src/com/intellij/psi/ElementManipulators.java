@@ -35,4 +35,8 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
     assert manipulator != null: element.getClass().getName();
     return manipulator.getRangeInElement(element);
   }
+
+  public static String getValueText(final PsiElement element) {
+    return getValueTextRange(element).substring(element.getText());
+  }
 }
