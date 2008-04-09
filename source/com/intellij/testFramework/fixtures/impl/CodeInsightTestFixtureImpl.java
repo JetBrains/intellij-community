@@ -8,6 +8,9 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.completion.CodeCompletionHandler;
+import com.intellij.codeInsight.completion.CompletionContext;
+import com.intellij.codeInsight.completion.LookupData;
+import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
@@ -483,6 +486,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Nullable
   public LookupItem[] completeBasic() {
     return new WriteCommandAction<LookupItem[]>(getProject()) {
+      boolean empty = false;
+
       protected void run(final Result<LookupItem[]> result) throws Throwable {
         new CodeCompletionAction() {
           public CodeInsightActionHandler getHandler() {
@@ -499,11 +504,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                 }
                 return copy;
               }
+
+              protected void handleEmptyLookup(final CompletionContext context,
+                                               final LookupData lookupData, final CompletionParameters parameters) {
+                empty = true;
+                super.handleEmptyLookup(context, lookupData, parameters);
+              }
             };
           }
         }.actionPerformedImpl(getProject(), InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile));
         LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
-        result.setResult(lookup == null ? null : lookup.getSortedItems());
+        result.setResult(lookup == null ? (empty ? LookupItem.EMPTY_ARRAY : null) : lookup.getSortedItems());
       }
     }.execute().getResultObject();
   }
@@ -667,6 +678,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
    */
   private int configureByFileInner(@NonNls String filePath) throws IOException {
     copyFileToProject(filePath);
+    return configureFromTempProjectFile(filePath);
+  }
+
+  public int configureFromTempProjectFile(final String filePath) throws IOException {
     return configureByFileInner(findFile(filePath));
   }
 
