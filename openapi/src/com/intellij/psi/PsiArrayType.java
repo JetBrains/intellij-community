@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,15 +37,15 @@ public class PsiArrayType extends PsiType {
   }
 
   public String getPresentableText() {
-    return myComponentType.getPresentableText() + "[]";
+    return StringUtil.joinOrNull(myComponentType.getPresentableText(), "[]");
   }
 
   public String getCanonicalText() {
-    return myComponentType.getCanonicalText() + "[]";
+    return StringUtil.joinOrNull(myComponentType.getCanonicalText(), "[]");
   }
 
   public String getInternalCanonicalText() {
-    return myComponentType.getInternalCanonicalText() + "[]";
+    return StringUtil.joinOrNull(myComponentType.getInternalCanonicalText(), "[]");
   }
 
   public boolean isValid() {

@@ -1200,4 +1200,15 @@ public class StringUtil {
 
     return b.toString();
   }
+
+  // returns null if any of args is null
+  @Nullable
+  public static String joinOrNull(@NotNull String... args) {
+    StringBuilder r = new StringBuilder();
+    for (String arg : args) {
+      if (arg == null) return null;
+      r.append(arg);
+    }
+    return r.toString();
+  }
 }

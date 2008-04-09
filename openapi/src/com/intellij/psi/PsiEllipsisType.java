@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 
 /**
  * Represents the type of a variable arguments array passed as a method parameter.
@@ -32,15 +34,15 @@ public class PsiEllipsisType extends PsiArrayType {
   }
 
   public String getPresentableText() {
-    return getComponentType().getPresentableText() + "...";
+    return StringUtil.joinOrNull(getComponentType().getPresentableText(), "...");
   }
 
   public String getCanonicalText() {
-    return getComponentType().getCanonicalText() + "...";
+    return StringUtil.joinOrNull(getComponentType().getCanonicalText(), "...");
   }
 
   public String getInternalCanonicalText() {
-    return getComponentType().getInternalCanonicalText() + "...";
+    return StringUtil.joinOrNull(getComponentType().getInternalCanonicalText(), "...");
   }
 
   public boolean equalsToText(String text) {
