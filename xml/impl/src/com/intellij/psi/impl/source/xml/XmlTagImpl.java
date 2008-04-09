@@ -480,8 +480,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   public String getAttributeValue(String qname) { //todo ?
     Map<String, String> map = myAttributeValueMap;
     while (map == null) {
-      getAttributes();
+      final XmlAttribute[] xmlAttributes = getAttributes();
       map = myAttributeValueMap;
+
+      if (map == null && xmlAttributes != null) {
+        myAttributes = null;
+      }
     }
     return map.get(qname);
   }
