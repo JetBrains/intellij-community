@@ -13,7 +13,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   private final ValueContainerImpl<Value> myAdded;
   private final ValueContainerImpl<Value> myRemoved;
   private final Computable<ValueContainer<Value>> myInitializer;
-  private ValueContainerImpl<Value> myMerged = null;
+  private volatile ValueContainerImpl<Value> myMerged = null;
 
   public ChangeTrackingValueContainer(Computable<ValueContainer<Value>> initializer) {
     myInitializer = initializer;
