@@ -137,7 +137,7 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
         if (hasContradictingMethods(getter1, clazz)) getter1 = null;
 
         GrAccessorMethod getter2 = null;
-        if (PsiType.BOOLEAN.equals(getTypeGroovy())) {
+        if (PsiType.BOOLEAN.equals(getDeclaredType())) {
           getter2 = new GrAccessorMethodImpl(this, false, "is" + name);
           if (hasContradictingMethods(getter2, clazz)) getter2 = null;
         }
