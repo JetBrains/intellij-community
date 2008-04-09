@@ -10,7 +10,7 @@ public class CreateTestNGTestProvider extends CreateTestBaseProvider {
   }
 
   protected String getMarkerClassFQName() {
-    return "org.testng.annotations.Test";
+    return getTestAnnotation();
   }
 
   public String getLibraryPath() {
@@ -25,5 +25,20 @@ public class CreateTestNGTestProvider extends CreateTestBaseProvider {
   @Nullable
   public String getDefaultSuperClass() {
     return null;
+  }
+
+  @Nullable
+  public String getSetUpAnnotation() {
+    return "org.testng.annotations.BeforeTest";
+  }
+
+  @Nullable
+  public String getTearDownAnnotation() {
+    return "org.testng.annotations.AfterTest";
+  }
+
+  @Nullable
+  public String getTestAnnotation() {
+    return "org.testng.annotations.Test";
   }
 }
