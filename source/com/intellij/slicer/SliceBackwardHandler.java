@@ -11,11 +11,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.usageView.UsageInfo;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author cdr
@@ -39,21 +34,11 @@ public class SliceBackwardHandler implements CodeInsightActionHandler {
 
     PsiDocumentManager.getInstance(project).commitAllDocuments(); // prevents problems with smart pointers creation
 
-    Map<SliceUsage, List<SliceUsage>> targetEqualUsages =
-        new THashMap<SliceUsage, List<SliceUsage>>(new TObjectHashingStrategy<SliceUsage>() {
-          public int computeHashCode(SliceUsage object) {
-            return object.getUsageInfo().hashCode();
-          }
 
-          public boolean equals(SliceUsage o1, SliceUsage o2) {
-            return o1.getUsageInfo().equals(o2.getUsageInfo());
-          }
-        });
-                                                     
     final Content[] myContent = new Content[1];
     final ContentManager contentManager = SliceManager.getInstance(project).getContentManager();
     final SliceToolwindowSettings sliceToolwindowSettings = SliceToolwindowSettings.getInstance(project);
-    SlicePanel slicePanel = new SlicePanel(project, new SliceUsage(new UsageInfo(expression), targetEqualUsages, null)) {
+    SlicePanel slicePanel = new SlicePanel(project, new SliceUsage(new UsageInfo(expression), null)) {
       public void dispose() {
         super.dispose();
         contentManager.removeContent(myContent[0], true);

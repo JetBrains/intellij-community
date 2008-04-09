@@ -18,8 +18,7 @@ import java.util.*;
  * @author cdr
  */
 public class SliceUtil {
-  public static boolean processUsagesFlownDownToTheExpression(PsiExpression expression, Processor<SliceUsage> processor, SliceUsage parent,
-                                                              final Map<SliceUsage, List<SliceUsage>> targetEqualUsages) {
+  public static boolean processUsagesFlownDownToTheExpression(PsiExpression expression, Processor<SliceUsage> processor, SliceUsage parent) {
     PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
     if (method == null) return true;
     expression = simplify(expression);
@@ -30,10 +29,10 @@ public class SliceUtil {
 
       Collection<PsiExpression> expressions = getExpressionsFlownTo(expression, method, (PsiVariable)resolved);
 
-      return processFlownFromExpressions(expressions, processor, parent, targetEqualUsages, ref);
+      return processFlownFromExpressions(expressions, processor, parent, ref);
     }
     else if (expression instanceof PsiMethodCallExpression) {
-      return processMethodReturnValue((PsiMethodCallExpression)expression, processor, parent, targetEqualUsages);
+      return processMethodReturnValue((PsiMethodCallExpression)expression, processor, parent);
     }
     return true;
   }
@@ -63,22 +62,21 @@ public class SliceUtil {
   }
 
   private static boolean processFlownFromExpressions(final Collection<PsiExpression> expressions, final Processor<SliceUsage> processor,
-                                                     final SliceUsage parent,
-                                                     final Map<SliceUsage, List<SliceUsage>> targetEqualUsages, final PsiReferenceExpression ref) {
+                                                     final SliceUsage parent, final PsiReferenceExpression ref) {
     for (PsiExpression flowFromExpression : expressions) {
       if (flowFromExpression instanceof PsiReferenceExpression) {
         PsiElement element = ((PsiReferenceExpression)flowFromExpression).resolve();
         if (element instanceof PsiParameter) {
-          if (!processParameterUsages((PsiParameter)element, processor, parent, targetEqualUsages)) return false;
+          if (!processParameterUsages((PsiParameter)element, processor, parent)) return false;
           continue;
         }
         if (element instanceof PsiField) {
-          if (!processFieldUsages((PsiField)element, processor, parent, targetEqualUsages)) return false;
+          if (!processFieldUsages((PsiField)element, processor, parent)) return false;
           continue;
         }
       }
       //generic usage
-      SliceUsage usage = new SliceUsage(new UsageInfo(flowFromExpression), targetEqualUsages, parent);
+      SliceUsage usage = new SliceUsage(new UsageInfo(flowFromExpression), parent);
       if (!processor.process(usage)) return false;
     }
 
@@ -86,7 +84,7 @@ public class SliceUtil {
   }
 
   private static boolean processMethodReturnValue(final PsiMethodCallExpression methodCallExpr, final Processor<SliceUsage> processor,
-                                                  final SliceUsage parent, final Map<SliceUsage, List<SliceUsage>> targetEqualUsages) {
+                                                  final SliceUsage parent) {
     final PsiMethod methodCalled = methodCallExpr.resolveMethod();
     if (methodCalled == null) return true;
 
@@ -107,10 +105,10 @@ public class SliceUtil {
       }
     });
 
-    return processFlownFromExpressions(expressions, processor, parent, targetEqualUsages, methodCallExpr.getMethodExpression());
+    return processFlownFromExpressions(expressions, processor, parent, methodCallExpr.getMethodExpression());
   }
 
-  private static boolean processFieldUsages(final PsiField field, final Processor<SliceUsage> processor, final SliceUsage parent, final Map<SliceUsage, List<SliceUsage>> targetEqualUsages) {
+  private static boolean processFieldUsages(final PsiField field, final Processor<SliceUsage> processor, final SliceUsage parent) {
     return ReferencesSearch.search(field).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference reference) {
         PsiElement element = reference.getElement();
@@ -118,14 +116,13 @@ public class SliceUtil {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
         if (!PsiUtil.isOnAssignmentLeftHand(referenceExpression)) return true;
         PsiExpression rExpression = ((PsiAssignmentExpression)referenceExpression.getParent()).getRExpression();
-        SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(rExpression), targetEqualUsages, parent, field);
+        SliceFieldUsage usage = new SliceFieldUsage(new UsageInfo(rExpression), parent, field);
         return processor.process(usage);
       }
     });
   }
 
-  private static boolean processParameterUsages(final PsiParameter parameter, final Processor<SliceUsage> processor, final SliceUsage parent,
-                                                final Map<SliceUsage, List<SliceUsage>> targetEqualUsages) {
+  private static boolean processParameterUsages(final PsiParameter parameter, final Processor<SliceUsage> processor, final SliceUsage parent) {
     PsiElement declarationScope = parameter.getDeclarationScope();
     if (!(declarationScope instanceof PsiMethod)) return true;
     PsiMethod method = (PsiMethod)declarationScope;
@@ -144,7 +141,7 @@ public class SliceUtil {
           if (!(element instanceof PsiCall)) return true;
           final PsiCall call = (PsiCall)element;
           PsiExpression passExpression = call.getArgumentList().getExpressions()[paramSeqNo];
-          SliceParameterUsage usage = new SliceParameterUsage(new UsageInfo(passExpression), parameter, parent, targetEqualUsages);
+          SliceParameterUsage usage = new SliceParameterUsage(new UsageInfo(passExpression), parameter, parent);
           return processor.process(usage);
         }
       })) return false;
