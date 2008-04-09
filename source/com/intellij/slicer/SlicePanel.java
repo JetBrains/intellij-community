@@ -222,9 +222,11 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider{
 
   private class CloseAction extends CloseTabToolbarAction {
     public final void actionPerformed(final AnActionEvent e) {
-      dispose();
+      close();
     }
   }
+
+  protected abstract void close();
 
   private final class RefreshAction extends com.intellij.ide.actions.RefreshAction {
     public RefreshAction(JComponent tree) {
