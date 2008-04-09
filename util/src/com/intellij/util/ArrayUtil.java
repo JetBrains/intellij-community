@@ -371,4 +371,7 @@ public class ArrayUtil {
     return -1;
   }
 
+  public static boolean contains(final Object o, final Object... objects) {
+    return indexOf(objects, o) >= 0;
+  }
 }
