@@ -107,12 +107,13 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
 
   @Nullable
   private static StubElement buildStubTree(final FileContent inputData) {
-    final FileType fileType = inputData.getFile().getFileType();
+    final VirtualFile file = inputData.getFile();
+    final FileType fileType = file.getFileType();
     if (fileType.isBinary()) {
       final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
       assert builder != null;
 
-      return builder.buildStubTree(inputData.getContent());
+      return builder.buildStubTree(file, inputData.getContent());
     }
 
     final LanguageFileType filetype = (LanguageFileType)fileType;
@@ -186,6 +187,29 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
         oldStubTree = Collections.emptyMap();
       }
       return oldStubTree;
+    }
+
+    protected Map<Integer, SerializedStubTree> mapOld(final FileContent inputData) {
+      if (inputData == null) return Collections.emptyMap();
+      
+      Map<Integer, SerializedStubTree> result = new HashMap<Integer, SerializedStubTree>();
+
+      final int key = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
+
+      final ValueContainer<SerializedStubTree> valueContainer;
+      try {
+        valueContainer = getStorage().read(key);
+      }
+      catch (StorageException e) {
+        throw new RuntimeException(e); // TODO
+      }
+
+      if (valueContainer.size() == 0) return result;
+
+      assert valueContainer.size() == 1;
+      result.put(key, valueContainer.getValueIterator().next());
+
+      return result;
     }
   }
 }

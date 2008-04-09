@@ -5,6 +5,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.EmptyVisitor;
 
+import java.io.IOException;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
@@ -33,14 +35,10 @@ public class ClsStubBuilder {
   }
 
   @Nullable
-  public static PsiFileStub build(byte[] bytes) throws ClsFormatException {
+  public static PsiFileStub build(final VirtualFile vFile, byte[] bytes) throws ClsFormatException {
     final PsiJavaFileStubImpl file = new PsiJavaFileStubImpl("dont.know.yet");
     try {
-      ClassReader reader = new ClassReader(bytes);
-
-      final MyClassVisitor classVisitor = new MyClassVisitor(file);
-      reader.accept(classVisitor, ClassReader.SKIP_CODE);
-      final PsiClassStub result = classVisitor.getResult();
+      final PsiClassStub result = buildClass(vFile, bytes, file);
       if (result == null) return null;
 
       file.setPackageName(getPackageName(result));
@@ -51,11 +49,15 @@ public class ClsStubBuilder {
     return file;
   }
 
-  private static String getPackageName(final PsiClassStub result) {
-    if (result instanceof PsiInnerClassStubPlug) {
-      return "";
-    }
+  private static PsiClassStub buildClass(final VirtualFile vFile, final byte[] bytes, final StubElement parent) {
+    ClassReader reader = new ClassReader(bytes);
 
+    final MyClassVisitor classVisitor = new MyClassVisitor(vFile, parent);
+    reader.accept(classVisitor, ClassReader.SKIP_CODE);
+    return classVisitor.getResult();
+  }
+
+  private static String getPackageName(final PsiClassStub result) {
     final String fqn = result.getQualifiedName();
     final String shortName = result.getName();
     if (fqn == null || Comparing.equal(shortName, fqn)) {
@@ -67,6 +69,7 @@ public class ClsStubBuilder {
 
   private static class MyClassVisitor implements ClassVisitor {
     private final StubElement myParent;
+    private final VirtualFile myVFile;
     private PsiModifierListStub myModlist;
     private PsiClassStub myResult;
     private static final String[] EMPTY_STRINGS = new String[0];
@@ -74,7 +77,8 @@ public class ClsStubBuilder {
     @NonNls private static final String SYNTHETIC_INIT_METHOD = "<init>";
 
 
-    private MyClassVisitor(final StubElement parent) {
+    private MyClassVisitor(final VirtualFile vFile, final StubElement parent) {
+      myVFile = vFile;
       myParent = parent;
     }
 
@@ -89,8 +93,11 @@ public class ClsStubBuilder {
                       final String superName,
                       final String[] interfaces) {
       String fqn = Type.getObjectType(name).getClassName();
-      if (isAnonymousOrChildOf(name)) return;
-      fqn = fqn.replace('$', '.');
+
+      final boolean isInner = fqn.contains("$");
+      if (isInner) {
+        fqn = fqn.replace('$', '.');
+      }
 
       final String shortName = PsiNameHelper.getShortClassName(fqn);
 
@@ -102,6 +109,7 @@ public class ClsStubBuilder {
       final byte flags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false);
 
       myResult = new PsiClassStubImpl(myParent, fqn, shortName, null, flags);
+
       ((PsiClassStubImpl)myResult).setLanguageLevel(convertFromVersion(version));
       myModlist = new PsiModifierListStubImpl(myResult, packModlistFlags(access));
 
@@ -143,16 +151,6 @@ public class ClsStubBuilder {
         }
         new PsiClassReferenceListStubImpl(myResult, interfacesArray, PsiReferenceList.Role.IMPLEMENTS_LIST);
       }
-    }
-
-    private static boolean isAnonymousOrChildOf(final String name) {
-      int len = name.length();
-      int idx = name.indexOf('$');
-      while (idx > 0) {
-        if (idx >= len || Character.isDigit(name.charAt(idx + 1))) return true;
-        idx = name.indexOf('$', idx + 1);
-      }
-      return false;
     }
 
     @Nullable
@@ -259,16 +257,19 @@ public class ClsStubBuilder {
 
     public void visitInnerClass(final String name, final String outerName, final String innerName, final int access) {
       if (innerName != null && outerName != null && Type.getObjectType(outerName).getClassName().equals(myResult.getQualifiedName())) {
-        final String fqn = Type.getObjectType(name.replace('$', '.')).getClassName();
+        final String basename = myVFile.getNameWithoutExtension();
+        final VirtualFile dir = myVFile.getParent();
+        assert dir != null;
 
-        boolean isDeprecated = (access & Opcodes.ACC_DEPRECATED) != 0;
-        boolean isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
-        boolean isEnum = (access & Opcodes.ACC_ENUM) != 0;
-        boolean isAnnotationType = (access & Opcodes.ACC_ANNOTATION) != 0;
-
-        final byte flags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false);
-
-        new PsiClassStubImpl(myResult, fqn, innerName, null, flags);
+        final VirtualFile innerFile = dir.findChild(basename + "$" + innerName + ".class");
+        if (innerFile != null) {
+          try {
+            buildClass(innerFile, innerFile.contentsToByteArray(), myResult);
+          }
+          catch (IOException e) {
+            // No inner class file found, ignore.
+          }
+        }
       }
     }
 

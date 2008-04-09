@@ -124,10 +124,18 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   public void update(int inputId, @Nullable Input content, @Nullable Input oldContent) throws StorageException {
-    final Map<Key, Value> oldData = oldContent != null ? myIndexer.map(oldContent) : Collections.<Key, Value>emptyMap();
-    final Map<Key, Value> data = content != null ? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
+    final Map<Key, Value> oldData = mapOld(oldContent);
+    final Map<Key, Value> data = mapNew(content);
 
     updateWithMap(inputId, oldData, data);
+  }
+
+  protected Map<Key, Value> mapNew(final Input content) {
+    return content != null ? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
+  }
+
+  protected Map<Key, Value> mapOld(final Input oldContent) {
+    return oldContent != null ? myIndexer.map(oldContent) : Collections.<Key, Value>emptyMap();
   }
 
   protected void updateWithMap(final int inputId, final Map<Key, Value> oldData, final Map<Key, Value> newData) throws StorageException {

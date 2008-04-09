@@ -7,8 +7,6 @@ import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiEnumConstantInitializer;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
-import com.intellij.psi.impl.java.stubs.impl.PsiInnerClassStubPlug;
-import com.intellij.psi.impl.java.stubs.impl.PsiInnerClassStubSocket;
 import com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex;
@@ -22,10 +20,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiClass> {
-  private static int NORMAL_CLASS = 0x0;
-  private static int INNER_SOCKET = 0x01;
-  private static int INNER_PLUG = 0x02;
-
   public JavaClassElementType() {
     super("java.CLASS");
   }
@@ -56,17 +50,6 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
       throws IOException {
     dataStream.writeByte(((PsiClassStubImpl)stub).getFlags());
     if (!stub.isAnonymous()) {
-      if (stub instanceof PsiInnerClassStubPlug) {
-        dataStream.writeByte(INNER_PLUG);
-        DataInputOutputUtil.writeNAME(dataStream, ((PsiInnerClassStubPlug)stub).getOuterClassFQN(), nameStorage);
-      }
-      else if (stub instanceof PsiInnerClassStubSocket) {
-        dataStream.writeByte(INNER_SOCKET);
-      }
-      else {
-        dataStream.writeByte(NORMAL_CLASS);
-      }
-
       DataInputOutputUtil.writeNAME(dataStream, stub.getName(), nameStorage);
       DataInputOutputUtil.writeNAME(dataStream, stub.getQualifiedName(), nameStorage);
     }
@@ -80,22 +63,9 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
     byte flags = dataStream.readByte();
 
     if (!PsiClassStubImpl.isAnonymous(flags)) {
-      byte socketFlag = dataStream.readByte();
       String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
       String qname = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-      if (socketFlag == NORMAL_CLASS) {
-        return new PsiClassStubImpl(parentStub, qname, name, null, flags);
-      }
-      else if (socketFlag == INNER_PLUG) {
-        String outerFQN = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-        return new PsiInnerClassStubPlug(parentStub, qname, name, flags, outerFQN);
-      }
-      else if (socketFlag == INNER_SOCKET) {
-        return new PsiInnerClassStubSocket(parentStub, qname, name, flags);
-      }
-      else {
-        throw new RuntimeException("Unexpected socket flag: " + socketFlag);
-      }
+      return new PsiClassStubImpl(parentStub, qname, name, null, flags);
     }
     else {
       String baseref = DataInputOutputUtil.readNAME(dataStream, nameStorage);
