@@ -3,6 +3,7 @@
  */
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiNameHelper;
@@ -39,12 +40,29 @@ public class ClsStubBuilder {
 
       final MyClassVisitor classVisitor = new MyClassVisitor(file);
       reader.accept(classVisitor, ClassReader.SKIP_CODE);
-      if (classVisitor.getResult() == null) return null;
+      final PsiClassStub result = classVisitor.getResult();
+      if (result == null) return null;
+
+      file.setPackageName(getPackageName(result));
     }
     catch (Exception e) {
       throw new ClsFormatException();
     }
     return file;
+  }
+
+  private static String getPackageName(final PsiClassStub result) {
+    if (result instanceof PsiInnerClassStubPlug) {
+      return "";
+    }
+
+    final String fqn = result.getQualifiedName();
+    final String shortName = result.getName();
+    if (fqn == null || Comparing.equal(shortName, fqn)) {
+      return "";
+    }
+
+    return fqn.substring(0, fqn.lastIndexOf('.'));
   }
 
   private static class MyClassVisitor implements ClassVisitor {
@@ -153,7 +171,10 @@ public class ClsStubBuilder {
       final String convertedSuper;
       convertedSuper = SignatureParsing.parseToplevelClassRefSignature(signatureIterator);
       while (signatureIterator.current() != CharacterIterator.DONE) {
-        convertedInterfaces.add(SignatureParsing.parseToplevelClassRefSignature(signatureIterator));
+        final String ifs = SignatureParsing.parseToplevelClassRefSignature(signatureIterator);
+        if (ifs == null) throw new ClsFormatException();
+
+        convertedInterfaces.add(ifs);
       }
       return convertedSuper;
     }

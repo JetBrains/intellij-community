@@ -25,7 +25,16 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
     return myPackageName;
   }
 
+  public void setPackageName(final String packageName) {
+    myPackageName = packageName;
+  }
+
   public IStubFileElementType getType() {
     return JavaStubElementTypes.FILE;
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public String toString() {
+    return "PsiJavaFileStub [" + myPackageName + "]";
   }
 }

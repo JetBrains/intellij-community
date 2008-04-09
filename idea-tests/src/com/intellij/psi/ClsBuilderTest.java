@@ -7,8 +7,8 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.compiled.ClsStubBuilder;
-import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
 import com.intellij.psi.stubs.PsiFileStub;
+import com.intellij.psi.stubs.StubBase;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.cls.ClsFormatException;
 
@@ -36,7 +36,7 @@ public class ClsBuilderTest extends LightIdeaTestCase {
 
     final byte[] bytes = FileUtil.adaptiveLoadBytes(stream);
     final PsiFileStub stub = ClsStubBuilder.build(bytes);
-    final String butWas = ((PsiClassStubImpl)stub).printTree();
+    final String butWas = ((StubBase)stub).printTree();
     String expected = FileUtil.loadTextAndClose(new FileReader(PathManagerEx.getTestDataPath() + "/psi/cls/stubBuilder/" + goldFile));
     expected = StringUtil.convertLineSeparators(expected);
     assertEquals(expected, butWas);
