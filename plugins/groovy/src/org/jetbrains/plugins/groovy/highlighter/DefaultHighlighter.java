@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NonNls;
@@ -128,7 +129,6 @@ public class DefaultHighlighter {
       HighlighterColors.JAVA_STRING.getDefaultAttributes());
 
   public static TextAttributesKey UNTYPED_ACCESS = TextAttributesKey.createTextAttributesKey(UNTYPED_ACCESS_ID,
-      new TextAttributes(HighlighterColors.JAVA_BRACKETS.getDefaultAttributes().getForegroundColor(),
-                         HighlighterColors.JAVA_BRACKETS.getDefaultAttributes().getBackgroundColor(),
-                         HighlighterColors.JAVA_BRACKETS.getDefaultAttributes().getForegroundColor(), EffectType.LINE_UNDERSCORE, Font.PLAIN));
+      new TextAttributes(null, null,
+                         EditorColors.CARET_COLOR.getDefaultColor(), EffectType.LINE_UNDERSCORE, Font.PLAIN));
 }
