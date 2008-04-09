@@ -11,6 +11,7 @@ import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.cache.impl.repositoryCache.TypeInfo;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
@@ -108,7 +109,7 @@ public class ClsStubBuilder {
 
       final byte flags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false);
 
-      myResult = new PsiClassStubImpl(myParent, fqn, shortName, null, flags);
+      myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, flags);
 
       ((PsiClassStubImpl)myResult).setLanguageLevel(convertFromVersion(version));
       myModlist = new PsiModifierListStubImpl(myResult, packModlistFlags(access));
@@ -139,17 +140,17 @@ public class ClsStubBuilder {
 
       String[] interfacesArray = convertedInterfaces.toArray(new String[convertedInterfaces.size()]);
       if (isInterface) {
-        new PsiClassReferenceListStubImpl(myResult, interfacesArray, PsiReferenceList.Role.EXTENDS_LIST);
-        new PsiClassReferenceListStubImpl(myResult, EMPTY_STRINGS, PsiReferenceList.Role.IMPLEMENTS_LIST);
+        new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, interfacesArray, PsiReferenceList.Role.EXTENDS_LIST);
+        new PsiClassReferenceListStubImpl(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, EMPTY_STRINGS, PsiReferenceList.Role.IMPLEMENTS_LIST);
       }
       else {
         if (convertedSuper != null && !"java.lang.Object".equals(convertedSuper)) {
-          new PsiClassReferenceListStubImpl(myResult, new String[] {convertedSuper}, PsiReferenceList.Role.EXTENDS_LIST);
+          new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, new String[] {convertedSuper}, PsiReferenceList.Role.EXTENDS_LIST);
         }
         else {
-          new PsiClassReferenceListStubImpl(myResult, EMPTY_STRINGS, PsiReferenceList.Role.EXTENDS_LIST);
+          new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, EMPTY_STRINGS, PsiReferenceList.Role.EXTENDS_LIST);
         }
-        new PsiClassReferenceListStubImpl(myResult, interfacesArray, PsiReferenceList.Role.IMPLEMENTS_LIST);
+        new PsiClassReferenceListStubImpl(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, interfacesArray, PsiReferenceList.Role.IMPLEMENTS_LIST);
       }
     }
 
@@ -364,10 +365,10 @@ public class ClsStubBuilder {
         for (int i = 0; i < converted.length; i++) {
           converted[i] = Type.getObjectType(exceptions[i]).getClassName();
         }
-        new PsiClassReferenceListStubImpl(stub, converted, PsiReferenceList.Role.THROWS_LIST);
+        new PsiClassReferenceListStubImpl(JavaStubElementTypes.THROWS_LIST, stub, converted, PsiReferenceList.Role.THROWS_LIST);
       }
       else {
-        new PsiClassReferenceListStubImpl(stub, EMPTY_STRINGS, PsiReferenceList.Role.THROWS_LIST);
+        new PsiClassReferenceListStubImpl(JavaStubElementTypes.THROWS_LIST, stub, EMPTY_STRINGS, PsiReferenceList.Role.THROWS_LIST);
       }
 
       return new AnnotationCollectingVisitor(stub, modlist);

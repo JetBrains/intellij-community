@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.parsing.FileTextParsing;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.tree.IChameleonElementType;
@@ -20,34 +20,38 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 
 public interface JavaElementType {
-  //chameleons
-  IElementType TYPE_PARAMETER = new IJavaElementType("TYPE_PARAMETER");
-  IElementType TYPE_PARAMETER_LIST = new IJavaElementType("TYPE_PARAMETER_LIST");
+  IFileElementType JAVA_FILE = JavaStubElementTypes.FILE;
 
-  IElementType JAVA_CODE_REFERENCE = new IJavaElementType("JAVA_CODE_REFERENCE");
+  IElementType CLASS = JavaStubElementTypes.CLASS;
+  IElementType ANONYMOUS_CLASS = JavaStubElementTypes.ANONYMOUS_CLASS;
+  IElementType ENUM_CONSTANT_INITIALIZER = JavaStubElementTypes.ENUM_CONSTANT_INITIALIZER;
 
-  IElementType PACKAGE_STATEMENT = new IJavaElementType("PACKAGE_STATEMENT");
-  IElementType CLASS = new IJavaElementType("CLASS");
-  IElementType ANONYMOUS_CLASS = new IJavaElementType("ANONYMOUS_CLASS");
-  IElementType ENUM_CONSTANT_INITIALIZER = new IJavaElementType("ENUM_CONSTANT_INITIALIZER");
-  IElementType IMPORT_STATEMENT = new IJavaElementType("IMPORT_STATEMENT");
-  IElementType IMPORT_STATIC_STATEMENT = new IJavaElementType("IMPORT_STATIC_STATEMENT");
+  IElementType TYPE_PARAMETER = JavaStubElementTypes.TYPE_PARAMETER;
+  IElementType TYPE_PARAMETER_LIST = JavaStubElementTypes.TYPE_PARAMETER_LIST;
+
+  IElementType IMPORT_STATEMENT = JavaStubElementTypes.IMPORT_STATEMENT;
+  IElementType IMPORT_STATIC_STATEMENT = JavaStubElementTypes.IMPORT_STATIC_STATEMENT;
+
+  IElementType MODIFIER_LIST = JavaStubElementTypes.MODIFIER_LIST;
+  IElementType EXTENDS_LIST = JavaStubElementTypes.EXTENDS_LIST;
+  IElementType IMPLEMENTS_LIST = JavaStubElementTypes.IMPLEMENTS_LIST;
+  IElementType FIELD = JavaStubElementTypes.FIELD;
+  IElementType ENUM_CONSTANT = JavaStubElementTypes.ENUM_CONSTANT;
+  IElementType METHOD = JavaStubElementTypes.METHOD;
+
+  IElementType CLASS_INITIALIZER = JavaStubElementTypes.CLASS_INITIALIZER;
+  IElementType PARAMETER = JavaStubElementTypes.PARAMETER;
+  IElementType PARAMETER_LIST = JavaStubElementTypes.PARAMETER_LIST;
+  IElementType EXTENDS_BOUND_LIST = JavaStubElementTypes.EXTENDS_BOUND_LIST;
+  IElementType THROWS_LIST = JavaStubElementTypes.THROWS_LIST;
+
   IElementType IMPORT_STATIC_REFERENCE = new IJavaElementType("IMPORT_STATIC_REFERENCE");
-  IElementType MODIFIER_LIST = new IJavaElementType("MODIFIER_LIST");
-  IElementType EXTENDS_LIST = new IJavaElementType("EXTENDS_LIST");
-  IElementType IMPLEMENTS_LIST = new IJavaElementType("IMPLEMENTS_LIST");
-  IElementType FIELD = new IJavaElementType("FIELD");
-  IElementType ENUM_CONSTANT = new IJavaElementType("ENUM_CONSTANT");
-  IElementType METHOD = new IJavaElementType("METHOD");
-  IElementType LOCAL_VARIABLE = new IJavaElementType("LOCAL_VARIABLE");
-  IElementType CLASS_INITIALIZER = new IJavaElementType("CLASS_INITIALIZER");
-  IElementType PARAMETER = new IJavaElementType("PARAMETER");
   IElementType TYPE = new IJavaElementType("TYPE");
-  IElementType PARAMETER_LIST = new IJavaElementType("PARAMETER_LIST");
-  IElementType EXTENDS_BOUND_LIST = new IJavaElementType("EXTENDS_BOUND_LIST");
-  IElementType THROWS_LIST = new IJavaElementType("THROWS_LIST");
   IElementType REFERENCE_PARAMETER_LIST = new IJavaElementType("REFERENCE_PARAMETER_LIST");
+  IElementType JAVA_CODE_REFERENCE = new IJavaElementType("JAVA_CODE_REFERENCE");
+  IElementType PACKAGE_STATEMENT = new IJavaElementType("PACKAGE_STATEMENT");
 
+  IElementType LOCAL_VARIABLE = new IJavaElementType("LOCAL_VARIABLE");
   IElementType REFERENCE_EXPRESSION = new IJavaElementType("REFERENCE_EXPRESSION");
   IElementType LITERAL_EXPRESSION = new IJavaElementType("LITERAL_EXPRESSION");
   IElementType THIS_EXPRESSION = new IJavaElementType("THIS_EXPRESSION");
@@ -96,18 +100,6 @@ public interface JavaElementType {
   IElementType ANNOTATION = new IJavaElementType("ANNOTATION");
   IElementType NAME_VALUE_PAIR = new IJavaElementType("NAME_VALUE_PAIR");
   IElementType ANNOTATION_PARAMETER_LIST = new IJavaElementType("ANNOTATION_PARAMETER_LIST");
-
-  IFileElementType JAVA_FILE = new IFileElementType("JAVA_FILE", StdLanguages.JAVA){
-    public ASTNode parseContents(ASTNode chameleon) {
-      final CharSequence seq = ((LeafElement)chameleon).getInternedText();
-
-      final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
-      final JavaLexer lexer = new JavaLexer(PsiUtil.getLanguageLevel(TreeUtil.getFileElement((LeafElement)chameleon).getPsi()));
-      return FileTextParsing.parseFileText(manager, lexer,
-                                           seq, 0, seq.length(), SharedImplUtil.findCharTableByTree(chameleon));
-    }
-    public boolean isParsable(CharSequence buffer, final Project project) {return true;}
-  };
 
   IElementType IMPORT_LIST = new IChameleonElementType("IMPORT_LIST_TEXT", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {

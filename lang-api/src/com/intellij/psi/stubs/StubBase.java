@@ -8,6 +8,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -66,6 +67,17 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
     List<E> result = new ArrayList<E>();
     for(StubElement childStub: getChildrenStubs()) {
       if (childStub.getStubType() == elementType) {
+        //noinspection unchecked
+        result.add((E)childStub.getPsi());
+      }
+    }
+    return result.toArray(array);
+  }
+
+  public <E> E[] getChildrenByType(final TokenSet filter, final E[] array) {
+    List<E> result = new ArrayList<E>();
+    for(StubElement childStub: getChildrenStubs()) {
+      if (filter.contains(childStub.getStubType())) {
         //noinspection unchecked
         result.add((E)childStub.getPsi());
       }

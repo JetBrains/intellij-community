@@ -17,11 +17,7 @@ import java.io.IOException;
 
 public class JavaModifierListElementType extends JavaStubElementType<PsiModifierListStub, PsiModifierList> {
   public JavaModifierListElementType() {
-    super("java.modlist");
-  }
-
-  public String getExternalId() {
-    return "java.modlist";
+    super("MODIFIER_LIST");
   }
 
   public PsiModifierList createPsi(final PsiModifierListStub stub) {

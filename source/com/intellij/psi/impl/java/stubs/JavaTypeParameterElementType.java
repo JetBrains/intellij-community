@@ -16,7 +16,7 @@ import java.io.IOException;
 
 public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypeParameterStub, PsiTypeParameter> {
   public JavaTypeParameterElementType() {
-    super("java.TYPE_PARAMETR");
+    super("TYPE_PARAMETR");
   }
 
   public PsiTypeParameter createPsi(final PsiTypeParameterStub stub) {
@@ -25,10 +25,6 @@ public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypePar
 
   public PsiTypeParameterStub createStub(final PsiTypeParameter psi, final StubElement parentStub) {
     return new PsiTypeParameterStubImpl(parentStub, psi.getName());
-  }
-
-  public String getExternalId() {
-    return "java.TYPE_PARAMETR";
   }
 
   public void serialize(final PsiTypeParameterStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)

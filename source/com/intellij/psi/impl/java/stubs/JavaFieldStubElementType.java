@@ -15,14 +15,16 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, PsiField> {
-  public JavaFieldStubElementType() {
-    super("java.FIELD");
+  public JavaFieldStubElementType(@NotNull @NonNls final String id) {
+    super(id);
   }
 
   public PsiField createPsi(final PsiFieldStub stub) {
@@ -34,10 +36,6 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
     final TypeInfo type = TypeInfo.create(psi.getType(), psi.getTypeElement());
     final byte flags = PsiFieldStubImpl.packFlags(psi instanceof PsiEnumConstant, psi.isDeprecated());
     return new PsiFieldStubImpl(parentStub, psi.getName(), type, initializer != null ? initializer.getText() : null, flags);
-  }
-
-  public String getExternalId() {
-    return "java.FIELD";
   }
 
   public void serialize(final PsiFieldStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)

@@ -15,7 +15,7 @@ import java.io.IOException;
 
 public class JavaTypeParameterListElementType extends JavaStubElementType<PsiTypeParameterListStub, PsiTypeParameterList> {
   public JavaTypeParameterListElementType() {
-    super("java.TYPE_PARAMETER_LIST");
+    super("TYPE_PARAMETER_LIST");
   }
 
   public PsiTypeParameterList createPsi(final PsiTypeParameterListStub stub) {
@@ -24,10 +24,6 @@ public class JavaTypeParameterListElementType extends JavaStubElementType<PsiTyp
 
   public PsiTypeParameterListStub createStub(final PsiTypeParameterList psi, final StubElement parentStub) {
     return new PsiTypeParameterListStubImpl(parentStub);
-  }
-
-  public String getExternalId() {
-    return "java.TYPE_PARAMETER_LIST";
   }
 
   public void serialize(final PsiTypeParameterListStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)

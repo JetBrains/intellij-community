@@ -18,11 +18,7 @@ import java.io.IOException;
 
 public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotationStub, PsiAnnotation> {
   public JavaAnnotationElementType() {
-    super("java.ANNOTATION");
-  }
-
-  public String getExternalId() {
-    return "java.ANNOTATION";
+    super("ANNOTATION");
   }
 
   public PsiAnnotation createPsi(final PsiAnnotationStub stub) {

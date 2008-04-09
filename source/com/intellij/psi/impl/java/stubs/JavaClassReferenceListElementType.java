@@ -13,14 +13,16 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class JavaClassReferenceListElementType extends JavaStubElementType<PsiClassReferenceListStub, PsiReferenceList> {
-  public JavaClassReferenceListElementType() {
-    super("java.REFLIST");
+  public JavaClassReferenceListElementType(@NotNull @NonNls String id) {
+    super(id);
   }
 
   public PsiReferenceList createPsi(final PsiClassReferenceListStub stub) {
@@ -28,7 +30,22 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
   }
 
   public PsiClassReferenceListStub createStub(final PsiReferenceList psi, final StubElement parentStub) {
-    return new PsiClassReferenceListStubImpl(parentStub, getTexts(psi), psi.getRole());
+    return new PsiClassReferenceListStubImpl(roleToElementType(psi.getRole()), parentStub, getTexts(psi), psi.getRole());
+  }
+
+  private static JavaClassReferenceListElementType roleToElementType(final PsiReferenceList.Role role) {
+    switch (role) {
+      case EXTENDS_BOUNDS_LIST:
+        return JavaStubElementTypes.EXTENDS_BOUND_LIST;
+      case EXTENDS_LIST:
+        return JavaStubElementTypes.EXTENDS_LIST;
+      case IMPLEMENTS_LIST:
+        return JavaStubElementTypes.IMPLEMENTS_LIST;
+      case THROWS_LIST:
+        return JavaStubElementTypes.THROWS_LIST;
+    }
+
+    throw new RuntimeException("Unknown role: " + role);
   }
 
   private static String[] getTexts(PsiReferenceList psi) {
@@ -41,15 +58,9 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
     return texts;
   }
 
-  public String getExternalId() {
-    return "java.REFLIST";
-  }
-
   public void serialize(final PsiClassReferenceListStub stub,
                         final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage) throws IOException {
-    final PsiReferenceList.Role role = stub.getRole();
-    byte encodedRole = role == PsiReferenceList.Role.EXTENDS_LIST ? 0 : role == PsiReferenceList.Role.IMPLEMENTS_LIST ? (byte)1 : 2;
-    dataStream.writeByte(encodedRole);
+    dataStream.writeByte(encodeRole(stub.getRole()));
     final String[] names = stub.getReferencedNames();
     DataInputOutputUtil.writeINT(dataStream, names.length);
     for (String name : names) {
@@ -66,11 +77,32 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
       names[i] = DataInputOutputUtil.readNAME(dataStream, nameStorage);
     }
 
-    return new PsiClassReferenceListStubImpl(parentStub, names, role == 0
-                                                                      ? PsiReferenceList.Role.EXTENDS_LIST
-                                                                      : role == 1
-                                                                        ? PsiReferenceList.Role.IMPLEMENTS_LIST
-                                                                        : PsiReferenceList.Role.THROWS_LIST);
+    final PsiReferenceList.Role decodedRole = decodeRole(role);
+    return new PsiClassReferenceListStubImpl(roleToElementType(decodedRole), parentStub, names, decodedRole);
+  }
+
+  private static PsiReferenceList.Role decodeRole(int code) {
+    switch (code) {
+      case 0: return PsiReferenceList.Role.EXTENDS_LIST;
+      case 1: return PsiReferenceList.Role.IMPLEMENTS_LIST;
+      case 2: return PsiReferenceList.Role.THROWS_LIST;
+      case 3: return PsiReferenceList.Role.EXTENDS_BOUNDS_LIST;
+
+      default:
+        throw new RuntimeException("Unknown role code: " + code);
+    }
+  }
+
+  private static byte encodeRole(PsiReferenceList.Role role) {
+    switch (role) {
+      case EXTENDS_LIST:         return 0;
+      case IMPLEMENTS_LIST:      return 1;
+      case THROWS_LIST:          return 2;
+      case EXTENDS_BOUNDS_LIST:  return 3;
+
+      default:
+        throw new RuntimeException("Unknown role code: " + role);
+    }
   }
 
   public void indexStub(final PsiClassReferenceListStub stub, final IndexSink sink) {

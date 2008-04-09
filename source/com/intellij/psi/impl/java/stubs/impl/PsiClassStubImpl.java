@@ -5,7 +5,7 @@ package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.JavaClassElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
@@ -26,12 +26,13 @@ public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub
   private LanguageLevel myLanguageLevel = null;
   private String mySourceFileName = null;
 
-  public PsiClassStubImpl(final StubElement parent,
+  public PsiClassStubImpl(final JavaClassElementType type,
+                          final StubElement parent,
                           final String qualifiedName,
                           final String name,
                           final String baseRefText,
                           final byte flags) {
-    super(parent, JavaStubElementTypes.CLASS);
+    super(parent, type);
     myQualifiedName = qualifiedName;
     myName = name;
     myBaseRefText = baseRefText;
@@ -63,7 +64,11 @@ public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub
   }
 
   public boolean isEnumConstantInitializer() {
-    return (myFlags & ENUM_CONSTANT_INITIALIZER) != 0;
+    return isEnumConstInitializer(myFlags);
+  }
+
+  public static boolean isEnumConstInitializer(final byte flags) {
+    return (flags & ENUM_CONSTANT_INITIALIZER) != 0;
   }
 
   public boolean isAnonymous() {

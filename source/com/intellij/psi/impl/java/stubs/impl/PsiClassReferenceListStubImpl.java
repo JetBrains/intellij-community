@@ -4,7 +4,7 @@
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.psi.PsiReferenceList;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.JavaClassReferenceListElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
@@ -13,8 +13,8 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
   private final PsiReferenceList.Role myRole;
   private final String[] myNames;
 
-  public PsiClassReferenceListStubImpl(final StubElement parent, final String[] names, final PsiReferenceList.Role role) {
-    super(parent, JavaStubElementTypes.REFLIST);
+  public PsiClassReferenceListStubImpl(final JavaClassReferenceListElementType type, final StubElement parent, final String[] names, final PsiReferenceList.Role role) {
+    super(parent, type);
     myNames = names;
     myRole = role;
   }

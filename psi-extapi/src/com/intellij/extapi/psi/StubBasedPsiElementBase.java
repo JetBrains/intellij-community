@@ -170,6 +170,21 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     }
   }
 
+  public <Psi extends PsiElement> Psi[] getStubOrPsiChildren(TokenSet filter, Psi[] array) {
+    if (myStub != null) {
+      //noinspection unchecked
+      return (Psi[])myStub.getChildrenByType(filter, array);
+    }
+    else {
+      final ASTNode[] nodes = getNode().getChildren(filter);
+      Psi[] psiElements = (Psi[])java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), nodes.length);
+      for (int i = 0; i < nodes.length; i++) {
+        psiElements[i] = (Psi)nodes[i].getPsi();
+      }
+      return psiElements;
+    }
+  }
+
   @Nullable
   protected <E extends PsiElement> E getStubOrPsiParentOfType(final Class<E> parentClass) {
     if (myStub != null) {

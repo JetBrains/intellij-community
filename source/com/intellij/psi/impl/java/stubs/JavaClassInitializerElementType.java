@@ -15,7 +15,7 @@ import java.io.IOException;
 
 public class JavaClassInitializerElementType extends JavaStubElementType<PsiClassInitializerStub, PsiClassInitializer> {
   public JavaClassInitializerElementType() {
-    super("java.CLASS_INITIALIZER");
+    super("CLASS_INITIALIZER");
   }
 
   public PsiClassInitializer createPsi(final PsiClassInitializerStub stub) {
@@ -24,10 +24,6 @@ public class JavaClassInitializerElementType extends JavaStubElementType<PsiClas
 
   public PsiClassInitializerStub createStub(final PsiClassInitializer psi, final StubElement parentStub) {
     return new PsiClassInitializerStubImpl(parentStub);
-  }
-
-  public String getExternalId() {
-    return "java.CLASS_INITIALIZER";
   }
 
   public void serialize(final PsiClassInitializerStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)

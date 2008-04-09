@@ -32,13 +32,17 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
   private final static int STATIC = 0x02;
 
   public PsiImportStatementStubImpl(final StubElement parent, final String text, final byte flags) {
-    super(parent, JavaStubElementTypes.IMPORT_STATEMENT);
+    super(parent, isStatic(flags) ? JavaStubElementTypes.IMPORT_STATIC_STATEMENT : JavaStubElementTypes.IMPORT_STATEMENT);
     myText = text;
     myFlags = flags;
   }
 
   public boolean isStatic() {
-    return (myFlags & STATIC) != 0;
+    return isStatic(myFlags);
+  }
+
+  private static boolean isStatic(final byte flags) {
+    return (flags & STATIC) != 0;
   }
 
   public boolean isOnDemand() {

@@ -62,7 +62,7 @@ public class PsiTypeParameterExtendsBoundsListImpl extends SlaveRepositoryPsiEle
   }
 
   public Role getRole() {
-    return Role.EXTENDS_LIST;
+    return Role.EXTENDS_BOUNDS_LIST;
   }
 
   private PsiClassType[] createTypes(final PsiJavaCodeReferenceElement[] refs) {

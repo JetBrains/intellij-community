@@ -15,7 +15,7 @@ import java.io.IOException;
 
 public class JavaImportListElementType extends JavaStubElementType<PsiImportListStub, PsiImportList> {
   public JavaImportListElementType() {
-    super("java.IMPORT_LIST");
+    super("IMPORT_LIST");
   }
 
   public PsiImportList createPsi(final PsiImportListStub stub) {
@@ -24,10 +24,6 @@ public class JavaImportListElementType extends JavaStubElementType<PsiImportList
 
   public PsiImportListStub createStub(final PsiImportList psi, final StubElement parentStub) {
     return new PsiImportListStubImpl(parentStub);
-  }
-
-  public String getExternalId() {
-    return "java.IMPORT_LIST";
   }
 
   public void serialize(final PsiImportListStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)

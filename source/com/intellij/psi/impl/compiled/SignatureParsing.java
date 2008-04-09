@@ -4,6 +4,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterListStub;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
@@ -60,7 +61,7 @@ public class SignatureParsing {
 
     if (!bounds.isEmpty()) {
       String[] sbounds = bounds.toArray(new String[bounds.size()]);
-      new PsiClassReferenceListStubImpl(parameterStub, sbounds, PsiReferenceList.Role.EXTENDS_LIST);
+      new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_BOUND_LIST, parameterStub, sbounds, PsiReferenceList.Role.EXTENDS_LIST);
     }
 
     return parameterStub;

@@ -21,11 +21,7 @@ import java.io.IOException;
 
 public class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, PsiMethod> {
   public JavaMethodElementType() {
-    super("java.METHOD");
-  }
-
-  public String getExternalId() {
-    return "java.METHOD";
+    super("METHOD");
   }
 
   public PsiMethod createPsi(final PsiMethodStub stub) {

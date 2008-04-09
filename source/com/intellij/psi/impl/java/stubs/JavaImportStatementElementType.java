@@ -11,14 +11,16 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class JavaImportStatementElementType extends JavaStubElementType<PsiImportStatementStub, PsiImportStatementBase> {
-  public JavaImportStatementElementType() {
-    super("java.IMPORT_STATEMENT");
+  public JavaImportStatementElementType(@NonNls @NotNull final String id) {
+    super(id);
   }
 
   public PsiImportStatementBase createPsi(final PsiImportStatementStub stub) {
@@ -29,10 +31,6 @@ public class JavaImportStatementElementType extends JavaStubElementType<PsiImpor
     final byte flags = PsiImportStatementStubImpl.packFlags(psi.isOnDemand(), psi instanceof PsiImportStaticStatement);
     final PsiJavaCodeReferenceElement ref = psi.getImportReference();
     return new PsiImportStatementStubImpl(parentStub, ref != null ? ref.getCanonicalText() : null, flags);
-  }
-
-  public String getExternalId() {
-    return "java.IMPORT_STATEMENT";
   }
 
   public void serialize(final PsiImportStatementStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)

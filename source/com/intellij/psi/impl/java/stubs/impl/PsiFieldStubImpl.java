@@ -26,7 +26,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
   private final static int DEPRECATED = 0x02;
 
   public PsiFieldStubImpl(final StubElement parent, final String name, final TypeInfo type, final String initializer, final byte flags) {
-    super(parent, JavaStubElementTypes.FIELD);
+    super(parent, isEnumConst(flags) ? JavaStubElementTypes.ENUM_CONSTANT : JavaStubElementTypes.FIELD);
 
     if (initializer != null && initializer.length() > INITIALIZER_LENGTH_LIMIT) {
       myInitializer = INITIALIZER_TOO_LONG;
@@ -54,7 +54,11 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
   }
 
   public boolean isEnumConstant() {
-    return (myFlags & ENUM_CONST) != 0;
+    return isEnumConst(myFlags);
+  }
+
+  private static boolean isEnumConst(final byte flags) {
+    return (flags & ENUM_CONST) != 0;
   }
 
   public boolean isDeprecated() {

@@ -14,18 +14,16 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiClass> {
-  public JavaClassElementType() {
-    super("java.CLASS");
-  }
-
-  public String getExternalId() {
-    return "java.CLASS";
+  public JavaClassElementType(@NotNull @NonNls final String id) {
+    super(id);
   }
 
   public PsiClass createPsi(final PsiClassStub stub) {
@@ -33,16 +31,26 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
   }
 
   public PsiClassStub createStub(final PsiClass psi, final StubElement parentStub) {
+    final boolean isAnonymous = psi instanceof PsiAnonymousClass;
+    final boolean isEnumConst = psi instanceof PsiEnumConstantInitializer;
+
     byte flags = PsiClassStubImpl.packFlags(psi.isDeprecated(),
                                             psi.isInterface(),
                                             psi.isEnum(),
-                                            psi instanceof PsiEnumConstantInitializer,
-                                            psi instanceof PsiAnonymousClass,
+                                            isEnumConst,
+                                            isAnonymous,
                                             psi.isAnnotationType(),
-                                            psi instanceof PsiAnonymousClass && ((PsiAnonymousClass)psi).isInQualifiedNew());
+                                            isAnonymous && ((PsiAnonymousClass)psi).isInQualifiedNew());
 
-    String baseRef = psi instanceof PsiAnonymousClass ? ((PsiAnonymousClass)psi).getBaseClassReference().getText() : null;
-    return new PsiClassStubImpl(parentStub, psi.getQualifiedName(), psi.getName(), baseRef, flags);
+    String baseRef = isAnonymous ? ((PsiAnonymousClass)psi).getBaseClassReference().getText() : null;
+    final JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
+    return new PsiClassStubImpl(type, parentStub, psi.getQualifiedName(), psi.getName(), baseRef, flags);
+  }
+
+  public static JavaClassElementType typeForClass(final boolean anonymous, final boolean enumConst) {
+    return enumConst
+           ? JavaStubElementTypes.ENUM_CONSTANT_INITIALIZER
+           : anonymous ? JavaStubElementTypes.ANONYMOUS_CLASS : JavaStubElementTypes.CLASS;
   }
 
 
@@ -62,14 +70,18 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
                                   final StubElement parentStub, final PersistentStringEnumerator nameStorage) throws IOException {
     byte flags = dataStream.readByte();
 
-    if (!PsiClassStubImpl.isAnonymous(flags)) {
+    final boolean isAnonymous = PsiClassStubImpl.isAnonymous(flags);
+    final boolean isEnumConst = PsiClassStubImpl.isEnumConstInitializer(flags);
+    final JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
+
+    if (!isAnonymous) {
       String name = DataInputOutputUtil.readNAME(dataStream, nameStorage);
       String qname = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-      return new PsiClassStubImpl(parentStub, qname, name, null, flags);
+      return new PsiClassStubImpl(type, parentStub, qname, name, null, flags);
     }
     else {
       String baseref = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-      return new PsiClassStubImpl(parentStub, null, null, baseref, flags);
+      return new PsiClassStubImpl(type, parentStub, null, null, baseref, flags);
     }
   }
 

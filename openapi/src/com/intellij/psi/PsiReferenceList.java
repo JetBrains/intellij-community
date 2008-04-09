@@ -49,6 +49,7 @@ public interface PsiReferenceList extends PsiElement {
   enum Role {
     THROWS_LIST,
     EXTENDS_LIST,
-    IMPLEMENTS_LIST
+    IMPLEMENTS_LIST,
+    EXTENDS_BOUNDS_LIST
   }
 }
