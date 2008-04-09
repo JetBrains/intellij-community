@@ -104,7 +104,7 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase{
     myFixture.configureByText(fileType, text.replaceAll("\\|", "<caret>"));
     tuneCompletionFile(myFixture.getFile());
     final LookupElement[] elements = myFixture.completeBasic();
-    if (elements != null) {
+    if (elements != null && elements.length > 0) {
       fail(Arrays.toString(elements));
     }
     myFixture.checkResult(resultText.replaceAll("\\|", "<caret>"));
