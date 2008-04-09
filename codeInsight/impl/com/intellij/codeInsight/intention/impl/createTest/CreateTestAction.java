@@ -1,9 +1,8 @@
-package com.intellij.codeInsight.intention.impl;
+package com.intellij.codeInsight.intention.impl.createTest;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -11,8 +10,6 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
-import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,12 +19,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
 
 public class CreateTestAction extends PsiElementBaseIntentionAction {
   @NotNull
@@ -70,23 +63,13 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     PsiDirectory srcDir = file.getContainingDirectory();
     PsiPackage srcPackage = JavaDirectoryService.getInstance().getPackage(srcDir);
 
-    ensureJuntLibraryAttached(project, srcModule);
-
-    CreateTestDialog d = new CreateTestDialog(project,
-                                              getText(),
-                                              srcClass,
-                                              hasJUnitLib(project) ? "junit.framework.TestCase" : "",
-                                              srcPackage,
-                                              srcModule);
+    final CreateTestDialog d = new CreateTestDialog(project,
+                                                    getText(),
+                                                    srcClass,
+                                                    srcPackage,
+                                                    srcModule);
     d.show();
     if (!d.isOK()) return;
-
-    final String targetClassName = d.getClassName();
-    final String superClassName = d.getSuperClassName();
-    final PsiDirectory targetDirectory = d.getTargetDirectory();
-    final MemberInfo[] methods = d.getSelectedMethods();
-
-    if (targetDirectory == null) return;
 
     PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
       public void run() {
@@ -95,14 +78,17 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
             try {
               IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
-              PsiClass targetClass = JavaDirectoryService.getInstance().createClass(targetDirectory, targetClassName);
-              addSuperClass(targetClass, project, superClassName);
-              addTestMethods(targetClass, methods);
+              PsiClass targetClass = JavaDirectoryService.getInstance().createClass(d.getTargetDirectory(), d.getClassName());
+              addSuperClass(targetClass, project, d.getSuperClassName());
+              addTestMethods(targetClass,
+                             d.getSelectedMethods(),
+                             d.shouldGeneratedBefore(),
+                             d.shouldGeneratedAfter());
 
               CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
             }
             catch (IncorrectOperationException e) {
-              showErrorLater(project, targetClassName);
+              showErrorLater(project, d.getClassName());
             }
           }
         });
@@ -118,69 +104,6 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
                                  CodeInsightBundle.message("intention.error.cannot.create.class.title"));
       }
     });
-  }
-
-  private void ensureJuntLibraryAttached(Project project, final Module srcModule) {
-    if (hasJUnitLib(project) || hasTestNGLib(project)) return;
-
-    JLabel label = new JLabel(CodeInsightBundle.message("intention.create.test.no.testing.library"));
-
-    JRadioButton junit3Button = new JRadioButton("JUnit3");
-    JRadioButton junit4Button = new JRadioButton("JUnit4");
-    JRadioButton testngButton = new JRadioButton("TestNG");
-    ButtonGroup group = new ButtonGroup();
-    group.add(junit3Button);
-    group.add(junit4Button);
-    group.add(testngButton);
-    junit3Button.setSelected(true);
-
-    testngButton.setEnabled(getTestNGJarPath() != null);
-
-    JPanel buttonsPanel = new JPanel();
-    BoxLayout l = new BoxLayout(buttonsPanel, BoxLayout.Y_AXIS);
-    buttonsPanel.setLayout(l);
-    buttonsPanel.add(junit3Button);
-    buttonsPanel.add(junit4Button);
-    buttonsPanel.add(testngButton);
-
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(label, BorderLayout.NORTH);
-    panel.add(buttonsPanel, BorderLayout.CENTER);
-
-    DialogBuilder builder = new DialogBuilder(project);
-    builder.setTitle(getText());
-    builder.setCenterPanel(panel);
-    int result = builder.show();
-
-    if (result != 0) return;
-
-    final String[] path = new String[1];
-    if (junit3Button.isSelected()) path[0] = JavaSdkUtil.getJunit3JarPath();
-    if (junit4Button.isSelected()) path[0] = JavaSdkUtil.getJunit4JarPath();
-    if (testngButton.isSelected()) path[0] = getTestNGJarPath();
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        OrderEntryFix.addJarToRoots(path[0], srcModule);
-      }
-    });
-  }
-
-  private boolean hasJUnitLib(Project project) {
-    return findClass(project, "junit.framework.TestCase") != null;
-  }
-
-  private boolean hasTestNGLib(Project project) {
-    return findClass(project, "org.testng.annotations.Test") != null;
-  }
-
-  private static String getTestNGJarPath() {
-    try {
-      return PathUtil.getJarPathForClass(Class.forName("org.testng.annotations.Test"));
-    }
-    catch (ClassNotFoundException e) {
-      return null;
-    }
   }
 
   private void addSuperClass(PsiClass targetClass, Project project, String superClassName) throws IncorrectOperationException {
@@ -204,15 +127,23 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     return JavaPsiFacade.getInstance(project).findClass(fqName, scope);
   }
 
+  private void addTestMethods(PsiClass targetClass,
+                              MemberInfo[] methods,
+                              boolean generateBefore,
+                              boolean generateAfter) throws IncorrectOperationException {
+    if (generateBefore) addMethod(targetClass, "setUp");
+    if (generateAfter) addMethod(targetClass, "tearDown");
 
-  private void addTestMethods(PsiClass targetClass, MemberInfo[] methods) throws IncorrectOperationException {
-    PsiElementFactory f = JavaPsiFacade.getInstance(targetClass.getProject()).getElementFactory();
     for (MemberInfo m : methods) {
-      String name = m.getMember().getName();
-      PsiMethod test = f.createMethod("test" + StringUtil.capitalize(name), PsiType.VOID);
-      test.getBody().add(f.createCommentFromText("// Add your test code here", test));
-      targetClass.add(test);
+      addMethod(targetClass, "test" + StringUtil.capitalize(m.getMember().getName()));
     }
+  }
+
+  private void addMethod(PsiClass targetClass, String name) throws IncorrectOperationException {
+    PsiElementFactory f = JavaPsiFacade.getInstance(targetClass.getProject()).getElementFactory();
+    PsiMethod test = f.createMethod(name, PsiType.VOID);
+    test.getBody().add(f.createCommentFromText("// Add your code here", test));
+    targetClass.add(test);
   }
 
   public boolean startInWriteAction() {

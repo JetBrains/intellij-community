@@ -1,15 +1,18 @@
-package com.intellij.codeInsight.intention.impl;
+package com.intellij.codeInsight.intention.impl.createTest;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -53,12 +56,13 @@ public class CreateTestDialog extends DialogWrapper {
   private EditorTextField mySuperClassField;
   private PsiTypeCodeFragment mySuperClassFieldCodeFragment;
   private ReferenceEditorComboWithBrowseButton myTargetPackageField;
+  private JCheckBox myGenerateBeforeBox;
+  private JCheckBox myGenerateAfterBox;
   private MemberSelectionTable myMembersTable;
 
   public CreateTestDialog(@NotNull Project project,
                           @NotNull String title,
                           PsiClass targetClass,
-                          @NotNull String superClassName,
                           PsiPackage targetPackage,
                           Module targetModule) {
     super(project, true);
@@ -67,17 +71,22 @@ public class CreateTestDialog extends DialogWrapper {
     myTargetClass = targetClass;
     myTargetModule = targetModule;
 
-    initControls(targetClass, superClassName, targetPackage);
+    initControls(targetClass, targetPackage);
     setTitle(title);
     init();
   }
 
-  private void initControls(PsiClass targetClass, String superClassName, PsiPackage targetPackage) {
+  private void initControls(PsiClass targetClass, PsiPackage targetPackage) {
     myTargetClassNameField = new JTextField(targetClass.getName() + "Test");
     setPreferredSize(myTargetClassNameField);
+    myTargetClassNameField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        getOKAction().setEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(getClassName()));
+      }
+    });
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
-    mySuperClassFieldCodeFragment = factory.createTypeCodeFragment(superClassName, targetPackage, true);
+    mySuperClassFieldCodeFragment = factory.createTypeCodeFragment("", targetPackage, true);
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(mySuperClassFieldCodeFragment);
     mySuperClassField = new EditorTextField(document, myProject, StdFileTypes.JAVA);
 
@@ -87,6 +96,16 @@ public class CreateTestDialog extends DialogWrapper {
         doSelectPackage();
       }
     }, targetPackageName, PsiManager.getInstance(myProject), false, RECENTS_KEY);
+
+    new AnAction() {
+      public void actionPerformed(AnActionEvent e) {
+        myTargetPackageField.getButton().doClick();
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)),
+                                myTargetPackageField.getChildComponent());
+
+    myGenerateBeforeBox = new JCheckBox("Generate 'setUp/@Before'");
+    myGenerateAfterBox = new JCheckBox("Generate 'tearDown/@After'");
 
     myMembersTable = new MemberSelectionTable(collectMethods(), null);
   }
@@ -133,8 +152,46 @@ public class CreateTestDialog extends DialogWrapper {
     constr.fill = GridBagConstraints.HORIZONTAL;
     constr.anchor = GridBagConstraints.WEST;
 
+    JPanel librariesPanel = new JPanel();
+    BoxLayout l = new BoxLayout(librariesPanel, BoxLayout.X_AXIS);
+    librariesPanel.setLayout(l);
+
+    ButtonGroup group = new ButtonGroup();
+    for (final CreateTestProvider p : Extensions.getExtensions(CreateTestProvider.EXTENSION_NAME)) {
+      final JRadioButton b = new JRadioButton(p.getName());
+      group.add(b);
+      librariesPanel.add(b);
+
+      b.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          if (b.isSelected() && !p.isLibraryAttached(myTargetModule)) {
+            int result = Messages.showYesNoDialog(myProject,
+                                                  "Do you wand to attach " + p.getName() + " library to the module?",
+                                                  "Library is not available",
+                                                  Messages.getQuestionIcon());
+            if (result == 0) {
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                public void run() {
+                  OrderEntryFix.addJarToRoots(p.getLibraryPath(), myTargetModule);
+                }
+              });
+            }
+          }
+
+          String superClass = p.getDefaultSuperClass();
+          mySuperClassField.setText(superClass == null ? "" : superClass);
+        }
+      });
+    }
+
+    constr.gridx = 0;
+    constr.weightx = 1;
+    constr.gridwidth = GridBagConstraints.REMAINDER;
+    panel.add(librariesPanel, constr);
+
     constr.gridx = 0;
     constr.weightx = 0;
+    constr.gridwidth = 1;
     panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.class.name")), constr);
 
     constr.gridx = 1;
@@ -162,24 +219,11 @@ public class CreateTestDialog extends DialogWrapper {
 
     constr.gridx = 0;
     constr.gridwidth = GridBagConstraints.REMAINDER;
-    panel.add(new JLabel("Select methods to create tests for"), constr);
+    panel.add(myGenerateBeforeBox, constr);
+    panel.add(myGenerateAfterBox, constr);
 
-    constr.gridx = 0;
-    constr.gridwidth = GridBagConstraints.REMAINDER;
+    panel.add(new JLabel("Select methods to create tests for:"), constr);
     panel.add(new JScrollPane(myMembersTable), constr);
-
-    myTargetClassNameField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
-        getOKAction().setEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(getClassName()));
-      }
-    });
-
-    new AnAction() {
-      public void actionPerformed(AnActionEvent e) {
-        myTargetPackageField.getButton().doClick();
-      }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)),
-                                myTargetPackageField.getChildComponent());
 
     return panel;
   }
@@ -206,6 +250,14 @@ public class CreateTestDialog extends DialogWrapper {
 
   public MemberInfo[] getSelectedMethods() {
     return myMembersTable.getSelectedMemberInfos();
+  }
+
+  public boolean shouldGeneratedAfter() {
+    return myGenerateAfterBox.isSelected();
+  }
+
+  public boolean shouldGeneratedBefore() {
+    return myGenerateBeforeBox.isSelected();
   }
 
   protected void doOKAction() {
