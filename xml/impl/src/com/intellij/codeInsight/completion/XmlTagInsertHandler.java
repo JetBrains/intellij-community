@@ -35,7 +35,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-class XmlTagInsertHandler extends BasicInsertHandler {
+public class XmlTagInsertHandler extends BasicInsertHandler {
   public XmlTagInsertHandler() {
   }
 
