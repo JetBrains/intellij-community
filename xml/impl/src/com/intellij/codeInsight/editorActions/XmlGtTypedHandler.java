@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
@@ -119,7 +118,8 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       XmlTag tag = (XmlTag)element;
       if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) != null) return Result.CONTINUE;
       if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return Result.CONTINUE;
-      if (tag instanceof JspXmlTagBase) return Result.CONTINUE;
+      final XmlToken startToken = XmlUtil.getTokenOfType(tag, XmlTokenType.XML_START_TAG_START);
+      if (startToken == null || !startToken.getText().equals("<")) return Result.CONTINUE;
 
       final String name = tag.getName();
       if (tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(name)) return Result.CONTINUE;
