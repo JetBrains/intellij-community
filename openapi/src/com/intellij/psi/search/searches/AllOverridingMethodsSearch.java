@@ -21,6 +21,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.EmptyQuery;
 import com.intellij.util.Query;
 
@@ -59,6 +60,6 @@ public class AllOverridingMethodsSearch extends ExtensibleQueryFactory<Pair<PsiM
   }
 
   public static Query<Pair<PsiMethod, PsiMethod>> search(final PsiClass aClass) {
-    return search(aClass, aClass.getUseScope());
+    return search(aClass, GlobalSearchScope.allScope(aClass.getProject()));
   }
 }
