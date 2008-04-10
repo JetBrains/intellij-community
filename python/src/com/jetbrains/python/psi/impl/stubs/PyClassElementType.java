@@ -74,10 +74,10 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
   public void indexStub(final PyClassStub stub, final IndexSink sink) {
     final String name = stub.getName();
     if (name != null) {
-      sink.occurence(PyClassNameIndex.KEY, name);
+      sink.occurrence(PyClassNameIndex.KEY, name);
     }
     for(String s: stub.getSuperClasses()) {
-      sink.occurence(PySuperClassIndex.KEY, s);
+      sink.occurrence(PySuperClassIndex.KEY, s);
     }
   }
 }

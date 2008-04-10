@@ -50,7 +50,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
   public void indexStub(final PyFunctionStub stub, final IndexSink sink) {
     final String name = stub.getName();
     if (name != null) {
-      sink.occurence(PyFunctionNameIndex.KEY, name);
+      sink.occurrence(PyFunctionNameIndex.KEY, name);
     }
   }
 }
