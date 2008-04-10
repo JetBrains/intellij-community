@@ -147,7 +147,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     }
   }
 
-  protected static boolean shouldCreateStaticMember(PsiReferenceExpression ref, PsiElement enclosingContext, PsiClass targetClass) {
+  protected static boolean shouldCreateStaticMember(PsiReferenceExpression ref, PsiClass targetClass) {
     if (targetClass.isInterface()) {
       return false;
     }
@@ -163,47 +163,28 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       PsiElement resolvedElement = referenceExpression.resolve();
 
       return resolvedElement instanceof PsiClass;
-    } else if (qualifierExpression instanceof PsiTypeCastExpression) {
-      return false;
-    } else if (qualifierExpression instanceof PsiCallExpression) {
+    } else if (qualifierExpression != null) {
       return false;
     } else {
-      if (enclosingContext instanceof PsiMethod) {
-        PsiMethodCallExpression callExpression;
+      assert PsiTreeUtil.isAncestor(targetClass, ref, true);
+      PsiModifierListOwner owner = PsiTreeUtil.getParentOfType(ref, PsiModifierListOwner.class);
+      if (owner instanceof PsiMethod && ((PsiMethod)owner).isConstructor()) {
+        //usages inside delegating constructor call
+        PsiExpression run = ref;
+        while (true) {
+          if (!(run.getParent() instanceof PsiExpression)) break;
+          run = (PsiExpression)run.getParent();
+        }
+        if (run.getParent() instanceof PsiExpressionList &&
+          run.getParent().getParent() instanceof PsiMethodCallExpression) {
+          @NonNls String calleeText = ((PsiMethodCallExpression)run.getParent().getParent()).getMethodExpression().getText();
+          if (calleeText.equals("this") || calleeText.equals("super")) return true;
+        }
+      }
 
-        if (ref.getParent() instanceof PsiMethodCallExpression) {
-          callExpression = PsiTreeUtil.getParentOfType(ref.getParent(), PsiMethodCallExpression.class);
-        } else {
-          callExpression = PsiTreeUtil.getParentOfType(ref, PsiMethodCallExpression.class);
-        }
-
-        if (callExpression != null) {
-          final String callText = callExpression.getMethodExpression().getText();
-          if (callText.equals(PsiKeyword.SUPER) || callText.equals(PsiKeyword.THIS)) {
-            return true;
-          }
-        }
-
-        PsiMethod method = (PsiMethod) enclosingContext;
-        if (PsiTreeUtil.isAncestor(targetClass, method, false)) {
-          do {
-            if (method.hasModifierProperty(PsiModifier.STATIC)) {
-              return true;
-            }
-            if (method.getContainingClass() == targetClass) break;
-            method = PsiTreeUtil.getParentOfType(method, PsiMethod.class);
-          }
-          while(method != null);
-        }
-        else {
-          return method.hasModifierProperty(PsiModifier.STATIC);
-        }
-      } else if (enclosingContext instanceof PsiField) {
-        PsiField field = (PsiField) enclosingContext;
-        return field.hasModifierProperty(PsiModifier.STATIC);
-      } else if (enclosingContext instanceof PsiClassInitializer) {
-        PsiClassInitializer initializer = (PsiClassInitializer) enclosingContext;
-        return initializer.hasModifierProperty(PsiModifier.STATIC);
+      while (owner != null && owner != targetClass) {
+        if (owner.hasModifierProperty(PsiModifier.STATIC)) return true;
+        owner = PsiTreeUtil.getParentOfType(owner, PsiModifierListOwner.class);
       }
     }
 
