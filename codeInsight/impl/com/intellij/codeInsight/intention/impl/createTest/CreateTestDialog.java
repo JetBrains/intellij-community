@@ -5,15 +5,15 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
@@ -57,8 +57,7 @@ public class CreateTestDialog extends DialogWrapper {
 
   private List<JRadioButton> myLibraryButtons = new ArrayList<JRadioButton>();
   private JTextField myTargetClassNameField;
-  private EditorTextField mySuperClassField;
-  private PsiTypeCodeFragment mySuperClassFieldCodeFragment;
+  private ReferenceEditorWithBrowseButton mySuperClassField;
   private ReferenceEditorComboWithBrowseButton myTargetPackageField;
   private JCheckBox myGenerateBeforeBox;
   private JCheckBox myGenerateAfterBox;
@@ -99,7 +98,7 @@ public class CreateTestDialog extends DialogWrapper {
       });
     }
 
-    myFixLibraryButton = new JButton("Fix");
+    myFixLibraryButton = new JButton(CodeInsightBundle.message("intention.create.test.dialog.fix.library"));
     myFixLibraryButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -119,10 +118,7 @@ public class CreateTestDialog extends DialogWrapper {
       }
     });
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
-    mySuperClassFieldCodeFragment = factory.createTypeCodeFragment("", targetPackage, true);
-    Document document = PsiDocumentManager.getInstance(myProject).getDocument(mySuperClassFieldCodeFragment);
-    mySuperClassField = new EditorTextField(document, myProject, StdFileTypes.JAVA);
+    mySuperClassField = new ReferenceEditorWithBrowseButton(new MyChooseSuperClassAction(), "", PsiManager.getInstance(myProject), true);
 
     String targetPackageName = targetPackage != null ? targetPackage.getQualifiedName() : "";
     myTargetPackageField = new ReferenceEditorComboWithBrowseButton(new ActionListener() {
@@ -138,14 +134,15 @@ public class CreateTestDialog extends DialogWrapper {
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)),
                                 myTargetPackageField.getChildComponent());
 
-    myGenerateBeforeBox = new JCheckBox("Generate 'setUp/@Before'");
-    myGenerateAfterBox = new JCheckBox("Generate 'tearDown/@After'");
+    myGenerateBeforeBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.generate", "setUp/@Before"));
+    myGenerateAfterBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.generate", "tearDown/@After"));
 
     myMembersTable = new MemberSelectionTable(collectMethods(), null);
   }
 
   private void onLibrarySelected(CreateTestProvider p) {
-    myFixLibraryLabel.setText(p.getName() + " library not found in the module");
+    String text = CodeInsightBundle.message("intention.create.test.dialog.library.not.found", p.getName());
+    myFixLibraryLabel.setText(text);
     myFixLibraryPanel.setVisible(!p.isLibraryAttached(myTargetModule));
 
     String superClass = p.getDefaultSuperClass();
@@ -204,6 +201,10 @@ public class CreateTestDialog extends DialogWrapper {
     }
 
     constr.gridx = 0;
+    constr.weightx = 0;
+    panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.testing.library")), constr);
+
+    constr.gridx = 1;
     constr.weightx = 1;
     constr.gridwidth = GridBagConstraints.REMAINDER;
     panel.add(librariesPanel, constr);
@@ -213,7 +214,11 @@ public class CreateTestDialog extends DialogWrapper {
     myFixLibraryLabel.setIcon(Messages.getWarningIcon());
     myFixLibraryPanel.add(myFixLibraryLabel, BorderLayout.CENTER);
     myFixLibraryPanel.add(myFixLibraryButton, BorderLayout.EAST);
+
+    constr.gridx = 0;
     panel.add(myFixLibraryPanel, constr);
+
+    constr.gridheight = 1;
 
     constr.gridx = 0;
     constr.weightx = 0;
@@ -248,7 +253,7 @@ public class CreateTestDialog extends DialogWrapper {
     panel.add(myGenerateBeforeBox, constr);
     panel.add(myGenerateAfterBox, constr);
 
-    panel.add(new JLabel("Select methods to create tests for:"), constr);
+    panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.select.methods")), constr);
     constr.fill = GridBagConstraints.BOTH;
     constr.weighty = 1;
     panel.add(new JScrollPane(myMembersTable), constr);
@@ -261,15 +266,9 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   public String getSuperClassName() {
-    if (mySuperClassField.getText().trim().length() == 0) return null;
-    try {
-      return mySuperClassFieldCodeFragment.getType().getCanonicalText();
-    }
-    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-    }
-    catch (PsiTypeCodeFragment.NoTypeException e) {
-    }
-    return mySuperClassField.getText();
+    String result = mySuperClassField.getText().trim();
+    if (result.length() == 0) return null;
+    return result;
   }
 
   public PsiDirectory getTargetDirectory() {
@@ -354,5 +353,17 @@ public class CreateTestDialog extends DialogWrapper {
   private String getPackageName() {
     String name = myTargetPackageField.getText();
     return name != null ? name.trim() : "";
+  }
+
+  private class MyChooseSuperClassAction implements ActionListener {
+    public void actionPerformed(ActionEvent e) {
+      TreeClassChooserFactory f = TreeClassChooserFactory.getInstance(myProject);
+      TreeClassChooser dialog = f.createAllProjectScopeChooser(CodeInsightBundle.message("intention.create.test.dialog.choose.super.class"));
+      dialog.showDialog();
+      PsiClass aClass = dialog.getSelectedClass();
+      if (aClass != null) {
+        mySuperClassField.setText(aClass.getQualifiedName());
+      }
+    }
   }
 }
