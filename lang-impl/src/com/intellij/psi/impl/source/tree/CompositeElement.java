@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
+import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -127,8 +127,8 @@ public class CompositeElement extends TreeElement implements Cloneable {
     clearCaches();
     if (!(this instanceof PsiElement)) {
       final PsiElement psi = getPsi();
-      if (psi instanceof ASTWrapperPsiElement) {
-        ((ASTWrapperPsiElement)psi).subtreeChanged();
+      if (psi instanceof ASTDelegatePsiElement) {
+        ((ASTDelegatePsiElement)psi).subtreeChanged();
       }
     }
     
