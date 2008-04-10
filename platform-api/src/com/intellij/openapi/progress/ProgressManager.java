@@ -25,12 +25,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class ProgressManager {
-  private static volatile ProgressManager ourCachedInstance = null;
+  private static final ProgressManager ourInstance = ServiceManager.getService(ProgressManager.class);
+
   public static ProgressManager getInstance() {
-    ProgressManager instance = ourCachedInstance;
-    if( instance == null )
-      instance = ourCachedInstance = ServiceManager.getService(ProgressManager.class);
-    return instance;
+    return ourInstance;
   }
 
   public abstract boolean hasProgressIndicator();
