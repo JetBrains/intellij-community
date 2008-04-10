@@ -467,7 +467,7 @@ public final class PsiUtil extends PsiUtilBase {
   }
 
   @Nullable
-  public static PsiClass resolveClassInType(PsiType type) {
+  public static PsiClass resolveClassInType(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
       return ((PsiClassType) type).resolve();
     }

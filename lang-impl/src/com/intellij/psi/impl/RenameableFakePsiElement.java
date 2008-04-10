@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
  */
-package com.intellij.psi.impl.beanProperties;
+package com.intellij.psi.impl;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
@@ -26,13 +25,15 @@ import javax.swing.*;
 public abstract class RenameableFakePsiElement extends FakePsiElement implements PsiMetaOwner, PsiPresentableMetaData {
   private final PsiFile myContainingFile;
 
-  public RenameableFakePsiElement(final PsiFile containingFile) {
+  protected RenameableFakePsiElement(final PsiFile containingFile) {
     myContainingFile = containingFile;
   }
 
   public PsiFile getContainingFile() {
     return myContainingFile;
   }
+
+  public abstract String getName();
 
   @NotNull
   public Language getLanguage() {
