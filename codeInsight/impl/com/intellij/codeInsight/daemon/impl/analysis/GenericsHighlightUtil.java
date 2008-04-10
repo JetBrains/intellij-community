@@ -684,29 +684,45 @@ public class GenericsHighlightUtil {
       if (aClass == null) return null;
       final PsiManager manager = aClass.getManager();
       final String qName = aClass.getQualifiedName();
+      PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
       if (qName != null) {
-        final PsiClass myClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(qName, expression.getResolveScope());
-        if (myClass != null) aClass = myClass;
+        PsiClass myClass = facade.findClass(qName, expression.getResolveScope());
+        if (myClass != null && myClass != aClass) {
+          //different JDKs
+          PsiTypeParameter thisTypeParameter = getIterableTypeParameter(facade, myClass);
+          if (thisTypeParameter == null) return null;
+          PsiTypeParameter thatTypeParameter = getIterableTypeParameter(facade, aClass);
+          if (thatTypeParameter != null) { //it can be null if we reference collection in JDK1.4 module from JDK5 source
+            substitutor = substitutor.put(thisTypeParameter, substitutor.substitute(thatTypeParameter));
+          }
+          aClass = myClass;
+        }
       }
-      final PsiClass iterable = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Iterable", aClass.getResolveScope());
-      if (iterable == null) return null;
-      final PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(iterable, aClass, PsiSubstitutor.EMPTY);
-      if (substitutor == null) return null;
-      PsiTypeParameter[] typeParameters = iterable.getTypeParameters();
-      if (typeParameters.length != 1) return null;
-      final PsiTypeParameter itemTypeParameter = typeParameters[0];
-      PsiType itemType = substitutor.substitute(itemTypeParameter);
-      itemType = resolveResult.getSubstitutor().substitute(itemType);
+      PsiTypeParameter typeParameter = getIterableTypeParameter(facade, aClass);
+      if (typeParameter == null) return null;
+      PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getClassSubstitutor((PsiClass)typeParameter.getOwner(), aClass, PsiSubstitutor.EMPTY);
+      if (superClassSubstitutor == null) return null;
+      PsiType itemType = superClassSubstitutor.substitute(typeParameter);
+      itemType = substitutor.substitute(itemType);
       return itemType == null ? PsiType.getJavaLangObject(manager, aClass.getResolveScope()) : itemType;
     }
     return null;
+  }
+
+  private static PsiTypeParameter getIterableTypeParameter(final JavaPsiFacade facade, final PsiClass context) {
+    PsiClass iterable = facade.findClass("java.lang.Iterable", context.getResolveScope());
+    if (iterable == null) return null;
+    PsiTypeParameter[] typeParameters = iterable.getTypeParameters();
+    if (typeParameters.length != 1) return null;
+    return typeParameters[0];
   }
 
   public static HighlightInfo checkAccessStaticFieldFromEnumConstructor(PsiReferenceExpression expr, JavaResolveResult result) {
     final PsiElement resolved = result.getElement();
 
     if (!(resolved instanceof PsiField)) return null;
-    if (!((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC)) return null;
+    if (!((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) return null;
     final PsiMember constructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expr);
     if (constructorOrInitializer == null) return null;
     if (constructorOrInitializer.hasModifierProperty(PsiModifier.STATIC)) return null;
@@ -840,7 +856,7 @@ public class GenericsHighlightUtil {
     while (ref instanceof PsiJavaCodeReferenceElement) {
       final HighlightInfo result = isIllegalForInstanceOf((PsiJavaCodeReferenceElement)ref, checkTypeElement);
       if (result != null) return result;
-      ref = ((PsiJavaCodeReferenceElement)ref).getQualifier();
+      ref = ((PsiQualifiedReference)ref).getQualifier();
     }
     return null;
   }
@@ -985,8 +1001,8 @@ public class GenericsHighlightUtil {
     if (resolveResult != null) {
       PsiElement element = resolveResult.getElement();
       if (!(element instanceof PsiTypeParameterListOwner)) return null;
-      if (((PsiTypeParameterListOwner)element).hasModifierProperty(PsiModifier.STATIC)) return null;
-      PsiClass containingClass = ((PsiTypeParameterListOwner)element).getContainingClass();
+      if (((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) return null;
+      PsiClass containingClass = ((PsiMember)element).getContainingClass();
       if (containingClass != null && PsiUtil.isRawSubstitutor(containingClass, resolveResult.getSubstitutor())) {
         final String message;
         if (element instanceof PsiClass) {
