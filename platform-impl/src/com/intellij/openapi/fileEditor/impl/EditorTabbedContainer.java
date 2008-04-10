@@ -1,10 +1,12 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -12,11 +14,11 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +34,7 @@ import java.util.List;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class EditorTabbedContainer  {
+final class EditorTabbedContainer implements Disposable {
   private final EditorWindow myWindow;
   private final Project myProject;
   private JBTabs myTabs;
@@ -43,7 +45,7 @@ final class EditorTabbedContainer  {
     myWindow = window;
     myProject = project;
     final ActionManager actionManager = ActionManager.getInstance();
-    myTabs = new JBTabsImpl(project, actionManager, IdeFocusManager.getInstance(project), project);
+    myTabs = new JBTabsImpl(project, actionManager, IdeFocusManager.getInstance(project), this);
     myTabs.setDataProvider(new DataProvider() {
       public Object getData(@NonNls final String dataId) {
         if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
@@ -88,6 +90,8 @@ final class EditorTabbedContainer  {
         updateTabBorder();
       }
     });
+
+    Disposer.register(project, this);
   }
 
   public int getTabCount() {
@@ -182,4 +186,7 @@ final class EditorTabbedContainer  {
     return tab.getComponent();
   }
 
+  public void dispose() {
+
+  }
 }

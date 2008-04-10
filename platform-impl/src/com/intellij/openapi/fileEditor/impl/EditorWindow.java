@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -89,6 +90,7 @@ public class EditorWindow {
 
   private void disposeTabs() {
     if (myTabbedPane != null) {
+      Disposer.dispose(myTabbedPane);
       myTabbedPane = null;
     }
     myPanel.removeAll();
@@ -382,7 +384,8 @@ public class EditorWindow {
         else {
           final int indexToInsert = myTabbedPane.getSelectedIndex() + 1;
           final VirtualFile file = editor.getFile();
-          myTabbedPane.insertTab(file, null, new TComp(editor), null, indexToInsert);
+          final Icon template = IconLoader.getIcon("/fileTypes/text.png");
+          myTabbedPane.insertTab(file, new EmptyIcon(template.getIconWidth(), template.getIconHeight()), new TComp(editor), null, indexToInsert);
           trimToSize(UISettings.getInstance().EDITOR_TAB_LIMIT, file);
           setSelectedEditor(editor, focusEditor);
           myOwner.updateFileIcon(file);
@@ -536,51 +539,46 @@ public class EditorWindow {
   }
   public void unsplit() {
     checkConsistency();
-    final Container parent = myPanel.getParent();
-    if (parent instanceof Splitter) {
-      EditorWithProviderComposite editorToSelect = getSelectedEditor();
-      final EditorWindow[] siblings = findSiblings();
-      final JPanel parent2 = (JPanel)parent.getParent();
-      final Set<EditorWithProviderComposite> siblingSelectedEditors = new HashSet<EditorWithProviderComposite>(siblings.length);
-      for (EditorWindow sibling : siblings) {
-        // selected editors will be added first
-        final EditorWithProviderComposite selected = sibling.getSelectedEditor();
-        if (editorToSelect == null) {
-          editorToSelect = selected;
-        }
-        if (selected != null) {
-          // selected can be null if sibling does not have any editors at all
-          siblingSelectedEditors.add(selected);
-          processSiblingEditor(selected);
-        }
+    final Container splitter = myPanel.getParent();
+
+    if (!(splitter instanceof Splitter)) return;
+
+    EditorWithProviderComposite editorToSelect = getSelectedEditor();
+    final EditorWindow[] siblings = findSiblings();
+    final JPanel parent = (JPanel)splitter.getParent();
+
+    for (EditorWindow eachSibling : siblings) {
+      // selected editors will be added first
+      final EditorWithProviderComposite selected = eachSibling.getSelectedEditor();
+      if (editorToSelect == null) {
+        editorToSelect = selected;
       }
-      for (final EditorWindow sibling : siblings) {
-        final EditorWithProviderComposite[] siblingEditors = sibling.getEditors();
-        for (final EditorWithProviderComposite siblingEditor : siblingEditors) {
-          if (!siblingSelectedEditors.contains(siblingEditor)) {
-            if (editorToSelect == null) {
-              editorToSelect = siblingEditor;
-            }
-            processSiblingEditor(siblingEditor);
-          }
-        }
-        LOG.assertTrue(sibling != this);
-        sibling.dispose();
-      }
-      parent2.remove(parent);
-      if (myTabbedPane != null) {
-        parent2.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
-      }
-      else {
-        parent2.add(myPanel.getComponent(0), BorderLayout.CENTER);
-      }
-      parent2.revalidate();
-      myPanel = parent2;
-      if (editorToSelect != null) {
-        setSelectedEditor(editorToSelect, true);
-      }
-      myOwner.setCurrentWindow(this, false);
     }
+
+    for (final EditorWindow sibling : siblings) {
+      final EditorWithProviderComposite[] siblingEditors = sibling.getEditors();
+      for (final EditorWithProviderComposite siblingEditor : siblingEditors) {
+        if (editorToSelect == null) {
+          editorToSelect = siblingEditor;
+        }
+        processSiblingEditor(siblingEditor);
+      }
+      LOG.assertTrue(sibling != this);
+      sibling.dispose();
+    }
+    parent.remove(splitter);
+    if (myTabbedPane != null) {
+      parent.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
+    }
+    else {
+      parent.add(myPanel.getComponent(0), BorderLayout.CENTER);
+    }
+    parent.revalidate();
+    myPanel = parent;
+    if (editorToSelect != null) {
+      setSelectedEditor(editorToSelect, true);
+    }
+    myOwner.setCurrentWindow(this, false);
   }
 
   private void processSiblingEditor(final EditorWithProviderComposite siblingEditor) {

@@ -483,7 +483,7 @@ public final class EditorsSplitters extends JPanel {
           collect((JPanel)splitter.getFirstComponent());
           collect((JPanel)splitter.getSecondComponent());
         }
-        else if (comp instanceof JPanel) {
+        else if (comp instanceof JPanel || comp instanceof JBTabs) {
           final EditorWindow window = findWindowWith(comp);
           if (window != null) {
             res.add(window);
