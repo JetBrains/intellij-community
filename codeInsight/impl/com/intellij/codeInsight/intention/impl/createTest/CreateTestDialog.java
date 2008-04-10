@@ -3,10 +3,7 @@ package com.intellij.codeInsight.intention.impl.createTest;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
-import com.intellij.ide.util.PackageChooserDialog;
-import com.intellij.ide.util.PackageUtil;
-import com.intellij.ide.util.TreeClassChooser;
-import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.ide.util.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -32,7 +29,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -46,7 +42,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CreateTestDialog extends DialogWrapper {
-  @NonNls private static final String RECENTS_KEY = "CreateTestDialog.RecentsKey";
+  private static final String RECENTS_KEY = "CreateTestDialog.RecentsKey";
+  private static final String DEFAULT_LIBRARY_NAME_PROPERTY = CreateTestDialog.class.getName() + ".defaultLibrary";
 
   private Project myProject;
   private PsiClass myTargetClass;
@@ -66,6 +63,8 @@ public class CreateTestDialog extends DialogWrapper {
   private JPanel myFixLibraryPanel;
   private JLabel myFixLibraryLabel;
 
+  private JRadioButton myDefaultLibraryButton;
+
   public CreateTestDialog(@NotNull Project project,
                           @NotNull String title,
                           PsiClass targetClass,
@@ -81,15 +80,23 @@ public class CreateTestDialog extends DialogWrapper {
     setTitle(title);
     init();
 
-    myLibraryButtons.get(0).doClick();
+    if (myDefaultLibraryButton == null) {
+      myDefaultLibraryButton = myLibraryButtons.get(0);
+    }
+    myDefaultLibraryButton.doClick();
   }
 
   private void initControls(PsiClass targetClass, PsiPackage targetPackage) {
     ButtonGroup group = new ButtonGroup();
+    String defaultLibrary = getDefaultLibraryName();
     for (final CreateTestProvider p : Extensions.getExtensions(CreateTestProvider.EXTENSION_NAME)) {
       final JRadioButton b = new JRadioButton(p.getName());
       myLibraryButtons.add(b);
       group.add(b);
+
+      if (p.getName().equals(defaultLibrary)) {
+        myDefaultLibraryButton = b;
+      }
       
       b.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
@@ -173,6 +180,19 @@ public class CreateTestDialog extends DialogWrapper {
     d.show();
     PsiPackage p = d.getSelectedPackage();
     if (p != null) myTargetPackageField.setText(p.getQualifiedName());
+  }
+
+  private String getDefaultLibraryName() {
+    return PropertiesComponent.getInstance(myProject).getValue(DEFAULT_LIBRARY_NAME_PROPERTY);
+  }
+
+  private void saveDefaultLibraryName() {
+    PropertiesComponent.getInstance(myProject).setValue(DEFAULT_LIBRARY_NAME_PROPERTY, mySelectedTestProvider.getName());
+  }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return getClass().getName();
   }
 
   protected Action[] createActions() {
@@ -316,7 +336,8 @@ public class CreateTestDialog extends DialogWrapper {
       }
       return;
     }
-    
+
+    saveDefaultLibraryName();
     super.doOKAction();
   }
 
