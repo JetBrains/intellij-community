@@ -13,6 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -42,7 +44,9 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
         psiClass.isAnnotationType() ||
         psiClass.isInterface() ||
         psiClass.isEnum() ||
-        psiClass instanceof PsiAnonymousClass) {
+        psiClass instanceof PsiAnonymousClass ||
+        PsiTreeUtil.getParentOfType(psiClass, PsiClass.class) != null || // inner
+        isUnderTestSources(psiClass)) {
       return false;
     }
 
@@ -54,6 +58,13 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     if (!declarationRange.contains(element.getTextRange())) return false;
 
     return true;
+  }
+
+  private boolean isUnderTestSources(PsiClass c) {
+    ProjectRootManager rm = ProjectRootManager.getInstance(c.getProject());
+    VirtualFile f = c.getContainingFile().getVirtualFile();
+    if (f == null) return false;
+    return rm.getFileIndex().isInTestSourceContent(f);
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
