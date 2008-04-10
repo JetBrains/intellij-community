@@ -204,7 +204,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
         throw new RuntimeException(e); // TODO
       }
 
-      if (valueContainer.size() == 0) return result;
+      if (valueContainer.size() != 1) return result; // TODO. Return if == 0 only
 
       assert valueContainer.size() == 1;
       result.put(key, valueContainer.getValueIterator().next());
