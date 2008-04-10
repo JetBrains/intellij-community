@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +95,7 @@ public class TypedHandler implements TypedActionHandler {
       return;
     }
 
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
 
     if (file == null){
       if (myOriginalHandler != null){

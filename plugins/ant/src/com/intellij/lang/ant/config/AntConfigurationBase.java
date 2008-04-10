@@ -1,10 +1,8 @@
 package com.intellij.lang.ant.config;
 
-import com.intellij.lang.ant.config.impl.AntBreadcrumbsInfoProvider;
 import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.config.ExternalizablePropertyContainer;
-import com.intellij.xml.breadcrumbs.BreadcrumbsLoaderComponent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -15,7 +13,6 @@ public abstract class AntConfigurationBase extends AntConfiguration {
 
   protected AntConfigurationBase(final Project project) {
     super(project);
-    BreadcrumbsLoaderComponent.registerProvider(project, new AntBreadcrumbsInfoProvider());
   }
 
   public static AntConfigurationBase getInstance(final Project project) {
