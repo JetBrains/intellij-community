@@ -5,6 +5,9 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandAdapter;
+import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -24,7 +27,6 @@ import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -39,9 +41,9 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
+import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
-import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
@@ -116,7 +118,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
                         final VirtualFileManager virtualFileManager,
                         final StartupManager startupManager,
                         final ProjectRootManager projectRootManager,
-                        final DomApplicationComponent applicationComponent) {
+                        final DomApplicationComponent applicationComponent,
+                        final CommandProcessor commandProcessor) {
     myProject = project;
     myApplicationComponent = applicationComponent;
     myAnnotationsManager = (DomElementAnnotationsManagerImpl)annotationsManager;
@@ -134,6 +137,21 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
         return xmlAspect.equals(aspect);
       }
     }, project);
+
+    commandProcessor.addCommandListener(new CommandAdapter() {
+      public void commandFinished(final CommandEvent event) {
+        if (!myBulkChange) {
+          myHandlerCache.clear();
+        }
+      }
+
+      public void undoTransparentActionFinished() {
+        if (!myBulkChange) {
+          myHandlerCache.clear();
+        }
+      }
+    }, project);
+    
     final GenericValueReferenceProvider provider = new GenericValueReferenceProvider();
     registry.registerReferenceProvider(XmlTag.class, provider);
     registry.registerReferenceProvider(XmlAttributeValue.class, provider);
@@ -213,8 +231,6 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     for (final DomFileDescription description : Extensions.getExtensions(DomFileDescription.EP_NAME)) {
       _registerFileDescription(description);
     }
-
-    registerRunnable();
   }
 
   private void processVfsChange(final VirtualFile file) {
@@ -228,26 +244,12 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   public void cacheHandler(XmlElement element, DomInvocationHandler handler) {
-    if (myHandlerCache.isEmpty() && handler != null) {
-      registerRunnable();
-    }
-
     if (handler != null) {
       myHandlerCache.put(element, handler);
     } else {
       myHandlerCache.remove(element);
     }
     element.putUserData(CACHED_DOM_HANDLER, handler);
-  }
-
-  private void registerRunnable() {
-    ((PsiManagerEx)PsiManager.getInstance(myProject)).registerRunnableToRunOnChange(new Runnable() {
-      public void run() {
-        if (!myBulkChange) {
-          myHandlerCache.clear();
-        }
-      }
-    });
   }
 
   private void processFileChange(final VirtualFile file) {

@@ -448,19 +448,24 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final String qName = aClass.getQualifiedName();
     assert qName != null;
 
+    final PsiFile psiFile = addFileToProject(qName.replace('.', '/') + ".java", classText);
+
+    myAddedClasses.add(psiFile.getVirtualFile());
+    return ((PsiJavaFile)psiFile).getClasses()[0];
+  }
+
+  public PsiFile addFileToProject(@NonNls final String relativePath, @NonNls final String fileText) throws IOException {
     final VirtualFile root = ModuleRootManager.getInstance(myProjectFixture.getModule()).getSourceRoots()[0];
     final VirtualFile[] virtualFile = new VirtualFile[1];
-    final VirtualFile dir = VfsUtil.createDirectories(root.getPath() + "/" + StringUtil.getPackageName(qName).replace('.', '/'));
+    final VirtualFile dir = VfsUtil.createDirectories(root.getPath() + "/" + StringUtil.getPackageName(relativePath, '/'));
 
     new WriteCommandAction.Simple(getProject()) {
       protected void run() throws Throwable {
-        virtualFile[0] = dir.createChildData(this, StringUtil.getShortName(qName) + ".java");
-        VfsUtil.saveText(virtualFile[0], classText);
+        virtualFile[0] = dir.createChildData(this, StringUtil.getShortName(relativePath, '/'));
+        VfsUtil.saveText(virtualFile[0], fileText);
       }
     }.execute();
-    
-    myAddedClasses.add(virtualFile[0]);
-    return ((PsiJavaFile)getPsiManager().findFile(virtualFile[0])).getClasses()[0];
+    return getPsiManager().findFile(virtualFile[0]);
   }
 
   public <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> epName, final T extension) {

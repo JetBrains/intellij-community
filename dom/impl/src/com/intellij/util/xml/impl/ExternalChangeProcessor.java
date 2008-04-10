@@ -40,18 +40,18 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
   public void processChanges() {
     if (myDocumentChanged) return;
     for (DomInvocationHandler handler : myChangeSets.values()) {
-      myDomManager.fireEvent(new ElementChangedEvent(handler));
+      myDomManager.fireEvent(new ElementChangedEvent(handler.getProxy()));
     }
   }
 
-  public void addChange(XmlTag tag) {
+  private void addChange(XmlTag tag) {
     final PsiFile file = tag.getContainingFile();
 
     DomInvocationHandler handler = myChangeSets.get(tag);
     if (handler != null) return;
 
     while (tag != null) {
-      final DomInvocationHandler data = myDomManager.getCachedHandler(tag);
+      final DomInvocationHandler data = tag.getUserData(DomManagerImpl.CACHED_DOM_HANDLER);
       if (data != null) {
         if (handler == null) {
           handler = data;

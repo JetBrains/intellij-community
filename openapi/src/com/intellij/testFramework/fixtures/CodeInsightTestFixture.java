@@ -266,4 +266,6 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   JavaPsiFacade getJavaFacade();
 
   int configureFromTempProjectFile(String filePath) throws IOException;
+
+  PsiFile addFileToProject(@NonNls String relativePath, @NonNls String fileText) throws IOException;
 }
