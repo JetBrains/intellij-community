@@ -28,8 +28,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.AsyncConsumer;
 import com.intellij.util.concurrency.Semaphore;
@@ -163,12 +163,14 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
             flushQueue(queue);
           }
 
-          return !indicator.isRunning();
+          return !indicator.isRunning() || indicator.isCanceled();
         }
       });
     }
 
-    computingFinished(data.get(), indicator, context, parameters, offset1, offset2);
+    if (!indicator.isCanceled()) {
+      computingFinished(data.get(), indicator, context, parameters, offset1, offset2);
+    }
 
     flushQueue(queue);
   }
@@ -515,36 +517,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   protected PsiFile createFileCopy(PsiFile file) {
-    final PsiElementVisitor originalVisitor = new PsiRecursiveElementVisitor() {
-      public void visitElement(final PsiElement element) {
-        if (element instanceof LeafElement) return;
-
-        element.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, element);
-        super.visitElement(element);
-      }
-    };
-    originalVisitor.visitFile(file);
-
-
-    final PsiFile fileCopy = (PsiFile)file.copy();
-
-    final PsiElementVisitor copyVisitor = new PsiRecursiveElementVisitor() {
-
-      public void visitElement(final PsiElement element) {
-        if (element instanceof LeafElement) return;
-
-        final PsiElement originalElement = element.getCopyableUserData(CompletionUtil.ORIGINAL_KEY);
-        if (originalElement != null) {
-          originalElement.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, null);
-          element.putCopyableUserData(CompletionUtil.ORIGINAL_KEY, null);
-          element.putUserData(CompletionUtil.ORIGINAL_KEY, originalElement);
-        }
-        super.visitElement(element);
-      }
-
-    };
-    copyVisitor.visitFile(fileCopy);
-    return fileCopy;
+    final Key<PsiElement> originalKey = CompletionUtil.ORIGINAL_KEY;
+    return PsiUtilBase.copyElementPreservingOriginalLinks(file, originalKey);
   }
 
 
