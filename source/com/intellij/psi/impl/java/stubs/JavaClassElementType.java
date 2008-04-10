@@ -90,18 +90,18 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
     if (isAnonymous) {
       String baseref = stub.getBaseClassReferenceText();
       if (baseref != null) {
-        sink.occurence(JavaAnonymousClassBaseRefOccurenceIndex.KEY, baseref);
+        sink.occurrence(JavaAnonymousClassBaseRefOccurenceIndex.KEY, baseref);
       }
     }
     else {
       final String shortname = stub.getName();
       if (shortname != null) {
-        sink.occurence(JavaShortClassNameIndex.KEY, shortname);
+        sink.occurrence(JavaShortClassNameIndex.KEY, shortname);
       }
 
       final String fqn = stub.getQualifiedName();
       if (fqn != null) {
-        sink.occurence(JavaFullClassNameIndex.KEY, fqn.hashCode());
+        sink.occurrence(JavaFullClassNameIndex.KEY, fqn.hashCode());
       }
     }
   }

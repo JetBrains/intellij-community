@@ -54,7 +54,7 @@ public class StubTree {
       final StubSerializer serializer = SerializationManager.getInstance().getSerializer(stub);
       final int stubIdx = i;
       serializer.indexStub(stub, new IndexSink() {
-        public void occurence(@NotNull final StubIndexKey indexKey, @NotNull final Object value) {
+        public void occurrence(@NotNull final StubIndexKey indexKey, @NotNull final Object value) {
           Map<Object, TIntArrayList> map = result.get(indexKey);
           if (map == null) {
             map = new HashMap<Object, TIntArrayList>();

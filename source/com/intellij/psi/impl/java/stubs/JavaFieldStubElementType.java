@@ -70,7 +70,7 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
   public void indexStub(final PsiFieldStub stub, final IndexSink sink) {
     final String name = stub.getName();
     if (name != null) {
-      sink.occurence(JavaFieldNameIndex.KEY, name);
+      sink.occurrence(JavaFieldNameIndex.KEY, name);
     }
   }
 }

@@ -110,7 +110,7 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
     if (role == PsiReferenceList.Role.EXTENDS_LIST || role == PsiReferenceList.Role.IMPLEMENTS_LIST) {
       final String[] names = stub.getReferencedNames();
       for (String name : names) {
-        sink.occurence(JavaSuperClassNameOccurenceIndex.KEY, name);
+        sink.occurrence(JavaSuperClassNameOccurenceIndex.KEY, name);
       }
     }
   }

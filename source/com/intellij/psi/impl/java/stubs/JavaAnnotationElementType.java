@@ -42,7 +42,7 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
   public void indexStub(final PsiAnnotationStub stub, final IndexSink sink) {
     final String text = stub.getText();
     final String refText = getReferenceShortName(text);
-    sink.occurence(JavaAnnotationIndex.KEY, refText);
+    sink.occurrence(JavaAnnotationIndex.KEY, refText);
   }
 
   private static String getReferenceShortName(String annotationText) {

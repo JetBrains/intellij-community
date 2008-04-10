@@ -71,7 +71,7 @@ public class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, Ps
   public void indexStub(final PsiMethodStub stub, final IndexSink sink) {
     final String name = stub.getName();
     if (name != null) {
-      sink.occurence(JavaMethodNameIndex.KEY, name);
+      sink.occurrence(JavaMethodNameIndex.KEY, name);
     }
   }
 }
