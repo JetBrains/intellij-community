@@ -6,7 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -19,15 +21,33 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   private final Map<Key, UpdatableValueContainer<Value>> myMap = new HashMap<Key,UpdatableValueContainer<Value>>();
   private final IndexStorage<Key, Value> myBackendStorage;
   private AtomicBoolean myBufferingEnabled = new AtomicBoolean(false);
+  private final List<BufferingStateListener> myListeners = new CopyOnWriteArrayList<BufferingStateListener>();
 
+  public static interface BufferingStateListener {
+    void bufferingStateChanged(boolean newState);
+  }
+  
   public MemoryIndexStorage(IndexStorage<Key, Value> backend) {
     myBackendStorage = backend;
   }
 
+  public void addBufferingStateListsner(BufferingStateListener listener) {
+    myListeners.add(listener);
+  }
+
+  public void removeBufferingStateListsner(BufferingStateListener listener) {
+    myListeners.remove(listener);
+  }
+  
   public void setBufferingEnabled(boolean enabled) {
     final boolean wasEnabled = myBufferingEnabled.getAndSet(enabled);
     if (wasEnabled && !enabled) {
       myMap.clear();
+    }
+    if (wasEnabled != enabled) {
+      for (BufferingStateListener listener : myListeners) {
+        listener.bufferingStateChanged(enabled);
+      }
     }
   }
 

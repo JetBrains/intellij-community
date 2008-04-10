@@ -8,6 +8,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
@@ -31,6 +32,8 @@ import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
 
 @State(
   name = "FileBasedIndex",
@@ -41,42 +44,50 @@ import java.util.*;
     }
 )
 public class StubIndexImpl extends StubIndex implements ApplicationComponent, PersistentStateComponent<StubIndexState> {
-  private final Map<StubIndexKey<?,?>, MyIndex<?>> myIndicies = new HashMap<StubIndexKey<?,?>, MyIndex<?>>();
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubIndexImpl");
+  private final Map<StubIndexKey<?,?>, MyIndex<?>> myIndices = new HashMap<StubIndexKey<?,?>, MyIndex<?>>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
-
+  private final AtomicBoolean myNeedRebuild = new AtomicBoolean(false);
+  
   private StubIndexState myPreviouslyRegistered;
 
-  public StubIndexImpl(FileBasedIndex fbi) throws IOException {
-    final StubIndexExtension[] extensions = Extensions.getExtensions(StubIndexExtension.EP_NAME);
+  public StubIndexImpl() throws IOException {
+    final StubIndexExtension<?, ?>[] extensions = Extensions.getExtensions(StubIndexExtension.EP_NAME);
+    boolean needRebuild = false;
     for (StubIndexExtension extension : extensions) {
-      registerIndexer(extension);
+      //noinspection unchecked
+      needRebuild |= registerIndexer(extension);
     }
-
+    myNeedRebuild.set(needRebuild);
     dropUnregisteredIndices();
   }
 
-  private <K> void registerIndexer(final StubIndexExtension<K, ?> extension) throws IOException {
-    final StubIndexKey name = extension.getKey();
+  private <K> boolean registerIndexer(final StubIndexExtension<K, ?> extension) throws IOException {
+    boolean needRebuild = false;
+    final StubIndexKey<K, ?> indexKey = extension.getKey();
     final int version = extension.getVersion();
-    myIndexIdToVersionMap.put(name, version);
-    final File versionFile = IndexInfrastructure.getVersionFile(name);
+    myIndexIdToVersionMap.put(indexKey, version);
+    final File versionFile = IndexInfrastructure.getVersionFile(indexKey);
     if (IndexInfrastructure.versionDiffers(versionFile, version)) {
-      FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
+      needRebuild = true;
+      FileUtil.delete(IndexInfrastructure.getIndexRootDir(indexKey));
       IndexInfrastructure.rewriteVersion(versionFile, version);
     }
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        final MapIndexStorage<K, TIntArrayList> storage = new MapIndexStorage<K, TIntArrayList>(IndexInfrastructure.getStorageFile(name), extension.getKeyDescriptor(), new StubIdExternalizer());
+        final MapIndexStorage<K, TIntArrayList> storage = new MapIndexStorage<K, TIntArrayList>(IndexInfrastructure.getStorageFile(indexKey), extension.getKeyDescriptor(), new StubIdExternalizer());
         final MemoryIndexStorage<K, TIntArrayList> memStorage = new MemoryIndexStorage<K, TIntArrayList>(storage);
-        myIndicies.put(name, new MyIndex<K>(memStorage));
+        myIndices.put(indexKey, new MyIndex<K>(memStorage));
         break;
       }
       catch (IOException e) {
-        FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
+        needRebuild = true;
+        FileUtil.delete(IndexInfrastructure.getIndexRootDir(indexKey));
         IndexInfrastructure.rewriteVersion(versionFile, version);
       }
     }
+    return needRebuild;
   }
 
   private static class StubIdExternalizer implements DataExternalizer<TIntArrayList> {
@@ -112,26 +123,47 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   public <Key, Psi extends PsiElement> Collection<Psi> get(final StubIndexKey<Key, Psi> indexKey, final Key key, final Project project,
                                                            final GlobalSearchScope scope) {
+    if (myNeedRebuild.getAndSet(false)) {
+      StubUpdatingIndex.rebuildStubIndices();
+    }
+    
+    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID);
+    
+    final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
+    final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
+    final PsiManager psiManager = PsiManager.getInstance(project);
+
+    final List<Psi> result = new ArrayList<Psi>();
+    final MyIndex<Key> index = (MyIndex<Key>)myIndices.get(indexKey);
+
+    final Lock lock = index.getReadLock();
+    lock.lock();
     try {
-      final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
-      final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
-      final PsiManager psiManager = PsiManager.getInstance(project);
-
-      final List<Psi> result = new ArrayList<Psi>();
-      final MyIndex<Key> index = (MyIndex<Key>)myIndicies.get(indexKey);
-
-      index.getReadLock().lock();
+      ValueContainer<TIntArrayList> container;
       try {
-        final ValueContainer<TIntArrayList> container = index.getData(key);
-        container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
-          public void perform(final int id, final TIntArrayList value) {
-            final VirtualFile file = IndexInfrastructure.findFileById(dirIndex, fs, id);
-            if (file != null && (scope == null || scope.contains(file))) {
-              final PsiFileImpl psiFile = (PsiFileImpl)psiManager.findFile(file);
-              if (psiFile != null) {
-                StubTree stubTree = psiFile.getStubTree();
-                if (stubTree == null) {
-                  stubTree = StubTree.readFromVFile(file, project);
+        container = index.getData(key);
+      }
+      catch (StorageException e) {
+        LOG.info(e);
+        lock.unlock();
+        try {
+          StubUpdatingIndex.rebuildStubIndices();
+        }
+        finally {
+          lock.lock();
+        }
+        container = index.getData(key);
+      }
+      container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
+        public void perform(final int id, final TIntArrayList value) {
+          final VirtualFile file = IndexInfrastructure.findFileById(dirIndex, fs, id);
+          if (file != null && (scope == null || scope.contains(file))) {
+            final PsiFileImpl psiFile = (PsiFileImpl)psiManager.findFile(file);
+            if (psiFile != null) {
+              StubTree stubTree = psiFile.getStubTree();
+              if (stubTree == null) {
+                stubTree = StubTree.readFromVFile(file, project);
+                if (stubTree != null) {
                   final List<StubElement<?>> plained = stubTree.getPlainList();
                   for (int i = 0; i < value.size(); i++) {
                     final StubElement<?> stub = plained.get(value.get(i));
@@ -139,36 +171,51 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                     result.add((Psi)tree.getPsi());
                   }
                 }
-                else {
-                  final List<StubElement<?>> plained = stubTree.getPlainList();
-                  for (int i = 0; i < value.size(); i++) {
-                    result.add((Psi)plained.get(value.get(i)).getPsi());
-                  }
+              }
+              else {
+                final List<StubElement<?>> plained = stubTree.getPlainList();
+                for (int i = 0; i < value.size(); i++) {
+                  result.add((Psi)plained.get(value.get(i)).getPsi());
                 }
               }
             }
           }
-        });
-      }
-      finally {
-        index.getReadLock().unlock();
-      }
-
-      return result;
+        }
+      });
     }
     catch (StorageException e) {
-      throw new RuntimeException(e); // TODO!!!
+      myNeedRebuild.set(true);
+      LOG.error(e);
     }
+    finally {
+      lock.unlock();
+    }
+
+    return result;
   }
 
   public <Key> Collection<Key> getAllKeys(final StubIndexKey<Key, ?> indexKey) {
-    final MyIndex<Key> index = (MyIndex<Key>)myIndicies.get(indexKey);
+    if (myNeedRebuild.getAndSet(false)) {
+      StubUpdatingIndex.rebuildStubIndices();
+    }
+    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID);
+    
+    final MyIndex<Key> index = (MyIndex<Key>)myIndices.get(indexKey);
     try {
-      return index.getAllKeys();
+      try {
+        return index.getAllKeys();
+      }
+      catch (StorageException e) {
+        LOG.info(e);
+        StubUpdatingIndex.rebuildStubIndices();
+        return index.getAllKeys();
+      }
     }
     catch (StorageException e) {
-      throw new RuntimeException(e); // TODO!!!
+      myNeedRebuild.set(true);
+      LOG.error(e);
     }
+    return Collections.emptyList();
   }
 
   @NotNull
@@ -180,14 +227,44 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   public void disposeComponent() {
-    for (UpdatableIndex index : myIndicies.values()) {
+    for (UpdatableIndex index : myIndices.values()) {
       index.dispose();
     }
   }
 
+  public void setDataBufferingEnabled(final boolean enabled) {
+    for (UpdatableIndex index : myIndices.values()) {
+      final IndexStorage indexStorage = ((MapReduceIndex)index).getStorage();
+      ((MemoryIndexStorage)indexStorage).setBufferingEnabled(enabled);
+    }
+  }
+  
+  
+  public void clearAllIndices() {
+    for (UpdatableIndex index : myIndices.values()) {
+      try {
+        index.clear();
+      }
+      catch (StorageException e) {
+        LOG.error(e);
+        throw new RuntimeException(e);
+      }
+    }
+  }
+  
+  public void clearIndex(StubIndexKey<?, ?> indexKey) {
+    try {
+      myIndices.get(indexKey).clear();
+    }
+    catch (StorageException e) {
+      LOG.error(e);
+      throw new RuntimeException(e); 
+    }
+  }
+  
   private void dropUnregisteredIndices() {
     final Set<String> indicesToDrop = new HashSet<String>(myPreviouslyRegistered != null? myPreviouslyRegistered.registeredIndices : Collections.<String>emptyList());
-    for (ID<?, ?> key : myIndicies.keySet()) {
+    for (ID<?, ?> key : myIndices.keySet()) {
       indicesToDrop.remove(key.toString());
     }
 
@@ -197,7 +274,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   public StubIndexState getState() {
-    return new StubIndexState(myIndicies.keySet());
+    return new StubIndexState(myIndices.keySet());
   }
 
   public void loadState(final StubIndexState state) {
@@ -206,11 +283,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   public void updateIndex(StubIndexKey key, int fileId, Map<?, TIntArrayList> oldValues, Map<?, TIntArrayList> newValues) {
     try {
-      final MyIndex index = myIndicies.get(key);
+      final MyIndex index = myIndices.get(key);
       index.updateWithMap(fileId, oldValues, newValues);
     }
     catch (StorageException e) {
-      throw new RuntimeException(e); // TODO!!!
+      LOG.error(e);
+      myNeedRebuild.set(true);
     }
   }
 

@@ -4,7 +4,6 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -41,7 +40,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -184,8 +182,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   @NotNull
   public <K> Collection<K> getAllKeys(final ID<K, ?> indexId) {
     try {
-      checkRebuild(indexId);
-      indexUnsavedDocuments();
+      ensureUpToDate(indexId);
       final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
       return index != null? index.getAllKeys() : Collections.<K>emptyList();
     }
@@ -195,7 +192,18 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
     return Collections.emptyList();
   }
-  
+
+  public <K> void ensureUpToDate(final ID<K, ?> indexId) {
+    try {
+      checkRebuild(indexId);
+      indexUnsavedDocuments();
+    }
+    catch (StorageException e) {
+      requestRebuild(indexId);
+      LOG.error(e);
+    }
+  }
+
   @NotNull
   public <K, V> List<V> getValues(final ID<K, V> indexId, K dataKey, Project project) {
     final List<V> values = new ArrayList<V>();
@@ -229,8 +237,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   private <K, V> void processValuesImpl(final ID<K, V> indexId, final K dataKey, final Project project, boolean ensureValueProcessedOnce,
                                         final @Nullable VirtualFile restrictToFile, ValueProcessor<V> processor) {
     try {
-      checkRebuild(indexId);
-      indexUnsavedDocuments();
+      ensureUpToDate(indexId);
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
         return;
@@ -306,6 +313,51 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
   }
   
+  public static interface AllValuesProcessor<V> {
+    void process(final int inputId, V value);
+  }
+  
+  public <K, V> void processAllValues(final ID<K, V> indexId, AllValuesProcessor<V> processor) {
+    try {
+      ensureUpToDate(indexId);
+      final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
+      if (index == null) {
+        return;
+      }
+
+      final Lock readLock = index.getReadLock();
+      readLock.lock();
+      try {
+        for (K dataKey : index.getAllKeys()) {
+          final ValueContainer<V> container = index.getData(dataKey);
+          for (final Iterator<V> it = container.getValueIterator(); it.hasNext();) {
+            final V value = it.next();
+            for (final ValueContainer.IntIterator inputsIt = container.getInputIdsIterator(value); inputsIt.hasNext();) {
+              processor.process(inputsIt.next(), value);
+            }
+          }
+        }
+      }
+      finally {
+        readLock.unlock();
+      }
+    }
+    catch (StorageException e) {
+      requestRebuild(indexId);
+      LOG.error(e);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof StorageException || cause instanceof IOException) {
+        requestRebuild(indexId);
+        LOG.error(e);
+      }
+      else {
+        throw e;
+      }
+    }
+  }
+
   private void checkRebuild(final ID<?, ?> indexId) throws StorageException {
     final boolean reallyRemoved = myRequiresRebuild.remove(indexId);
     if (!reallyRemoved) {
@@ -335,36 +387,11 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       }.queue();
     }
     else {
-      final Semaphore semaphore = new Semaphore();
-      semaphore.down();
-      Runnable runnable = new Runnable() {
-        public void run() {
-          // due to current assertions in 'progress management' subsystem 
-          // we have to queue the task only from event dispatch thread
-          // when these are solved, it is ok to remove invokeLater() calls from here
-          new Task.Backgroundable(null, "Updating index", false) {
-            public void run(@NotNull final ProgressIndicator indicator) {
-              try {
-                synchronizer.execute();
-              }
-              finally {
-                semaphore.up();
-              }
-            }
-          }.queue();
-        }
-      };
-      if (application.isUnitTestMode()) {
-        application.invokeLater(runnable, ModalityState.NON_MODAL);
-      }
-      else {
-        SwingUtilities.invokeLater(runnable);
-      }
-      semaphore.waitFor();
+      synchronizer.execute();
     }
   }
 
-  public void indexUnsavedDocuments() throws StorageException {
+  private void indexUnsavedDocuments() throws StorageException {
     myChangedFilesUpdater.forceUpdate();
     
     final FileDocumentManager fdManager = FileDocumentManager.getInstance();
@@ -612,7 +639,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       if (file.isDirectory()) {
         if (!(file instanceof NewVirtualFile) || ManagingFS.getInstance().areChildrenLoaded(file)) {
           for (VirtualFile child : file.getChildren()) {
-            scheduleInvalidation(child, false);
+            scheduleInvalidation(child, saveContent); 
           }
         }
       }
@@ -637,12 +664,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
         }
         
         if (affectedIndices.size() > 0) {
-          iterateIndexableFiles(file, new Processor<VirtualFile>() {
-            public boolean process(final VirtualFile file) {
-              myFilesToUpdate.add(file);
-              return true;
-            }
-          });
           if (saveContent) {
             myFileContentAttic.offer(file);
           }
@@ -670,6 +691,12 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
             });
             myFutureInvalidations.offer(future);
           }
+          iterateIndexableFiles(file, new Processor<VirtualFile>() {
+            public boolean process(final VirtualFile file) {
+              myFilesToUpdate.add(file);
+              return true;
+            }
+          });
         }
       }
     }

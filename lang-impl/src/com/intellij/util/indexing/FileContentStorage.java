@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.SLRUCache;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,18 +16,24 @@ import java.io.*;
  */
 public class FileContentStorage {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileContentStorage");
+  private static final byte[] EMPTY_BYTE_ARRAY = new byte[]{};
+
   private int myKeyBeingRemoved = -1;
   private final File myStorageRoot;
-  private static final byte[] EMPTY_BYTE_ARRAY = new byte[]{};
-  
+  private final TIntHashSet myFileIds = new TIntHashSet();
+  private final Object myLock = new Object();
+
   private SLRUCache<Integer, byte[]> myCache = new SLRUCache<Integer, byte[]>(200, 56) {
     @NotNull
     public byte[] createValue(final Integer key) {
-      final File dataFile = getDataFile(key);
-      try {
-        return FileUtil.loadFileBytes(dataFile);
-      }
-      catch (IOException ignored) {
+      final int _keyValue = key.intValue();
+      if (myFileIds.contains(_keyValue)) {
+        final File dataFile = getDataFile(_keyValue);
+        try {
+          return FileUtil.loadFileBytes(dataFile);
+        }
+        catch (IOException ignored) {
+        }
       }
       return EMPTY_BYTE_ARRAY;
     }
@@ -60,14 +67,30 @@ public class FileContentStorage {
 
   public FileContentStorage(File storageRoot) {
     myStorageRoot = storageRoot;
-    storageRoot.mkdirs();
+    final boolean wasCreated = storageRoot.mkdirs();
+    if (!wasCreated) {
+      final String[] names = storageRoot.list();
+      if (names != null) {
+        for (String name : names) {
+          try {
+            myFileIds.add(Integer.parseInt(name));
+          }
+          catch (NumberFormatException ignored) {
+          }
+        }
+      }
+    }
   }
 
   public void offer(VirtualFile file) {
     try {
       final byte[] bytes = file.contentsToByteArray();
       if (bytes != null && bytes.length > 0) {
-        myCache.put(FileBasedIndex.getFileId(file), bytes);
+        synchronized (myLock) {
+          final int fileId = FileBasedIndex.getFileId(file);
+          myFileIds.add(fileId);
+          myCache.put(fileId, bytes);
+        }
       }
     }
     catch (FileNotFoundException ignored) {
@@ -80,16 +103,19 @@ public class FileContentStorage {
   }
 
   @Nullable
-  public byte[] remove(VirtualFile file) {
+  public synchronized byte[] remove(VirtualFile file) {
     final int fileId = FileBasedIndex.getFileId(file);
-    try {
-      final byte[] bytes = myCache.get(fileId);
-      return bytes.length == 0 ? null : bytes;
-    }
-    finally {
-      myKeyBeingRemoved = fileId;
-      myCache.remove(fileId);
-      myKeyBeingRemoved = -1;
+    synchronized (myLock) {
+      try {
+        final byte[] bytes = myCache.get(fileId);
+        return bytes.length == 0 ? null : bytes;
+      }
+      finally {
+        myKeyBeingRemoved = fileId;
+        myCache.remove(fileId);
+        myFileIds.remove(fileId);
+        myKeyBeingRemoved = -1;
+      }
     }
   }
   
