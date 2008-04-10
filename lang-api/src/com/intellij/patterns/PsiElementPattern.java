@@ -54,6 +54,10 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
     return afterLeafSkipping(psiElement().whitespaceCommentOrError(), pattern);
   }
 
+  public Self beforeLeaf(@NotNull final ElementPattern<? extends PsiElement> pattern) {
+    return beforeLeafSkipping(psiElement().whitespaceCommentOrError(), pattern);
+  }
+
   public Self whitespace() {
     return withElementType(TokenType.WHITE_SPACE);
   }
@@ -118,6 +122,23 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
           if (offset == 0) return false;
 
           element = element.getContainingFile().findElementAt(offset - 1);
+          if (element == null) return false;
+          if (!skip.getCondition().accepts(element, context)) {
+            return pattern.getCondition().accepts(element, context);
+          }
+        }
+      }
+
+    });
+  }
+
+  public Self beforeLeafSkipping(@NotNull final ElementPattern skip, @NotNull final ElementPattern pattern) {
+    return with(new PatternCondition<T>("afterLeafSkipping") {
+      public boolean accepts(@NotNull T t, final ProcessingContext context) {
+        PsiElement element = t;
+        while (true) {
+          final int offset = element.getTextRange().getEndOffset();
+          element = element.getContainingFile().findElementAt(offset);
           if (element == null) return false;
           if (!skip.getCondition().accepts(element, context)) {
             return pattern.getCondition().accepts(element, context);
