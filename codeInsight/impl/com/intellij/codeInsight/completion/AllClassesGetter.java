@@ -177,16 +177,7 @@ public class AllClassesGetter {
   public void getClasses(final PsiElement context, final CompletionContext completionContext, CompletionResultSet<LookupElement> set, boolean afterNew) {
     if(context == null || !context.isValid()) return;
 
-    String prefix = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      public String compute() {
-        return context.getText().substring(0, completionContext.getStartOffset() - context.getTextRange().getStartOffset());
-      }
-    });
-    final int i = prefix.lastIndexOf('.');
-    String packagePrefix = "";
-    if (i > 0) {
-      packagePrefix = prefix.substring(0, i);
-    }
+    String packagePrefix = getPackagePrefix(context, completionContext);
 
     final PsiManager manager = context.getManager();
     final Set<String> qnames = new THashSet<String>();
@@ -229,6 +220,23 @@ public class AllClassesGetter {
         }
       }
     }
+  }
+
+  private static String getPackagePrefix(final PsiElement context, final CompletionContext completionContext) {
+    final String fileText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        return context.getContainingFile().getText();
+      }
+    });
+    int i = completionContext.getStartOffset() - 1;
+    while (i >= 0) {
+      final char c = fileText.charAt(i);
+      if (!Character.isJavaIdentifierPart(c) && c != '.') break;
+      i--;
+    }
+    String prefix = fileText.substring(i + 1, completionContext.getStartOffset());
+    final int j = prefix.lastIndexOf('.');
+    return j > 0 ? prefix.substring(0, j) : "";
   }
 
   private boolean isSuitable(final PsiElement context, final String packagePrefix, final Set<String> qnames,

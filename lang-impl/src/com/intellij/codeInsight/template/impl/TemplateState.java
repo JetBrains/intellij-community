@@ -719,7 +719,7 @@ public class TemplateState implements Disposable {
     }
     String variableName = myTemplate.getVariableNameAt(currentVariableNumber);
     int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
-    if (segmentNumber <= 0) return false;
+    if (segmentNumber < 0) return false;
     int start = mySegments.getSegmentStart(segmentNumber);
     ExpressionContext context = createExpressionContext(start);
     Result result = expression.calculateResult(context);
