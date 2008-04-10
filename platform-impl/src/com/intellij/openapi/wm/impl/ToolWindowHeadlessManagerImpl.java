@@ -132,15 +132,15 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   };
 
   @NonNls private static final ContentManager MOCK_CONTENT_MANAGER = new ContentManager() {
-    public void addContent(final Content content) { }
-    public void addContent(final Content content, final Object constraints) { }
-    public void addContentManagerListener(final ContentManagerListener l) { }
-    public void addDataProvider(final DataProvider provider) { }
-    public void addSelectedContent(final Content content) { }
+    public void addContent(@NotNull final Content content) { }
+    public void addContent(@NotNull final Content content, final Object constraints) { }
+    public void addContentManagerListener(@NotNull final ContentManagerListener l) { }
+    public void addDataProvider(@NotNull final DataProvider provider) { }
+    public void addSelectedContent(@NotNull final Content content) { }
     public boolean canCloseAllContents() { return false; }
     public boolean canCloseContents() { return false; }
     public Content findContent(final String displayName) { return null; }
-    public List<AnAction> getAdditionalPopupActions(final Content content) { return Collections.emptyList(); }
+    public List<AnAction> getAdditionalPopupActions(@NotNull final Content content) { return Collections.emptyList(); }
     public String getCloseActionName() { return "close"; }
     public String getCloseAllButThisActionName() { return "closeallbutthis"; }
     public JComponent getComponent() { return new JLabel(); }
@@ -148,21 +148,23 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     @Nullable
     public Content getContent(final int index) { return null; }
     public int getContentCount() { return 0; }
+    @NotNull
     public Content[] getContents() { return new Content[0]; }
     public int getIndexOfContent(final Content content) { return -1; }
     @Nullable
     public Content getSelectedContent() { return null; }
+    @NotNull
     public Content[] getSelectedContents() { return new Content[0]; }
-    public boolean isSelected(final Content content) { return false; }
+    public boolean isSelected(@NotNull final Content content) { return false; }
     public void removeAllContents(final boolean dispose) { }
-    public boolean removeContent(final Content content, final boolean dispose) { return false; }
-    public void removeContentManagerListener(final ContentManagerListener l) { }
-    public void removeFromSelection(final Content content) { }
+    public boolean removeContent(@NotNull final Content content, final boolean dispose) { return false; }
+    public void removeContentManagerListener(@NotNull final ContentManagerListener l) { }
+    public void removeFromSelection(@NotNull final Content content) { }
     public void requestFocus(@Nullable final Content content) { }
     public void selectNextContent() { }
     public void selectPreviousContent() { }
-    public void setSelectedContent(final Content content) { }
-    public void setSelectedContent(final Content content, final boolean requestFocus) { }
+    public void setSelectedContent(@NotNull final Content content) { }
+    public void setSelectedContent(@NotNull final Content content, final boolean requestFocus) { }
 
     public void dispose() {}
 
@@ -174,6 +176,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       return true;
     }
 
+    @NotNull
     public ContentFactory getFactory() {
       return ServiceManager.getService(ContentFactory.class);
     }

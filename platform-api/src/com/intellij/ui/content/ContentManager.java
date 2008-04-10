@@ -18,6 +18,7 @@ package com.intellij.ui.content;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,26 +31,26 @@ public interface ContentManager extends Disposable {
 
   JComponent getComponent();
 
-  void addContent(Content content);
-  void addContent(Content content, Object constraints);
+  void addContent(@NotNull Content content);
+  void addContent(@NotNull Content content, Object constraints);
 
-  boolean removeContent(Content content, final boolean dispose);
+  boolean removeContent(@NotNull Content content, final boolean dispose);
 
-  void setSelectedContent(Content content);
-  void setSelectedContent(Content content, boolean requestFocus);
+  void setSelectedContent(@NotNull Content content);
+  void setSelectedContent(@NotNull Content content, boolean requestFocus);
 
-  void addSelectedContent(Content content);
+  void addSelectedContent(@NotNull Content content);
 
   @Nullable
   Content getSelectedContent();
-  Content[] getSelectedContents();
+  @NotNull Content[] getSelectedContents();
 
 
   void removeAllContents(final boolean dispose);
 
   int getContentCount();
 
-  Content[] getContents();
+  @NotNull Content[] getContents();
 
   //TODO[anton,vova] is this method needed?
   Content findContent(String displayName);
@@ -69,9 +70,9 @@ public interface ContentManager extends Disposable {
 
   void selectNextContent();
 
-  void addContentManagerListener(ContentManagerListener l);
+  void addContentManagerListener(@NotNull ContentManagerListener l);
 
-  void removeContentManagerListener(ContentManagerListener l);
+  void removeContentManagerListener(@NotNull ContentManagerListener l);
 
   /**
    * Returns the localized name of the "Close All but This" action.
@@ -81,17 +82,17 @@ public interface ContentManager extends Disposable {
    */
   String getCloseAllButThisActionName();
 
-  List<AnAction> getAdditionalPopupActions(final Content content);
+  List<AnAction> getAdditionalPopupActions(@NotNull  Content content);
 
-  void removeFromSelection(Content content);
+  void removeFromSelection(@NotNull Content content);
 
-  boolean isSelected(Content content);
+  boolean isSelected(@NotNull Content content);
 
   void requestFocus(@Nullable Content content);
 
-  void addDataProvider(DataProvider provider);
+  void addDataProvider(@NotNull DataProvider provider);
   
-  ContentFactory getFactory();
+  @NotNull ContentFactory getFactory();
 
   boolean isDisposed();
 
