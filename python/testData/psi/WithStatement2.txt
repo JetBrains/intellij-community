@@ -1,0 +1,80 @@
+PyFile:WithStatement2.py
+  PsiComment(Py:END_OF_LINE_COMMENT)('# with = 1 # legal identifier')
+  PsiWhiteSpace('\n')
+  PsiComment(Py:END_OF_LINE_COMMENT)('# with = 1')
+  PsiWhiteSpace('\n')
+  PyAssignmentStatement
+    PyTargetExpression: with
+      PsiElement(Py:IDENTIFIER)('with')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyNumericLiteralExpression
+      PsiElement(Py:INTEGER_LITERAL)('1')
+  PsiWhiteSpace('\n')
+  PsiComment(Py:END_OF_LINE_COMMENT)('# from __future__ import with_statement, nested_scopes')
+  PsiWhiteSpace('\n')
+  PyFromImportStatement
+    PsiElement(Py:FROM_KEYWORD)('from')
+    PsiWhiteSpace(' ')
+    PyReferenceExpression: __future__
+      PsiElement(Py:IDENTIFIER)('__future__')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IMPORT_KEYWORD)('import')
+    PsiWhiteSpace(' ')
+    PyImportElement
+      PyReferenceExpression: with_statement
+        PsiElement(Py:IDENTIFIER)('with_statement')
+    PsiElement(Py:COMMA)(',')
+    PsiWhiteSpace(' ')
+    PyImportElement
+      PyReferenceExpression: nested_scopes
+        PsiElement(Py:IDENTIFIER)('nested_scopes')
+  PsiWhiteSpace('\n')
+  PsiComment(Py:END_OF_LINE_COMMENT)('# with x.y(z)[t] as y: pass')
+  PsiWhiteSpace('\n')
+  PyWithStatement
+    PsiElement(Py:WITH_KEYWORD)('with')
+    PsiWhiteSpace(' ')
+    PySubscriptionExpression
+      PyCallExpression: y
+        PyReferenceExpression: y
+          PyReferenceExpression: x
+            PsiElement(Py:IDENTIFIER)('x')
+          PsiElement(Py:DOT)('.')
+          PsiElement(Py:IDENTIFIER)('y')
+        PyArgumentList
+          PsiElement(Py:LPAR)('(')
+          PyReferenceExpression: z
+            PsiElement(Py:IDENTIFIER)('z')
+          PsiElement(Py:RPAR)(')')
+      PsiElement(Py:LBRACKET)('[')
+      PyReferenceExpression: t
+        PsiElement(Py:IDENTIFIER)('t')
+      PsiElement(Py:RBRACKET)(']')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:AS_KEYWORD)('as')
+    PsiWhiteSpace(' ')
+    PyReferenceExpression: y
+      PsiElement(Py:IDENTIFIER)('y')
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace(' ')
+    PyStatementList
+      PyPassStatement
+        PsiElement(Py:PASS_KEYWORD)('pass')
+  PsiWhiteSpace('\n')
+  PsiComment(Py:END_OF_LINE_COMMENT)('# with = 1 # now illegal')
+  PsiWhiteSpace('\n')
+  PyWithStatement
+    PsiElement(Py:WITH_KEYWORD)('with')
+    PsiErrorElement:expression expected
+      <empty list>
+    PsiWhiteSpace(' ')
+    PyStatementList
+      PsiElement(Py:EQ)('=')
+      PsiErrorElement:statement expected, found Py:EQ
+        <empty list>
+  PsiWhiteSpace(' ')
+  PyExpressionStatement
+    PyNumericLiteralExpression
+      PsiElement(Py:INTEGER_LITERAL)('1')

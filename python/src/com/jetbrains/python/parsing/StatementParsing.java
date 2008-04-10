@@ -16,23 +16,42 @@
 
 package com.jetbrains.python.parsing;
 
+import com.intellij.lang.ITokenTypeRemapper;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.EnumSet;
+import java.util.Set;
+
 
 /**
  * @author yole
  */
-public class StatementParsing extends Parsing {
+public class StatementParsing
+    extends Parsing
+    implements ITokenTypeRemapper
+{
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.parsing.StatementParsing");
+  protected enum FIPH {NONE, FROM, FUTURE, IMPORT} // 'from __future__ import' phase
+  private FIPH _from_import_phase = FIPH.NONE;
+  private boolean _expect_AS_kwd = false;
+
+  protected enum FUTURE {ABSOLUTE_IMPORT, DIVISION, GENERATORS, NESTED_SCOPES, WITH_STATEMENT}
+  protected Set<FUTURE> myFutureFlags = EnumSet.noneOf(FUTURE.class);
 
   protected StatementParsing(ParsingContext context) {
     super(context);
   }
 
   public void parseStatement() {
+    // TODO: initialize it in a more proper place
+    myBuilder.setTokenTypeRemapper(this);
+
     while (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
       myBuilder.advanceLexer();
     }
@@ -308,7 +327,7 @@ public class StatementParsing extends Parsing {
     LOG.assertTrue(builder.getTokenType() == PyTokenTypes.IMPORT_KEYWORD);
     final PsiBuilder.Marker importStatement = builder.mark();
     builder.advanceLexer();
-    parseImportElements(true, false);
+    parseImportElements(true, false, false);
     checkEndOfStatement(inSuite);
     importStatement.done(PyElementTypes.IMPORT_STATEMENT);
   }
@@ -316,48 +335,66 @@ public class StatementParsing extends Parsing {
   private void parseFromImportStatement(boolean inSuite) {
     PsiBuilder builder = myContext.getBuilder();
     assertCurrentToken(PyTokenTypes.FROM_KEYWORD);
+    _from_import_phase = FIPH.FROM;
     final PsiBuilder.Marker fromImportStatement = builder.mark();
     builder.advanceLexer();
+    boolean from_future = false;
     if (parseDottedName()) {
       checkMatches(PyTokenTypes.IMPORT_KEYWORD, "'import' expected");
+      if (_from_import_phase == FIPH.FUTURE) {
+        _from_import_phase = FIPH.IMPORT;
+        from_future = true;
+      }
       if (builder.getTokenType() == PyTokenTypes.MULT) {
         builder.advanceLexer();
       }
       else if (builder.getTokenType() == PyTokenTypes.LPAR) {
         builder.advanceLexer();
-        parseImportElements(false, true);
+        parseImportElements(false, true, from_future);
         checkMatches(PyTokenTypes.RPAR, ") expected");
       }
       else {
-        parseImportElements(false, false);
+        parseImportElements(false, false, from_future);
       }
     }
     checkEndOfStatement(inSuite);
     fromImportStatement.done(PyElementTypes.FROM_IMPORT_STATEMENT);
+    _from_import_phase = FIPH.NONE;
   }
 
-  private void parseImportElements(boolean isModuleName, boolean inParens) {
+  private void parseImportElements(boolean is_module_import, boolean in_parens, final boolean from_future) {
     PsiBuilder builder = myContext.getBuilder();
     while (true) {
       final PsiBuilder.Marker asMarker = builder.mark();
-      if (isModuleName) {
-        if (!parseDottedName()) {
-          asMarker.drop();
+      if (is_module_import) { // import _
+        if (!parseDottedNameAsAware(true)) {
+          asMarker.drop(); 
           break;
         }
       }
-      else {
-        parseIdentifier(PyElementTypes.REFERENCE_EXPRESSION);
+      else { // from X import _
+        String token_text = parseIdentifier(PyElementTypes.REFERENCE_EXPRESSION);
+        if (from_future) {
+          // TODO: make constants for known future feature names
+          if ("with_statement".equals(token_text)) {
+            myFutureFlags.add(FUTURE.WITH_STATEMENT);
+          }
+          else if ("nested_scopes".equals(token_text)) {
+            myFutureFlags.add(FUTURE.NESTED_SCOPES);
+          }
+        }
       }
-      String tokenText = builder.getTokenText();
-      if (builder.getTokenType() == PyTokenTypes.IDENTIFIER && tokenText != null && tokenText.equals("as")) {
+      _expect_AS_kwd = true; // possible 'as' comes as an ident; reparse it as keyword if found
+      if (builder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
         builder.advanceLexer();
+        _expect_AS_kwd = false;
         parseIdentifier(PyElementTypes.TARGET_EXPRESSION);
       }
       asMarker.done(PyElementTypes.IMPORT_ELEMENT);
+      _expect_AS_kwd = false;
       if (builder.getTokenType() == PyTokenTypes.COMMA) {
         builder.advanceLexer();
-        if (inParens && builder.getTokenType() == PyTokenTypes.RPAR) {
+        if (in_parens && builder.getTokenType() == PyTokenTypes.RPAR) {
           break;
         }
       }
@@ -367,19 +404,27 @@ public class StatementParsing extends Parsing {
     }
   }
 
-  private void parseIdentifier(final IElementType elementType) {
+  @Nullable
+  private String parseIdentifier(final IElementType elementType) {
     final PsiBuilder.Marker idMarker = myBuilder.mark();
     if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
+      String id_text = myBuilder.getTokenText();
       myBuilder.advanceLexer();
       idMarker.done(elementType);
+      return id_text;
     }
     else {
       myBuilder.error("identifier expected");
       idMarker.drop();
     }
+    return null;
   }
 
   public boolean parseDottedName() {
+    return parseDottedNameAsAware(false);
+  }
+
+  protected boolean parseDottedNameAsAware(boolean expect_as) {
     if (myBuilder.getTokenType() != PyTokenTypes.IDENTIFIER) {
       myBuilder.error("identifier expected");
       return false;
@@ -387,12 +432,15 @@ public class StatementParsing extends Parsing {
     PsiBuilder.Marker marker = myBuilder.mark();
     myBuilder.advanceLexer();
     marker.done(PyElementTypes.REFERENCE_EXPRESSION);
+    boolean old_expect_AS_kwd = _expect_AS_kwd;
+    _expect_AS_kwd = expect_as;
     while (myBuilder.getTokenType() == PyTokenTypes.DOT) {
       marker = marker.precede();
       myBuilder.advanceLexer();
       checkMatches(PyTokenTypes.IDENTIFIER, "identifier expected");
       marker.done(PyElementTypes.REFERENCE_EXPRESSION);
     }
+    _expect_AS_kwd = old_expect_AS_kwd;
     return true;
   }
 
@@ -582,7 +630,7 @@ public class StatementParsing extends Parsing {
       if (!myBuilder.eof()) {
         checkMatches(PyTokenTypes.DEDENT, "dedent expected");
       }
-      // HACK: the following line advances the PsiBuilder lexer and thus
+      // NOTE: the following line advances the PsiBuilder lexer and thus
       // ensures that the whitespace following the statement list is included
       // in the block containing the statement list
       myBuilder.getTokenType();
@@ -599,5 +647,30 @@ public class StatementParsing extends Parsing {
         endMarker.done(elType);
       }
     }
+  }
+  public IElementType filter(final IElementType source, final int start, final int end, final CharSequence text) {
+    if (
+      (myFutureFlags.contains(FUTURE.WITH_STATEMENT) || _expect_AS_kwd) &&
+      source == PyTokenTypes.IDENTIFIER &&
+      CharArrayUtil.regionMatches(text, start, end, "as")
+    ) {
+      return PyTokenTypes.AS_KEYWORD;
+    }
+    else if ( // filter
+        (_from_import_phase == FIPH.FROM) &&
+        source == PyTokenTypes.IDENTIFIER &&
+        CharArrayUtil.regionMatches(text, start, end, "__future__")
+    ) {
+      _from_import_phase = FIPH.FUTURE;
+      return source;
+    }
+    else if (
+        myFutureFlags.contains(FUTURE.WITH_STATEMENT) &&
+        source == PyTokenTypes.IDENTIFIER &&
+        CharArrayUtil.regionMatches(text, start, end, "with")
+    ) {
+      return PyTokenTypes.WITH_KEYWORD;
+    }
+    return source;
   }
 }

@@ -68,4 +68,13 @@ public class PythonParsingTest extends ParsingTestCase {
   public void testWithStatement() throws Exception {
     doTest(true);
   }
+  
+  public void testWithStatement2() throws Exception {
+    doTest(true);
+  }
+
+  public void testImportStmt() throws Exception {
+    doTest(true);
+  }
+
 }
