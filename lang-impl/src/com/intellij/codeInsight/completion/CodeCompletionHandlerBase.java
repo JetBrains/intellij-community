@@ -118,7 +118,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final PsiElement insertedElement = insertedInfo.getSecond();
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, insertedInfo.getFirst());
 
-    final CompletionParametersImpl parameters = new CompletionParametersImpl(insertedInfo.getSecond(), insertedInfo.getFirst().file, myCompletionType);
+    final CompletionParametersImpl parameters = new CompletionParametersImpl(insertedInfo.getSecond(), insertedInfo.getFirst().file, myCompletionType, insertedInfo.getFirst().getStartOffset());
     final String adText = CompletionService.getCompletionService().getAdvertisementText(parameters);
 
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, adText, this, insertedInfo.getFirst());

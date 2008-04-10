@@ -29,9 +29,8 @@ public class LegacyCompletionContributor extends CompletionContributor{
     final PsiElementPattern.Capture<PsiElement> everywhere = PlatformPatterns.psiElement();
     registrar.extend(CompletionType.BASIC, everywhere, new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
-        final CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         final PsiFile file = parameters.getOriginalFile();
-        final int startOffset = context.getStartOffset();
+        final int startOffset = parameters.getOffset();
         final PsiElement lastElement = file.findElementAt(startOffset - 1);
         final PsiElement insertedElement = parameters.getPosition();
         CompletionData completionData = ApplicationManager.getApplication().runReadAction(new Computable<CompletionData>() {
@@ -54,11 +53,11 @@ public class LegacyCompletionContributor extends CompletionContributor{
         final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
         final PsiReference ref = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
           public PsiReference compute() {
-            return insertedElement.getContainingFile().findReferenceAt(context.getStartOffset());
+            return insertedElement.getContainingFile().findReferenceAt(parameters.getOffset());
           }
         });
         if (ref != null) {
-          completionData.completeReference(ref, lookupSet, insertedElement, result.getPrefixMatcher(), context.file, context.getStartOffset());
+          completionData.completeReference(ref, lookupSet, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile(), parameters.getOffset());
         }
         for (final LookupItem item : lookupSet) {
           result.addElement(item);
@@ -66,8 +65,8 @@ public class LegacyCompletionContributor extends CompletionContributor{
         lookupSet.clear();
 
         final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-        completionData.addKeywordVariants(keywordVariants, insertedElement, context.file);
-        completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), context.file);
+        completionData.addKeywordVariants(keywordVariants, insertedElement, parameters.getOriginalFile());
+        completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile());
         for (final LookupItem item : lookupSet) {
           result.addElement(item);
         }

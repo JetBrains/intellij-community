@@ -42,7 +42,6 @@ public class JavaClassNameCompletionContributor extends CompletionContributor{
   public void registerCompletionProviders(final CompletionRegistrar registrar) {
     registrar.extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
-        CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         PsiElement insertedElement = parameters.getPosition();
         String prefix = result.toString();
 
@@ -108,7 +107,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor{
           }
         }
 
-        getter.getClasses(insertedElement, context, result, afterNew);
+        getter.getClasses(insertedElement, result, afterNew, parameters.getOffset());
       }
     });
 

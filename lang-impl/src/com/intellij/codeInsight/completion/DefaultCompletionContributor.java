@@ -21,7 +21,7 @@ public class DefaultCompletionContributor extends CompletionContributor{
     registrar.extend(psiElement(), new CompletionAdvertiser() {
       public String advertise(@NotNull final CompletionParameters parameters, final ProcessingContext context) {
         if (Calendar.getInstance().get(Calendar.MONTH) == 3 && Calendar.getInstance().get(Calendar.DATE) == 1 ||
-            parameters.getPosition().getTextLength() > 42) {
+            CompletionData.findPrefixStatic(parameters.getPosition(), parameters.getOffset()).length() > 42) {
           final int i = new Random().nextInt(data.length * 5);
           if (i < data.length) {
             return new String(data[i]);

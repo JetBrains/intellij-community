@@ -57,7 +57,7 @@ public class CompletionService implements CompletionRegistrar{
 
   public void performAsyncCompletion(CompletionType type, final CompletionParameters queryParameters, AsyncConsumer<LookupElement> consumer) {
     final CompletionContext context = queryParameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-    final String prefix = CompletionData.findPrefixStatic(queryParameters.getPosition(), context.getStartOffset());
+    final String prefix = CompletionData.findPrefixStatic(queryParameters.getPosition(), queryParameters.getOffset());
     final PrefixMatcher matcher = new CamelHumpMatcher(prefix);
     context.setPrefix(prefix);
 
@@ -107,8 +107,6 @@ public class CompletionService implements CompletionRegistrar{
 
   @Nullable
   public String getAdvertisementText(final CompletionParameters queryParameters) {
-    final CompletionContext context = queryParameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-    final PrefixMatcher matcher = new CamelHumpMatcher(CompletionData.findPrefixStatic(queryParameters.getPosition(), context.getStartOffset()));
     for (final Pair<ElementPattern, CompletionAdvertiser> advertiser : myAdvertisers) {
       final ProcessingContext processingContext = new ProcessingContext();
       if (advertiser.first.accepts(queryParameters.getPosition(), processingContext)) {
@@ -120,8 +118,6 @@ public class CompletionService implements CompletionRegistrar{
   }
   @Nullable
   public String getEmptyLookupText(final CompletionParameters queryParameters) {
-    final CompletionContext context = queryParameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-    final PrefixMatcher matcher = new CamelHumpMatcher(CompletionData.findPrefixStatic(queryParameters.getPosition(), context.getStartOffset()));
     for (final Pair<ElementPattern, CompletionAdvertiser> advertiser : myAdvertisers) {
       final ProcessingContext processingContext = new ProcessingContext();
       if (advertiser.first.accepts(queryParameters.getPosition(), processingContext)) {

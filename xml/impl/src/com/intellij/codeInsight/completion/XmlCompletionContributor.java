@@ -30,7 +30,6 @@ public class XmlCompletionContributor extends CompletionContributor{
     registrar.extend(CompletionType.CLASS_NAME, PlatformPatterns.psiElement(XmlTokenType.XML_NAME), new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
         result.stopHere();
-        CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         final PsiElement element = parameters.getPosition();
         if (!(element.getParent() instanceof XmlTag)) {
           return;
@@ -50,7 +49,7 @@ public class XmlCompletionContributor extends CompletionContributor{
         final PsiReference reference = parent.getReference();
         if (reference != null && namespace.length() > 0 && parentDescriptor != null && !(parentDescriptor instanceof AnyXmlElementDescriptor)) {
           final Set<LookupItem> set = new HashSet<LookupItem>();
-          new XmlCompletionData().completeReference(reference, set, element, result.getPrefixMatcher(), context.file, context.getStartOffset());
+          new XmlCompletionData().completeReference(reference, set, element, result.getPrefixMatcher(), parameters.getOriginalFile(), parameters.getOffset());
           for (final LookupItem item : set) {
             result.addElement(item);
           }

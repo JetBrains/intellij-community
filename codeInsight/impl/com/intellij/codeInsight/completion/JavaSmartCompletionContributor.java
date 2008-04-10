@@ -50,8 +50,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
         final Set<LookupItem> set = new LinkedHashSet<LookupItem>();
         final PsiElement identifierCopy = parameters.getPosition();
         final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-        final CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-        context.setPrefix(identifierCopy, context.getStartOffset(), SMART_DATA);
+        result.setPrefixMatcher(SMART_DATA.findPrefix(identifierCopy, parameters.getOffset()));
 
         final PsiFile file = parameters.getOriginalFile();
 
@@ -110,7 +109,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
           }
         });
         if (ref != null) {
-          SMART_DATA.completeReference(ref, set, identifierCopy, result.getPrefixMatcher(), file, context.getStartOffset());
+          SMART_DATA.completeReference(ref, set, identifierCopy, result.getPrefixMatcher(), file, parameters.getOffset());
         }
         SMART_DATA.addKeywordVariants(keywordVariants, identifierCopy, file);
         SMART_DATA.completeKeywordsBySet(set, keywordVariants, identifierCopy, result.getPrefixMatcher(), file);
@@ -119,7 +118,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
         final PsiExpression expr = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
         final ExpectedTypeInfo[] expectedInfos = ApplicationManager.getApplication().runReadAction(new Computable<ExpectedTypeInfo[]>() {
           public ExpectedTypeInfo[] compute() {
-            return expr != null ? ExpectedTypesProvider.getInstance(context.project).getExpectedTypes(expr, true) : null;
+            return expr != null ? ExpectedTypesProvider.getInstance(parameters.getPosition().getProject()).getExpectedTypes(expr, true) : null;
           }
         });
 

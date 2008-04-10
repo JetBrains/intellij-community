@@ -23,4 +23,6 @@ public interface CompletionParameters {
 
   @NotNull
   CompletionType getCompletionType();
+
+  int getOffset();
 }

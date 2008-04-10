@@ -174,10 +174,10 @@ public class AllClassesGetter {
     myFilter = filter;
   }
 
-  public void getClasses(final PsiElement context, final CompletionContext completionContext, CompletionResultSet<LookupElement> set, boolean afterNew) {
+  public void getClasses(final PsiElement context, CompletionResultSet<LookupElement> set, boolean afterNew, final int offset) {
     if(context == null || !context.isValid()) return;
 
-    String packagePrefix = getPackagePrefix(context, completionContext);
+    String packagePrefix = getPackagePrefix(context, offset);
 
     final PsiManager manager = context.getManager();
     final Set<String> qnames = new THashSet<String>();
@@ -203,7 +203,7 @@ public class AllClassesGetter {
       lookingForAnnotations = true;
     }
 
-    final CamelHumpMatcher matcher = new CamelHumpMatcher(completionContext.getPrefix());
+    final CamelHumpMatcher matcher = new CamelHumpMatcher(set.getPrefixMatcher().getPrefix());
     for (final String name : names) {
       if (!matcher.prefixMatches(name)) continue;
 
@@ -222,19 +222,19 @@ public class AllClassesGetter {
     }
   }
 
-  private static String getPackagePrefix(final PsiElement context, final CompletionContext completionContext) {
+  private static String getPackagePrefix(final PsiElement context, final int offset) {
     final String fileText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
         return context.getContainingFile().getText();
       }
     });
-    int i = completionContext.getStartOffset() - 1;
+    int i = offset - 1;
     while (i >= 0) {
       final char c = fileText.charAt(i);
       if (!Character.isJavaIdentifierPart(c) && c != '.') break;
       i--;
     }
-    String prefix = fileText.substring(i + 1, completionContext.getStartOffset());
+    String prefix = fileText.substring(i + 1, offset);
     final int j = prefix.lastIndexOf('.');
     return j > 0 ? prefix.substring(0, j) : "";
   }

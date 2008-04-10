@@ -45,9 +45,8 @@ public class JavaCompletionContributor extends CompletionContributor{
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
         result.stopHere();
 
-        final CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         final PsiFile file = parameters.getOriginalFile();
-        final int startOffset = context.getStartOffset();
+        final int startOffset = parameters.getOffset();
         final PsiElement lastElement = file.findElementAt(startOffset - 1);
         final PsiElement insertedElement = parameters.getPosition();
         CompletionData completionData = ApplicationManager.getApplication().runReadAction(new Computable<CompletionData>() {
@@ -60,16 +59,16 @@ public class JavaCompletionContributor extends CompletionContributor{
         final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
         final PsiReference ref = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
           public PsiReference compute() {
-            return insertedElement.getContainingFile().findReferenceAt(context.getStartOffset());
+            return insertedElement.getContainingFile().findReferenceAt(startOffset);
           }
         });
         if (ref != null) {
-          completionData.completeReference(ref, lookupSet, insertedElement, result.getPrefixMatcher(), context.file, context.getStartOffset());
+          completionData.completeReference(ref, lookupSet, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile(), startOffset);
         }
 
         final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-        completionData.addKeywordVariants(keywordVariants, insertedElement, context.file);
-        completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), context.file);
+        completionData.addKeywordVariants(keywordVariants, insertedElement, parameters.getOriginalFile());
+        completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile());
         for (final LookupItem item : lookupSet) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
