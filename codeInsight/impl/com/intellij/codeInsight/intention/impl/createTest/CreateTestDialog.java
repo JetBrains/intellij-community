@@ -15,7 +15,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -342,7 +341,7 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   private PsiDirectory selectTargetDirectory() throws IncorrectOperationException {
-    VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentSourceRoots();
+    VirtualFile[] roots = ModuleRootManager.getInstance(myTargetModule).getSourceRoots();
     if (roots.length == 0) return null;
 
     String packageName = getPackageName();
