@@ -27,7 +27,7 @@ public class VariablesPanel extends DebuggerTreePanel implements DataProvider{
     add(new JScrollPane(frameTree), BorderLayout.CENTER);
     registerDisposable(DebuggerAction.installEditAction(frameTree, DebuggerActions.EDIT_NODE_SOURCE));
 
-    overrideShortcut(frameTree, DebuggerActions.SET_VALUE, KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
+    overrideShortcut(frameTree, DebuggerActions.SET_VALUE, new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)));
 
     new ValueNodeDnD(myTree, parent);
   }

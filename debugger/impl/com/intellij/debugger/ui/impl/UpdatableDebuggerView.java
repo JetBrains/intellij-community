@@ -109,9 +109,9 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
     myDisposables.clear();
   }
 
-  protected void overrideShortcut(final JComponent forComponent, final String actionId, final KeyStroke keyStroke) {
+  protected void overrideShortcut(final JComponent forComponent, final String actionId, final CustomShortcutSet shortcutSet) {
     final AnAction action = ActionManager.getInstance().getAction(actionId);
-    action.registerCustomShortcutSet(new CustomShortcutSet(keyStroke), forComponent);
+    action.registerCustomShortcutSet(shortcutSet, forComponent);
     registerDisposable(new Disposable() {
       public void dispose() {
         action.unregisterCustomShortcutSet(forComponent);
