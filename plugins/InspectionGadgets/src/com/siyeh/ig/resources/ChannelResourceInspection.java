@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,8 +78,7 @@ public class ChannelResourceInspection extends BaseInspection{
             } else if (parent instanceof PsiVariable) {
                 boundVariable = (PsiVariable) parent;
             } else {
-                registerError(expression, expression);
-                return;
+                boundVariable = null;
             }
             final PsiStatement statement =
                     PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
@@ -89,31 +88,51 @@ public class ChannelResourceInspection extends BaseInspection{
             PsiStatement nextStatement =
                     PsiTreeUtil.getNextSiblingOfType(statement,
                             PsiStatement.class);
-            if (!(nextStatement instanceof PsiTryStatement)) {
-                registerError(expression, expression);
+            while (!(nextStatement instanceof PsiTryStatement)) {
+                if (!(nextStatement instanceof PsiDeclarationStatement)) {
+                    registerError(expression, expression);
+                    return;
+                }
+                final VariableReferenceVisitor visitor =
+                        new VariableReferenceVisitor(boundVariable);
+                nextStatement.accept(visitor);
+                if (visitor.containsReference()) {
+                    registerError(expression, expression);
+                    return;
+                }
+                nextStatement =
+                        PsiTreeUtil.getNextSiblingOfType(nextStatement,
+                                PsiStatement.class);
+            }
+            PsiTryStatement tryStatement = (PsiTryStatement) nextStatement;
+            if (boundVariable != null &&
+                    resourceIsClosedInFinally(tryStatement, boundVariable)) {
                 return;
             }
-            //while (!(nextStatement instanceof PsiTryStatement)) {
-            //if (!(nextStatement instanceof PsiDeclarationStatement)) {
-            //    registerError(expression, expression);
-            //    return;
-            //}
-            //final VariableReferenceVisitor visitor =
-            //        new VariableReferenceVisitor(boundVariable);
-            //nextStatement.accept(visitor);
-            //if (visitor.containsReference()) {
-            //    registerError(expression, expression);
-            //    return;
-            //}
-            //nextStatement =
-            //        PsiTreeUtil.getNextSiblingOfType(nextStatement,
-            //                PsiStatement.class);
-            //}
-            PsiTryStatement tryStatement = (PsiTryStatement) nextStatement;
-            if (resourceIsClosedInFinally(tryStatement, boundVariable)) {
+            if (isChannelFactoryClosedInFinally(expression, tryStatement)) {
                 return;
             }
             registerError(expression, expression);
+        }
+
+        private static boolean isChannelFactoryClosedInFinally(
+                PsiMethodCallExpression expression,
+                PsiTryStatement tryStatement) {
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (!(qualifier instanceof PsiReferenceExpression)) {
+                return false;
+            }
+            PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) qualifier;
+            final PsiElement target = referenceExpression.resolve();
+            if (!(target instanceof PsiVariable)) {
+                return false;
+            }
+            PsiVariable variable = (PsiVariable) target;
+            return resourceIsClosedInFinally(tryStatement, variable);
         }
 
         private static boolean isChannelFactoryMethod(
@@ -135,11 +154,14 @@ public class ChannelResourceInspection extends BaseInspection{
 		            "java.net.ServerSocket",
 		            "java.io.FileInputStream",
 		            "java.io.FileOutputStream",
-		            "java.io.RandomAccessFile");
+		            "java.io.RandomAccessFile",
+                    "com.sun.corba.se.pept.transport.EventHandler",
+                    "sun.nio.ch.InheritedChannel");
         }
 
         private static boolean resourceIsClosedInFinally(
-                PsiTryStatement tryStatement, PsiVariable boundVariable){
+                @NotNull PsiTryStatement tryStatement,
+                @NotNull PsiVariable boundVariable){
             final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
             if(finallyBlock == null){
                 return false;
@@ -154,7 +176,6 @@ public class ChannelResourceInspection extends BaseInspection{
         }
     }
 
-    /*
     private static class VariableReferenceVisitor
             extends JavaRecursiveElementVisitor{
 
@@ -185,7 +206,6 @@ public class ChannelResourceInspection extends BaseInspection{
             return containsReference;
         }
     }
-    */
 
     private static class CloseVisitor extends JavaRecursiveElementVisitor{
 
