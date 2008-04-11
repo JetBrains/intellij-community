@@ -10,11 +10,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.util.XmlUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -94,7 +91,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     return checkName(xmlTag, mySettings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE);
   }
 
-  private boolean checkName(XmlTag tag, String option) {
+  protected boolean checkName(XmlTag tag, String option) {
     if (option == null) return false;
     for (String name : getTagNames(option)) {
       if (name.trim().equalsIgnoreCase(tag.getName())) return true;
@@ -149,21 +146,12 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     return true;
   }
 
-  private boolean isInlineTag(final XmlTag tag) {
-    return checkName(tag, mySettings.HTML_INLINE_ELEMENTS) ||
-           tag.getNamespacePrefix().length() > 0 && !isScriptletObject(tag) ||
-           "jsp:expression".equals(tag.getName());
+  protected boolean isInlineTag(final XmlTag tag) {
+    return checkName(tag, mySettings.HTML_INLINE_ELEMENTS);
   }
 
-  private boolean shouldBeWrapped(final XmlTag tag) {
-    final String name = tag.getName();
-    if (name.length() == 0) return false;
-
-    return isScriptletObject(tag) || JspSpiUtil.getDirectiveKindByTag(tag) != null;
-  }
-
-  private boolean isScriptletObject(final XmlTag tag) {
-    return XmlUtil.JSP_URI.equals(tag.getNamespace());
+  protected boolean shouldBeWrapped(final XmlTag tag) {
+    return false;
   }
 
   public boolean isTextElement(XmlTag tag) {
@@ -171,7 +159,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   }                               
 
   public int getTextWrap(final XmlTag tag) {
-    return tag.getContainingFile() instanceof JspFile ? CodeStyleSettings.DO_NOT_WRAP : mySettings.HTML_TEXT_WRAP;
+    return mySettings.HTML_TEXT_WRAP;
   }
 
   public int getAttributesWrap() {
