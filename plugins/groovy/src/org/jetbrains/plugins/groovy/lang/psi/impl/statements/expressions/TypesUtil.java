@@ -66,7 +66,7 @@ public class TypesUtil {
       if (candidates.length == 1) {
         final PsiElement element = candidates[0].getElement();
         if (element instanceof PsiMethod) {
-          return ((PsiMethod) element).getReturnType();
+          return candidates[0].getSubstitutor().substitute(((PsiMethod) element).getReturnType());
         }
       }
     }
