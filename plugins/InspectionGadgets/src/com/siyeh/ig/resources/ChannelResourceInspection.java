@@ -22,6 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ChannelResourceInspection extends BaseInspection{
@@ -93,12 +94,12 @@ public class ChannelResourceInspection extends BaseInspection{
                     registerError(expression, expression);
                     return;
                 }
-                final VariableReferenceVisitor visitor =
-                        new VariableReferenceVisitor(boundVariable);
-                nextStatement.accept(visitor);
-                if (visitor.containsReference()) {
-                    registerError(expression, expression);
-                    return;
+                if (boundVariable != null) {
+                    if (VariableAccessUtils.variableIsUsed(boundVariable,
+                            nextStatement)) {
+                        registerError(expression, expression);
+                        return;
+                    }
                 }
                 nextStatement =
                         PsiTreeUtil.getNextSiblingOfType(nextStatement,
@@ -172,38 +173,7 @@ public class ChannelResourceInspection extends BaseInspection{
             }
             final CloseVisitor visitor = new CloseVisitor(boundVariable);
             finallyBlock.accept(visitor);
-            return visitor.containsStreamClose();
-        }
-    }
-
-    private static class VariableReferenceVisitor
-            extends JavaRecursiveElementVisitor{
-
-        private boolean containsReference = false;
-        private PsiVariable variable;
-
-        VariableReferenceVisitor(@NotNull PsiVariable variable) {
-            this.variable = variable;
-        }
-
-        @Override
-        public void visitReferenceExpression(
-                PsiReferenceExpression expression) {
-            if (containsReference) {
-                return;
-            }
-            final PsiExpression qualifier = expression.getQualifierExpression();
-            if (qualifier != null) {
-                return;
-            }
-            final PsiElement target = expression.resolve();
-            if (variable.equals(target)) {
-                containsReference = true;
-            }
-        }
-
-        public boolean containsReference() {
-            return containsReference;
+            return visitor.containsClose();
         }
     }
 
@@ -247,7 +217,7 @@ public class ChannelResourceInspection extends BaseInspection{
             }
         }
 
-        public boolean containsStreamClose(){
+        public boolean containsClose(){
             return containsClose;
         }
     }
