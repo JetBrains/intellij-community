@@ -12,7 +12,7 @@ PyFile:WithStatement2.py
     PyNumericLiteralExpression
       PsiElement(Py:INTEGER_LITERAL)('1')
   PsiWhiteSpace('\n')
-  PsiComment(Py:END_OF_LINE_COMMENT)('# from __future__ import with_statement, nested_scopes')
+  PsiComment(Py:END_OF_LINE_COMMENT)('# from __future__ import nested_scopes, with_statement')
   PsiWhiteSpace('\n')
   PyFromImportStatement
     PsiElement(Py:FROM_KEYWORD)('from')
@@ -23,13 +23,13 @@ PyFile:WithStatement2.py
     PsiElement(Py:IMPORT_KEYWORD)('import')
     PsiWhiteSpace(' ')
     PyImportElement
-      PyReferenceExpression: with_statement
-        PsiElement(Py:IDENTIFIER)('with_statement')
+      PyReferenceExpression: nested_scopes
+        PsiElement(Py:IDENTIFIER)('nested_scopes')
     PsiElement(Py:COMMA)(',')
     PsiWhiteSpace(' ')
     PyImportElement
-      PyReferenceExpression: nested_scopes
-        PsiElement(Py:IDENTIFIER)('nested_scopes')
+      PyReferenceExpression: with_statement
+        PsiElement(Py:IDENTIFIER)('with_statement')
   PsiWhiteSpace('\n')
   PsiComment(Py:END_OF_LINE_COMMENT)('# with x.y(z)[t] as y: pass')
   PsiWhiteSpace('\n')
