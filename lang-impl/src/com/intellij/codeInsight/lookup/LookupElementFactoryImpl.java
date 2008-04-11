@@ -5,7 +5,6 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.simple.SimpleLookupItem;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +28,7 @@ public class LookupElementFactoryImpl extends LookupElementFactory{
     return createLookupElement(element, StringUtil.notNullize(element.getName()));
   }
 
-  public <T extends PsiElement> SimpleLookupItem<T> createLookupElement(@NotNull T element, @NotNull String lookupString) {
+  public <T> SimpleLookupItem<T> createLookupElement(@NotNull T element, @NotNull String lookupString) {
     return new SimpleLookupItem<T>(element, lookupString);
   }
 }
