@@ -25,11 +25,12 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
@@ -602,7 +603,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+            final PsiFile file = PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
             final IntentionAction action = cachedAction.getAction();
             if (file == null || !action.isAvailable(myProject, myEditor, file)) {
               return;
