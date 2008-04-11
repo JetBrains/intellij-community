@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
+import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.repo.MavenRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
@@ -30,6 +31,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.Collection;
 import java.util.HashMap;
@@ -54,10 +56,35 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
 
   private Map<VirtualFile, PomNode> fileToNode = new HashMap<VirtualFile, PomNode>();
 
-  public MavenProjectNavigator(Project project, MavenProjectsManager projectsManager, MavenRepository repository, MavenEventsHandler eventsHandler) {
+  public MavenProjectNavigator(final Project project, MavenProjectsManager projectsManager, MavenRepository repository, MavenEventsHandler eventsHandler) {
     super(project, projectsManager, repository, eventsHandler);
 
-    tree = new SimpleTree();
+    tree = new SimpleTree() {
+      private JLabel myLabel = new JLabel(ProjectBundle.message("maven.please.reimport.xml"));
+
+      @Override
+      protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        
+        if (MavenProjectsManager.getInstance(project).isValidVersion()) return;
+
+        myLabel.setFont(getFont());
+        myLabel.setBackground(getBackground());
+        myLabel.setForeground(getForeground());
+        Rectangle bounds = getBounds();
+        Dimension size = myLabel.getPreferredSize();
+        myLabel.setBounds(0, 0, size.width, size.height);
+
+        int x = (bounds.width - size.width) / 2;
+        Graphics g2 = g.create(bounds.x + x, bounds.y + 20, bounds.width, bounds.height);
+        try {
+          myLabel.paint(g2);
+        }
+        finally {
+          g2.dispose();
+        }
+      }
+    };
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);

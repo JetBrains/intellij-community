@@ -13,6 +13,7 @@ import org.apache.maven.project.MavenProject;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenFactory;
 import org.jetbrains.idea.maven.core.util.Path;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
 
@@ -55,10 +56,10 @@ public class FoldersConfigurator {
   }
 
   private static void updateModuleExcludedFolders(Module m, MavenProjectReader r) throws MavenException {
-    MavenImporter importer = MavenImporter.getInstance(m.getProject());
-    MavenImporterSettings settings = importer.getImporterSettings();
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(m.getProject());
+    MavenImporterSettings settings = manager.getImporterSettings();
 
-    VirtualFile f = importer.findPomForModule(m);
+    VirtualFile f = manager.findPomForModule(m);
     if (f == null) return;
     MavenProject project = r.readBare(f.getPath());
 

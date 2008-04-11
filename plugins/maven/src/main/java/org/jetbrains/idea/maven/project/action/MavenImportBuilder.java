@@ -98,8 +98,8 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   public void commit(final Project project) {
     myImportProcessor.commit(project, getAllProfiles());
 
-    MavenImporter importerComponent = MavenImporter.getInstance(project);
-    importerComponent.setDoesNotRequireSynchronization();
+    MavenProjectsManager.getInstance(project).setDoesNotRequireSynchronization();
+    MavenProjectsManager.getInstance(project).setMavenProject();
 
     StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
       public void run() {

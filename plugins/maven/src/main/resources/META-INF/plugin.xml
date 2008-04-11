@@ -48,9 +48,6 @@
       <implementation-class>org.jetbrains.idea.maven.state.MavenProjectsManager</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.project.MavenImporter</implementation-class>
-    </component>
-    <component>
       <interface-class>org.jetbrains.idea.maven.runner.MavenRunner</interface-class>
       <implementation-class>org.jetbrains.idea.maven.runner.MavenRunnerImpl</implementation-class>
       <option name="workspace" value="true"/>

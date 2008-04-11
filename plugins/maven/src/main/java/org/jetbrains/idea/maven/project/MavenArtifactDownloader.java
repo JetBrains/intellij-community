@@ -45,19 +45,18 @@ public class MavenArtifactDownloader {
   }
 
   public static void download(final Project project) throws CanceledException, MavenException {
-    final MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    final MavenImporter importer = MavenImporter.getInstance(project);
+    final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
 
     final Map<MavenProject, Collection<String>> mavenProjects = new HashMap<MavenProject, Collection<String>>();
 
     final Map<VirtualFile, MavenProject> fileToProject = new HashMap<VirtualFile, MavenProject>();
     final MavenEmbedder e = MavenFactory.createEmbedderForRead(MavenCore.getInstance(project).getState());
     try {
-      for (VirtualFile file : projectsManager.getFiles()) {
-        if (!projectsManager.isIgnored(file)) {
-          MavenProject p = projectsManager.getResolvedProject(file);
+      for (VirtualFile file : manager.getFiles()) {
+        if (!manager.isIgnored(file)) {
+          MavenProject p = manager.getResolvedProject(file);
           if (p == null) continue;
-          mavenProjects.put(p, projectsManager.getActiveProfiles(file));
+          mavenProjects.put(p, manager.getActiveProfiles(file));
           fileToProject.put(file, p);
         }
       }
@@ -65,8 +64,8 @@ public class MavenArtifactDownloader {
       final Map<MavenProject, Module> projectsToModules = new HashMap<MavenProject, Module>();
 
       for (Module module : ModuleManager.getInstance(project).getModules()) {
-        VirtualFile pomFile = importer.findPomForModule(module);
-        if (pomFile != null && !projectsManager.isIgnored(pomFile)) {
+        VirtualFile pomFile = manager.findPomForModule(module);
+        if (pomFile != null && !manager.isIgnored(pomFile)) {
           MavenProject mavenProject = fileToProject.get(pomFile);
           if (mavenProject != null) {
             projectsToModules.put(mavenProject, module);
@@ -80,7 +79,7 @@ public class MavenArtifactDownloader {
           for (MavenProject mavenProject : projectsToModules.keySet()) {
             projectIds.add(new ProjectId(mavenProject.getArtifact()));
           }
-          new MavenArtifactDownloader(importer.getArtifactSettings(), e, p)
+          new MavenArtifactDownloader(manager.getArtifactSettings(), e, p)
             .download(project, mavenProjects, fileToProject, projectIds, true);
         }
       });
