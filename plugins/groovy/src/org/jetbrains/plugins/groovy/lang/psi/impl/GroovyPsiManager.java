@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
@@ -150,7 +151,7 @@ public class GroovyPsiManager implements ProjectComponent {
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
     LOG.assertTrue(parameters.length > 0);
-    PsiType thisType = parameters[0].getType();
+    PsiType thisType = TypeConversionUtil.erasure(parameters[0].getType());
     String thisCanonicalText = thisType.getCanonicalText();
     LOG.assertTrue(thisCanonicalText != null);
     List<PsiMethod> hisMethods = map.get(thisCanonicalText);

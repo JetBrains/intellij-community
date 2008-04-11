@@ -27,6 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -94,11 +96,34 @@ public class MethodResolverProcessor extends ResolverProcessor {
       return substitutor;
     }
 
-    if (method instanceof GrGdkMethod) {
-      //type inference should be performed from static method
-      method = ((GrGdkMethod) method).getStaticMethod();
+    if (argumentsSupplied() && method.getTypeParameters().length > 0) {
+      PsiType[] argTypes = myArgumentTypes;
+      if (method instanceof GrGdkMethod) {
+        assert argTypes != null;
+        //type inference should be performed from static method
+        PsiType[] newArgTypes = new PsiType[argTypes.length + 1];
+        newArgTypes[0] = getThisType();
+        System.arraycopy(argTypes, 0, newArgTypes, 1, argTypes.length);
+        argTypes = newArgTypes;
+
+        method = ((GrGdkMethod) method).getStaticMethod();
+      }
+      return inferMethodTypeParameters(method, substitutor, typeParameters, argTypes);
     }
-    return inferMethodTypeParameters(method, substitutor, typeParameters);
+
+    return substitutor;
+  }
+
+  private PsiType getThisType() {
+    if (myPlace instanceof GrReferenceExpression) {
+      GrExpression qualifier = ((GrReferenceExpression) myPlace).getQualifierExpression();
+      if (qualifier != null) {
+        PsiType qType = qualifier.getType();
+        if (qType != null) return qType;
+      }
+    }
+
+    return PsiType.getJavaLangObject(myPlace.getManager(), myPlace.getResolveScope());
   }
 
   private boolean isClosure(PsiVariable variable) {
@@ -109,20 +134,20 @@ public class MethodResolverProcessor extends ResolverProcessor {
     return variable.getType().equalsToText(GrClosableBlock.GROOVY_LANG_CLOSURE);
   }
 
-  private PsiSubstitutor inferMethodTypeParameters(PsiMethod method, PsiSubstitutor partialSubstitutor, final PsiTypeParameter[] typeParameters) {
+  private PsiSubstitutor inferMethodTypeParameters(PsiMethod method, PsiSubstitutor partialSubstitutor, final PsiTypeParameter[] typeParameters, final PsiType[] argTypes) {
     if (typeParameters.length == 0) return partialSubstitutor;
 
     if (argumentsSupplied()) {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
-      final int max = Math.max(parameters.length, myArgumentTypes.length);
+      final int max = Math.max(parameters.length, argTypes.length);
       PsiType[] parameterTypes = new PsiType[max];
       PsiType[] argumentTypes = new PsiType[max];
       for (int i = 0; i < parameterTypes.length; i++) {
         if (i < parameters.length) {
           final PsiType type = parameters[i].getType();
-          if (myArgumentTypes.length == parameters.length &&
+          if (argTypes.length == parameters.length &&
               type instanceof PsiEllipsisType &&
-              !(myArgumentTypes[myArgumentTypes.length - 1] instanceof PsiArrayType)) {
+              !(argTypes[argTypes.length - 1] instanceof PsiArrayType)) {
             parameterTypes[i] = ((PsiEllipsisType) type).getComponentType();
           } else {
             parameterTypes[i] = type;
@@ -130,7 +155,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
         } else {
           if (parameters.length > 0) {
             final PsiType lastParameterType = parameters[parameters.length - 1].getType();
-            if (myArgumentTypes.length > parameters.length && lastParameterType instanceof PsiEllipsisType) {
+            if (argTypes.length > parameters.length && lastParameterType instanceof PsiEllipsisType) {
               parameterTypes[i] = ((PsiEllipsisType) lastParameterType).getComponentType();
             } else {
               parameterTypes[i] = lastParameterType;
@@ -139,7 +164,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
             parameterTypes[i] = PsiType.NULL;
           }
         }
-        argumentTypes[i] = i < myArgumentTypes.length ? myArgumentTypes[i] : PsiType.NULL;
+        argumentTypes[i] = i < argTypes.length ? argTypes[i] : PsiType.NULL;
       }
 
       final PsiResolveHelper helper = method.getManager().getResolveHelper();
