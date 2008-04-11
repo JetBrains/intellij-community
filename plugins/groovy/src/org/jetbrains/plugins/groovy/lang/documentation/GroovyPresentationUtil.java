@@ -38,6 +38,7 @@ public class GroovyPresentationUtil {
     StringBuilder builder = new StringBuilder();
     PsiType type = parameter.getTypeGroovy();
     if (type != null) {
+      type = substitutor.substitute(type);
       return builder.append(type.getPresentableText()).append(" ").append(parameter.getName()).toString();
     } else {
       builder.append(parameter.getName());
