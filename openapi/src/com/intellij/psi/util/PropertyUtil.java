@@ -500,4 +500,34 @@ public class PropertyUtil {
     }
     return null;
   }
+
+  @Nullable
+  public static PsiField findPropertyFieldByMember(final PsiMember psiMember) {
+    if (psiMember instanceof PsiField) {
+      return (PsiField)psiMember;
+    }
+    else if (psiMember instanceof PsiMethod) {
+      final PsiMethod psiMethod = (PsiMethod)psiMember;
+      final PsiType returnType = psiMethod.getReturnType();
+      if (returnType == null) return null;
+      final PsiCodeBlock body = psiMethod.getBody();
+      final PsiStatement[] statements = body == null? null : body.getStatements();
+      final PsiStatement statement = statements == null || statements.length != 1? null : statements[0];
+      final PsiElement target;
+      if (returnType == PsiType.VOID) {
+        final PsiExpression expression = statement instanceof PsiExpressionStatement? ((PsiExpressionStatement)statement).getExpression() : null;
+        target = expression instanceof PsiAssignmentExpression? ((PsiAssignmentExpression)expression).getLExpression() : null;
+      }
+      else {
+        target = statement instanceof PsiReturnStatement ? ((PsiReturnStatement)statement).getReturnValue() : null;
+      }
+      final PsiElement resolved = target instanceof PsiReferenceExpression ? ((PsiReferenceExpression)target).resolve() : null;
+      if (resolved instanceof PsiField) {
+        final PsiField field = (PsiField)resolved;
+        if (psiMember.getContainingClass() == field.getContainingClass() ||
+               psiMember.getContainingClass().isInheritor(field.getContainingClass(), true)) return field;
+      }
+    }
+    return null;
+  }
 }
