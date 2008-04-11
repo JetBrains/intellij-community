@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -297,18 +298,21 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
   }
 
   private void appendParameterText(PsiParameter parm, PsiSubstitutor substitutor, StringBuffer buffer) {
-    PsiType paramType = substitutor.substitute(parm.getType());
-    buffer.append(paramType.getPresentableText());
-    String name = parm.getName();
-    if (name != null) {
-      buffer.append(" ");
-      buffer.append(name);
-    }
-
     if (parm instanceof GrParameter) {
+      buffer.append(GroovyPresentationUtil.getParameterPresentation((GrParameter) parm, substitutor));
+
       final GrExpression initializer = ((GrParameter) parm).getDefaultInitializer();
       if (initializer != null) {
         buffer.append(" = ").append(initializer.getText());
+      }
+    } else {
+      PsiType t = parm.getType();
+      PsiType paramType = substitutor.substitute(t);
+      buffer.append(paramType.getPresentableText());
+      String name = parm.getName();
+      if (name != null) {
+        buffer.append(" ");
+        buffer.append(name);
       }
     }
   }

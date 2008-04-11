@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 
@@ -33,7 +34,7 @@ import java.util.LinkedHashSet;
 public class GroovyPresentationUtil {
   private static final int CONSTRAINTS_NUMBER = 2;
   
-  public static String getParameterPresentation(GrParameter parameter) {
+  public static String getParameterPresentation(GrParameter parameter, PsiSubstitutor substitutor) {
     StringBuilder builder = new StringBuilder();
     PsiType type = parameter.getTypeGroovy();
     if (type != null) {

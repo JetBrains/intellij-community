@@ -84,7 +84,7 @@ public class GroovyDocumentationProvider implements DocumentationProvider {
         PsiParameter parameter = parameters[i];
         if (i > 0) buffer.append(", ");
         if (parameter instanceof GrParameter) {
-          buffer.append(GroovyPresentationUtil.getParameterPresentation((GrParameter) parameter));
+          buffer.append(GroovyPresentationUtil.getParameterPresentation((GrParameter) parameter, PsiSubstitutor.EMPTY));
         } else {
           PsiType type = parameter.getType();
           appendTypeString(buffer, type);
