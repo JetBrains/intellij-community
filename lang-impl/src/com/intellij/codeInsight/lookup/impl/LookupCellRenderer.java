@@ -98,7 +98,7 @@ class LookupCellRenderer implements ListCellRenderer {
     //noinspection HardCodedStringLiteral
     label.setText("W"); //the widest letter known to me
     label.setIcon(null);
-    label.setFont(NORMAL_FONT);
+    label.setFont(BOLD_FONT);
     FONT_WIDTH = label.getPreferredSize().width;
 
     final LookupItem[] items = lookup.getItems();
@@ -281,6 +281,8 @@ class LookupCellRenderer implements ListCellRenderer {
   }
 
   private static String getName(final LookupItem item){
+    final String presentableText = item.getPresentableText();
+    if (presentableText != null) return presentableText;
     final Object o = item.getObject();
     String name = null;
     if (o instanceof PsiElement) {
