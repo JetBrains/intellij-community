@@ -101,7 +101,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
       @SuppressWarnings({"ConstantConditions"})
       public Module[] compute() {
         final Module module = getConfigurationModule().getModule();
-        return module == null ? null : new Module[] {module};
+        return module == null ? Module.EMPTY_ARRAY : new Module[] {module};
       }
     });
   }
