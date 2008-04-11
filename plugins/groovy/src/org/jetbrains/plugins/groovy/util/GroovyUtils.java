@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -25,6 +27,7 @@ import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -100,5 +103,11 @@ public abstract class GroovyUtils {
     }
 
     return result;
+  }
+
+  public static boolean isSuitableModule(Module module) {
+    if (module == null) return false;
+    ModuleType moduleType = module.getModuleType();
+    return moduleType instanceof JavaModuleType || moduleType.getId().equals(GroovyGrailsConfiguration.PLUGIN_MODULE_ID);
   }
 }

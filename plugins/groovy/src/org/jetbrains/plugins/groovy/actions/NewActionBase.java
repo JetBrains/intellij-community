@@ -29,7 +29,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
 
@@ -57,7 +57,7 @@ public abstract class NewActionBase extends CreateElementActionBase {
     final DataContext context = event.getDataContext();
     Module module = (Module) context.getData(DataConstants.MODULE);
 
-    if (!GroovyGrailsConfiguration.isSuitableModule(module) ||
+    if (!GroovyUtils.isSuitableModule(module) ||
         !presentation.isEnabled() ||
         !NewActionBase.isUnderSourceRoots(event) ||
         !ActionsUtil.isGroovyConfigured(event)){
@@ -73,7 +73,7 @@ public abstract class NewActionBase extends CreateElementActionBase {
   public static boolean isUnderSourceRoots(final AnActionEvent e) {
     final DataContext context = e.getDataContext();
     Module module = (Module) context.getData(DataConstants.MODULE);
-    if (!GroovyGrailsConfiguration.isSuitableModule(module)) {
+    if (!GroovyUtils.isSuitableModule(module)) {
       return false;
     }
     final IdeView view = (IdeView) context.getData(DataConstants.IDE_VIEW);

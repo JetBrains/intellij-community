@@ -15,14 +15,14 @@
 
 package org.jetbrains.plugins.groovy.refactoring;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
+
+import java.util.ArrayList;
 
 /**
  * @author ilyas
@@ -44,6 +44,10 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
   public String EXTRACT_METHOD_VISIBILITY = null;
   public Boolean IS_DEBUG_ENABLED_IN_SCRIPT = null;
 
+
+  // Groovy configuration settings
+  public String DEFAULT_GROOVY_VERSION = null;
+  public ArrayList<String> GROOVY_VERSIONS = new ArrayList<String>();
 
   @Transient
   private boolean myJsSupportEnabled = false;

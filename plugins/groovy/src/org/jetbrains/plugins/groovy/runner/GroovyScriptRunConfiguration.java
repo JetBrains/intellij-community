@@ -109,7 +109,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
       RunnerSettings runnerSettings,
       ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
     GroovyGrailsConfiguration groovyConfig = GroovyGrailsConfiguration.getInstance();
-    if (!groovyConfig.isGroovyConfigured(null)) {
+    if (!groovyConfig.isGroovyConfigured()) {
       throw new ExecutionException("Groovy is not configured");
     }
 
