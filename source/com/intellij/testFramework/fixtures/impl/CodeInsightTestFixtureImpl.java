@@ -33,6 +33,8 @@ import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.RunResult;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -611,7 +613,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void tearDown() throws Exception {
-    LookupManager.getInstance(getProject()).hideActiveLookup();
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      public void run() {
+        LookupManager.getInstance(getProject()).hideActiveLookup();
+      }
+    }, ModalityState.NON_MODAL);
 
     FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     VirtualFile[] openFiles = editorManager.getOpenFiles();
