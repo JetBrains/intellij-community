@@ -411,7 +411,8 @@ public class TemplateState implements Disposable {
                                                        lookupItems,
                                                        "",
                                                        new CompletionPreferencePolicy("", new CompletionParametersImpl(psiFile, psiFile,
-                                                                                                                       CompletionType.BASIC, myEditor.getCaretModel().getOffset())));
+                                                                                                                       CompletionType.BASIC, myEditor.getCaretModel().getOffset(),
+                                                                                                                       1)));
         lookup.setCurrentItem(lookupItems[0]); // [Valentin] not absolutely correct but all existing macros return the first item as the result
         toProcessTab = false;
         lookup.addLookupListener(

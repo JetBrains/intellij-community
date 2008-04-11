@@ -17,8 +17,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -208,5 +208,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public boolean isInitialized() {
     return myInitialized;
+  }
+
+  public boolean isActive(CodeCompletionHandlerBase handler) {
+    if (!getHandler().getClass().equals(handler.getClass())) return false;
+
+    return !isCanceled();
   }
 }

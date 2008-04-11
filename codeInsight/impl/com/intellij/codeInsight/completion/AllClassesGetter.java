@@ -71,9 +71,16 @@ public class AllClassesGetter {
             if (newUnderlying != null) {
               final PsiElement psiElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newUnderlying);
               if (psiElement != null) {
-                endOffset = psiElement.getTextRange().getEndOffset();
+                for (final PsiReference reference : psiElement.getReferences()) {
+                  if (psiManager.areElementsEquivalent(psiClass, resolveReference(reference))) {
+                    insertFqn = false;
+                    break;
+                  }
+                }
+                if (!insertFqn) {
+                  endOffset = psiElement.getTextRange().getEndOffset();
+                }
               }
-              insertFqn = false;
             }
           }
           catch (IncorrectOperationException e) {
@@ -174,7 +181,8 @@ public class AllClassesGetter {
     myFilter = filter;
   }
 
-  public void getClasses(final PsiElement context, CompletionResultSet<LookupElement> set, boolean afterNew, final int offset) {
+  public void getClasses(final PsiElement context, CompletionResultSet<LookupElement> set, boolean afterNew, final int offset,
+                         final boolean filterByScope) {
     if(context == null || !context.isValid()) return;
 
     String packagePrefix = getPackagePrefix(context, offset);
@@ -185,7 +193,7 @@ public class AllClassesGetter {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     final PsiShortNamesCache cache = facade.getShortNamesCache();
 
-    final GlobalSearchScope scope = context.getContainingFile().getResolveScope();
+    final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(context.getProject());
     final String[] names = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
       public String[] compute() {
         return cache.getAllClassNames(true);
@@ -215,7 +223,7 @@ public class AllClassesGetter {
       });
       for (PsiClass psiClass : classes) {
         ProgressManager.getInstance().checkCanceled();
-        if (isSuitable(context, packagePrefix, qnames, lookingForAnnotations, psiClass)) {
+        if (isSuitable(context, packagePrefix, qnames, lookingForAnnotations, psiClass, filterByScope)) {
           set.addElement(createLookupItem(psiClass, afterNew));
         }
       }
@@ -241,7 +249,8 @@ public class AllClassesGetter {
 
   private boolean isSuitable(final PsiElement context, final String packagePrefix, final Set<String> qnames,
                              final boolean lookingForAnnotations,
-                             final PsiClass psiClass) {
+                             final PsiClass psiClass,
+                             final boolean filterByScope) {
     //noinspection AutoUnboxing
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
@@ -254,10 +263,12 @@ public class AllClassesGetter {
 
         if (!myFilter.isAcceptable(psiClass, context)) return false;
 
-        if (!(psiClass instanceof PsiCompiledElement) &&
-            !JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, null)) return false;
+        if (!(psiClass instanceof PsiCompiledElement) || !filterByScope ||
+            JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, psiClass)) {
+          return qnames.add(qualifiedName);
+        }
+        return false;
 
-        return qnames.add(qualifiedName);
       }
     });
   }

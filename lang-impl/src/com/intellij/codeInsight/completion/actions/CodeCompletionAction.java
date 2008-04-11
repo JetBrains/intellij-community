@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.completion.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.completion.CodeCompletionHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -13,7 +14,7 @@ import com.intellij.psi.PsiFile;
  *
  *
  */
-public class CodeCompletionAction extends BaseCodeInsightAction {
+public class CodeCompletionAction extends BaseCodeInsightAction implements HintManager.ActionToIgnore{
   public CodeCompletionAction() {
     setEnabledInModalContext(true);
   }

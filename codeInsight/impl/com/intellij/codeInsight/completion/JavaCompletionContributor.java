@@ -17,8 +17,8 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.pom.java.LanguageLevel;
@@ -32,7 +32,9 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author peter
@@ -102,6 +104,12 @@ public class JavaCompletionContributor extends CompletionContributor{
 
     registrar.extend(psiElement().inFile(PlatformPatterns.psiFile().withLanguage(StdLanguages.JAVA)), new CompletionAdvertiser() {
       public String advertise(@NotNull final CompletionParameters parameters, final ProcessingContext context) {
+        if (parameters.getCompletionType() == CompletionType.CLASS_NAME && parameters.getInvocationCount() == 1 && parameters.getOriginalFile().getLanguage() ==
+                                                                                                                   StdLanguages.JAVA) {
+          return CompletionBundle.message("completion.class.name.hint.2", KeymapUtil.getFirstKeyboardShortcutText(
+              ActionManager.getInstance().getAction(IdeActions.ACTION_CLASS_NAME_COMPLETION)));
+        }
+
         if (parameters.getCompletionType() != CompletionType.SMART && shouldSuggestSmartCompletion(parameters.getPosition())) {
           return CompletionBundle.message("completion.smart.hint", KeymapUtil.getFirstKeyboardShortcutText(
               ActionManager.getInstance().getAction(IdeActions.ACTION_SMART_TYPE_COMPLETION)));
@@ -149,7 +157,7 @@ public class JavaCompletionContributor extends CompletionContributor{
     return new ExpectedTypesGetter().get(element, null).length > 0;
   }
 
-  protected static boolean shouldSuggestClassNameCompletion(final PsiElement element) {
+  private static boolean shouldSuggestClassNameCompletion(final PsiElement element) {
     if (element == null) return false;
     final PsiElement parent = element.getParent();
     if (parent == null) return false;

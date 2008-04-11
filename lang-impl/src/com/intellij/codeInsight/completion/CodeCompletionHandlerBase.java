@@ -27,10 +27,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.LightweightHint;
 import com.intellij.util.AsyncConsumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Queue;
@@ -39,12 +42,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.Collection;
-import java.util.LinkedHashSet;
+import java.util.*;
 
 abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
   protected final CompletionType myCompletionType;
+  public static final Key COMPLETION_EMPTY_MESSAGE = Key.create("COMPLETION_EMPTY_MESSAGE");
 
   protected CodeCompletionHandlerBase(final CompletionType completionType) {
     myCompletionType = completionType;
@@ -55,6 +58,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     }
 
+
     final Document document = editor.getDocument();
     if (editor.isViewer()) {
       document.fireReadOnlyModificationAttempt();
@@ -64,16 +68,27 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       return;
     }
 
-    final CompletionProgressIndicator indicator = CompletionProgressIndicator.getCurrentCompletion();
+    int time = 1;
+    CompletionProgressIndicator indicator = CompletionProgressIndicator.getCurrentCompletion();
     if (indicator != null) {
-      if (!indicator.isRunning() &&
-          !indicator.isCanceled() &&
-          indicator.getHandler().getClass().equals(getClass()) &&
-          (!isAutocompleteCommonPrefixOnInvocation() || indicator.fillInCommonPrefix())) {
-        return;
+      if (!indicator.isCanceled() && indicator.getHandler().getClass().equals(getClass())) {
+        if (!indicator.isRunning() && (!isAutocompleteCommonPrefixOnInvocation() || indicator.fillInCommonPrefix())) {
+          return;
+        }
+        else {
+          time++;
+        }
       }
       indicator.closeAndFinish();
+    } else {
+      for (final LightweightHint hint : HintManager.getInstance().getAllHints()) {
+        indicator = (CompletionProgressIndicator)hint.getComponent().getClientProperty(COMPLETION_EMPTY_MESSAGE);
+        if (indicator != null && indicator.getHandler().getClass().equals(getClass())) {
+          time++;
+        }
+      }
     }
+    HintManager.getInstance().hideAllHints();
 
     final PsiFile file = psiFile;
 
@@ -102,13 +117,13 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final int offset2 = initializationContext.getSelectionEndOffset();
     final CompletionContext context = new CompletionContext(project, editor, file, initializationContext.getOffsetMap());
 
-    doComplete(offset1, offset2, context, initializationContext.getDummyIdentifier(), editor);
+    doComplete(offset1, offset2, context, initializationContext.getDummyIdentifier(), editor, time);
   }
 
   protected void doComplete(final int offset1,
                             final int offset2,
                             final CompletionContext context,
-                            final String dummyIdentifier, final Editor editor) {
+                            final String dummyIdentifier, final Editor editor, final int invocationCount) {
     final Pair<CompletionContext, PsiElement> insertedInfo = new WriteCommandAction<Pair<CompletionContext, PsiElement>>(context.project) {
       protected void run(Result<Pair<CompletionContext, PsiElement>> result) throws Throwable {
         result.setResult(insertDummyIdentifier(context, dummyIdentifier));
@@ -118,7 +133,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final PsiElement insertedElement = insertedInfo.getSecond();
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, insertedInfo.getFirst());
 
-    final CompletionParametersImpl parameters = new CompletionParametersImpl(insertedInfo.getSecond(), insertedInfo.getFirst().file, myCompletionType, insertedInfo.getFirst().getStartOffset());
+    final CompletionParametersImpl parameters = new CompletionParametersImpl(insertedInfo.getSecond(), insertedInfo.getFirst().file, myCompletionType, insertedInfo.getFirst().getStartOffset(),
+                                                                             invocationCount);
     final String adText = CompletionService.getCompletionService().getAdvertisementText(parameters);
 
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, adText, this, insertedInfo.getFirst());
@@ -192,7 +208,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (items.length == 0) {
       indicator.closeAndFinish();
       HintManager.getInstance().hideAllHints();
-      handleEmptyLookup(context, data, parameters);
+      handleEmptyLookup(context, data, parameters, indicator);
       return;
     }
 
@@ -461,7 +477,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   protected void analyseItem(LookupItem item, PsiElement place, CompletionContext context) {}
 
-  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData, final CompletionParameters parameters) {
+  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData, final CompletionParameters parameters,
+                                   final CompletionProgressIndicator indicator) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     Project project = context.project;
     Editor editor = context.editor;
@@ -470,6 +487,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final String text = CompletionService.getCompletionService().getEmptyLookupText(parameters);
     if (StringUtil.isNotEmpty(text)) {
       HintManager.getInstance().showErrorHint(editor, text);
+      for (final LightweightHint hint : HintManager.getInstance().getAllHints()) {
+        hint.getComponent().putClientProperty(COMPLETION_EMPTY_MESSAGE, indicator);
+      }
     }
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     if (codeAnalyzer != null) {

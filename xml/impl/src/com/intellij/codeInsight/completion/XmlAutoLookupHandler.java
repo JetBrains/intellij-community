@@ -21,10 +21,12 @@ public class XmlAutoLookupHandler extends CodeCompletionHandler {
     return false;
   }
 
-  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData, final CompletionParameters parameters) {
+  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData, final CompletionParameters parameters,
+                                   final CompletionProgressIndicator indicator) {
   }
 
-  protected void doComplete(final int offset1, final int offset2, final CompletionContext context, final String dummyIdentifier, Editor editor) {
+  protected void doComplete(final int offset1, final int offset2, final CompletionContext context, final String dummyIdentifier, Editor editor,
+                            final int invocationCount) {
     PsiFile file = context.file;
     int offset = context.getStartOffset();
 
@@ -43,7 +45,7 @@ public class XmlAutoLookupHandler extends CodeCompletionHandler {
         text.endsWith("${") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue() ||
         text.endsWith("@{") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue() ||
         text.endsWith("</") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt)) {
-      super.doComplete(offset1, offset2, context, dummyIdentifier, editor);
+      super.doComplete(offset1, offset2, context, dummyIdentifier, editor, invocationCount);
     }
   }
 

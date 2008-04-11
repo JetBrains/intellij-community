@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.completion.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.completion.CodeCompletionHandler;
 import com.intellij.codeInsight.completion.SmartCodeCompletionHandler;
@@ -14,7 +15,7 @@ import com.intellij.psi.PsiFile;
 /**
  *
  */
-public class SmartCodeCompletionAction extends BaseCodeInsightAction {
+public class SmartCodeCompletionAction extends BaseCodeInsightAction implements HintManager.ActionToIgnore{
   private static boolean ourDoingSmartCodeCompleteAction;
 
   public SmartCodeCompletionAction() {

@@ -25,4 +25,6 @@ public interface CompletionParameters {
   CompletionType getCompletionType();
 
   int getOffset();
+  
+  int getInvocationCount();
 }

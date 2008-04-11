@@ -7,10 +7,7 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.codeInsight.completion.CodeCompletionHandler;
-import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.LookupData;
-import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
@@ -511,9 +508,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
               }
 
               protected void handleEmptyLookup(final CompletionContext context,
-                                               final LookupData lookupData, final CompletionParameters parameters) {
+                                               final LookupData lookupData, final CompletionParameters parameters,
+                                               final CompletionProgressIndicator indicator) {
                 empty = true;
-                super.handleEmptyLookup(context, lookupData, parameters);
+                super.handleEmptyLookup(context, lookupData, parameters, indicator);
               }
             };
           }

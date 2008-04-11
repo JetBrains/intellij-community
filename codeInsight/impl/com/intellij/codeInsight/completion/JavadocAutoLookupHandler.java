@@ -17,17 +17,18 @@ public class JavadocAutoLookupHandler extends CodeCompletionHandler{
     return false;
   }
 
-  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData, final CompletionParameters parameters){
+  protected void handleEmptyLookup(CompletionContext context, LookupData lookupData, final CompletionParameters parameters,
+                                   final CompletionProgressIndicator indicator){
   }
 
   protected void doComplete(final int offset1, final int offset2, final CompletionContext context, final String dummyIdentifier,
-                            final Editor editor) {
+                            final Editor editor, final int invocationCount) {
     PsiFile file = context.file;
     int offset = context.getStartOffset();
 
     PsiElement lastElement = file.findElementAt(offset - 1);
     if (lastElement == null || !StringUtil.endsWithChar(lastElement.getText(), '@')) return;
 
-    super.doComplete(offset1, offset2, context, dummyIdentifier, editor);
+    super.doComplete(offset1, offset2, context, dummyIdentifier, editor, invocationCount);
   }
 }

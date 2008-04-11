@@ -26,6 +26,8 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -530,7 +532,11 @@ public class HintManager implements ApplicationComponent {
 
   public void showErrorHint(@NotNull Editor editor, String text) {
     JLabel label = HintUtil.createErrorLabel(text);
-    LightweightHint hint = new LightweightHint(label);
+    LightweightHint hint = new LightweightHint(label) {
+      public void hide() {
+        super.hide();
+      }
+    };
     Point p = getHintPosition(hint, editor, ABOVE);
     showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false);
   }
@@ -624,6 +630,14 @@ public class HintManager implements ApplicationComponent {
         showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | UPDATE_BY_SCROLLING | HIDE_IF_OUT_OF_EDITOR, 0, false);
         myQuestionAction = action;
         myQuestionHint = hint;
+      }
+    });
+  }
+
+  public List<LightweightHint> getAllHints() {
+    return ContainerUtil.map2List(myHintsStack, new Function<HintInfo, LightweightHint>() {
+      public LightweightHint fun(final HintInfo hintInfo) {
+        return hintInfo.hint;
       }
     });
   }
