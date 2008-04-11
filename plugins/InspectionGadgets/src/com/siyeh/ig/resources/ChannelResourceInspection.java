@@ -19,13 +19,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ChannelResourceInspection extends BaseInspection{
+public class ChannelResourceInspection extends ResourceInspection{
 
     @NotNull
     public String getID(){
@@ -60,65 +58,25 @@ public class ChannelResourceInspection extends BaseInspection{
             if(!isChannelFactoryMethod(expression)){
                 return;
             }
-            final PsiElement parent = expression.getParent();
-            final PsiVariable boundVariable;
-            if (parent instanceof PsiAssignmentExpression) {
-                final PsiAssignmentExpression assignment =
-                        (PsiAssignmentExpression) parent;
-                final PsiExpression lhs = assignment.getLExpression();
-                if (!(lhs instanceof PsiReferenceExpression)) {
-                    return;
-                }
-                final PsiReferenceExpression referenceExpression =
-                        (PsiReferenceExpression) lhs;
-                final PsiElement referent = referenceExpression.resolve();
-                if (referent == null || !(referent instanceof PsiVariable)) {
-                    return;
-                }
-                boundVariable = (PsiVariable) referent;
-            } else if (parent instanceof PsiVariable) {
-                boundVariable = (PsiVariable) parent;
-            } else {
-                boundVariable = null;
-            }
-            final PsiStatement statement =
-                    PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
-            if (statement == null) {
+            final PsiElement parent = getExpressionParent(expression);
+            if(parent instanceof PsiReturnStatement){
                 return;
             }
-            PsiStatement nextStatement =
-                    PsiTreeUtil.getNextSiblingOfType(statement,
-                            PsiStatement.class);
-            while (!(nextStatement instanceof PsiTryStatement)) {
-                if (!(nextStatement instanceof PsiDeclarationStatement)) {
-                    registerError(expression, expression);
-                    return;
-                }
-                if (boundVariable != null) {
-                    if (VariableAccessUtils.variableIsUsed(boundVariable,
-                            nextStatement)) {
-                        registerError(expression, expression);
-                        return;
-                    }
-                }
-                nextStatement =
-                        PsiTreeUtil.getNextSiblingOfType(nextStatement,
-                                PsiStatement.class);
-            }
-            PsiTryStatement tryStatement = (PsiTryStatement) nextStatement;
-            if (boundVariable != null &&
-                    resourceIsClosedInFinally(tryStatement, boundVariable)) {
+            final PsiVariable boundVariable = getVariable(parent);
+            if(isSafelyClosed(boundVariable, expression)){
                 return;
             }
-            if (isChannelFactoryClosedInFinally(expression, tryStatement)) {
+            if(isChannelFactoryClosedInFinally(expression)){
+                return;
+            }
+            if(isResourceEscapedFromMethod(boundVariable, expression)){
                 return;
             }
             registerError(expression, expression);
         }
 
         private static boolean isChannelFactoryClosedInFinally(
-                PsiMethodCallExpression expression,
-                PsiTryStatement tryStatement) {
+                PsiMethodCallExpression expression) {
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final PsiExpression qualifier =
@@ -132,8 +90,22 @@ public class ChannelResourceInspection extends BaseInspection{
             if (!(target instanceof PsiVariable)) {
                 return false;
             }
-            PsiVariable variable = (PsiVariable) target;
-            return resourceIsClosedInFinally(tryStatement, variable);
+            final PsiVariable variable = (PsiVariable) target;
+            PsiTryStatement tryStatement =
+                    PsiTreeUtil.getParentOfType(expression,
+                            PsiTryStatement.class, true, PsiMember.class);
+            if(tryStatement == null){
+                return false;
+            }
+            while (!resourceIsClosedInFinally(tryStatement, variable)) {
+                tryStatement =
+                        PsiTreeUtil.getParentOfType(tryStatement,
+                            PsiTryStatement.class, true, PsiMember.class);
+                if(tryStatement == null){
+                    return false;
+                }
+            }
+            return true;
         }
 
         private static boolean isChannelFactoryMethod(
@@ -158,67 +130,6 @@ public class ChannelResourceInspection extends BaseInspection{
 		            "java.io.RandomAccessFile",
                     "com.sun.corba.se.pept.transport.EventHandler",
                     "sun.nio.ch.InheritedChannel");
-        }
-
-        private static boolean resourceIsClosedInFinally(
-                @NotNull PsiTryStatement tryStatement,
-                @NotNull PsiVariable boundVariable){
-            final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-            if(finallyBlock == null){
-                return false;
-            }
-            final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-            if(tryBlock == null){
-                return false;
-            }
-            final CloseVisitor visitor = new CloseVisitor(boundVariable);
-            finallyBlock.accept(visitor);
-            return visitor.containsClose();
-        }
-    }
-
-    private static class CloseVisitor extends JavaRecursiveElementVisitor{
-
-        private boolean containsClose = false;
-        private PsiVariable objectToClose;
-
-        private CloseVisitor(PsiVariable objectToClose){
-            this.objectToClose = objectToClose;
-        }
-
-        @Override public void visitElement(@NotNull PsiElement element){
-            if(!containsClose){
-                super.visitElement(element);
-            }
-        }
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression call){
-            if(containsClose){
-                return;
-            }
-            super.visitMethodCallExpression(call);
-            final PsiReferenceExpression methodExpression =
-                    call.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if(!HardcodedMethodConstants.CLOSE.equals(methodName)){
-                return;
-            }
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if(!(qualifier instanceof PsiReferenceExpression)){
-                return;
-            }
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression) qualifier;
-            final PsiElement referent = referenceExpression.resolve();
-            if(objectToClose.equals(referent)){
-                containsClose = true;
-            }
-        }
-
-        public boolean containsClose(){
-            return containsClose;
         }
     }
 }

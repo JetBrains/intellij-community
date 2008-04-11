@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,13 @@
 package com.siyeh.ig.resources;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SocketResourceInspection extends BaseInspection {
+public class SocketResourceInspection extends ResourceInspection {
 
   @NotNull
   public String getID(){
@@ -57,113 +54,48 @@ public class SocketResourceInspection extends BaseInspection {
         @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            if(!isSocketFactoryMethod(expression)) {
+            if(!isSocketFactoryMethod(expression)){
                 return;
             }
-            final PsiElement parent = expression.getParent();
-            if(!(parent instanceof PsiAssignmentExpression)) {
-                registerError(expression, expression);
+            final PsiElement parent = getExpressionParent(expression);
+            if(parent instanceof PsiReturnStatement){
                 return;
             }
-            final PsiAssignmentExpression assignment =
-                    (PsiAssignmentExpression) parent;
-            final PsiExpression lhs = assignment.getLExpression();
-            if(!(lhs instanceof PsiReferenceExpression)) {
+            final PsiVariable boundVariable = getVariable(parent);
+            if(isSafelyClosed(boundVariable, expression)){
                 return;
             }
-            final PsiElement referent =
-                    ((PsiReference) lhs).resolve();
-            if(referent == null || !(referent instanceof PsiVariable)) {
+            if(isResourceEscapedFromMethod(boundVariable, expression)){
                 return;
             }
-            final PsiVariable boundVariable = (PsiVariable) referent;
-
-            PsiElement currentContext = expression;
-            while(true){
-                final PsiTryStatement tryStatement =
-                        PsiTreeUtil.getParentOfType(currentContext,
-                                                    PsiTryStatement.class);
-                if(tryStatement == null) {
-                    registerError(expression, expression);
-                    return;
-                }
-                if(resourceIsOpenedInTryAndClosedInFinally(
-                        tryStatement, expression, boundVariable)) {
-                    return;
-                }
-                currentContext = tryStatement;
-            }
+            registerError(expression, expression);
         }
 
-        @Override public void visitNewExpression(@NotNull PsiNewExpression expression){
+        @Override public void visitNewExpression(
+                @NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);
             if(!isSocketResource(expression)){
                 return;
             }
-            final PsiElement parent = expression.getParent();
-            if(!(parent instanceof PsiAssignmentExpression)){
-                registerError(expression, expression);
+            final PsiElement parent = getExpressionParent(expression);
+            if(parent instanceof PsiReturnStatement){
                 return;
             }
-            final PsiAssignmentExpression assignment =
-                    (PsiAssignmentExpression) parent;
-            final PsiExpression lhs = assignment.getLExpression();
-            if(!(lhs instanceof PsiReferenceExpression)){
+            final PsiVariable boundVariable = getVariable(parent);
+            if(isSafelyClosed(boundVariable, expression)){
                 return;
             }
-            final PsiElement referent =
-                    ((PsiReference) lhs).resolve();
-            if(referent == null || !(referent instanceof PsiVariable)){
+            if(isResourceEscapedFromMethod(boundVariable, expression)){
                 return;
             }
-            final PsiVariable boundVariable = (PsiVariable) referent;
-            PsiElement currentContext = expression;
-            while(true){
-                final PsiTryStatement tryStatement =
-                        PsiTreeUtil.getParentOfType(currentContext,
-                                                    PsiTryStatement.class);
-                if(tryStatement == null){
-                    registerError(expression, expression);
-                    return;
-                }
-                if(resourceIsOpenedInTryAndClosedInFinally(
-                        tryStatement, expression, boundVariable)) {
-                    return;
-                }
-                currentContext = tryStatement;
-            }
-        }
-
-        private static boolean resourceIsOpenedInTryAndClosedInFinally(
-                PsiTryStatement tryStatement, PsiExpression lhs,
-                PsiVariable boundVariable){
-            final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-            if(finallyBlock == null){
-                return false;
-            }
-            final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-            if(tryBlock == null){
-                return false;
-            }
-            if(!PsiTreeUtil.isAncestor(tryBlock, lhs, true)){
-                return false;
-            }
-            return containsResourceClose(finallyBlock, boundVariable);
-        }
-
-        private static boolean containsResourceClose(PsiCodeBlock finallyBlock,
-                                                     PsiVariable boundVariable){
-            final CloseVisitor visitor =
-                    new CloseVisitor(boundVariable);
-            finallyBlock.accept(visitor);
-            return visitor.containsStreamClose();
+            registerError(expression, expression);
         }
 
         private static boolean isSocketResource(PsiNewExpression expression){
             return TypeUtils.expressionHasTypeOrSubtype(expression,
-		            "java.net.Socket",
-		            "java.net.DatagramSocket",
-		            "java.net.ServerSocket");
+                    "java.net.Socket",
+                    "java.net.DatagramSocket",
+                    "java.net.ServerSocket");
         }
 
         private static boolean isSocketFactoryMethod(
@@ -181,55 +113,7 @@ public class SocketResourceInspection extends BaseInspection {
                 return false;
             }
             return TypeUtils.expressionHasTypeOrSubtype(qualifier,
-		            "java.net.ServerSocket");
-        }
-    }
-
-	private static class CloseVisitor extends JavaRecursiveElementVisitor{
-
-        private boolean containsClose = false;
-        private PsiVariable objectToClose;
-
-        private CloseVisitor(PsiVariable objectToClose){
-            super();
-            this.objectToClose = objectToClose;
-        }
-
-        @Override public void visitElement(@NotNull PsiElement element){
-            if(!containsClose){
-                super.visitElement(element);
-            }
-        }
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression call){ if (containsClose){
-                return;
-            }
-            super.visitMethodCallExpression(call);
-            final PsiReferenceExpression methodExpression =
-                    call.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if(!HardcodedMethodConstants.CLOSE.equals(methodName)) {
-              return;
-            }
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if(!(qualifier instanceof PsiReferenceExpression)){
-                return;
-            }
-            final PsiElement referent =
-                    ((PsiReference) qualifier).resolve();
-            if(referent == null)
-            {
-                return;
-            }
-            if(referent.equals(objectToClose)){
-                containsClose = true;
-            }
-        }
-
-        public boolean containsStreamClose(){
-            return containsClose;
+                    "java.net.ServerSocket");
         }
     }
 }

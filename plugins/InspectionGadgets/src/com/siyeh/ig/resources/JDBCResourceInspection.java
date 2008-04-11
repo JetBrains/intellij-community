@@ -16,10 +16,7 @@
 package com.siyeh.ig.resources;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +25,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JDBCResourceInspection extends BaseInspection{
+public class JDBCResourceInspection extends ResourceInspection{
 
     private static final String[] creationMethodClassName =
             new String[]{
@@ -98,72 +95,18 @@ public class JDBCResourceInspection extends BaseInspection{
             if(!isJDBCResourceCreation(expression)){
                 return;
             }
-            final PsiElement parent = expression.getParent();
-            final PsiAssignmentExpression assignment;
-            if(!(parent instanceof PsiAssignmentExpression)){
-                if(!(parent instanceof PsiTypeCastExpression)){
-                    registerError(expression, expression);
-                    return;
-                }
-                final PsiElement grandParent = parent.getParent();
-                if(!(grandParent instanceof PsiAssignmentExpression)){
-                    registerError(expression, expression);
-                    return;
-                }
-                assignment = (PsiAssignmentExpression) grandParent;
-            }else{
-                assignment = (PsiAssignmentExpression) parent;
-            }
-            final PsiExpression lhs = assignment.getLExpression();
-            if(!(lhs instanceof PsiReferenceExpression)){
+            final PsiElement parent = getExpressionParent(expression);
+            if(parent instanceof PsiReturnStatement){
                 return;
             }
-            final PsiElement referent = ((PsiReference) lhs).resolve();
-            if(referent == null || !(referent instanceof PsiVariable)){
+            final PsiVariable boundVariable = getVariable(parent);
+            if(isSafelyClosed(boundVariable, expression)){
                 return;
             }
-            final PsiVariable boundVariable = (PsiVariable) referent;
-            PsiElement currentContext = expression;
-            while(true){
-                final PsiTryStatement tryStatement =
-                        PsiTreeUtil.getParentOfType(currentContext,
-                                                    PsiTryStatement.class);
-                if(tryStatement == null){
-                    registerError(expression, expression);
-                    return;
-                }
-                if(resourceIsOpenedInTryAndClosedInFinally(
-                        tryStatement, expression, boundVariable)){
-                    return;
-                }
-                currentContext = tryStatement;
+            if(isResourceEscapedFromMethod(boundVariable, expression)){
+                return;
             }
-        }
-
-        private static boolean resourceIsOpenedInTryAndClosedInFinally(
-                PsiTryStatement tryStatement,
-                PsiExpression lhs,
-                PsiVariable boundVariable){
-            final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-            if(finallyBlock == null){
-                return false;
-            }
-            final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-            if(tryBlock == null){
-                return false;
-            }
-            if(!PsiTreeUtil.isAncestor(tryBlock, lhs, true)){
-                return false;
-            }
-            return containsResourceClose(finallyBlock, boundVariable);
-        }
-
-        private static boolean containsResourceClose(PsiCodeBlock finallyBlock,
-                                                     PsiVariable boundVariable){
-            final ResourceCloseVisitor visitor =
-                    new ResourceCloseVisitor(boundVariable);
-            finallyBlock.accept(visitor);
-            return visitor.containsResourceClose();
+            registerError(expression, expression);
         }
 
         private static boolean isJDBCResourceCreation(
@@ -198,54 +141,6 @@ public class JDBCResourceInspection extends BaseInspection{
                 }
             }
             return false;
-        }
-    }
-
-    private static class ResourceCloseVisitor
-            extends JavaRecursiveElementVisitor{
-        private boolean containsResourceClose = false;
-        private PsiVariable streamToClose;
-
-        private ResourceCloseVisitor(PsiVariable streamToClose){
-            super();
-            this.streamToClose = streamToClose;
-        }
-
-        @Override public void visitElement(@NotNull PsiElement element){
-            if(!containsResourceClose){
-                super.visitElement(element);
-            }
-        }
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression call){
-            if(containsResourceClose){
-                return;
-            }
-            super.visitMethodCallExpression(call);
-            final PsiReferenceExpression methodExpression =
-                    call.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if(!HardcodedMethodConstants.CLOSE.equals(methodName)){
-              return;
-            }
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if(!(qualifier instanceof PsiReferenceExpression)){
-                return;
-            }
-            final PsiElement referent =
-                    ((PsiReference) qualifier).resolve();
-            if(referent == null){
-                return;
-            }
-            if(referent.equals(streamToClose)){
-                containsResourceClose = true;
-            }
-        }
-
-        public boolean containsResourceClose(){
-            return containsResourceClose;
         }
     }
 }
