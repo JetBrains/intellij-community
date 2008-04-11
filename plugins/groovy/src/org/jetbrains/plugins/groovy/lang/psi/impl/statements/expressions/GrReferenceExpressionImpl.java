@@ -504,13 +504,25 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     ResolverProcessor processor;
     if (kind == Kind.METHOD_OR_PROPERTY) {
       final PsiType[] argTypes = checkArguments ? PsiUtil.getArgumentTypes(refExpr, false, false) : null;
-      processor = new MethodResolverProcessor(name, refExpr, forCompletion, false, argTypes, refExpr.getTypeArguments());
+      PsiType thisType = getThisType(refExpr);
+      processor = new MethodResolverProcessor(name, refExpr, forCompletion, false, thisType, argTypes, refExpr.getTypeArguments());
     } else {
       processor = new PropertyResolverProcessor(name, refExpr, forCompletion);
     }
 
     return processor;
   }
+
+  private static PsiType getThisType(GrReferenceExpression refExpr) {
+    GrExpression qualifier = refExpr.getQualifierExpression();
+    if (qualifier != null) {
+      PsiType qType = qualifier.getType();
+      if (qType != null) return qType;
+    }
+
+    return TypesUtil.getJavaLangObject(refExpr);
+  }
+
 
   enum Kind {
     TYPE_OR_PROPERTY,

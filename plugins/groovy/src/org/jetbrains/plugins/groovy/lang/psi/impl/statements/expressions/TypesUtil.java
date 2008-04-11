@@ -53,7 +53,7 @@ public class TypesUtil {
   public static PsiType getOverloadedOperatorType(PsiType thisType, String operatorName,
                                                   GroovyPsiElement place, PsiType[] argumentTypes) {
     if (operatorName != null) {
-      MethodResolverProcessor processor = new MethodResolverProcessor(operatorName, place, false, false, argumentTypes, PsiType.EMPTY_ARRAY);
+      MethodResolverProcessor processor = new MethodResolverProcessor(operatorName, place, false, false, thisType, argumentTypes, PsiType.EMPTY_ARRAY);
       if (thisType instanceof PsiClassType) {
         final PsiClass lClass = ((PsiClassType) thisType).resolve();
         if (lClass != null) {

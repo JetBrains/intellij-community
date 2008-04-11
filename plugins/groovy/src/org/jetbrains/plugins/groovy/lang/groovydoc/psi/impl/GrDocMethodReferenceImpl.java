@@ -62,12 +62,13 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
       GrCodeReferenceElement referenceElement = holder.getReferenceElement();
       resolved = referenceElement != null ? referenceElement.resolve() : null;
     } else {
-      resolved = getEnclosingClassOrFile(this);
+      resolved = getEnclosingClass(this);
     }
-    if (resolved != null) {
+    if (resolved instanceof PsiClass) {
       PsiType[] parameterTypes = getParameterList().getParameterTypes();
-      MethodResolverProcessor processor = new MethodResolverProcessor(name, this, false, false, parameterTypes, PsiType.EMPTY_ARRAY);
-      MethodResolverProcessor constructorProcessor = new MethodResolverProcessor(name, this, false, true, parameterTypes, PsiType.EMPTY_ARRAY);
+      PsiType thisType = getManager().getElementFactory().createType((PsiClass) resolved, PsiSubstitutor.EMPTY);
+      MethodResolverProcessor processor = new MethodResolverProcessor(name, this, false, false, thisType, parameterTypes, PsiType.EMPTY_ARRAY);
+      MethodResolverProcessor constructorProcessor = new MethodResolverProcessor(name, this, false, true, thisType, parameterTypes, PsiType.EMPTY_ARRAY);
       resolved.processDeclarations(processor, PsiSubstitutor.EMPTY, resolved, this);
       resolved.processDeclarations(constructorProcessor, PsiSubstitutor.EMPTY, resolved, this);
       return ArrayUtil.mergeArrays(processor.getCandidates(), constructorProcessor.getCandidates(), GroovyResolveResult.class);

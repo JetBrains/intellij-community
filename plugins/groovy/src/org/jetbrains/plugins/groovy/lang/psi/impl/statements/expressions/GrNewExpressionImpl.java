@@ -86,8 +86,10 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
       final PsiElement element = classResult.getElement();
       if (element instanceof PsiClass) {
         final GroovyPsiElement context = classResult.getCurrentFileResolveContext();
-        String className = ((PsiClass) element).getName();
-        final MethodResolverProcessor processor = new MethodResolverProcessor(className, ref, false, true, argTypes, PsiType.EMPTY_ARRAY);
+        PsiClass clazz = (PsiClass) element;
+        String className = clazz.getName();
+        PsiType thisType = getManager().getElementFactory().createType(clazz, classResult.getSubstitutor());
+        final MethodResolverProcessor processor = new MethodResolverProcessor(className, ref, false, true, thisType, argTypes, PsiType.EMPTY_ARRAY);
         processor.setCurrentFileResolveContext(context);
         final boolean toBreak = element.processDeclarations(processor, classResult.getSubstitutor(), null, ref);
         constructorResults.addAll(Arrays.asList(processor.getCandidates()));

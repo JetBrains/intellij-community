@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
@@ -128,14 +129,15 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
       GrCodeReferenceElement referenceElement = holder.getReferenceElement();
       resolved = referenceElement != null ? referenceElement.resolve() : null;
     } else {
-      resolved = getEnclosingClassOrFile(this);
+      resolved = getEnclosingClass(this);
     }
-    if (resolved != null) {
+    if (resolved instanceof PsiClass) {
       PropertyResolverProcessor propertyProcessor = new PropertyResolverProcessor(null, this, true);
       resolved.processDeclarations(propertyProcessor, PsiSubstitutor.EMPTY, null, this);
       PsiElement[] propertyCandidates = ResolveUtil.mapToElements(propertyProcessor.getCandidates());
-      MethodResolverProcessor methodProcessor = new MethodResolverProcessor(null, this, true, false, null, PsiType.EMPTY_ARRAY);
-      MethodResolverProcessor constructorProcessor = new MethodResolverProcessor(null, this, false, true, null, PsiType.EMPTY_ARRAY);
+      PsiType thisType = getManager().getElementFactory().createType((PsiClass) resolved, PsiSubstitutor.EMPTY);
+      MethodResolverProcessor methodProcessor = new MethodResolverProcessor(null, this, true, false, thisType, null, PsiType.EMPTY_ARRAY);
+      MethodResolverProcessor constructorProcessor = new MethodResolverProcessor(null, this, false, true, thisType, null, PsiType.EMPTY_ARRAY);
 
       resolved.processDeclarations(methodProcessor, PsiSubstitutor.EMPTY, null, this);
       resolved.processDeclarations(constructorProcessor, PsiSubstitutor.EMPTY, resolved, this);
@@ -166,15 +168,14 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
-  protected PsiElement getEnclosingClassOrFile(PsiElement element) {
+  protected PsiClass getEnclosingClass(PsiElement element) {
     PsiElement parent = element.getParent();
-    while (!(parent instanceof PsiClass) && !(parent instanceof PsiFile) && parent != null) {
+    while (parent != null) {
+      if (parent instanceof GrTypeDefinition) return (PsiClass) parent;
+      if (parent instanceof GroovyFile) return ((GroovyFile) parent).getScriptClass();
       parent = parent.getParent();
     }
-    if (parent instanceof GroovyFile) {
-      parent = ((GroovyFile) parent).getScriptClass();
-    }
-    return parent;
+    return null;
   }
 
   protected abstract ResolveResult[] multiResolveImpl();

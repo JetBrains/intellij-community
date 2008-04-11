@@ -27,8 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -43,6 +41,7 @@ import java.util.*;
  *         Resolves methods from call expression or function application.
  */
 public class MethodResolverProcessor extends ResolverProcessor {
+  private PsiType myThisType;
   @Nullable
   private PsiType[] myArgumentTypes;
   private PsiType[] myTypeArguments;
@@ -50,9 +49,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
   private boolean myIsConstructor;
 
-  public MethodResolverProcessor(String name, GroovyPsiElement place, boolean forCompletion, boolean isConstructor, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments) {
+  public MethodResolverProcessor(String name, GroovyPsiElement place, boolean forCompletion, boolean isConstructor, PsiType thisType, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments) {
     super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, forCompletion, PsiType.EMPTY_ARRAY);
     myIsConstructor = isConstructor;
+    myThisType = thisType;
     myArgumentTypes = argumentTypes;
     myTypeArguments = typeArguments;
   }
@@ -102,7 +102,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
         assert argTypes != null;
         //type inference should be performed from static method
         PsiType[] newArgTypes = new PsiType[argTypes.length + 1];
-        newArgTypes[0] = getThisType();
+        newArgTypes[0] = myThisType;
         System.arraycopy(argTypes, 0, newArgTypes, 1, argTypes.length);
         argTypes = newArgTypes;
 
@@ -112,18 +112,6 @@ public class MethodResolverProcessor extends ResolverProcessor {
     }
 
     return substitutor;
-  }
-
-  private PsiType getThisType() {
-    if (myPlace instanceof GrReferenceExpression) {
-      GrExpression qualifier = ((GrReferenceExpression) myPlace).getQualifierExpression();
-      if (qualifier != null) {
-        PsiType qType = qualifier.getType();
-        if (qType != null) return qType;
-      }
-    }
-
-    return PsiType.getJavaLangObject(myPlace.getManager(), myPlace.getResolveScope());
   }
 
   private boolean isClosure(PsiVariable variable) {

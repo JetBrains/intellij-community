@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +75,17 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
     PsiClass clazz = getDelegatedClass();
     if (clazz != null) {
       PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false, false);
-      MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, false, true, argTypes, PsiType.EMPTY_ARRAY);
+      PsiType thisType;
+      PsiElementFactory factory = getManager().getElementFactory();
+      if (isThisCall()) {
+        thisType = factory.createType(clazz, PsiSubstitutor.EMPTY);
+      } else {
+        GrTypeDefinition enclosing = getEnclosingClass();
+        assert enclosing != null;
+        PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(clazz, enclosing, PsiSubstitutor.EMPTY);
+        thisType = factory.createType(clazz, substitutor);
+      }
+      MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, false, true, thisType, argTypes, PsiType.EMPTY_ARRAY);
       clazz.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);
       return processor.getCandidates();
     }
@@ -90,11 +101,15 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
   }
 
   public PsiClass getDelegatedClass() {
-    GrTypeDefinition typeDefinition = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class);
+    GrTypeDefinition typeDefinition = getEnclosingClass();
     if (typeDefinition != null) {
       return isThisCall() ? typeDefinition : typeDefinition.getSuperClass();
     }
     return null;
+  }
+
+  private GrTypeDefinition getEnclosingClass() {
+    return PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class);
   }
 
   public PsiElement getElement() {
