@@ -298,7 +298,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   public String getSuggestedProjectName() {
     final List<MavenProjectModel.Node> list = myImportProcessor.getMavenProjectModel().getRootProjects();
     if(list.size()==1){
-      return list.get(0).getId().artifactId;
+      return list.get(0).getMavenId().artifactId;
     }
     return null;
   }

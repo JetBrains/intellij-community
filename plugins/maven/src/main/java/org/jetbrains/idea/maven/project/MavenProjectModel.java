@@ -8,10 +8,7 @@ import org.apache.maven.model.Model;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.core.util.Path;
-import org.jetbrains.idea.maven.core.util.ProjectUtil;
-import org.jetbrains.idea.maven.core.util.Tree;
+import org.jetbrains.idea.maven.core.util.*;
 
 import java.util.*;
 
@@ -198,10 +195,14 @@ public class MavenProjectModel {
       return myMavenProject;
     }
 
-    public MavenId getId() {
+    public MavenId getMavenId() {
       return new MavenId(myMavenModel.getGroupId(),
                          myMavenModel.getArtifactId(),
                          myMavenModel.getVersion());
+    }
+
+    public ProjectId getProjectId() {
+      return new ProjectId(myMavenModel);
     }
 
     public boolean isIncluded() {

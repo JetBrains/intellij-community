@@ -124,7 +124,7 @@ public class ProjectConfigurator {
 
     myProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
       public void visit(MavenProjectModel.Node node) {
-        String name = myMapping.getModuleName(node.getId());
+        String name = myMapping.getModuleName(node.getProjectId());
 
         if (!node.mySubProjects.isEmpty()) {
           groups.push(ProjectBundle.message("module.group.name", name));

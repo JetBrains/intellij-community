@@ -119,8 +119,7 @@ public class DependenciesImportingTest extends ImportingTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
-  public void ignoreTestIntermoduleDependenciesWithoutModuleGroup() throws Exception {
-    // todo fix it 8)
+  public void testIntermoduleDependenciesWithoutModuleGroup() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +

@@ -42,7 +42,7 @@ public class MavenToIdeaMapping {
 
     mavenProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
       public void visit(MavenProjectModel.Node node) {
-        MavenId id = node.getId();
+        MavenId id = node.getMavenId();
         String name = node.getLinkedModule() != null
                       ? node.getLinkedModule().getName()
                       : generateModuleName(id, duplicateNames);
@@ -54,7 +54,7 @@ public class MavenToIdeaMapping {
 
         projectNames.add(name);
 
-        ProjectId projectId = new ProjectId(id);
+        ProjectId projectId = node.getProjectId();
         projectIdToModuleName.put(projectId, name);
         projectIdToFile.put(projectId, node.getFile());
       }
@@ -67,7 +67,7 @@ public class MavenToIdeaMapping {
 
     m.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
       public void visit(MavenProjectModel.Node node) {
-        String name = node.getId().artifactId;
+        String name = node.getMavenId().artifactId;
         if (allNames.contains(name)) result.add(name);
         allNames.add(name);
       }
@@ -140,8 +140,8 @@ public class MavenToIdeaMapping {
     return id.toString();
   }
 
-  public String getModuleName(MavenId id) {
-    String name = projectIdToModuleName.get(new ProjectId(id));
+  public String getModuleName(ProjectId id) {
+    String name = projectIdToModuleName.get(id);
     if (nameToModule.containsKey(name) || projectNames.contains(name)) return name;
     return null;
   }

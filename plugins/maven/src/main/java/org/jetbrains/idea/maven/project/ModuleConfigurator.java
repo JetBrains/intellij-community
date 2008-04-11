@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.core.util.Strings;
+import org.jetbrains.idea.maven.core.util.ProjectId;
 
 import java.text.MessageFormat;
 import java.util.Collection;
@@ -68,7 +69,7 @@ public class ModuleConfigurator {
 
       boolean isExportable = ProjectUtil.isExportableDependency(artifact);
 
-      String moduleName = myMapping.getModuleName(id);
+      String moduleName = myMapping.getModuleName(new ProjectId(artifact));
       if (moduleName != null) {
         myModel.createModuleDependency(moduleName, isExportable);
       }

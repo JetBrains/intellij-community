@@ -25,7 +25,7 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
       new SelectImportedProjectsStep<MavenProjectModel.Node>(wizardContext) {
         protected String getElementText(final MavenProjectModel.Node node) {
           final StringBuilder stringBuilder = new StringBuilder();
-          stringBuilder.append(node.getId());
+          stringBuilder.append(node.getMavenId());
           final String relPath =
             VfsUtil.getRelativePath(node.getFile().getParent(), ((MavenImportBuilder)getBuilder()).getRootDirectory(), File.separatorChar);
           if (relPath.length() != 0) {
