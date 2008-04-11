@@ -637,7 +637,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
     private void scheduleInvalidation(final VirtualFile file, final boolean saveContent) {
       if (file.isDirectory()) {
-        if (!(file instanceof NewVirtualFile) || ManagingFS.getInstance().areChildrenLoaded(file)) {
+        if (areChildrenLoaded(file)) {
           for (VirtualFile child : file.getChildren()) {
             scheduleInvalidation(child, saveContent); 
           }
@@ -699,6 +699,19 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
           });
         }
       }
+    }
+
+    private boolean areChildrenLoaded(final VirtualFile file) {
+      // todo: remove this check when the right VFS method is used
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        return true;
+      }
+      if (!(file instanceof NewVirtualFile)) {
+        return true;
+      }
+      // TODO: ManagingFS.areChildrenLoaded(file) is not the right method to use here
+      //  need API from VFS to understand if there were _any_ child virtual files created for the dir 
+      return ManagingFS.getInstance().areChildrenLoaded(file);
     }
 
     private void ensureAllInvalidateTasksCompleted() {

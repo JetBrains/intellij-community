@@ -239,25 +239,29 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
       return oldStubTree;
     }
 
-    protected Map<Integer, SerializedStubTree> mapOld(final FileContent inputData) {
-      if (inputData == null) return Collections.emptyMap();
-      
-      final Map<Integer, SerializedStubTree> result = new HashMap<Integer, SerializedStubTree>();
-
+    protected Map<Integer, SerializedStubTree> mapOld(final FileContent inputData) throws StorageException {
+      if (inputData == null) {
+        return Collections.emptyMap();
+      }
       final int key = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
 
-      final ValueContainer<SerializedStubTree> valueContainer;
+      final Map<Integer, SerializedStubTree> result = new HashMap<Integer, SerializedStubTree>();
+      final Lock lock = getReadLock();
+      lock.lock();
       try {
-        valueContainer = getStorage().read(key);
-      }
-      catch (StorageException e) {
-        throw new RuntimeException(e); // TODO
-      }
+        final ValueContainer<SerializedStubTree> valueContainer = getData(key);
+        if (valueContainer.size() == 0) {
+          return result;
+        }
 
-      if (valueContainer.size() != 1) return result; // TODO. Return if == 0 only
+      //if (valueContainer.size() != 1) return result; // TODO. Return if == 0 only
 
-      assert valueContainer.size() == 1;
-      result.put(key, valueContainer.getValueIterator().next());
+        assert valueContainer.size() == 1;
+        result.put(key, valueContainer.getValueIterator().next());
+      }
+      finally {
+        lock.unlock();
+      }
 
       return result;
     }
