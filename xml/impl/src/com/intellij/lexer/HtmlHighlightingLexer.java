@@ -3,11 +3,10 @@ package com.intellij.lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.psi.jsp.el.ELTokenType;
-import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.text.CharArrayCharSequence;
+import org.jetbrains.annotations.Nullable;
 
 public class HtmlHighlightingLexer extends BaseHtmlLexer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.HtmlHighlightingLexer");
@@ -18,7 +17,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   private Lexer embeddedLexer;
   private Lexer styleLexer;
   private Lexer scriptLexer;
-  private Lexer elLexer;
+  protected Lexer elLexer;
   private boolean hasNoEmbeddments;
   private static FileType ourStyleFileType;
   private static FileType ourScriptFileType;
@@ -103,14 +102,16 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
         scriptLexer = (ourScriptFileType!=null)? SyntaxHighlighter.PROVIDER.create(ourScriptFileType, null, null).getHighlightingLexer():null;
       }
       newLexer = scriptLexer;
-    } else if (super.getTokenType() == ELTokenType.JSP_EL_CONTENT) {
-      if (elLexer==null) elLexer = JspSpiUtil.createElLexer();
-      newLexer = elLexer;
-    }
+    } else newLexer = createELLexer(newLexer);
 
     if (newLexer!=null) {
       embeddedLexer = newLexer;
     }
+  }
+
+  @Nullable
+  protected Lexer createELLexer(Lexer newLexer) {
+    return newLexer;
   }
 
   public void advance() {
@@ -124,11 +125,6 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     if (embeddedLexer==null) {
       super.advance();
     }
-  }
-
-  protected boolean isValidAttributeValueTokenType(final IElementType tokenType) {
-    return super.isValidAttributeValueTokenType(tokenType) ||
-      tokenType == ELTokenType.JSP_EL_CONTENT;
   }
 
   public IElementType getTokenType() {
