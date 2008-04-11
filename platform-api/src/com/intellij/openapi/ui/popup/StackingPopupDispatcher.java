@@ -31,5 +31,7 @@ public abstract class StackingPopupDispatcher implements IdePopup {
 
   public abstract void requestFocus();
 
+  public abstract boolean close();
+
   public abstract boolean closeActivePopup();
 }

@@ -27,4 +27,6 @@ public interface IdePopup {
   boolean dispatch(AWTEvent event);
 
   void requestFocus();
+
+  boolean close();
 }

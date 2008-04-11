@@ -93,11 +93,14 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
     }
   }
 
-  public static void disposeActiveWizard() {
+  public static boolean disposeActiveWizard() {
     if (ourActiveWizardRoot != null) {
       ourActiveWizardRoot.disposeChildren();
       ourActiveWizardRoot.dispose();
+      return true;
     }
+
+    return false;
   }
 
   public boolean dispatchKeyEvent(final KeyEvent e) {
@@ -150,5 +153,9 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
     if (ourShowingStep != null) {
       ourShowingStep.requestFocus();
     }
+  }
+
+  public boolean close() {
+    return disposeActiveWizard();
   }
 }

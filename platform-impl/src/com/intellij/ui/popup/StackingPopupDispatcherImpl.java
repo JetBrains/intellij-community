@@ -170,6 +170,10 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
 
   }
 
+  public boolean close() {
+    return closeActivePopup();
+  }
+
   public boolean closeActivePopup() {
     if (myStack.isEmpty()) return false;
 
