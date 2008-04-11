@@ -7,7 +7,6 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -67,7 +66,6 @@ public class IdRefReference extends BasicAttributeValueReference {
   protected static boolean isAcceptableTagType(final XmlTag subTag) {
     return subTag.getAttributeValue(IdReferenceProvider.ID_ATTR_NAME) != null ||
            (subTag.getAttributeValue(IdReferenceProvider.NAME_ATTR_NAME) != null &&
-            !(subTag instanceof JspDirective) &&
             subTag.getName().indexOf(".directive") == -1);
   }
 
