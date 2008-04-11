@@ -15,20 +15,15 @@
 package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.lang.LangBundle;
 import com.intellij.psi.*;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
@@ -66,7 +61,7 @@ public class GroovyDocumentationProvider implements DocumentationProvider {
     } else if (element instanceof PsiMethod) {
       StringBuffer buffer = new StringBuffer();
       PsiMethod method = (PsiMethod) element;
-      if (method instanceof DefaultGroovyMethod) {
+      if (method instanceof GrGdkMethod) {
         buffer.append("[GDK] ");
       } else {
         PsiClass hisClass = method.getContainingClass();

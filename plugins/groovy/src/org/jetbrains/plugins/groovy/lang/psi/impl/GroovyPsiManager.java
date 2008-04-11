@@ -36,7 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 
 import java.util.*;
 
@@ -273,7 +273,7 @@ public class GroovyPsiManager implements ProjectComponent {
   }
 
   private PsiMethod convertMethod(PsiMethod method, boolean isStatic) {
-    return new DefaultGroovyMethod(method, isStatic);
+    return new GrGdkMethodImpl(method, isStatic);
   }
 
   public void disposeComponent() {

@@ -24,13 +24,14 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 
 import java.util.LinkedHashSet;
 
 /**
  * @author ven
  */
-public class DefaultGroovyMethod extends LightMethod {
+public class GrGdkMethodImpl extends LightMethod implements GrGdkMethod {
   private PsiMethod myMethod;
 
   private LightParameterList myParameterList = null;
@@ -46,7 +47,7 @@ public class DefaultGroovyMethod extends LightMethod {
     return true;
   }
 
-  public DefaultGroovyMethod(PsiMethod method, boolean isStatic) {
+  public GrGdkMethodImpl(PsiMethod method, boolean isStatic) {
     super(method.getManager(), method, null);
     myMethod = method;
     final PsiManager manager = method.getManager();
@@ -92,7 +93,7 @@ public class DefaultGroovyMethod extends LightMethod {
       public LightParameter[] compute() {
         LightParameter[] result = new LightParameter[parmNames.length];
         for (int i = 0; i < result.length; i++) {
-          result[i] = new LightParameter(manager, parmNames[i], null, originalParameters[i+1].getType(), DefaultGroovyMethod.this);
+          result[i] = new LightParameter(manager, parmNames[i], null, originalParameters[i+1].getType(), GrGdkMethodImpl.this);
 
         }
         return result;
@@ -108,6 +109,10 @@ public class DefaultGroovyMethod extends LightMethod {
       parameterTypes[i] = parameters[i].getType();
     }
     return MethodSignatureUtil.createMethodSignature(getName(), parameterTypes, PsiTypeParameter.EMPTY_ARRAY, substitutor); //todo
+  }
+
+  public PsiMethod getStaticMethod() {
+    return myMethod;
   }
 
   @NotNull

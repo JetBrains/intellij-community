@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -93,6 +94,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
       return substitutor;
     }
 
+    if (method instanceof GrGdkMethod) {
+      //type inference should be performed from static method
+      method = ((GrGdkMethod) method).getStaticMethod();
+    }
     return inferMethodTypeParameters(method, substitutor, typeParameters);
   }
 

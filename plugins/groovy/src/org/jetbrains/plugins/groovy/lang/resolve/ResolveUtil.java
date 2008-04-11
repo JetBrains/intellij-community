@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
@@ -241,7 +241,7 @@ public class ResolveUtil {
   private static boolean useCategoryClass(GrMethodCallExpression call) {
 
     final PsiMethod resolved = call.resolveMethod();
-    if (resolved instanceof DefaultGroovyMethod) {
+    if (resolved instanceof GrGdkMethod) {
       final PsiElementFactory factory = call.getManager().getElementFactory();
       final GlobalSearchScope scope = call.getResolveScope();
       final PsiType[] parametersType = {

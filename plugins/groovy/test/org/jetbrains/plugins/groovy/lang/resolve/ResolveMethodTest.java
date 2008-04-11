@@ -24,7 +24,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -108,35 +109,35 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
   public void testDefaultMethod1() throws Exception {
     PsiReference ref = configureByFile("defaultMethod1/A.groovy");
     PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof DefaultGroovyMethod);
+    assertTrue(resolved instanceof GrGdkMethod);
   }
 
   public void testDefaultStaticMethod() throws Exception {
     PsiReference ref = configureByFile("defaultStaticMethod/A.groovy");
     PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof DefaultGroovyMethod);
-    assertTrue(((DefaultGroovyMethod) resolved).hasModifierProperty(PsiModifier.STATIC));
+    assertTrue(resolved instanceof GrGdkMethod);
+    assertTrue(((GrGdkMethodImpl) resolved).hasModifierProperty(PsiModifier.STATIC));
   }
 
   public void testPrimitiveSubtyping() throws Exception {
     PsiReference ref = configureByFile("primitiveSubtyping/A.groovy");
     PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof DefaultGroovyMethod);
-    assertTrue(((DefaultGroovyMethod) resolved).hasModifierProperty(PsiModifier.STATIC));
+    assertTrue(resolved instanceof GrGdkMethod);
+    assertTrue(((GrGdkMethodImpl) resolved).hasModifierProperty(PsiModifier.STATIC));
   }
 
   public void testDefaultMethod2() throws Exception {
     PsiReference ref = configureByFile("defaultMethod2/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof PsiMethod);
-    assertTrue(resolved instanceof DefaultGroovyMethod);
+    assertTrue(resolved instanceof GrGdkMethod);
   }
 
   public void testGrvy111() throws Exception {
     PsiReference ref = configureByFile("grvy111/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof PsiMethod);
-    assertTrue(resolved instanceof DefaultGroovyMethod);
+    assertTrue(resolved instanceof GrGdkMethod);
     assertEquals(0, ((PsiMethod) resolved).getParameterList().getParametersCount());
     assertTrue(((PsiMethod) resolved).hasModifierProperty(PsiModifier.PUBLIC));
   }
@@ -152,14 +153,14 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     PsiReference ref = configureByFile("arrayDefault/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof PsiMethod);
-    assertTrue(resolved instanceof DefaultGroovyMethod);
+    assertTrue(resolved instanceof GrGdkMethod);
   }
 
   public void testArrayDefault1() throws Exception {
     PsiReference ref = configureByFile("arrayDefault1/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof PsiMethod);
-    assertTrue(resolved instanceof DefaultGroovyMethod);
+    assertTrue(resolved instanceof GrGdkMethod);
   }
 
   public void testSpreadOperator() throws Exception {
