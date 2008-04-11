@@ -243,6 +243,16 @@ public abstract class ImportingTestCase extends MavenTestCase {
     assertOrderedElementsAreEqual(actual, expectedDeps);
   }
 
+  protected void assertModuleGroupPath(String moduleName, String... expected) {
+    String[] path = ModuleManager.getInstance(myProject).getModuleGroupPath(getModule(moduleName));
+
+    if (expected.length == 0) assertNull(path);
+    else {
+      assertNotNull(path);
+      assertOrderedElementsAreEqual(Arrays.asList(path), expected);
+    }
+  }
+
   protected Module getModule(String name) {
     Module m = ModuleManager.getInstance(myProject).findModuleByName(name);
     assertNotNull("Module " + name + " not found", m);
@@ -287,8 +297,15 @@ public abstract class ImportingTestCase extends MavenTestCase {
   }
 
   protected void importProjectWithProfiles(String... profiles) throws MavenException {
+    doImportProjects(Collections.singletonList(projectPom), profiles);
+  }
+
+  protected void importSeveralProjects(VirtualFile... files) throws MavenException {
+    doImportProjects(Arrays.asList(files));
+  }
+
+  private void doImportProjects(List<VirtualFile> files, String... profiles) throws MavenException {
     try {
-      List<VirtualFile> files = Collections.singletonList(projectPom);
       List<String> profilesList = Arrays.asList(profiles);
 
       MavenImportProcessor p = new MavenImportProcessor(myProject);
@@ -297,7 +314,7 @@ public abstract class ImportingTestCase extends MavenTestCase {
 
       resolutionProblems = new ArrayList<Pair<File, List<String>>>();
       p.resolve(myProject, profilesList, resolutionProblems);
-      
+
       p.commit(myProject, profilesList);
       projectModel = p.getMavenProjectModel();
     }
@@ -311,7 +328,7 @@ public abstract class ImportingTestCase extends MavenTestCase {
 
     MavenRunnerParameters rp = new MavenRunnerParameters(pom.getPath(), Arrays.asList(goal), null);
     MavenRunnerSettings rs = new MavenRunnerSettings();
-    MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(rp, getMavenCoreState(), rs);
+    MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(rp, getMavenCoreSettings(), rs);
 
     e.execute();
   }

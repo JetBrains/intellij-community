@@ -7,7 +7,6 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 
-import java.util.Arrays;
 import java.io.File;
 
 public class ReimportingTest extends ImportingTestCase {
@@ -50,10 +49,7 @@ public class ReimportingTest extends ImportingTestCase {
     model.commit();
 
     importProject();
-
-    String[] path = ModuleManager.getInstance(myProject).getModuleGroupPath(m);
-    assertNotNull(path);
-    assertOrderedElementsAreEqual(Arrays.asList(path), "group");
+    assertModuleGroupPath("project", "group");
   }
 
   public void testAddingNewModule() throws Exception {

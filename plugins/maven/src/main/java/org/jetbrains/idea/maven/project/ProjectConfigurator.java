@@ -122,11 +122,17 @@ public class ProjectConfigurator {
 
     final Stack<String> groups = new Stack<String>();
 
+    final boolean createTopLevelGroup = myProjectModel.getRootProjects().size() > 1;
+
     myProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
+      int depth = 0;
+
       public void visit(MavenProjectModel.Node node) {
+        depth++;
+
         String name = myMapping.getModuleName(node.getProjectId());
 
-        if (!node.mySubProjects.isEmpty()) {
+        if (shouldCreateGroup(node)) {
           groups.push(ProjectBundle.message("module.group.name", name));
         }
 
@@ -135,9 +141,14 @@ public class ProjectConfigurator {
       }
 
       public void leave(MavenProjectModel.Node node) {
-        if (!node.mySubProjects.isEmpty()) {
+        if (shouldCreateGroup(node)) {
           groups.pop();
         }
+        depth--;
+      }
+
+      private boolean shouldCreateGroup(MavenProjectModel.Node node) {
+        return !node.mySubProjects.isEmpty() && (createTopLevelGroup || depth > 1);
       }
     });
   }

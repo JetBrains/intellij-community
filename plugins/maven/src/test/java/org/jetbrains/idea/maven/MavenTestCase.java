@@ -7,13 +7,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
+import org.jetbrains.idea.maven.project.MavenImporterSettings;
+import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Collection;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 public abstract class MavenTestCase extends IdeaTestCase {
   protected File dir;
@@ -46,15 +48,19 @@ public abstract class MavenTestCase extends IdeaTestCase {
   }
 
   protected MavenCore getMavenCore() {
-    return myProject.getComponent(MavenCore.class);
+    return MavenCore.getInstance(myProject);
   }
 
-  protected MavenCoreSettings getMavenCoreState() {
+  protected MavenCoreSettings getMavenCoreSettings() {
     return getMavenCore().getState();
   }
 
+  protected MavenImporterSettings getMavenImporterSettings() {
+    return MavenProjectsManager.getInstance(myProject).getImporterSettings();
+  }
+
   protected String getRepositoryPath() {
-    String path = getMavenCoreState().getEffectiveLocalRepository().getPath();
+    String path = getMavenCoreSettings().getEffectiveLocalRepository().getPath();
     return FileUtil.toSystemIndependentName(path);
   }
 

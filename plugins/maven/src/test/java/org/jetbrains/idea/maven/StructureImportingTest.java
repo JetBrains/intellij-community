@@ -237,6 +237,92 @@ public class StructureImportingTest extends ImportingTestCase {
     assertModuleLibDeps("m", "junit:junit:4.0");
   }
 
+  public void testCreatingModuleGroups() throws Exception {
+    VirtualFile p1 = createModulePom("project1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>project1</artifactId>" +
+                    "<version>1</version>" +
+                    "<packaging>pom</packaging>" +
+
+                    "<modules>" +
+                    "  <module>m1</module>" +
+                    "</modules>");
+
+    createModulePom("project1/m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>");
+
+    VirtualFile p2 = createModulePom("project2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>project2</artifactId>" +
+                    "<version>1</version>" +
+                    "<packaging>pom</packaging>" +
+
+                    "<modules>" +
+                    "  <module>m2</module>" +
+                    "</modules>");
+
+    createModulePom("project2/m2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m2</artifactId>" +
+                    "<version>1</version>" +
+                    "<packaging>pom</packaging>" +
+
+                    "<modules>" +
+                    "  <module>m3</module>" +
+                    "</modules>");
+
+    createModulePom("project2/m2/m3",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m3</artifactId>" +
+                    "<version>1</version>");
+
+    getMavenImporterSettings().setCreateModuleGroups(true);
+    importSeveralProjects(p1, p2);
+    assertModules("project1", "project2", "m1", "m2", "m3");
+
+    assertModuleGroupPath("project1", "project1 and modules");
+    assertModuleGroupPath("m1", "project1 and modules");
+    assertModuleGroupPath("project2", "project2 and modules");
+    assertModuleGroupPath("m2", "project2 and modules", "m2 and modules");
+    assertModuleGroupPath("m3", "project2 and modules", "m2 and modules");
+  }
+
+  public void testDoesNotCreateUnnecessaryTopLevelModuleGroup() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>");
+
+    createModulePom("m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>" +
+                    "<packaging>pom</packaging>" +
+
+                    "<modules>" +
+                    "  <module>m2</module>" +
+                    "</modules>");
+
+    createModulePom("m1/m2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m2</artifactId>" +
+                    "<version>1</version>");
+
+    getMavenImporterSettings().setCreateModuleGroups(true);
+    importProject();
+    assertModules("project", "m1", "m2");
+
+    assertModuleGroupPath("project");
+    assertModuleGroupPath("m1", "m1 and modules");
+    assertModuleGroupPath("m2", "m1 and modules");
+  }
+
   public void testLanguageLevel() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
