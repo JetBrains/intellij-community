@@ -219,7 +219,7 @@ public final class LoadTextUtil {
       }
 
       if (allowMissingDecompiler) return null;
-      throw new IllegalArgumentException("Attempt to load text for binary file, that doesn't have decompiler plugged in.");
+      throw new IllegalArgumentException("Attempt to load text for binary file, that doesn't have decompiler plugged in: "+file.getPresentableUrl());
     }
 
     try {
