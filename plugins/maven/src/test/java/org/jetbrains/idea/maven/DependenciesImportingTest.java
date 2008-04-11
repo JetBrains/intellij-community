@@ -335,6 +335,54 @@ public class DependenciesImportingTest extends ImportingTestCase {
     assertModuleLibDep("project", "xml-apis:xml-apis:1.0.b2");
   }
 
+  public void testExclusionOfTransitiveDependencies() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>1</version>" +
+                          "      <exclusions>" +
+                          "        <exclusion>" +
+                          "          <groupId>group</groupId>" +
+                          "          <artifactId>id</artifactId>" +
+                          "        </exclusion>" +
+                          "      </exclusions>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>group</groupId>" +
+                          "    <artifactId>id</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+    importProject();
+
+    assertModuleLibDeps("m2", "group:id:1");
+    
+    assertModuleModuleDeps("m1", "m2");
+    assertModuleLibDeps("m1");
+  }
+
   public void testDependencyWithEnvironmentProperty() throws Exception {
     String javaHome = FileUtil.toSystemIndependentName(System.getProperty("java.home"));
 
