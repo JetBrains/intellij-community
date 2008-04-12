@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,10 +117,12 @@ public abstract class ResourceInspection extends BaseInspection {
     private static class CloseVisitor extends JavaRecursiveElementVisitor {
 
         private boolean containsClose = false;
-        private PsiVariable objectToClose;
+        private final PsiVariable resource;
+        private final String resourceName;
 
-        private CloseVisitor(PsiVariable objectToClose) {
-            this.objectToClose = objectToClose;
+        private CloseVisitor(PsiVariable resource) {
+            this.resource = resource;
+            this.resourceName = resource.getName();
         }
 
         @Override
@@ -138,25 +139,105 @@ public abstract class ResourceInspection extends BaseInspection {
                 return;
             }
             super.visitMethodCallExpression(call);
+            if (!isResourceClose(call, resource)) {
+                return;
+            }
+            containsClose = true;
+        }
+
+        @Override
+        public void visitReferenceExpression(
+                PsiReferenceExpression referenceExpression) {
+            // check if resource is closed in IOUtils.silentClose() like method
+            super.visitReferenceExpression(referenceExpression);
+            if (containsClose) {
+                return;
+            }
+            final String text = referenceExpression.getText();
+            if (text == null || !text.equals(resourceName)) {
+                return;
+            }
+            final PsiElement parent = referenceExpression.getParent();
+            if (!(parent instanceof PsiExpressionList)) {
+                return;
+            }
+            final PsiExpressionList argumentList = (PsiExpressionList) parent;
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length != 1) {
+                return;
+            }
+            final PsiElement grandParent = parent.getParent();
+            if (!(grandParent instanceof PsiMethodCallExpression)) {
+                return;
+            }
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression) grandParent;
+            final PsiElement target = referenceExpression.resolve();
+            if (target == null || !target.equals(resource)) {
+                return;
+            }
+            final PsiMethod method = methodCallExpression.resolveMethod();
+            if (method == null) {
+                return;
+            }
+            final PsiCodeBlock codeBlock = method.getBody();
+            if (codeBlock == null) {
+                return;
+            }
+            final PsiParameterList parameterList = method.getParameterList();
+            final PsiParameter[] parameters = parameterList.getParameters();
+            if (parameters.length != 1) {
+                return;
+            }
+            final PsiParameter parameter = parameters[0];
+            final PsiStatement[] statements = codeBlock.getStatements();
+            for (PsiStatement statement : statements) {
+                if (!(statement instanceof PsiTryStatement)) {
+                    continue;
+                }
+                final PsiTryStatement tryStatement = (PsiTryStatement) statement;
+                final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+                if (tryBlock == null) {
+                    return;
+                }
+                final PsiStatement[] innerStatements = tryBlock.getStatements();
+                for (PsiStatement innerStatement : innerStatements) {
+                    if (!(innerStatement instanceof PsiExpressionStatement)) {
+                        continue;
+                    }
+                    final PsiExpressionStatement expressionStatement =
+                            (PsiExpressionStatement) innerStatement;
+                    final PsiExpression expression =
+                            expressionStatement.getExpression();
+                    if (!(expression instanceof PsiMethodCallExpression)) {
+                        continue;
+                    }
+                    final PsiMethodCallExpression potentialCloseExpression =
+                            (PsiMethodCallExpression) expression;
+                    if (isResourceClose(potentialCloseExpression, parameter)) {
+                        containsClose = true;
+                        return;
+                    }
+                }
+            }
+        }
+
+        private static boolean isResourceClose(PsiMethodCallExpression call,
+                                             PsiVariable resource) {
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();
             if (!HardcodedMethodConstants.CLOSE.equals(methodName)) {
-                return;
+                return false;
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
             if (!(qualifier instanceof PsiReferenceExpression)) {
-                return;
+                return false;
             }
             final PsiReference reference = (PsiReference) qualifier;
             final PsiElement referent = reference.resolve();
-            if (referent == null) {
-                return;
-            }
-            if (referent.equals(objectToClose)) {
-                containsClose = true;
-            }
+            return referent != null && referent.equals(resource);
         }
 
         public boolean containsClose() {
