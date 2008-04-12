@@ -88,7 +88,7 @@ public abstract class BaseRefactoringProcessor {
     return myIsPreviewUsages;
   }
 
-  boolean isPreviewUsages() {
+  protected boolean isPreviewUsages() {
     return myIsPreviewUsages;
   }
 
