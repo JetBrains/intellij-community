@@ -77,14 +77,16 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
               if (lastArg instanceof PsiNewExpression &&
                   substitutor.substitute(((PsiEllipsisType) lastParamType).toArrayType()).equals(lastArg.getType())) {
                 PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression) lastArg).getArrayInitializer();
-                PsiExpression[] initializers = arrayInitializer != null ? arrayInitializer.getInitializers() : PsiExpression.EMPTY_ARRAY;
-                if (isSafeToFlatten(expression, method, initializers)) {
-                  final ProblemDescriptor descriptor = manager.createProblemDescriptor(lastArg,
-                                                                                       InspectionsBundle.message("inspection.redundant.array.creation.for.varargs.call.descriptor"),
-                                                                                       myQuickFixAction,
-                                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                if (arrayInitializer != null) {
+                  PsiExpression[] initializers = arrayInitializer.getInitializers();
+                  if (isSafeToFlatten(expression, method, initializers)) {
+                    final ProblemDescriptor descriptor = manager.createProblemDescriptor(lastArg,
+                                                                                         InspectionsBundle.message("inspection.redundant.array.creation.for.varargs.call.descriptor"),
+                                                                                         myQuickFixAction,
+                                                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
 
-                  problems.add(descriptor);
+                    problems.add(descriptor);
+                  }
                 }
               }
             }

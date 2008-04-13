@@ -13,5 +13,6 @@ public class RedundantArrayForVarargsCallInspectionTest extends InspectionTestCa
   }
 
   public void testIDEADEV15215() throws Exception { doTest(); }
+  public void testIDEADEV25923() throws Exception { doTest(); }
   public void testNestedArray() throws Exception { doTest(); }
 }
