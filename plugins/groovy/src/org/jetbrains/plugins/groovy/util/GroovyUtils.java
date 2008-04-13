@@ -92,9 +92,9 @@ public abstract class GroovyUtils {
     return files != null ? files : new File[0];
   }
 
-  public static <E> List<E> flatten(Collection<List<E>> lists) {
+  public static <E> List<E> flatten(Collection<? extends Collection<E>> collections) {
     List<E> result = new ArrayList<E>();
-    for (List<E> list : lists) {
+    for (Collection<E> list : collections) {
       result.addAll(list);
     }
 
