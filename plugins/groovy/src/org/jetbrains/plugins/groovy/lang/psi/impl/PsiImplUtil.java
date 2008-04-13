@@ -325,7 +325,7 @@ public class PsiImplUtil {
   }
 
   public static GroovyResolveResult extractUniqueResult(GroovyResolveResult[] results) {
-    if (results.length != 1) return null;
+    if (results.length != 1) return GroovyResolveResult.EMPTY_RESULT;
     return results[0];
   }
 

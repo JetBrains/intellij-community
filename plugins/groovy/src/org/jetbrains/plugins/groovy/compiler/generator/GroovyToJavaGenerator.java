@@ -428,7 +428,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       PsiMethod constructor = enumConstant.resolveConstructor();
       if (constructor != null) {
         text.append("(");
-        writeStubConstructorInvocation(text, constructor);
+        writeStubConstructorInvocation(text, constructor, PsiSubstitutor.EMPTY);
         text.append(")");
       }
 
@@ -445,11 +445,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     text.append(";");
   }
 
-  private void writeStubConstructorInvocation(StringBuffer text, PsiMethod constructor) {
+  private void writeStubConstructorInvocation(StringBuffer text, PsiMethod constructor, PsiSubstitutor substitutor) {
     final PsiParameter[] superParams = constructor.getParameterList().getParameters();
     for (int j = 0; j < superParams.length; j++) {
       if (j > 0) text.append(", ");
-      String typeText = getTypeText(superParams[j].getType());
+      String typeText = getTypeText(substitutor.substitute(superParams[j].getType()));
       text.append("(").append(typeText).append(")").append(getDefaultValueText(typeText));
     }
   }
@@ -503,11 +503,14 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     if (constructorInvocation != null) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          PsiMethod chainedConstructor = constructorInvocation.resolveConstructor();
+          GroovyResolveResult resolveResult = constructorInvocation.resolveConstructorGenerics();
+          PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+          PsiMethod chainedConstructor = (PsiMethod) resolveResult.getElement();
           if (chainedConstructor == null) {
             final GroovyResolveResult[] results = constructorInvocation.multiResolveConstructor();
             if (results.length > 0) {
               chainedConstructor = (PsiMethod) results[0].getElement();
+              substitutor = results[0].getSubstitutor();
             }
           }
 
@@ -517,7 +520,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
               text.append(" throws ");
               for (int i = 0; i < throwsTypes.length; i++) {
                 if (i > 0) text.append(", ");
-                text.append(getTypeText(throwsTypes[i]));
+                text.append(getTypeText(substitutor.substitute(throwsTypes[i])));
               }
             }
           }
@@ -533,7 +536,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
           text.append("(");
 
           if (chainedConstructor != null) {
-            writeStubConstructorInvocation(text, chainedConstructor);
+            writeStubConstructorInvocation(text, chainedConstructor, substitutor);
           }
 
           text.append(")");

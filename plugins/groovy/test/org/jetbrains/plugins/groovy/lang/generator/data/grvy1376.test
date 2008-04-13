@@ -1,0 +1,12 @@
+class PerformanceLine extends HashMap {
+    PerformanceLine(String ... data) {
+        super((Map)null)
+    }
+}
+-----
+public class PerformanceLine extends java.util.HashMap {
+  public PerformanceLine(java.lang.String data) {
+    super((java.util.Map)null);
+  }
+}
+---

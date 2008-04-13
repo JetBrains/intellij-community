@@ -75,18 +75,18 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
     PsiClass clazz = getDelegatedClass();
     if (clazz != null) {
       PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false, false);
-      PsiType thisType;
       PsiElementFactory factory = getManager().getElementFactory();
+      PsiSubstitutor substitutor;
       if (isThisCall()) {
-        thisType = factory.createType(clazz, PsiSubstitutor.EMPTY);
+        substitutor = PsiSubstitutor.EMPTY;
       } else {
         GrTypeDefinition enclosing = getEnclosingClass();
         assert enclosing != null;
-        PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(clazz, enclosing, PsiSubstitutor.EMPTY);
-        thisType = factory.createType(clazz, substitutor);
+        substitutor = TypeConversionUtil.getSuperClassSubstitutor(clazz, enclosing, PsiSubstitutor.EMPTY);
       }
+      PsiType thisType = factory.createType(clazz, substitutor);
       MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, false, true, thisType, argTypes, PsiType.EMPTY_ARRAY);
-      clazz.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);
+      clazz.processDeclarations(processor, substitutor, null, this);
       return processor.getCandidates();
     }
     return GroovyResolveResult.EMPTY_ARRAY;
