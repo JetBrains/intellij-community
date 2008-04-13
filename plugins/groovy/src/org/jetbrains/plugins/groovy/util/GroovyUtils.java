@@ -83,9 +83,9 @@ public abstract class GroovyUtils {
 
   public static File[] getFilesInDirectoryByPattern(String dirPath, final String patternString) {
     File distDir = new File(dirPath);
+    final Pattern pattern = Pattern.compile(patternString);
     File[] files = distDir.listFiles(new FilenameFilter() {
       public boolean accept(File dir, String name) {
-        Pattern pattern = Pattern.compile(patternString);
         return pattern.matcher(name).matches();
       }
     });
