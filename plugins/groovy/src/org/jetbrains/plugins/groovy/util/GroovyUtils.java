@@ -15,27 +15,22 @@
 
 package org.jetbrains.plugins.groovy.util;
 
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.*;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.util.*;
-import java.util.Stack;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.regex.Pattern;
-
-import gnu.trove.TIntStack;
 
 /**
  * @author ilyas
@@ -88,12 +83,13 @@ public abstract class GroovyUtils {
 
   public static File[] getFilesInDirectoryByPattern(String dirPath, final String patternString) {
     File distDir = new File(dirPath);
-    return distDir.listFiles(new FilenameFilter() {
+    File[] files = distDir.listFiles(new FilenameFilter() {
       public boolean accept(File dir, String name) {
         Pattern pattern = Pattern.compile(patternString);
         return pattern.matcher(name).matches();
       }
     });
+    return files != null ? files : new File[0];
   }
 
   public static <E> List<E> flatten(Collection<List<E>> lists) {
