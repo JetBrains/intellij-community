@@ -71,7 +71,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
       return null;
     }
 
-    public boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType) {
+    public boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType, final PsiElement context) {
       return !(exprType instanceof PsiPrimitiveType) &&
              !(parameterType instanceof PsiPrimitiveType);
     }

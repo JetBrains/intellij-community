@@ -50,7 +50,7 @@ public abstract class ArgumentFixerActionFactory {
         PsiType parameterType = substitutor.substitute(parameter.getType());
         if (exprType == null
             || parameterType == null
-            || !areTypesConvertible(exprType, parameterType)) {
+            || !areTypesConvertible(exprType, parameterType, call)) {
           methodCandidates.remove(i);
           continue nextMethod;
         }
@@ -94,7 +94,7 @@ public abstract class ArgumentFixerActionFactory {
     }
   }
 
-  public abstract boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType);
+  public abstract boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType, final PsiElement context);
 
   public abstract MethodArgumentFix createFix(final PsiExpressionList list, final int i, final PsiType parameterType);
 

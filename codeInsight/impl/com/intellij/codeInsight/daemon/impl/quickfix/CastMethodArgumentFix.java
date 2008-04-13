@@ -9,9 +9,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,11 +32,20 @@ public class CastMethodArgumentFix extends MethodArgumentFix {
       return new CastMethodArgumentFix(list, i, toType, this);
     }
 
-    protected PsiExpression getModifiedArgument(final PsiExpression expression, final PsiType toType) throws IncorrectOperationException {
+    protected PsiExpression getModifiedArgument(final PsiExpression expression, PsiType toType) throws IncorrectOperationException {
+      final PsiType exprType = expression.getType();
+      if (exprType instanceof PsiClassType && toType instanceof PsiPrimitiveType) {
+        toType = ((PsiPrimitiveType)toType).getBoxedType(expression);
+        assert toType != null;
+      }
       return AddTypeCastFix.createCastExpression(expression, expression.getProject(), toType);
     }
 
-    public boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType) {
+    public boolean areTypesConvertible(PsiType exprType, PsiType parameterType, final PsiElement context) {
+      if (exprType instanceof PsiClassType && parameterType instanceof PsiPrimitiveType) {
+        parameterType = ((PsiPrimitiveType)parameterType).getBoxedType(context); //unboxing from type of cast expression will take place at runtime
+        if (parameterType == null) return false;
+      }
       return parameterType.isConvertibleFrom(exprType);
     }
   }
