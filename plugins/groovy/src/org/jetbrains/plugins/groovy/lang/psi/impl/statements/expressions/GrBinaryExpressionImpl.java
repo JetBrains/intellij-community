@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,25 +34,21 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
     super(node);
   }
 
+  @NotNull
   public GrExpression getLeftOperand() {
-    PsiElement first = getFirstChild();
-    if (first instanceof GrExpression) {
-      return (GrExpression) first;
-    } else {
-      return null;
-    }
+    GrExpression result = findChildByClass(GrExpression.class);
+    assert result != null;
+    return result;
   }
 
   public GrExpression getRightOperand() {
-    PsiElement last = getLastChild();
-    while (last != null && last instanceof PsiWhiteSpace) {
-      last = last.getPrevSibling();
+    GrExpression left = getLeftOperand();
+    PsiElement run = left.getNextSibling();
+    while (run != null) {
+      if (run instanceof GrExpression) return (GrExpression) run;
+      run = run.getNextSibling();
     }
-    if (last instanceof GrExpression) {
-      return (GrExpression) last;
-    } else {
-      return null;
-    }
+    return null;
   }
 
   @Nullable

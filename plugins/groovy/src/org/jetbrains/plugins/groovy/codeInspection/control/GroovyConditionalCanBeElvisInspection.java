@@ -132,6 +132,6 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
   }
 
   private static boolean isNull(GrExpression expression) {
-    return "null".equals(expression.getText());
+    return expression != null && "null".equals(expression.getText());
   }
 }

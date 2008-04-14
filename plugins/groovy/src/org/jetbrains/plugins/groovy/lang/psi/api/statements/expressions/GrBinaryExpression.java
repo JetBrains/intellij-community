@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ilyas
@@ -26,6 +27,7 @@ public interface GrBinaryExpression extends GrExpression {
   /**
    * @return left operand of binary expression
    */
+  @NotNull
   public GrExpression getLeftOperand();
 
   /**
