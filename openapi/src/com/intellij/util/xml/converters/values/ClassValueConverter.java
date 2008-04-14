@@ -31,7 +31,7 @@ public abstract class ClassValueConverter extends Converter<PsiClass> implements
     final Module module = context.getModule();
     final PsiFile psiFile = context.getFile();
     final Project project = psiFile.getProject();
-    return context.findClass(s, getScope(project, module, psiFile));
+    return DomJavaUtil.findClass(s, context.getFile(), context.getModule(), getScope(project, module, psiFile));
   }
 
   public String toString(@Nullable PsiClass psiClass, final ConvertContext context) {

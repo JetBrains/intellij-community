@@ -4,12 +4,12 @@
 
 package com.intellij.util.xml;
 
-import com.intellij.usages.impl.rules.UsageTypeProvider;
-import com.intellij.usages.impl.rules.UsageType;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.lang.StdLanguages;
+import com.intellij.usages.impl.rules.UsageType;
+import com.intellij.usages.impl.rules.UsageTypeProvider;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -19,7 +19,8 @@ public class DomUsageTypeProvider implements UsageTypeProvider {
   @Nullable
   public UsageType getUsageType(PsiElement element) {
     final PsiFile psiFile = element.getContainingFile();
-    if (StdLanguages.XML.equals(psiFile.getLanguage()) && DomManager.getDomManager(element.getProject()).getFileElement((XmlFile)psiFile, DomElement.class) != null) {
+    if (XMLLanguage.INSTANCE.equals(psiFile.getLanguage()) &&
+        DomManager.getDomManager(element.getProject()).getFileElement((XmlFile)psiFile, DomElement.class) != null) {
       return DOM_USAGE_TYPE;
     }
     return null;

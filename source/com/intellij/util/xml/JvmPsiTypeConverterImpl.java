@@ -56,7 +56,8 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
       final char c = s.charAt(arrayDimensions);
       if (c == 'L') {
         if (!s.endsWith(";")) return null;
-          final PsiClass aClass = context.findClass(s.substring(arrayDimensions + 1, s.length() - 1), null);
+        final PsiClass aClass =
+            DomJavaUtil.findClass(s.substring(arrayDimensions + 1, s.length() - 1), context.getFile(), context.getModule(), null);
           return aClass == null ? null : makeArray(arrayDimensions, createType(aClass));
       }
 
@@ -68,7 +69,7 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
       return null;
     }
 
-    final PsiClass aClass1 = context.findClass(s, null);
+    final PsiClass aClass1 = DomJavaUtil.findClass(s, context.getFile(), context.getModule(), null);
     return aClass1 == null ? null : createType(aClass1);
   }
 

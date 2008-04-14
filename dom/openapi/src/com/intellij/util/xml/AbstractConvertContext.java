@@ -16,10 +16,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -38,36 +35,6 @@ public abstract class AbstractConvertContext extends ConvertContext {
         return domElement;
       }
     };
-  }
-
-  public final PsiClass findClass(@Nullable String name, @Nullable final GlobalSearchScope searchScope) {
-    return findClass(name, getFile(), getModule(), searchScope);
-  }
-
-  @Nullable
-  public static PsiClass findClass(@Nullable String name, @NotNull final XmlFile file, @Nullable final Module module, @Nullable final GlobalSearchScope searchScope) {
-    if (name == null) return null;
-    if (name.indexOf('$')>=0) name = name.replace('$', '.');
-
-    final GlobalSearchScope scope;
-    if (searchScope == null) {
-
-      if (module != null) {
-        scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
-      }
-      else {
-        scope = file.getResolveScope();
-      }
-    }
-    else {
-      scope = searchScope;
-    }
-
-    final PsiClass aClass = JavaPsiFacade.getInstance(file.getProject()).findClass(name, scope);
-    if (aClass != null) {
-      assert aClass.isValid() : name;
-    }
-    return aClass;
   }
 
   public final XmlTag getTag() {
@@ -92,7 +59,4 @@ public abstract class AbstractConvertContext extends ConvertContext {
     return getFile().getManager();
   }
 
-  public JavaPsiFacade getJavaFacade() {
-    return JavaPsiFacade.getInstance(getFile().getProject());
-  }
 }

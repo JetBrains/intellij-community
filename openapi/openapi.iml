@@ -46,6 +46,7 @@
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="module" module-name="psi-extapi" exported="" />
     <orderEntry type="library" name="XmlRPC" level="project" />
+    <orderEntry type="module" module-name="dom-openapi" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

@@ -18,8 +18,6 @@ package com.intellij.util.xml.ui;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.Function;
@@ -69,12 +67,6 @@ public abstract class DomUIFactory {
   private static BaseControl createGenericValueControl(final Type type, final GenericDomValue<?> element, boolean commitOnEveryChange) {
     final DomStringWrapper stringWrapper = new DomStringWrapper(element);
     final Class rawType = ReflectionUtil.getRawType(type);
-    if (PsiClass.class.isAssignableFrom(rawType)) {
-      return getDomUIFactory().createPsiClassControl(stringWrapper, commitOnEveryChange);
-    }
-    if (type.equals(PsiType.class)) {
-      return getDomUIFactory().createPsiTypeControl(stringWrapper, commitOnEveryChange);
-    }
     if (type instanceof Class && Enum.class.isAssignableFrom(rawType)) {
       return new ComboControl(stringWrapper, rawType);
     }
@@ -122,10 +114,6 @@ public abstract class DomUIFactory {
   public abstract UserActivityWatcher createEditorAwareUserActivityWatcher();
 
   public abstract void setupErrorOutdatingUserActivityWatcher(CommittablePanel panel, DomElement... elements);
-
-  public abstract BaseControl createPsiClassControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
-
-  public abstract BaseControl createPsiTypeControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
 
   public abstract BaseControl createTextControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
 

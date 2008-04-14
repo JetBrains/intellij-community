@@ -17,10 +17,6 @@ package com.intellij.util.xml;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiType;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,36 +72,6 @@ public abstract class Converter<T> {
 
     public String toString(final String t, final ConvertContext context) {
       return t;
-    }
-
-  };
-
-  @Deprecated
-  public static final Converter<PsiClass> PSI_CLASS_CONVERTER = new Converter<PsiClass>() {
-    public PsiClass fromString(final String s, final ConvertContext context) {
-      return s == null? null:context.findClass(s, null);
-    }
-
-    public String toString(final PsiClass t, final ConvertContext context) {
-      return t==null?null:t.getQualifiedName();
-    }
-
-  };
-
-  @Deprecated
-  public static final Converter<PsiType> PSI_TYPE_CONVERTER = new Converter<PsiType>() {
-    public PsiType fromString(final String s, final ConvertContext context) {
-      if (s == null) return null;
-      try {
-        return JavaPsiFacade.getInstance(context.getFile().getProject()).getElementFactory().createTypeFromText(s, null);
-      }
-      catch (IncorrectOperationException e) {
-        return null;
-      }
-    }
-
-    public String toString(final PsiType t, final ConvertContext context) {
-      return t == null? null:t.getCanonicalText();
     }
 
   };

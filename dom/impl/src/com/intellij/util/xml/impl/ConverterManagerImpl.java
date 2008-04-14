@@ -4,8 +4,6 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.paths.PathReference;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ConcurrentInstanceMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.converters.PathReferenceConverter;
@@ -29,11 +27,7 @@ class ConverterManagerImpl implements ConverterManager {
     mySimpleConverters.put(Boolean.class, ResolvingConverter.BOOLEAN_CONVERTER);
     mySimpleConverters.put(String.class, Converter.EMPTY_CONVERTER);
     mySimpleConverters.put(Object.class, Converter.EMPTY_CONVERTER);
-    mySimpleConverters.put(PsiClass.class, new PsiClassConverter());
-    mySimpleConverters.put(PsiType.class, new CanonicalPsiTypeConverterImpl());
     mySimpleConverters.put(PathReference.class, PathReferenceConverter.INSTANCE);
-    registerConverterImplementation(JvmPsiTypeConverter.class, new JvmPsiTypeConverterImpl());
-    registerConverterImplementation(CanonicalPsiTypeConverter.class, new CanonicalPsiTypeConverterImpl());
   }
 
   public void addConverter(Class clazz, Converter converter) {

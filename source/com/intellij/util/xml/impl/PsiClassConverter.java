@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 public class PsiClassConverter extends Converter<PsiClass> implements CustomReferenceConverter<PsiClass> {
 
   public PsiClass fromString(final String s, final ConvertContext context) {
-    return s == null ? null:context.findClass(s, null);
+    return s == null ? null: DomJavaUtil.findClass(s, context.getFile(), context.getModule(), null);
   }
 
   @Nullable
