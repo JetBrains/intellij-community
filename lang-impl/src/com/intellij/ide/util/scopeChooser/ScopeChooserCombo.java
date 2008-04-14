@@ -145,7 +145,13 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     model.addElement(new ScopeDescriptor(GlobalSearchScope.projectTestScope(myProject)));
 
     final DataContext dataContext = DataManager.getInstance().getDataContext();
-    final PsiElement dataContextElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    
+    PsiElement dataContextElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+
+    if (dataContextElement == null) {
+      dataContextElement = LangDataKeys.PSI_FILE.getData(dataContext);
+    }
+
     if (dataContextElement != null) {
       Module module = ModuleUtil.findModuleForPsiElement(dataContextElement);
       if (module == null) {
