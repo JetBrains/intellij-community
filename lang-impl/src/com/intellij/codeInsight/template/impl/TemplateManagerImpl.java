@@ -16,13 +16,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class TemplateManagerImpl extends TemplateManager implements ProjectComponent {
   protected Project myProject;
@@ -245,7 +242,13 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public TemplateContextType getContextType(PsiFile file, int offset) {
-    for(TemplateContextType contextType: getAllContextTypes()) {
+    final Collection<TemplateContextType> typeCollection = getAllContextTypes();
+    LinkedList<TemplateContextType> userDefinedExtensionsFirst = new LinkedList<TemplateContextType>();
+    for(TemplateContextType contextType: typeCollection) {
+      if (contextType.getClass().getName().startsWith("com.intellij.codeInsight.template")) userDefinedExtensionsFirst.addLast(contextType);
+      else userDefinedExtensionsFirst.addFirst(contextType);
+    }
+    for(TemplateContextType contextType: userDefinedExtensionsFirst) {
       if (contextType.isInContext(file, offset)) {
         return contextType;
       }
