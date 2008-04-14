@@ -73,11 +73,6 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest();
   }
 
-  @Bombed(description = "Check issues: IDEADEV-25292.", user = "Anna Kozlova", month = 4, day = 18)
-  public void testIdentityNameFailures() throws Exception {
-    doTest();
-  }
-
   public void testIdentityWhitespace() throws Exception {
     doTest();
   }
