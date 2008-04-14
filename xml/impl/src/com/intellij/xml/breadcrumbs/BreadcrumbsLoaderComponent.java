@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiManager;
+import com.intellij.application.options.editor.XmlEditorOptions;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,22 +32,21 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
   @NonNls
   @NotNull
   public String getComponentName() {
-    return "HtmlBreadCrumbsComponent";
+    return "HtmlBreadcrumbsComponent";
   }
 
   public void initComponent() {
     final MyFileEditorManagerListener listener = new MyFileEditorManagerListener();
-    Disposer.register(myProject, listener);
-    FileEditorManager.getInstance(myProject).addFileEditorManagerListener(listener, listener);
+    FileEditorManager.getInstance(myProject).addFileEditorManagerListener(listener, myProject);
   }
 
-  private static class MyFileEditorManagerListener implements FileEditorManagerListener, Disposable {
+  private static boolean isEnabled() {
+    return XmlEditorOptions.getInstance().isBreadcrumbsEnabled();
+  }
 
-    public void dispose() {
-    }
-
+  private static class MyFileEditorManagerListener implements FileEditorManagerListener {
     public void fileOpened(final FileEditorManager source, final VirtualFile file) {
-      if (isSuitable(source.getProject(), file)) {
+      if (isEnabled() && isSuitable(source.getProject(), file)) {
         final FileEditor[] fileEditors = source.getEditors(file);
         for (final FileEditor each : fileEditors) {
           if (each instanceof TextEditor) {

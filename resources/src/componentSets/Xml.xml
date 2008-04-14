@@ -6,7 +6,10 @@
     <component>
       <implementation-class>com.intellij.application.options.editor.XmlFoldingSettings</implementation-class>
     </component>
-  </application-components>
+    <component>
+       <implementation-class>com.intellij.application.options.editor.XmlEditorOptions</implementation-class>
+     </component>
+   </application-components>
   <project-components>
     <component>
       <implementation-class>com.intellij.xml.breadcrumbs.BreadcrumbsLoaderComponent</implementation-class>
