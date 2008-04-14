@@ -60,7 +60,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
           public ValueContainer<Value> compute() {
             ValueContainer<Value> value = null;
             try {
-              value = myMap.get(key);
+              value = myMap != null? myMap.get(key) : null;
               if (value == null) {
                 value = new ValueContainerImpl<Value>();
               }
@@ -74,7 +74,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
       }
 
       protected void onDropFromCache(final Key key, final ChangeTrackingValueContainer<Value> valueContainer) {
-        if (key.equals(myKeyBeingRemoved) || myMap == null || !valueContainer.isDirty()) {
+        if (myMap == null || key.equals(myKeyBeingRemoved) || !valueContainer.isDirty()) {
           return;
         }
         try {
@@ -131,7 +131,9 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
 
   public void clear() throws StorageException{
     try {
-      myMap.close();
+      if (myMap != null) {
+        myMap.close();
+      }
     }
     catch (IOException e) {
       LOG.error(e);

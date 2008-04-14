@@ -121,7 +121,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
-  public <Key, Psi extends PsiElement> Collection<Psi> get(final StubIndexKey<Key, Psi> indexKey, final Key key, final Project project,
+  public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull final StubIndexKey<Key, Psi> indexKey, final @NotNull Key key, final Project project,
                                                            final GlobalSearchScope scope) {
     if (myNeedRebuild.getAndSet(false)) {
       StubUpdatingIndex.rebuildStubIndices();
@@ -185,7 +185,15 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
     catch (StorageException e) {
       myNeedRebuild.set(true);
-      LOG.error(e);
+      LOG.info(e);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException || cause instanceof StorageException) {
+        myNeedRebuild.set(true);
+        LOG.info(e);
+      }
+      throw e;
     }
     finally {
       lock.unlock();
@@ -213,7 +221,15 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
     catch (StorageException e) {
       myNeedRebuild.set(true);
-      LOG.error(e);
+      LOG.info(e);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException || cause instanceof StorageException) {
+        myNeedRebuild.set(true);
+        LOG.info(e);
+      }
+      throw e;
     }
     return Collections.emptyList();
   }
@@ -287,7 +303,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       index.updateWithMap(fileId, oldValues, newValues);
     }
     catch (StorageException e) {
-      LOG.error(e);
+      LOG.info(e);
       myNeedRebuild.set(true);
     }
   }

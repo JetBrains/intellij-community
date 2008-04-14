@@ -6,6 +6,7 @@ package com.intellij.psi.stubs;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
@@ -14,44 +15,91 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SerializationManagerImpl extends SerializationManager implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.SerializationManagerImpl");
 
-  private final PersistentStringEnumerator myNameStorage;
+  private PersistentStringEnumerator myNameStorage;
 
-  private final Map<Integer, StubSerializer> myIdToSerializer = new HashMap<Integer, StubSerializer>();
-  private final Map<StubSerializer, Integer> mySerializerToId = new HashMap<StubSerializer, Integer>();
+  private final Map<Integer, StubSerializer<? extends StubElement>> myIdToSerializer = new HashMap<Integer, StubSerializer<? extends StubElement>>();
+  private final Map<StubSerializer<? extends StubElement>, Integer> mySerializerToId = new HashMap<StubSerializer<? extends StubElement>, Integer>();
+  private final List<StubSerializer<? extends StubElement>> myAllSerializers = new ArrayList<StubSerializer<? extends StubElement>>();
+  private final AtomicBoolean myNameStorageCrashed = new AtomicBoolean(false);
+  private final File myFile = new File(PathManager.getSystemPath() + "/index/rep.names");
 
   public SerializationManagerImpl() {
     try {
-      myNameStorage = new PersistentStringEnumerator(new File(PathManager.getSystemPath() + "/rep.names"));
+      myNameStorage = new PersistentStringEnumerator(myFile);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      myNameStorageCrashed.set(true);
+      LOG.info(e);
+      repairNameStorage(); // need this in order for myNameStorage not to be null
+      myNameStorageCrashed.set(true);
     }
-
     registerSerializer(PsiFileStubImpl.TYPE);
   }
 
-  public <T extends StubElement> void registerSerializer(StubSerializer<T> serializer) {
-    try {
-      final int id = persistentId(serializer);
-      final StubSerializer old = myIdToSerializer.put(id, serializer);
-      assert old == null : "ID: " + serializer.getExternalId() + " is not unique";
+  public boolean isNameStorageCorrupted() {
+    return myNameStorageCrashed.get();
+  }
 
-      final Integer oldId = mySerializerToId.put(serializer, id);
-      assert oldId == null : "Serializer " + serializer + " is already registered";
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+  public void repairNameStorage() {
+    if (myNameStorageCrashed.getAndSet(false)) {
+      try {
+        if (myNameStorage != null) {
+          myNameStorage.close();
+        }
+
+        final File[] files = myFile.getParentFile().listFiles();
+        if (files != null) {
+          for (File file : files) {
+            if (file.getName().startsWith(myFile.getName())) {
+              FileUtil.delete(file);
+            }
+          }
+        }
+        myNameStorage = new PersistentStringEnumerator(myFile);
+        
+        mySerializerToId.clear();
+        myIdToSerializer.clear();
+        for (StubSerializer<? extends StubElement> serializer : myAllSerializers) {
+          assignId(serializer);
+        }
+      }
+      catch (IOException e) {
+        LOG.info(e);
+        myNameStorageCrashed.set(true);
+      }
     }
   }
 
-  private <T extends StubElement> int persistentId(final StubSerializer<T> serializer) throws IOException {
+  public void registerSerializer(StubSerializer<? extends StubElement> serializer) {
+    myAllSerializers.add(serializer);
+    try {
+      assignId(serializer);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      myNameStorageCrashed.set(true);
+    }
+  }
+
+  private void assignId(final StubSerializer<? extends StubElement> serializer) throws IOException {
+    final int id = persistentId(serializer);
+    final StubSerializer old = myIdToSerializer.put(id, serializer);
+    assert old == null : "ID: " + serializer.getExternalId() + " is not unique";
+
+    final Integer oldId = mySerializerToId.put(serializer, id);
+    assert oldId == null : "Serializer " + serializer + " is already registered";
+  }
+
+  private int persistentId(final StubSerializer<? extends StubElement> serializer) throws IOException {
     return myNameStorage.enumerate(serializer.getExternalId());
   }
 
@@ -69,7 +117,8 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      LOG.info(e);
+      myNameStorageCrashed.set(true);
     }
   }
 
@@ -87,6 +136,8 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
       return deserialize(stream, null);
     }
     catch (IOException e) {
+      myNameStorageCrashed.set(true);
+      LOG.info(e);
       throw new RuntimeException(e);
     }
   }

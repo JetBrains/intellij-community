@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -31,7 +32,10 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 
 public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileContent> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
+
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("StubUpdatingIndex");
+  private static final int VERSION = 2;
   private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
     public void save(final DataOutput out, final SerializedStubTree v) throws IOException {
       byte[] value = v.getBytes();
@@ -150,10 +154,10 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
   }
 
   public int getVersion() {
-    return 2;
+    return VERSION;
   }
 
-  public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(IndexStorage<Integer, SerializedStubTree> storage) {
+  public UpdatableIndex<Integer, SerializedStubTree, FileContent> createIndexImplementation(final FileBasedIndex owner, IndexStorage<Integer, SerializedStubTree> storage) {
     if (storage instanceof MemoryIndexStorage) {
       final MemoryIndexStorage<Integer, SerializedStubTree> memStorage = (MemoryIndexStorage<Integer, SerializedStubTree>)storage;
       memStorage.addBufferingStateListsner(new MemoryIndexStorage.BufferingStateListener() {
@@ -162,7 +166,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
         }
       });
     }
-    return new MyIndex(storage, getIndexer());
+    return new MyIndex(owner, storage, getIndexer());
   }
 
   public static void rebuildStubIndices() {
@@ -206,14 +210,21 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
   }
 
   private static class MyIndex extends MapReduceIndex<Integer, SerializedStubTree, FileContent> {
-    public MyIndex(final IndexStorage<Integer, SerializedStubTree> storage,
+    public MyIndex(final FileBasedIndex owner, final IndexStorage<Integer, SerializedStubTree> storage,
                    final DataIndexer<Integer, SerializedStubTree, FileContent> indexer) {
       super(indexer, storage);
+      try {
+        checkNameStorage();
+      }
+      catch (StorageException e) {
+        owner.requestRebuild(INDEX_ID);
+      }
     }
 
     protected void updateWithMap(final int inputId, final Map<Integer, SerializedStubTree> oldData, final Map<Integer, SerializedStubTree> newData)
         throws StorageException {
 
+      checkNameStorage();
       final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree = getStubTree(oldData);
       final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree = getStubTree(newData);
       final Lock lock = getWriteLock();
@@ -224,6 +235,15 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
       }
       finally {
         lock.unlock();
+      }
+    }
+
+    private static void checkNameStorage() throws StorageException {
+      final SerializationManager serializationManager = SerializationManager.getInstance();
+      if (serializationManager.isNameStorageCorrupted()) {
+        serializationManager.repairNameStorage();
+        //noinspection ThrowFromFinallyBlock
+        throw new StorageException("NameStorage for stubs serialization has been corrupted");
       }
     }
 
@@ -240,6 +260,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     }
 
     protected Map<Integer, SerializedStubTree> mapOld(final FileContent inputData) throws StorageException {
+      checkNameStorage();
       if (inputData == null) {
         return Collections.emptyMap();
       }
@@ -253,8 +274,6 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
         if (valueContainer.size() == 0) {
           return result;
         }
-
-      //if (valueContainer.size() != 1) return result; // TODO. Return if == 0 only
 
         assert valueContainer.size() == 1;
         result.put(key, valueContainer.getValueIterator().next());

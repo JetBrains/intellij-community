@@ -53,8 +53,11 @@ public class PersistentHashMapValueStorage {
       myReader.get(chunk, headerBits, 0, 12);
       final long prevChunkAddress = Bits.getLong(headerBits, 0);
       final int chunkSize = Bits.getInt(headerBits, 8);
-
-      myReader.get(chunk + 12, result, size - bytesRead - chunkSize, chunkSize);
+      final int off = size - bytesRead - chunkSize;
+      
+      checkPreconditions(result, chunkSize, off);
+      
+      myReader.get(chunk + 12, result, off, chunkSize);
       chunk = prevChunkAddress;
       bytesRead += chunkSize;
       chunkCount++;
@@ -67,6 +70,18 @@ public class PersistentHashMapValueStorage {
     }
 
     return tailChunkAddress;
+  }
+
+  private void checkPreconditions(final byte[] result, final int chunkSize, final int off) throws IOException {
+    if (chunkSize < 0) {
+      throw new IOException("Value storage corrupted: negative chunk size");
+    }
+    if (off < 0) {
+      throw new IOException("Value storage corrupted: negative offset");
+    }
+    if (chunkSize > result.length - off) {
+      throw new IOException("Value storage corrupted");
+    }
   }
 
   public void force() {

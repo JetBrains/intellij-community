@@ -13,11 +13,15 @@ public abstract class SerializationManager {
     return ApplicationManager.getApplication().getComponent(SerializationManager.class);
   }
 
-  public abstract <T extends StubElement> void registerSerializer(StubSerializer<T> serializer);
+  public abstract void registerSerializer(StubSerializer<? extends StubElement> serializer);
 
   public abstract void serialize(StubElement rootStub, DataOutputStream stream);
 
   public abstract StubElement deserialize(DataInputStream stream);
 
   public abstract StubSerializer getSerializer(StubElement rootStub);
+
+  public abstract boolean isNameStorageCorrupted();
+
+  public abstract void repairNameStorage();
 }

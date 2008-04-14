@@ -1,8 +1,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.impl.search.CachesBasedRefSearcher;
 import com.intellij.util.Alarm;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
@@ -151,28 +149,24 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         try {
           if (oldData.containsKey(key)) {
             final Value oldValue = oldData.get(key);
-            if (CachesBasedRefSearcher.DEBUG && !Comparing.equal(oldValue, newData.get(key))) {
-              System.out.println("MapReduceIndex.updateWithMap: inputId=" + inputId + "; REMOVE key='" + key + "'; value=" + oldValue);
-            }
+            //if (getClass().getName().contains("StubUpdatingIndex")) {
+            //  System.out.println(key + ": BEFORE REMOVE: " + myStorage.read(key).toValueList());
+            //}
             myStorage.removeValue(key, inputId, oldValue);
+            //if (getClass().getName().contains("StubUpdatingIndex")) {
+            //  System.out.println(key + ": AFTER REMOVE: " + myStorage.read(key).toValueList());
+            //}
           }
           // add new values
           if (newData.containsKey(key)) {
             final Value newValue = newData.get(key);
-            if (CachesBasedRefSearcher.DEBUG && !Comparing.equal(oldData.get(key), newValue)) {
-              System.out.println("MapReduceIndex.updateWithMap: inputId=" + inputId + "; ADD key='" + key + "'; value=" + newValue);
-            }
+            //if (getClass().getName().contains("StubUpdatingIndex")) {
+            //  System.out.println(key + ": BEFORE ADD: " + myStorage.read(key).toValueList());
+            //}
             myStorage.addValue(key, inputId, newValue);
-          }
-          if (CachesBasedRefSearcher.DEBUG) {
-            System.out.println("MapReduceIndex.updateWithMap");
-            System.out.println("inputId = " + inputId);
-            final ValueContainer<Value> container = myStorage.read(key);
-            container.forEach(new ValueContainer.ContainerAction<Value>() {
-              public void perform(final int id, final Value value) {
-                System.out.println("id = " + id + "; value = " + value);
-              }
-            });
+            //if (getClass().getName().contains("StubUpdatingIndex")) {
+            //  System.out.println(key + ": AFTER ADD: " + myStorage.read(key).toValueList());
+            //}
           }
         }
         finally {

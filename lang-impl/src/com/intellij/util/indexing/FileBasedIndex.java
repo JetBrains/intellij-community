@@ -94,7 +94,21 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     dropUnregisteredIndices();
-
+    
+    // check if rebuild was requested for any index during registration
+    for (ID<?, ?> indexId : myIndices.keySet()) {
+      final boolean reallyRemoved = myRequiresRebuild.remove(indexId);
+      if (reallyRemoved) {
+        try {
+          clearIndex(indexId);
+        }
+        catch (StorageException e) {
+          requestRebuild(indexId);
+          LOG.error(e);
+        }
+      }
+    }
+    
     myChangedFilesUpdater = new ChangedFilesUpdater();
     vfManager.addVirtualFileListener(myChangedFilesUpdater);
     vfManager.registerRefreshUpdater(myChangedFilesUpdater);
@@ -137,9 +151,9 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
   }
 
-  private static <K, V> UpdatableIndex<K, V, FileContent> createIndex(final FileBasedIndexExtension<K, V> extension, final IndexStorage<K, V> storage) {
+  private <K, V> UpdatableIndex<K, V, FileContent> createIndex(final FileBasedIndexExtension<K, V> extension, final IndexStorage<K, V> storage) {
     if (extension instanceof CustomImplementationFileBasedIndexExtension) {
-      return ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(storage);
+      return ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(this, storage);
     }
     return new MapReduceIndex<K, V, FileContent>(extension.getIndexer(), storage);
   }
@@ -160,7 +174,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       myInvalidationService.awaitTermination(30, TimeUnit.SECONDS);
     }
     catch (InterruptedException e) {
-      LOG.error(e);
+      LOG.info(e);
     }
 
     for (ID<?, ?> indexId : myIndices.keySet()) {
@@ -181,26 +195,51 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   @NotNull
   public <K> Collection<K> getAllKeys(final ID<K, ?> indexId) {
-    try {
-      ensureUpToDate(indexId);
-      final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
-      return index != null? index.getAllKeys() : Collections.<K>emptyList();
-    }
-    catch (StorageException e) {
-      requestRebuild(indexId);
-      LOG.error(e);
+    for (int attempt = 0; attempt < 2; attempt++) {
+      try {
+        ensureUpToDate(indexId);
+        final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
+        return index != null? index.getAllKeys() : Collections.<K>emptyList();
+      }
+      catch (StorageException e) {
+        requestRebuild(indexId);
+        LOG.info(e);
+      }
+      catch (RuntimeException e) {
+        final Throwable cause = e.getCause();
+        if (cause instanceof StorageException || cause instanceof IOException) {
+          requestRebuild(indexId);
+          LOG.info(e);
+        }
+        else {
+          throw e;
+        }
+      }
     }
     return Collections.emptyList();
   }
 
   public <K> void ensureUpToDate(final ID<K, ?> indexId) {
-    try {
-      checkRebuild(indexId);
-      indexUnsavedDocuments();
-    }
-    catch (StorageException e) {
-      requestRebuild(indexId);
-      LOG.error(e);
+    for (int attempt = 0; attempt < 2; attempt++) {
+      try {
+        checkRebuild(indexId);
+        indexUnsavedDocuments();
+        break;
+      }
+      catch (StorageException e) {
+        requestRebuild(indexId);
+        LOG.info(e);
+      }
+      catch (RuntimeException e) {
+        final Throwable cause = e.getCause();
+        if (cause instanceof StorageException || cause instanceof IOException) {
+          requestRebuild(indexId);
+          LOG.info(e);
+        }
+        else {
+          throw e;
+        }
+      }
     }
   }
 
@@ -236,79 +275,64 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   
   private <K, V> void processValuesImpl(final ID<K, V> indexId, final K dataKey, final Project project, boolean ensureValueProcessedOnce,
                                         final @Nullable VirtualFile restrictToFile, ValueProcessor<V> processor) {
-    try {
-      ensureUpToDate(indexId);
-      final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
-      if (index == null) {
-        return;
-      }
-
-      final Lock readLock = index.getReadLock();
-      readLock.lock();
+    for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        final ValueContainer<V> container = index.getData(dataKey);
-
-        if (restrictToFile != null) {
-          final int restrictedFileId = getFileId(restrictToFile);
-          if (CachesBasedRefSearcher.DEBUG) {
-            System.out.println("FileBasedIndex.processValuesImpl restricted");
-            System.out.println("indexId = " + indexId);
-            System.out.println("id = " + restrictedFileId);
-            System.out.println("file = " + restrictToFile.getPresentableUrl());
-            System.out.println("k = " + dataKey);
-            System.out.println("IndexInfrastructure.getIndexRootDir(indexId) = " + IndexInfrastructure.getIndexRootDir(indexId));
-          }
-          for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
-            final V value = valueIt.next();
-            if (container.isAssociated(value, restrictedFileId)) {
-              processor.process(restrictToFile, value);
+        ensureUpToDate(indexId);
+        final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
+        if (index == null) {
+          return;
+        }
+  
+        final Lock readLock = index.getReadLock();
+        readLock.lock();
+        try {
+          final ValueContainer<V> container = index.getData(dataKey);
+  
+          if (restrictToFile != null) {
+            final int restrictedFileId = getFileId(restrictToFile);
+            for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
+              final V value = valueIt.next();
+              if (container.isAssociated(value, restrictedFileId)) {
+                processor.process(restrictToFile, value);
+              }
             }
           }
+          else {
+            final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
+            final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
+            for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
+              final V value = valueIt.next();
+              for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext();) {
+                final int id = inputIdsIterator.next();
+                VirtualFile file = IndexInfrastructure.findFileById(dirIndex, fs, id);
+                if (file != null) {
+                  processor.process(file, value);
+                  if (ensureValueProcessedOnce) {
+                    break; // continue with the next value
+                  }
+                }
+              }
+            }
+          }
+        }
+        finally {
+          readLock.unlock();
+        }
+        break;
+      }
+      catch (StorageException e) {
+        requestRebuild(indexId);
+        LOG.info(e);
+      }
+      catch (RuntimeException e) {
+        final Throwable cause = e.getCause();
+        if (cause instanceof StorageException || cause instanceof IOException) {
+          requestRebuild(indexId);
+          LOG.info(e);
         }
         else {
-          final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
-          final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
-          for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
-            final V value = valueIt.next();
-            for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext();) {
-              final int id = inputIdsIterator.next();
-              if (CachesBasedRefSearcher.DEBUG) {
-                System.out.println("FileBasedIndex.processValuesImpl");
-                System.out.println("indexId = " + indexId);
-                System.out.println("id = " + id);
-                System.out.println("k = " + dataKey);
-                System.out.println("IndexInfrastructure.getIndexRootDir(indexId) = " + IndexInfrastructure.getIndexRootDir(indexId));
-              }
-              VirtualFile file = IndexInfrastructure.findFileById(dirIndex, fs, id);
-              if (file != null) {
-                if (CachesBasedRefSearcher.DEBUG) {
-                  System.out.println("file = " + file.getPresentableUrl());
-                }
-                processor.process(file, value);
-                if (ensureValueProcessedOnce) {
-                  break; // continue with the next value
-                }
-              }
-            }
-          }
+          throw e;
         }
-      }
-      finally {
-        readLock.unlock();
-      }
-    }
-    catch (StorageException e) {
-      requestRebuild(indexId);
-      LOG.error(e);
-    }
-    catch (RuntimeException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof StorageException || cause instanceof IOException) {
-        requestRebuild(indexId);
-        LOG.error(e);
-      }
-      else {
-        throw e;
       }
     }
   }
@@ -318,42 +342,45 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
   
   public <K, V> void processAllValues(final ID<K, V> indexId, AllValuesProcessor<V> processor) {
-    try {
-      ensureUpToDate(indexId);
-      final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
-      if (index == null) {
-        return;
-      }
-
-      final Lock readLock = index.getReadLock();
-      readLock.lock();
+    for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        for (K dataKey : index.getAllKeys()) {
-          final ValueContainer<V> container = index.getData(dataKey);
-          for (final Iterator<V> it = container.getValueIterator(); it.hasNext();) {
-            final V value = it.next();
-            for (final ValueContainer.IntIterator inputsIt = container.getInputIdsIterator(value); inputsIt.hasNext();) {
-              processor.process(inputsIt.next(), value);
+        ensureUpToDate(indexId);
+        final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
+        if (index == null) {
+          return;
+        }
+  
+        final Lock readLock = index.getReadLock();
+        readLock.lock();
+        try {
+          for (K dataKey : index.getAllKeys()) {
+            final ValueContainer<V> container = index.getData(dataKey);
+            for (final Iterator<V> it = container.getValueIterator(); it.hasNext();) {
+              final V value = it.next();
+              for (final ValueContainer.IntIterator inputsIt = container.getInputIdsIterator(value); inputsIt.hasNext();) {
+                processor.process(inputsIt.next(), value);
+              }
             }
           }
         }
+        finally {
+          readLock.unlock();
+        }
+        break;
       }
-      finally {
-        readLock.unlock();
-      }
-    }
-    catch (StorageException e) {
-      requestRebuild(indexId);
-      LOG.error(e);
-    }
-    catch (RuntimeException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof StorageException || cause instanceof IOException) {
+      catch (StorageException e) {
         requestRebuild(indexId);
-        LOG.error(e);
+        LOG.info(e);
       }
-      else {
-        throw e;
+      catch (RuntimeException e) {
+        final Throwable cause = e.getCause();
+        if (cause instanceof StorageException || cause instanceof IOException) {
+          requestRebuild(indexId);
+          LOG.info(e);
+        }
+        else {
+          throw e;
+        }
       }
     }
   }
@@ -363,20 +390,14 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     if (!reallyRemoved) {
       return;
     }
-    getIndex(indexId).clear();
-    try {
-      IndexInfrastructure.rewriteVersion(IndexInfrastructure.getVersionFile(indexId), myIndexIdToVersionMap.get(indexId));
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+    clearIndex(indexId);
 
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     final FileSystemSynchronizer synchronizer = new FileSystemSynchronizer();
     synchronizer.setCancelable(false);
     for (Project project : projects) {
       synchronizer.registerCacheUpdater(new UnindexedFilesUpdater(project, ProjectRootManager.getInstance(project), this));
-      }
+    }
 
     final Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
@@ -388,6 +409,16 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
     else {
       synchronizer.execute();
+    }
+  }
+
+  private void clearIndex(final ID<?, ?> indexId) throws StorageException {
+    getIndex(indexId).clear();
+    try {
+      IndexInfrastructure.rewriteVersion(IndexInfrastructure.getVersionFile(indexId), myIndexIdToVersionMap.get(indexId));
+    }
+    catch (IOException e) {
+      LOG.error(e);
     }
   }
 
@@ -421,13 +452,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
             for (ID<?, ?> indexId : myIndices.keySet()) {
               if (getInputFilter(indexId).acceptInput(vFile)) {
                 final int inputId = Math.abs(getFileId(vFile));
-                if (CachesBasedRefSearcher.DEBUG) {
-                  System.out.println("FileBasedIndex.indexUnsavedDocuments");
-                  System.out.println("indexId = " + indexId);
-                  System.out.println("Indexing inputId = " + inputId);
-                  System.out.println("file = " + vFile.getPresentableUrl());
-                  System.out.println("IndexInfrastructure.getIndexRootDir(indexId) = " + IndexInfrastructure.getIndexRootDir(indexId));
-                }
                 getIndex(indexId).update(inputId, newFc, oldFc);
               }
             }
@@ -513,7 +537,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
         }
         catch (StorageException e) {
           requestRebuild(indexId);
-          LOG.error(e);
+          LOG.info(e);
         }
       }
     }
@@ -624,7 +648,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
                   updateSingleIndex(indexId, file, new FileContent(file, (byte[])null), null);
                 }
                 catch (StorageException e) {
-                  LOG.error(e);
+                  LOG.info(e);
                   requestRebuild(indexId);
                 }
               }
@@ -656,7 +680,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
                 updateSingleIndex(indexId, file, null, new FileContent(file, (byte[])null));
               }
               catch (StorageException e) {
-                LOG.error(e);
+                LOG.info(e);
                 requestRebuild(indexId);
               }
             }
@@ -683,7 +707,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
                     updateSingleIndex(indexId, file, null, fc);
                   }
                   catch (StorageException e) {
-                    LOG.error(e);
+                    LOG.info(e);
                     requestRebuild(indexId);
                   }
                 }
