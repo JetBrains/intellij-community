@@ -12,6 +12,7 @@ import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,9 +77,8 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
               LOG.assertTrue(lastParamType instanceof PsiEllipsisType);
               if (lastArg instanceof PsiNewExpression &&
                   substitutor.substitute(((PsiEllipsisType) lastParamType).toArrayType()).equals(lastArg.getType())) {
-                PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression) lastArg).getArrayInitializer();
-                if (arrayInitializer != null) {
-                  PsiExpression[] initializers = arrayInitializer.getInitializers();
+                PsiExpression[] initializers = getInitializers((PsiNewExpression)lastArg);
+                if (initializers != null) {
                   if (isSafeToFlatten(expression, method, initializers)) {
                     final ProblemDescriptor descriptor = manager.createProblemDescriptor(lastArg,
                                                                                          InspectionsBundle.message("inspection.redundant.array.creation.for.varargs.call.descriptor"),
@@ -119,6 +119,23 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
     });
     if (problems.isEmpty()) return null;
     return problems.toArray(new ProblemDescriptor[problems.size()]);
+  }
+
+  @Nullable
+  private static PsiExpression[] getInitializers(final PsiNewExpression newExpression) {
+    PsiArrayInitializerExpression initializer = newExpression.getArrayInitializer();
+    if (initializer != null) {
+      return initializer.getInitializers();
+    }
+    PsiExpression[] dims = newExpression.getArrayDimensions();
+    if (dims.length > 0) {
+      PsiExpression firstDimension = dims[0];
+      Object value =
+        JavaPsiFacade.getInstance(newExpression.getProject()).getConstantEvaluationHelper().computeConstantExpression(firstDimension);
+      if (value instanceof Integer && ((Integer)value).intValue() == 0) return PsiExpression.EMPTY_ARRAY;
+    }
+
+    return null;
   }
 
   @NotNull
