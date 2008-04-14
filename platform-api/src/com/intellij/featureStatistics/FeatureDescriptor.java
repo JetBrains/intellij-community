@@ -95,15 +95,16 @@ public class FeatureDescriptor{
     String minUsageCount = element.getAttributeValue(ATTRIBUTE_MIN_USAGE_COUNT);
     myMinUsageCount = minUsageCount == null ? 1 : Integer.parseInt(minUsageCount);
     List depenencies = element.getChildren(ELEMENT_DEPENDENCY);
-    if (depenencies != null && depenencies.size() > 0) {
+    if (depenencies != null && !depenencies.isEmpty()) {
       myDependencies = new HashSet<String>();
-      for (int i = 0; i < depenencies.size(); i++) {
-        Element dependencyElement = (Element)depenencies.get(i);
+      for (Object depenency : depenencies) {
+        Element dependencyElement = (Element)depenency;
         myDependencies.add(dependencyElement.getAttributeValue(ATTRIBUTE_ID));
       }
     }
   }
 
+  @NotNull
   public String getId() {
     return myId;
   }
@@ -112,10 +113,12 @@ public class FeatureDescriptor{
     return myGroupId;
   }
 
+  @NotNull
   public String getTipFileName() {
     return myTipFileName;
   }
 
+  @NotNull
   public String getDisplayName() {
     return myDisplayName;
   }
@@ -146,7 +149,7 @@ public class FeatureDescriptor{
   }
 
   public String toString() {
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
 
     buffer.append("id = [");
     buffer.append(myId);

@@ -441,7 +441,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       }
     }
 
-    protected AbstractAddGroup(String text) {
+    public AbstractAddGroup(String text) {
       this(text, Icons.ADD_ICON);
     }
 
