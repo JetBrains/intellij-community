@@ -1,11 +1,13 @@
 package com.intellij.xml.util;
 
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -16,6 +18,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlExtension;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,20 +33,24 @@ import java.util.Map;
  * Time: 6:01:35 PM
  * To change this template use File | Settings | File Templates.
  */
-class AnchorReference implements PsiReference {
+class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
   private final String myAnchor;
   private final PsiReference myFileReference;
   private final PsiElement myElement;
   private final int myOffset;
+  private final boolean mySoft;
   @NonNls
   private static final String ANCHOR_ELEMENT_NAME = "a";
   private static final Key<CachedValue<Map<String,XmlTag>>> ourCachedIdsKey = Key.create("cached.ids");
 
-  AnchorReference(final String anchor, final PsiReference psiReference, final PsiElement element) {
+  AnchorReference(final String anchor, @Nullable final FileReference psiReference, final PsiElement element, final int offset,
+                  final boolean soft) {
+
     myAnchor = anchor;
     myFileReference = psiReference;
     myElement = element;
-    myOffset = element.getText().indexOf(anchor);
+    myOffset = offset;
+    mySoft = soft;
   }
 
   public PsiElement getElement() {
@@ -54,7 +61,10 @@ class AnchorReference implements PsiReference {
     return new TextRange(myOffset,myOffset+myAnchor.length());
   }
 
-  public PsiElement resolve(){
+  public PsiElement resolve() {
+    if (myAnchor.length() == 0) {
+      return myElement;
+    }
     Map<String,XmlTag> map = getIdMap();
     final XmlTag tag = map != null ? map.get(myAnchor):null;
     if (tag != null) {
@@ -172,7 +182,7 @@ class AnchorReference implements PsiReference {
 
   @Nullable
   private XmlFile getFile() {
-    if (myFileReference!=null) {
+    if (myFileReference != null) {
       final PsiElement psiElement = myFileReference.resolve();
       return psiElement instanceof XmlFile ? (XmlFile)psiElement:null;
     }
@@ -188,6 +198,13 @@ class AnchorReference implements PsiReference {
   }
 
   public boolean isSoft() {
-    return myFileReference != null && getFile() != myElement.getContainingFile();
+    return mySoft;
+  }
+
+  public String getUnresolvedMessagePattern() {
+    final XmlFile xmlFile = getFile();
+    return xmlFile == null ? 
+           XmlBundle.message("cannot.resolve.anchor", myAnchor) :
+           XmlBundle.message("cannot.resolve.anchor.in.file", myAnchor, xmlFile.getName());
   }
 }

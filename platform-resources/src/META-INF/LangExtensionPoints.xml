@@ -21,9 +21,11 @@
                   area="IDEA_PROJECT"/>
   <extensionPoint name="errorQuickFixProvider"
                   interface="com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider"/>
+
   <extensionPoint name="pathReferenceProvider"
                   interface="com.intellij.openapi.paths.PathReferenceProvider"/>
-
+  <extensionPoint name="anchorReferenceProvider"
+                  interface="com.intellij.openapi.paths.PathReferenceProvider"/>
   <extensionPoint name="dynamicContextProvider"
                   interface="com.intellij.openapi.paths.DynamicContextProvider"/>
 

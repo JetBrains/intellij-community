@@ -92,7 +92,9 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     for (PathReferenceProvider provider : additionalProviders) {
       processProvider(psiElement, provider, mergedReferences, soft);
     }
-
+    for (PathReferenceProvider provider : Extensions.getExtensions(ANCHOR_REFERENCE_PROVIDER_EP)) {
+      processProvider(psiElement, provider, mergedReferences, soft);
+    }
     return mergeReferences(psiElement, soft, mergedReferences);
   }
 
@@ -204,10 +206,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
   }
 
   private static boolean processProvider(PsiElement psiElement, PathReferenceProvider provider, List<PsiReference> mergedReferences, boolean soft) {
-    List<PsiReference> psiReferences = new ArrayList<PsiReference>();
-    final boolean result = provider.createReferences(psiElement, psiReferences, soft);
-    mergedReferences.addAll(psiReferences);
-    return result;
+    return provider.createReferences(psiElement, mergedReferences, soft);
   }
 
   private static PathReferenceProvider[] getProviders() {

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
@@ -28,6 +29,11 @@ import java.util.List;
  */
 public class GlobalPathReferenceProvider implements PathReferenceProvider {
 
+  @NonNls
+  private static final String MAILTO_PREFIX = "mailto:";
+  @NonNls
+  private static final String JAVASCRIPT_PREFIX = "javascript:";
+
   public boolean createReferences(@NotNull PsiElement psiElement, final @NotNull List<PsiReference> references, final boolean soft) {
     final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(psiElement);
     if (manipulator == null) {
@@ -35,7 +41,7 @@ public class GlobalPathReferenceProvider implements PathReferenceProvider {
     }
     final TextRange range = manipulator.getRangeInElement(psiElement);
     final String s = range.substring(psiElement.getText());
-    if (s.contains("://")) {
+    if (s.contains("://") || s.startsWith(MAILTO_PREFIX) || s.startsWith(JAVASCRIPT_PREFIX)) {
       final PsiReference reference = PsiReferenceBase.createSelfReference(psiElement, psiElement);
       references.add(reference);
       return true;

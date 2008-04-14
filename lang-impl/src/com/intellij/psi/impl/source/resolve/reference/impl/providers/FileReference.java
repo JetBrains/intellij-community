@@ -74,6 +74,14 @@ public class FileReference
 
   protected ResolveResult[] innerResolve() {
     final String referenceText = getText();
+    final TextRange range = getRangeInElement();
+    if (range.isEmpty()) {
+      final PsiElement element = getElement();
+      final String s = element.getText();
+      if (s.length() > range.getEndOffset() && s.charAt(range.getEndOffset()) == '#') {
+        return new ResolveResult[] { new PsiElementResolveResult(element.getContainingFile())};
+      }
+    }
     final Collection<PsiFileSystemItem> contexts = getContexts();
     final Collection<ResolveResult> result = new HashSet<ResolveResult>(contexts.size());
     for (final PsiFileSystemItem context : contexts) {

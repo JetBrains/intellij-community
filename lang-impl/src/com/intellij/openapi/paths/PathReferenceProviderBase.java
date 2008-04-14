@@ -41,7 +41,7 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
       }
     }
 
-    final int pos = getLastPosOfURL(elementText);
+    final int pos = getLastPosOfURL(offset, elementText);
     if (pos != -1 && pos < endOffset) {
       endOffset = pos;
     }
@@ -60,8 +60,8 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
                                   final @NotNull List<PsiReference> references,
                                   final boolean soft);
 
-  public static int getLastPosOfURL(@NotNull String url) {
-    for (int i = 0; i < url.length(); i++) {
+  public static int getLastPosOfURL(final int offset, @NotNull String url) {
+    for (int i = offset; i < url.length(); i++) {
       switch (url.charAt(i)) {
         case '?':
         case '#':
