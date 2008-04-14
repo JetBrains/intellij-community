@@ -25,8 +25,6 @@ public interface FacetEditorFacade {
   @Nullable
   ModuleType getSelectedModuleType();
 
-  void deleteSelectedFacet();
-
   void createFacet(final FacetInfo parent, final FacetType type, final String name);
 
   Collection<FacetInfo> getFacetsByType(FacetType<?,?> type);

@@ -65,6 +65,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   private Project myProject;
   private ModuleManager myModuleManager;
+  private final FacetStructureConfigurable myFacetStructureConfigurable;
 
   private History myHistory = new History(this);
   private SidePanel mySidePanel;
@@ -92,9 +93,11 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   public ProjectStructureConfigurable(final Project project, final ModuleManager moduleManager, final ProjectLibrariesConfigurable projectLibrariesConfigurable,
                                       final GlobalLibrariesConfigurable globalLibrariesConfigurable,
-                                      final ModuleStructureConfigurable moduleStructureConfigurable) {
+                                      final ModuleStructureConfigurable moduleStructureConfigurable,
+                                      FacetStructureConfigurable facetStructureConfigurable) {
     myProject = project;
     myModuleManager = moduleManager;
+    myFacetStructureConfigurable = facetStructureConfigurable;
 
     myModuleConfigurator = new ModulesConfigurator(myProject, myProjectJdksModel);
     myContext = new StructureConfigurableContext(myProject, myModuleManager, myModuleConfigurator);
@@ -106,6 +109,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myProjectLibrariesConfig.init(myContext);
     myGlobalLibrariesConfig.init(myContext);
     myModulesConfig.init(myContext);
+    myFacetStructureConfigurable.init(myContext);
   }
 
   @NonNls
@@ -178,9 +182,14 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     addProjectConfig();
     addModulesConfig();
     addProjectLibrariesConfig();
+    addFacetsConfig();
     mySidePanel.addSeparator("Platform Settings");
     addJdkListConfig();
     addGlobalLibrariesConfig();
+  }
+
+  private void addFacetsConfig() {
+    addConfigurable(myFacetStructureConfigurable);
   }
 
   private void addJdkListConfig() {
@@ -454,7 +463,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     mySidePanel.addPlace(createPlaceFor(configurable), new Presentation(configurable.getDisplayName()));
   }
 
-  private Place createPlaceFor(final Configurable configurable) {
+  private static Place createPlaceFor(final Configurable configurable) {
     return new Place().putPath(CATEGORY, configurable);
   }
 

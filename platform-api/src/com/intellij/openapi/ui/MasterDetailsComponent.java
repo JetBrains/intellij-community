@@ -578,7 +578,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   }
 
   protected class MyDeleteAction extends AnAction {
-    private Condition<Object> myCondition;
+    private final Condition<Object> myCondition;
 
     public MyDeleteAction(Condition<Object> availableCondition) {
       super(CommonBundle.message("button.delete"), CommonBundle.message("button.delete"), Icons.DELETE_ICON);

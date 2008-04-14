@@ -20,8 +20,8 @@ import javax.swing.*;
  * @author nik
  */
 public class FacetConfigurable extends NamedConfigurable<Facet> {
-  private Facet myFacet;
-  private ProjectFacetsConfigurator myFacetsConfigurator;
+  private final Facet myFacet;
+  private final ProjectFacetsConfigurator myFacetsConfigurator;
   private String myFacetName;
 
   public FacetConfigurable(final Facet facet, final ProjectFacetsConfigurator facetsConfigurator, final Runnable updateTree) {

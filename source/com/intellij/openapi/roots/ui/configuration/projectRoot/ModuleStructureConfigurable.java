@@ -7,9 +7,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.CommonBundle;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.actions.AddFacetActionGroup;
-import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.TreeExpander;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ModuleGroupUtil;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -84,7 +82,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   private final ModuleManager myModuleManager;
 
-  private FacetEditorFacadeImpl myFacetEditorFacade = new FacetEditorFacadeImpl(this, TREE_UPDATER);
+  private final FacetEditorFacadeImpl myFacetEditorFacade = new FacetEditorFacadeImpl(this, TREE_UPDATER);
 
 
   public ModuleStructureConfigurable(Project project, ModuleManager manager) {
@@ -109,26 +107,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     final ArrayList<AnAction> result = super.createActions(fromPopup);
     result.add(Separator.getInstance());
     result.add(new MyGroupAction());
-    final TreeExpander expander = new TreeExpander() {
-      public void expandAll() {
-        TreeUtil.expandAll(myTree);
-      }
-
-      public boolean canExpand() {
-        return true;
-      }
-
-      public void collapseAll() {
-        TreeUtil.collapseAll(myTree, 0);
-      }
-
-      public boolean canCollapse() {
-        return true;
-      }
-    };
-    final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    result.add(actionsManager.createExpandAllAction(expander, myTree));
-    result.add(actionsManager.createCollapseAllAction(expander, myTree));
+    addCollapseExpandActions(result);
     return result;
   }
 
@@ -446,7 +425,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return myContext.myModulesConfigurator.getFacetsConfigurator();
   }
 
-  public void addModule() {
+  private void addModule() {
     final Module module = myContext.myModulesConfigurator.addModule(myTree);
     if (module != null) {
       addModuleNode(module);
@@ -529,7 +508,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @Nullable
     public Object getData(@NonNls String dataId) {
-      if (DataConstants.MODULE_CONTEXT_ARRAY.equals(dataId)){
+      if (DataKeys.MODULE_CONTEXT_ARRAY.getName().equals(dataId)){
         final TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null) {
           ArrayList<Module> modules = new ArrayList<Module>();
@@ -545,7 +524,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           return !modules.isEmpty() ? modules.toArray(new Module[modules.size()]) : null;
         }
       }
-      if (DataConstants.MODULE_CONTEXT.equals(dataId)){
+      if (DataKeys.MODULE_CONTEXT.getName().equals(dataId)){
         return getSelectedModule();
       }
       if (DataConstantsEx.MODIFIABLE_MODULE_MODEL.equals(dataId)){
@@ -618,6 +597,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     final AddFacetActionGroup addFacetGroup = new AddFacetActionGroup("", true, myFacetEditorFacade);
 
     return new AbstractAddGroup(ProjectBundle.message("add.new.header.text")) {
+      @NotNull
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
         AnAction module = new AnAction(ProjectBundle.message("add.new.module.text.full"), null, IconLoader.getIcon("/actions/modul.png")) {
           public void actionPerformed(final AnActionEvent e) {
@@ -630,7 +610,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
         final AnAction[] facets = addFacetGroup.getChildren(e);
         if (facets.length > 0) {
-          result.add(new Separator("Facet"));
+          result.add(new Separator(ProjectBundle.message("add.group.facet.separator")));
         }
 
         result.addAll(Arrays.asList(facets));
@@ -653,10 +633,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return false;
   }
 
-  protected
   @Nullable
-  String getEmptySelectionString() {
-    return "Select a module to view or edit its details here";
+  protected String getEmptySelectionString() {
+    return ProjectBundle.message("empty.module.selection.string");
   }
 
   private class MyCopyAction extends AnAction {
@@ -673,9 +652,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
             "label.component.file.location", StringUtil.capitalize(modulePresentation)), 'a', 'l', IdeBundle.message(
             "title.select.project.file.directory", modulePresentation), IdeBundle.message("description.select.project.file.directory",
                                                                                           StringUtil.capitalize(modulePresentation)));
-          final DialogWrapper dlg = new DialogWrapper(myTree, false) {
+          final DialogWrapper copyModuleDialog = new DialogWrapper(myTree, false) {
             {
-              setTitle("Copy module");
+              setTitle(ProjectBundle.message("copy.module.dialog.title"));
               init();
             }
 
@@ -690,9 +669,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
             protected void doOKAction() {
               if (component.getNameValue().length() == 0) {
-                Messages.showErrorDialog(
-                  "Enter module copy name",
-                  CommonBundle.message("title.error"));
+                Messages.showErrorDialog(ProjectBundle.message("enter.module.copy.name.error.message"), CommonBundle.message("title.error"));
                 return;
               }
 
@@ -703,14 +680,14 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
               }
               if (!ProjectWizardUtil
                  .createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory", modulePresentation), component.getPath(), true)) {
-                Messages.showErrorDialog("Path \'" + component.getPath() + "\' is invalid", CommonBundle.message("title.error"));
+                Messages.showErrorDialog(ProjectBundle.message("path.0.is.invalid.error.message", component.getPath()), CommonBundle.message("title.error"));
                  return;
               }
               super.doOKAction();
             }
           };
-          dlg.show();
-          if (!dlg.isOK()) return;
+          copyModuleDialog.show();
+          if (!copyModuleDialog.isOK()) return;
           final ModifiableRootModel rootModel = ((ModuleConfigurable)namedConfigurable).getModuleEditor().getModifiableRootModel();
           final String path = component.getPath();
           final ModuleBuilder builder = new ModuleBuilder() {

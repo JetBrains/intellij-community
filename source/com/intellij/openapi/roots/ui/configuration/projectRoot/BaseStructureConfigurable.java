@@ -2,6 +2,8 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.facet.Facet;
 import com.intellij.find.FindBundle;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.impl.convert.ProjectFileVersion;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -35,16 +37,15 @@ import com.intellij.util.Icons;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 public abstract class BaseStructureConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable, Configurable.Assistant, Place.Navigator {
 
@@ -233,6 +234,29 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     }, 0);
   }
 
+  protected void addCollapseExpandActions(final List<AnAction> result) {
+    final TreeExpander expander = new TreeExpander() {
+      public void expandAll() {
+        TreeUtil.expandAll(myTree);
+      }
+
+      public boolean canExpand() {
+        return true;
+      }
+
+      public void collapseAll() {
+        TreeUtil.collapseAll(myTree, 0);
+      }
+
+      public boolean canCollapse() {
+        return true;
+      }
+    };
+    final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    result.add(actionsManager.createExpandAllAction(expander, myTree));
+    result.add(actionsManager.createCollapseAllAction(expander, myTree));
+  }
+
   protected class MyFindUsagesAction extends AnAction {
     public MyFindUsagesAction() {
       super(ProjectBundle.message("find.usages.action.text"), ProjectBundle.message("find.usages.action.text"), FIND_ICON);
@@ -268,7 +292,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
         public PopupStep onChosen(final String nameToSelect, final boolean finalChoice) {
           ProjectStructureConfigurable.getInstance(myProject).select(nameToSelect, null, true);
-          return PopupStep.FINAL_CHOICE;
+          return FINAL_CHOICE;
         }
 
         public Icon getIconFor(String selection) {
@@ -387,7 +411,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   }
 
-  protected boolean removeFacet(final Facet facet) {
+  private boolean removeFacet(final Facet facet) {
     if (!ProjectFileVersion.getInstance(myProject).isFacetDeletionEnabled(facet.getTypeId(), true)) {
       return true;
     }
@@ -402,7 +426,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   protected void removeJdk(final Sdk editableObject) {
   }
 
-  protected abstract class AbstractAddGroup extends ActionGroup implements MasterDetailsComponent.ActionGroupWithPreselection {
+  protected abstract static class AbstractAddGroup extends ActionGroup implements ActionGroupWithPreselection {
 
     protected AbstractAddGroup(String text, Icon icon) {
       super(text, true);
