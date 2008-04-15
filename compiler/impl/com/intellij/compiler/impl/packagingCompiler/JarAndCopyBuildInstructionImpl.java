@@ -30,7 +30,7 @@ import java.util.jar.JarFile;
  */
 public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl implements JarAndCopyBuildInstruction {
   private File myJarFile;
-  private List<File> myTempJars = new ArrayList<File>(1);
+  private final List<File> myTempJars = new ArrayList<File>(1);
   @NonNls private static final String TMP_FILE_SUFFIX = ".tmp";
 
   public JarAndCopyBuildInstructionImpl(Module module, File directoryToJar, String outputRelativePath, @Nullable PackagingFileFilter fileFilter) {

@@ -26,9 +26,9 @@ public class CompoundBuildInstructionImpl extends BuildInstructionBase implement
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.packagingCompiler.CompoundBuildInstructionImpl");
 
   private final BuildConfiguration myBuildConfiguration;
-  private BuildParticipant myBuildParticipant;
+  private final BuildParticipant myBuildParticipant;
   private final BuildRecipe myBuildRecipe;
-  @NonNls protected static final String TMP_FILE_SUFFIX = ".tmp";
+  @NonNls private static final String TMP_FILE_SUFFIX = ".tmp";
 
   public CompoundBuildInstructionImpl(@Nullable BuildRecipe buildRecipe, BuildParticipant buildParticipant, String outputRelativePath) {
     super(outputRelativePath, buildParticipant.getModule());

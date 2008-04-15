@@ -64,8 +64,8 @@ public class BuildJarProjectSettings implements PersistentStateComponent<Element
   private static final Logger LOG = Logger.getInstance("#com.intellij.jar.BuildJarProjectSettings");
 
   public boolean BUILD_JARS_ON_MAKE = false;
-  private @NonNls static final String MAIN_CLASS = Attributes.Name.MAIN_CLASS.toString();
-  private @NonNls static final String JAR_EXTENSION = ".jar";
+  @NonNls private static final String MAIN_CLASS = Attributes.Name.MAIN_CLASS.toString();
+  @NonNls private static final String JAR_EXTENSION = ".jar";
   private final Project myProject;
 
   public static BuildJarProjectSettings getInstance(Project project) {
@@ -79,7 +79,7 @@ public class BuildJarProjectSettings implements PersistentStateComponent<Element
   public Element getState() {
     try {
       final Element e = new Element("state");
-      writeExternal(e);
+      DefaultJDOMExternalizer.writeExternal(this, e);
       return e;
     }
     catch (WriteExternalException e1) {
@@ -90,7 +90,7 @@ public class BuildJarProjectSettings implements PersistentStateComponent<Element
 
   public void loadState(Element state) {
     try {
-      readExternal(state);
+      DefaultJDOMExternalizer.readExternal(this, state);
     }
     catch (InvalidDataException e) {
       LOG.error(e);
@@ -99,14 +99,6 @@ public class BuildJarProjectSettings implements PersistentStateComponent<Element
 
   public boolean isBuildJarOnMake() {
     return BUILD_JARS_ON_MAKE;
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
   public void projectOpened() {
@@ -176,7 +168,8 @@ public class BuildJarProjectSettings implements PersistentStateComponent<Element
       }
     }, IdeBundle.message("jar.build.progress.title"), true, myProject);
   }
-  public void buildJars(final ProgressIndicator progressIndicator) {
+
+  private void buildJars(final ProgressIndicator progressIndicator) {
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     try {
       for (Module module : modules) {
