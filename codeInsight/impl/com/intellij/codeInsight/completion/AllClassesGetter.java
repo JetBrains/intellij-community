@@ -90,6 +90,9 @@ public class AllClassesGetter {
       }
       if (toDelete.isValid()) {
         document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
+        if (insertFqn) {
+          endOffset = toDelete.getStartOffset();
+        }
       }
 
       if (insertFqn) {
