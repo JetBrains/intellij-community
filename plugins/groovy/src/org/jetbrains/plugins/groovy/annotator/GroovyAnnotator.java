@@ -23,10 +23,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -171,25 +168,19 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkPackageReference(AnnotationHolder holder, GrPackageDefinition packageDefinition) {
-    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(packageDefinition.getProject()).getFileIndex();
     final PsiFile file = packageDefinition.getContainingFile();
     assert file != null;
 
-    final VirtualFile virtualFile = file.getVirtualFile();
-    assert virtualFile != null;
-
-    final VirtualFile sourceRootForFile = projectFileIndex.getSourceRootForFile(virtualFile);
-    if (sourceRootForFile == null) return;
-    assert virtualFile.getPath().startsWith(sourceRootForFile.getPath());
-
-    final VirtualFile containingDirectory = virtualFile.getParent();
-    assert containingDirectory != null;
-
-    final String packageName = VfsUtil.getRelativePath(containingDirectory, sourceRootForFile, '.');
-
-    if (!packageDefinition.getPackageName().equals(packageName)) {
-      final Annotation annotation = holder.createWarningAnnotation(packageDefinition, "wrong package name");
-      annotation.registerFix(new ChangePackageQuickFix((GroovyFile)packageDefinition.getContainingFile(), packageName));
+    PsiDirectory psiDirectory = file.getContainingDirectory();
+    if (psiDirectory != null) {
+      PsiPackage aPackage = psiDirectory.getPackage();
+      if (aPackage != null) {
+        String packageName = aPackage.getQualifiedName();
+        if (!packageDefinition.getPackageName().equals(packageName)) {
+          final Annotation annotation = holder.createWarningAnnotation(packageDefinition, "wrong package name");
+          annotation.registerFix(new ChangePackageQuickFix((GroovyFile)packageDefinition.getContainingFile(), packageName));
+        }
+      }
     }
   }
 
