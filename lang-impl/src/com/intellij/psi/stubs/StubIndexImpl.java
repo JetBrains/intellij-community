@@ -68,9 +68,13 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     final int version = extension.getVersion();
     myIndexIdToVersionMap.put(indexKey, version);
     final File versionFile = IndexInfrastructure.getVersionFile(indexKey);
+    final boolean versionFileExisted = versionFile.exists();
+    final File indexRootDir = IndexInfrastructure.getIndexRootDir(indexKey);
     if (IndexInfrastructure.versionDiffers(versionFile, version)) {
-      needRebuild = true;
-      FileUtil.delete(IndexInfrastructure.getIndexRootDir(indexKey));
+      final String[] children = indexRootDir.list();
+      // rebuild only if there exists what to rebuild
+      needRebuild = versionFileExisted || (children != null && children.length > 0);
+      FileUtil.delete(indexRootDir);
       IndexInfrastructure.rewriteVersion(versionFile, version);
     }
 
@@ -83,7 +87,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       }
       catch (IOException e) {
         needRebuild = true;
-        FileUtil.delete(IndexInfrastructure.getIndexRootDir(indexKey));
+        FileUtil.delete(indexRootDir);
         IndexInfrastructure.rewriteVersion(versionFile, version);
       }
     }
