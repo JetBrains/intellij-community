@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public interface NamedStub<T extends PsiNamedElement> extends StubElement<T> {
-  @Indexed
   @NonNls
   @Nullable
   String getName();
