@@ -45,22 +45,12 @@ public class SuspendManagerUtil {
 
   public static Set<SuspendContextImpl> getSuspendingContexts(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    Set<ThreadReferenceProxyImpl> contextThreads = new HashSet<ThreadReferenceProxyImpl>();
-
-    Set<SuspendContextImpl> result = new HashSet<SuspendContextImpl>();
-
-    for (Iterator<SuspendContextImpl> iterator = suspendManager.getEventContexts().iterator(); iterator.hasNext();) {
-      final SuspendContextImpl suspendContext = iterator.next();
-      if(suspendContext.suspends(thread)) {
-        ThreadReferenceProxyImpl contextThread = suspendContext.getThread();
-        if (contextThreads.contains(contextThread)) {
-          LOG.assertTrue(false, suspendContext);
-        }
-        contextThreads.add(contextThread);
+    final Set<SuspendContextImpl> result = new HashSet<SuspendContextImpl>();
+    for (final SuspendContextImpl suspendContext : suspendManager.getEventContexts()) {
+      if (suspendContext.suspends(thread)) {
         result.add(suspendContext);
       }
     }
-
     return result;
   }
 
