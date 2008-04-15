@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class CollectHighlightsUtil {
@@ -36,8 +35,8 @@ public class CollectHighlightsUtil {
                                                     final int endOffset,
                                                     boolean includeAllParents) {
     PsiElement commonParent = findCommonParent(root, startOffset, endOffset);
-    if (commonParent == null) return Collections.emptyList();
-    final List<PsiElement> list = new ArrayList<PsiElement>(getElementsToHighlight(commonParent, startOffset, endOffset));
+    if (commonParent == null) return new ArrayList<PsiElement>();
+    final List<PsiElement> list = getElementsToHighlight(commonParent, startOffset, endOffset);
 
     PsiElement parent = commonParent;
     while (parent != null && parent != root) {
@@ -47,7 +46,7 @@ public class CollectHighlightsUtil {
 
     list.add(root);
 
-    return Collections.unmodifiableList(list);
+    return list;
   }
 
   private static List<PsiElement> getElementsToHighlight(final PsiElement commonParent, final int startOffset, final int endOffset) {

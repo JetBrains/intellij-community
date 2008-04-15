@@ -50,19 +50,13 @@ import java.util.StringTokenizer;
  * @author Mike
  */
 public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightVisitor, Validator.ValidationHost {
-  private static final Logger LOG = LoggerFactory.getInstance().getLoggerInstance(
-    "com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor"
-  );
+  private static final Logger LOG = LoggerFactory.getInstance().getLoggerInstance("com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor");
   public static final Key<String> DO_NOT_VALIDATE_KEY = Key.create("do not validate");
   private List<HighlightInfo> myResult;
 
   private static boolean ourDoJaxpTesting;
 
   @NonNls private static final String XML = "xml";
-
-  public List<HighlightInfo> getResult() {
-    return myResult;
-  }
 
   private void addElementsForTag(XmlTag tag,
                                  String localizedMessage,
@@ -122,7 +116,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   private void checkUnboundNamespacePrefix(final XmlElement element, final XmlTag context, String namespacePrefix) {
-    if (namespacePrefix.length() > 0 || ( element instanceof XmlTag && element.getParent() instanceof XmlDocument)) {
+    if (namespacePrefix.length() > 0 || element instanceof XmlTag && element.getParent() instanceof XmlDocument) {
       final String namespaceByPrefix = context.getNamespaceByPrefix(namespacePrefix);
 
       if (namespaceByPrefix.length() == 0) {
@@ -622,21 +616,27 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   public void visit(final PsiElement element, final HighlightInfoHolder holder) {
     element.accept(this);
 
-    List<HighlightInfo> result = getResult();
+    List<HighlightInfo> result = myResult;
     holder.addAll(result);
     myResult = null;
   }
 
-  public boolean init(final boolean updateWholeFile, final PsiFile file) {
+  public boolean analyze(Runnable action, final boolean updateWholeFile, final PsiFile file) {
+    try {
+      action.run();
+    }
+    finally {
+      myResult = null;
+    }
     return true;
-  }
-
-  public void cleanup(final boolean finishedSuccessfully, final PsiFile file) {
-    myResult = null;
   }
 
   public HighlightVisitor clone() {
     return new XmlHighlightVisitor();
+  }
+
+  public int order() {
+    return 1;
   }
 
   public static String getUnquotedValue(XmlAttributeValue value, XmlTag tag) {

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.JavaStatisticsManager;
@@ -41,11 +42,11 @@ public class RefCountHolder {
     public static final int BEING_USED_BY_PHP = 3;        // post highlighting pass is retrieving info
   }
 
-  private static final Key<RefCountHolder> REF_COUND_HOLDER_IN_FILE_KEY = Key.create("REF_COUND_HOLDER_IN_FILE_KEY");
+  private static final Key<RefCountHolder> REF_COUNT_HOLDER_IN_FILE_KEY = Key.create("REF_COUNT_HOLDER_IN_FILE_KEY");
   public static RefCountHolder getInstance(PsiFile file) {
-    RefCountHolder refCountHolder = file.getUserData(REF_COUND_HOLDER_IN_FILE_KEY);
+    RefCountHolder refCountHolder = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
     if (refCountHolder == null) {
-      refCountHolder = ((UserDataHolderEx)file).putUserDataIfAbsent(REF_COUND_HOLDER_IN_FILE_KEY, new RefCountHolder(file));
+      refCountHolder = ((UserDataHolderEx)file).putUserDataIfAbsent(REF_COUNT_HOLDER_IN_FILE_KEY, new RefCountHolder(file));
     }
     return refCountHolder;
   }
@@ -55,7 +56,7 @@ public class RefCountHolder {
     LOG.debug("RefCountHolder created for '"+ StringUtil.first(file.getText(), 30, true));
   }
 
-  public void clear() {
+  private void clear() {
     assertIsAnalyzing();
     myLocalRefsMap.clear();
     myImportStatements.clear();
@@ -115,7 +116,7 @@ public class RefCountHolder {
     }
   }
 
-  public void removeInvalidRefs() {
+  private void removeInvalidRefs() {
     assertIsAnalyzing();
     synchronized (myLocalRefsMap) {
       for(Iterator<PsiReference> iterator = myLocalRefsMap.keySet().iterator(); iterator.hasNext();){
@@ -223,16 +224,27 @@ public class RefCountHolder {
     return false;
   }
 
-  public boolean startAnalyzing() {
+  public boolean analyze(Runnable analyze, final TextRange dirtyScope, final PsiFile file) {
     myState.compareAndSet(State.READY, State.VIRGIN);
-    return myState.compareAndSet(State.VIRGIN, State.BEING_WRITTEN_BY_GHP);
-  }
+    if (!myState.compareAndSet(State.VIRGIN, State.BEING_WRITTEN_BY_GHP)) return false;
 
-  public void finishAnalyzing(boolean finishedSuccessfully) {
-    int newState = finishedSuccessfully ? State.READY : State.VIRGIN;
+    try {
+      if (dirtyScope != null) {
+        if (dirtyScope.equals(file.getTextRange())) {
+          clear();
+        }
+        else {
+          removeInvalidRefs();
+        }
+      }
 
-    boolean set = myState.compareAndSet(State.BEING_WRITTEN_BY_GHP, newState);
-    assert set : myState.get();
+      analyze.run();
+    }
+    finally {
+      boolean set = myState.compareAndSet(State.BEING_WRITTEN_BY_GHP, State.READY);
+      assert set : myState.get();
+    }
+    return true;
   }
 
   public boolean retrieveUnusedReferencesInfo(Runnable analyze) {
@@ -246,7 +258,7 @@ public class RefCountHolder {
       boolean set = myState.compareAndSet(State.BEING_USED_BY_PHP, State.READY);
       assert set : myState.get();
     }
-    return true;
+    return  true;
   }
 
   private void assertIsAnalyzing() {

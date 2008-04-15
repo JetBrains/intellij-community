@@ -52,6 +52,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<String, Pair<PsiImportStatementBase, PsiClass>> mySingleImportedClasses = new THashMap<String, Pair<PsiImportStatementBase, PsiClass>>();
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new THashMap<String, Pair<PsiImportStaticReferenceElement, PsiField>>();
   private volatile boolean released = true;
+  private PsiFile myFile;
 
   @SuppressWarnings({"UnusedDeclaration"}) //in plugin.xml
   public HighlightVisitorImpl(PsiManager manager) {
@@ -65,6 +66,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public HighlightVisitorImpl clone() {
     return new HighlightVisitorImpl(myResolveHelper);
   }
+
+  public int order() {
+    return 0;
+  }  
 
   public boolean suitableForFile(PsiFile file) {
     return true;
@@ -80,42 +85,34 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       LOG.assertTrue(element.isValid());
     }
     element.accept(this);
+
+    if (myRefCountHolder != null) {
+      registerReferencesFromInjectedFragments(element, myRefCountHolder);
+    }
   }
 
-  public boolean init(final boolean updateWholeFile, final PsiFile file) {
-    assert released;
-    released = false;
-    boolean success = true;
-    RefCountHolder refCountHolder;
-    if (updateWholeFile) {
-      Project project = file.getProject();
-      DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-      FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
-      refCountHolder = RefCountHolder.getInstance(file);
-      success = refCountHolder.startAnalyzing();
-      if (success) {
-        Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-        TextRange fileRange = file.getTextRange();
-        TextRange dirtyScope = document == null ? fileRange : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL);
-        if (dirtyScope != null) {
-          if (dirtyScope.equals(fileRange)) {
-            refCountHolder.clear();
-          }
-          else {
-            refCountHolder.removeInvalidRefs();
+  private void registerReferencesFromInjectedFragments(final PsiElement element, final RefCountHolder refCountHolder) {
+    final PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
+      @Override public void visitElement(PsiElement element) {
+        super.visitElement(element);
+
+        for (PsiReference reference : element.getReferences()) {
+          PsiElement resolved = reference.resolve();
+          if (resolved instanceof PsiNamedElement) {
+            refCountHolder.registerLocallyReferenced((PsiNamedElement)resolved);
           }
         }
       }
-    }
-    else {
-      refCountHolder = null;
-    }
+    };
+    InjectedLanguageUtil.enumerate(element, myFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
+        injectedPsi.accept(visitor);
+      }
+    }, false);
 
-    myRefCountHolder = refCountHolder;
-    return success;
   }
 
-  private static void registerReferencesFromInjectedFragments(final PsiFile hostFile, final RefCountHolder refCountHolder) {
+  private void registerReferencesFromInjectedFragments(final PsiFile hostFile, final RefCountHolder refCountHolder) {
     List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(hostFile);
     for (DocumentWindow documentRange : injected) {
       PsiFile file = PsiDocumentManager.getInstance(hostFile.getProject()).getPsiFile(documentRange);
@@ -140,23 +137,41 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
-  public void cleanup(final boolean finishedSuccessfully, final PsiFile file) {
-    if (myRefCountHolder != null) {
-      if (finishedSuccessfully) {
-        registerReferencesFromInjectedFragments(file, myRefCountHolder);
+  public boolean analyze(final Runnable action, final boolean updateWholeFile, final PsiFile file) {
+    myFile = file;
+    assert released;
+    released = false;
+    boolean success = true;
+    try {
+      if (updateWholeFile) {
+        Project project = file.getProject();
+        DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
+        FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
+        RefCountHolder refCountHolder = RefCountHolder.getInstance(file);
+        myRefCountHolder = refCountHolder;
+        Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+        TextRange fileRange = file.getTextRange();
+        TextRange dirtyScope = document == null ? fileRange : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL);
+        success = refCountHolder.analyze(action, dirtyScope, file);
       }
-      myRefCountHolder.finishAnalyzing(finishedSuccessfully);
+      else {
+        myRefCountHolder = null;
+        action.run();
+      }
     }
-    myUninitializedVarProblems.clear();
-    myFinalVarProblems.clear();
-    mySingleImportedClasses.clear();
-    mySingleImportedFields.clear();
-    myParameterIsReassigned.clear();
+    finally {
+      myUninitializedVarProblems.clear();
+      myFinalVarProblems.clear();
+      mySingleImportedClasses.clear();
+      mySingleImportedFields.clear();
+      myParameterIsReassigned.clear();
 
-    myRefCountHolder = null;
+      myRefCountHolder = null;
+      myFile = null;
+      released = true;
+    }
 
-    assert !released;
-    released = true;
+    return success;
   }
 
   public void visitElement(final PsiElement element) {

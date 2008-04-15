@@ -25,8 +25,8 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
   private HighlightInfoHolder myHolder;
 
   public static final ExtensionPointName<Condition<PsiErrorElement>> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.highlightErrorFilter");
-  private Condition<PsiErrorElement>[] myErrorFilters;
-  private Project myProject;
+  private final Condition<PsiErrorElement>[] myErrorFilters;
+  private final Project myProject;
 
   public DefaultHighlightVisitor(Project project) {
     myProject = project;
@@ -43,16 +43,22 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
     element.accept(this);
   }
 
-  public boolean init(final boolean updateWholeFile, final PsiFile file) {
+  public boolean analyze(final Runnable action, final boolean updateWholeFile, final PsiFile file) {
+    try {
+      action.run();
+    }
+    finally {
+      myAnnotationHolder.clear();
+    }
     return true;
-  }
-
-  public void cleanup(final boolean finishedSuccessfully, final PsiFile file) {
-    myAnnotationHolder.clear();
   }
 
   public HighlightVisitor clone() {
     return new DefaultHighlightVisitor(myProject);
+  }
+
+  public int order() {
+    return 2;
   }
 
   public void visitElement(final PsiElement element) {

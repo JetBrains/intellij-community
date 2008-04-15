@@ -88,10 +88,10 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   private final int CYCLIC_BUFFER_SIZE = GeneralSettings.getInstance().getCyclicBufferSize();
   private final boolean USE_CYCLIC_BUFFER = GeneralSettings.getInstance().isUseCyclicBuffer();
   private static final int HYPERLINK_LAYER = HighlighterLayer.SELECTION - 123;
-  private Alarm mySpareTimeAlarm = new Alarm();
+  private final Alarm mySpareTimeAlarm = new Alarm();
 
-  private CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
-  private Set<ConsoleViewContentType> myDeferredTypes = new HashSet<ConsoleViewContentType>();
+  private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
+  private final Set<ConsoleViewContentType> myDeferredTypes = new HashSet<ConsoleViewContentType>();
 
 
   private static class TokenInfo{
@@ -125,7 +125,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
 
   private String myHelpId;
 
-  private Alarm myFlushAlarm = new Alarm();
+  private final Alarm myFlushAlarm = new Alarm();
 
   private final Runnable myFlushDeferredRunnable = new Runnable() {
     public void run() {
@@ -133,7 +133,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     }
   };
 
-  private CompositeFilter myMessageFilter = new CompositeFilter();
+  private final CompositeFilter myMessageFilter = new CompositeFilter();
 
   public ConsoleViewImpl(final Project project) {
     super(new BorderLayout());
@@ -709,7 +709,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   }
 
   private static class MyTypedHandler implements TypedActionHandler {
-    private TypedActionHandler myOriginalHandler;
+    private final TypedActionHandler myOriginalHandler;
 
     public MyTypedHandler(final TypedActionHandler originalAction) {
       myOriginalHandler = originalAction;
@@ -860,7 +860,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
 
   public JComponent getPreferredFocusableComponent() {
     //ensure editor created
-    final JComponent component = getComponent();
+    getComponent();
     return myEditor.getContentComponent();
   }
 
@@ -940,7 +940,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   }
 
   private void fireChange() {
-    if (myDeferredTypes.size() == 0) return;
+    if (myDeferredTypes.isEmpty()) return;
     Collection<ConsoleViewContentType> types = Collections.unmodifiableCollection(myDeferredTypes);
 
     for (ChangeListener each : myListeners) {

@@ -10,8 +10,8 @@ public interface HighlightVisitor {
 
   boolean suitableForFile(PsiFile file);
   void visit(PsiElement element, HighlightInfoHolder holder);
-  boolean init(boolean updateWholeFile, PsiFile file);
 
-  void cleanup(boolean finishedSuccessfully, final PsiFile file);
+  boolean analyze(Runnable action, final boolean updateWholeFile, final PsiFile file);
   HighlightVisitor clone();
+  int order();
 }

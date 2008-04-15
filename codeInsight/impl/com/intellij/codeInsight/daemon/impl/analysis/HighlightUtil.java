@@ -864,7 +864,7 @@ public class HighlightUtil {
 
   @Nullable
   static HighlightInfo checkNotAStatement(PsiStatement statement) {
-    if (!PsiUtil.isStatement(statement)) {
+    if (!PsiUtil.isStatement(statement) && !PsiUtil.hasErrorElementChild(statement)) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, JavaErrorMessages.message("not.a.statement"));
     }
     return null;

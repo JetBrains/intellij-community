@@ -188,10 +188,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
           return extractValue(dtdUrlElement);
         }
         public TextRange getRangeInElement() {
-          return new TextRange(
-            dtdUrlElement.getTextRange().getStartOffset() - getTextRange().getStartOffset() + 1,
-            dtdUrlElement.getTextRange().getEndOffset() - getTextRange().getStartOffset() - 1
-          );
+          return TextRange.from(dtdUrlElement.getTextRange().getStartOffset() - getTextRange().getStartOffset() + 1, Math.max(dtdUrlElement.getTextRange().getLength() - 2, 0));
         }
       };
     }

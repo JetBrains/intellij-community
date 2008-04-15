@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
+public class HighlightInfoHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder");
 
   private final PsiFile myContextFile;
@@ -23,9 +23,9 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
   private int myWarningCount;
   private int myInfoCount;
   private boolean writable = false;
+  private final List<HighlightInfo> myInfos = new ArrayList<HighlightInfo>(5);
 
   public HighlightInfoHolder(@NotNull PsiFile contextFile, @NotNull HighlightInfoFilter... filters) {
-    super(5);
     myContextFile = contextFile;
     myFilters = filters;
   }
@@ -45,7 +45,7 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
       myInfoCount++;
     }
 
-    return super.add(info);
+    return myInfos.add(info);
   }
 
   private boolean accepted(HighlightInfo info) {
@@ -61,7 +61,7 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
     myErrorCount = 0;
     myWarningCount = 0;
     myInfoCount = 0;
-    super.clear();
+    myInfos.clear();
   }
 
   public boolean hasErrorResults() {
@@ -102,39 +102,11 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
     return writable;
   }
 
-  public HighlightInfo set(final int index, final HighlightInfo element) {
-    throw new UnsupportedOperationException();
+  public int size() {
+    return myInfos.size();
   }
 
-  public void add(final int index, final HighlightInfo element) {
-    throw new UnsupportedOperationException();
-  }
-
-  public HighlightInfo remove(final int index) {
-    throw new UnsupportedOperationException();
-  }
-
-  public boolean remove(final Object o) {
-    throw new UnsupportedOperationException();
-  }
-
-  public boolean addAll(final int index, final Collection<? extends HighlightInfo> c) {
-    throw new UnsupportedOperationException();
-  }
-
-  protected void removeRange(final int fromIndex, final int toIndex) {
-    throw new UnsupportedOperationException();
-  }
-
-  public boolean removeAll(final Collection<?> c) {
-    throw new UnsupportedOperationException();
-  }
-
-  public boolean retainAll(final Collection<?> c) {
-    throw new UnsupportedOperationException();
-  }
-
-  public List<HighlightInfo> subList(final int fromIndex, final int toIndex) {
-    throw new UnsupportedOperationException();
+  public HighlightInfo get(final int i) {
+    return myInfos.get(i);
   }
 }

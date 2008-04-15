@@ -89,9 +89,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<AtomicInteger>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
-  private HighlightVisitor[] createHighlightVisitors(final ProgressIndicator progress) {
+  private HighlightVisitor[] createHighlightVisitors() {
     int oldCount = incVisitorUsageCount(1);
     HighlightVisitor[] highlightVisitors = Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject);
+    Arrays.sort(highlightVisitors, new Comparator<HighlightVisitor>() {
+      public int compare(final HighlightVisitor o1, final HighlightVisitor o2) {
+        return o1.order() - o2.order();
+      }
+    });
     if (oldCount != 0) {
       highlightVisitors = highlightVisitors.clone();
       for (int i = 0; i < highlightVisitors.length; i++) {
@@ -99,29 +104,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         highlightVisitors[i] = highlightVisitor.clone();
       }
     }
-    for (int i = 0; i < highlightVisitors.length; i++) {
-      HighlightVisitor highlightVisitor = highlightVisitors[i];
-      if (!highlightVisitor.init(myUpdateAll, myFile)) {
-        progress.cancel();
-        releaseHighlightVisitors(highlightVisitors, false, 0, i);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            DaemonCodeAnalyzer.getInstance(myProject).restart();
-          }
-        }, myProject.getDisposed());
-        throw new ProcessCanceledException();
-      }
-    }
     return highlightVisitors;
-  }
-
-  private void releaseHighlightVisitors(HighlightVisitor[] highlightVisitors, final boolean finishedSuccessfully, final int start,
-                                        final int end) {
-    for (int i = start; i < end; i++) {
-      HighlightVisitor visitor = highlightVisitors[i];
-      visitor.cleanup(finishedSuccessfully, myFile);
-    }
-    incVisitorUsageCount(-1);
   }
 
   // returns old value
@@ -136,34 +119,38 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
-    final HighlightVisitor[] highlightVisitors = createHighlightVisitors(progress);
     final Collection<HighlightInfo> result = new THashSet<HighlightInfo>(100);
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
-    boolean finishedSuccessfully = false;
+    HighlightVisitor[] highlightVisitors = createHighlightVisitors();
     try {
       final FileViewProvider viewProvider = myFile.getViewProvider();
       final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
+      List<PsiElement> elements = null;
       for (Language language : relevantLanguages) {
         PsiElement psiRoot = viewProvider.getPsi(language);
         if (!HighlightLevelUtil.shouldHighlight(psiRoot)) continue;
-        //long time = System.currentTimeMillis();
-        List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
-        if (elements.isEmpty()) {
-          elements = Collections.singletonList(psiRoot);
+        List<PsiElement> underRoot = CollectHighlightsUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
+        if (elements == null) {
+          elements = underRoot;
         }
-
-        result.addAll(collectHighlights(elements, highlightVisitors));
-        result.addAll(highlightTodos());
-        addInjectedPsiHighlights(elements);
+        else {
+          elements.addAll(underRoot);
+        }
+        if (underRoot.isEmpty()) {
+          elements.add(psiRoot);
+        }
       }
+      result.addAll(collectHighlights(elements, highlightVisitors, progress));
+      result.addAll(highlightTodos());
+      addInjectedPsiHighlights(elements);
+
       if (myUpdateAll) {
         fileStatusMap.setErrorFoundFlag(myDocument, myErrorFound);
       }
-      finishedSuccessfully = true;
     }
     finally {
-      releaseHighlightVisitors(highlightVisitors, finishedSuccessfully, 0, highlightVisitors.length);
+      incVisitorUsageCount(-1);
     }
     myHighlights = result;
   }
@@ -319,7 +306,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     TextRange range = new TextRange(myStartOffset, myEndOffset);
     Collection<HighlightInfo> collection = myInjectedPsiHighlights.get(range);
     if (collection == null) {
-      collection = new ArrayList<HighlightInfo>();
+      collection = new ArrayList<HighlightInfo>(myHighlights.size());
     }
     collection.addAll(myHighlights);
     myInjectedPsiHighlights.put(range, collection);
@@ -342,17 +329,82 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return list;
   }
 
-  private Collection<HighlightInfo> collectHighlights(final List<PsiElement> elements, final HighlightVisitor[] highlightVisitors) {
+  private Collection<HighlightInfo> collectHighlights(final List<PsiElement> elements, final HighlightVisitor[] highlightVisitors,
+                                                      final ProgressIndicator progress) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final Set<PsiElement> skipParentsSet = new THashSet<PsiElement>();
     final Set<HighlightInfo> gotHighlights = new THashSet<HighlightInfo>();
 
-    final List<HighlightVisitor> visitors = new ArrayList<HighlightVisitor>();
+    final List<HighlightVisitor> visitors = new ArrayList<HighlightVisitor>(highlightVisitors.length);
     for (HighlightVisitor visitor : highlightVisitors) {
       if (visitor.suitableForFile(myFile)) visitors.add(visitor);
     }
+    HighlightVisitor[] visitorArray = visitors.toArray(new HighlightVisitor[visitors.size()]);
 
+    final boolean forceHighlightParents = forceHighlightParents();
+
+    final HighlightInfoHolder holder = createInfoHolder();
+    holder.setWritable(true);
+    final ProgressManager progressManager = ProgressManager.getInstance();
+    setProgressLimit((long)elements.size() * visitorArray.length);
+
+    final int chunkSize = Math.max(1, elements.size() / 100); // one percent precision is enough
+    for (final HighlightVisitor visitor : visitorArray) {
+      Runnable action = new Runnable() {
+        public void run() {
+          int nextLimit = chunkSize;
+          for (int i = 0; i < elements.size(); i++) {
+            PsiElement element = elements.get(i);
+            progressManager.checkCanceled();
+
+            if (element != myFile && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.contains(element)) {
+              skipParentsSet.add(element.getParent());
+              continue;
+            }
+
+            if (element instanceof PsiErrorElement) {
+              myHasErrorElement = true;
+            }
+            holder.clear();
+
+            visitor.visit(element, holder);
+            if (i == nextLimit) {
+              advanceProgress(chunkSize);
+              nextLimit = i + chunkSize;
+            }
+
+            //noinspection ForLoopReplaceableByForEach
+            for (int j = 0; j < holder.size(); j++) {
+              HighlightInfo info = holder.get(j);
+              // have to filter out already obtained highlights
+              if (!gotHighlights.add(info)) continue;
+              boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
+              if (isError) {
+                if (!forceHighlightParents) {
+                  skipParentsSet.add(element.getParent());
+                }
+                myErrorFound = true;
+              }
+            }
+          }
+        }
+      };
+      if (!visitor.analyze(action, myUpdateAll, myFile)) {
+        progress.cancel();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            DaemonCodeAnalyzer.getInstance(myProject).restart();
+          }
+        }, myProject.getDisposed());
+        throw new ProcessCanceledException();
+      }
+    }
+
+    return gotHighlights;
+  }
+
+  private boolean forceHighlightParents() {
     boolean forceHighlightParents = false;
     for(HighlightRangeExtension extension: Extensions.getExtensions(HighlightRangeExtension.EP_NAME)) {
       if (extension.isForceHighlightParents(myFile)) {
@@ -360,54 +412,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         break;
       }
     }
-
-    final HighlightInfoHolder holder = createInfoHolder();
-    holder.setWritable(true);
-    ProgressManager progressManager = ProgressManager.getInstance();
-    setProgressLimit((long)elements.size() * visitors.size());
-
-    int chunkSize = Math.max(1, elements.size() / 100); // one percent precision is enough
-    int nextLimit = chunkSize;
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < elements.size(); i++) {
-      PsiElement element = elements.get(i);
-      progressManager.checkCanceled();
-
-      if (element != myFile && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.remove(element)) {
-        skipParentsSet.add(element.getParent());
-        continue;
-      }
-
-      if (element instanceof PsiErrorElement) {
-        myHasErrorElement = true;
-      }
-      holder.clear();
-      //noinspection ForLoopReplaceableByForEach
-      for (int j = 0; j < visitors.size(); j++) {
-        HighlightVisitor visitor = visitors.get(j);
-        visitor.visit(element, holder);
-      }
-      if (i == nextLimit) {
-        advanceProgress(chunkSize * visitors.size());
-        nextLimit = i + chunkSize;
-      }
-
-      //noinspection ForLoopReplaceableByForEach
-      for (int j = 0; j < holder.size(); j++) {
-        HighlightInfo info = holder.get(j);
-        // have to filter out already obtained highlights
-        if (!gotHighlights.add(info)) continue;
-        boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
-        if (isError) {
-          if (!forceHighlightParents) {
-            skipParentsSet.add(element.getParent());
-          }
-          myErrorFound = true;
-        }
-      }
-    }
-
-    return gotHighlights;
+    return forceHighlightParents;
   }
 
   protected HighlightInfoHolder createInfoHolder() {
