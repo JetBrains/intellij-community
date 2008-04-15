@@ -145,6 +145,9 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
   private StubElement deserialize(DataInputStream stream, StubElement parentStub) throws IOException {
     final int id = DataInputOutputUtil.readINT(stream);
     final StubSerializer serializer = getClassById(id);
+    
+    assert serializer != null : "No serializer registered for stub: ID=" + id + "; parent stub class=" + parentStub.getClass().getName();
+    
     StubElement stub = serializer.deserialize(stream, parentStub, myNameStorage);
     int childCount = DataInputOutputUtil.readINT(stream);
     for (int i = 0; i < childCount; i++) {
