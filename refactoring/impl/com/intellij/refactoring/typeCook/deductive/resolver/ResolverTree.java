@@ -135,13 +135,13 @@ public class ResolverTree {
   }
 
   private ResolverTree applyRule(final Binding b) {
-    final Binding newBinding = myCurrentBinding.compose(b);
+    final Binding newBinding = b != null ? myCurrentBinding.compose(b) : null;
 
     return newBinding == null ? null : new ResolverTree(this, apply(b), newBinding);
   }
 
   private ResolverTree applyRule(final Binding b, final HashSet<Constraint> additional) {
-    final Binding newBinding = myCurrentBinding.compose(b);
+    final Binding newBinding = b != null ? myCurrentBinding.compose(b) : null;
 
     return newBinding == null ? null : new ResolverTree(this, apply(b, additional), newBinding);
   }
