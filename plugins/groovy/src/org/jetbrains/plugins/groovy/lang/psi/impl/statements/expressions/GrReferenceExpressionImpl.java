@@ -381,7 +381,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     public GroovyResolveResult[] resolve(GrReferenceExpressionImpl refExpr, boolean incompleteCode) {
       String name = refExpr.getReferenceName();
       if (name == null) return null;
-      ResolverProcessor processor = getMethodOrPropertyResolveProcessor(refExpr, name, false, !incompleteCode);
+      ResolverProcessor processor = getMethodOrPropertyResolveProcessor(refExpr, name, incompleteCode);
 
       resolveImpl(refExpr, processor);
 
@@ -499,15 +499,15 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     }
   }
 
-  public static ResolverProcessor getMethodOrPropertyResolveProcessor(GrReferenceExpression refExpr, String name, boolean forCompletion, boolean checkArguments) {
+  public static ResolverProcessor getMethodOrPropertyResolveProcessor(GrReferenceExpression refExpr, String name, boolean incompleteCode) {
     Kind kind = ((GrReferenceExpressionImpl) refExpr).getKind();
     ResolverProcessor processor;
     if (kind == Kind.METHOD_OR_PROPERTY) {
-      final PsiType[] argTypes = checkArguments ? PsiUtil.getArgumentTypes(refExpr, false, false) : null;
+      final PsiType[] argTypes = !incompleteCode ? PsiUtil.getArgumentTypes(refExpr, false, false) : null;
       PsiType thisType = getThisType(refExpr);
-      processor = new MethodResolverProcessor(name, refExpr, forCompletion, false, thisType, argTypes, refExpr.getTypeArguments());
+      processor = new MethodResolverProcessor(name, refExpr, incompleteCode, false, thisType, argTypes, refExpr.getTypeArguments());
     } else {
-      processor = new PropertyResolverProcessor(name, refExpr, forCompletion);
+      processor = new PropertyResolverProcessor(name, refExpr, incompleteCode);
     }
 
     return processor;
