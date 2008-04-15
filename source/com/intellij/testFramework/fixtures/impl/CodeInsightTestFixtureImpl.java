@@ -454,7 +454,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public PsiFile addFileToProject(@NonNls final String relativePath, @NonNls final String fileText) throws IOException {
-    final VirtualFile root = ModuleRootManager.getInstance(myProjectFixture.getModule()).getSourceRoots()[0];
+    VirtualFile root = ModuleRootManager.getInstance(myProjectFixture.getModule()).getSourceRoots()[0];
+    if (root.getParent() == null) {
+      // no real module in fixture
+      root = LocalFileSystem.getInstance().findFileByPath(getTempDirPath());
+    }
     final VirtualFile[] virtualFile = new VirtualFile[1];
     final VirtualFile dir = VfsUtil.createDirectories(root.getPath() + "/" + StringUtil.getPackageName(relativePath, '/'));
 
