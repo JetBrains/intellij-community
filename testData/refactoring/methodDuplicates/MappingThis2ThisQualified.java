@@ -4,7 +4,7 @@ class Mapping {
   public void <caret>method() {
     this.myInt++;
     Mapping.this.myInt--;
-    myInt += super.hashCode();
+    myInt += hashCode();
   }
 
   public void context() {

@@ -117,9 +117,8 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest();
   }
 
-  @Bombed(description = "Check issues: IDEADEV-25363.", user = "Anna Kozlova", month = 5, day = 24)
   public void testMappingField2This() throws Exception {
-    doTest(false);
+    doTest();
   }
 
   public void testMappingLocalVar2Expression() throws Exception {
@@ -174,12 +173,10 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest();
   }
 
-  @Bombed(description = "Check issues: IDEADEV-25355.", user = "Anna Kozlova", month = 5, day = 15)
   public void testMappingThis2ThisDifferent() throws Exception {
     doTest();
   }
 
-  @Bombed(description = "Check issues: IDEADEV-25310.", user = "Anna Kozlova", month = 4, day = 27)
   public void testMappingThis2ThisQualified() throws Exception {
     doTest();
   }

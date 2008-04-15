@@ -129,11 +129,9 @@ public final class Match {
     }
     else {
       if (myInstanceExpression.get() == null) {
-        if (instanceExpression instanceof PsiThisExpression) {
-          myInstanceExpression.set(instanceExpression);
-          return true;
-        }
-        else return myInstanceExpression != null;
+        myInstanceExpression.set(instanceExpression);
+
+        return true;
       }
       else {
         if (instanceExpression != null) {
