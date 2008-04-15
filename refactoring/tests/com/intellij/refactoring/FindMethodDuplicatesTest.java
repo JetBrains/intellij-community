@@ -181,7 +181,6 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest();
   }
 
-  @Bombed(description = "Check issues: IDEADEV-25305.", user = "Anna Kozlova", month = 6, day = 11)
   public void testPostFragmentUsage() throws Exception {
     doTest();
   }

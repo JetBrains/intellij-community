@@ -60,10 +60,8 @@ public class DuplicatesFinder {
       } while(endOffset < 0 && j >= 0);
 
       IntArrayList exitPoints = new IntArrayList();
-      final Collection<PsiStatement> exitStatements = ControlFlowUtil.findExitPointsAndStatements
-        (controlFlow, startOffset,
-         endOffset,
-         exitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
+      final Collection<PsiStatement> exitStatements = ControlFlowUtil
+          .findExitPointsAndStatements(controlFlow, startOffset, endOffset, exitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
       myMultipleExitPoints = exitPoints.size() > 1;
 
       if (myMultipleExitPoints) {
@@ -205,7 +203,37 @@ public class DuplicatesFinder {
       if (!matchPattern(myPattern[i], candidates.get(i), candidates, match)) return null;
     }
 
+    if (checkPostVariableUsages(candidates, match)) return null;
+
     return match;
+  }
+
+  private static boolean checkPostVariableUsages(final ArrayList<PsiElement> candidates, final Match match) {
+    final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(candidates.get(0));
+    try {
+      final ControlFlow controlFlow = ControlFlowFactory.getInstance(codeFragment.getProject()).getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false);
+
+      int startOffset;
+      int i = 0;
+      do {
+        startOffset = controlFlow.getStartOffset(candidates.get(i++));
+      } while(startOffset < 0 && i < candidates.size());
+
+      int endOffset;
+      int j = candidates.size() - 1;
+      do {
+        endOffset = controlFlow.getEndOffset(candidates.get(j--));
+      } while(endOffset < 0 && j >= 0);
+
+      final IntArrayList exitPoints = new IntArrayList();
+      ControlFlowUtil.findExitPointsAndStatements(controlFlow, startOffset, endOffset, exitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
+      final PsiVariable[] outVariables = ControlFlowUtil.getOutputVariables(controlFlow, startOffset, endOffset, exitPoints.toArray());
+
+      if ((match.getReturnValue() != null ? 1 : 0) + outVariables.length > 1) return true;
+    }
+    catch (AnalysisCanceledException e) {
+    }
+    return false;
   }
 
   private static boolean canTypesBeEquivalent(PsiType type1, PsiType type2) {
