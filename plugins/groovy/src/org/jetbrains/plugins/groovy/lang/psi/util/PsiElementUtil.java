@@ -15,12 +15,13 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiElement;
 
 /**
  * @author ilyas
@@ -29,12 +30,20 @@ public class PsiElementUtil {
   public static final String GETTER_PREFIX = "get";
   public static final String SETTER_PREFIX = "set";
 
-  public static boolean isPropertyAccessor(GrMethodCallExpression call) {
+  public static boolean isPropertyAccessor(GrCall call) {
     return isGetterInvocation(call) || isSetterInvocation(call);
   }
 
-  public static boolean isSetterInvocation(GrMethodCallExpression call) {
-    GrExpression expr = call.getInvokedExpression();
+  public static boolean isSetterInvocation(GrCall call) {
+    if (!(call instanceof GrMethodCallExpression) &&
+        !(call instanceof GrApplicationStatement)) {
+      return false;
+    }
+
+    GrExpression expr = (call instanceof GrMethodCallExpression) ?
+        ((GrMethodCallExpression) call).getInvokedExpression() :
+        ((GrApplicationStatement) call).getFunExpression();
+
     if (!(expr instanceof GrReferenceExpression)) return false;
 
     GrReferenceExpression refExpr = (GrReferenceExpression) expr;
@@ -45,17 +54,32 @@ public class PsiElementUtil {
     String propName = StringUtil.decapitalize(name);
     if (propName.length() == 0 || name.equals(propName)) return false;
 
-    PsiMethod method = call.resolveMethod();
-    if (!PsiUtil.isSimplePropertySetter(method)) return false;
+    if (call instanceof GrApplicationStatement) {
+      PsiElement element = refExpr.resolve();
+      if (!(element instanceof PsiMethod) || !PsiUtil.isSimplePropertySetter(((PsiMethod) element))) return false;
+    } else {
+      PsiMethod method = ((GrMethodCallExpression) call).resolveMethod();
+      if (!PsiUtil.isSimplePropertySetter(method)) return false;
+    }
 
-    GrArgumentList args = call.getArgumentList();
+    if (call instanceof GrMethodCallExpression) {
+      GrArgumentList args = ((GrMethodCallExpression) call).getArgumentList();
+      return args != null &&
+          args.getExpressionArguments().length == 1 &&
+          args.getNamedArguments().length == 0;
+    }
+
+    GrCommandArgumentList args = ((GrApplicationStatement) call).getArgumentList();
     return args != null &&
-        args.getExpressionArguments().length == 1 &&
-        args.getNamedArguments().length == 0;
+        args.getArguments().length == 1 &&
+        args.getLabeledArguments().length == 0;
+
   }
 
-  public static boolean isGetterInvocation(GrMethodCallExpression call) {
-    GrExpression expr = call.getInvokedExpression();
+  public static boolean isGetterInvocation(GrCall call) {
+    if (!(call instanceof GrMethodCallExpression)) return false;
+    GrMethodCallExpression methodCall = (GrMethodCallExpression) call;
+    GrExpression expr = methodCall.getInvokedExpression();
     if (!(expr instanceof GrReferenceExpression)) return false;
 
     GrReferenceExpression refExpr = (GrReferenceExpression) expr;
@@ -67,10 +91,10 @@ public class PsiElementUtil {
     if (propName.length() == 0 || name.equals(propName)) return false;
 
 
-    PsiMethod method = call.resolveMethod();
+    PsiMethod method = methodCall.resolveMethod();
     if (!PsiUtil.isSimplePropertyGetter(method)) return false;
 
-    GrArgumentList args = call.getArgumentList();
+    GrArgumentList args = methodCall.getArgumentList();
     return args != null && args.getExpressionArguments().length == 0;
   }
 

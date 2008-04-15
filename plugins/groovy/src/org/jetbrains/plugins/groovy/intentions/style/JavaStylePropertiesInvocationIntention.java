@@ -23,9 +23,9 @@ import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiElementUtil.*;
 
 /**
@@ -34,32 +34,43 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiElementUtil.*;
 public class JavaStylePropertiesInvocationIntention extends Intention {
 
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
-    assert element instanceof GrMethodCallExpression;
-    GrMethodCallExpression call = ((GrMethodCallExpression) element);
-    GrExpression invoked = call.getInvokedExpression();
+    assert element instanceof GrMethodCallExpression || element instanceof GrApplicationStatement;
+    GrCall call = ((GrCall) element);
+    GrExpression invoked = call instanceof GrMethodCallExpression ?
+        ((GrMethodCallExpression) call).getInvokedExpression() :
+        ((GrApplicationStatement) call).getFunExpression();
     if (isGetterInvocation(call) && invoked instanceof GrReferenceExpression) {
       String name = ((GrReferenceExpression) invoked).getName();
       assert name != null;
       name = StringUtil.trimStart(name, GETTER_PREFIX);
       name = StringUtil.decapitalize(name);
-      replaceWithGetter(call, name);
+      replaceWithGetter(((GrMethodCallExpression) call), name);
     } else if (isSetterInvocation(call) && invoked instanceof GrReferenceExpression) {
       String name = ((GrReferenceExpression) invoked).getName();
       assert name != null;
-      GrArgumentList args = call.getArgumentList();
-      assert args != null;
       name = StringUtil.trimStart(name, SETTER_PREFIX);
       name = StringUtil.decapitalize(name);
-      GrExpression value = args.getExpressionArguments()[0];
+      GrExpression value;
+      if (call instanceof GrMethodCallExpression) {
+        GrArgumentList args = ((GrMethodCallExpression) call).getArgumentList();
+        assert args != null;
+        value = args.getExpressionArguments()[0];
+      } else {
+        GrCommandArgumentList args = ((GrApplicationStatement) call).getArgumentList();
+        assert args != null;
+        value = args.getArguments()[0];
+      }
       replaceWithSetter(call, name, value);
     }
   }
 
-  private static void replaceWithSetter(GrMethodCallExpression call, String name, GrExpression value) throws IncorrectOperationException {
-    GrReferenceExpression refExpr = (GrReferenceExpression) call.getInvokedExpression();
+  private static void replaceWithSetter(GrCall call, String name, GrExpression value) throws IncorrectOperationException {
+    GrReferenceExpression refExpr = (GrReferenceExpression) (call instanceof GrMethodCallExpression ?
+        ((GrMethodCallExpression) call).getInvokedExpression() :
+        ((GrApplicationStatement) call).getFunExpression());
     String oldNameStr = refExpr.getReferenceNameElement().getText();
     String newRefExpr = StringUtil.trimEnd(refExpr.getText(), oldNameStr) + name;
-    IntentionUtils.replaceExpression(newRefExpr + " = " + value.getText(), call);
+    IntentionUtils.replaceStatement(newRefExpr + " = " + value.getText(), ((GrStatement) call));
   }
 
   private static void replaceWithGetter(GrMethodCallExpression call, String name) throws IncorrectOperationException {
@@ -76,8 +87,8 @@ public class JavaStylePropertiesInvocationIntention extends Intention {
 
   private static class JavaPropertyInvocationPredicate implements PsiElementPredicate {
     public boolean satisfiedBy(PsiElement element) {
-      if (!(element instanceof GrMethodCallExpression)) return false;
-      GrMethodCallExpression call = (GrMethodCallExpression) element;
+      if (!(element instanceof GrCall)) return false;
+      GrCall call = (GrCall) element;
       return isPropertyAccessor(call);
     }
   }
