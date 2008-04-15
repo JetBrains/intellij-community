@@ -7,10 +7,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.DummyCompileContext;
-import com.intellij.openapi.compiler.make.BuildInstruction;
-import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
-import com.intellij.openapi.compiler.make.BuildRecipe;
-import com.intellij.openapi.compiler.make.FileCopyInstruction;
+import com.intellij.openapi.compiler.make.*;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.deployment.LibraryLink;
@@ -235,6 +232,12 @@ public class BuildJarProjectSettings implements PersistentStateComponent<Element
           }
           //todo[nik] use IncrementalPackagingCompiler instead
           instruction.addFilesToJar(DummyCompileContext.getInstance(), tempFile, jarOutputStream, dependencies, tempWrittenRelativePaths, null);
+          return true;
+        }
+      }, false);
+      buildRecipe.visitInstructionsWithExceptions(new BuildInstructionVisitor() {
+        public boolean visitJarAndCopyBuildInstruction(final JarAndCopyBuildInstruction instruction) throws Exception {
+          instruction.deleteTemporaryJars();
           return true;
         }
       }, false);

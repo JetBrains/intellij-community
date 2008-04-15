@@ -29,4 +29,7 @@ public interface JarAndCopyBuildInstruction extends FileCopyInstruction {
                @NotNull File jarFile,
                @Nullable FileFilter fileFilter) throws IOException;
   File getJarFile();
+
+  @Deprecated
+  void deleteTemporaryJars();
 }
