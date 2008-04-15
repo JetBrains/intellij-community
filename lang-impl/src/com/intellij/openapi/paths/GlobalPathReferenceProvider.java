@@ -31,8 +31,6 @@ public class GlobalPathReferenceProvider implements PathReferenceProvider {
 
   @NonNls
   private static final String MAILTO_PREFIX = "mailto:";
-  @NonNls
-  private static final String JAVASCRIPT_PREFIX = "javascript:";
 
   public boolean createReferences(@NotNull PsiElement psiElement, final @NotNull List<PsiReference> references, final boolean soft) {
     final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(psiElement);
@@ -41,7 +39,7 @@ public class GlobalPathReferenceProvider implements PathReferenceProvider {
     }
     final TextRange range = manipulator.getRangeInElement(psiElement);
     final String s = range.substring(psiElement.getText());
-    if (s.contains("://") || s.startsWith(MAILTO_PREFIX) || s.startsWith(JAVASCRIPT_PREFIX)) {
+    if (s.contains("://") || s.startsWith(MAILTO_PREFIX)) {
       final PsiReference reference = PsiReferenceBase.createSelfReference(psiElement, psiElement);
       references.add(reference);
       return true;
