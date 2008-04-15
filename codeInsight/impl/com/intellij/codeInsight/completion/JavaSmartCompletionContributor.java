@@ -28,7 +28,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,8 +86,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
                       final String value = statisticsInfo.getValue();
                       if (value.startsWith(JavaStatisticsManager.CLASS_PREFIX)) {
                         final String qname = value.substring(JavaStatisticsManager.CLASS_PREFIX.length());
-                        final PsiClass[] classes = JavaPsiFacade.getInstance(file.getProject()).findClasses(qname, file.getResolveScope());
-                        ContainerUtil.process(classes, processor);
+                        for (final PsiClass psiClass : JavaPsiFacade.getInstance(file.getProject()).findClasses(qname, file.getResolveScope())) {
+                          if (!PsiTreeUtil.isAncestor(file, psiClass, true) && !processor.process(psiClass)) break;
+                        }
                       }
                     }
 
