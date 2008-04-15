@@ -9,20 +9,21 @@ class Return {
   }
 
   public void contextLValue() {
-    myReturn = new Return();
-    myReturn.myInt++;
+      myReturn = method();
     myReturn = null;
   }
 
   public void contextNoUsage() {
-      method();
+      myReturn = method();
   }
 
   public void contextRValue() {
-      Return r = method();
+      myReturn = method();
+    Return r = myReturn;
   }
 
   public void contextRValueQualified() {
-      Return r = this.method();
+      myReturn = method();
+    Return r = this.myReturn;
   }
 }

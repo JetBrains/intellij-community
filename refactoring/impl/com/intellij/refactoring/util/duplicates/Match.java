@@ -167,7 +167,12 @@ public final class Match {
                                            final PsiVariable outputVariable) throws IncorrectOperationException {
     final PsiStatement statement;
     if (outputVariable != null) {
-      statement = getOutputVariableValue(outputVariable).createReplacement(methodCallExpression);
+      ReturnValue returnValue = getOutputVariableValue(outputVariable);
+      if (returnValue == null && outputVariable instanceof PsiField) {
+        returnValue = new FieldReturnValue((PsiField)outputVariable);
+      }
+      if (returnValue == null) return;
+      statement = returnValue.createReplacement(methodCallExpression);
     }
     else if (getReturnValue() != null) {
       statement = getReturnValue().createReplacement(methodCallExpression);

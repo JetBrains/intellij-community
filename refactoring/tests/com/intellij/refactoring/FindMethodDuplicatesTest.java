@@ -190,7 +190,6 @@ public class FindMethodDuplicatesTest extends LightCodeInsightTestCase{
     doTest();
   }
 
-  @Bombed(description = "Check issues: IDEADEV-25352.", user = "Anna Kozlova", month = 6, day = 2)
   public void testReturnField() throws Exception {
     doTest();
   }
