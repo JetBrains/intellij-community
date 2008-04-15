@@ -398,7 +398,7 @@ public class FramesPanel extends UpdatableDebuggerView {
       final MethodsTracker tracker = new MethodsTracker();
       final int totalFramesCount = frames.size();
       int index = 0;
-      final long timestamp = System.currentTimeMillis();
+      final long timestamp = System.nanoTime();
       for (StackFrameProxyImpl stackFrameProxy : frames) {
         managerThread.invokeLater(
           new AppendFrameCommand(getSuspendContext(), stackFrameProxy, evaluationContext, tracker, index++, stackFrameProxy.equals(contextFrame), totalFramesCount, timestamp)
