@@ -34,7 +34,7 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @State(name = "MavenProjectNavigator", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
@@ -54,7 +54,7 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
   private final SimpleTreeBuilder treeBuilder;
   final SimpleTree tree;
 
-  private Map<VirtualFile, PomNode> fileToNode = new HashMap<VirtualFile, PomNode>();
+  private Map<VirtualFile, PomNode> fileToNode = new LinkedHashMap<VirtualFile, PomNode>();
 
   public MavenProjectNavigator(final Project project, MavenProjectsManager projectsManager, MavenRepository repository, MavenEventsHandler eventsHandler) {
     super(project, projectsManager, repository, eventsHandler);

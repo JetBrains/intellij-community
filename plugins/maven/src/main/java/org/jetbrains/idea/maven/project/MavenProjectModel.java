@@ -3,13 +3,14 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.model.Model;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.*;
 
+import java.io.File;
 import java.util.*;
 
 public class MavenProjectModel {
@@ -64,11 +65,10 @@ public class MavenProjectModel {
                                 Node parentNode,
                                 boolean isExistingModuleTree,
                                 Progress p) throws MavenException, CanceledException {
-    for (String modulePath : ProjectUtil.collectRelativeModulePaths(mavenModel, profiles, new HashSet<String>())) {
+    for (String modulePath : ProjectUtil.collectAbsoluteModulePaths(mavenModel, new File(pomFile.getPath()), profiles, new HashSet<String>())) {
       p.checkCanceled();
 
-      VirtualFile childFile = getMavenModuleFile(pomFile, modulePath);
-
+      VirtualFile childFile = LocalFileSystem.getInstance().findFileByPath(modulePath);
       if (childFile == null) {
         LOG.info("Cannot find maven module " + modulePath);
         continue;
@@ -84,18 +84,6 @@ public class MavenProjectModel {
         parentNode.mySubProjects.add(module);
       }
     }
-  }
-
-  @Nullable
-  private static VirtualFile getMavenModuleFile(VirtualFile parentPom, String moduleRelPath) {
-    final VirtualFile parentDir = parentPom.getParent();
-    if (parentDir != null) {
-      VirtualFile moduleDir = parentDir.findFileByRelativePath(moduleRelPath);
-      if (moduleDir != null) {
-        return moduleDir.findChild(Constants.POM_XML);
-      }
-    }
-    return null;
   }
 
   private Node findExistingRoot(final VirtualFile childFile) {

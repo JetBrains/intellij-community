@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,8 +19,8 @@ import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.MavenFactory;
+import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
@@ -33,7 +32,6 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -716,27 +714,8 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
 
     public boolean containsAsModule(PomNode node) {
-      if (mavenModel != null) {
-        File myParent = new File(virtualFile.getPath()).getParentFile();
-        File itsParent = new File(node.virtualFile.getPath()).getParentFile();
-        String relPath = FileUtil.getRelativePath(myParent, itsParent);
-
-        if (relPath != null) {
-          relPath = FileUtil.toSystemIndependentName(relPath);
-
-          Set<String> moduleNames = ProjectUtil.collectRelativeModulePaths(
-              mavenModel,
-              myProjectsManager.getActiveProfiles(virtualFile),
-              new HashSet<String>());
-
-          for (String moduleName : moduleNames) {
-            if (relPath.equals(moduleName)) {
-              return true;
-            }
-          }
-        }
-      }
-      return false;
+      if (mavenModel == null) return false;
+      return MavenProjectsManager.getInstance(project).isModuleOf(virtualFile, node.getFile());
     }
 
     public void setIgnored(boolean on) {

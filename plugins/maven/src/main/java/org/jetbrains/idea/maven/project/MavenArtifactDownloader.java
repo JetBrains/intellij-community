@@ -245,7 +245,7 @@ public class MavenArtifactDownloader {
 
     for (Map.Entry<MavenProject, Collection<String>> entry : projects.entrySet()) {
       final File file = entry.getKey().getFile();
-      if (!modulePaths.contains(FileUtil.toSystemIndependentName(file.getParent()))) { // only for top-level projects
+      if (!modulePaths.contains(FileUtil.toSystemIndependentName(file.getPath()))) { // only for top-level projects
         commands.add(new MavenRunnerParameters(file.getPath(), goals, entry.getValue()));
       }
     }
