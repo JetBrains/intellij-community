@@ -60,6 +60,10 @@ public class ConstructorDefinition implements GroovyElementTypes {
       return false;
     }
 
+    if (ParserUtils.lookAhead(builder, mNLS, kTHROWS) || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
+      ParserUtils.getToken(builder, mNLS);
+    }
+
     ThrowClause.parse(builder);
 
     if (builder.getTokenType() == mLCURLY || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {

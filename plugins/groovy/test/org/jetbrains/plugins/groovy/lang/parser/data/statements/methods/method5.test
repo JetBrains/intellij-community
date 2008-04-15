@@ -16,9 +16,9 @@ Groovy script
           <empty list>
         PsiElement(identifier)('someObj')
     PsiElement())(')')
+    PsiElement(new line)('\n')
     Throw clause
       <empty list>
-    PsiElement(new line)('\n')
     Open block
       PsiElement({)('{')
       PsiWhiteSpace('\n \t')
