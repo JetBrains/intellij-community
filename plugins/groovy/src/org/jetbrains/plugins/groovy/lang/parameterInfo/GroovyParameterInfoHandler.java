@@ -7,6 +7,7 @@ import com.intellij.lang.parameterInfo.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -62,29 +63,28 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
   }
 
   public GroovyPsiElement findElementForParameterInfo(CreateParameterInfoContext context) {
-    return getArgumentList(context.getEditor().getCaretModel().getOffset(), context.getFile());
+    return getMethodReference(context.getEditor().getCaretModel().getOffset(), context.getFile());
   }
 
   public GroovyPsiElement findElementForUpdatingParameterInfo(UpdateParameterInfoContext context) {
-    return getArgumentList(context.getEditor().getCaretModel().getOffset(), context.getFile());
+    return getMethodReference(context.getEditor().getCaretModel().getOffset(), context.getFile());
   }
 
-  private GroovyPsiElement getArgumentList(int offset, PsiFile file) {
+  private GroovyPsiElement getMethodReference(int offset, PsiFile file) {
     PsiElement element = file.findElementAt(offset);
-    if (element != null) {
-      final ASTNode node = element.getNode();
-      if (node != null && node.getElementType() == GroovyTokenTypes.mNLS) {
-        element = file.findElementAt(offset - 1);
-      }
-    }
-    if (element instanceof PsiWhiteSpace) element = element.getNextSibling();
     if (element == null) return null;
+
     GroovyPsiElement argList = PsiTreeUtil.getParentOfType(element, GrArgumentList.class);
     if (argList != null) return argList;
     final GrCall call = PsiTreeUtil.getParentOfType(element, GrCall.class);
     if (call != null) {
       argList = call.getArgumentList();
       if (argList != null && argList.getTextRange().contains(element.getTextRange().getStartOffset())) return argList;
+    } else {
+      offset = CharArrayUtil.shiftBackward(file.getText(), offset, "\n\t ");
+      if (offset <= 0) return null;
+      element = file.findElementAt(offset);
+      if (element != null && element.getParent() instanceof GrReferenceExpression) return (GroovyPsiElement) element.getParent();
     }
     return null;
   }
@@ -109,6 +109,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
       if (funExpr instanceof GrReferenceExpression) {
         variants = ((GrReferenceExpression) funExpr).getSameNameVariants();
       }
+    } else if (place instanceof GrReferenceExpression) {
+      variants = ((GrReferenceExpression) place).getSameNameVariants();
     }
     context.setItemsToShow(variants);
     context.showHint(place, place.getTextRange().getStartOffset(), this);

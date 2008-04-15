@@ -41,6 +41,9 @@ public class PropertyResolverProcessor extends ResolverProcessor {
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
     if (myName != null && element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
+      if (myForCompletion) {
+        return !myName.equals(method.getName()) || super.execute(element, substitutor);
+      }
       boolean lValue = myPlace instanceof GroovyPsiElement && PsiUtil.isLValue((GroovyPsiElement) myPlace);
       if (!lValue && PsiUtil.isSimplePropertyGetter(method, myName)) {
         myCandidates.clear();
