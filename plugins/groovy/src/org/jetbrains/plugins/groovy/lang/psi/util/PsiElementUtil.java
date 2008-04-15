@@ -41,7 +41,7 @@ public class PsiElementUtil {
     String name = refExpr.getName();
     if (name == null || !name.startsWith(SETTER_PREFIX)) return false;
 
-    name = StringUtil.trimStart(name, SETTER_PREFIX);
+    name = name.substring(SETTER_PREFIX.length());
     String propName = StringUtil.decapitalize(name);
     if (propName.length() == 0 || name.equals(propName)) return false;
 
@@ -62,7 +62,7 @@ public class PsiElementUtil {
     String name = refExpr.getName();
     if (name == null || !name.startsWith(GETTER_PREFIX)) return false;
 
-    name = StringUtil.trimStart(name, GETTER_PREFIX);
+    name = name.substring(GETTER_PREFIX.length());
     String propName = StringUtil.decapitalize(name);
     if (propName.length() == 0 || name.equals(propName)) return false;
 
