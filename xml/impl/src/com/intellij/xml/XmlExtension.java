@@ -161,4 +161,8 @@ public abstract class XmlExtension {
   public boolean isIndirectSyntax(final XmlAttributeDescriptor descriptor) {
     return false;
   }
+
+  public boolean isCustomTagAllowed(final XmlTag tag) {
+    return false;
+  }
 }

@@ -1,22 +1,22 @@
 package com.intellij.html.impl;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.XmlExtension;
+import com.intellij.xml.XmlAttributeDescriptorsProvider;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.jsp.impl.TldDescriptor;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Maxim.Mossienko
  */
 public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptorImpl {
-  @NonNls private static final String JSFC_ATTR_NAME = "jsfc";
 
   RelaxedHtmlFromSchemaElementDescriptor(XmlTag tag) {
     super(tag);
@@ -42,21 +42,12 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
 
   public static XmlElementDescriptor getRelaxedDescriptor(XmlElementDescriptor base, final XmlTag childTag) {
     final String namespace = childTag.getNamespace();
-
+    final XmlExtension extension = XmlExtension.getExtensionByElement(childTag);
     if(!XmlUtil.XHTML_URI.equals(namespace) && 
        ( base.getContentType() != XmlElementDescriptor.CONTENT_TYPE_EMPTY ||
-         (childTag.getNSDescriptor(namespace, true) instanceof TldDescriptor) // allow custom tag
+         (extension != null && extension.isCustomTagAllowed(childTag)) // allow custom tag
        ) ) {
       return new AnyXmlElementDescriptor(base,childTag.getNSDescriptor(namespace,true));
-    }
-    return null;
-  }
-
-  private static final XmlElementDescriptor findElementDescriptorFromString(String str, XmlTag context) {
-    final String namespaceByPrefix = context.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(str));
-    final XmlNSDescriptor nsDescriptor = context.getNSDescriptor(namespaceByPrefix, true);
-    if (nsDescriptor instanceof TldDescriptor) {
-      return ((TldDescriptor)nsDescriptor).getElementDescriptor(XmlUtil.findLocalNameByQualifiedName(str));
     }
     return null;
   }
@@ -66,15 +57,14 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
   }
 
   public static XmlAttributeDescriptor[] addAttrDescriptorsForFacelets(final XmlTag context,
-                                                                       final XmlAttributeDescriptor[] attributeDescriptors) {
-    final String jsfc = context != null ? context.getAttributeValue(JSFC_ATTR_NAME):null;
-    if (jsfc == null) return attributeDescriptors;
-    final XmlElementDescriptor descriptor = findElementDescriptorFromString(jsfc, context);
-
-    if (descriptor != null) {
-      return ArrayUtil.mergeArrays(attributeDescriptors, descriptor.getAttributesDescriptors(context), XmlAttributeDescriptor.class);
+                                                                       XmlAttributeDescriptor[] descriptors) {
+    if (context == null) {
+      return descriptors;
     }
-    return attributeDescriptors;
+    for (XmlAttributeDescriptorsProvider provider: Extensions.getExtensions(XmlAttributeDescriptorsProvider.EP_NAME)) {
+      descriptors = ArrayUtil.mergeArrays(descriptors, provider.getAttributeDescriptors(context), XmlAttributeDescriptor.class);
+    }
+    return descriptors;
   }
 
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
@@ -84,12 +74,17 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
     return getAttributeDescriptorFromFacelets(attributeName, context);
   }
 
+  @Nullable
   public static XmlAttributeDescriptor getAttributeDescriptorFromFacelets(final String attributeName, final XmlTag context) {
-    final String jsfc = context != null ? context.getAttributeValue(JSFC_ATTR_NAME):null;
-
-    final XmlElementDescriptor xmlElementDescriptor = jsfc != null ? findElementDescriptorFromString(jsfc, context):null;
-    if (xmlElementDescriptor != null) return xmlElementDescriptor.getAttributeDescriptor(attributeName, context);
-
+    if (context == null) {
+      return null;
+    }
+    for (XmlAttributeDescriptorsProvider provider: Extensions.getExtensions(XmlAttributeDescriptorsProvider.EP_NAME)) {
+      final XmlAttributeDescriptor descriptor = provider.getAttributeDescriptor(attributeName, context);
+      if (descriptor != null) {
+        return descriptor;
+      }
+    }
     return null;
   }
 
