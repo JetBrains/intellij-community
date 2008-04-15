@@ -59,7 +59,12 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
         saveOrReload(open, list);
       }
     }
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES).after(new ArrayList<VFileEvent>(list));
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES)
+            .after(new ArrayList<VFileEvent>(list));
+      }
+    });
   }
 
   @TestOnly
