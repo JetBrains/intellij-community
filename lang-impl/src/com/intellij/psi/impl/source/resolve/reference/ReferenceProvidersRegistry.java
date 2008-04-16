@@ -11,6 +11,7 @@ import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.codeInsight.completion.LegacyCompletionContributor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -181,6 +182,11 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
       return result;
     }
     Collections.sort(providers, PRIORITY_COMPARATOR);
+    if (LegacyCompletionContributor.DEBUG) {
+      System.out.println("ReferenceProvidersRegistry.getReferencesFromProviders");
+      System.out.println("providers = " + providers);
+    }
+
     final Double maxPriority = providers.get(0).getThird();
     next: for (Trinity<PsiReferenceProvider, ProcessingContext, Double> trinity : providers) {
       final PsiReference[] refs = trinity.getFirst().getReferencesByElement(context, trinity.getSecond());
