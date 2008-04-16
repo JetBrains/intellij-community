@@ -5,7 +5,6 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -28,23 +27,6 @@ import java.util.Map;
  */
 public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   private static final Key<CachedValue<FactoryMap<String,List<String>>>> NAMESPACE_PROVIDER_KEY = Key.create("NamespaceProvider");
-  private static final UserDataCache<CachedValue<FactoryMap<String,List<String>>>, XmlFile, Object> ourNamespaceCache =
-    new UserDataCache<CachedValue<FactoryMap<String, List<String>>>, XmlFile, Object>() {
-      protected CachedValue<FactoryMap<String, List<String>>> compute(final XmlFile file, final Object p) {
-        return file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<FactoryMap<String, List<String>>>() {
-          public Result<FactoryMap<String, List<String>>> compute() {
-            final FactoryMap<String, List<String>> map = new ConcurrentFactoryMap<String, List<String>>() {
-              protected List<String> create(final String key) {
-                final DomFileDescription<?> description = DomManagerImpl.getDomManager(file.getProject()).getDomFileDescription(file);
-                if (description == null) return Collections.emptyList();
-                return description.getAllowedNamespaces(key, file);
-              }
-            };
-            return Result.create(map, file);
-          }
-        }, false);
-      }
-    };
   private static final Map<EvaluatedXmlNameImpl,EvaluatedXmlNameImpl> ourInterned = new ConcurrentHashMap<EvaluatedXmlNameImpl,EvaluatedXmlNameImpl>();
 
   private final XmlName myXmlName;
@@ -103,7 +85,23 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
 
   @NotNull
   private List<String> getAllowedNamespaces(final XmlFile file) {
-    final List<String> list = ourNamespaceCache.get(NAMESPACE_PROVIDER_KEY, file, null).getValue().get(myNamespaceKey);
+    CachedValue<FactoryMap<String, List<String>>> value = file.getUserData(NAMESPACE_PROVIDER_KEY);
+    if (value == null) {
+      file.putUserData(NAMESPACE_PROVIDER_KEY, value = file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<FactoryMap<String, List<String>>>() {
+          public Result<FactoryMap<String, List<String>>> compute() {
+            final FactoryMap<String, List<String>> map = new ConcurrentFactoryMap<String, List<String>>() {
+              protected List<String> create(final String key) {
+                final DomFileDescription<?> description = DomManagerImpl.getDomManager(file.getProject()).getDomFileDescription(file);
+                if (description == null) return Collections.emptyList();
+                return description.getAllowedNamespaces(key, file);
+              }
+            };
+            return Result.create(map, file);
+          }
+        }, false));
+    }
+
+    final List<String> list = value.getValue().get(myNamespaceKey);
     assert list != null;
     return list;
   }
@@ -163,3 +161,4 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
     return name;
   }
 }
+                
