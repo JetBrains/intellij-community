@@ -74,7 +74,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     myParameters.setText(configuration.scriptParams);
 
     scriptPathField.setText(configuration.scriptPath);
-    workDirField.setText(configuration.getAbsoluteWorkDir());
+    workDirField.setText(configuration.getWorkDir());
 
     myDebugCB.setEnabled(true);
     myDebugCB.setSelected(configuration.isDebugEnabled);
@@ -92,7 +92,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     configuration.isDebugEnabled = myDebugCB.isSelected();
     configuration.scriptParams = myParameters.getText();
     configuration.scriptPath = scriptPathField.getText();
-    configuration.setAbsoluteWorkDir(workDirField.getText());
+    configuration.setWorkDir(workDirField.getText());
   }
 
   @NotNull

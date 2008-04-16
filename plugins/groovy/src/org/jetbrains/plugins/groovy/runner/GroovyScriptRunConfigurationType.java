@@ -79,7 +79,7 @@ public class GroovyScriptRunConfigurationType implements LocatableConfigurationT
     final PsiFile file = aClass.getContainingFile();
     final PsiDirectory dir = file.getContainingDirectory();
     assert dir != null;
-    configuration.setAbsoluteWorkDir(dir.getVirtualFile().getPath());
+    configuration.setWorkDir(dir.getVirtualFile().getPath());
     final VirtualFile vFile = file.getVirtualFile();
     assert vFile != null;
     configuration.scriptPath = vFile.getPath();
