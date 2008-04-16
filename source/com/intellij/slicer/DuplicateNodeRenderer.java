@@ -27,6 +27,7 @@ public class DuplicateNodeRenderer {
     Color old = g.getColor();
     for (int i = start; i < end; i++) {
       TreePath path = tree.getPathForRow(i);
+      if (path == null) continue;
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Rectangle accumRect = null;
       TreePath accumPath = null;
