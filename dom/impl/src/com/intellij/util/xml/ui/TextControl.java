@@ -6,22 +6,21 @@ package com.intellij.util.xml.ui;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PlainTextTokenTypes;
-import com.intellij.psi.impl.source.PsiCodeFragmentImpl;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -51,7 +50,8 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
     boundedComponent.removeAll();
     final Function<String, Document> factory = new Function<String, Document>() {
       public Document fun(final String s) {
-        return PsiDocumentManager.getInstance(project).getDocument(new PsiCodeFragmentImpl(project, PlainTextTokenTypes.PLAIN_TEXT, true, "a.txt", s));
+        return PsiDocumentManager.getInstance(project)
+        .getDocument(PsiFileFactory.getInstance(project).createFileFromText("a.txt", PlainTextLanguage.INSTANCE, "", true, false));
       }
     };
     final TextPanel boundedComponent1 = boundedComponent;

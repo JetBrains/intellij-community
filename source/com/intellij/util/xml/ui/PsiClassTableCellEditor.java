@@ -17,7 +17,6 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.AbstractTableCellEditor;
-import com.intellij.util.xml.DomElement;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,10 +30,6 @@ public class PsiClassTableCellEditor extends AbstractTableCellEditor {
   private final Project myProject;
   private final GlobalSearchScope mySearchScope;
   private EditorTextField myEditor;
-
-  public PsiClassTableCellEditor(DomElement element) {
-    this(element.getManager().getProject(), element.getResolveScope());
-  }
 
   public PsiClassTableCellEditor(final Project project, final GlobalSearchScope searchScope) {
     myProject = project;

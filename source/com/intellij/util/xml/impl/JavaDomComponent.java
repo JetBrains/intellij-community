@@ -14,6 +14,8 @@ import com.intellij.util.xml.converters.values.ClassArrayConverter;
 import com.intellij.util.xml.converters.values.ClassValueConverter;
 import com.intellij.util.xml.ui.*;
 
+import javax.swing.table.TableCellEditor;
+
 /**
  * @author peter
  */
@@ -40,6 +42,12 @@ public class JavaDomComponent extends AbstractProjectComponent{
     factory.registerCustomControl(PsiType.class, new Function<DomWrapper<String>, BaseControl>() {
       public BaseControl fun(final DomWrapper<String> wrapper) {
         return new PsiTypeControl(wrapper, false);
+      }
+    });
+
+    factory.registerCustomCellEditor(PsiClass.class, new Function<DomElement, TableCellEditor>() {
+      public TableCellEditor fun(final DomElement element) {
+        return new PsiClassTableCellEditor(element.getManager().getProject(), element.getResolveScope());
       }
     });
   }

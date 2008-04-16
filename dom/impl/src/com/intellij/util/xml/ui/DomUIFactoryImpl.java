@@ -12,9 +12,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.UserActivityListener;
@@ -41,30 +39,31 @@ import java.util.List;
  */
 public class DomUIFactoryImpl extends DomUIFactory {
   private final ClassMap<Function<DomWrapper<String>, BaseControl>> myCustomControlCreators = new ClassMap<Function<DomWrapper<String>, BaseControl>>();
+  private final ClassMap<Function<DomElement, TableCellEditor>> myCustomCellEditorCreators = new ClassMap<Function<DomElement, TableCellEditor>>();
 
-  public TableCellEditor createPsiClasssTableCellEditor(Project project, GlobalSearchScope searchScope) {
-    return new PsiClassTableCellEditor(project, searchScope);
+  public DomUIFactoryImpl() {
+    final Function<DomElement, TableCellEditor> booleanCreator = new Function<DomElement, TableCellEditor>() {
+      public TableCellEditor fun(final DomElement domElement) {
+        return new BooleanTableCellEditor();
+      }
+    };
+    registerCustomCellEditor(Boolean.class, booleanCreator);
+    registerCustomCellEditor(boolean.class, booleanCreator);
+    registerCustomCellEditor(String.class, new Function<DomElement, TableCellEditor>() {
+      public TableCellEditor fun(final DomElement domElement) {
+        return new DefaultCellEditor(removeBorder(new JTextField()));
+      }
+    });
   }
 
   protected TableCellEditor createCellEditor(DomElement element, Class type) {
-    if (Boolean.class.equals(type) || boolean.class.equals(type)) {
-      return new BooleanTableCellEditor();
-    }
-
-    if (String.class.equals(type)) {
-      return new DefaultCellEditor(removeBorder(new JTextField()));
-    }
-
-    if (PsiClass.class.equals(type)) {
-      return new PsiClassTableCellEditor(element.getManager().getProject(), element.getResolveScope());
-    }
-
     if (Enum.class.isAssignableFrom(type)) {
       return new ComboTableCellEditor((Class<? extends Enum>)type, false);
     }
 
-    assert false : "Type not supported: " + type;
-    return null;
+    final Function<DomElement, TableCellEditor> function = myCustomCellEditorCreators.get(type);
+    assert function != null : "Type not supported: " + type;
+    return function.fun(element);
   }
 
   public final UserActivityWatcher createEditorAwareUserActivityWatcher() {
@@ -164,6 +163,10 @@ public class DomUIFactoryImpl extends DomUIFactory {
 
   public void registerCustomControl(Class aClass, Function<DomWrapper<String>, BaseControl> creator) {
     myCustomControlCreators.put(aClass, creator);
+  }
+
+  public void registerCustomCellEditor(final Class aClass, final Function<DomElement, TableCellEditor> creator) {
+    myCustomCellEditorCreators.put(aClass, creator);
   }
 
   private static <T extends JComponent> T removeBorder(final T component) {

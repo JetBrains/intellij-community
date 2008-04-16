@@ -18,7 +18,6 @@ package com.intellij.util.xml.ui;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
@@ -107,8 +106,6 @@ public abstract class DomUIFactory {
     return getDomUIFactory().createCellEditor(genericDomValue, DomUtil.extractParameterClassFromGenericType(genericDomValue.getDomElementType()));
   }
 
-  public abstract TableCellEditor createPsiClasssTableCellEditor(Project project, GlobalSearchScope searchScope);
-
   protected abstract TableCellEditor createCellEditor(DomElement element, Class type);
 
   public abstract UserActivityWatcher createEditorAwareUserActivityWatcher();
@@ -118,6 +115,8 @@ public abstract class DomUIFactory {
   public abstract BaseControl createTextControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
 
   public abstract void registerCustomControl(Class aClass, Function<DomWrapper<String>, BaseControl> creator);
+
+  public abstract void registerCustomCellEditor(Class aClass, Function<DomElement, TableCellEditor> creator);
 
   @Nullable
   public abstract BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange);
