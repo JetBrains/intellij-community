@@ -2,14 +2,12 @@ package org.jetbrains.plugins.groovy.lang.parameterInfo;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
@@ -63,14 +61,14 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
   }
 
   public GroovyPsiElement findElementForParameterInfo(CreateParameterInfoContext context) {
-    return getMethodReference(context.getEditor().getCaretModel().getOffset(), context.getFile());
+    return findAnchorElement(context.getEditor().getCaretModel().getOffset(), context.getFile());
   }
 
   public GroovyPsiElement findElementForUpdatingParameterInfo(UpdateParameterInfoContext context) {
-    return getMethodReference(context.getEditor().getCaretModel().getOffset(), context.getFile());
+    return findAnchorElement(context.getEditor().getCaretModel().getOffset(), context.getFile());
   }
 
-  private GroovyPsiElement getMethodReference(int offset, PsiFile file) {
+  private GroovyPsiElement findAnchorElement(int offset, PsiFile file) {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
 
