@@ -353,6 +353,23 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return array.toArray(new HighlightInfo[array.size()]);
   }
 
+  @NotNull
+  public static HighlightInfo[] getHighlightsAround(Document document, Project project, int offset) {
+    LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
+    HighlightInfo[] highlights = getHighlights(document, project);
+    if (highlights == null) return HighlightInfo.EMPTY_ARRAY;
+    Collection<HighlightInfo> array = new ArrayList<HighlightInfo>();
+
+    for (HighlightInfo info : highlights) {
+      if (
+          info.endOffset >= offset &&
+          info.startOffset <= offset) {
+        array.add(info);
+      }
+    }
+    return array.toArray(new HighlightInfo[array.size()]);
+  }
+
   @Nullable
   public HighlightInfo findHighlightByOffset(Document document, int offset, boolean includeFixRange) {
     HighlightInfo[] highlights = getHighlights(document, myProject);

@@ -94,10 +94,10 @@ public final class QuickFixAction {
     final Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-    HighlightInfo info = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(editor.getDocument(), offset, true);
     List<HighlightInfo.IntentionActionDescriptor> list = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    addAvailableActionsForGroups(info, editor, file, list, passId == -1 ? null : new int[]{passId});
+    for (HighlightInfo info : DaemonCodeAnalyzerImpl.getHighlightsAround(editor.getDocument(), project, offset)) {
+      addAvailableActionsForGroups(info, editor, file, list, passId == -1 ? null : new int[]{passId});
+    }
     return list;
   }
 
