@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -171,10 +172,10 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
     // search for getters/setters
     PsiClass aClass = field.getContainingClass();
 
-    final JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(field.getProject());
+    Project project = field.getProject();
+    final JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
 
-    final String propertyName =
-        manager.variableNameToPropertyName(field.getName(), VariableKind.FIELD);
+    final String propertyName = manager.variableNameToPropertyName(field.getName(), VariableKind.FIELD);
     String newPropertyName = manager.variableNameToPropertyName(newName, VariableKind.FIELD);
 
     boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
@@ -208,17 +209,16 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
         setter = null;
         newSetterName = null;
         shouldRenameSetterParameter = false;
-      } else if (newSetterParameterName.equals(setter.getParameterList().getParameters()[0].getName())) {
+      }
+      else if (newSetterParameterName.equals(setter.getParameterList().getParameters()[0].getName())) {
         shouldRenameSetterParameter = false;
       }
     }
 
-    if (getter != null || setter != null) {
-      if (askToRenameAccesors(getter, setter, newName)) {
-        getter = null;
-        setter = null;
-        shouldRenameSetterParameter = false;
-      }
+    if ((getter != null || setter != null) && askToRenameAccesors(getter, setter, newName, project)) {
+      getter = null;
+      setter = null;
+      shouldRenameSetterParameter = false;
     }
 
     if (getter != null) {
@@ -235,10 +235,10 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
     }
   }
 
-  private static boolean askToRenameAccesors(PsiMethod getter, PsiMethod setter, String newName) {
+  private static boolean askToRenameAccesors(PsiMethod getter, PsiMethod setter, String newName, final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return false;
     String text = RefactoringMessageUtil.getGetterSetterMessage(newName, RefactoringBundle.message("rename.title"), getter, setter);
-    return Messages.showYesNoDialog(getter.getProject(), text, RefactoringBundle.message("rename.title"), Messages.getQuestionIcon()) != 0;
+    return Messages.showYesNoDialog(project, text, RefactoringBundle.message("rename.title"), Messages.getQuestionIcon()) != 0;
   }
 
   private static void addOverriddenAndImplemented(PsiClass aClass, PsiMethod methodPrototype, String newName,
@@ -330,7 +330,7 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
     }
   }
 
-  public static void findSubmemberHidesFieldCollisions(final PsiField field, final String newName, final List<UsageInfo> result) {
+  private static void findSubmemberHidesFieldCollisions(final PsiField field, final String newName, final List<UsageInfo> result) {
     if (field.getContainingClass() == null) return;
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) return;
     final PsiClass containingClass = field.getContainingClass();
@@ -362,7 +362,7 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (!expression.isQualified()) {
-          final PsiElement resolved = expression.resolve();
+          PsiElement resolved = expression.resolve();
           if (resolved instanceof PsiField) {
             final PsiField field = (PsiField)resolved;
             String fieldNewName = allRenames.containsKey(field) ? allRenames.get(field) : field.getName();

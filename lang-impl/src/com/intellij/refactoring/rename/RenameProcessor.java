@@ -59,8 +59,9 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
     setNewName(newName);
   }
-  public RenameProcessor(Project project, PsiElement element) {
-    this(project, element, null, false, false);
+
+  public RenameProcessor(Project project) {
+    this(project, null, null, false, false);
   }
 
   public Set<PsiElement> getElements() {
@@ -153,11 +154,11 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       .runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("searching.for.variables"), true, myProject);
   }
 
-  public void addElement(PsiElement element, String newName) {
+  public void addElement(@NotNull PsiElement element, @NotNull String newName) {
     myAllRenames.put(element, newName);
   }
 
-  private void setNewName(String newName) {
+  private void setNewName(@NotNull String newName) {
     if (myPrimaryElement == null) {
       myCommandName = RefactoringBundle.message("renaming.something");
       return;

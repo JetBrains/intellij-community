@@ -24,7 +24,7 @@ import java.util.List;
  * @author yole
  */
 public abstract class RenamePsiElementProcessor {
-  public static final ExtensionPointName<RenamePsiElementProcessor> EP_NAME = ExtensionPointName.create("com.intellij.renamePsiElementProcessor");
+  private static final ExtensionPointName<RenamePsiElementProcessor> EP_NAME = ExtensionPointName.create("com.intellij.renamePsiElementProcessor");
 
   public abstract boolean canProcessElement(PsiElement element);
 
@@ -39,7 +39,7 @@ public abstract class RenamePsiElementProcessor {
   }
 
   @Nullable
-  public Pair<String, String> getTextOccurrenceSearchStrings(final PsiElement element, final String newName) {
+  public Pair<String, String> getTextOccurrenceSearchStrings(@NotNull PsiElement element, @NotNull String newName) {
     return null;
   }
 
@@ -79,10 +79,7 @@ public abstract class RenamePsiElementProcessor {
   }
 
   public boolean isToSearchInComments(final PsiElement element) {
-    if (element instanceof PsiFileSystemItem) {
-      return RefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FILE;
-    }
-    return false;
+    return element instanceof PsiFileSystemItem && RefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FILE;
   }
 
   public void setToSearchInComments(final PsiElement element, boolean enabled) {
@@ -92,10 +89,7 @@ public abstract class RenamePsiElementProcessor {
   }
 
   public boolean isToSearchForTextOccurrences(final PsiElement element) {
-    if (element instanceof PsiFileSystemItem) {
-      return RefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_FILE;
-    }
-    return false;
+    return element instanceof PsiFileSystemItem && RefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_FILE;
   }
 
   public void setToSearchForTextOccurrences(final PsiElement element, boolean enabled) {
@@ -113,7 +107,7 @@ public abstract class RenamePsiElementProcessor {
                              final List<UsageInfo> result) {
   }
   
-  public static RenamePsiElementProcessor DEFAULT = new RenamePsiElementProcessor() {
+  public static final RenamePsiElementProcessor DEFAULT = new RenamePsiElementProcessor() {
     public boolean canProcessElement(final PsiElement element) {
       return true;
     }

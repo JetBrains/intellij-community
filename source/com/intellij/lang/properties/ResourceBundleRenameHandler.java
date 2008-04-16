@@ -94,7 +94,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
         if (!CodeInsightUtilBase.prepareFileForWrite(propertiesFile)) return false;
       }
 
-      final RenameProcessor renameProcessor = new RenameProcessor(myProject, null);
+      final RenameProcessor renameProcessor = new RenameProcessor(myProject);
       String baseName = myResourceBundle.getBaseName();
       for (PropertiesFile propertiesFile : propertiesFiles) {
         final VirtualFile virtualFile = propertiesFile.getVirtualFile();

@@ -23,6 +23,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -88,7 +89,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   }
 
   @Nullable
-  public Pair<String, String> getTextOccurrenceSearchStrings(final PsiElement element, final String newName) {
+  public Pair<String, String> getTextOccurrenceSearchStrings(@NotNull final PsiElement element, @NotNull final String newName) {
     if (element instanceof PsiClass) {
       final PsiClass aClass = (PsiClass)element;
       if (aClass.getParent() instanceof PsiClass) {

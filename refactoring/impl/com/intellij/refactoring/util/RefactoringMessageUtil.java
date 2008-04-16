@@ -48,9 +48,11 @@ public class RefactoringMessageUtil {
     String text;
     if (getter != null && setter != null) {
       text = RefactoringBundle.message("getter.and.setter.methods.found.for.the.field.0", newName, action);
-    } else if (getter != null) {
+    }
+    else if (getter != null) {
       text = RefactoringBundle.message("getter.method.found.for.the.field.0", newName, action);
-    } else {
+    }
+    else {
       text = RefactoringBundle.message("setter.method.found.for.the.field.0", newName, action);
     }
     return text;

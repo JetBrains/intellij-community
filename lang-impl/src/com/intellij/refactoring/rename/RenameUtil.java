@@ -21,6 +21,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -55,9 +56,7 @@ public class RenameUtil {
     processor.findCollisions(element, newName, allRenames, result);
 
     if (searchInStringsAndComments && !(element instanceof PsiDirectory)) {
-      String stringToSearch = ElementDescriptionUtil.getElementDescription(element, false
-                                                                                    ? NonCodeSearchDescriptionLocation.NON_JAVA
-                                                                                    : NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
+      String stringToSearch = ElementDescriptionUtil.getElementDescription(element, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
       if (stringToSearch != null) {
         final String stringToReplace = getStringToReplace(element, newName, false, processor);
         TextOccurrencesUtil.UsageInfoFactory factory = new NonCodeUsageInfoFactory(element, stringToReplace);
@@ -67,19 +66,15 @@ public class RenameUtil {
 
 
     if (searchForTextOccurences && !(element instanceof PsiDirectory)) {
-      String stringToSearch = ElementDescriptionUtil.getElementDescription(element, true
-                                                                                    ? NonCodeSearchDescriptionLocation.NON_JAVA
-                                                                                    : NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
+      String stringToSearch = ElementDescriptionUtil.getElementDescription(element, NonCodeSearchDescriptionLocation.NON_JAVA);
 
       if (stringToSearch != null) {
         final String stringToReplace = getStringToReplace(element, newName, true, processor);
         addTextOccurence(element, result, projectScope, stringToSearch, stringToReplace);
 
-        if (processor != null) {
-          Pair<String, String> additionalStringToSearch = processor.getTextOccurrenceSearchStrings(element, newName);
-          if (additionalStringToSearch != null) {
-            addTextOccurence(element, result, projectScope, additionalStringToSearch.first, additionalStringToSearch.second);
-          }
+        Pair<String, String> additionalStringToSearch = processor.getTextOccurrenceSearchStrings(element, newName);
+        if (additionalStringToSearch != null) {
+          addTextOccurence(element, result, projectScope, additionalStringToSearch.first, additionalStringToSearch.second);
         }
       }
     }
@@ -225,7 +220,7 @@ public class RenameUtil {
 
   public static void renameNonCodeUsages(@NotNull Project project, @NotNull NonCodeUsageInfo[] usages) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    com.intellij.util.containers.HashMap<Document, ArrayList<UsageOffset>> docsToOffsetsMap = new com.intellij.util.containers.HashMap<Document, ArrayList<UsageOffset>>();
+    Map<Document, ArrayList<UsageOffset>> docsToOffsetsMap = new HashMap<Document, ArrayList<UsageOffset>>();
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     for (NonCodeUsageInfo usage : usages) {
       PsiElement element = usage.getElement();
