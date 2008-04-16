@@ -24,4 +24,6 @@ public abstract class FacetAutodetectingManager {
   public abstract void disableAutodetectionInProject();
 
   public abstract void disableAutodetectionInProject(FacetType type);
+
+  public abstract boolean hasDetectors(@NotNull FacetType<?, ?> facetType);
 }

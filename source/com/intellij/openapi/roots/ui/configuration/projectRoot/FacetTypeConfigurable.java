@@ -11,9 +11,11 @@ import javax.swing.*;
  * @author nik
  */
 public class FacetTypeConfigurable extends NamedConfigurable<FacetType> {
+  private final FacetStructureConfigurable myFacetStructureConfigurable;
   private FacetType myFacetType;
 
-  public FacetTypeConfigurable(final FacetType facetType) {
+  public FacetTypeConfigurable(final FacetStructureConfigurable facetStructureConfigurable, final FacetType facetType) {
+    myFacetStructureConfigurable = facetStructureConfigurable;
     myFacetType = facetType;
   }
 
@@ -29,7 +31,7 @@ public class FacetTypeConfigurable extends NamedConfigurable<FacetType> {
   }
 
   public JComponent createOptionsPanel() {
-    return new JPanel();
+    return myFacetStructureConfigurable.getOrCreateFacetTypeEditor(myFacetType).createComponent();
   }
 
   public String getDisplayName() {

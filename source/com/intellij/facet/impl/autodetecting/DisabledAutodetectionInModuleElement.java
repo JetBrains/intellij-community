@@ -8,7 +8,7 @@ import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -17,7 +17,7 @@ import java.util.Set;
 @Tag("module")
 public class DisabledAutodetectionInModuleElement {
   private String myModuleName;
-  private Set<String> myFiles = new HashSet<String>();
+  private Set<String> myFiles = new LinkedHashSet<String>();
 
   public DisabledAutodetectionInModuleElement() {
   }
@@ -48,5 +48,18 @@ public class DisabledAutodetectionInModuleElement {
 
   public void setFiles(final Set<String> files) {
     myFiles = files;
+  }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final DisabledAutodetectionInModuleElement that = (DisabledAutodetectionInModuleElement)o;
+    return myFiles.equals(that.myFiles) && myModuleName.equals(that.myModuleName);
+
+  }
+
+  public int hashCode() {
+    return 31 * myModuleName.hashCode() + myFiles.hashCode();
   }
 }

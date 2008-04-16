@@ -4,20 +4,27 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeRegistry;
+import com.intellij.facet.impl.ui.facetType.FacetTypeEditor;
+import com.intellij.facet.impl.autodetecting.FacetAutodetectingManager;
+import com.intellij.facet.impl.autodetecting.FacetAutodetectingManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.Result;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author nik
@@ -34,21 +41,18 @@ import java.util.Collection;
 public class FacetStructureConfigurable extends BaseStructureConfigurable {
   private static final Icon ICON = IconLoader.getIcon("/modules/modules.png");//todo[nik] use facets icon
   private final ModuleManager myModuleManager;
+  private final Map<FacetType<?, ?>, FacetTypeEditor> myFacetTypeEditors = new HashMap<FacetType<?,?>, FacetTypeEditor>();
 
   public FacetStructureConfigurable(final Project project, ModuleManager moduleManager) {
     super(project);
     myModuleManager = moduleManager;
   }
 
-  public static FacetStructureConfigurable getInstance(final Project project) {
-    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, FacetStructureConfigurable.class);
-  }
-
   protected void loadTree() {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     for (FacetType<?,?> facetType : FacetTypeRegistry.getInstance().getFacetTypes()) {
-      FacetTypeConfigurable facetTypeConfigurable = new FacetTypeConfigurable(facetType);
+      FacetTypeConfigurable facetTypeConfigurable = new FacetTypeConfigurable(this, facetType);
       MyNode facetTypeNode = new MyNode(facetTypeConfigurable);
       addNode(facetTypeNode, myRoot);
 
@@ -61,6 +65,56 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
         }
       }
     }
+  }
+
+  public FacetTypeEditor getOrCreateFacetTypeEditor(@NotNull FacetType<?, ?> facetType) {
+    FacetTypeEditor editor = myFacetTypeEditors.get(facetType);
+    if (editor == null) {
+      editor = new FacetTypeEditor(myProject, myContext, facetType);
+      editor.reset();
+      myFacetTypeEditors.put(facetType, editor);
+    }
+    return editor;
+  }
+
+  public void reset() {
+    super.reset();
+    myFacetTypeEditors.clear();
+  }
+
+
+  public void apply() throws ConfigurationException {
+    super.apply();
+    for (FacetTypeEditor editor : myFacetTypeEditors.values()) {
+      editor.apply();
+    }
+    new WriteAction() {
+      protected void run(final Result result) {
+        ((FacetAutodetectingManagerImpl)FacetAutodetectingManager.getInstance(myProject)).redetectFacets();
+      }
+    }.execute();
+  }
+
+  public boolean isModified() {
+    return super.isModified() || isEditorsModified();
+  }
+
+  private boolean isEditorsModified() {
+    for (FacetTypeEditor editor : myFacetTypeEditors.values()) {
+      if (editor.isModified()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public void disposeUIResources() {
+    super.disposeUIResources();
+
+    for (FacetTypeEditor editor : myFacetTypeEditors.values()) {
+      editor.disposeUIResources();
+    }
+    myFacetTypeEditors.clear();
   }
 
   @NotNull

@@ -4,10 +4,7 @@
 
 package com.intellij.facet.impl.autodetecting;
 
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetConfiguration;
-import com.intellij.facet.FacetType;
-import com.intellij.facet.FacetTypeRegistry;
+import com.intellij.facet.*;
 import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.impl.FacetUtil;
 import com.intellij.facet.pointers.FacetPointer;
@@ -36,10 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.EventListener;
+import java.util.*;
 
 /**
  * @author nik
@@ -66,11 +60,14 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   private DisabledAutodetectionInfo myDisabledAutodetectionInfo = new DisabledAutodetectionInfo();
   private final EventDispatcher<ImplicitFacetListener> myImplicitFacetDispatcher = EventDispatcher.create(ImplicitFacetListener.class);
   private boolean myDetectionInProgress;
+  private Set<FacetType<?,?>> myFacetTypesWithDetectors = new THashSet<FacetType<?,?>>();
+  private final EnableAutodetectionWorker myEnableAutodetectionWorker;
 
   public FacetAutodetectingManagerImpl(final Project project, PsiManager psiManager, FacetPointersManager facetPointersManager) {
     myProject = project;
     myPsiManager = psiManager;
     myFacetPointersManager = facetPointersManager;
+    myEnableAutodetectionWorker = new EnableAutodetectionWorker(project, this);
   }
 
   public void projectOpened() {
@@ -118,8 +115,14 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     FacetOnTheFlyDetectorRegistryImpl<C, F> detectorRegistry = new FacetOnTheFlyDetectorRegistryImpl<C, F>(type);
     type.registerDetectors(new FacetDetectorRegistryEx<C>(null, detectorRegistry));
     if (detectorRegistry.hasDetectors()) {
+      myFacetTypesWithDetectors.add(type);
       myImplicitFacetManager.registerListeners(type);
     }
+  }
+
+  @Nullable
+  public DisabledAutodetectionByTypeElement getDisabledAutodetectionState(@NotNull FacetType<?,?> type) {
+    return myDisabledAutodetectionInfo.findElement(type.getStringId());
   }
 
   public DisabledAutodetectionInfo getState() {
@@ -131,6 +134,10 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   }
 
   public void processFile(VirtualFile virtualFile) {
+    processFile(virtualFile, true);
+  }
+
+  public void processFile(VirtualFile virtualFile, final boolean notifyIfDetected) {
     //todo[nik] do not detect facets if Project Structure dialog is opened. 
     if (!virtualFile.isValid() || myProject.isDisposed()) return;
 
@@ -156,7 +163,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
       removeObsoleteFacets(removed);
     }
 
-    if (facets != null && !facets.isEmpty()) {
+    if (notifyIfDetected && facets != null && !facets.isEmpty()) {
       myImplicitFacetManager.onImplicitFacetChanged();
     }
   }
@@ -210,6 +217,14 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     myMergingUpdateQueue.dispose();
     myPsiManager.removePsiTreeChangeListener(myPsiTreeChangeListener);
     myFileIndex.dispose();
+  }
+
+  public boolean hasDetectors(@NotNull FacetType<?, ?> facetType) {
+    return myFacetTypesWithDetectors.contains(facetType);
+  }
+
+  public void redetectFacets() {
+    myEnableAutodetectionWorker.redetectFacets();
   }
 
   public boolean isAutodetectionEnabled(final Module module, final FacetType facetType, final String url) {
@@ -289,6 +304,17 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
 
   public void fireImplicitFacetAccepted(final @NotNull Facet facet) {
     myImplicitFacetDispatcher.getMulticaster().implicitFacetAccepted(facet);
+  }
+
+  public void setDisabledAutodetectionState(final FacetType<?, ?> facetType, final DisabledAutodetectionByTypeElement element) {
+    String id = facetType.getStringId();
+    DisabledAutodetectionByTypeElement oldElement = myDisabledAutodetectionInfo.findElement(id);
+    myEnableAutodetectionWorker.queueChanges(facetType, oldElement, element);
+    myDisabledAutodetectionInfo.replaceElement(id, element);
+  }
+
+  public ImplicitFacetManager getImplicitFacetManager() {
+    return myImplicitFacetManager;
   }
 
   public interface ImplicitFacetListener extends EventListener {

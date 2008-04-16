@@ -10,8 +10,8 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -20,7 +20,7 @@ import java.util.Set;
 @Tag("facet-type")
 public class DisabledAutodetectionByTypeElement {
   private String myFacetTypeId;
-  private List<DisabledAutodetectionInModuleElement> myModuleElements = new ArrayList<DisabledAutodetectionInModuleElement>();
+  private Set<DisabledAutodetectionInModuleElement> myModuleElements = new LinkedHashSet<DisabledAutodetectionInModuleElement>();
   
   public DisabledAutodetectionByTypeElement() {
   }
@@ -46,7 +46,7 @@ public class DisabledAutodetectionByTypeElement {
 
   @Tag("modules")
   @AbstractCollection(surroundWithTag = false)
-  public List<DisabledAutodetectionInModuleElement> getModuleElements() {
+  public Set<DisabledAutodetectionInModuleElement> getModuleElements() {
     return myModuleElements;
   }
 
@@ -54,7 +54,7 @@ public class DisabledAutodetectionByTypeElement {
     myFacetTypeId = facetTypeId;
   }
 
-  public void setModuleElements(final List<DisabledAutodetectionInModuleElement> moduleElements) {
+  public void setModuleElements(final Set<DisabledAutodetectionInModuleElement> moduleElements) {
     myModuleElements = moduleElements;
   }
 
@@ -88,13 +88,26 @@ public class DisabledAutodetectionByTypeElement {
   }
 
   @Nullable
-  private DisabledAutodetectionInModuleElement findElement(final @NotNull String moduleName) {
+  public DisabledAutodetectionInModuleElement findElement(final @NotNull String moduleName) {
     for (DisabledAutodetectionInModuleElement element : myModuleElements) {
       if (moduleName.equals(element.getModuleName())) {
         return element;
       }
     }
     return null;
+  }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final DisabledAutodetectionByTypeElement that = (DisabledAutodetectionByTypeElement)o;
+    return myFacetTypeId.equals(that.myFacetTypeId) && myModuleElements.equals(that.myModuleElements);
+
+  }
+
+  public int hashCode() {
+    return myFacetTypeId.hashCode()+ 31 * myModuleElements.hashCode();
   }
 
   public boolean isDisabled(final String moduleName, final String url) {
@@ -105,5 +118,17 @@ public class DisabledAutodetectionByTypeElement {
 
     Set<String> files = element.getFiles();
     return files.isEmpty() || files.contains(url);
+  }
+
+  public boolean removeDisabled(final String moduleName) {
+    Iterator<DisabledAutodetectionInModuleElement> iterator = myModuleElements.iterator();
+    while (iterator.hasNext()) {
+      DisabledAutodetectionInModuleElement element = iterator.next();
+      if (element.getModuleName().equals(moduleName)) {
+        iterator.remove();
+        break;
+      }
+    }
+    return myModuleElements.size() > 0;
   }
 }

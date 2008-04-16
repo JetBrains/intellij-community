@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Iterator;
 
 /**
  * @author nik
@@ -33,8 +34,22 @@ public class DisabledAutodetectionInfo {
     return element != null && element.isDisabled(moduleName, url);
   }
 
+  public void replaceElement(@NotNull String facetTypeId, @Nullable DisabledAutodetectionByTypeElement element) {
+    Iterator<DisabledAutodetectionByTypeElement> iterator = myElements.iterator();
+    while (iterator.hasNext()) {
+      DisabledAutodetectionByTypeElement typeElement = iterator.next();
+      if (typeElement.getFacetTypeId().equals(facetTypeId)) {
+        iterator.remove();
+        break;
+      }
+    }
+    if (element != null) {
+      myElements.add(element);
+    }
+  }
+
   @Nullable
-  private DisabledAutodetectionByTypeElement findElement(@NotNull String facetTypeId) {
+  public DisabledAutodetectionByTypeElement findElement(@NotNull String facetTypeId) {
     for (DisabledAutodetectionByTypeElement element : myElements) {
       if (facetTypeId.equals(element.getFacetTypeId())) {
         return element;

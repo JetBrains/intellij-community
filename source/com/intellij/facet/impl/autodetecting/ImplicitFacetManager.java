@@ -48,15 +48,15 @@ public class ImplicitFacetManager implements Disposable {
     }
   };
   private List<Facet> myImplicitFacets = new ArrayList<Facet>();
-  private Project myProject;
+  private final Project myProject;
   private final FacetAutodetectingManagerImpl myAutodetectingManager;
   private final ProjectWideFacetListenersRegistry myProjectWideFacetListenersRegistry;
   private AttentionComponent myAttentionComponent;
   private StatusBar myStatusBar;
   private boolean myUIInitialized;
-  private Set<Facet> myPendingNewFacets = new HashSet<Facet>();
+  private final Set<Facet> myPendingNewFacets = new HashSet<Facet>();
   private JBPopup myNotificationPopup;
-  private Alarm myNotificationAlarm = new Alarm();
+  private final Alarm myNotificationAlarm = new Alarm();
 
   public ImplicitFacetManager(final Project project, final FacetAutodetectingManagerImpl autodetectingManager) {
     myProjectWideFacetListenersRegistry = ProjectWideFacetListenersRegistry.getInstance(project);
@@ -242,6 +242,11 @@ public class ImplicitFacetManager implements Disposable {
   public void skipImplicitFacet(final Facet facet) {
     markExplicit(facet);
     onImplicitFacetChanged();
+  }
+
+  public void computeImplicitFacetsAndShowDialog() {
+    myImplicitFacets = getImplicitFacets();
+    showImplicitFacetsDialog();
   }
 
   public void showImplicitFacetsDialog() {

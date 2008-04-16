@@ -331,6 +331,10 @@ public class StructureConfigurableContext implements Disposable {
      });
    }
 
+  public Module[] getModules() {
+    return myModulesConfigurator.getModules();
+  }
+
   public String getRealName(final Module module) {
     final ModifiableModuleModel moduleModel = myModulesConfigurator.getModuleModel();
     return moduleModel.getNewName(module) != null ? moduleModel.getNewName(module) : module.getName();
