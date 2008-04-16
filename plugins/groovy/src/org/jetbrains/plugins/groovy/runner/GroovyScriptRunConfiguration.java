@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -184,9 +185,10 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
       VirtualFile jdkDir = getJdkLibDirParent(jdk);
 
       for (String libPath : list) {
-        if (!isInJdk(jdkDir, libPath)) {
-          buffer.append(libPath).append(File.pathSeparator);
+        if (isInJdk(jdkDir, libPath)) {
+          continue;
         }
+        buffer.append(libPath).append(File.pathSeparator);
       }
     }
 
@@ -206,7 +208,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     File file = new File(rtLibraryPath).getParentFile().getParentFile().getParentFile();   //strip /jre/lib/rt.jar
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     assert vFile != null;
-    return vFile;
+    return SystemInfo.isMac ? vFile.getParent(): vFile;
   }
 
   private void configureScript(JavaParameters params) {
