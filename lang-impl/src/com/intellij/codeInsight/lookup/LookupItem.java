@@ -268,7 +268,7 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
   }
 
   @NotNull
-  public LookupItem setTypeText(final String text) {
+  public LookupItem<T> setTypeText(final String text) {
     setAttribute(TYPE_TEXT_ATTR, text);
     return this;
   }
