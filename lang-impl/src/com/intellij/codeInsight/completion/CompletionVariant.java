@@ -175,6 +175,10 @@ public class CompletionVariant {
     for (final CompletionVariantItem ce : myCompletionsList) {
       if(ce.myCompletion instanceof ElementFilter){
         final ElementFilter filter = (ElementFilter)ce.myCompletion;
+        if (LegacyCompletionContributor.DEBUG) {
+          System.out.println("CompletionVariant.addReferenceCompletions");
+          System.out.println("filter = " + filter);
+        }
         completionData.completeReference(reference, position, set, ce.myTailType, matcher, file, filter, this);
       }
     }

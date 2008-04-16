@@ -24,6 +24,7 @@ import java.util.Set;
  * @author peter
  */
 public class LegacyCompletionContributor extends CompletionContributor{
+  public static boolean DEBUG = false;
 
   public void registerCompletionProviders(final CompletionRegistrar registrar) {
     final PsiElementPattern.Capture<PsiElement> everywhere = PlatformPatterns.psiElement();
@@ -57,7 +58,13 @@ public class LegacyCompletionContributor extends CompletionContributor{
           }
         });
         if (ref != null) {
-          completionData.completeReference(ref, lookupSet, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile(), parameters.getOffset());
+          if (DEBUG) {
+            System.out.println("LegacyCompletionContributor.addCompletions");
+            System.out.println("ref = " + ref);
+          }
+
+          completionData.completeReference(ref, lookupSet, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile(),
+                                           parameters.getOffset());
         }
         for (final LookupItem item : lookupSet) {
           result.addElement(item);
