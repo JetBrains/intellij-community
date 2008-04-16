@@ -2,29 +2,42 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
+import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixProvider;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PathUtil;
 import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.beans.MavenModel;
 import org.jetbrains.idea.maven.project.Constants;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MavenModuleReference implements PsiReference {
+public class MavenModuleReference implements PsiReference, LocalQuickFixProvider {
   private PsiElement myElement;
   private VirtualFile myVirtualFile;
   private PsiFile myPsiFile;
@@ -103,6 +116,78 @@ public class MavenModuleReference implements PsiReference {
 
   private Project getProject() {
     return myPsiFile.getProject();
+  }
+
+  public LocalQuickFix[] getQuickFixes() {
+    if (resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
+    return new LocalQuickFix[] { new LocalQuickFix() {
+      @NotNull
+      public String getName() {
+        return "Create pom.xml";
+      }
+
+      @NotNull
+      public String getFamilyName() {
+        return "Maven";
+      }
+
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor d) {
+        try {
+          VirtualFile dir = myVirtualFile.getParent();
+          String path = PathUtil.getCanonicalPath(dir.getPath() + "/" + myText);
+          VirtualFile newDir = VfsUtil.createDirectories(path);
+          VirtualFile pom = newDir.createChildData(this, "pom.xml");
+
+          OpenFileDescriptor descriptor = new OpenFileDescriptor(project, pom, 0);
+          Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+
+          XmlFile psiFile = (XmlFile)PsiFileFactory.getInstance(project).createFileFromText(
+              "pom.xml",
+              StdLanguages.XML,
+              "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+              "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+              "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
+              "    <modelVersion>4.0.0</modelVersion>\n" +
+              "    <groupId>xxx</groupId>\n" +
+              "    <artifactId>xxx</artifactId>\n" +
+              "    <version>xxx</version>\n" +
+              "</project>");
+          
+          TemplateBuilder b = new TemplateBuilder(psiFile);
+
+          DomFileElement<MavenModel> parentModel =
+              DomManager.getDomManager(project).getFileElement((XmlFile)myElement.getContainingFile(), MavenModel.class);
+          MavenModel parentProject = parentModel.getRootElement();
+
+          String proposedArtifactId = pom.getParent().getName();
+          String proposedGroupId = parentProject.getGroupId().getValue();
+          String proposedVersion = parentProject.getVersion().getValue();
+
+          if (proposedGroupId == null) {
+            proposedGroupId = parentProject.getMavenParent().getGroupId().getValue();
+            if (proposedGroupId == null) proposedGroupId = "groupId";
+          }
+                                                     
+          if (proposedVersion == null) {
+            proposedVersion = parentProject.getMavenParent().getVersion().getValue();
+            if (proposedVersion == null) proposedVersion = "version";
+          }
+
+          b.replaceElement(getTagValueElement(psiFile, "groupId"), new ConstantNode(proposedGroupId));
+          b.replaceElement(getTagValueElement(psiFile, "artifactId"), new ConstantNode(proposedArtifactId));
+          b.replaceElement(getTagValueElement(psiFile, "version"), new ConstantNode(proposedVersion));
+
+          TemplateManager.getInstance(project).startTemplate(editor, b.buildTemplate());
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }};
+  }
+
+  private XmlText getTagValueElement(XmlFile psiFile, String qname) {
+    return psiFile.getDocument().getRootTag().findFirstSubTag(qname).getValue().getTextElements()[0];
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
