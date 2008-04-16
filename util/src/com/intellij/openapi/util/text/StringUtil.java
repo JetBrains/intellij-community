@@ -1211,4 +1211,19 @@ public class StringUtil {
     }
     return r.toString();
   }
+
+  public static String getPropertyName(final String methodName) {
+    if (methodName.startsWith("get")) {
+      return Introspector.decapitalize(methodName.substring(3));
+    }
+    else if (methodName.startsWith("is")) {
+      return Introspector.decapitalize(methodName.substring(2));
+    }
+    else if (methodName.startsWith("set")) {
+      return Introspector.decapitalize(methodName.substring(3));
+    }
+    else {
+      return null;
+    }
+  }
 }

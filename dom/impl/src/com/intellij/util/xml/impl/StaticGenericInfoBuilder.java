@@ -3,16 +3,15 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.util.Function;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -307,7 +306,7 @@ public class StaticGenericInfoBuilder {
 
   @Nullable
   private static String getPropertyName(JavaMethodSignature method) {
-    return PropertyUtil.getPropertyName(method.getMethodName());
+    return StringUtil.getPropertyName(method.getMethodName());
   }
 
   @NotNull

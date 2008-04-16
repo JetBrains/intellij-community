@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
@@ -139,11 +138,6 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     final Class clazz = DomUtil.getGenericValueParameter(invocationHandler.getDomElementType());
     if (clazz == null) return PsiReference.EMPTY_ARRAY;
 
-    if (ReflectionCache.isAssignable(PsiPackage.class, clazz)) {
-      final JavaClassReferenceProvider provider = new JavaClassReferenceProvider(getScope(domValue));
-      provider.setSoft(true);
-      return provider.getReferencesByElement(psiElement);
-    }
     if (ReflectionCache.isAssignable(Integer.class, clazz)) {
       return new PsiReference[]{new GenericDomValueReference<Integer>((GenericDomValue<Integer>)domValue) {
         public Object[] getVariants() {
