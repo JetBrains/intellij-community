@@ -12,12 +12,12 @@ public class MavenModelInspection extends BasicDomElementsInspection<MavenModel>
 
   @NotNull
   public String getGroupDisplayName() {
-    return "Maven";
+    return DomBundle.message("inspection.group");
   }
 
   @NotNull
   public String getDisplayName() {
-    return "Maven Model Inspection";
+    return DomBundle.message("inspection.name");
   }
 
   @NotNull
