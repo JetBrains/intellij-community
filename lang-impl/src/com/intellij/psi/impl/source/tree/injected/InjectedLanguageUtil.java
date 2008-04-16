@@ -671,7 +671,7 @@ public class InjectedLanguageUtil {
           patchLeafs(parsedNode, escapers, shreds);
           assert parsedNode.getText().equals(documentText) : "After patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars;
 
-          parsedNode.putUserData(TreeElement.MANAGER_KEY, (PsiManagerEx)myPsiManager);
+          ((FileElement)parsedNode).setManager((PsiManagerEx)myPsiManager);
           virtualFile.setContent(null, documentWindow.getText(), false);
           FileDocumentManagerImpl.registerDocument(documentWindow, virtualFile);
           synchronized (PsiLock.LOCK) {

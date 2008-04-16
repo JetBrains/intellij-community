@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -11,7 +10,7 @@ import com.intellij.util.CharTable;
 
 public class FileElement extends RepositoryTreeElement{
   private CharTable myCharTable = new CharTableImpl();
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.FileElement");
+  private PsiManagerEx myManager;
 
   public CharTable getCharTable() {
     return myCharTable;
@@ -21,15 +20,16 @@ public class FileElement extends RepositoryTreeElement{
     super(type);
   }
 
+  public void setManager(final PsiManagerEx manager) {
+    myManager = manager;
+  }
+
   public PsiManagerEx getManager() {
-    final PsiManagerEx manager = getUserData(MANAGER_KEY);
-    if (manager == null) {
+    if (myManager == null) {
       if(parent != null) return parent.getManager();
-      else return (PsiManagerEx)SourceTreeToPsiMap.treeElementToPsi(this).getManager(); //TODO: cache?
+      return (PsiManagerEx)SourceTreeToPsiMap.treeElementToPsi(this).getManager(); //TODO: cache?
     }
-    else {
-      return manager;
-    }
+    return myManager;
   }
 
   public ASTNode copyElement() {

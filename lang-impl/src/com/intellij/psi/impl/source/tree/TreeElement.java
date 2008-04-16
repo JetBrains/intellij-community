@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.DebugUtil;
@@ -17,8 +16,6 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   public volatile TreeElement next = null;
   public volatile TreeElement prev = null;
   public volatile CompositeElement parent = null;
-
-  public static final Key<PsiManagerEx> MANAGER_KEY = Key.create("Element.MANAGER_KEY");
 
   public Object clone() {
     TreeElement clone = (TreeElement)super.clone();
@@ -48,9 +45,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
       if (getTreeParent() != null) {
         return getTreeParent().getManager();
       }
-      else {
-        return getUserData(MANAGER_KEY);
-      }
+      return null;
     }
   }
 
