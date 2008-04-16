@@ -100,4 +100,9 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass {
     // do not show progress of visible highlighters update
     return myUpdateAll ? super.getProgress() : -1;
   }
+
+  public Collection<LineMarkerInfo> getMarkers() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    return myMarkers;
+  }
 }

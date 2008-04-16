@@ -16,6 +16,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -25,16 +26,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -194,7 +197,31 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     final PsiFile file = myFile;
     final Editor editor = myEditor;
 
-    List<HighlightInfo> result = collectHighlighInfos(file, editor);
+    final List<HighlightInfo> result = collectHighlighInfos(file, editor);
+
+    if (doTestLineMarkers()) {
+      collectLineMarkersForFile(file, editor, result);
+
+      if (file instanceof XmlFile) {
+        file.acceptChildren(new PsiRecursiveElementVisitor() {
+          public void visitElement(final PsiElement element) {
+            super.visitElement(element);
+            if (element instanceof PsiLanguageInjectionHost) {
+              ((PsiLanguageInjectionHost)element).processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+                public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
+                  collectLineMarkersForFile(
+                      injectedPsi,
+                      InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedPsi),
+                      result
+                  );
+                }
+              });
+
+            }
+          }
+        });
+      }
+    }
 
     boolean isToLaunchExternal = true;
     for (HighlightInfo info : result) {
@@ -216,6 +243,32 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
 
     return result;
+  }
+
+  private void collectLineMarkersForFile(final PsiFile file, final Editor editor, final List<HighlightInfo> result) {
+    LineMarkersPass lineMarkersPass =
+        new LineMarkersPass(myProject, file, editor.getDocument(), 0, editor.getDocument().getTextLength(), true);
+    lineMarkersPass.doCollectInformation(new MockProgressIndicator());
+    Collection<LineMarkerInfo> infoCollection = lineMarkersPass.getMarkers();
+    appendHighlightInfosFromLineMarkers(result, infoCollection);
+
+    SlowLineMarkersPass lineMarkersPass2 =
+        new SlowLineMarkersPass(myProject, file, editor.getDocument(), 0, editor.getDocument().getTextLength());
+    lineMarkersPass2.doCollectInformation(new MockProgressIndicator());
+    infoCollection = lineMarkersPass2.getMarkers();
+    appendHighlightInfosFromLineMarkers(result, infoCollection);
+  }
+
+  protected boolean doTestLineMarkers() {
+    return false;
+  }
+
+  private static void appendHighlightInfosFromLineMarkers(final List<HighlightInfo> result, final Collection<LineMarkerInfo> infoCollection) {
+    for(LineMarkerInfo lineMarkerInfo:infoCollection) {
+      GutterIconRenderer gutterIconRenderer = lineMarkerInfo.createGutterRenderer();
+      result.add(HighlightInfo.createHighlightInfo(HighlightInfoType.INFO, lineMarkerInfo.startOffset, lineMarkerInfo.startOffset,
+                                                   gutterIconRenderer != null ? gutterIconRenderer.getTooltipText() : lineMarkerInfo.toString()));
+    }
   }
 
   public static List<HighlightInfo> collectHighlighInfos(final PsiFile file, final Editor editor) {
