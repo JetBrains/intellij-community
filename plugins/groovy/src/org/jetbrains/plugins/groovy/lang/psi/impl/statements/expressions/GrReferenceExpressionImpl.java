@@ -457,7 +457,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
             processClassQualifierType(refExpr, processor, conjunct);
           }
         } else {
-          processClassQualifierType(refExpr, processor, qualifierType);
           if (qualifier instanceof GrReferenceExpression) {
             PsiElement resolved = ((GrReferenceExpression) qualifier).resolve();
             if (resolved instanceof PsiClass) { //omitted .class
@@ -468,9 +467,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
                 if (typeParameters.length == 1) {
                   substitutor = substitutor.put(typeParameters[0], qualifierType);
                 }
-                javaLangClass.processDeclarations(processor, substitutor, null, refExpr);
+                if (!javaLangClass.processDeclarations(processor, substitutor, null, refExpr)) return;
+                PsiType javaLangClassType = refExpr.getManager().getElementFactory().createType(javaLangClass, substitutor);
+                ResolveUtil.processNonCodeMethods(javaLangClassType, processor, refExpr.getProject());
+                return;
               }
             }
+            processClassQualifierType(refExpr, processor, qualifierType);
           }
         }
       }

@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.*;
@@ -425,8 +426,9 @@ public class PsiUtil {
               //members from java.lang.Class can be invoked without ".class"
               PsiClass javaLangClass = place.getManager().findClass("java.lang.Class", place.getResolveScope());
               if (javaLangClass != null) {
-                if (owner instanceof PsiMethod && javaLangClass.findMethodBySignature((PsiMethod) owner, true) != null) return true;
-                if (owner instanceof PsiField && javaLangClass.findFieldByName(((PsiField) owner).getName(), true) != null) return true;
+                PsiClass containingClass = ((PsiMember) owner).getContainingClass();
+                if (containingClass == null || //default groovy method
+                    InheritanceUtil.isInheritorOrSelf(javaLangClass, containingClass, true)) return true;
               }
             }
             return false;

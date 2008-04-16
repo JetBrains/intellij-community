@@ -218,17 +218,25 @@ public class CompleteReferenceExpression {
           getVariantsFromQualifierType(refExpr, processor, conjunct, project);
         }
       } else {
-        getVariantsFromQualifierType(refExpr, processor, qualifierType, project);
         if (qualifier instanceof GrReferenceExpression) {
           PsiElement resolved = ((GrReferenceExpression) qualifier).resolve();
           if (resolved instanceof PsiClass) { ////omitted .class
             GlobalSearchScope scope = refExpr.getResolveScope();
             PsiClass javaLangClass = PsiUtil.getJavaLangClass(resolved, scope);
             if (javaLangClass != null) {
-              javaLangClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr);
+              PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+              PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
+              if (typeParameters.length == 1) {
+                substitutor = substitutor.put(typeParameters[0], qualifierType);
+              }
+              javaLangClass.processDeclarations(processor, substitutor, null, refExpr);
+              PsiType javaLangClassType = refExpr.getManager().getElementFactory().createType(javaLangClass, substitutor);
+              ResolveUtil.processNonCodeMethods(javaLangClassType, processor, refExpr.getProject());
+              return;
             }
           }
         }
+        getVariantsFromQualifierType(refExpr, processor, qualifierType, project);
       }
     }
   }
