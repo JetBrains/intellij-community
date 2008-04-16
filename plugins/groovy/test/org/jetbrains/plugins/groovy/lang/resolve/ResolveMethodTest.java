@@ -447,12 +447,4 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     GrReferenceExpression ref = (GrReferenceExpression) configureByFile("defaultOverloaded3/A.groovy").getElement();
     assertNotNull(ref.resolve());
   }
-
-  public void testGetMetaClass() throws Exception {
-    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("getMetaClass/A.groovy").getElement();
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrGdkMethod);
-    assertTrue(((GrGdkMethod) resolved).getStaticMethod().getParameterList().getParameters()[0].getType().equalsToText("java.lang.Class"));
-  }
-
 }
