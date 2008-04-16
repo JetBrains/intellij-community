@@ -152,10 +152,6 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       }
     }, project);
     
-    final GenericValueReferenceProvider provider = new GenericValueReferenceProvider();
-    registry.registerReferenceProvider(XmlTag.class, provider);
-    registry.registerReferenceProvider(XmlAttributeValue.class, provider);
-
     myFileFactory = PsiFileFactory.getInstance(project);
     solver.registerFileHighlightFilter(new Condition<VirtualFile>() {
       public boolean value(final VirtualFile file) {
