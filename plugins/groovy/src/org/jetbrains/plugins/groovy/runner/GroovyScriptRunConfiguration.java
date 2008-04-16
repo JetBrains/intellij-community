@@ -198,7 +198,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
 
   private boolean isInJdk(VirtualFile jdkDir, String libPath) {
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(libPath);
-    return vFile == null || !VfsUtil.isAncestor(jdkDir, vFile, false);
+    return vFile != null && VfsUtil.isAncestor(jdkDir, vFile, false);
   }
 
   private static VirtualFile getJdkLibDirParent(ProjectJdk jdk) {
