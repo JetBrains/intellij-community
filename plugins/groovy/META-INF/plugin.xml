@@ -27,8 +27,8 @@
   <extensions xmlns="com.intellij">
     <errorHandler implementation="org.jetbrains.plugins.groovy.error.ErrorReportSubmitter"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
-    <applicationService serviceInterface="org.jetbrains.plugins.groovy.refactoring.GroovyApplicationSettings"
-                        serviceImplementation="org.jetbrains.plugins.groovy.refactoring.GroovyApplicationSettings"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"
+                        serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"/>
     <fileEditorProvider
         implementation="org.jetbrains.plugins.grails.perspectives.DomainClassesRelationsEditorProvider"/>
     <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
