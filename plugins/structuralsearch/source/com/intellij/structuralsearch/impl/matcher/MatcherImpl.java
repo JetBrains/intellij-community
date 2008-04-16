@@ -250,7 +250,7 @@ public class MatcherImpl {
                ) {
               final FileViewProvider viewProvider = file.getViewProvider();
 
-              for(Language lang: viewProvider.getPrimaryLanguages()) {
+              for(Language lang: viewProvider.getLanguages()) {
                 if (lang != ourPatternLanguage) continue;
                 ++totalFilesToScan;
                 scheduler.addOneTask( new MatchOneFile(viewProvider.getPsi(lang)) );
