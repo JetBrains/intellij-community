@@ -66,13 +66,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private CharTable myCharTable;
   private int myCurrentLexem;
-  private Token myCurrentToken = null;
   private final CharSequence myText;
   private final char[] myTextArray;
   private boolean myDebugMode = false;
   private ASTNode myOriginalTree = null;
-  private final Token myMutableToken = new Token();
   private int myLexemCount = 0;
+  boolean myTokenTypeChecked;
 
   private static TokenSet ourAnyLanguageWhitespaceTokens = TokenSet.EMPTY;
 
@@ -122,14 +121,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myInjectionHost = chameleon.getTreeParent().getPsi().getContext();
 
     myFileLevelParsing = myCharTable == null || myOriginalTree != null;
-
-    myLexer.start(myText, 0, text.length(), 0);
-
-    int approxLexCount = Math.max(10, text.length() / 5);
-
-    myLexStarts = new int[approxLexCount];
-    myLexEnds = new int[approxLexCount];
-    myLexTypes = new IElementType[approxLexCount];
   }
 
   /**
@@ -143,11 +134,37 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
 
     myFileLevelParsing = true;
+  }
 
-    myLexer.start(myText, 0, text.length(), 0);
-    myLexStarts = new int[5];
-    myLexEnds = new int[5];
-    myLexTypes = new IElementType[5];
+  private void cacheLexems() {
+    int approxLexCount = Math.max(10, myText.length() / 5);
+
+    myLexStarts = new int[approxLexCount];
+    myLexEnds = new int[approxLexCount];
+    myLexTypes = new IElementType[approxLexCount];
+
+    int i = 0;
+
+    myLexer.start(myText, 0, myText.length(), 0);
+    while (true) {
+      IElementType type = myLexer.getTokenType();
+      if (myRemapper != null) {
+        type = myRemapper.filter(type, myLexer.getTokenStart(), myLexer.getTokenEnd(), myLexer.getBufferSequence());
+      }
+      if (type == null) break;
+
+      if (i >= myLexStarts.length) {
+        resizeLexems(i * 3 / 2);
+      }
+      myLexStarts[i] = myLexer.getTokenStart();
+      myLexEnds[i] = myLexer.getTokenEnd();
+      myLexTypes[i] = type;
+
+      i++;
+      myLexer.advance();
+    }
+
+    myLexemCount = i;
   }
 
   public void enforceCommentTokens(TokenSet tokens) {
@@ -286,7 +303,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return pre;
   }
 
-  public class Token extends Node {
+  private class Token extends Node {
     public IElementType myTokenType;
     public int myTokenStart;
     public int myTokenEnd;
@@ -420,10 +437,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   public IElementType getTokenType() {
-    final Token lex = getCurrentToken();
-    if (lex == null) return null;
-
-    return lex.getTokenType();
+    if (!locateToken()) return null;
+    return myLexTypes[myCurrentLexem];
   }
 
   public void setTokenTypeRemapper(final ITokenTypeRemapper remapper) {
@@ -431,80 +446,46 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   public void advanceLexer() {
-    myCurrentToken = null;
+    if (!myTokenTypeChecked) {
+      LOG.assertTrue(eof(), "Probably a bug: eating token without its type checking");
+    }
+    myTokenTypeChecked = false;
     myCurrentLexem++;
   }
 
+  private boolean locateToken() {
+    myTokenTypeChecked = true;
+    if (myLexStarts == null) {
+      cacheLexems();
+    }
+
+    while (myCurrentLexem < myLexemCount && whitespaceOrComment(myLexTypes[myCurrentLexem])) myCurrentLexem++;
+    return myCurrentLexem < myLexemCount;
+  }
+
   public int getCurrentOffset() {
-    final PsiBuilderImpl.Token token = getCurrentToken();
-    if (token == null) return getOriginalText().length();
-    return token.myTokenStart;
+    if (!locateToken()) return getOriginalText().length();
+    return myLexStarts[myCurrentLexem];
   }
 
   @Nullable
   public String getTokenText() {
-    final PsiBuilderImpl.Token token = getCurrentToken();
-    return token != null ? token.getText().toString() : null;
-  }
-
-  @Nullable
-  public Token getCurrentToken() {
-    if (myCurrentToken == null) {
-      while (true) {
-        if (getTokenOrWhitespace()) return null;
-
-        if (whitespaceOrComment(myLexTypes[myCurrentLexem])) {
-          myCurrentLexem++;
-        }
-        else {
-          break;
-        }
-      }
-
-      myCurrentToken = myMutableToken;
-      myCurrentToken.myTokenType = myLexTypes[myCurrentLexem];
-      myCurrentToken.myTokenStart = myLexStarts[myCurrentLexem];
-      myCurrentToken.myTokenEnd = myLexEnds[myCurrentLexem];
-    }
-
-    return myCurrentToken;
-  }
-
-  private boolean getTokenOrWhitespace() {
-    while (myCurrentLexem >= myLexemCount) {
-      IElementType type = myLexer.getTokenType();
-      if (myRemapper != null) {
-        type = myRemapper.filter(type, myLexer.getTokenStart(), myLexer.getTokenEnd(), myLexer.getBufferSequence());
-      }
-      if (type == null) return true;
-
-      if (myLexemCount + 1 >= myLexStarts.length) {
-        int newSize = myLexemCount * 3 / 2;
-
-        resizeLexems(newSize);
-      }
-
-      myLexTypes[myLexemCount] = type;
-      myLexStarts[myLexemCount] = myLexer.getTokenStart();
-      myLexEnds[myLexemCount] = myLexer.getTokenEnd();
-
-      myLexer.advance();
-      myLexemCount++;
-    }
-    return false;
+    if (!locateToken()) return null;
+    return myText.subSequence(myLexStarts[myCurrentLexem], myLexEnds[myCurrentLexem]).toString();
   }
 
   private void resizeLexems(final int newSize) {
+    int count = Math.min(newSize, myLexStarts.length);
     int[] newStarts = new int[newSize];
-    System.arraycopy(myLexStarts, 0, newStarts, 0, myLexemCount);
+    System.arraycopy(myLexStarts, 0, newStarts, 0, count);
     myLexStarts = newStarts;
 
     int[] newEnds = new int[newSize];
-    System.arraycopy(myLexEnds, 0, newEnds, 0, myLexemCount);
+    System.arraycopy(myLexEnds, 0, newEnds, 0, count);
     myLexEnds = newEnds;
 
     IElementType[] newTypes = new IElementType[newSize];
-    System.arraycopy(myLexTypes, 0, newTypes, 0, myLexemCount);
+    System.arraycopy(myLexTypes, 0, newTypes, 0, count);
     myLexTypes = newTypes;
   }
 
@@ -531,14 +512,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return marker;
   }
 
-  public boolean eof() {
-    return myCurrentLexem + 1 >= myLexemCount && getCurrentToken() == null;
+  public final boolean eof() {
+    return !locateToken();
   }
 
   @SuppressWarnings({"SuspiciousMethodCalls"})
-  public void rollbackTo(Marker marker) {
+  private void rollbackTo(Marker marker) {
     myCurrentLexem = ((StartMarker)marker).myLexemIndex;
-    myCurrentToken = null;
+    myTokenTypeChecked = true;
     int idx = myProduction.lastIndexOf(marker);
     if (idx < 0) {
       LOG.error("The marker must be added before rolled back to.");
@@ -729,6 +710,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private StartMarker prepareLightTree() {
+    locateToken();
+
     final MyList fProduction = myProduction;
     StartMarker rootMarker = (StartMarker)fProduction.get(0);
 
@@ -788,7 +771,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
     }
 
-    final boolean allTokensInserted = myCurrentLexem >= myLexemCount && eof();
+    final boolean allTokensInserted = myCurrentLexem >= myLexemCount;
     if (!allTokensInserted) {
       LOG.error("Not all of the tokens inserted to the tree, parsed text:\n" + myText);
     }
@@ -824,7 +807,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         lexIndex = insertLeafs(lexIndex, childMarker.myDoneMarker.myLexemIndex, ast);
       }
       else if (child instanceof ErrorItem) {
-        lexIndex = insertLeafs(lexIndex, ((ErrorItem)child).myLexemIndex, ast);
+        lexIndex = insertLeafs(lexIndex, child.myLexemIndex, ast);
         final PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
         errorElement.setErrorDescription(((ErrorItem)child).myMessage);
         TreeUtil.addChildren(ast, errorElement);
