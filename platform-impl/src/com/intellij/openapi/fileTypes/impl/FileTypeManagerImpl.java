@@ -43,7 +43,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
   private SetWithArray myFileTypes = new SetWithArray(new THashSet<FileType>());
-  private final ArrayList<FakeFileType> mySpecialFileTypes = new ArrayList<FakeFileType>();
+  private final ArrayList<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
   private final ArrayList<Pattern> myIgnorePatterns = new ArrayList<Pattern>();
 
   private FileTypeAssocTable myPatternsTable = new FileTypeAssocTable();
@@ -150,7 +150,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     // first let file recognize its type
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < mySpecialFileTypes.size(); i++) {
-      FakeFileType fileType = mySpecialFileTypes.get(i);
+      final FileTypeIdentifiableByVirtualFile fileType = mySpecialFileTypes.get(i);
       if (fileType.isMyFileType(file)) return fileType;
     }
 
@@ -186,8 +186,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private void unregisterFileTypeWithoutNotification(FileType fileType) {
     removeAllAssociations(fileType);
     myFileTypes.remove(fileType);
-    if (fileType instanceof FakeFileType) {
-      final FakeFileType fakeFileType = (FakeFileType)fileType;
+    if (fileType instanceof FileTypeIdentifiableByVirtualFile) {
+      final FileTypeIdentifiableByVirtualFile fakeFileType = (FileTypeIdentifiableByVirtualFile)fileType;
       mySpecialFileTypes.remove(fakeFileType);
     }
   }
@@ -576,8 +576,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       myInitialAssociations.addAssociation(matcher, fileType);
     }
 
-    if (fileType instanceof FakeFileType) {
-      mySpecialFileTypes.add((FakeFileType)fileType);
+    if (fileType instanceof FileTypeIdentifiableByVirtualFile) {
+      mySpecialFileTypes.add((FileTypeIdentifiableByVirtualFile)fileType);
     }
 
     // Resolve unresolved mappings initialized before certain plugin initialized.
