@@ -119,7 +119,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
 
     File srcFile = new File(file.getPath());
     File destFile = new File(new File(toDir.getPath()), copyName);
-    if (!SVNWCUtil.isVersionedDirectory(destFile.getParentFile()) && !isPendingAdd(toDir)) {
+    final boolean dstDirUnderControl = SVNWCUtil.isVersionedDirectory(destFile.getParentFile());
+    if ((! dstDirUnderControl) && !isPendingAdd(toDir)) {
       return null;
     }
 
@@ -134,7 +135,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       return null;
     }
 
-    if (sameRoot(vcs, srcFile.getParentFile(), destFile.getParentFile())) {
+    if (sameRoot(vcs, srcFile.getParentFile(), destFile.getParentFile(), dstDirUnderControl)) {
       myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, srcFile));
       return null;
     }
@@ -143,15 +144,43 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     return null;
   }
 
-  private boolean sameRoot(final SvnVcs vcs, final File srcDir, final File dstDir) {
+  private boolean sameRoot(final SvnVcs vcs, final File srcDir, final File dstDir, final boolean dstDirUnderControl) {
     try {
-      final SVNInfo info1 = vcs.createWCClient().doInfo(srcDir, SVNRevision.WORKING);
-      final SVNInfo info2 = vcs.createWCClient().doInfo(dstDir, SVNRevision.WORKING);
+      final SVNWCClient client = vcs.createWCClient();
 
-      return (info1 != null) && (info2 != null) && (info1.getRepositoryUUID().equals(info2.getRepositoryUUID()));
+      // src directory is already checked for being under VC
+      final SVNInfo info1 = client.doInfo(srcDir, SVNRevision.WORKING);
+
+      // get correct not null repo UUID
+      final File underControlDst = (dstDirUnderControl) ? dstDir : getFirstVersionedParent(dstDir);
+      if (underControlDst == null) {
+        return false;
+      }
+      final SVNInfo info2 = client.doInfo(underControlDst, SVNRevision.WORKING);
+
+      if ((info1 == null) || (info2 == null)) {
+        return false;
+      }
+
+      final String srcUUID = info1.getRepositoryUUID();
+      final String dstUUID = info2.getRepositoryUUID();
+      return (srcUUID != null) && (dstUUID != null) && (srcUUID.equals(dstUUID));
     } catch (SVNException e) {
       return false;
     }
+  }
+
+  @Nullable
+  private File getFirstVersionedParent(final File file) {
+    if (SVNWCUtil.isVersionedDirectory(file)) {
+      return file;
+    }
+
+    final File parent = file.getParentFile();
+    if (parent == null) {
+      return null;
+    }
+    return getFirstVersionedParent(parent);
   }
 
   public boolean move(VirtualFile file, VirtualFile toDir) throws IOException {
