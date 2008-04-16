@@ -27,10 +27,12 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
@@ -39,6 +41,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 /**
  * @author ilyas
@@ -49,6 +52,8 @@ public class GroovyFacetEditorTab extends FacetEditorTab {
   private JComboBox myComboBox;
   private JCheckBox myAddNewGdkCb;
   private FacetEditorContext myEditorContext;
+  private FacetValidatorsManager myValidatorsManager;
+  private LibraryTable.Listener myLibraryListener;
 
   public static GroovyFacetEditorTab createEditorTab(FacetEditorContext editorContext, FacetValidatorsManager validatorsManager) {
     GroovyApplicationSettings settings = GroovyApplicationSettings.getInstance();
@@ -65,44 +70,40 @@ public class GroovyFacetEditorTab extends FacetEditorTab {
   }
 
   public GroovyFacetEditorTab(String[] versions, String defaultVersion, FacetValidatorsManager validatorsManager) {
+    myValidatorsManager = validatorsManager;
+    myLibraryListener = new MyLibraryListener();
+
     if (versions.length > 0) {
       if (defaultVersion == null) {
         defaultVersion = versions[versions.length - 1];
       }
-      String maxValue = "";
-      for (String version : versions) {
-        myComboBox.addItem(version);
-        FontMetrics fontMetrics = myComboBox.getFontMetrics(myComboBox.getFont());
-        if (fontMetrics.stringWidth(version) > fontMetrics.stringWidth(maxValue)) {
-          maxValue = version;
-        }
-      }
-      myComboBox.setPrototypeDisplayValue(maxValue + "_");
-      myComboBox.setSelectedItem(defaultVersion);
+      adjustVersionComboBox(versions, defaultVersion);
     } else {
       myComboBox.setEnabled(false);
       myComboBox.setVisible(false);
     }
 
     FacetEditorContext context = getEditorContext();
-    configureEditFieldForGroovyPath(myPathToGroovy, context != null ? context.getProject() : null);
+    configureEditFieldForGroovyPath(context != null ? context.getProject() : null);
     configureNewGdkCheckBox(versions.length > 0);
 
     if (validatorsManager != null) {
-      validatorsManager.registerValidator(new FacetEditorValidator() {
-        public ValidationResult check() {
-          if (myAddNewGdkCb.isEnabled()) {
-            final Object o = myPathToGroovy.getTextField().getText();
-            if (o != null) {
-              final VirtualFile relativeFile = VfsUtil.findRelativeFile(o.toString(), null);
-              if (relativeFile != null && GroovyConfigUtils.isGroovySdkHome(relativeFile)) return ValidationResult.OK;
-            }
-            return new ValidationResult(GroovyBundle.message("invalid.groovy.sdk.path.message"));
-          }
-          return ValidationResult.OK;
-        }
-      }, myPathToGroovy);
+      validatorsManager.registerValidator(new MyFacetEditorValidator(), myPathToGroovy);
     }
+  }
+
+  private void adjustVersionComboBox(String[] versions, String defaultVersion) {
+    myComboBox.removeAllItems();
+    String maxValue = "";
+    for (String version : versions) {
+      myComboBox.addItem(version);
+      FontMetrics fontMetrics = myComboBox.getFontMetrics(myComboBox.getFont());
+      if (fontMetrics.stringWidth(version) > fontMetrics.stringWidth(maxValue)) {
+        maxValue = version;
+      }
+    }
+    myComboBox.setPrototypeDisplayValue(maxValue + "_");
+    myComboBox.setSelectedItem(defaultVersion);
   }
 
 
@@ -125,15 +126,30 @@ public class GroovyFacetEditorTab extends FacetEditorTab {
     });
   }
 
-  private static void configureEditFieldForGroovyPath(final TextFieldWithBrowseButton editField, final Project project) {
-    editField.getButton().addActionListener(new ActionListener() {
+  private void configureEditFieldForGroovyPath(final Project project) {
+    myPathToGroovy.getButton().addActionListener(new ActionListener() {
 
       public void actionPerformed(final ActionEvent e) {
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
         final FileChooserDialog fileChooserDialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
         final VirtualFile[] files = fileChooserDialog.choose(null, project);
         if (files.length > 0) {
-          editField.setText(files[0].getPath());
+          String path = files[0].getPath();
+          myPathToGroovy.setText(path);
+          ValidationResult validationResult = new MyFacetEditorValidator().check();
+          if (validationResult == ValidationResult.OK) {
+            ArrayList<String> versions = GroovyApplicationSettings.getInstance().GROOVY_VERSIONS;
+            String version = GroovyConfigUtils.getGroovyVersion(path);
+            boolean addVersion = !versions.contains(version) ||
+                Messages.showOkCancelDialog(GroovyBundle.message("ask.to.replace.groovy.lib", version),
+                    GroovyBundle.message("replace.groovy.lib"),
+                    GroovyIcons.BIG_ICON) == 0;
+
+            if (addVersion && !GroovyConfigUtils.UNDEFINED_VERSION.equals(version)) {
+              GroovyGrailsConfiguration.getInstance().createGroovyLibs(path);
+              adjustVersionComboBox(versions.toArray(new String[versions.size()]), version);
+            }
+          }
         }
       }
 
@@ -194,4 +210,44 @@ public class GroovyFacetEditorTab extends FacetEditorTab {
     return null;
   }
 
+  public FacetValidatorsManager getValidatorsManager() {
+    return myValidatorsManager;
+  }
+
+  private class MyFacetEditorValidator extends FacetEditorValidator {
+    public ValidationResult check() {
+      if (myAddNewGdkCb.isEnabled()) {
+        final Object o = myPathToGroovy.getTextField().getText();
+        if (o != null) {
+          final VirtualFile relativeFile = VfsUtil.findRelativeFile(o.toString(), null);
+          if (relativeFile != null && GroovyConfigUtils.isGroovySdkHome(relativeFile)) return ValidationResult.OK;
+        }
+        return new ValidationResult(GroovyBundle.message("invalid.groovy.sdk.path.message"));
+      }
+      return ValidationResult.OK;
+    }
+  }
+
+  private class MyLibraryListener implements LibraryTable.Listener {
+    public void afterLibraryAdded(Library newLibrary) {
+
+    }
+
+    public void afterLibraryRenamed(Library library) {
+
+    }
+
+    public void beforeLibraryRemoved(Library library) {
+      String name = library.getName();
+      GroovyApplicationSettings settings = GroovyApplicationSettings.getInstance();
+      for (String version : settings.GROOVY_VERSIONS) {
+        if (GroovyConfigUtils.getLibraryNameByVersion(version).equals(name)) {
+          myComboBox.removeItem(version);
+        }
+      }
+    }
+
+    public void afterLibraryRemoved(Library library) {
+    }
+  }
 }
