@@ -9,16 +9,15 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.formatter.common.AbstractBlock;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author peter
@@ -26,28 +25,29 @@ import java.util.Collections;
 public class TemplateLanguageFormattingModelBuilder implements FormattingModelBuilder{
   @NotNull
   public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
-    final PsiFile file = element.getContainingFile();
-    if (element != file) {
-      return new DocumentBasedFormattingModel(new AbstractBlock(element.getNode(), Wrap.createWrap(WrapType.NONE, false), Alignment.createAlignment()) {
-        protected List<Block> buildChildren() {
-          return Collections.emptyList();
-        }
-
-        public Spacing getSpacing(final Block child1, final Block child2) {
-          return Spacing.getReadOnlySpacing();
-        }
-
-        public boolean isLeaf() {
-          return true;
-        }
-      }, element.getProject(), settings, file.getFileType(), file);
+    if (element instanceof PsiFile) {
+      final TemplateLanguageFileViewProvider provider = (TemplateLanguageFileViewProvider)((PsiFile)element).getViewProvider();
+      final Language language = provider.getTemplateDataLanguage();
+      FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forLanguage(language);
+      if (builder != null) {
+        return builder.createModel(provider.getPsi(language), settings);
+      }
     }
 
-    final TemplateLanguageFileViewProvider provider = (TemplateLanguageFileViewProvider)file.getViewProvider();
-    final Language language = provider.getTemplateDataLanguage();
-    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forLanguage(language);
-    if (builder == null) builder =  LanguageFormatting.INSTANCE.forLanguage(PlainTextLanguage.INSTANCE);
-    return builder.createModel(provider.getPsi(language), settings);
+    final PsiFile file = element.getContainingFile();
+    return new DocumentBasedFormattingModel(new AbstractBlock(element.getNode(), Wrap.createWrap(WrapType.NONE, false), Alignment.createAlignment()) {
+      protected List<Block> buildChildren() {
+        return Collections.emptyList();
+      }
+
+      public Spacing getSpacing(final Block child1, final Block child2) {
+        return Spacing.getReadOnlySpacing();
+      }
+
+      public boolean isLeaf() {
+        return true;
+      }
+    }, element.getProject(), settings, file.getFileType(), file);
   }
 
   public TextRange getRangeAffectingIndent(final PsiFile file, final int offset, final ASTNode elementAtOffset) {

@@ -3,6 +3,7 @@
  */
 package com.intellij.lang.properties.structureView;
 
+import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
@@ -17,7 +18,10 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TIntLongHashMap;
 import gnu.trove.TIntProcedure;
@@ -25,11 +29,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.io.UnsupportedEncodingException;
 
 public class PropertiesSeparatorManager implements JDOMExternalizable, ApplicationComponent {
   @NonNls private static final String FILE_ELEMENT = "file";
@@ -59,7 +62,11 @@ public class PropertiesSeparatorManager implements JDOMExternalizable, Applicati
     }
     else {
       PsiManager psiManager = PsiManager.getInstance(project);
-      files = Collections.singletonList((PropertiesFile)psiManager.findFile(file));
+      final FileViewProvider provider = psiManager.findViewProvider(file);
+      files = new SmartList<PropertiesFile>();
+      if (provider != null) {
+        ContainerUtil.addIfNotNull((PropertiesFile)provider.getPsi(PropertiesLanguage.INSTANCE), files);
+      }
     }
     final TIntLongHashMap charCounts = new TIntLongHashMap();
     for (PropertiesFile propertiesFile : files) {

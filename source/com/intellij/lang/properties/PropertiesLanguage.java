@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class PropertiesLanguage extends Language {
+  public static final PropertiesLanguage INSTANCE = new PropertiesLanguage();
+
   public PropertiesLanguage() {
     super("Properties", "text/properties");
     SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExpicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {

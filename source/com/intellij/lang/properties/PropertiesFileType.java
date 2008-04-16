@@ -18,7 +18,7 @@ public class PropertiesFileType extends LanguageFileType {
   public static final LanguageFileType FILE_TYPE = new PropertiesFileType();
 
   private PropertiesFileType() {
-    super(new PropertiesLanguage());
+    super(PropertiesLanguage.INSTANCE);
   }
 
   @NotNull
