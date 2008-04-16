@@ -218,6 +218,7 @@ public class CompleteReferenceExpression {
           getVariantsFromQualifierType(refExpr, processor, conjunct, project);
         }
       } else {
+        getVariantsFromQualifierType(refExpr, processor, qualifierType, project);
         if (qualifier instanceof GrReferenceExpression) {
           PsiElement resolved = ((GrReferenceExpression) qualifier).resolve();
           if (resolved instanceof PsiClass) { ////omitted .class
@@ -232,11 +233,9 @@ public class CompleteReferenceExpression {
               javaLangClass.processDeclarations(processor, substitutor, null, refExpr);
               PsiType javaLangClassType = refExpr.getManager().getElementFactory().createType(javaLangClass, substitutor);
               ResolveUtil.processNonCodeMethods(javaLangClassType, processor, refExpr.getProject());
-              return;
             }
           }
         }
-        getVariantsFromQualifierType(refExpr, processor, qualifierType, project);
       }
     }
   }
