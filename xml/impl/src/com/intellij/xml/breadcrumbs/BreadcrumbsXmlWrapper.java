@@ -37,10 +37,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.Comparator;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.List;
-import java.util.PriorityQueue;
 
 /**
  * @author spleaner
@@ -191,7 +189,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     FileViewProvider viewProvider = findViewProvider();
     if (viewProvider == null) return null;
 
-    for (final Language language : viewProvider.getPrimaryLanguages()) {
+    for (final Language language : viewProvider.getLanguages()) {
       ContainerUtil.addIfNotNull(viewProvider.findElementAt(offset, language), leafs);
     }
     while (!leafs.isEmpty()) {
@@ -230,7 +228,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
       final Language baseLang = viewProvider.getBaseLanguage();
       provider = getInfoProvider(baseLang);
       if (provider == null) {
-        for (final Language language : viewProvider.getPrimaryLanguages()) {
+        for (final Language language : viewProvider.getLanguages()) {
           provider = getInfoProvider(language);
           if (provider != null) {
             break;

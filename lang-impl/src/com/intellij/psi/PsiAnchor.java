@@ -41,7 +41,7 @@ public class PsiAnchor {
       }
 
       final FileViewProvider viewProvider = myFile.getViewProvider();
-      final Set<Language> languages = viewProvider.getRelevantLanguages();
+      final Set<Language> languages = viewProvider.getLanguages();
       for (Language language : languages) {
         if (PsiTreeUtil.isAncestor(viewProvider.getPsi(language), element, false)) {
           myLanguage = language;

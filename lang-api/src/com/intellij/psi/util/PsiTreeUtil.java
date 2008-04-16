@@ -435,7 +435,7 @@ public class PsiTreeUtil {
   public static <T extends PsiElement> T findElementOfClassAtRange (@NotNull PsiFile file, int startOffset, int endOffset, @NotNull Class<T> clazz) {
     final FileViewProvider viewProvider = file.getViewProvider();
     T result = null;
-    for (Language lang : viewProvider.getPrimaryLanguages()) {
+    for (Language lang : viewProvider.getLanguages()) {
       PsiElement elementAt = viewProvider.findElementAt(startOffset, lang);
       T run = getParentOfType(elementAt, clazz, false);
       T prev = run;

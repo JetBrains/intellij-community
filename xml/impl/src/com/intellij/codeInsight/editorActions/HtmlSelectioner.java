@@ -75,7 +75,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
 
     addAttributeSelection(result, e);
     final FileViewProvider fileViewProvider = psiFile.getViewProvider();
-    for (Language lang : fileViewProvider.getPrimaryLanguages()) {
+    for (Language lang : fileViewProvider.getLanguages()) {
       final PsiFile langFile = fileViewProvider.getPsi(lang);
       if (langFile != psiFile) addAttributeSelection(result, fileViewProvider.findElementAt(cursorOffset, lang));
     }

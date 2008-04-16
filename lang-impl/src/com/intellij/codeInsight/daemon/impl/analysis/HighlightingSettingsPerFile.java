@@ -16,10 +16,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectComponent {
   @NonNls private static final String SETTING_TAG = "setting";
@@ -47,7 +44,7 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
   }
 
   public static FileHighlighingSetting[] getDefaults(PsiFile file){
-    final int rootsCount = file.getViewProvider().getPrimaryLanguages().size();
+    final int rootsCount = file.getViewProvider().getLanguages().size();
     final FileHighlighingSetting[] fileHighlighingSettings = new FileHighlighingSetting[rootsCount];
     for (int i = 0; i < fileHighlighingSettings.length; i++) {
       fileHighlighingSettings[i] = FileHighlighingSetting.FORCE_HIGHLIGHTING;

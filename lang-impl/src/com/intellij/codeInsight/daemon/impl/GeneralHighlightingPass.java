@@ -125,7 +125,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     HighlightVisitor[] highlightVisitors = createHighlightVisitors();
     try {
       final FileViewProvider viewProvider = myFile.getViewProvider();
-      final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
+      final Set<Language> relevantLanguages = viewProvider.getLanguages();
       List<PsiElement> elements = null;
       for (Language language : relevantLanguages) {
         PsiElement psiRoot = viewProvider.getPsi(language);

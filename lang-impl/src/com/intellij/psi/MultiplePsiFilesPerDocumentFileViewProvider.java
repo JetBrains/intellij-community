@@ -116,9 +116,9 @@ public class MultiplePsiFilesPerDocumentFileViewProvider extends SingleRootFileV
   public PsiElement findElementAt(int offset, Class<? extends Language> lang) {
     final PsiFile mainRoot = getPsi(getBaseLanguage());
     PsiElement ret = null;
-    for (final Language language : getRelevantLanguages()) {
+    for (final Language language : getLanguages()) {
       if (!ReflectionCache.isAssignable(lang, language.getClass())) continue;
-      if (lang.equals(Language.class) && !getPrimaryLanguages().contains(language)) continue;
+      if (lang.equals(Language.class) && !getLanguages().contains(language)) continue;
 
       final PsiFile psiRoot = getPsi(language);
       final PsiElement psiElement = findElementAt(psiRoot, offset);
@@ -139,7 +139,7 @@ public class MultiplePsiFilesPerDocumentFileViewProvider extends SingleRootFileV
   public PsiReference findReferenceAt(int offset) {
     TextRange minRange = new TextRange(0, getContents().length());
     PsiReference ret = null;
-    for (final Language language : getPrimaryLanguages()) {
+    for (final Language language : getLanguages()) {
       final PsiElement psiRoot = getPsi(language);
       final PsiReference reference = SharedPsiElementImplUtil.findReferenceAt(psiRoot, offset);
       if (reference == null) continue;

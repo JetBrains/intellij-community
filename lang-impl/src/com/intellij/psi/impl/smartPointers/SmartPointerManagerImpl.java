@@ -54,7 +54,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   public static void unfastenBelts(PsiFile file) {
-    final Set<Language> languages = file.getViewProvider().getRelevantLanguages();
+    final Set<Language> languages = file.getViewProvider().getLanguages();
     for (Language language : languages) {
       final PsiFile f = file.getViewProvider().getPsi(language);
       synchronized (f) {
@@ -64,7 +64,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   public static void synchronizePointers(PsiFile file) {
-    final Set<Language> languages = file.getViewProvider().getRelevantLanguages();
+    final Set<Language> languages = file.getViewProvider().getLanguages();
     for (Language language : languages) {
       final PsiFile f = file.getViewProvider().getPsi(language);
       synchronized (f) {

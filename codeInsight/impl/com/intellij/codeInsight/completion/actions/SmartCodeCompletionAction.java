@@ -31,7 +31,7 @@ public class SmartCodeCompletionAction extends BaseCodeInsightAction implements 
       public void invoke(Project project, Editor editor, PsiFile file) {
         try {
           ourDoingSmartCodeCompleteAction = true;
-          if (file.getViewProvider().getRelevantLanguages().contains(StdLanguages.JAVA)) {
+          if (file.getViewProvider().getLanguages().contains(StdLanguages.JAVA)) {
             FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.general");
             new SmartCodeCompletionHandler().invoke(project, editor, file);
           } else {

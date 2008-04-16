@@ -792,8 +792,8 @@ public class FileManagerImpl implements FileManager {
                   else if (!newPsiFile.getClass().equals(oldPsiFile.getClass()) ||
                            newPsiFile.getFileType() != myFileTypeManager.getFileTypeByFileName((String)event.getOldValue()) ||
                            languageDialectChanged(newPsiFile, (String)event.getOldValue()) ||
-                           !oldFileViewProvider.getPrimaryLanguages().equals(fileViewProvider.getPrimaryLanguages()) ||
-                           !oldFileViewProvider.getRelevantLanguages().equals(fileViewProvider.getRelevantLanguages())
+                           !oldFileViewProvider.getLanguages().equals(fileViewProvider.getLanguages()) ||
+                           !oldFileViewProvider.getLanguages().equals(fileViewProvider.getLanguages())
                           ) {
                     myVFileToViewProviderMap.put(vFile, fileViewProvider);
 

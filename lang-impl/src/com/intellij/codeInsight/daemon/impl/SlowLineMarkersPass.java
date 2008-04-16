@@ -33,7 +33,7 @@ public class SlowLineMarkersPass extends TextEditorHighlightingPass {
 
   public void doCollectInformation(ProgressIndicator progress) {
     final FileViewProvider viewProvider = myFile.getViewProvider();
-    final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
+    final Set<Language> relevantLanguages = viewProvider.getLanguages();
     myMarkers = new SmartList<LineMarkerInfo>();
     for (Language language : relevantLanguages) {
       PsiElement psiRoot = viewProvider.getPsi(language);

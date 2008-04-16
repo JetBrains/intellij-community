@@ -34,7 +34,7 @@ public class ImportPopupHectorComponentProvider implements HectorComponentPanels
     final boolean notInLibrary =
       !fileIndex.isInLibrarySource(virtualFile) && !fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInContent(virtualFile);
     final FileViewProvider viewProvider = file.getViewProvider();
-    final Set<Language> languages = viewProvider.getPrimaryLanguages();
+    final Set<Language> languages = viewProvider.getLanguages();
 
     return new HectorComponentPanel() {
       private JCheckBox myImportPopupCheckBox = new JCheckBox(EditorBundle.message("hector.import.popup.checkbox"));

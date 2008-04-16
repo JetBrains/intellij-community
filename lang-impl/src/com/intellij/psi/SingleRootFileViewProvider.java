@@ -95,13 +95,8 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   @NotNull
-  public Set<Language> getRelevantLanguages() {
+  public Set<Language> getLanguages() {
     return Collections.singleton(getBaseLanguage());
-  }
-
-  @NotNull
-  public Set<Language> getPrimaryLanguages() {
-    return getRelevantLanguages();
   }
 
   @Nullable
@@ -112,6 +107,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return getPsiInner(target);
   }
 
+  @NotNull
   public Language getRootLanguage(final PsiElement elt) {
     return elt.getLanguage();
   }
@@ -299,6 +295,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     throw new IllegalStateException("Original version of ParserDefinition is supported only for PsiFileImpl implementations");
   }
 
+  @NotNull
   public PsiManager getManager() {
     return myManager;
   }

@@ -47,7 +47,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass {
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
     final List<LineMarkerInfo> lineMarkers = new ArrayList<LineMarkerInfo>();
     final FileViewProvider viewProvider = myFile.getViewProvider();
-    final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
+    final Set<Language> relevantLanguages = viewProvider.getLanguages();
     for (Language language : relevantLanguages) {
       PsiElement psiRoot = viewProvider.getPsi(language);
       if (!HighlightLevelUtil.shouldHighlight(psiRoot)) continue;

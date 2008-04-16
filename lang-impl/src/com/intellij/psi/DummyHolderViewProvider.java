@@ -33,6 +33,7 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
     myModificationStamp = LocalTimeCounter.currentTime();
   }
 
+  @NotNull
   public PsiManager getManager() {
     return myManager;
   }
@@ -58,13 +59,8 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
   }
 
   @NotNull
-  public Set<Language> getRelevantLanguages() {
+  public Set<Language> getLanguages() {
     return Collections.singleton(getBaseLanguage());
-  }
-
-  @NotNull
-  public Set<Language> getPrimaryLanguages() {
-    return getRelevantLanguages();
   }
 
   public PsiFile getPsi(@NotNull Language target) {
@@ -72,6 +68,7 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
     return target == getBaseLanguage() ? myHolder : null;
   }
 
+  @NotNull
   public Language getRootLanguage(final PsiElement elt) {
     return elt.getLanguage();
   }

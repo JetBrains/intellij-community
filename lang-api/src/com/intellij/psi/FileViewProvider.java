@@ -26,19 +26,23 @@ import java.util.List;
 import java.util.Set;
 
 public interface FileViewProvider extends Cloneable, UserDataHolder {
-  PsiManager getManager();
+  @NotNull PsiManager getManager();
 
   @Nullable Document getDocument();
   @NotNull CharSequence getContents();
   @NotNull VirtualFile getVirtualFile();
 
   @NotNull Language getBaseLanguage();
-  @NotNull Set<Language> getRelevantLanguages();
-  @NotNull Set<Language> getPrimaryLanguages();
+
+  /**
+   * @return all languages this file supports. See {@link #getPsi(com.intellij.lang.Language)}
+   */
+  @NotNull Set<Language> getLanguages();
+
   @Nullable
   PsiFile getPsi(@NotNull Language target);
 
-  Language getRootLanguage(final PsiElement elt);
+  @NotNull Language getRootLanguage(final PsiElement elt);
 
   @NotNull List<PsiFile> getAllFiles();
 

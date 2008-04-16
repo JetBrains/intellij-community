@@ -9,7 +9,6 @@ import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.structureView.*;
-import com.intellij.ide.structureView.impl.StructureViewComposite;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
@@ -161,7 +160,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
       myBaseLanguageViewDescriptorIndex = descriptors.size() - 1;
     }
 
-    for (final Language language : getViewProvider().getRelevantLanguages()) {
+    for (final Language language : getViewProvider().getLanguages()) {
       if (language != dataLanguage && language != getViewProvider().getBaseLanguage()) {
         ContainerUtil.addIfNotNull(createBaseLanguageStructureView(fileEditor, language), descriptors);
       }

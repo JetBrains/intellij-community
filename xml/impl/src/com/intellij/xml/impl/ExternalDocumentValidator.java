@@ -318,7 +318,7 @@ public class ExternalDocumentValidator {
       return;
     }
 
-    for(Language lang:containingFile.getViewProvider().getPrimaryLanguages()) {
+    for(Language lang: containingFile.getViewProvider().getLanguages()) {
       if ("ANT".equals(lang.getID())) return;
     }
 

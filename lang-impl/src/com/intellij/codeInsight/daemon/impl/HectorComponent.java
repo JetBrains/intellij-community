@@ -58,7 +58,7 @@ public class HectorComponent extends JPanel {
     final boolean notInLibrary =
       !fileIndex.isInLibrarySource(virtualFile) && !fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInContent(virtualFile);
     final FileViewProvider viewProvider = myFile.getViewProvider();
-    final Set<Language> languages = viewProvider.getPrimaryLanguages();
+    final Set<Language> languages = viewProvider.getLanguages();
     for (Language language : languages) {
       final Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
       sliderLabels.put(1, new JLabel(EditorBundle.message("hector.none.slider.label")));

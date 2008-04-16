@@ -102,7 +102,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     final FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
     final List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
     final FileViewProvider viewProvider = myFile.getViewProvider();
-    final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
+    final Set<Language> relevantLanguages = viewProvider.getLanguages();
     final Set<PsiElement> elementSet = new THashSet<PsiElement>();
     for (Language language : relevantLanguages) {
       PsiElement psiRoot = viewProvider.getPsi(language);
