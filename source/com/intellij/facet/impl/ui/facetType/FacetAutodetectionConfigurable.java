@@ -199,7 +199,7 @@ public class FacetAutodetectionConfigurable implements Configurable {
 
     myEnableAutoDetectionCheckBox.setSelected(true);
     if (autodetectionInfo != null) {
-      Set<DisabledAutodetectionInModuleElement> moduleElements = autodetectionInfo.getModuleElements();
+      List<DisabledAutodetectionInModuleElement> moduleElements = autodetectionInfo.getModuleElements();
       if (moduleElements.isEmpty()) {
         myEnableAutoDetectionCheckBox.setSelected(false);
       }

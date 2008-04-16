@@ -10,8 +10,9 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -20,7 +21,7 @@ import java.util.Set;
 @Tag("facet-type")
 public class DisabledAutodetectionByTypeElement {
   private String myFacetTypeId;
-  private Set<DisabledAutodetectionInModuleElement> myModuleElements = new LinkedHashSet<DisabledAutodetectionInModuleElement>();
+  private List<DisabledAutodetectionInModuleElement> myModuleElements = new ArrayList<DisabledAutodetectionInModuleElement>();
   
   public DisabledAutodetectionByTypeElement() {
   }
@@ -46,7 +47,7 @@ public class DisabledAutodetectionByTypeElement {
 
   @Tag("modules")
   @AbstractCollection(surroundWithTag = false)
-  public Set<DisabledAutodetectionInModuleElement> getModuleElements() {
+  public List<DisabledAutodetectionInModuleElement> getModuleElements() {
     return myModuleElements;
   }
 
@@ -54,7 +55,7 @@ public class DisabledAutodetectionByTypeElement {
     myFacetTypeId = facetTypeId;
   }
 
-  public void setModuleElements(final Set<DisabledAutodetectionInModuleElement> moduleElements) {
+  public void setModuleElements(final List<DisabledAutodetectionInModuleElement> moduleElements) {
     myModuleElements = moduleElements;
   }
 

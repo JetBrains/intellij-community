@@ -45,7 +45,7 @@ public class EnableAutodetectionWorker {
     ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     List<Module> modulesToProcess = new ArrayList<Module>();
 
-    Set<DisabledAutodetectionInModuleElement> moduleElements = oldElement.getModuleElements();
+    List<DisabledAutodetectionInModuleElement> moduleElements = oldElement.getModuleElements();
     for (DisabledAutodetectionInModuleElement moduleElement : moduleElements) {
       Set<String> files = moduleElement.getFiles();
       if (!files.isEmpty()) {
