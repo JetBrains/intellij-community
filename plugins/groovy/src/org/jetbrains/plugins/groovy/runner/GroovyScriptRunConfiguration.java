@@ -31,6 +31,9 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import org.jdom.Element;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
@@ -178,10 +181,10 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     ProjectJdk jdk = params.getJdk();
     StringBuffer buffer = new StringBuffer();
     if (jdk != null) {
-      String jdkDir = getJdkLibDirParent(jdk);
+      VirtualFile jdkDir = getJdkLibDirParent(jdk);
 
       for (String libPath : list) {
-        if (!libPath.startsWith(jdkDir)) {
+        if (!isInJdk(jdkDir, libPath)) {
           buffer.append(libPath).append(File.pathSeparator);
         }
       }
@@ -193,9 +196,17 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     }
   }
 
-  private static String getJdkLibDirParent(ProjectJdk jdk) {
+  private boolean isInJdk(VirtualFile jdkDir, String libPath) {
+    VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(libPath);
+    return vFile == null || !VfsUtil.isAncestor(jdkDir, vFile, false);
+  }
+
+  private static VirtualFile getJdkLibDirParent(ProjectJdk jdk) {
     String rtLibraryPath = jdk.getRtLibraryPath();
-    return new File(rtLibraryPath).getParentFile().getParentFile().getParentFile().getAbsolutePath();  //strip /jre/lib/rt.jar
+    File file = new File(rtLibraryPath).getParentFile().getParentFile().getParentFile();   //strip /jre/lib/rt.jar
+    VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    assert vFile != null;
+    return vFile;
   }
 
   private void configureScript(JavaParameters params) {
