@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use File | Settings | File Templates.
  */
 class CustomFileTypeBraceMatcher implements BraceMatcher {
-  public int getTokenGroup(IElementType tokenType) {
+  public int getBraceTokenGroupId(IElementType tokenType) {
     return 777;
   }
 
@@ -51,36 +51,24 @@ class CustomFileTypeBraceMatcher implements BraceMatcher {
     return type == CustomHighlighterTokenType.L_BRACE || type == CustomHighlighterTokenType.R_BRACE;
   }
 
-  public IElementType getTokenType(char ch, HighlighterIterator iterator) {
-    if (iterator.atEnd() || !(iterator.getTokenType() instanceof CustomHighlighterTokenType.CustomElementType)) {
+  public IElementType getOppositeBraceTokenType(IElementType type) {
+    if (!(type instanceof CustomHighlighterTokenType.CustomElementType)) {
       return null;
     }
 
-    if (ch == '}') return CustomHighlighterTokenType.R_BRACE;
-    if (ch == '{') return CustomHighlighterTokenType.L_BRACE;
+    if (type == CustomHighlighterTokenType.L_BRACE) return CustomHighlighterTokenType.R_BRACE;
+    if (type == CustomHighlighterTokenType.R_BRACE) return CustomHighlighterTokenType.L_BRACE;
 
-    if (ch == ']') return CustomHighlighterTokenType.R_BRACKET;
-    if (ch == '[') return CustomHighlighterTokenType.L_BRACKET;
-    if (ch == ')') return CustomHighlighterTokenType.R_PARENTH;
-    if (ch == '(') return CustomHighlighterTokenType.L_PARENTH;
+    if (type == CustomHighlighterTokenType.L_BRACKET) return CustomHighlighterTokenType.R_BRACKET;
+    if (type == CustomHighlighterTokenType.R_BRACKET) return CustomHighlighterTokenType.L_BRACKET;
+    if (type == CustomHighlighterTokenType.L_PARENTH) return CustomHighlighterTokenType.R_PARENTH;
+    if (type == CustomHighlighterTokenType.R_PARENTH) return CustomHighlighterTokenType.L_PARENTH;
 
     return null;
   }
 
   public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
     return true;
-  }
-
-  public boolean isStrictTagMatching(final FileType fileType, final int group) {
-    return false;
-  }
-
-  public boolean areTagsCaseSensitive(final FileType fileType, final int tokenGroup) {
-    return false;
-  }
-
-  public String getTagName(final CharSequence fileText, final HighlighterIterator iterator) {
-    return null;
   }
 
   public int getCodeConstructStart(final PsiFile file, final int openingBraceOffset) {

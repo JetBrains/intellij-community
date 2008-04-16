@@ -33,6 +33,8 @@
   <extensionPoint name="intentionAction"
                   beanClass="com.intellij.codeInsight.intention.IntentionActionBean"/>
 
+  <extensionPoint name="braceMatcher"
+                  beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
   <extensionPoint name="quoteHandler"
                   beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP"/>
   <extensionPoint name="extendWordSelectionHandler"

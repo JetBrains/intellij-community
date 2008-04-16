@@ -19,7 +19,7 @@ class PairedBraceMatcherAdapter implements BraceMatcher {
     myLanguage = language;
   }
 
-  public int getTokenGroup(IElementType tokenType) {
+  public int getBraceTokenGroupId(IElementType tokenType) {
     final BracePair[] pairs = myMatcher.getPairs();
     for (BracePair pair : pairs) {
       if (tokenType == pair.getLeftBraceType() || tokenType == pair.getRightBraceType()) return myLanguage.hashCode();
@@ -45,6 +45,16 @@ class PairedBraceMatcherAdapter implements BraceMatcher {
     return false;
   }
 
+  public IElementType getOppositeBraceTokenType(@NotNull final IElementType type) {
+    final BracePair[] pairs = myMatcher.getPairs();
+    for (BracePair pair : pairs) {
+      if (type == pair.getRightBraceType()) return pair.getLeftBraceType();
+      if (type == pair.getLeftBraceType()) return pair.getRightBraceType();
+    }
+
+    return null;
+  }
+
   public boolean isPairBraces(IElementType tokenType, IElementType tokenType2) {
     final BracePair[] pairs = myMatcher.getPairs();
     for (BracePair pair : pairs) {
@@ -65,34 +75,8 @@ class PairedBraceMatcherAdapter implements BraceMatcher {
     return false;
   }
 
-  public IElementType getTokenType(char ch, HighlighterIterator iterator) {
-    if (iterator.atEnd()) return null;
-    final IElementType tokenType = iterator.getTokenType();
-    if (tokenType.getLanguage() != myLanguage) return null;
-    final BracePair[] pairs = myMatcher.getPairs();
-
-    for (final BracePair pair : pairs) {
-      if (ch == pair.getRightBraceChar()) return pair.getRightBraceType();
-      if (ch == pair.getLeftBraceChar()) return pair.getLeftBraceType();
-    }
-    return null;
-  }
-
   public boolean isPairedBracesAllowedBeforeType(@NotNull IElementType lbraceType, @Nullable IElementType contextType) {
     return myMatcher.isPairedBracesAllowedBeforeType(lbraceType, contextType);
-  }
-
-  public boolean isStrictTagMatching(final FileType fileType, final int group) {
-    return false;
-  }
-
-  public boolean areTagsCaseSensitive(final FileType fileType, final int tokenGroup) {
-    return false;
-  }
-
-  @Nullable
-  public String getTagName(final CharSequence fileText, final HighlighterIterator iterator) {
-    return null;
   }
 
   public int getCodeConstructStart(final PsiFile file, int openingBraceOffset) {

@@ -1,70 +1,60 @@
-package com.intellij.codeInsight.highlighting;
+package com.intellij.xml.impl;
 
+import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.codeInsight.highlighting.XmlAwareBraceMatcher;
 import com.intellij.lang.BracePair;
 import com.intellij.lang.LanguageBraceMatching;
 import com.intellij.lang.PairedBraceMatcher;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspTokenType;
-import com.intellij.psi.jsp.el.ELTokenType;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.java.IJavaDocElementType;
-import com.intellij.psi.tree.java.IJavaElementType;
-import com.intellij.psi.tree.jsp.IJspElementType;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.xml.util.HtmlUtil;
-import com.intellij.codeInsight.hint.DeclarationRangeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class DefaultBraceMatcher implements BraceMatcher {
-  private static final int JAVA_TOKEN_GROUP = 0;
+/**
+ * @author Maxim.Mossienko
+ *         Date: Apr 15, 2008
+ *         Time: 4:27:25 PM
+ */
+public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   private static final int XML_TAG_TOKEN_GROUP = 1;
   private static final int XML_VALUE_DELIMITER_GROUP = 2;
-  private static final int JSP_TOKEN_GROUP = 3;
-  private static final int PAIRED_TOKEN_GROUP = 4;
-  private static final int DOC_TOKEN_GROUP = 5;
 
   private static final BidirectionalMap<IElementType, IElementType> PAIRING_TOKENS = new BidirectionalMap<IElementType, IElementType>();
 
   static {
-    PAIRING_TOKENS.put(JavaTokenType.LPARENTH, JavaTokenType.RPARENTH);
-    PAIRING_TOKENS.put(JavaTokenType.LBRACE, JavaTokenType.RBRACE);
-    PAIRING_TOKENS.put(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
     PAIRING_TOKENS.put(XmlTokenType.XML_TAG_END, XmlTokenType.XML_START_TAG_START);
     PAIRING_TOKENS.put(XmlTokenType.XML_CDATA_START, XmlTokenType.XML_CDATA_END);
     PAIRING_TOKENS.put(XmlTokenType.XML_EMPTY_ELEMENT_END, XmlTokenType.XML_START_TAG_START);
     PAIRING_TOKENS.put(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER, XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER);
-    PAIRING_TOKENS.put(JspTokenType.JSP_SCRIPTLET_START, JspTokenType.JSP_SCRIPTLET_END);
-    PAIRING_TOKENS.put(JspTokenType.JSP_EXPRESSION_START, JspTokenType.JSP_EXPRESSION_END);
-    PAIRING_TOKENS.put(JspTokenType.JSP_DECLARATION_START, JspTokenType.JSP_DECLARATION_END);
-    PAIRING_TOKENS.put(JspTokenType.JSP_DIRECTIVE_START, JspTokenType.JSP_DIRECTIVE_END);
-    PAIRING_TOKENS.put(JavaDocTokenType.DOC_INLINE_TAG_START, JavaDocTokenType.DOC_INLINE_TAG_END);
-    PAIRING_TOKENS.put(ELTokenType.JSP_EL_RBRACKET, ELTokenType.JSP_EL_LBRACKET);
-    PAIRING_TOKENS.put(ELTokenType.JSP_EL_RPARENTH, ELTokenType.JSP_EL_LPARENTH);
   }
 
-  public int getTokenGroup(IElementType tokenType) {
-    if (tokenType instanceof IJavaElementType) {
-      return JAVA_TOKEN_GROUP;
+  public int getBraceTokenGroupId(IElementType tokenType) {
+    final Language l = tokenType.getLanguage();
+    PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(l);
+    
+    if (matcher != null) {
+      BracePair[] pairs = matcher.getPairs();
+      for (BracePair pair : pairs) {
+        if (pair.getLeftBraceType() == tokenType || pair.getRightBraceType() == tokenType ) {
+          return l.hashCode();
+        }
+      }
     }
-    else if (tokenType instanceof IXmlLeafElementType) {
+    if (tokenType instanceof IXmlLeafElementType) {
       return tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER || tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER
              ? XML_VALUE_DELIMITER_GROUP
              : XML_TAG_TOKEN_GROUP;
-    }
-    else if (tokenType instanceof IJspElementType) {
-      return JSP_TOKEN_GROUP;
-    }
-    else if (tokenType instanceof IJavaDocElementType) {
-      return DOC_TOKEN_GROUP;
     }
     else{
       return BraceMatchingUtil.UNDEFINED_TOKEN_GROUP;
@@ -72,10 +62,8 @@ public class DefaultBraceMatcher implements BraceMatcher {
   }
 
   public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
-    return isLBraceToken(iterator.getTokenType());
-  }
-
-  private static boolean isLBraceToken(final IElementType tokenType) {
+    final IElementType tokenType = iterator.getTokenType();
+    final boolean result;
     PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
     if (matcher != null) {
       BracePair[] pairs = matcher.getPairs();
@@ -83,19 +71,10 @@ public class DefaultBraceMatcher implements BraceMatcher {
         if (pair.getLeftBraceType() == tokenType) return true;
       }
     }
-    return tokenType == JavaTokenType.LPARENTH ||
-           tokenType == JavaTokenType.LBRACE ||
-           tokenType == JavaTokenType.LBRACKET ||
-           tokenType == XmlTokenType.XML_START_TAG_START ||
+    result = tokenType == XmlTokenType.XML_START_TAG_START ||
            tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER ||
-           tokenType == XmlTokenType.XML_CDATA_START ||
-           tokenType == JspTokenType.JSP_SCRIPTLET_START ||
-           tokenType == JspTokenType.JSP_EXPRESSION_START ||
-           tokenType == JspTokenType.JSP_DECLARATION_START ||
-           tokenType == JspTokenType.JSP_DIRECTIVE_START ||
-           tokenType == ELTokenType.JSP_EL_LBRACKET ||
-           tokenType == ELTokenType.JSP_EL_LPARENTH ||
-           tokenType == JavaDocTokenType.DOC_INLINE_TAG_START;
+           tokenType == XmlTokenType.XML_CDATA_START;
+    return result;
   }
 
   public boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
@@ -108,25 +87,16 @@ public class DefaultBraceMatcher implements BraceMatcher {
       }
     }
 
-    if (tokenType == JavaTokenType.RPARENTH ||
-        tokenType == JavaTokenType.RBRACE ||
-        tokenType == JavaTokenType.RBRACKET ||
+    if (
         tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END ||
         tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER ||
-        tokenType == XmlTokenType.XML_CDATA_END ||
-        tokenType == JspTokenType.JSP_SCRIPTLET_END ||
-        tokenType == JspTokenType.JSP_EXPRESSION_END ||
-        tokenType == JspTokenType.JSP_DECLARATION_END ||
-        tokenType == JspTokenType.JSP_DIRECTIVE_END ||
-        tokenType == ELTokenType.JSP_EL_RBRACKET ||
-        tokenType == ELTokenType.JSP_EL_RPARENTH ||
-        tokenType == JavaDocTokenType.DOC_INLINE_TAG_END) {
+        tokenType == XmlTokenType.XML_CDATA_END) {
       return true;
     }
     else if (tokenType == XmlTokenType.XML_TAG_END) {
       final boolean result = findEndTagStart(iterator);
 
-      if (fileType == StdFileTypes.HTML || fileType == StdFileTypes.JSP) {
+      if (isFileTypeWithSingleHtmlTags(fileType)) {
         final String tagName = getTagName(fileText, iterator);
 
         if (tagName != null && HtmlUtil.isSingleHtmlTag(tagName)) {
@@ -141,7 +111,19 @@ public class DefaultBraceMatcher implements BraceMatcher {
     }
   }
 
+  protected boolean isFileTypeWithSingleHtmlTags(final FileType fileType) {
+    return fileType == StdFileTypes.HTML;
+  }
+
   public boolean isPairBraces(IElementType tokenType1, IElementType tokenType2) {
+    PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType1.getLanguage());
+    if (matcher != null) {
+      BracePair[] pairs = matcher.getPairs();
+      for (BracePair pair : pairs) {
+        if (pair.getLeftBraceType() == tokenType1 ) return pair.getRightBraceType() == tokenType2;
+        if (pair.getRightBraceType() == tokenType1 ) return pair.getLeftBraceType() == tokenType2;
+      }
+    }
     if (tokenType2.equals(PAIRING_TOKENS.get(tokenType1))) return true;
     List<IElementType> keys = PAIRING_TOKENS.getKeysByValue(tokenType1);
     return keys != null && keys.contains(tokenType2);
@@ -158,10 +140,7 @@ public class DefaultBraceMatcher implements BraceMatcher {
             pair.isStructural()) return true;
       }
     }
-    if (fileType == StdFileTypes.JAVA) {
-      return tokenType == JavaTokenType.RBRACE || tokenType == JavaTokenType.LBRACE;
-    }
-    else if (fileType == StdFileTypes.HTML ||
+    if (fileType == StdFileTypes.HTML ||
              fileType == StdFileTypes.XML ||
              fileType == StdFileTypes.XHTML
             ) {
@@ -169,83 +148,38 @@ public class DefaultBraceMatcher implements BraceMatcher {
              tokenType == XmlTokenType.XML_TAG_END ||
              tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END ||
              ( tokenType == XmlTokenType.XML_TAG_END &&
-               ( fileType == StdFileTypes.HTML ||
-                 fileType == StdFileTypes.JSP
+               ( isFileTypeWithSingleHtmlTags(fileType)
                ) &&
                isEndOfSingleHtmlTag(text, iterator)
              );
     }
-    else {
-      return (fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX) && isJspJspxStructuralBrace(tokenType);
-    }
-  }
-
-  private static boolean isJspJspxStructuralBrace(final IElementType tokenType) {
-    return tokenType == JavaTokenType.LBRACE ||
-           tokenType == JavaTokenType.RBRACE ||
-           tokenType == XmlTokenType.XML_START_TAG_START ||
-           tokenType == XmlTokenType.XML_TAG_END ||
-           tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END;
-  }
-
-  public IElementType getTokenType(char ch, HighlighterIterator iterator) {
-    IElementType tokenType = (!iterator.atEnd())? iterator.getTokenType() :null;
-
-    if(tokenType == TokenType.WHITE_SPACE) {
-      iterator.retreat();
-
-      if (!iterator.atEnd()) {
-        tokenType = iterator.getTokenType();
-        iterator.advance();
-      }
-    }
-
-    if(tokenType instanceof IJavaElementType) {
-      if (ch == '}') return JavaTokenType.RBRACE;
-      if (ch == '{') return JavaTokenType.LBRACE;
-      if (ch == ']') return JavaTokenType.RBRACKET;
-      if (ch == '[') return JavaTokenType.LBRACKET;
-      if (ch == ')') return JavaTokenType.RPARENTH;
-      if (ch == '(') return JavaTokenType.LPARENTH;
-    } else if(tokenType instanceof IJspElementType) {
-      if (ch == ']') return ELTokenType.JSP_EL_RBRACKET;
-      if (ch == '[') return ELTokenType.JSP_EL_LBRACKET;
-      if (ch == ')') return ELTokenType.JSP_EL_RPARENTH;
-      if (ch == '(') return ELTokenType.JSP_EL_LPARENTH;
-    }
-
-    return null;  //TODO: add more here!
+    return false;
   }
 
   public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
-    if (contextType instanceof IJavaElementType) return isPairedBracesAllowedBeforeTypeInJava(contextType);
     return true;
   }
 
-  public boolean isStrictTagMatching(final FileType fileType, final int group) {
-    switch(group){
+  public boolean isStrictTagMatching(final FileType fileType, final int braceGroupId) {
+    switch(braceGroupId){
       case XML_TAG_TOKEN_GROUP:
         // Other xml languages may have nonbalanced tag names
-        return fileType == StdFileTypes.XML ||
-               fileType == StdFileTypes.XHTML ||
-               fileType == StdFileTypes.JSPX;
-
-      case JSP_TOKEN_GROUP:
-        return true;
+        return isStrictTagMatchingForFileType(fileType);
 
       default:
         return false;
     }
   }
 
-  public boolean areTagsCaseSensitive(final FileType fileType, final int tokenGroup) {
-    switch(tokenGroup){
+  protected boolean isStrictTagMatchingForFileType(final FileType fileType) {
+    return fileType == StdFileTypes.XML ||
+           fileType == StdFileTypes.XHTML;
+  }
+
+  public boolean areTagsCaseSensitive(final FileType fileType, final int braceGroupId) {
+    switch(braceGroupId){
       case XML_TAG_TOKEN_GROUP:
         return fileType == StdFileTypes.XML;
-
-      case JSP_TOKEN_GROUP:
-        return true;
-
       default:
         return false;
     }
@@ -276,15 +210,6 @@ public class DefaultBraceMatcher implements BraceMatcher {
     return tagName != null && HtmlUtil.isSingleHtmlTag(tagName);
   }
 
-  public static boolean isPairedBracesAllowedBeforeTypeInJava(final IElementType tokenType) {
-    return TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType)
-            || tokenType == JavaTokenType.SEMICOLON
-            || tokenType == JavaTokenType.COMMA
-            || tokenType == JavaTokenType.RPARENTH
-            || tokenType == JavaTokenType.RBRACKET
-            || tokenType == JavaTokenType.RBRACE;
-  }
-
   public String getTagName(CharSequence fileText, HighlighterIterator iterator) {
     final IElementType tokenType = iterator.getTokenType();
     String name = null;
@@ -294,7 +219,7 @@ public class DefaultBraceMatcher implements BraceMatcher {
         iterator.advance();
         IElementType tokenType1 = (!iterator.atEnd() ? iterator.getTokenType() :null);
 
-        if (tokenType1 == JavaTokenType.WHITE_SPACE || tokenType1 == JspTokenType.JSP_WHITE_SPACE) {
+        if (isWhitespace(tokenType1)) {
           wasWhiteSpace = true;
           iterator.advance();
           tokenType1 = (!iterator.atEnd() ? iterator.getTokenType() :null);
@@ -333,27 +258,23 @@ public class DefaultBraceMatcher implements BraceMatcher {
     return name;
   }
 
+  protected boolean isWhitespace(final IElementType tokenType1) {
+    return tokenType1 == TokenType.WHITE_SPACE;
+  }
+
+  public IElementType getOppositeBraceTokenType(@NotNull final IElementType type) {
+    PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(type.getLanguage());
+    if (matcher != null) {
+      BracePair[] pairs = matcher.getPairs();
+      for (BracePair pair : pairs) {
+        if (pair.getLeftBraceType() == type ) return pair.getRightBraceType();
+        if (pair.getRightBraceType() == type ) return pair.getLeftBraceType();
+      }
+    }
+    return null;
+  }
+
   public int getCodeConstructStart(final PsiFile file, int openingBraceOffset) {
-    PsiElement element = file.findElementAt(openingBraceOffset);
-    if (element == null || element instanceof PsiFile) return openingBraceOffset;
-    PsiElement parent = element.getParent();
-    if (parent instanceof PsiCodeBlock) {
-      parent = parent.getParent();
-      if (parent instanceof PsiMethod || parent instanceof PsiClassInitializer) {
-        TextRange range = DeclarationRangeUtil.getDeclarationRange(parent);
-        return range.getStartOffset();
-      }
-      else if (parent instanceof PsiStatement) {
-        if (parent instanceof PsiBlockStatement && parent.getParent() instanceof PsiStatement) {
-          parent = parent.getParent();
-        }
-        return parent.getTextRange().getStartOffset();
-      }
-    }
-    else if (parent instanceof PsiClass) {
-      TextRange range = DeclarationRangeUtil.getDeclarationRange(parent);
-      return range.getStartOffset();
-    }
     return openingBraceOffset;
   }
 }

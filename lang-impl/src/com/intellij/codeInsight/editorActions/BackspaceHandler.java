@@ -88,8 +88,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
         return true;
       }
 
-      final char closingBrace = c == '(' ? ')' : ']';
-      int rparenOffset = BraceMatchingUtil.findRightmostRParen(iterator, braceMatcher.getTokenType(closingBrace, iterator),chars,fileType);
+      int rparenOffset = BraceMatchingUtil.findRightmostRParen(iterator, iterator.getTokenType() ,chars,fileType);
       if (rparenOffset >= 0){
         iterator = ((EditorEx)editor).getHighlighter().createIterator(rparenOffset);
         boolean matched = BraceMatchingUtil.matchBrace(chars, fileType, iterator, false);

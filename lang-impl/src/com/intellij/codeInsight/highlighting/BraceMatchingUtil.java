@@ -4,10 +4,15 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageBraceMatching;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeExtensionPoint;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Stack;
@@ -56,10 +61,10 @@ public class BraceMatchingUtil {
       myMatcher = getBraceMatcher(_fileType);
       brace1Token = iterator.getTokenType();
       group = getTokenGroup(brace1Token, fileType);
-      brace1TagName = myMatcher == null ? null : myMatcher.getTagName(fileText, iterator);
+      brace1TagName = myMatcher == null ? null : getTagName(myMatcher,fileText, iterator);
 
-      isStrict = myMatcher != null && myMatcher.isStrictTagMatching(fileType, group);
-      isCaseSensitive = myMatcher != null && myMatcher.areTagsCaseSensitive(fileType, group);
+      isStrict = myMatcher != null && isStrictTagMatching(myMatcher,fileType, group);
+      isCaseSensitive = myMatcher != null && areTagsCaseSensitive(myMatcher,fileType, group);
     }
 
     MatchBraceContext(CharSequence _fileText, FileType _fileType, HighlighterIterator _iterator, boolean _forward,
@@ -90,7 +95,7 @@ public class BraceMatchingUtil {
         IElementType tokenType = iterator.getTokenType();
 
         if (getTokenGroup(tokenType, fileType) == group) {
-          String tagName = myMatcher == null ? null : myMatcher.getTagName(fileText, iterator);
+          String tagName = myMatcher == null ? null : getTagName(myMatcher,fileText, iterator);
           if (!isStrict && !Comparing.equal(brace1TagName, tagName, isCaseSensitive)) continue;
           if (forward ? isLBraceToken(iterator, fileText, fileType) : isRBraceToken(iterator, fileText, fileType)){
             ourBraceStack.push(tokenType);
@@ -145,24 +150,24 @@ public class BraceMatchingUtil {
       if (isStructuralBraceToken(fileType, iterator,fileText)) {
         if (isRBraceToken(iterator, fileText, fileType)) {
           ourBraceStack.push(iterator.getTokenType());
-          ourTagNameStack.push(matcher.getTagName(fileText, iterator));
+          ourTagNameStack.push(getTagName(matcher,fileText, iterator));
         }
         if (isLBraceToken(iterator, fileText, fileType)) {
           if (ourBraceStack.size() == 0) return true;
 
-          final int group = matcher.getTokenGroup(iterator.getTokenType());
+          final int group = matcher.getBraceTokenGroupId(iterator.getTokenType());
 
           final IElementType topTokenType = ourBraceStack.pop();
           final IElementType tokenType = iterator.getTokenType();
 
-          boolean isStrict = matcher.isStrictTagMatching(fileType, group);
-          boolean isCaseSensitive = matcher.areTagsCaseSensitive(fileType, group);
+          boolean isStrict = isStrictTagMatching(matcher,fileType, group);
+          boolean isCaseSensitive = areTagsCaseSensitive(matcher,fileType, group);
 
           String topTagName = null;
           String tagName = null;
           if (isStrict){
             topTagName = ourTagNameStack.pop();
-            tagName = matcher.getTagName(fileText, iterator);
+            tagName = getTagName(matcher,fileText, iterator);
           }
 
           if (!isPairBraces(topTokenType, tokenType, fileType)
@@ -202,7 +207,7 @@ public class BraceMatchingUtil {
 
   private static int getTokenGroup(IElementType tokenType, FileType fileType){
     BraceMatcher matcher = getBraceMatcher(fileType);
-    if (matcher!=null) return matcher.getTokenGroup(tokenType);
+    if (matcher!=null) return matcher.getBraceTokenGroupId(tokenType);
     return UNDEFINED_TOKEN_GROUP;
   }
 
@@ -270,23 +275,81 @@ public class BraceMatchingUtil {
     return lastRbraceOffset;
   }
 
-  public static void setDefaultBraceMatcher(final BraceMatcher defaultBraceMatcher) {
-    ourDefaultBraceMatcher = defaultBraceMatcher;
-  }
-
   public static BraceMatcher getBraceMatcher(FileType fileType) {
     BraceMatcher braceMatcher = BRACE_MATCHERS.get(fileType);
     if (braceMatcher==null) {
-      if (fileType instanceof LanguageFileType) {
-        final Language language = ((LanguageFileType)fileType).getLanguage();
-        final PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(language);
-        if (matcher != null) {
-          braceMatcher = new PairedBraceMatcherAdapter(matcher,language);
+      for(FileTypeExtensionPoint<BraceMatcher> ext:Extensions.getExtensions(BraceMatcher.EP_NAME)) {
+        if (fileType.getName().equals(ext.filetype)) {
+          braceMatcher = ext.getInstance();
+          break;
         }
       }
-      if (braceMatcher == null) braceMatcher = ourDefaultBraceMatcher;
+      if (braceMatcher == null) {
+        if (fileType instanceof LanguageFileType) {
+          final Language language = ((LanguageFileType)fileType).getLanguage();
+          final PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(language);
+          if (matcher != null) {
+            braceMatcher = new PairedBraceMatcherAdapter(matcher,language);
+          }
+        }
+      }
+      if (braceMatcher == null) {
+        if (ourDefaultBraceMatcher == null) {
+          ourDefaultBraceMatcher = new DefaultBraceMatcher();
+        }
+        braceMatcher = ourDefaultBraceMatcher;
+      }
       BRACE_MATCHERS.put(fileType, braceMatcher);
     }
     return braceMatcher;
+  }
+
+  private static boolean isStrictTagMatching(BraceMatcher matcher,final FileType fileType, final int group) {
+    if (matcher instanceof XmlAwareBraceMatcher) return ((XmlAwareBraceMatcher)matcher).isStrictTagMatching(fileType, group);
+    return false;
+  }
+
+  private static boolean areTagsCaseSensitive(BraceMatcher matcher,final FileType fileType, final int tokenGroup) {
+    if (matcher instanceof XmlAwareBraceMatcher) return ((XmlAwareBraceMatcher)matcher).areTagsCaseSensitive(fileType, tokenGroup);
+    return false;
+  }
+
+  private static String getTagName(BraceMatcher matcher,CharSequence fileText, HighlighterIterator iterator) {
+    if (matcher instanceof XmlAwareBraceMatcher) return ((XmlAwareBraceMatcher)matcher).getTagName(fileText, iterator);
+    return null;
+  }
+
+  private static class DefaultBraceMatcher implements BraceMatcher {
+    public int getBraceTokenGroupId(final IElementType tokenType) {
+      return UNDEFINED_TOKEN_GROUP;
+    }
+
+    public boolean isLBraceToken(final HighlighterIterator iterator, final CharSequence fileText, final FileType fileType) {
+      return false;
+    }
+
+    public boolean isRBraceToken(final HighlighterIterator iterator, final CharSequence fileText, final FileType fileType) {
+      return false;
+    }
+
+    public boolean isPairBraces(final IElementType tokenType, final IElementType tokenType2) {
+      return false;
+    }
+
+    public boolean isStructuralBrace(final HighlighterIterator iterator, final CharSequence text, final FileType fileType) {
+      return false;
+    }
+
+    public IElementType getOppositeBraceTokenType(@NotNull final IElementType type) {
+      return null;
+    }
+
+    public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
+      return true;
+    }
+
+    public int getCodeConstructStart(final PsiFile file, final int openingBraceOffset) {
+      return openingBraceOffset;
+    }
   }
 }

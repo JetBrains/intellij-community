@@ -4,9 +4,6 @@
       <interface-class>com.intellij.codeInsight.folding.CodeFoldingSettings</interface-class>
       <implementation-class>com.intellij.codeInsight.folding.impl.CodeFoldingSettingsImpl</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.DefaultBraceMatcherLoader</implementation-class>
-    </component>
   </application-components>
 
   <project-components>

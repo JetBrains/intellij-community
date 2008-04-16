@@ -164,10 +164,10 @@ public class TypedHandler implements TypedActionHandler {
     }
 
     if (')' == charTyped){
-      if (handleRParen(editor, fileType, ')', '(')) return;
+      if (handleRParen(editor, fileType)) return;
     }
     else if (']' == charTyped){
-      if (handleRParen(editor, fileType, ']', '[')) return;
+      if (handleRParen(editor, fileType)) return;
     }
     else if ('"' == charTyped || '\'' == charTyped){
       if (handleQuote(editor, fileType, charTyped, dataContext)) return;
@@ -221,8 +221,9 @@ public class TypedHandler implements TypedActionHandler {
 
     if (!atEndOfDocument) iterator.retreat();
     BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
-    IElementType braceTokenType = braceMatcher.getTokenType(lparenChar, iterator);
-    if (iterator.atEnd() || iterator.getTokenType() != braceTokenType) return;
+    if (iterator.atEnd()) return;
+    IElementType braceTokenType = iterator.getTokenType();
+    if (!braceMatcher.isLBraceToken(iterator, editor.getDocument().getCharsSequence(), fileType)) return;
 
     if (!iterator.atEnd()) {
       iterator.advance();
@@ -261,7 +262,7 @@ public class TypedHandler implements TypedActionHandler {
     }
   }
 
-  private static boolean handleRParen(Editor editor, FileType fileType, char rightParen, char leftParen){
+  private static boolean handleRParen(Editor editor, FileType fileType){
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false;
 
     int offset = editor.getCaretModel().getOffset();
@@ -270,13 +271,17 @@ public class TypedHandler implements TypedActionHandler {
 
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
     BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
-    if (iterator.atEnd() || braceMatcher.getTokenType(rightParen,iterator) != iterator.getTokenType()) {
+    if (iterator.atEnd()) return false;
+
+    if (!braceMatcher.isRBraceToken(iterator, editor.getDocument().getCharsSequence(), fileType)) {
       return false;
     }
 
+    IElementType tokenType = iterator.getTokenType();
+    
     iterator.retreat();
 
-    int lparenthOffset = BraceMatchingUtil.findLeftmostLParen(iterator, braceMatcher.getTokenType(leftParen, iterator),  editor.getDocument().getCharsSequence(),fileType);
+    int lparenthOffset = BraceMatchingUtil.findLeftmostLParen(iterator, braceMatcher.getOppositeBraceTokenType(tokenType),  editor.getDocument().getCharsSequence(),fileType);
     if (lparenthOffset < 0) return false;
 
     iterator = ((EditorEx) editor).getHighlighter().createIterator(lparenthOffset);

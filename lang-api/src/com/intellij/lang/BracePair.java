@@ -26,28 +26,18 @@ import com.intellij.psi.tree.IElementType;
 
 public class BracePair {
   private IElementType myLeftBrace;
-  private char myLeftBraceChar;
   private IElementType myRightBrace;
-  private char myRightBraceChar;
   private boolean myStructural;
 
   /**
    * Creates a new brace pair instance.
    *
-   * @param leftBraceChar  the character for the left brace in the pair.
    * @param leftBrace      the lexer token type for the left brace in the pair.
-   * @param rightBraceChar the character for the right brace in the pair.
    * @param rightBrace     the lexer token type for the right brace in the pair.
    * @param structural     if true, the brace is considered structural (see {@link #isStructural()} for details)
    */
-  public BracePair(char leftBraceChar,
-                   final IElementType leftBrace,
-                   char rightBraceChar,
-                   final IElementType rightBrace,
-                   final boolean structural) {
-    myLeftBraceChar = leftBraceChar;
+  public BracePair(final IElementType leftBrace, final IElementType rightBrace, final boolean structural) {
     myLeftBrace = leftBrace;
-    myRightBraceChar = rightBraceChar;
     myRightBrace = rightBrace;
     myStructural = structural;
   }
@@ -80,23 +70,5 @@ public class BracePair {
    */
   public boolean isStructural() {
     return myStructural;
-  }
-
-  /**
-   * Returns the character for the left brace in the pair.
-   *
-   * @return brace character
-   */
-  public char getLeftBraceChar() {
-    return myLeftBraceChar;
-  }
-
-  /**
-   * Returns the character for the right brace in the pair.
-   *
-   * @return brace character
-   */
-  public char getRightBraceChar() {
-    return myRightBraceChar;
   }
 }
