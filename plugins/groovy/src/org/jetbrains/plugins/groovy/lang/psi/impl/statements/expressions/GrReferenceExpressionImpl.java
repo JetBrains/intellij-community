@@ -473,8 +473,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
                 return;
               }
             }
-            processClassQualifierType(refExpr, processor, qualifierType);
           }
+          processClassQualifierType(refExpr, processor, qualifierType);
         }
       }
     }
