@@ -65,7 +65,7 @@ public class MavenProjectModel {
                                 Node parentNode,
                                 boolean isExistingModuleTree,
                                 Progress p) throws MavenException, CanceledException {
-    for (String modulePath : ProjectUtil.collectAbsoluteModulePaths(mavenModel, new File(pomFile.getPath()), profiles, new HashSet<String>())) {
+    for (String modulePath : ProjectUtil.collectAbsoluteModulePaths(mavenModel, new File(pomFile.getPath()), profiles, new LinkedHashSet<String>())) {
       p.checkCanceled();
 
       VirtualFile childFile = LocalFileSystem.getInstance().findFileByPath(modulePath);

@@ -27,7 +27,8 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <configurationType implementation="org.jetbrains.idea.maven.runner.execution.MavenRunConfigurationType"/>
 
-    <dom.fileDescription implementation="org.jetbrains.idea.maven.core.MavenDomDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomDescription"/>
+    <inspectionToolProvider implementation="org.jetbrains.idea.maven.dom.MavenModelInspection"/>
   </extensions>
 
   <application-components>

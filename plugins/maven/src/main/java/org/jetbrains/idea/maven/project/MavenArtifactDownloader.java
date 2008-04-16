@@ -238,7 +238,7 @@ public class MavenArtifactDownloader {
     final List<MavenRunnerParameters> commands = new ArrayList<MavenRunnerParameters>();
     final List<String> goals = Arrays.asList(generateGoals);
 
-    final Set<String> modulePaths = new HashSet<String>();
+    final LinkedHashSet<String> modulePaths = new LinkedHashSet<String>();
     for (Map.Entry<MavenProject, Collection<String>> entry : projects.entrySet()) {
       ProjectUtil.collectAbsoluteModulePaths(entry.getKey(), entry.getValue(), modulePaths);
     }

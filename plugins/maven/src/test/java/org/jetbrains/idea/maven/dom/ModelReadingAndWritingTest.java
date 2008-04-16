@@ -11,6 +11,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.idea.maven.MavenTestCase;
+import org.jetbrains.idea.maven.dom.beans.MavenModel;
+import org.jetbrains.idea.maven.dom.beans.Dependency;
 
 public abstract class ModelReadingAndWritingTest extends MavenTestCase {
   @Override
@@ -23,7 +25,7 @@ public abstract class ModelReadingAndWritingTest extends MavenTestCase {
   }
 
   public void testReading() throws Exception {
-    Model model = getDomModel();
+    MavenModel model = getDomModel();
 
     assertEquals("test", model.getGroupId().getStringValue());
     assertEquals("project", model.getArtifactId().getStringValue());
@@ -33,7 +35,7 @@ public abstract class ModelReadingAndWritingTest extends MavenTestCase {
   public void testWriting() throws Exception {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        Model model = getDomModel();
+        MavenModel model = getDomModel();
 
         model.getGroupId().setStringValue("foo");
         model.getArtifactId().setStringValue("bar");
@@ -57,7 +59,7 @@ public abstract class ModelReadingAndWritingTest extends MavenTestCase {
   public void testAddingADependency() throws Exception {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        Model model = getDomModel();
+        MavenModel model = getDomModel();
 
         Dependency d = model.getDependencies().addDependency();
         d.getGroupId().setStringValue("group");
@@ -85,9 +87,9 @@ public abstract class ModelReadingAndWritingTest extends MavenTestCase {
                  "</project>", getProjectPomDocument().getText());
   }
 
-  private Model getDomModel() {
+  private MavenModel getDomModel() {
     PsiFile f = getProjectPomPsiFile();
-    DomFileElement<Model> root = DomManager.getDomManager(myProject).getFileElement((XmlFile)f, Model.class);
+    DomFileElement<MavenModel> root = DomManager.getDomManager(myProject).getFileElement((XmlFile)f, MavenModel.class);
     return root.getRootElement();
   }
 
