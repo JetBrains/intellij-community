@@ -45,4 +45,13 @@ public class MultiMap<K, V> extends FactoryMap<K, List<V>> {
   public List<V> remove(final Object k) {
     return myMap.remove(k);
   }
+
+  public boolean containsScalarValue(V value) {
+    for(List<V> valueList: myMap.values()) {
+      if (valueList.contains(value)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
