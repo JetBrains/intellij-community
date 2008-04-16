@@ -48,6 +48,7 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
   // Groovy configuration settings
   public String DEFAULT_GROOVY_VERSION = null;
   public ArrayList<String> GROOVY_VERSIONS = new ArrayList<String>();
+  public String GROOVY_INSTALL_PATH = null;
 
   @Transient
   private boolean myJsSupportEnabled = false;
