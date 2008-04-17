@@ -118,6 +118,16 @@
       first-show="5"
       successive-show="7"/>
     <feature
+      id="editing.completion.second.classname"
+      tip-file="SecondClassNameCompletion.html"
+      min-usage-count="8"
+      first-show="10"
+      successive-show="3">
+      <dependency id="editing.completion.basic"/>
+      <dependency id="editing.completion.classname"/>
+      <dependency id="editing.completion.smarttype.general"/>
+      </feature>
+    <feature
       id="editing.completion.variable.name"
       tip-file="VariableNameCompletion.html"
       min-usage-count="7"

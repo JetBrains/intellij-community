@@ -90,6 +90,10 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
     HintManager.getInstance().hideAllHints();
 
+    if (time != 0) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.second.classname");
+    }
+
     final PsiFile file = psiFile;
 
     final CompletionInitializationContext initializationContext = new WriteCommandAction<CompletionInitializationContext>(project) {
