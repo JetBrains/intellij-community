@@ -164,7 +164,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
       for (VirtualFile f : files) {
         Set<String> profiles = new LinkedHashSet<String>();
         ProjectUtil.collectProfileIds(r.readModel(f.getPath()), profiles);
-        result.put(f, profiles);
+        if (!profiles.isEmpty()) result.put(f, profiles);
       }
 
       MavenFactory.releaseEmbedder(e);
