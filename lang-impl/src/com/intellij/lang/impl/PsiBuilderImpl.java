@@ -148,9 +148,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myLexer.start(myText, 0, myText.length(), 0);
     while (true) {
       IElementType type = myLexer.getTokenType();
-      if (myRemapper != null) {
-        type = myRemapper.filter(type, myLexer.getTokenStart(), myLexer.getTokenEnd(), myLexer.getBufferSequence());
-      }
       if (type == null) break;
 
       if (i >= myLexStarts.length) {
@@ -159,7 +156,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myLexStarts[i] = myLexer.getTokenStart();
       myLexEnds[i] = myLexer.getTokenEnd();
       myLexTypes[i] = type;
-
       i++;
       myLexer.advance();
     }
@@ -438,7 +434,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   public IElementType getTokenType() {
     if (!locateToken()) return null;
-    return myLexTypes[myCurrentLexem];
+    if (myRemapper != null) {
+      IElementType type = myLexTypes[myCurrentLexem];
+      type = myRemapper.filter(type, myLexStarts[myCurrentLexem], myLexEnds[myCurrentLexem], myLexer.getBufferSequence());
+      myLexTypes[myCurrentLexem] = type; // filter may have changed the type 
+      return type;
+    }
+    else return myLexTypes[myCurrentLexem];
   }
 
   public void setTokenTypeRemapper(final ITokenTypeRemapper remapper) {
