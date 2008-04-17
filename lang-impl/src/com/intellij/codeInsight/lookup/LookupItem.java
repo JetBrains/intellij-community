@@ -257,7 +257,7 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
   }
 
   @NotNull
-  public LookupElement<T> setPresentableText(@NotNull final String displayText) {
+  public LookupItem<T> setPresentableText(@NotNull final String displayText) {
     myPresentable = displayText;
     return this;
   }
