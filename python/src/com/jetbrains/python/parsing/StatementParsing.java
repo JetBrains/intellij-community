@@ -24,6 +24,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -37,6 +38,11 @@ public class StatementParsing
     implements ITokenTypeRemapper
 {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.parsing.StatementParsing");
+  @NonNls protected static final String TOK_FUTURE_IMPORT = "__future__";
+  @NonNls protected static final String TOK_WITH_STATEMENT = "with_statement";
+  @NonNls protected static final String TOK_NESTED_SCOPES = "nested_scopes";
+  @NonNls protected static final String TOK_WITH = "with";
+  @NonNls protected static final String TOK_AS = "as";
   protected enum FIPH {NONE, FROM, FUTURE, IMPORT} // 'from __future__ import' phase
   private FIPH _from_import_phase = FIPH.NONE;
   private boolean _expect_AS_kwd = false;
@@ -49,8 +55,6 @@ public class StatementParsing
   }
 
   public void parseStatement() {
-    // TODO: initialize it in a more proper place
-    myBuilder.setTokenTypeRemapper(this);
 
     while (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
       myBuilder.advanceLexer();
@@ -375,11 +379,11 @@ public class StatementParsing
       else { // from X import _
         String token_text = parseIdentifier(PyElementTypes.REFERENCE_EXPRESSION);
         if (from_future) {
-          // TODO: make constants for known future feature names
-          if ("with_statement".equals(token_text)) {
+          // TODO: mark all known future feature names
+          if (TOK_WITH_STATEMENT.equals(token_text)) {
             myFutureFlags.add(FUTURE.WITH_STATEMENT);
           }
-          else if ("nested_scopes".equals(token_text)) {
+          else if (TOK_NESTED_SCOPES.equals(token_text)) {
             myFutureFlags.add(FUTURE.NESTED_SCOPES);
           }
         }
@@ -652,14 +656,14 @@ public class StatementParsing
     if (
       (myFutureFlags.contains(FUTURE.WITH_STATEMENT) || _expect_AS_kwd) &&
       source == PyTokenTypes.IDENTIFIER &&
-      CharArrayUtil.regionMatches(text, start, end, "as")
+      CharArrayUtil.regionMatches(text, start, end, TOK_AS)
     ) {
       return PyTokenTypes.AS_KEYWORD;
     }
     else if ( // filter
         (_from_import_phase == FIPH.FROM) &&
         source == PyTokenTypes.IDENTIFIER &&
-        CharArrayUtil.regionMatches(text, start, end, "__future__")
+        CharArrayUtil.regionMatches(text, start, end, TOK_FUTURE_IMPORT)
     ) {
       _from_import_phase = FIPH.FUTURE;
       return source;
@@ -667,7 +671,7 @@ public class StatementParsing
     else if (
         myFutureFlags.contains(FUTURE.WITH_STATEMENT) &&
         source == PyTokenTypes.IDENTIFIER &&
-        CharArrayUtil.regionMatches(text, start, end, "with")
+        CharArrayUtil.regionMatches(text, start, end, TOK_WITH)
     ) {
       return PyTokenTypes.WITH_KEYWORD;
     }
