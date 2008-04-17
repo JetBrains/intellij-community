@@ -53,14 +53,13 @@ public class IndexCacheManagerImpl implements CacheManager{
   }
 
   @NotNull
-  public synchronized PsiFile[] getFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
+  public PsiFile[] getFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
     CommonProcessors.CollectProcessor<PsiFile> processor = new CommonProcessors.CollectProcessor<PsiFile>();
     processFilesWithWord(processor, word, occurenceMask, scope, caseSensitively);
     return processor.toArray(PsiFile.EMPTY_ARRAY);
   }
 
-  public synchronized boolean processFilesWithWord(@NotNull final Processor<PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
-
+  public boolean processFilesWithWord(@NotNull final Processor<PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
     Processor<VirtualFile> virtualFileProcessor = new Processor<VirtualFile>() {
       public boolean process(final VirtualFile virtualFile) {
         LOG.assertTrue(virtualFile.isValid());
@@ -92,8 +91,6 @@ public class IndexCacheManagerImpl implements CacheManager{
         return false;
       }
     }
-
-    
     return true;
   }
 

@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 public class FSRecords implements Disposable, Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  private final static int VERSION = 7;
+  private static final int VERSION = 7;
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -44,7 +44,7 @@ public class FSRecords implements Disposable, Forceable {
   private static final int LENGTH_OFFSET = MODCOUNT_OFFSET + MODCOUNT_SIZE;
   private static final int LENGTH_SIZE = 8;
 
-  private final static int RECORD_SIZE = LENGTH_OFFSET + LENGTH_SIZE;
+  private static final int RECORD_SIZE = LENGTH_OFFSET + LENGTH_SIZE;
 
   private static final byte[] ZEROES = new byte[RECORD_SIZE];
 
@@ -59,7 +59,7 @@ public class FSRecords implements Disposable, Forceable {
   private static final int CORRUPTED_MAGIC = 0xabcf7f7f;
 
   private static final String CHILDREN_ATT = "FsRecords.DIRECTORY_CHILDREN";
-  private final static Object lock = new Object();
+  private static final Object lock = new Object();
   private DbConnection myConnection;
 
   private static int ourLocalModificationCount = 0;
@@ -275,7 +275,7 @@ public class FSRecords implements Disposable, Forceable {
   public FSRecords() {
   }
 
-  public void connect() throws IOException {
+  public void connect() {
     myConnection = DbConnection.connect();
   }
 
@@ -818,10 +818,6 @@ public class FSRecords implements Disposable, Forceable {
   @NotNull
   public DataOutputStream writeAttribute(final int id, final String attId) {
     return new AttributeOutputStream(id, attId);
-  }
-
-  public void disposeAndDeleteFiles() {
-    dispose();
   }
 
   public void dispose() {

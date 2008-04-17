@@ -108,7 +108,7 @@ public class MappedFile implements Forceable {
     }
   }
 
-  private void map() throws IOException {
+  private void map() {
     myHolder = new ReadWriteMappedBufferWrapper(myFile);
     myRealSize = myFile.length();
     if (LOG.isDebugEnabled()) {
@@ -198,12 +198,7 @@ public class MappedFile implements Forceable {
 
   private ByteBuffer buf() {
     if (!isMapped()) {
-      try {
-        map();
-      }
-      catch (IOException e) {
-        LOG.error(e); // TODO: rethrow?
-      }
+      map();
     }
 
     return myHolder.buf();

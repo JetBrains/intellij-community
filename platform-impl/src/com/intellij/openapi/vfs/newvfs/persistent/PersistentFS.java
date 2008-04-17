@@ -26,14 +26,14 @@ import java.util.*;
 
 public class PersistentFS extends ManagingFS implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
-  private final static FileAttribute FILE_CONTENT = new FileAttribute("PersistentFS.File.Contents", 1);
+  private static final FileAttribute FILE_CONTENT = new FileAttribute("PersistentFS.File.Contents", 1);
 
   private static final int CHILDREN_CACHED_FLAG = 0x01;
   static final int IS_DIRECTORY_FLAG = 0x02;
   private static final int IS_READ_ONLY = 0x04;
   private static final int MUST_RELOAD_CONTENT = 0x08;
 
-  static int ALL_VALID_FLAGS = CHILDREN_CACHED_FLAG | IS_DIRECTORY_FLAG | IS_READ_ONLY | MUST_RELOAD_CONTENT;
+  static final int ALL_VALID_FLAGS = CHILDREN_CACHED_FLAG | IS_DIRECTORY_FLAG | IS_READ_ONLY | MUST_RELOAD_CONTENT;
 
   private static final long FILE_LENGTH_TO_CACHE_THRESHOULD = 20 * 1024 * 1024; // 20 megabytes
 
@@ -70,12 +70,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   public void initComponent() {
-    try {
-      myRecords.connect();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    myRecords.connect();
   }
 
   private static NewVirtualFileSystem getDelegate(VirtualFile file) {
@@ -96,7 +91,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
   }
 
-  public String[] listPersisted(final VirtualFile file) {
+  private String[] listPersisted(final VirtualFile file) {
     return listPersisted(getFileId(file));
   }
 
@@ -104,7 +99,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     final int[] childrenIds = myRecords.list(id);
     String[] names = new String[childrenIds.length];
     for (int i = 0; i < childrenIds.length; i++) {
-      names[i] = myRecords.getName(childrenIds[i]);
+      names[i] = FSRecords.getName(childrenIds[i]);
     }
     return names;
   }
@@ -125,14 +120,14 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
         childrenIds[i] = currentIds[idx];
       }
       else {
-        int childId = myRecords.createRecord();
+        int childId = FSRecords.createRecord();
         copyRecordFromDelegateFS(childId, id, new FakeVirtualFile(name, file), delegate);
         childrenIds[i] = childId;
       }
     }
 
     myRecords.updateList(id, childrenIds);
-    int flags = myRecords.getFlags(id);
+    int flags = FSRecords.getFlags(id);
     myRecords.setFlags(id, flags | CHILDREN_CACHED_FLAG, true);
 
     return names;
@@ -149,9 +144,9 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
 
-  public boolean areChildrenLoaded(final int parentId) {
+  private static boolean areChildrenLoaded(final int parentId) {
     final int mask = CHILDREN_CACHED_FLAG;
-    return (myRecords.getFlags(parentId) & mask) != 0;
+    return (FSRecords.getFlags(parentId) & mask) != 0;
   }
 
   @Nullable
@@ -165,11 +160,11 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   public int getModificationCount(final VirtualFile file) {
     final int id = getFileId(file);
-    return myRecords.getModCount(id);
+    return FSRecords.getModCount(id);
   }
 
   public int getFilesystemModificationCount() {
-    return myRecords.getModCount();
+    return FSRecords.getModCount();
   }
 
   private void copyRecordFromDelegateFS(final int id, final int parentId, final VirtualFile file, NewVirtualFileSystem delegate) {
@@ -180,7 +175,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
     String name = file.getName();
 
-    if (name.length() > 0 && namesEqual(delegate, name, myRecords.getName(id))) return; // TODO: Handle root attributes change.
+    if (name.length() > 0 && namesEqual(delegate, name, FSRecords.getName(id))) return; // TODO: Handle root attributes change.
 
     if (name.length() == 0) {            // TODO: hack
       if (areChildrenLoaded(id)) return;
@@ -204,12 +199,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   public boolean isDirectory(final int id) {
     assert id > 0;
-    return (myRecords.getFlags(id) & IS_DIRECTORY_FLAG) != 0;
+    return (FSRecords.getFlags(id) & IS_DIRECTORY_FLAG) != 0;
   }
 
   public int getParent(final int id) {
     assert id > 0;
-    return myRecords.getParent(id);
+    return FSRecords.getParent(id);
   }
 
   private static boolean namesEqual(VirtualFileSystem fs, String n1, String n2) {
@@ -217,12 +212,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   public boolean exists(final VirtualFile fileOrDirectory) {
-    return ((NewVirtualFile)fileOrDirectory).getId() > 0;
+    return ((VirtualFileWithId)fileOrDirectory).getId() > 0;
   }
 
   public long getTimeStamp(final VirtualFile file) {
     final int id = getFileId(file);
-    return myRecords.getTimestamp(id);
+    return FSRecords.getTimestamp(id);
   }
 
   public void setTimeStamp(final VirtualFile file, final long modstamp) throws IOException {
@@ -233,7 +228,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   private static int getFileId(final VirtualFile file) {
-    final int id = ((NewVirtualFile)file).getId();
+    final int id = ((VirtualFileWithId)file).getId();
     if (id <= 0) {
       throw new InvalidVirtualFileAccessException(file);
     }
@@ -243,7 +238,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   public boolean isWritable(final VirtualFile file) {
     final int id = getFileId(file);
 
-    return (myRecords.getFlags(id) & IS_READ_ONLY) == 0;
+    return (FSRecords.getFlags(id) & IS_READ_ONLY) == 0;
   }
 
   public void setWritable(final VirtualFile file, final boolean writableFlag) throws IOException {
@@ -257,12 +252,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
     final int[] children = myRecords.list(parentId);
     for (final int childId : children) {
-      if (namesEqual(delegate, childName, myRecords.getName(childId))) return childId;
+      if (namesEqual(delegate, childName, FSRecords.getName(childId))) return childId;
     }
 
     VirtualFile fake = new FakeVirtualFile(childName, parent);
     if (delegate.exists(fake)) {
-      int child = myRecords.createRecord();
+      int child = FSRecords.createRecord();
       copyRecordFromDelegateFS(child, parentId, fake, delegate);
       myRecords.updateList(parentId, ArrayUtil.append(children, child));
       return child;
@@ -274,7 +269,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   public long getLength(final VirtualFile file) {
     final int id = getFileId(file);
 
-    long len = myRecords.getLength(id);
+    long len = FSRecords.getLength(id);
     if (len == -1) {
       len = (int)getDelegate(file).getLength(file);
       myRecords.setLength(id, len);
@@ -410,7 +405,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   private boolean mustReloadContent(final VirtualFile file) {
-    return checkFlag(file, MUST_RELOAD_CONTENT) || myRecords.getLength(getFileId(file)) == -1L;
+    return checkFlag(file, MUST_RELOAD_CONTENT) || FSRecords.getLength(getFileId(file)) == -1L;
   }
 
   public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException {
@@ -640,7 +635,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     VirtualFile fakeFile = new FakeVirtualFile(name, parent);
     if (delegate.exists(fakeFile)) {
       final int parentId = getFileId(parent);
-      int childId = myRecords.createRecord();
+      int childId = FSRecords.createRecord();
       copyRecordFromDelegateFS(childId, parentId, fakeFile, delegate);
 
       appendIdToParentList(parentId, childId);
@@ -719,7 +714,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   private void setFlag(final int id, final int mask, final boolean value) {
-    int oldFlags = myRecords.getFlags(id);
+    int oldFlags = FSRecords.getFlags(id);
     int flags = value ? (oldFlags | mask) : (oldFlags & (~mask));
 
     if (oldFlags != flags) {
@@ -728,7 +723,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   private boolean checkFlag(VirtualFile file, int mask) {
-    return (myRecords.getFlags(getFileId(file)) & mask) != 0;
+    return (FSRecords.getFlags(getFileId(file)) & mask) != 0;
   }
 
   private void executeTouch(final VirtualFile file, boolean reloadContentFromDelegate, long newModificationStamp) {
@@ -762,7 +757,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   public String getName(final int id) {
     assert id > 0;
-    return myRecords.getName(id);
+    return FSRecords.getName(id);
   }
 
   public void cleanPersistedContents() {
