@@ -9,6 +9,7 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.generation.PsiMethodMember;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -77,6 +78,9 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
                                                @NotNull final LookupElement<PsiMethod> element, final char completionChar) {
             if (completionChar == '(') {
               return element.getObject().getParameterList().getParameters().length > 0 ? TailType.NONE : TailType.SEMICOLON;
+            }
+            if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+              return TailTypes.SMART_COMPLETION;
             }
             return null;
           }
@@ -462,7 +466,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       case ':': return TailType.CASE_COLON; //?
       case '(': return TailTypes.SMART_LPARENTH;
       case '<': case '>': case '[': return TailType.createSimpleTailType(completionChar);
-      case '\r': return TailTypes.SMART_COMPLETION;
+      case Lookup.COMPLETE_STATEMENT_SELECT_CHAR: return TailTypes.SMART_COMPLETION;
     }
     final TailType attr = item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
     return attr != null ? attr : TailType.NONE;

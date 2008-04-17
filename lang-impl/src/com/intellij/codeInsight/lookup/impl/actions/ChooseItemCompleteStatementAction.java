@@ -6,11 +6,9 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.project.Project;
 
 public class ChooseItemCompleteStatementAction extends EditorAction {
   public ChooseItemCompleteStatementAction(){
@@ -22,7 +20,7 @@ public class ChooseItemCompleteStatementAction extends EditorAction {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.completeStatement");
 
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-      lookup.finishLookup(Lookup.COPMLETE_STATEMENT_SELECT_CHAR);
+      lookup.finishLookup(Lookup.COMPLETE_STATEMENT_SELECT_CHAR);
     }
   }
 

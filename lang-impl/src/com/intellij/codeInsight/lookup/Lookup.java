@@ -11,7 +11,7 @@ import java.awt.*;
 public interface Lookup extends UserDataHolder{
   char NORMAL_SELECT_CHAR = '\n';
   char REPLACE_SELECT_CHAR = '\t';
-  char COPMLETE_STATEMENT_SELECT_CHAR = '\r';
+  char COMPLETE_STATEMENT_SELECT_CHAR = '\r';
 
   @Nullable
   LookupItem getCurrentItem();
