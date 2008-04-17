@@ -75,7 +75,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private final ReentrantWriterPreferenceReadWriteLock myActionsLock = new ReentrantWriterPreferenceReadWriteLock();
   private final Stack<Runnable> myWriteActionsStack = new Stack<Runnable>();
 
-  private volatile Thread myExceptionalThreadWithReadAccess = null;
   private volatile Runnable myExceptionalThreadWithReadAccessRunnable;
 
   private int myInEditorPaintCounter = 0;
@@ -372,8 +371,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public boolean runProcessWithProgressSynchronously(final Runnable process, String progressTitle, boolean canBeCanceled, Project project) {
     assertIsDispatchThread();
 
-    if (myExceptionalThreadWithReadAccess != null ||
-        myExceptionalThreadWithReadAccessRunnable != null ||
+    if (myExceptionalThreadWithReadAccessRunnable != null ||
         ApplicationManager.getApplication().isUnitTestMode() ||
         ApplicationManager.getApplication().isHeadlessEnvironment()) {
       try {
@@ -403,8 +401,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                 LOG.error("myExceptionalThreadWithReadAccessRunnable != process, process = " + myExceptionalThreadWithReadAccessRunnable);
               }
 
-              myExceptionalThreadWithReadAccess = Thread.currentThread();
-              boolean old = setExceptionalThreadWithReadAccessFlag(true);
+              final boolean old = setExceptionalThreadWithReadAccessFlag(true);
               LOG.assertTrue(isReadAccessAllowed());
               try {
                 ProgressManager.getInstance().runProcess(process, progress);
@@ -426,7 +423,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       LOG.assertTrue(!progress.isRunning());
     }
     finally {
-      myExceptionalThreadWithReadAccess = null;
       myExceptionalThreadWithReadAccessRunnable = null;
     }
 
@@ -474,13 +470,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       return;
     }
 
-    Thread currentThread = Thread.currentThread();
-    if (myExceptionalThreadWithReadAccess == currentThread) { //OK if we're in exceptional thread.
+    if (isExceptionalThreadWithReadAccess()) { //OK if we're in exceptional thread.
       LaterInvocator.invokeAndWait(runnable, modalityState);
       return;
     }
 
-    if (myActionsLock.isReadLockAcquired(currentThread)) {
+    if (myActionsLock.isReadLockAcquired(Thread.currentThread())) {
       final Throwable stack = new Throwable();
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
