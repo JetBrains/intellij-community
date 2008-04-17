@@ -135,7 +135,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       return null;
     }
 
-    if (sameRoot(vcs, srcFile.getParentFile(), destFile.getParentFile(), dstDirUnderControl)) {
+    if (sameRoot(vcs, file.getParent(), toDir)) {
       myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName, srcFile));
       return null;
     }
@@ -144,43 +144,45 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     return null;
   }
 
-  private boolean sameRoot(final SvnVcs vcs, final File srcDir, final File dstDir, final boolean dstDirUnderControl) {
-    try {
-      final SVNWCClient client = vcs.createWCClient();
+  private boolean sameRoot(final SvnVcs vcs, final VirtualFile srcDir, final VirtualFile dstDir) {
+    final UUIDHelper helper = new UUIDHelper(vcs);
+    final String srcUUID = helper.getRepositoryUUID(srcDir);
+    final String dstUUID = helper.getRepositoryUUID(dstDir);
 
-      // src directory is already checked for being under VC
-      final SVNInfo info1 = client.doInfo(srcDir, SVNRevision.WORKING);
-
-      // get correct not null repo UUID
-      final File underControlDst = (dstDirUnderControl) ? dstDir : getFirstVersionedParent(dstDir);
-      if (underControlDst == null) {
-        return false;
-      }
-      final SVNInfo info2 = client.doInfo(underControlDst, SVNRevision.WORKING);
-
-      if ((info1 == null) || (info2 == null)) {
-        return false;
-      }
-
-      final String srcUUID = info1.getRepositoryUUID();
-      final String dstUUID = info2.getRepositoryUUID();
-      return (srcUUID != null) && (dstUUID != null) && (srcUUID.equals(dstUUID));
-    } catch (SVNException e) {
-      return false;
-    }
+    return (srcUUID != null) && (dstUUID != null) && (srcUUID.equals(dstUUID));
   }
 
-  @Nullable
-  private File getFirstVersionedParent(final File file) {
-    if (SVNWCUtil.isVersionedDirectory(file)) {
-      return file;
+  private class UUIDHelper {
+    private final SVNWCClient myWcClient;
+
+    private UUIDHelper(final SvnVcs vcs) {
+      myWcClient = vcs.createWCClient();
     }
 
-    final File parent = file.getParentFile();
-    if (parent == null) {
+    /**
+     * passed dir must be under VC control (it is assumed)
+     */
+    @Nullable
+    public String getRepositoryUUID(final VirtualFile dir) {
+      try {
+        final SVNInfo info1 = myWcClient.doInfo(new File(dir.getPath()), SVNRevision.WORKING);
+        if ((info1 == null) || (info1.getRepositoryUUID() == null)) {
+          // go deeper if current parent was added (if parent was added, it theoretically could NOT know its repo UUID)
+          final VirtualFile parent = dir.getParent();
+          if (parent == null) {
+            return null;
+          }
+          if (isPendingAdd(parent)) {
+            return getRepositoryUUID(parent);
+          }
+        } else {
+          return info1.getRepositoryUUID();
+        }
+      } catch (SVNException e) {
+        // go to return default
+      }
       return null;
     }
-    return getFirstVersionedParent(parent);
   }
 
   public boolean move(VirtualFile file, VirtualFile toDir) throws IOException {
