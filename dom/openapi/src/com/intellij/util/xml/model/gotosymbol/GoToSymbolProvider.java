@@ -16,7 +16,6 @@
 
 package com.intellij.util.xml.model.gotosymbol;
 
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
@@ -25,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.ElementPresentationManager;
@@ -104,7 +104,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
   /**
    * Wraps one entry to display in "Go To Symbol" dialog.
    */
-  protected static class BaseNavigationItem extends ASTWrapperPsiElement {
+  protected static class BaseNavigationItem extends FakePsiElement {
 
     private final PsiElement myPsiElement;
     private final String myText;
@@ -118,10 +118,13 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
      * @param icon       Icon to show for this element.
      */
     protected BaseNavigationItem(@NotNull PsiElement psiElement, @NotNull @NonNls String text, @Nullable Icon icon) {
-      super(psiElement.getNode());
       myPsiElement = psiElement;
       myText = text;
       myIcon = icon;
+    }
+
+    public PsiElement getNavigationElement() {
+      return myPsiElement;
     }
 
     public Icon getIcon(int flags) {
@@ -150,6 +153,10 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
           return null;
         }
       };
+    }
+
+    public PsiElement getParent() {
+      return myPsiElement.getParent();
     }
   }
 
