@@ -29,7 +29,7 @@ public abstract class WaitFor {
 
   private long myWaitTime;
   private boolean myInterrupted;
-  private boolean myConditionRealized;
+  private volatile boolean myConditionRealized;
   @NonNls public static final String WAIT_FOR_THREAD_NAME = "WaitFor thread";
 
   /** Blocking call */
@@ -48,7 +48,7 @@ public abstract class WaitFor {
 
     myConditionRealized = false;
     try {
-      while(!(myConditionRealized = condition()) && (System.currentTimeMillis() < deadline)) {
+      while(!(myConditionRealized = condition()) && System.currentTimeMillis() < deadline) {
           Thread.sleep(step);
       }
     } catch (InterruptedException e) {
@@ -69,8 +69,7 @@ public abstract class WaitFor {
 
         if (myConditionRealized) {
           toRunOnTrue.run();
-        }
-      }
+        }      }
     }.start();
   }
 
