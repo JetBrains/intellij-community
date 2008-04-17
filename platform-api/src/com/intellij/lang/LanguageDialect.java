@@ -19,7 +19,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class LanguageDialect extends Language {
+  private final Language myBaseLanguage;
+
   public LanguageDialect(@NonNls @NotNull String id, @NotNull Language baseLanguage) {
-    super(baseLanguage, id, "");
+    super(id, "");
+    myBaseLanguage = baseLanguage;
+  }
+
+  @NotNull
+  public Language getBaseLanguage() {
+    return myBaseLanguage;
   }
 }

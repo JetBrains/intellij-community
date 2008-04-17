@@ -30,7 +30,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     if (extensions.isEmpty()) {
 
       Language base = l.getBaseLanguage();
-      if (base != null) {
+      if (base != l) {
         return forLanguage(base);
       }
 
@@ -46,7 +46,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     List<T> list = forKey(l);
     if (list.isEmpty()) {
       Language base = l.getBaseLanguage();
-      if (base != null) {
+      if (base != l) {
         return allForLanguage(base);
       }
     }
