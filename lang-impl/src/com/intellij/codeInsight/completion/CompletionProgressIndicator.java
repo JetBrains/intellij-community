@@ -100,16 +100,16 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void updateLookup() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    myLookup.updateList();
     if (!myInitialized) {
       myInitialized = true;
       myLookup.show();
     }
-    if (myLookup.isVisible()) {
+    else {
       Point point=myLookup.calculatePosition();
       Dimension preferredSize = myLookup.getComponent().getPreferredSize();
       myLookup.setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
     }
-    myLookup.updateList();
     myLookup.adaptSize();
   }
 
