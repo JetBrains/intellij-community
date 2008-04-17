@@ -870,7 +870,7 @@ public class GroovyAnnotator implements Annotator {
     }
 
     final GroovyResolveResult constructorResolveResult = newExpression.resolveConstructorGenerics();
-    if (constructorResolveResult != null) {
+    if (constructorResolveResult.getElement() != null) {
       checkMethodApplicability(constructorResolveResult, refElement, holder);
     } else {
       final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
