@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -40,10 +41,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 
@@ -74,7 +77,11 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   private ChangedFilesUpdater myChangedFilesUpdater;
 
   private final List<IndexableFileSet> myIndexableSets = new CopyOnWriteArrayList<IndexableFileSet>();
-  private final Set<ID<?, ?>> myRequiresRebuild = Collections.synchronizedSet(new HashSet<ID<?, ?>>());
+  
+  public static final int OK = 1;
+  public static final int REQUIRES_REBUILD = 2;
+  public static final int REBUILD_IN_PROGRESS = 3;
+  private final Map<ID<?, ?>, AtomicInteger> myRebuildStatus = new HashMap<ID<?,?>, AtomicInteger>();
 
   private final ExecutorService myInvalidationService = ConcurrencyUtil.newSingleThreadExecutor("FileBasedIndex.InvalidationQueue");
   private final VirtualFileManagerEx myVfManager;
@@ -90,6 +97,9 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     myVfManager = vfManager;
     final FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
     for (FileBasedIndexExtension<?, ?> extension : extensions) {
+      myRebuildStatus.put(extension.getName(), new AtomicInteger(OK));
+    }
+    for (FileBasedIndexExtension<?, ?> extension : extensions) {
       registerIndexer(extension);
     }
 
@@ -97,8 +107,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     
     // check if rebuild was requested for any index during registration
     for (ID<?, ?> indexId : myIndices.keySet()) {
-      final boolean reallyRemoved = myRequiresRebuild.remove(indexId);
-      if (reallyRemoved) {
+      if (myRebuildStatus.get(indexId).compareAndSet(REQUIRES_REBUILD, OK)) {
         try {
           clearIndex(indexId);
         }
@@ -195,50 +204,41 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   @NotNull
   public <K> Collection<K> getAllKeys(final ID<K, ?> indexId) {
-    for (int attempt = 0; attempt < 2; attempt++) {
-      try {
-        ensureUpToDate(indexId);
-        final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
-        return index != null? index.getAllKeys() : Collections.<K>emptyList();
+    try {
+      ensureUpToDate(indexId);
+      final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
+      return index != null? index.getAllKeys() : Collections.<K>emptyList();
+    }
+    catch (StorageException e) {
+      scheduleRebuild(indexId, e);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof StorageException || cause instanceof IOException) {
+        scheduleRebuild(indexId, cause);
       }
-      catch (StorageException e) {
-        requestRebuild(indexId);
-        LOG.info(e);
-      }
-      catch (RuntimeException e) {
-        final Throwable cause = e.getCause();
-        if (cause instanceof StorageException || cause instanceof IOException) {
-          requestRebuild(indexId);
-          LOG.info(e);
-        }
-        else {
-          throw e;
-        }
+      else {
+        throw e;
       }
     }
     return Collections.emptyList();
   }
 
   public <K> void ensureUpToDate(final ID<K, ?> indexId) {
-    for (int attempt = 0; attempt < 2; attempt++) {
-      try {
-        checkRebuild(indexId);
-        indexUnsavedDocuments();
-        break;
+    try {
+      checkRebuild(indexId);
+      indexUnsavedDocuments();
+    }
+    catch (StorageException e) {
+      scheduleRebuild(indexId, e);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof StorageException || cause instanceof IOException) {
+        scheduleRebuild(indexId, e);
       }
-      catch (StorageException e) {
-        requestRebuild(indexId);
-        LOG.info(e);
-      }
-      catch (RuntimeException e) {
-        final Throwable cause = e.getCause();
-        if (cause instanceof StorageException || cause instanceof IOException) {
-          requestRebuild(indexId);
-          LOG.info(e);
-        }
-        else {
-          throw e;
-        }
+      else {
+        throw e;
       }
     }
   }
@@ -275,64 +275,59 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   
   private <K, V> void processValuesImpl(final ID<K, V> indexId, final K dataKey, final Project project, boolean ensureValueProcessedOnce,
                                         final @Nullable VirtualFile restrictToFile, ValueProcessor<V> processor) {
-    for (int attempt = 0; attempt < 2; attempt++) {
+    try {
+      ensureUpToDate(indexId);
+      final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
+      if (index == null) {
+        return;
+      }
+  
+      final Lock readLock = index.getReadLock();
+      readLock.lock();
       try {
-        ensureUpToDate(indexId);
-        final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
-        if (index == null) {
-          return;
-        }
+        final ValueContainer<V> container = index.getData(dataKey);
   
-        final Lock readLock = index.getReadLock();
-        readLock.lock();
-        try {
-          final ValueContainer<V> container = index.getData(dataKey);
-  
-          if (restrictToFile != null) {
-            final int restrictedFileId = getFileId(restrictToFile);
-            for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
-              final V value = valueIt.next();
-              if (container.isAssociated(value, restrictedFileId)) {
-                processor.process(restrictToFile, value);
-              }
+        if (restrictToFile != null) {
+          final int restrictedFileId = getFileId(restrictToFile);
+          for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
+            final V value = valueIt.next();
+            if (container.isAssociated(value, restrictedFileId)) {
+              processor.process(restrictToFile, value);
             }
           }
-          else {
-            final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
-            final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
-            for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
-              final V value = valueIt.next();
-              for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext();) {
-                final int id = inputIdsIterator.next();
-                VirtualFile file = IndexInfrastructure.findFileById(dirIndex, fs, id);
-                if (file != null) {
-                  processor.process(file, value);
-                  if (ensureValueProcessedOnce) {
-                    break; // continue with the next value
-                  }
+        }
+        else {
+          final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
+          final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
+          for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
+            final V value = valueIt.next();
+            for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext();) {
+              final int id = inputIdsIterator.next();
+              VirtualFile file = IndexInfrastructure.findFileById(dirIndex, fs, id);
+              if (file != null) {
+                processor.process(file, value);
+                if (ensureValueProcessedOnce) {
+                  break; // continue with the next value
                 }
               }
             }
           }
         }
-        finally {
-          readLock.unlock();
-        }
-        break;
       }
-      catch (StorageException e) {
-        requestRebuild(indexId);
-        LOG.info(e);
+      finally {
+        readLock.unlock();
       }
-      catch (RuntimeException e) {
-        final Throwable cause = e.getCause();
-        if (cause instanceof StorageException || cause instanceof IOException) {
-          requestRebuild(indexId);
-          LOG.info(e);
-        }
-        else {
-          throw e;
-        }
+    }
+    catch (StorageException e) {
+      scheduleRebuild(indexId, e);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof StorageException || cause instanceof IOException) {
+        scheduleRebuild(indexId, e);
+      }
+      else {
+        throw e;
       }
     }
   }
@@ -342,73 +337,94 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
   
   public <K, V> void processAllValues(final ID<K, V> indexId, AllValuesProcessor<V> processor) {
-    for (int attempt = 0; attempt < 2; attempt++) {
-      try {
-        ensureUpToDate(indexId);
-        final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
-        if (index == null) {
-          return;
-        }
+    try {
+      ensureUpToDate(indexId);
+      final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
+      if (index == null) {
+        return;
+      }
   
-        final Lock readLock = index.getReadLock();
-        readLock.lock();
-        try {
-          for (K dataKey : index.getAllKeys()) {
-            final ValueContainer<V> container = index.getData(dataKey);
-            for (final Iterator<V> it = container.getValueIterator(); it.hasNext();) {
-              final V value = it.next();
-              for (final ValueContainer.IntIterator inputsIt = container.getInputIdsIterator(value); inputsIt.hasNext();) {
-                processor.process(inputsIt.next(), value);
-              }
+      final Lock readLock = index.getReadLock();
+      readLock.lock();
+      try {
+        for (K dataKey : index.getAllKeys()) {
+          final ValueContainer<V> container = index.getData(dataKey);
+          for (final Iterator<V> it = container.getValueIterator(); it.hasNext();) {
+            final V value = it.next();
+            for (final ValueContainer.IntIterator inputsIt = container.getInputIdsIterator(value); inputsIt.hasNext();) {
+              processor.process(inputsIt.next(), value);
             }
           }
         }
-        finally {
-          readLock.unlock();
-        }
-        break;
       }
-      catch (StorageException e) {
-        requestRebuild(indexId);
-        LOG.info(e);
+      finally {
+        readLock.unlock();
       }
-      catch (RuntimeException e) {
-        final Throwable cause = e.getCause();
-        if (cause instanceof StorageException || cause instanceof IOException) {
-          requestRebuild(indexId);
-          LOG.info(e);
-        }
-        else {
-          throw e;
-        }
+    }
+    catch (StorageException e) {
+      scheduleRebuild(indexId, e);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof StorageException || cause instanceof IOException) {
+        scheduleRebuild(indexId, e);
+      }
+      else {
+        throw e;
       }
     }
   }
 
-  private void checkRebuild(final ID<?, ?> indexId) throws StorageException {
-    final boolean reallyRemoved = myRequiresRebuild.remove(indexId);
-    if (!reallyRemoved) {
-      return;
-    }
-    clearIndex(indexId);
+  private <K> void scheduleRebuild(final ID<K, ?> indexId, final Throwable e) {
+    requestRebuild(indexId);
+    LOG.info(e);
+    checkRebuild(indexId);
+  }
 
-    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    final FileSystemSynchronizer synchronizer = new FileSystemSynchronizer();
-    synchronizer.setCancelable(false);
-    for (Project project : projects) {
-      synchronizer.registerCacheUpdater(new UnindexedFilesUpdater(project, ProjectRootManager.getInstance(project), this));
-    }
+  private void checkRebuild(final ID<?, ?> indexId) {
+    if (myRebuildStatus.get(indexId).compareAndSet(REQUIRES_REBUILD, REBUILD_IN_PROGRESS)) {
 
-    final Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      new Task.Modal(null, "Updating index", false) {
-        public void run(@NotNull final ProgressIndicator indicator) {
-          synchronizer.execute();
+      final FileSystemSynchronizer synchronizer = new FileSystemSynchronizer();
+      synchronizer.setCancelable(false);
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        synchronizer.registerCacheUpdater(new UnindexedFilesUpdater(project, ProjectRootManager.getInstance(project), this));
+      }
+
+      final Runnable rebuildRunnable = new Runnable() {
+        public void run() {
+          try {
+            clearIndex(indexId);
+            synchronizer.execute();
+          }
+          catch (StorageException e) {
+            requestRebuild(indexId);
+            LOG.info(e);
+          }
+          finally {
+            myRebuildStatus.get(indexId).compareAndSet(REBUILD_IN_PROGRESS, OK);
+          }
         }
-      }.queue();
+      };
+      
+      final Application application = ApplicationManager.getApplication();
+      if (application.isUnitTestMode()) {
+        rebuildRunnable.run();
+      }
+      else {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            new Task.Modal(null, "Updating index", false) {
+              public void run(@NotNull final ProgressIndicator indicator) {
+                rebuildRunnable.run();
+              }
+            }.queue();
+          }
+        });
+      }    
     }
-    else {
-      synchronizer.execute();
+    
+    if (myRebuildStatus.get(indexId).get() == REBUILD_IN_PROGRESS) {
+      throw new ProcessCanceledException();
     }
   }
 
@@ -497,7 +513,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
 
   public void requestRebuild(ID<?, ?> indexId) {
-    myRequiresRebuild.add(indexId);
+    myRebuildStatus.get(indexId).set(REQUIRES_REBUILD);
   }
   
   @Nullable

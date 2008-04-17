@@ -27,6 +27,7 @@ import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
@@ -35,7 +36,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("StubUpdatingIndex");
-  private static final int VERSION = 2;
+  private static final int VERSION = 3;
   private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
     public void save(final DataOutput out, final SerializedStubTree v) throws IOException {
       byte[] value = v.getBytes();
@@ -169,27 +170,44 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     return new MyIndex(owner, storage, getIndexer());
   }
 
-  public static void rebuildStubIndices() {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      new Task.Modal(null, "Updating index", false) {
-        public void run(@NotNull final ProgressIndicator indicator) {
-          doRebuild();
+  /**
+   * Schedules asynchronous rebuild
+   * @param finishCallback
+   */
+  public static void scheduleStubIndicesRebuild(@Nullable final Runnable finishCallback) {
+    final Runnable rebuildRunnable = new Runnable() {
+      public void run() {
+        try {
+          FileBasedIndex.getInstance().processAllValues(INDEX_ID, new FileBasedIndex.AllValuesProcessor<SerializedStubTree>() {
+            public void process(final int inputId, final SerializedStubTree value) {
+              final Map<StubIndexKey, Map<Object, TIntArrayList>> stubTree = new StubTree((PsiFileStub)value.getStub()).indexStubTree();
+              updateAffectedStubIndices(inputId, Collections.<StubIndexKey, Map<Object, TIntArrayList>>emptyMap(), stubTree);
+            }
+          });
         }
-      }.queue();
+        finally {
+          if (finishCallback != null) {
+            finishCallback.run();
+          }
+        }
+      }
+    };
+
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode()) {
+      rebuildRunnable.run();
     }
     else {
-      doRebuild();
-    }
-  }
-
-  private static void doRebuild() {
-    FileBasedIndex.getInstance().processAllValues(INDEX_ID, new FileBasedIndex.AllValuesProcessor<SerializedStubTree>() {
-      public void process(final int inputId, final SerializedStubTree value) {
-        final Map<StubIndexKey, Map<Object, TIntArrayList>> stubTree = new StubTree((PsiFileStub)value.getStub()).indexStubTree();
-        updateAffectedStubIndices(inputId, Collections.<StubIndexKey, Map<Object, TIntArrayList>>emptyMap(), stubTree);
-      }
-    });
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          new Task.Modal(null, "Updating index", false) {
+            public void run(@NotNull final ProgressIndicator indicator) {
+              rebuildRunnable.run();
+            }
+          }.queue();
+        }
+      });
+    }    
   }
 
   private static void updateAffectedStubIndices(final int inputId, final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree,
