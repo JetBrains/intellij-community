@@ -485,6 +485,9 @@ class RecursionUtils {
       return true;
     }
     final GrFinallyClause finallyBlock = tryStatement.getFinallyClause();
+    if (finallyBlock == null) {
+      return false;
+    }
     return codeBlockDefinitelyRecurses(finallyBlock.getBody(), method);
   }
 
