@@ -3,6 +3,7 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.codeInsight.completion.LegacyCompletionContributor;
 import com.intellij.javaee.web.PsiReferenceConverter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -17,6 +18,7 @@ import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -116,9 +118,17 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
 
   @NotNull
   private PsiReference[] createReferences(final GenericDomValue domValue, final XmlElement psiElement, final Object converter) {
+    if (LegacyCompletionContributor.DEBUG) {
+        System.out.println("GenericValueReferenceProvider.createReferences");
+        System.out.println("converter = " + converter);
+      }
     if (converter instanceof CustomReferenceConverter) {
       final PsiReference[] references =
         ((CustomReferenceConverter)converter).createReferences(domValue, psiElement, createConvertContext(psiElement, domValue));
+
+      if (LegacyCompletionContributor.DEBUG) {
+        System.out.println("custom references = " + Arrays.toString(references));
+      }
 
       if (references.length == 0 && converter instanceof ResolvingConverter) {
         return new PsiReference[]{new GenericDomValueReference(domValue)};

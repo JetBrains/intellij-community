@@ -58,11 +58,6 @@ public class LegacyCompletionContributor extends CompletionContributor{
           }
         });
         if (ref != null) {
-          if (DEBUG) {
-            System.out.println("LegacyCompletionContributor.addCompletions");
-            System.out.println("ref = " + ref);
-          }
-
           completionData.completeReference(ref, lookupSet, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile(),
                                            parameters.getOffset());
         }

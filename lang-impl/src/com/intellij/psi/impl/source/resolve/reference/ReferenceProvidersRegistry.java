@@ -203,10 +203,6 @@ public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
         result = ArrayUtil.mergeArrays(result, refs, PsiReference.class);
       }
     }
-    if (LegacyCompletionContributor.DEBUG) {
-      System.out.println("ReferenceProvidersRegistry.getReferencesFromProviders");
-      System.out.println("result = " + Arrays.toString(result));
-    }
     return result;
   }
 

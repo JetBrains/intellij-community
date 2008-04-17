@@ -93,10 +93,6 @@ public class CompletionData {
         boolean hasApplicableVariants = false;
         for (CompletionVariant variant : variants) {
           if (variant.hasReferenceFilter()) {
-            if (LegacyCompletionContributor.DEBUG) {
-              System.out.println("CompletionData.run");
-              System.out.println("variant = " + variant);
-            }
             variant.addReferenceCompletions(reference, position, set, matcher, file, CompletionData.this);
             hasApplicableVariants = true;
           }
@@ -284,13 +280,7 @@ public class CompletionData {
                                    final CompletionVariant variant) {
     if (reference instanceof PsiMultiReference) {
       final PsiReference[] references = getReferences((PsiMultiReference)reference);
-      if (LegacyCompletionContributor.DEBUG) {
-        System.out.println("CompletionData.completeReference");
-      }
       for (PsiReference ref : references) {
-        if (LegacyCompletionContributor.DEBUG) {
-          System.out.println("ref = " + ref);
-        }
         completeReference(ref, position, set, tailType, matcher, file, filter, variant);
       }
     }
