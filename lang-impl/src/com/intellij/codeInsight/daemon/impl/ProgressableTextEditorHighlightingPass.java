@@ -72,26 +72,17 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     myProgressCount.addAndGet(progress);
   }
 
-  public static class EmptyPass extends ProgressableTextEditorHighlightingPass {
+  public static class EmptyPass extends TextEditorHighlightingPass {
     public EmptyPass(final Project project, @Nullable final Document document, Icon icon, String text) {
-      super(project, document, icon, text);
+      super(project, document);
     }
 
-    protected void collectInformationWithProgress(final ProgressIndicator progress) {
-
-    }
-
-    protected void applyInformationWithProgress() {
+    public void doCollectInformation(final ProgressIndicator progress) {
 
     }
 
-    public boolean isFinished() {
-      return true;
-    }
+    public void doApplyInformationToEditor() {
 
-    // always valid
-    public double getProgress() {
-      return 0;
     }
   }
 }

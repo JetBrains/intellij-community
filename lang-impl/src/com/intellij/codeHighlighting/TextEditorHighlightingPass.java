@@ -40,17 +40,12 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myInitialStamp = document == null ? 0 : document.getModificationStamp();
   }
 
-  @Deprecated
-  protected TextEditorHighlightingPass(Document document) {
-    this(null, document);
-  }
-
   public final void collectInformation(ProgressIndicator progress) {
     if (!isValid()) return; //Document has changed.
     doCollectInformation(progress);
   }
 
-  public boolean isValid() {
+  private boolean isValid() {
     if (myDocument != null && myDocument.getModificationStamp() != myInitialStamp) return false;
     if (myProject != null && myDocument != null) {
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
@@ -67,11 +62,6 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
 
   public abstract void doCollectInformation(ProgressIndicator progress);
   public abstract void doApplyInformationToEditor();
-
-  @Deprecated
-  public int getPassId() {
-    return myId;
-  }
 
   public final int getId() {
     return myId;
@@ -106,5 +96,4 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public String toString() {
     return getClass() + "; id=" + getId();
   }
-
 }

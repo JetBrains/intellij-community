@@ -36,10 +36,10 @@ public class FileStatusMap {
     TextRange documentRange = TextRange.from(0, document.getTextLength());
 
     TextRange dirtyScope = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(editor.getProject())).getFileStatusMap().getFileDirtyScope(document, part);
-    if (dirtyScope == null || !documentRange.contains(dirtyScope)) {
+    if (dirtyScope == null || !documentRange.intersects(dirtyScope)) {
       return null;
     }
-    return dirtyScope;
+    return documentRange.intersection(dirtyScope);
   }
 
   public void setErrorFoundFlag(Document document, boolean errorFound) {
@@ -107,9 +107,6 @@ public class FileStatusMap {
         status = new FileStatus(file);
         myDocumentToStatusMap.put(document, status);
       }
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("********************************* Mark file uptodate "+file.getName());
-      }
 
       status.defensivelyMarked=false;
       switch (passId) {
@@ -164,7 +161,7 @@ public class FileStatusMap {
           if (status.customPassDirtyScopes.containsKey(passId)) {
             return status.customPassDirtyScopes.get(passId);
           }
-          LOG.assertTrue(false);
+          LOG.error("Unknown pass " + passId);
           return null;
       }
     }
@@ -195,13 +192,13 @@ public class FileStatusMap {
       if (status.defensivelyMarked) {
         status.defensivelyMarked = false;
       }
-      status.dirtyScope = combineScopes(status.dirtyScope, scope, document, myProject);
-      status.localInspectionsDirtyScope = combineScopes(status.localInspectionsDirtyScope, scope, document, myProject);
-      status.externalDirtyScope = combineScopes(status.externalDirtyScope, scope, document, myProject);
+      status.dirtyScope = combineScopes(status.dirtyScope, scope, document);
+      status.localInspectionsDirtyScope = combineScopes(status.localInspectionsDirtyScope, scope, document);
+      status.externalDirtyScope = combineScopes(status.externalDirtyScope, scope, document);
     }
   }
 
-  private static TextRange combineScopes(TextRange scope1, TextRange scope2, Document document, Project project) {
+  private static TextRange combineScopes(TextRange scope1, TextRange scope2, Document document) {
     if (scope1 == null) return scope2;
     if (scope2 == null) return scope1;
     TextRange documentRange = TextRange.from(0, document.getTextLength());
