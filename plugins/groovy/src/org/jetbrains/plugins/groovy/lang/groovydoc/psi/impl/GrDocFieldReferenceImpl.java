@@ -87,13 +87,13 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
       resolved = getEnclosingClass(this);
     }
     if (resolved instanceof PsiClass) {
-      PropertyResolverProcessor processor = new PropertyResolverProcessor(name, this, false);
+      PropertyResolverProcessor processor = new PropertyResolverProcessor(name, this);
       resolved.processDeclarations(processor, PsiSubstitutor.EMPTY, resolved, this);
       GroovyResolveResult[] candidates = processor.getCandidates();
       if (candidates.length == 0) {
         PsiType thisType = getManager().getElementFactory().createType((PsiClass) resolved, PsiSubstitutor.EMPTY);
-        MethodResolverProcessor methodProcessor = new MethodResolverProcessor(name, this, false, false, thisType, null, PsiType.EMPTY_ARRAY);
-        MethodResolverProcessor constructorProcessor = new MethodResolverProcessor(name, this, false, true, thisType, null, PsiType.EMPTY_ARRAY);
+        MethodResolverProcessor methodProcessor = new MethodResolverProcessor(name, this, false, thisType, null, PsiType.EMPTY_ARRAY);
+        MethodResolverProcessor constructorProcessor = new MethodResolverProcessor(name, this, true, thisType, null, PsiType.EMPTY_ARRAY);
         resolved.processDeclarations(methodProcessor, PsiSubstitutor.EMPTY, resolved, this);
         resolved.processDeclarations(constructorProcessor, PsiSubstitutor.EMPTY, resolved, this);
         candidates = ArrayUtil.mergeArrays(methodProcessor.getCandidates(), constructorProcessor.getCandidates(), GroovyResolveResult.class);

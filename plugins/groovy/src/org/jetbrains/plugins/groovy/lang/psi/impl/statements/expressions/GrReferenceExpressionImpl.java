@@ -60,10 +60,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.Collections;
 
@@ -388,7 +385,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       GroovyResolveResult[] propertyCandidates = processor.getCandidates();
       if (propertyCandidates.length > 0) return propertyCandidates;
       if (refExpr.getKind() == Kind.TYPE_OR_PROPERTY) {
-        ResolverProcessor classProcessor = new ClassResolverProcessor(refExpr.getReferenceName(), refExpr, false);
+        ResolverProcessor classProcessor = new ClassResolverProcessor(refExpr.getReferenceName(), refExpr);
         resolveImpl(refExpr, classProcessor);
         return classProcessor.getCandidates();
       }
@@ -501,15 +498,17 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     }
   }
 
-  public static ResolverProcessor getMethodOrPropertyResolveProcessor(GrReferenceExpression refExpr, String name, boolean incompleteCode) {
+  private static ResolverProcessor getMethodOrPropertyResolveProcessor(GrReferenceExpression refExpr, String name, boolean forCompletion) {
+    if (forCompletion) return CompletionProcessor.createPropertyCompletionProcessor(refExpr);
+
     Kind kind = ((GrReferenceExpressionImpl) refExpr).getKind();
     ResolverProcessor processor;
     if (kind == Kind.METHOD_OR_PROPERTY) {
-      final PsiType[] argTypes = !incompleteCode ? PsiUtil.getArgumentTypes(refExpr, false, false) : null;
+      final PsiType[] argTypes = PsiUtil.getArgumentTypes(refExpr, false, false);
       PsiType thisType = getThisType(refExpr);
-      processor = new MethodResolverProcessor(name, refExpr, incompleteCode, false, thisType, argTypes, refExpr.getTypeArguments());
+      processor = new MethodResolverProcessor(name, refExpr, false, thisType, argTypes, refExpr.getTypeArguments());
     } else {
-      processor = new PropertyResolverProcessor(name, refExpr, incompleteCode);
+      processor = new PropertyResolverProcessor(name, refExpr);
     }
 
     return processor;

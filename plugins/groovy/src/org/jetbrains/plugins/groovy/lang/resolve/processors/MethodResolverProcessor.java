@@ -38,7 +38,6 @@ import java.util.*;
 
 /**
  * @author ven
- *         Resolves methods from call expression or function application.
  */
 public class MethodResolverProcessor extends ResolverProcessor {
   private PsiType myThisType;
@@ -49,8 +48,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
   private boolean myIsConstructor;
 
-  public MethodResolverProcessor(String name, GroovyPsiElement place, boolean forCompletion, boolean isConstructor, PsiType thisType, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments) {
-    super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, forCompletion, PsiType.EMPTY_ARRAY);
+  public MethodResolverProcessor(String name, GroovyPsiElement place, boolean isConstructor, PsiType thisType, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments) {
+    super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, PsiType.EMPTY_ARRAY);
     myIsConstructor = isConstructor;
     myThisType = thisType;
     myArgumentTypes = argumentTypes;
@@ -65,8 +64,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       substitutor = obtainSubstitutor(substitutor, method);
       boolean isAccessible = isAccessible(method);
       boolean isStaticsOK = isStaticsOK(method);
-      if (myForCompletion ||
-          PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myCurrentFileResolveContext instanceof GrMethodCallExpression)) {
+      if (PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myCurrentFileResolveContext instanceof GrMethodCallExpression)) {
         myCandidates.add(new GroovyResolveResultImpl(method, myCurrentFileResolveContext, substitutor, isAccessible, isStaticsOK));
       } else {
         myInapplicableCandidates.add(new GroovyResolveResultImpl(method, myCurrentFileResolveContext, substitutor, isAccessible, isStaticsOK));
@@ -74,8 +72,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
       return true;
     } else if (element instanceof PsiVariable) {
-      if (myForCompletion ||
-          element instanceof GrField && ((GrField) element).isProperty() ||
+      if (element instanceof GrField && ((GrField) element).isProperty() ||
           isClosure((PsiVariable) element)) {
         return super.execute(element, substitutor);
       }
@@ -239,12 +236,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
       result.add(array[i]);
     }
 
-    if (!myForCompletion) {
-      if (methodsPresent && propertiesPresent) {
-        for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
-          GroovyResolveResult resolveResult = iterator.next();
-          if (!(resolveResult.getElement() instanceof PsiMethod)) iterator.remove();
-        }
+    if (methodsPresent && propertiesPresent) {
+      for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
+        GroovyResolveResult resolveResult = iterator.next();
+        if (!(resolveResult.getElement() instanceof PsiMethod)) iterator.remove();
       }
     }
 

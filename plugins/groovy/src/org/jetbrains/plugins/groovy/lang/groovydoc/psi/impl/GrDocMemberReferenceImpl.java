@@ -31,11 +31,11 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 /**
  * @author ilyas
@@ -132,21 +132,17 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
       resolved = getEnclosingClass(this);
     }
     if (resolved instanceof PsiClass) {
-      PropertyResolverProcessor propertyProcessor = new PropertyResolverProcessor(null, this, true);
+      ResolverProcessor propertyProcessor = CompletionProcessor.createPropertyCompletionProcessor(this);
       resolved.processDeclarations(propertyProcessor, PsiSubstitutor.EMPTY, null, this);
       PsiElement[] propertyCandidates = ResolveUtil.mapToElements(propertyProcessor.getCandidates());
       PsiType thisType = getManager().getElementFactory().createType((PsiClass) resolved, PsiSubstitutor.EMPTY);
-      MethodResolverProcessor methodProcessor = new MethodResolverProcessor(null, this, true, false, thisType, null, PsiType.EMPTY_ARRAY);
-      MethodResolverProcessor constructorProcessor = new MethodResolverProcessor(null, this, false, true, thisType, null, PsiType.EMPTY_ARRAY);
+      ResolverProcessor methodProcessor = CompletionProcessor.createPropertyCompletionProcessor(this);
 
       resolved.processDeclarations(methodProcessor, PsiSubstitutor.EMPTY, null, this);
-      resolved.processDeclarations(constructorProcessor, PsiSubstitutor.EMPTY, resolved, this);
 
       PsiElement[] methodCandidates = ResolveUtil.mapToElements(methodProcessor.getCandidates());
-      PsiElement[] constructorCandidates = ResolveUtil.mapToElements(constructorProcessor.getCandidates());
 
-      PsiElement[] elements = ArrayUtil.mergeArrays(ArrayUtil.mergeArrays(propertyCandidates, methodCandidates, PsiElement.class),
-          constructorCandidates, PsiElement.class);
+      PsiElement[] elements = ArrayUtil.mergeArrays(propertyCandidates, methodCandidates, PsiElement.class);
 
       return ContainerUtil.map2Array(elements, new Function<PsiElement, Object>() {
         public Object fun(PsiElement psiElement) {

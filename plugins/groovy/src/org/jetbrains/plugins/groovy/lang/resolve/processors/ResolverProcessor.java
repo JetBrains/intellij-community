@@ -33,7 +33,6 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   protected String myName;
   private EnumSet<ResolveKind> myResolveTargetKinds;
   protected PsiElement myPlace;
-  protected boolean myForCompletion;
   private @NotNull PsiType[] myTypeArguments;
 
   protected Set<GroovyResolveResult> myCandidates = new LinkedHashSet<GroovyResolveResult>();
@@ -49,12 +48,11 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   protected GroovyPsiElement myCurrentFileResolveContext;
 
   protected ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets,
-                           PsiElement place, boolean forCompletion,
-                           @NotNull PsiType[] typeArguments) {
+                              PsiElement place,
+                              @NotNull PsiType[] typeArguments) {
     myName = name;
     myResolveTargetKinds = resolveTargets;
     myPlace = place;
-    myForCompletion = forCompletion;
     myTypeArguments = typeArguments;
   }
 
@@ -69,7 +67,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
       boolean isAccessible = isAccessible(namedElement);
       boolean isStaticsOK = isStaticsOK(namedElement);
       myCandidates.add(new GroovyResolveResultImpl(namedElement, myCurrentFileResolveContext, substitutor, isAccessible, isStaticsOK));
-      return myForCompletion || !isAccessible;
+      return !isAccessible;
     }
 
     return true;
@@ -126,9 +124,5 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
   public boolean hasCandidates() {
     return myCandidates.size() > 0;
-  }
-
-  public boolean isForCompletion() {
-    return myForCompletion;
   }
 }

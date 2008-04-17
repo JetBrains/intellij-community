@@ -159,12 +159,12 @@ public class ResolveUtil {
   }
 
   public static GroovyPsiElement resolveProperty(GroovyPsiElement place, String name) {
-    PropertyResolverProcessor processor = new PropertyResolverProcessor(name, place, false);
+    PropertyResolverProcessor processor = new PropertyResolverProcessor(name, place);
     return resolveExistingElement(place, processor, GrVariable.class, GrReferenceExpression.class);
   }
 
   public static PsiClass resolveClass(GroovyPsiElement place, String name) {
-    ClassResolverProcessor processor = new ClassResolverProcessor(name, place, false);
+    ClassResolverProcessor processor = new ClassResolverProcessor(name, place);
     return resolveExistingElement(place, processor, PsiClass.class);
   }
 

@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -251,7 +252,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
             return ((PsiClass) qualifierResolved).getInnerClasses();
           }
         } else {
-          ResolverProcessor processor = new ClassResolverProcessor(null, this, true);
+          ResolverProcessor processor = CompletionProcessor.createClassCompletionProcessor(this);
           ResolveUtil.treeWalkUp(this, processor);
           return GroovyCompletionUtil.getCompletionVariants(processor.getCandidates());
         }
@@ -338,7 +339,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
               }
             }
           } else {
-            ResolverProcessor processor = new ClassResolverProcessor(refName, ref, false);
+            ResolverProcessor processor = new ClassResolverProcessor(refName, ref);
             ResolveUtil.treeWalkUp(ref, processor);
             GroovyResolveResult[] candidates = processor.getCandidates();
             if (candidates.length > 0) return candidates;

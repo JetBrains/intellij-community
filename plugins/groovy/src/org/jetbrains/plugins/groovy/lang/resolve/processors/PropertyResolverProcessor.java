@@ -34,16 +34,13 @@ import java.util.Iterator;
 public class PropertyResolverProcessor extends ResolverProcessor {
   private GroovyResolveResult myProperty = null;
 
-  public PropertyResolverProcessor(String name, PsiElement place, boolean forCompletion) {
-    super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, forCompletion, PsiType.EMPTY_ARRAY);
+  public PropertyResolverProcessor(String name, PsiElement place) {
+    super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, PsiType.EMPTY_ARRAY);
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
     if (myName != null && element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
-      if (myForCompletion) {
-        return !myName.equals(method.getName()) || super.execute(element, substitutor);
-      }
       boolean lValue = myPlace instanceof GroovyPsiElement && PsiUtil.isLValue((GroovyPsiElement) myPlace);
       if (!lValue && PsiUtil.isSimplePropertyGetter(method, myName)) {
         myCandidates.clear();
@@ -55,8 +52,7 @@ public class PropertyResolverProcessor extends ResolverProcessor {
         return false;
       }
     } else if (myName == null || myName.equals(((PsiNamedElement) element).getName())) {
-      if (!myForCompletion &&
-          element instanceof GrField && ((GrField) element).isProperty()) {
+      if (element instanceof GrField && ((GrField) element).isProperty()) {
         if (myProperty == null) {
           boolean isAccessible = isAccessible((PsiNamedElement) element);
           boolean isStaticsOK = isStaticsOK((PsiNamedElement) element);
@@ -72,22 +68,18 @@ public class PropertyResolverProcessor extends ResolverProcessor {
 
   public GroovyResolveResult[] getCandidates() {
     if (myProperty != null) {
-      if (myForCompletion) {
-        myCandidates.add(myProperty); //could be completed to avoid runtime errors in some cases - see e.g. contr4.test
-      } else {
-        boolean containingAccessorFound = false;
-        for (Iterator<GroovyResolveResult> it = myCandidates.iterator(); it.hasNext();) {
-          PsiElement element = it.next().getElement();
-          if (element instanceof GrMethod && PsiTreeUtil.isAncestor(element, myPlace, false)) {
-            it.remove();
-            containingAccessorFound = true;
-            break;
-          }
+      boolean containingAccessorFound = false;
+      for (Iterator<GroovyResolveResult> it = myCandidates.iterator(); it.hasNext();) {
+        PsiElement element = it.next().getElement();
+        if (element instanceof GrMethod && PsiTreeUtil.isAncestor(element, myPlace, false)) {
+          it.remove();
+          containingAccessorFound = true;
+          break;
         }
+      }
 
-        if (containingAccessorFound) {
-          myCandidates.add(myProperty);
-        }
+      if (containingAccessorFound) {
+        myCandidates.add(myProperty);
       }
 
       myProperty = null;
