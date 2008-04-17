@@ -2,7 +2,6 @@ package com.intellij.extapi.psi;
 
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -25,7 +24,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class PsiElementBase extends ElementBase implements PsiElement, NavigationItem {
+public abstract class PsiElementBase extends ElementBase implements NavigatablePsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.extapi.psi.PsiElementBase");
 
   public PsiElement copy() {

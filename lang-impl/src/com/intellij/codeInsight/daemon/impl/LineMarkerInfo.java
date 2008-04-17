@@ -15,42 +15,42 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
 
-public class LineMarkerInfo {
+public class LineMarkerInfo<T extends PsiElement> {
   private final Icon myIcon;
-  private final WeakReference<PsiElement> elementRef;
+  private final WeakReference<T> elementRef;
   public final int startOffset;
   public Color separatorColor;
   public SeparatorPlacement separatorPlacement;
   public RangeHighlighter highlighter;
   public final int updatePass;
 
-  @Nullable private final Function<PsiElement, String> myTooltipProvider;
+  @Nullable private final Function<T, String> myTooltipProvider;
   private final GutterIconRenderer.Alignment myIconAlignment;
-  @Nullable private final GutterIconNavigationHandler myNavigationHandler;
+  @Nullable private final GutterIconNavigationHandler<T> myNavigationHandler;
 
 
-  public LineMarkerInfo(PsiElement element,
+  public LineMarkerInfo(T element,
                         int startOffset,
                         Icon icon,
                         int updatePass,
-                        @Nullable Function<PsiElement, String> tooltipProvider,
-                        @Nullable GutterIconNavigationHandler navHandler,
+                        @Nullable Function<T, String> tooltipProvider,
+                        @Nullable GutterIconNavigationHandler<T> navHandler,
                         GutterIconRenderer.Alignment alignment) {
     myIcon = icon;
     myTooltipProvider = tooltipProvider;
     myIconAlignment = alignment;
-    elementRef = new WeakReference<PsiElement>(element);
+    elementRef = new WeakReference<T>(element);
     myNavigationHandler = navHandler;
     this.startOffset = startOffset;
     this.updatePass = updatePass;
   }
 
-  public LineMarkerInfo(PsiElement element,
+  public LineMarkerInfo(T element,
                         int startOffset,
                         Icon icon,
                         int updatePass,
-                        @Nullable Function<PsiElement, String> tooltipProvider,
-                        @Nullable GutterIconNavigationHandler navHandler) {
+                        @Nullable Function<T, String> tooltipProvider,
+                        @Nullable GutterIconNavigationHandler<T> navHandler) {
     this(element, startOffset, icon, updatePass, tooltipProvider, navHandler, GutterIconRenderer.Alignment.RIGHT);
   }
 
@@ -83,7 +83,7 @@ public class LineMarkerInfo {
 
   @Nullable
   private String getLineMarkerTooltip() {
-    PsiElement element = elementRef.get();
+    T element = elementRef.get();
     if (element == null || !element.isValid()) return null;
     if (myTooltipProvider != null) return myTooltipProvider.fun(element);
     return null;
@@ -94,7 +94,7 @@ public class LineMarkerInfo {
     public void actionPerformed(AnActionEvent e) {
       if (myNavigationHandler != null) {
         MouseEvent mouseEvent = (MouseEvent)e.getInputEvent();
-        PsiElement element = elementRef.get();
+        T element = elementRef.get();
         if (element == null || !element.isValid()) return;
 
         myNavigationHandler.navigate(mouseEvent, element);
