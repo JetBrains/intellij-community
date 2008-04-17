@@ -113,7 +113,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
     return myFindContentManager == null ? null : myFindContentManager.getSelectedContent();
   }
 
-  public void closeContent(Content content) {
+  public void closeContent(@NotNull Content content) {
     myFindContentManager.removeContent(content, true);
     content.release();
   }

@@ -509,8 +509,7 @@ public class RunContentManagerImpl implements RunContentManager {
 
       final boolean canClose = closeQuery();
       if (canClose) {
-        final Content content = myContent;
-        content.getManager().removeContent(content, true);
+        myContent.getManager().removeContent(myContent, true);
         myContent = null;
       }
       return canClose;

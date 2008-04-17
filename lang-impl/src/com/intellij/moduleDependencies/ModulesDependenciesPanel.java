@@ -49,18 +49,18 @@ import java.util.List;
 public class ModulesDependenciesPanel extends JPanel implements ModuleRootListener, Disposable {
   @NonNls private static final String DIRECTION = "FORWARD_ANALIZER";
   private Content myContent;
-  private Project myProject;
+  private final Project myProject;
   private Tree myLeftTree;
   private DefaultTreeModel myLeftTreeModel;
 
-  private Tree myRightTree;
-  private DefaultTreeModel myRightTreeModel;
+  private final Tree myRightTree;
+  private final DefaultTreeModel myRightTreeModel;
 
   private Graph<Module> myModulesGraph;
-  private Module[] myModules;
+  private final Module[] myModules;
 
-  private Splitter mySplitter;
-  @NonNls private static String ourHelpID = "module.dependencies.tool.window";
+  private final Splitter mySplitter;
+  @NonNls private static final String ourHelpID = "module.dependencies.tool.window";
 
   public ModulesDependenciesPanel(final Project project, final Module[] modules) {
     super(new BorderLayout());
@@ -411,10 +411,6 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       return myModule;
     }
 
-    public void setModule(final Module module) {
-      myModule = module;
-    }
-
     public boolean equals(Object object) {
       return object instanceof MyUserObject && myModule.equals(((MyUserObject)object).getModule());      
     }
@@ -429,8 +425,8 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
   }
 
   private static class MyTreePanel extends JPanel implements DataProvider{
-    private Tree myTree;
-    private Project myProject;
+    private final Tree myTree;
+    private final Project myProject;
     public MyTreePanel(final Tree tree, Project project) {
       super(new BorderLayout());
       myTree = tree;

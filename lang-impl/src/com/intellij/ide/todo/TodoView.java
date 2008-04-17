@@ -62,7 +62,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
   @NonNls private static final String VALUE_DEFAULT_CHANGELIST = "default-changelist";
   private Content myChangeListTodosContent;
 
-  private MyVcsListener myVcsListener = new MyVcsListener();
+  private final MyVcsListener myVcsListener = new MyVcsListener();
 
   /* Invoked by reflection */
   TodoView(Project project, ProjectLevelVcsManager manager){
