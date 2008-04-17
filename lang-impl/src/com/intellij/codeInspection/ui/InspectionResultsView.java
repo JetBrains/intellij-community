@@ -10,7 +10,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
 import com.intellij.codeInspection.ui.actions.InspectionsOptionsToolbarAction;
 import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
@@ -63,24 +62,22 @@ import java.util.List;
  * @author max
  */
 public class InspectionResultsView extends JPanel implements Disposable, OccurenceNavigator, DataProvider {
-  public static final RefElement[] EMPTY_ELEMENTS_ARRAY = new RefElement[0];
-  public static final ProblemDescriptor[] EMPTY_DESCRIPTORS = new ProblemDescriptor[0];
-  private Project myProject;
+  private final Project myProject;
   private InspectionTree myTree;
-  private Browser myBrowser;
+  private final Browser myBrowser;
   private Map<HighlightDisplayLevel, Map<String, InspectionGroupNode>> myGroups = null;
   private OccurenceNavigator myOccurenceNavigator;
   private InspectionProfile myInspectionProfile;
-  private AnalysisScope myScope;
+  private final AnalysisScope myScope;
   @NonNls
-  public static final String HELP_ID = "reference.toolWindows.inspections";
-  public final Map<HighlightDisplayLevel, InspectionSeverityGroupNode> mySeverityGroupNodes = new HashMap<HighlightDisplayLevel, InspectionSeverityGroupNode>();
+  private static final String HELP_ID = "reference.toolWindows.inspections";
+  private final Map<HighlightDisplayLevel, InspectionSeverityGroupNode> mySeverityGroupNodes = new HashMap<HighlightDisplayLevel, InspectionSeverityGroupNode>();
 
-  private Splitter mySplitter;
-  private GlobalInspectionContextImpl myGlobalInspectionContext;
+  private final Splitter mySplitter;
+  private final GlobalInspectionContextImpl myGlobalInspectionContext;
   private boolean myRerun = false;
 
-  private InspectionRVContentProvider myProvider;
+  private final InspectionRVContentProvider myProvider;
   private AnAction myIncludeAction;
   private AnAction myExcludeAction;
 
@@ -353,7 +350,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return null;
   }
 
-  public void syncBrowser() {
+  private void syncBrowser() {
     if (myTree.getSelectionModel().getSelectionCount() != 1) {
       myBrowser.showEmpty();
     }
@@ -386,7 +383,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
   }
 
-  public void showInBrowser(final RefEntity refEntity) {
+  private void showInBrowser(final RefEntity refEntity) {
     Cursor currentCursor = getCursor();
     setCursor(new Cursor(Cursor.WAIT_CURSOR));
     myBrowser.showPageFor(refEntity);
@@ -528,11 +525,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return myOccurenceNavigator != null && myOccurenceNavigator.hasPreviousOccurence();
   }
 
-  public OccurenceNavigator.OccurenceInfo goNextOccurence() {
+  public OccurenceInfo goNextOccurence() {
     return myOccurenceNavigator != null ? myOccurenceNavigator.goNextOccurence() : null;
   }
 
-  public OccurenceNavigator.OccurenceInfo goPreviousOccurence() {
+  public OccurenceInfo goPreviousOccurence() {
     return myOccurenceNavigator != null ? myOccurenceNavigator.goPreviousOccurence() : null;
   }
 
@@ -620,7 +617,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
     }
     if (psiElement == null || !psiElement.isValid()) return null;
-    final VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
+    PsiFile containingFile = psiElement.getContainingFile();
+    final VirtualFile virtualFile = containingFile == null ? null : containingFile.getVirtualFile();
     if (virtualFile != null) {
       int startOffset = psiElement.getTextOffset();
       if (descriptor instanceof ProblemDescriptorImpl) {
@@ -688,10 +686,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   @NotNull public InspectionTree getTree(){
     return myTree;
-  }
-
-  protected RefManagerImpl getRefManager() {
-    return (RefManagerImpl)myGlobalInspectionContext.getRefManager();
   }
 
   public GlobalInspectionContextImpl getGlobalInspectionContext() {
