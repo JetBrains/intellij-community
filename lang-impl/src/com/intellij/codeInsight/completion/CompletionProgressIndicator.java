@@ -105,7 +105,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       myInitialized = true;
       myLookup.show();
     }
-    else {
+    else if (myLookup.isVisible()) {
       Point point=myLookup.calculatePosition();
       Dimension preferredSize = myLookup.getComponent().getPreferredSize();
       myLookup.setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
