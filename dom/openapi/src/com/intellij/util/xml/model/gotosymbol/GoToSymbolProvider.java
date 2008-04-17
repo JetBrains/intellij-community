@@ -158,6 +158,25 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
     public PsiElement getParent() {
       return myPsiElement.getParent();
     }
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final BaseNavigationItem that = (BaseNavigationItem)o;
+
+      if (myPsiElement != null ? !myPsiElement.equals(that.myPsiElement) : that.myPsiElement != null) return false;
+      if (myText != null ? !myText.equals(that.myText) : that.myText != null) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      int result;
+      result = (myPsiElement != null ? myPsiElement.hashCode() : 0);
+      result = 31 * result + (myText != null ? myText.hashCode() : 0);
+      return result;
+    }
   }
 
 }
