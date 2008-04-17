@@ -15,6 +15,8 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Comparator;
 
 public class ComparatorUtil {
@@ -37,4 +39,11 @@ public class ComparatorUtil {
     return o1.compareTo(o2) >= 0 ? o2 : o1;
   }
 
+  public static <T> boolean equalsNullable(@Nullable T a, @Nullable T b) {
+    if (a == null) {
+      return b == null;
+    } else {
+      return b != null && a.equals(b);
+    }
+  }
 }
