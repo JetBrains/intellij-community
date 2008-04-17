@@ -498,8 +498,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     }
   }
 
-  private static ResolverProcessor getMethodOrPropertyResolveProcessor(GrReferenceExpression refExpr, String name, boolean forCompletion) {
-    if (forCompletion) return CompletionProcessor.createPropertyCompletionProcessor(refExpr);
+  private static ResolverProcessor getMethodOrPropertyResolveProcessor(GrReferenceExpression refExpr, String name, boolean incomplete) {
+    if (incomplete) return CompletionProcessor.createRefSameNameProcessor(refExpr, name);
 
     Kind kind = ((GrReferenceExpressionImpl) refExpr).getKind();
     ResolverProcessor processor;
