@@ -6,10 +6,6 @@ package com.intellij.util.xml;
 
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Function;
 import com.intellij.util.Icons;
@@ -28,20 +24,6 @@ public class ElementPresentationManagerImpl extends ElementPresentationManager {
   public <T> Object[] createVariants(Collection<T> elements, Function<T, String> namer, int iconFlags) {
     ArrayList<Object> result = new ArrayList<Object>(elements.size());
     for (T element: elements) {
-      if (element instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)element;
-        String tail = PsiFormatUtil.formatMethod(method,
-                                          PsiSubstitutor.EMPTY,
-                                          PsiFormatUtil.SHOW_PARAMETERS,
-                                          PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
-
-        final PsiType returnType = method.getReturnType();
-        final Object value = LookupValueFactory.createLookupValueWithHintAndTail(method.getName(),
-                                     method.getIcon(iconFlags),
-                                     returnType == null ? null : returnType.getPresentableText(),
-                                     tail);
-        result.add(value);
-      }
       String name = namer.fun(element);
       if (name != null) {
         Icon icon = getIcon(element);
