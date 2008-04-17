@@ -43,6 +43,7 @@ import java.util.List;
 public class CreateTestDialog extends DialogWrapper {
   private static final String RECENTS_KEY = "CreateTestDialog.RecentsKey";
   private static final String DEFAULT_LIBRARY_NAME_PROPERTY = CreateTestDialog.class.getName() + ".defaultLibrary";
+  private static final String SHOW_INHERITED_MEMBERS_PROPERTY = CreateTestDialog.class.getName() + ".includeInheritedMembers";
 
   private Project myProject;
   private PsiClass myTargetClass;
@@ -57,7 +58,8 @@ public class CreateTestDialog extends DialogWrapper {
   private ReferenceEditorComboWithBrowseButton myTargetPackageField;
   private JCheckBox myGenerateBeforeBox;
   private JCheckBox myGenerateAfterBox;
-  private MemberSelectionTable myMembersTable;
+  private JCheckBox myShowInheritedMethodsBox;
+  private MemberSelectionTable myMethodsTable;
   private JButton myFixLibraryButton;
   private JPanel myFixLibraryPanel;
   private JLabel myFixLibraryLabel;
@@ -143,7 +145,15 @@ public class CreateTestDialog extends DialogWrapper {
     myGenerateBeforeBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.generate", "setUp/@Before"));
     myGenerateAfterBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.generate", "tearDown/@After"));
 
-    myMembersTable = new MemberSelectionTable(collectMethods(), null);
+    myShowInheritedMethodsBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.show.inherited"));
+    myShowInheritedMethodsBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        updateMethodsTable();
+      }
+    });
+    restoreShowInheritedMembersStatus();
+    myMethodsTable = new MemberSelectionTable(new MemberInfo[0], null);
+    updateMethodsTable();
   }
 
   private void onLibrarySelected(CreateTestProvider p) {
@@ -163,14 +173,24 @@ public class CreateTestDialog extends DialogWrapper {
     field.setPreferredSize(size);
   }
 
-  private MemberInfo[] collectMethods() {
-    return MemberInfo.extractClassMembers(myTargetClass, new MemberInfo.Filter() {
-      public boolean includeMember(PsiMember member) {
-        if (!(member instanceof PsiMethod)) return false;
-        PsiModifierList list = member.getModifierList();
-        return list.hasModifierProperty(PsiModifier.PUBLIC);
-      }
-    }, false);
+  private void updateMethodsTable() {
+    List<MemberInfo> methods = new ArrayList<MemberInfo>();
+
+    PsiClass c = myTargetClass;
+    do {
+      MemberInfo.extractClassMembers(c, methods, new MemberInfo.Filter() {
+        public boolean includeMember(PsiMember member) {
+          if (!(member instanceof PsiMethod)) return false;
+          PsiModifierList list = member.getModifierList();
+          return list.hasModifierProperty(PsiModifier.PUBLIC);
+        }
+      }, false);
+      c = c.getSuperClass();
+    } while(c != null
+            && c.getSuperClass() != null // not the Object
+            && myShowInheritedMethodsBox.isSelected());
+
+    myMethodsTable.setMemberInfos(methods.toArray(new MemberInfo[methods.size()]));
   }
 
   private void doSelectPackage() {
@@ -182,11 +202,25 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   private String getDefaultLibraryName() {
-    return PropertiesComponent.getInstance(myProject).getValue(DEFAULT_LIBRARY_NAME_PROPERTY);
+    return getProperties().getValue(DEFAULT_LIBRARY_NAME_PROPERTY);
   }
 
   private void saveDefaultLibraryName() {
-    PropertiesComponent.getInstance(myProject).setValue(DEFAULT_LIBRARY_NAME_PROPERTY, mySelectedTestProvider.getName());
+    getProperties().setValue(DEFAULT_LIBRARY_NAME_PROPERTY, mySelectedTestProvider.getName());
+  }
+
+  private void restoreShowInheritedMembersStatus() {
+    String v = getProperties().getValue(SHOW_INHERITED_MEMBERS_PROPERTY);
+    myShowInheritedMethodsBox.setSelected(v != null && v.equals("true"));
+  }
+
+  private void saveShowInheritedMembersStatus() {
+    boolean v = myShowInheritedMethodsBox.isSelected();
+    getProperties().setValue(SHOW_INHERITED_MEMBERS_PROPERTY, Boolean.toString(v));
+  }
+
+  private PropertiesComponent getProperties() {
+    return PropertiesComponent.getInstance(myProject);
   }
 
   @Override
@@ -272,10 +306,20 @@ public class CreateTestDialog extends DialogWrapper {
     panel.add(myGenerateBeforeBox, constr);
     panel.add(myGenerateAfterBox, constr);
 
+    constr.gridx = 0;
+    constr.weightx = 0;
+    constr.gridwidth = 1;
     panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.select.methods")), constr);
+
+    constr.gridx = 1;
+    constr.weightx = 1;
+    panel.add(myShowInheritedMethodsBox, constr);
+
+    constr.gridx = 0;
+    constr.gridwidth = GridBagConstraints.REMAINDER;
     constr.fill = GridBagConstraints.BOTH;
     constr.weighty = 1;
-    panel.add(new JScrollPane(myMembersTable), constr);
+    panel.add(new JScrollPane(myMethodsTable), constr);
 
     return panel;
   }
@@ -295,7 +339,7 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   public MemberInfo[] getSelectedMethods() {
-    return myMembersTable.getSelectedMemberInfos();
+    return myMethodsTable.getSelectedMemberInfos();
   }
 
   public boolean shouldGeneratedAfter() {
@@ -337,6 +381,7 @@ public class CreateTestDialog extends DialogWrapper {
     }
 
     saveDefaultLibraryName();
+    saveShowInheritedMembersStatus();
     super.doOKAction();
   }
 

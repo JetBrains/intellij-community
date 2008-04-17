@@ -189,7 +189,7 @@ public class Storage {
   }
 
   private void markAsBroken(BrokenStorageException cause) {
-    LOG.warn("Local History starage is broken. It will be rebuilt on project reopen.", cause);
+    LOG.warn("Local History storage is broken. It will be rebuilt on project reopen.", cause);
 
     isBroken = true;
     try {
