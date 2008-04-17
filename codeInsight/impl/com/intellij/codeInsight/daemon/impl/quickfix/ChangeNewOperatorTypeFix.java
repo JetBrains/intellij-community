@@ -46,15 +46,15 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
     changeNewOperatorType(myExpression, myType, editor);
   }
 
-  private static void changeNewOperatorType(PsiExpression originalExpression, PsiType type, final Editor editor) throws IncorrectOperationException {
+  private static void changeNewOperatorType(PsiNewExpression originalExpression, PsiType toType, final Editor editor) throws IncorrectOperationException {
     PsiNewExpression newExpression;
     PsiElementFactory factory = JavaPsiFacade.getInstance(originalExpression.getProject()).getElementFactory();
     int caretOffset;
     TextRange selection;
-    if (type instanceof PsiArrayType) {
+    if (toType instanceof PsiArrayType) {
       caretOffset = -2;
-      @NonNls String text = "new " + type.getDeepComponentType().getCanonicalText() + "[0]";
-      for (int i = 1; i < type.getArrayDimensions(); i++) {
+      @NonNls String text = "new " + toType.getDeepComponentType().getCanonicalText() + "[0]";
+      for (int i = 1; i < toType.getArrayDimensions(); i++) {
         text += "[]";
         caretOffset -= 2;
       }
@@ -63,7 +63,8 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
       selection = new TextRange(caretOffset, caretOffset+1);
     }
     else {
-      newExpression = (PsiNewExpression)factory.createExpressionFromText("new " + type.getCanonicalText() + "()", originalExpression);
+      newExpression = (PsiNewExpression)factory.createExpressionFromText("new " + toType.getCanonicalText() + "()", originalExpression);
+      newExpression.getArgumentList().replace(originalExpression.getArgumentList());
       selection = null;
       caretOffset = -1;
     }
