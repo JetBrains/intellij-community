@@ -73,7 +73,12 @@ class LookupCellRenderer implements ListCellRenderer {
     ICON_WIDTH = EMPTY_ICON.getIconWidth();
 
     myLookup = lookup;
-    myLabel0 = new StrikeoutLabel("", SwingConstants.LEFT);
+    myLabel0 = new StrikeoutLabel("", SwingConstants.LEFT) {
+      public Dimension getPreferredSize() {
+        final Dimension preferredSize = super.getPreferredSize();
+        return new Dimension(preferredSize.width + 2, preferredSize.height);
+      }
+    };
     myLabel0.setOpaque(true);
     myLabel1 = new StrikeoutLabel("", SwingConstants.LEFT);
     myLabel1.setOpaque(true);
