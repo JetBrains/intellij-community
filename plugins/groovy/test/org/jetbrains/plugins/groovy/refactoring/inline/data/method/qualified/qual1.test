@@ -36,11 +36,11 @@ class R {
 -----
 def getGeneratedFileNames() {
     if (true) {
-        def edfgh = QasdWfsdEdfgh.foo().f
+        def f = QasdWfsdEdfgh.foo().f
         int result
         foo = 42
-        edfgh.boo()
-        edfgh.boo1()
+        f.boo()
+        f.boo1()
         def qual = 48
         println(foo)
         result = foo
