@@ -95,13 +95,13 @@ public class ThreeStateCheckBox extends JCheckBox {
         }
 
         if (icon != null) {
-          final Color selected = UIManager.getColor("CheckBox.focus");
-          if (selected != null) {
-            g.setColor(selected);
-          }
+          //final Color selected = UIManager.getColor("CheckBox.focus");
+          //if (selected != null) {
+          //  g.setColor(selected);
+          //}
 
           final int width1 = icon.getIconWidth();
-          final int height1 = icon.getIconHeight();
+          final int height1 = r.height - i.top - i.bottom;
           final int yoffset = height1 / 2 - 1;
           final int xoffset = width1 / 2 - width1 / 5;
 
