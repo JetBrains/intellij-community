@@ -50,8 +50,10 @@ public class DefaultFacetSettingsEditor<C extends FacetConfiguration> implements
   }
 
   public void apply() throws ConfigurationException {
-    myDelegate.apply();
-    ProjectFacetManager.getInstance(myProject).setDefaultConfiguration(myFacetType, myConfiguration);
+    if (myDelegate.isModified()) {
+      myDelegate.apply();
+      ProjectFacetManager.getInstance(myProject).setDefaultConfiguration(myFacetType, myConfiguration);
+    }
   }
 
   public void reset() {
