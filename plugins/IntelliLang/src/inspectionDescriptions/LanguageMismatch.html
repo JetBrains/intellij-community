@@ -1,0 +1,33 @@
+<html>
+<head>
+  <style type="text/css">
+    body, table {
+      font-family: Verdana, sans-serif;
+      font-size: 100%;
+      padding-left: 2mm;
+    }
+
+    #footer {
+      font-size: 95%;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+<p>
+  Checks whether the language of a reference matches the expected language of the usage context.
+</p>
+
+<p>Example:</p>
+<pre>
+@Language("JavaScript")
+String JS_CODE = "var x;";
+
+@Language("XPath")
+String XPATH_CODE = JS_CODE;
+</pre>
+
+<p id="footer">Powered by IntelliLang</p>
+</body>
+</html>

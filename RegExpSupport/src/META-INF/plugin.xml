@@ -1,0 +1,20 @@
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
+<idea-plugin>
+  <name>Regular Expression Support</name>
+  <id>RegExpLanguage</id>
+
+  <description>
+    Regular Expression Language implementation with full java.util.regex.Pattern syntax support,
+    detailed on-the-fly error highlighting, completion, some intention actions and more.
+  </description>
+
+  <version>1.0</version>
+  <vendor>Sascha Weinreuter</vendor>
+  <idea-version since-build="6656"/>
+  
+  <application-components>
+    <component>
+      <implementation-class>org.intellij.lang.regexp.RegExpSupportLoader</implementation-class>
+    </component>
+  </application-components>
+</idea-plugin>

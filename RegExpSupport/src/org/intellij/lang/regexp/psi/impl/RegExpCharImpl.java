@@ -1,0 +1,122 @@
+/*
+ * Copyright 2006 Sascha Weinreuter
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.intellij.lang.regexp.psi.impl;
+
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import org.intellij.lang.regexp.RegExpTT;
+import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+
+public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
+    private static final TokenSet OCT_CHARS = TokenSet.create(RegExpTT.OCT_CHAR, RegExpTT.BAD_OCT_VALUE);
+    private static final TokenSet HEX_CHARS = TokenSet.create(RegExpTT.HEX_CHAR, RegExpTT.BAD_HEX_VALUE);
+    private static final TokenSet UNICODE_CHARS = TokenSet.create(RegExpTT.HEX_CHAR, StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN);
+
+    public RegExpCharImpl(ASTNode astNode) {
+        super(astNode);
+    }
+
+    @NotNull
+    public Type getType() {
+        final ASTNode child = getNode().getFirstChildNode();
+        assert child != null;
+        final IElementType t = child.getElementType();
+        if (OCT_CHARS.contains(t)) {
+            return Type.OCT;
+        } else if (HEX_CHARS.contains(t)) {
+            return Type.HEX;
+        } else if (UNICODE_CHARS.contains(t)) {
+            return Type.UNICODE;
+        } else {
+            return Type.CHAR;
+        }
+    }
+
+    @Nullable
+    public Character getValue() {
+        return unescapeChar(getUnescapedText());
+    }
+
+    @Nullable
+    static Character unescapeChar(String s) {
+        assert s.length() > 0;
+
+        boolean escaped = false;
+        for (int idx = 0; idx < s.length(); idx++) {
+            char ch = s.charAt(idx);
+            if (!escaped) {
+                if (ch == '\\') {
+                    escaped = true;
+                } else {
+                    return ch;
+                }
+            } else {
+                switch (ch) {
+                    case'n':
+                        return '\n';
+                    case'r':
+                        return '\r';
+                    case't':
+                        return '\t';
+                    case'f':
+                        return '\f';
+                    case'c':
+                        return (char)(ch ^ 64);
+                    case'x':
+                        return parseNumber(idx, s, 16, 2, true);
+                    case'u':
+                        return parseNumber(idx, s, 16, 4, true);
+                    case'0':
+                        return parseNumber(idx, s, 8, 3, false);
+                    default:
+                        if (Character.isLetter(ch)) {
+                            return null;
+                        }
+                        return ch;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    static Character parseNumber(int idx, String s, int radix, int len, boolean strict) {
+        final int start = idx + 1;
+        final int end = start + len;
+        try {
+            int sum = 0;
+            int i;
+            for (i = start; i < end && i < s.length(); i++) {
+                sum *= radix;
+                sum += Integer.valueOf(s.substring(i, i + 1), radix);
+            }
+            if (i-start == 0) return null;
+            return i-start < len && strict ? null : (char)sum;
+        } catch (NumberFormatException e1) {
+            return null;
+        }
+    }
+
+    public void accept(RegExpElementVisitor visitor) {
+        visitor.visitRegExpChar(this);
+    }
+}

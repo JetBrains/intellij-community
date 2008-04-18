@@ -1,0 +1,64 @@
+<idea-plugin url="http://www.jetbrains.net/confluence/display/CONTEST/IntelliLang" version="2">
+  <name>IntelliLang</name>
+
+  <description>
+    <![CDATA[
+    This plugin provides the following features, inspired by <a href="http://www.jetbrains.net/jira/browse/IDEADEV-2599">IDEADEV-2599</a>:
+    <p>
+    - Annotation based and UI configurable language injection<br>
+    - Annotation based pattern validation<br>
+    - Regular Expression Language implementation with full java.util.regex.Pattern syntax support,
+      detailed on-the-fly error highlighting, completion, some intention actions and more.<br>
+    </p>
+   ]]></description>
+
+  <version>2.3-Diana</version>
+  <depends>RegExpLanguage</depends>
+  <idea-version since-build="8243" until-build="8299"/>  <!-- Diana EAP -->
+
+  <vendor email="sascha.weinreuter@cit.de" logo="/org/intellij/plugins/intelliLang/icon_small.png">Sascha Weinreuter</vendor>
+
+  <change-notes><![CDATA[<p>
+    * First Diana compatible release<br>
+  </p>
+  <p>
+    The complete change-history is available
+    <a href="http://www.jetbrains.net/confluence/display/CONTEST/IntelliLang#IntelliLang-History">here</a>
+  </p>]]></change-notes>
+
+  <!--<depends optional="true">XPathView</depends>-->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="org.intellij.plugins.intelliLang.util.SimpleErrorReportSubmitter" />
+  </extensions>
+
+  <application-components>
+    <component>
+      <implementation-class>org.intellij.plugins.intelliLang.inject.validation.InspectionProvider</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.intellij.plugins.intelliLang.pattern.InspectionProvider</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.intellij.plugins.intelliLang.Configuration</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.intellij.plugins.intelliLang.Settings</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.intellij.plugins.intelliLang.inject.formatting.Loader</implementation-class>
+    </component>
+
+  </application-components>
+  
+  <project-components>
+    <component>
+      <implementation-class>org.intellij.plugins.intelliLang.inject.CustomLanguageInjector</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.intellij.plugins.intelliLang.pattern.compiler.impl.CompilerProvider</implementation-class>
+    </component>
+  </project-components>
+  
+  <helpset file="help.jar" path="/Help.hs" />
+</idea-plugin>

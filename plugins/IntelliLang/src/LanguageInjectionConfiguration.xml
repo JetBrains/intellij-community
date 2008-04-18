@@ -1,0 +1,256 @@
+<!-- default configuration -->
+<component name="LanguageInjectionConfiguration">
+  <TAGS>
+    <entry>
+      <XmlTagInjection>
+        <setting name="LANGUAGE" value="JavaScript" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="TAGNAME" value="script" />
+        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml" />
+      </XmlTagInjection>
+    </entry>
+    <entry>
+      <XmlTagInjection>
+        <setting name="LANGUAGE" value="CSS" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="TAGNAME" value="style" />
+        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml" />
+        <setting name="XPATH_CONDITION" value="lower-case(@type)='text/css'" />
+      </XmlTagInjection>
+    </entry>
+  </TAGS>
+  <ATTRIBUTES>
+    <entry>
+      <XmlAttributeInjection>
+        <setting name="LANGUAGE" value="JavaScript" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="TAGNAME" value="" />
+        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml" />
+        <setting name="ATT_NAME" value="on.*" />
+        <setting name="ATT_NAMESPACE" value="" />
+      </XmlAttributeInjection>
+    </entry>
+    <entry>
+      <XmlAttributeInjection>
+        <setting name="LANGUAGE" value="JavaScript" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="TAGNAME" value="" />
+        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml" />
+        <setting name="ATT_NAME" value="href" />
+        <setting name="ATT_NAMESPACE" value="" />
+        <setting name="VALUE_PATTERN" value="^javascript:(.+)" />
+        <setting name="XPATH_CONDITION" value="" />
+      </XmlAttributeInjection>
+    </entry>
+    <entry>
+      <XmlAttributeInjection>
+        <setting name="LANGUAGE" value="CSS" />
+        <setting name="PREFIX" value="dummy_selector {" />
+        <setting name="SUFFIX" value="}" />
+        <setting name="TAGNAME" value="" />
+        <setting name="TAGNAMESPACE" value="http://www.w3.org/1999/xhtml" />
+        <setting name="ATT_NAME" value="style" />
+        <setting name="ATT_NAMESPACE" value="" />
+      </XmlAttributeInjection>
+    </entry>
+  </ATTRIBUTES>
+  <PARAMETERS>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="RegExp" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="CLASS" value="java.util.regex.Pattern" />
+        <setting name="METHOD" value="compile(java.lang.String regex)" />
+        <setting name="APPLY_IN_HIERARCHY" value="false" />
+        <list size="1">
+          <item index="0" class="java.lang.String" itemvalue="true" />
+        </list>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="XPath" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="CLASS" value="org.dom4j.Node" />
+        <setting name="METHOD" value="createXPath(java.lang.String string)" />
+        <setting name="APPLY_IN_HIERARCHY" value="true" />
+        <list size="1">
+          <item index="0" class="java.lang.String" itemvalue="true" />
+        </list>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="XPath" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="CLASS" value="org.dom4j.Node" />
+        <setting name="METHOD" value="selectNodes(java.lang.String string)" />
+        <setting name="APPLY_IN_HIERARCHY" value="true" />
+        <list size="1">
+          <item index="0" class="java.lang.String" itemvalue="true" />
+        </list>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="XPath" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="CLASS" value="org.dom4j.Node" />
+        <setting name="METHOD" value="selectSingleNode(java.lang.String string)" />
+        <setting name="APPLY_IN_HIERARCHY" value="true" />
+        <list size="1">
+          <item index="0" class="java.lang.String" itemvalue="true" />
+        </list>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="RegExp" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="CLASS" value="java.util.regex.Pattern" />
+        <setting name="METHOD" value="compile(java.lang.String regex, int flags)" />
+        <setting name="APPLY_IN_HIERARCHY" value="false" />
+        <list size="2">
+          <item index="0" class="java.lang.String" itemvalue="true" />
+          <item index="1" class="java.lang.String" itemvalue="false" />
+        </list>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="RegExp" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="CLASS" value="java.lang.String" />
+        <setting name="METHOD" value="split(java.lang.String regex)" />
+        <setting name="APPLY_IN_HIERARCHY" value="false" />
+        <list size="1">
+          <item index="0" class="java.lang.String" itemvalue="true" />
+        </list>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="RegExp" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="CLASS" value="java.lang.String" />
+        <setting name="METHOD" value="split(java.lang.String regex, int limit)" />
+        <setting name="APPLY_IN_HIERARCHY" value="false" />
+        <list size="2">
+          <item index="0" class="java.lang.String" itemvalue="true" />
+          <item index="1" class="java.lang.String" itemvalue="false" />
+        </list>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="RegExp" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="CLASS" value="java.lang.String" />
+        <setting name="METHOD" value="matches(java.lang.String string)" />
+        <setting name="APPLY_IN_HIERARCHY" value="false" />
+        <list size="1">
+          <item index="0" class="java.lang.String" itemvalue="true" />
+        </list>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="RegExp" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="CLASS" value="java.lang.String" />
+        <setting name="METHOD" value="replaceFirst(java.lang.String string, java.lang.String string1)" />
+        <setting name="APPLY_IN_HIERARCHY" value="false" />
+        <list size="2">
+          <item index="0" class="java.lang.String" itemvalue="true" />
+          <item index="1" class="java.lang.String" itemvalue="false" />
+        </list>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="RegExp" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="CLASS" value="java.lang.String" />
+        <setting name="METHOD" value="replaceAll(java.lang.String string, java.lang.String string1)" />
+        <setting name="APPLY_IN_HIERARCHY" value="false" />
+        <list size="2">
+          <item index="0" class="java.lang.String" itemvalue="true" />
+          <item index="1" class="java.lang.String" itemvalue="false" />
+        </list>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="XPath" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="CLASS" value="org.jdom.xpath.XPath" />
+        <setting name="METHOD" value="selectNodes(java.lang.Object object, java.lang.String string)" />
+        <setting name="APPLY_IN_HIERARCHY" value="false" />
+        <list size="2">
+          <item index="0" class="java.lang.String" itemvalue="false" />
+          <item index="1" class="java.lang.String" itemvalue="true" />
+        </list>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="XPath" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="CLASS" value="org.jdom.xpath.XPath" />
+        <setting name="METHOD" value="selectSingleNode(java.lang.Object object, java.lang.String string)" />
+        <setting name="APPLY_IN_HIERARCHY" value="false" />
+        <list size="2">
+          <item index="0" class="java.lang.String" itemvalue="false" />
+          <item index="1" class="java.lang.String" itemvalue="true" />
+        </list>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="XPath" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="CLASS" value="javax.xml.xpath.XPath" />
+        <setting name="METHOD" value="compile(java.lang.String string)" />
+        <setting name="APPLY_IN_HIERARCHY" value="true" />
+        <list size="1">
+          <item index="0" class="java.lang.String" itemvalue="true" />
+        </list>
+      </MethodParameterInjection>
+    </entry>
+    <entry>
+      <MethodParameterInjection>
+        <setting name="LANGUAGE" value="XPath" />
+        <setting name="PREFIX" value="" />
+        <setting name="SUFFIX" value="" />
+        <setting name="CLASS" value="javax.xml.xpath.XPath" />
+        <setting name="METHOD" value="evaluate(java.lang.String string, java.lang.Object object)" />
+        <setting name="APPLY_IN_HIERARCHY" value="true" />
+        <list size="2">
+          <item index="0" class="java.lang.String" itemvalue="true" />
+          <item index="1" class="java.lang.String" itemvalue="false" />
+        </list>
+      </MethodParameterInjection>
+    </entry>
+  </PARAMETERS>
+  <option name="INSTRUMENTATION" value="ASSERT" />
+  <option name="LANGUAGE_ANNOTATION" value="org.intellij.lang.annotations.Language" />
+  <option name="PATTERN_ANNOTATION" value="org.intellij.lang.annotations.Pattern" />
+  <option name="SUBST_ANNOTATION" value="org.intellij.lang.annotations.Subst" />
+</component>
