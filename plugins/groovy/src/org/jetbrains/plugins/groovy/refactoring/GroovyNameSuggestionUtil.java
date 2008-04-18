@@ -44,6 +44,7 @@ public class GroovyNameSuggestionUtil {
                                               NameValidator validator) {
     ArrayList<String> possibleNames = new ArrayList<String>();
     PsiType type = expr.getType();
+    generateNameByExpr(expr, possibleNames, validator);
     if (type != null && !PsiType.VOID.equals(type)) {
       String unboxed = PsiTypesUtil.unboxIfPossible(type.getCanonicalText());
       if (unboxed != null && !unboxed.equals(type.getCanonicalText())) {
@@ -56,7 +57,6 @@ public class GroovyNameSuggestionUtil {
         generateByType(expr.getType(), possibleNames, validator);
       }
     }
-    generateNameByExpr(expr, possibleNames, validator);
     while (possibleNames.contains("")) {
       possibleNames.remove("");
     }
