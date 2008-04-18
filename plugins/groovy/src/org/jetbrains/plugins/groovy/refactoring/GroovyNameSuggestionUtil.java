@@ -76,13 +76,14 @@ public class GroovyNameSuggestionUtil {
     }
     if (expr instanceof GrReferenceExpression && ((GrReferenceExpression) expr).getName() != null) {
       GrReferenceExpression refExpr = (GrReferenceExpression) expr;
-      if (refExpr.getName().toUpperCase().equals(refExpr.getName())) {
-        possibleNames.add(validator.validateName(refExpr.getName().toLowerCase(), true));
+      String name = refExpr.getName();
+      if (name != null && name.toUpperCase().equals(name)) {
+        possibleNames.add(validator.validateName(name.toLowerCase(), true));
       } else {
-        generateCamelNames(possibleNames, validator, refExpr.getName());
+        generateCamelNames(possibleNames, validator, name);
       }
-      if (expr.getText().equals(refExpr.getName())) {
-        possibleNames.remove(refExpr.getName());
+      if (expr.getText().equals(name)) {
+        possibleNames.remove(name);
       }
     }
     if (expr instanceof GrMethodCallExpression) {
