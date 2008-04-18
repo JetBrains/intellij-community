@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class UnusedCatchParameterInspection extends BaseInspection {
     public boolean m_ignoreCatchBlocksWithComments = false;
     /** @noinspection PublicField */
     public boolean m_ignoreTestCases = false;
-    /** @noinspecion PublicField */
+    /** @noinspection PublicField */
     public boolean m_ignoreIgnoreParameter = true;
 
     @NotNull
@@ -87,8 +87,8 @@ public class UnusedCatchParameterInspection extends BaseInspection {
                 return;
             }
             final PsiIdentifier identifier = (PsiIdentifier)element;
-            final PsiManager manager = element.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+            final PsiElementFactory factory =
+                    JavaPsiFacade.getInstance(project).getElementFactory();
             final PsiIdentifier newIdentifier =
                     factory.createIdentifier("ignored");
             identifier.replace(newIdentifier);
@@ -96,12 +96,13 @@ public class UnusedCatchParameterInspection extends BaseInspection {
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new EmptyCatchBlockVisitor();
+        return new UnusedCatchParameterVisitor();
     }
 
-    private class EmptyCatchBlockVisitor extends BaseInspectionVisitor {
+    private class UnusedCatchParameterVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
+        @Override public void visitTryStatement(
+                @NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             if (m_ignoreTestCases && TestUtils.isPartOfJUnitTestMethod(
                     statement)) {
