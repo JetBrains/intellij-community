@@ -88,11 +88,7 @@ public class CompletionProcessor extends ResolverProcessor {
     PsiParameter[] params1 = method1.getParameterList().getParameters();
     PsiParameter[] params2 = method2.getParameterList().getParameters();
 
-    if (params1.length < params2.length) {
-      if (params1.length == 0) return false;
-      final PsiType lastType = params1[params1.length - 1].getType(); //varargs applicability
-      return lastType instanceof PsiArrayType;
-    }
+    if (params1.length != params2.length) return false;
 
     for (int i = 0; i < params2.length; i++) {
       PsiType type1 = substitutor1.substitute(params1[i].getType());
