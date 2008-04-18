@@ -15,23 +15,20 @@
 
 package org.jetbrains.plugins.groovy.config.ui;
 
-import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetEditorContext;
+import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetValidatorsManager;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.diagnostic.Logger;
-
-import javax.swing.*;
-
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
-import java.awt.event.KeyEvent;
-import java.awt.event.ActionListener;
+import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 
 /**
  * @author ilyas
@@ -40,40 +37,21 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.config.ui.GroovyFacetTab");
 
-  private JComboBox myComboBox;
+  private GrovySDKComboBox myComboBox;
   private JButton myNewButton;
   private JPanel myPanel;
+  private FacetEditorContext myEditorContext;
+  private FacetValidatorsManager myValidatorsManager;
 
 
   private boolean isSdkChanged = false;
 
   public GroovyFacetTab(FacetEditorContext editorContext, FacetValidatorsManager validatorsManager) {
-    initLibComboBox();
     myNewButton.setMnemonic(KeyEvent.VK_N);
+    myEditorContext = editorContext;
+    myValidatorsManager = validatorsManager;
   }
 
-  protected void initLibComboBox() {
-
-    myComboBox.removeAllItems();
-    String maxValue = "";
-    for (Library library : GroovyConfigUtils.getGroovyLibraries()) {
-      String version = GroovyConfigUtils.getGroovyLibVersion(library);
-      myComboBox.addItem(version);
-      FontMetrics fontMetrics = myComboBox.getFontMetrics(myComboBox.getFont());
-      if (version != null && fontMetrics.stringWidth(version) > fontMetrics.stringWidth(maxValue)) {
-        maxValue = version;
-      }
-    }
-
-    myComboBox.setPrototypeDisplayValue(maxValue + "_");
-
-    myComboBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        isSdkChanged = true;
-      }
-    });
-
-  }
 
   @Nls
   public String getDisplayName() {
@@ -89,6 +67,11 @@ public class GroovyFacetTab extends FacetEditorTab {
   }
 
   public void apply() throws ConfigurationException {
+    GrovySDKComboBox.DefaultGroovySDKComboBoxItem item = (GrovySDKComboBox.DefaultGroovySDKComboBoxItem) myComboBox.getSelectedItem();
+    Module module = myEditorContext.getModule();
+    if (module != null) {
+      GroovyConfigUtils.updateGroovyLibInModule(module, item.getGroovySDK());
+    }
     isSdkChanged = false;
   }
 
@@ -98,5 +81,15 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   public void disposeUIResources() {
 
+  }
+
+  private void createUIComponents() {
+    myComboBox = new GrovySDKComboBox();
+    myComboBox.insertItemAt(new GrovySDKComboBox.NoGroovySDKComboBoxItem(), 0);
+    myComboBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        isSdkChanged = true;
+      }
+    });
   }
 }

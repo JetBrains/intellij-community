@@ -21,8 +21,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.util.Processor;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.jar.JarFile;
@@ -108,15 +110,19 @@ public class GroovyConfigUtils {
   }
 
 
-  public static Library[] getGroovyLibraries(){
+  public static Library[] getGroovyLibraries() {
     LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable();
     List<Library> groovyLibs = ContainerUtil.findAll(table.getLibraries(), new Condition<Library>() {
       public boolean value(Library library) {
-        return library.getName().matches(GROOVY_LIB_PATTERN);
+        return isGroovySdkLibrary(library);
       }
     });
     return groovyLibs.toArray(new Library[groovyLibs.size()]);
 
+  }
+
+  public static boolean isGroovySdkLibrary(Library library) {
+    return library.getName().matches(GROOVY_LIB_PATTERN);
   }
 
   @NotNull
@@ -153,5 +159,47 @@ public class GroovyConfigUtils {
       }
     }
     return null;
+  }
+
+  public static GroovySDK[] getGroovySDKs() {
+    return ContainerUtil.map2Array(getGroovyLibraries(), GroovySDK.class, new Function<Library, GroovySDK>() {
+      public GroovySDK fun(final Library library) {
+        return new GroovySDK(library);
+      }
+    });
+  }
+
+  public static void updateGroovyLibInModule(@NotNull Module module, @Nullable GroovySDK sdk) {
+    ModuleRootManager manager = ModuleRootManager.getInstance(module);
+    ModifiableRootModel model = manager.getModifiableModel();
+    LibraryTable libTable = model.getModuleLibraryTable();
+    Library[] libraries = libTable.getLibraries();
+    for (Library library : libraries) {
+      if (isGroovySdkLibrary(library)) {
+        libTable.removeLibrary(library);
+      }
+    }
+    if (sdk == null || sdk.getGroovyLibrary() == null) return;
+    Library newLib = sdk.getGroovyLibrary();
+    LibraryOrderEntry addedEntry = model.addLibraryEntry(newLib);
+
+    final OrderEntry[] order = model.getOrderEntries();
+    //place library before jdk
+    assert order[order.length - 1] == addedEntry;
+    int insertionPoint = - -1;
+    for (int i = 0; i < order.length - 1; i++) {
+      if (order[i] instanceof JdkOrderEntry) {
+        insertionPoint = i;
+        break;
+      }
+    }
+    if (insertionPoint >= 0) {
+      for (int i = order.length - 1; i > insertionPoint; i--) {
+        order[i] = order[i - 1];
+      }
+      order[insertionPoint] = addedEntry;
+      model.rearrangeOrderEntries(order);
+    }
+    model.commit();
   }
 }
