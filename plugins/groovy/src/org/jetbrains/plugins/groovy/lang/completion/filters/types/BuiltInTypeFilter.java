@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -57,7 +58,8 @@ public class BuiltInTypeFilter implements ElementFilter {
         ((GrParameter) context.getParent()).getTypeElementGroovy() == null) ||
         context.getParent() instanceof GrReferenceElement &&
             !(context.getParent().getParent() instanceof GrImportStatement) &&
-            !(context.getParent().getParent() instanceof GrPackageDefinition)) {
+            !(context.getParent().getParent() instanceof GrPackageDefinition) &&
+            !(context.getParent().getParent() instanceof GrArgumentList)) {
       PsiElement prevSibling = context.getPrevSibling();
       if (context.getParent() instanceof GrReferenceElement && prevSibling != null && prevSibling.getNode() != null) {
         ASTNode node = prevSibling.getNode();

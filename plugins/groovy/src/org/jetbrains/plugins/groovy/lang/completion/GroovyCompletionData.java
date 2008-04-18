@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ImportFilte
 import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.PackageFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.ParameterTypeFilter;
+import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeAsArgumentFilter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.ClassesGetter;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.ContextSpecificInsertHandler;
@@ -57,6 +58,7 @@ import java.util.Set;
  * @author ilyas
  */
 public class GroovyCompletionData extends CompletionData {
+  public final String[] BUILT_IN_TYPES = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"};
 
   public GroovyCompletionData() {
     registerAllCompletions();
@@ -73,6 +75,7 @@ public class GroovyCompletionData extends CompletionData {
     registerControlCompletion();
     registerSimpleExprsCompletion();
     registerBuiltInTypeCompletion();
+    registrBuiltInTypesAsArgumentCompletion();
     registerInstanceofCompletion();
     registerThrowsCompletion();
     registerBranchCompletion();
@@ -131,8 +134,24 @@ public class GroovyCompletionData extends CompletionData {
   }
 
   private void registerBuiltInTypeCompletion() {
-    String[] builtInTypes = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"};
-    registerStandardCompletion(new AndFilter(new BuiltInTypeFilter(), new NotFilter(new ThrowsFilter())), builtInTypes);
+    registerStandardCompletion(new AndFilter(new BuiltInTypeFilter(), new NotFilter(new ThrowsFilter())), BUILT_IN_TYPES);
+  }
+
+  private void registrBuiltInTypesAsArgumentCompletion(){
+    AndFilter filter = new AndFilter(new BuiltInTypeAsArgumentFilter(), new NotFilter(new ThrowsFilter()));
+    CompletionVariant variant = setUpFilter(filter);
+    for (String completion : BUILT_IN_TYPES) {
+      variant.addCompletion(completion, TailType.NONE);
+    }
+    registerVariant(variant);
+  }
+
+  private CompletionVariant setUpFilter(ElementFilter filter) {
+    LeftNeighbour afterDotFilter = new LeftNeighbour(new TextFilter("."));
+    CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), filter));
+    variant.includeScopeClass(LeafPsiElement.class);
+    variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
+    return variant;
   }
 
   private void registerSimpleExprsCompletion() {
