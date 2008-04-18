@@ -22,8 +22,8 @@ public class PauseActionHandler extends DebuggerActionHandler {
            );
   }
 
-  private boolean isSingleThreadSuspended(final DebuggerSession debuggerSession) {
+  private static boolean isSingleThreadSuspended(final DebuggerSession debuggerSession) {
     final SuspendContextImpl suspendContext = debuggerSession.getContextManager().getContext().getSuspendContext();
-    return suspendContext != null && suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD;
+    return suspendContext != null && !suspendContext.isResumed() && suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD;
   }
 }
