@@ -42,8 +42,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcess
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
@@ -262,5 +261,55 @@ public class ResolveUtil {
     }
 
     return elements;
+  }
+
+  public static GroovyResolveResult[] filterSameSignatureCandidates(Collection<GroovyResolveResult> candidates) {
+    GroovyResolveResult[] array = candidates.toArray(new GroovyResolveResult[candidates.size()]);
+    if (array.length == 1) return array;
+
+    List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
+    result.add(array[0]);
+
+    Outer:
+    for (int i = 1; i < array.length; i++) {
+      PsiElement currentElement = array[i].getElement();
+      if (currentElement instanceof PsiMethod) {
+        PsiMethod currentMethod = (PsiMethod) currentElement;
+        for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
+          final GroovyResolveResult otherResolveResult = iterator.next();
+          PsiElement element = otherResolveResult.getElement();
+          if (element instanceof PsiMethod) {
+            PsiMethod method = (PsiMethod) element;
+            if (dominated(currentMethod, array[i].getSubstitutor(), method, otherResolveResult.getSubstitutor())) {
+              continue Outer;
+            } else
+            if (dominated(method, otherResolveResult.getSubstitutor(), currentMethod, array[i].getSubstitutor())) {
+              iterator.remove();
+            }
+          }
+        }
+      }
+
+      result.add(array[i]);
+    }
+
+    return result.toArray(new GroovyResolveResult[result.size()]);
+  }
+
+  public static boolean dominated(PsiMethod method1, PsiSubstitutor substitutor1, PsiMethod method2, PsiSubstitutor substitutor2) {  //method1 has more general parameter types thn method2
+    if (!method1.getName().equals(method2.getName())) return false;
+
+    PsiParameter[] params1 = method1.getParameterList().getParameters();
+    PsiParameter[] params2 = method2.getParameterList().getParameters();
+
+    if (params1.length != params2.length) return false;
+
+    for (int i = 0; i < params2.length; i++) {
+      PsiType type1 = substitutor1.substitute(params1[i].getType());
+      PsiType type2 = substitutor2.substitute(params2[i].getType());
+      if (!type1.equals(type2)) return false;
+    }
+
+    return true;
   }
 }

@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
 
@@ -195,7 +196,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
     if (myCandidates.size() > 0) {
       return filterCandidates();
     }
-    return myInapplicableCandidates.toArray(new GroovyResolveResult[myInapplicableCandidates.size()]);
+    if (myInapplicableCandidates.size() > 0) {
+      return ResolveUtil.filterSameSignatureCandidates(myInapplicableCandidates);
+    }
+    return GroovyResolveResult.EMPTY_ARRAY;
   }
 
   private GroovyResolveResult[] filterCandidates() {
