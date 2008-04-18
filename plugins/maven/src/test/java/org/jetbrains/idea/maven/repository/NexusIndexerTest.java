@@ -56,12 +56,12 @@ public class NexusIndexerTest extends MavenTestCase {
   }
 
   public void testSeraching() throws Exception {
-    addContext(new File(createDataPath("index")), null, null);
+    addContext(new File(createDataPath("local1_index")), null, null);
     assertSearchWorks();
   }
 
   public void testCreating() throws Exception {
-    IndexingContext c = addContext(indexDir, new File(createDataPath("local")), null);
+    IndexingContext c = addContext(indexDir, new File(createDataPath("local1")), null);
     indexer.scan(c, new NullScanningListener());
 
     assertSearchWorks();

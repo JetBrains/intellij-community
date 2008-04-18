@@ -1,0 +1,31 @@
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>jmock</groupId>
+    <artifactId>jmock</artifactId>
+    <version>1.1.0</version>
+    <packaging>jar</packaging>
+    <name>jMock</name>
+    <url>http://www.jmock.org/</url>
+    <description>jMock is a library for testing Java code using mock objects</description>
+    <licenses>
+        <license>
+            <name>BSD</name>
+            <url>http://www.jmock.org/license.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <scm>
+        <url>http://cvs.jmock.codehaus.org/browse/jmock/jmock</url>
+    </scm>
+    <organization>
+        <name>jMock.org</name>
+        <url>http://www.jmock.org/</url>
+    </organization>
+    <dependencies>
+	    <dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.1</version>
+		</dependency>
+	</dependencies>
+</project>
