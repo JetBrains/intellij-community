@@ -25,12 +25,11 @@ public abstract class LexerBase implements Lexer{
   public LexerPosition getCurrentPosition() {
     final int offset = getTokenStart();
     final int intState = getState();
-    final LexerState state = new SimpleLexerState(intState);
-    return new LexerPositionImpl(offset, state);
+    return new LexerPositionImpl(offset, intState);
   }
 
   public void restore(LexerPosition position) {
-    start(getBufferSequence(), position.getOffset(), getBufferEnd(), ((SimpleLexerState)position.getState()).getState());
+    start(getBufferSequence(), position.getOffset(), getBufferEnd(), position.getState());
   }
 
   public CharSequence getBufferSequence() {

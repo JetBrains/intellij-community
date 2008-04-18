@@ -127,14 +127,11 @@ public class LayeredLexer extends LexerBase {
   }
 
   public LexerPosition getCurrentPosition() {
-    final int offset = getTokenStart();
-    final int intState = getState();
-    final LexerState state = new SimpleLexerState(intState);
-    return new LexerPositionImpl(offset, state);
+    return new LexerPositionImpl(getTokenStart(), getState());
   }
 
   public void restore(LexerPosition position) {
-    start(getBufferSequence(), position.getOffset(), getBufferEnd(), ((SimpleLexerState)position.getState()).getState());
+    start(getBufferSequence(), position.getOffset(), getBufferEnd(), position.getState());
   }
 
   private boolean isStopToken(Lexer lexer, IElementType tokenType) {

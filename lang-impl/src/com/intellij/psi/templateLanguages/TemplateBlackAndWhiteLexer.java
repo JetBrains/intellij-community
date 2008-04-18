@@ -5,7 +5,6 @@ package com.intellij.psi.templateLanguages;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
-import com.intellij.lexer.LexerState;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,8 +122,8 @@ public class TemplateBlackAndWhiteLexer implements Lexer{
       return myBasePosition;
     }
 
-    public LexerState getState() {
-      return null;
+    public int getState() {
+      throw new UnsupportedOperationException("Method getState is not yet implemented in " + getClass().getName());
     }
   }
 

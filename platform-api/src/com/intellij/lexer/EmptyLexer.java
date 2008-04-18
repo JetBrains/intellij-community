@@ -62,7 +62,7 @@ public class EmptyLexer extends LexerBase {
   }
 
   public LexerPosition getCurrentPosition() {
-    return new LexerPositionImpl(0, new SimpleLexerState(getState()));
+    return new LexerPositionImpl(0, getState());
   }
 
   public void restore(LexerPosition position) {}

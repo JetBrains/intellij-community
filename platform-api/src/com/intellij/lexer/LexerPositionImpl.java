@@ -17,9 +17,9 @@ package com.intellij.lexer;
 
 class LexerPositionImpl implements LexerPosition {
   private final int myOffset;
-  private final LexerState myState;
+  private final int myState;
 
-  public LexerPositionImpl(final int offset, final LexerState state) {
+  public LexerPositionImpl(final int offset, final int state) {
     myOffset = offset;
     myState = state;
   }
@@ -28,7 +28,7 @@ class LexerPositionImpl implements LexerPosition {
     return myOffset;
   }
 
-  public LexerState getState() {
+  public int getState() {
     return myState;
   }
 }

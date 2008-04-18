@@ -25,5 +25,5 @@ public interface LexerPosition {
    * @return the lexer offset
    */
   int getOffset();
-  LexerState getState();
+  int getState();
 }

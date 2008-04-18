@@ -127,7 +127,7 @@ public class MergingLexerAdapter extends LexerBase {
       return myOffset;
     }
 
-    public LexerState getState() {
+    public int getState() {
       return myOriginalPosition.getState();
     }
 
