@@ -29,6 +29,7 @@
     <orderEntry type="module" module-name="UsageView" />
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="codeInsight-impl" />
+    <orderEntry type="module" module-name="xslt-rt" />
     <orderEntryProperties />
   </component>
 </module>
