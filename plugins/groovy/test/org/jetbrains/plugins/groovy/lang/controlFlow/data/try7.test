@@ -1,0 +1,15 @@
+try {
+  return foo()
+} finally {
+  bar()
+}
+-----
+0(1) element: null
+1(2) element: Open block
+2(4) READ foo
+3(6) element: Finally clause
+4(3,5)  CALL 3
+5(8) AFTER CALL 4
+6(7) READ bar
+7(5)  RETURN
+8() element: null

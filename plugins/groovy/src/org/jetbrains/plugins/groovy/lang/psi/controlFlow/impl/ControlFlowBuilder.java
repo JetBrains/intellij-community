@@ -466,16 +466,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     if (finallyClause != null) {
       flowAbrupted();
-      final InstructionImpl finallyInstruction = startNode(finallyClause);
+      final InstructionImpl finallyInstruction = startNode(finallyClause, false);
       Set<PostCallInstructionImpl> postCalls = new LinkedHashSet<PostCallInstructionImpl>();
       addFinallyEdges(finallyInstruction, postCalls);
 
-      if (tryEnd == null) {
-        tryEnd = startNode(null);
-        finishNode(tryEnd);
+      if (tryEnd != null) {
+        postCalls.add(addCallNode(finallyInstruction, tryCatchStatement, tryEnd));
       }
-
-      postCalls.add(addCallNode(finallyInstruction, tryCatchStatement, tryEnd));
 
       for (InstructionImpl catchEnd : catches) {
         if (catchEnd != null) {
@@ -524,9 +521,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   private InstructionImpl startNode(GroovyPsiElement element) {
+    return startNode(element, true);
+  }
+
+  private InstructionImpl startNode(GroovyPsiElement element, boolean checkPending) {
     final InstructionImpl instruction = new InstructionImpl(element, myInstructionNumber++);
     addNode(instruction);
-    checkPending(instruction);
+    if (checkPending) checkPending(instruction);
     return myProcessingStack.push(instruction);
   }
 
