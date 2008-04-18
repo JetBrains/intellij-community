@@ -15,7 +15,8 @@ public class ThreeStateCheckBox extends JCheckBox {
   private ThreeStateModelDecorator myModel;
 
   public static enum State {
-    SELECTED, NOT_SELECTED, DONT_CARE }
+    SELECTED, NOT_SELECTED, DONT_CARE
+  }
 
   public ThreeStateCheckBox() {
     this(null, null, State.DONT_CARE);
@@ -88,10 +89,24 @@ public class ThreeStateCheckBox extends JCheckBox {
         final Rectangle r = getBounds();
         final Insets i = getInsets();
 
-        final int yoffset = (r.height - i.top - i.bottom)/ 2 - 1;
-        final int xoffset = (r.width - i.left - i.right) / 2 - (r.width - i.left - i.right) / 5;
+        Icon icon = getIcon();
+        if (icon == null) {
+          icon = UIManager.getIcon("CheckBox.icon");
+        }
 
-        g.fillRect(xoffset + i.left, yoffset + i.top, r.width / 3, 2);
+        if (icon != null) {
+          final Color selected = UIManager.getColor("CheckBox.focus");
+          if (selected != null) {
+            g.setColor(selected);
+          }
+
+          final int width1 = icon.getIconWidth();
+          final int height1 = icon.getIconHeight();
+          final int yoffset = height1 / 2 - 1;
+          final int xoffset = width1 / 2 - width1 / 5;
+
+          g.fillRect(xoffset + i.left, yoffset + i.top, width1 / 3, 2);
+        }
         break;
       default:
         break;
@@ -129,9 +144,11 @@ public class ThreeStateCheckBox extends JCheckBox {
     private State getState() {
       if (isSelected() && !isArmed()) {
         return State.SELECTED;
-      } else if (isArmed()) {
+      }
+      else if (isArmed()) {
         return State.DONT_CARE;
-      } else {
+      }
+      else {
         return State.NOT_SELECTED;
       }
     }
