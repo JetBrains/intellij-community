@@ -6,8 +6,8 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.refactoring.InlineHandlers;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiClass;
@@ -15,7 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.inline.InlineHandler;
+import com.intellij.refactoring.inline.JavaInlineHandler;
 
 public class InlineAction extends BaseRefactoringAction {
 
@@ -31,13 +31,13 @@ public class InlineAction extends BaseRefactoringAction {
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {
-    return new InlineHandler();
+    return new JavaInlineHandler();
   }
 
   protected boolean isAvailableForLanguage(Language language) {
     return language instanceof JavaLanguage ||
            language.equals(StdFileTypes.JSPX.getLanguage()) ||
            language.equals(StdFileTypes.JSP.getLanguage()) ||
-           LanguageRefactoringSupport.INSTANCE.forLanguage(language).getInlineHandler() != null;
+           InlineHandlers.getInlineHandlers(language).size() > 0;
   }
 }

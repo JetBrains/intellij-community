@@ -1,7 +1,6 @@
 package com.intellij.lang.java;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
-import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
@@ -25,10 +24,5 @@ public class JavaRefactoringSupportProvier implements RefactoringSupportProvider
   @Nullable
   public RefactoringActionHandler getExtractMethodHandler() {
     return new ExtractMethodHandler();
-  }
-
-  @Nullable
-  public InlineHandler getInlineHandler() {
-    return null;
   }
 }

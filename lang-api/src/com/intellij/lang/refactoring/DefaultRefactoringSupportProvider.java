@@ -37,9 +37,4 @@ public class DefaultRefactoringSupportProvider implements RefactoringSupportProv
   public RefactoringActionHandler getExtractMethodHandler() {
     return null;
   }
-
-  @Nullable
-  public InlineHandler getInlineHandler() {
-    return null;
-  }
 }

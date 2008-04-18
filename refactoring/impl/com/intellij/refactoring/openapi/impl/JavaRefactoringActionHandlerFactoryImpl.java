@@ -8,7 +8,7 @@ import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.extractInterface.ExtractInterfaceHandler;
 import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
-import com.intellij.refactoring.inline.InlineHandler;
+import com.intellij.refactoring.inline.JavaInlineHandler;
 import com.intellij.refactoring.typeCook.TypeCookHandler;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
@@ -82,7 +82,7 @@ public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActi
   }
 
   public RefactoringActionHandler createInlineHandler() {
-    return new InlineHandler();
+    return new JavaInlineHandler();
   }
 
   public RefactoringActionHandler createExtractMethodHandler() {

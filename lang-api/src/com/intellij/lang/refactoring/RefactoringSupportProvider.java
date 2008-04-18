@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
  * files in the language.
  *
  * @author ven
- * @see com.intellij.lang.Language#getRefactoringSupportProvider()
  */
 
 public interface RefactoringSupportProvider {
@@ -50,9 +49,4 @@ public interface RefactoringSupportProvider {
    */
   @Nullable RefactoringActionHandler getExtractMethodHandler();
 
-  /**
-   * @return language specific part for performing inline
-   * @see com.intellij.lang.refactoring.InlineHandler
-   */
-  @Nullable InlineHandler getInlineHandler();
 }

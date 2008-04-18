@@ -6,7 +6,9 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.ide.DataManager;
-import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.refactoring.InlineHandler;
+import com.intellij.lang.refactoring.InlineHandlers;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -23,7 +25,9 @@ import com.intellij.refactoring.lang.jsp.inlineInclude.InlineIncludeFileHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class InlineHandler implements RefactoringActionHandler {
+import java.util.List;
+
+public class JavaInlineHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineHandler");
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.title");
 
@@ -52,11 +56,11 @@ public class InlineHandler implements RefactoringActionHandler {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element != null) {
-      final com.intellij.lang.refactoring.InlineHandler languageSpecific =
-        LanguageRefactoringSupport.INSTANCE.forLanguage(element.getLanguage()).getInlineHandler();
-      if (languageSpecific != null) {
-        GenericInlineHandler.invoke(element, editor, languageSpecific);
-        return;
+      final List<InlineHandler> handlers = InlineHandlers.getInlineHandlers(element.getLanguage());
+      for (InlineHandler handler : handlers) {
+        if (GenericInlineHandler.invoke(element, editor, handler)) {
+          return;
+        }
       }
     }
 
@@ -86,10 +90,11 @@ public class InlineHandler implements RefactoringActionHandler {
     else if (PsiUtil.isInJspFile(file) && (jspFile = PsiUtil.getJspFile(file)) != null) {
       InlineIncludeFileHandler.invoke(project, editor, jspFile);
     }
-    else {
+    else if (element != null && element.getLanguage() instanceof JavaLanguage){
       String message =
         RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.local.name"));
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
     }
   }
+
 }

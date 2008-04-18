@@ -17,6 +17,7 @@
 package com.intellij.lang.refactoring;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.Nullable;
@@ -27,8 +28,12 @@ import java.util.Collection;
  * Interface that should be implemented by the language in order to provide inline functionality and possibly
  * participate in inline of elements in other languages this language may reference.
  * @author ven
+ * @see InlineHandlers#getInlineHandlers(com.intellij.lang.Language)
  */
 public interface InlineHandler {
+
+  ExtensionPointName<InlineHandler> EP_NAME = new ExtensionPointName<InlineHandler>("com.intellij.refactoring.inlineHandler");
+
   interface Settings {
     /**
      * @return true if as a result of refactoring setup only the reference where refactoring
@@ -41,7 +46,7 @@ public interface InlineHandler {
    * @param element element to be inlined
    * @param invokedOnReference true if the user invoked the refactoring on an element reference
    * @param editor in case refactoring has been called in the editor
-   * @return <code>Settings</code> object in case refactoring shoold be performed or null otherwise
+   * @return <code>Settings</code> object in case refactoring should be performed or null otherwise
 
    */
   @Nullable Settings prepareInlineElement(PsiElement element, Editor editor, boolean invokedOnReference);

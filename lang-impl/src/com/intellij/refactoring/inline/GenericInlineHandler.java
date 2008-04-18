@@ -2,8 +2,8 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.InlineHandler;
+import com.intellij.lang.refactoring.InlineHandlers;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -17,40 +17,38 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
  */
 public class GenericInlineHandler {
-  public static void invoke(final PsiElement element, final Editor editor, final InlineHandler languageSpecific) {
+
+  public static boolean invoke(final PsiElement element, final Editor editor, final InlineHandler languageSpecific) {
     final PsiReference invocationReference = TargetElementUtilBase.findReference(editor);
     final InlineHandler.Settings settings = languageSpecific.prepareInlineElement(element, editor, invocationReference != null);
-    if (settings == null) return;
+    if (settings == null) return false;
 
     final Collection<PsiReference> allReferences =
       settings.isOnlyOneReferenceToInline() ? Collections.singleton(invocationReference) : ReferencesSearch.search(element).findAll();
     final Map<Language, InlineHandler.Inliner> inliners = new HashMap<Language, InlineHandler.Inliner>();
+
     final Set<String> conflicts = new HashSet<String>();
     for (PsiReference ref : allReferences) {
       final Language language = ref.getElement().getLanguage();
       if (inliners.containsKey(language)) continue;
 
-      final InlineHandler inlineHandler = LanguageRefactoringSupport.INSTANCE.forLanguage(language).getInlineHandler();
-      if (inlineHandler == null) {
-        conflicts.add("Cannot inline reference from " + language.getID());
-      }
-      else {
-        final InlineHandler.Inliner inliner = inlineHandler.createInliner(element);
-        if (inliner == null) {
-          conflicts.add("Cannot inline reference from " + language.getID());
-        }
-        else {
+      InlineHandler.Inliner inliner = null;
+      final List<InlineHandler> handlers = InlineHandlers.getInlineHandlers(language);
+      for (InlineHandler handler : handlers) {
+        inliner = handler.createInliner(element);
+        if (inliner != null) {
           inliners.put(language, inliner);
+          break;
         }
+      }
+      if (inliner == null) {
+        conflicts.add("Cannot inline reference from " + language.getID());
       }
     }
 
@@ -62,7 +60,7 @@ public class GenericInlineHandler {
     if (!conflicts.isEmpty()) {
       final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
       conflictsDialog.show();
-      if (!conflictsDialog.isOK()) return;
+      if (!conflictsDialog.isOK()) return true;
     }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -82,6 +80,7 @@ public class GenericInlineHandler {
         }, RefactoringBundle.message("inline.command", subj), null);
       }
     });
+    return true;
   }
 
   private static void collectConflicts(final PsiReference reference,
@@ -107,5 +106,4 @@ public class GenericInlineHandler {
       inliner.inlineReference(reference, element);
     }
   }
-
 }
