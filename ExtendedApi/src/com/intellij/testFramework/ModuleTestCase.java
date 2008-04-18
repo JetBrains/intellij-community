@@ -125,14 +125,21 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     project.setOptimiseTestLoadSpeed(true);
   }
 
-  protected Module createModuleFromTestData(final String dirInTestData, final String newModuleFileName, final ModuleType moduleType)
+  protected Module createModuleFromTestData(final String dirInTestData, final String newModuleFileName, final ModuleType moduleType,
+                                            final boolean addSourceRoot)
     throws IOException {
     final File dirInTestDataFile = new File(dirInTestData);
     assertTrue(dirInTestDataFile.isDirectory());
     final File moduleDir = createTempDirectory();
     FileUtil.copyDir(dirInTestDataFile, moduleDir);
     final Module module = createModule(moduleDir + "/" + newModuleFileName, moduleType);
-    PsiTestUtil.addContentRoot(module, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir));
+    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir);
+    if (addSourceRoot) {
+      PsiTestUtil.addSourceContentToRoots(module, root);
+    }
+    else {
+      PsiTestUtil.addContentRoot(module, root);
+    }
     return module;
   }
 }
