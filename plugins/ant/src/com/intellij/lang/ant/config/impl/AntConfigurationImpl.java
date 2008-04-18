@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.config.impl;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.DataAccessors;
@@ -93,7 +94,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private final StartupManager myStartupManager;
   private volatile long myModificationCount = 0;
 
-  public AntConfigurationImpl(final Project project, final AntWorkspaceConfiguration antWorkspaceConfiguration) {
+  public AntConfigurationImpl(final Project project, final AntWorkspaceConfiguration antWorkspaceConfiguration, final DaemonCodeAnalyzer daemon) {
     super(project);
     getProperties().registerProperty(DEFAULT_ANT, AntReference.EXTERNALIZER);
     getProperties().rememberKey(INSTANCE);
@@ -102,6 +103,20 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     myAntWorkspaceConfiguration = antWorkspaceConfiguration;
     myPsiManager = PsiManager.getInstance(project);
     myStartupManager = StartupManager.getInstance(project);
+    addAntConfigurationListener(new AntConfigurationListener() {
+      public void configurationLoaded() {
+        daemon.restart();
+      }
+      public void buildFileChanged(final AntBuildFile buildFile) {
+        daemon.restart();
+      }
+      public void buildFileAdded(final AntBuildFile buildFile) {
+        daemon.restart();
+      }
+      public void buildFileRemoved(final AntBuildFile buildFile) {
+        daemon.restart();
+      }
+    });
   }
 
   public Element getState() {

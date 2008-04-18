@@ -51,10 +51,6 @@
       <implementation-class>com.intellij.lang.ant.config.impl.AntProjectComponent</implementation-class>
       <skipForDummyProject/>
     </component>
-    <component>
-      <implementation-class>com.intellij.lang.ant.AntDaemonRestarter</implementation-class>
-      <skipForDummyProject/>
-    </component>
   </project-components>
 
   <actions>
