@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.intellij.lang.xpath.xslt.associations.impl.AssociationsEditor">
+  <grid id="80ff4" binding="myComponent" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="0">
+    <margin top="5" left="5" bottom="5" right="5"/>
+    <constraints>
+      <xy x="89" y="38" width="560" height="414"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <splitpane id="4c386" binding="mySplitPane">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="200"/>
+          </grid>
+        </constraints>
+        <properties>
+          <continuousLayout value="false"/>
+          <dividerLocation value="200"/>
+          <oneTouchExpandable value="false"/>
+          <resizeWeight value="1.0"/>
+        </properties>
+        <border type="none"/>
+        <children>
+          <grid id="ee4f4" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="0">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <splitpane position="right"/>
+            </constraints>
+            <properties/>
+            <border type="none" title="Associated Files"/>
+            <children>
+              <grid id="82810" binding="myToolbar" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </grid>
+              <scrollpane id="cc69">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                    <preferred-size width="200" height="300"/>
+                  </grid>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="755cb" class="javax.swing.JList" binding="myList">
+                    <constraints/>
+                    <properties/>
+                  </component>
+                </children>
+              </scrollpane>
+            </children>
+          </grid>
+          <grid id="2ea54" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="0">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <splitpane position="left"/>
+            </constraints>
+            <properties/>
+            <border type="none" title="Project XSLT Files"/>
+            <children>
+              <scrollpane id="39878">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="b890d" class="com.intellij.util.ui.Tree" binding="myTree">
+                    <constraints/>
+                    <properties>
+                      <rootVisible value="false"/>
+                      <showsRootHandles value="false"/>
+                    </properties>
+                  </component>
+                </children>
+              </scrollpane>
+            </children>
+          </grid>
+        </children>
+      </splitpane>
+    </children>
+  </grid>
+  <inspectionSuppressions>
+    <suppress inspection="NoLabelFor" id="cc69"/>
+    <suppress inspection="NoLabelFor" id="39878"/>
+  </inspectionSuppressions>
+</form>

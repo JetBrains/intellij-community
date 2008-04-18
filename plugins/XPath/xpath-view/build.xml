@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="xpath-view" default="build">
+
+  <property file="${basedir}/build.properties"/>
+  <property name="idea.plugins.path" value="${idea.home}/config/plugins"/>
+
+  <property name="build.dir" value="${basedir}/build"/>
+  <property name="build.help.dir" value="${basedir}/build/help"/>
+  <property name="build.classes.dir" value="${build.dir}/classes"/>
+  <property name="build.xpath-lang.dir" value="${build.dir}/xpath-lang"/>
+
+  <property name="path.source1" value="./src"/>
+
+  <path id="path.source">
+    <pathelement location="${path.source1}"/>
+  </path>
+  <path id="idea.classpath">
+    <fileset dir="${idea.home}">
+      <include name="lib/*.jar"/>
+      <include name="redist/*.jar"/>
+    </fileset>
+  </path>
+  <path id="path.xpath-lang.class">
+    <pathelement location="${build.dir}/xpath-lang/classes" />
+  </path>
+
+  <path id="classpath.uidesigner">
+    <fileset dir="${idea.home}">
+      <include name="lib/*.jar"/>
+      <include name="redist/*.jar"/>
+    </fileset>
+  </path>
+
+  <taskdef name="javac2" classname="com.intellij.ant.Javac2">
+    <classpath refid="classpath.uidesigner" />
+  </taskdef>
+
+  <target name="init">
+    <tstamp/>
+  </target>
+
+  <target name="xpath-lang">
+    <ant antfile="../xpath-lang/build.xml" target="jar" inheritall="false">
+      <property name="build.dir" value="${build.xpath-lang.dir}" />
+      <property name="xpath-lang.embedded" value="true" />
+    </ant>
+  </target>
+
+  <target name="compile" depends="init, xpath-lang" description="Compiles sources">
+    <mkdir dir="${build.classes.dir}"/>
+    <javac2 sourcepathref="path.source" destdir="${build.classes.dir}" debug="on" deprecation="on" target="1.5">
+      <src refid="path.source"/>
+      <classpath refid="idea.classpath" />
+      <classpath refid="path.xpath-lang.class" />
+      <exclude name="com/**/*" />
+    </javac2>
+  </target>
+
+  <target name="build" depends="compile" description="Rebuilds project"/>
+
+  <target name="clean" depends="init" description="Removes classses and javadoc">
+    <delete dir="${build.dir}"/>
+  </target>
+
+  <target name="jar" depends="init, compile">
+    <jar file="${build.dir}/xpath-view.jar" compress="false">
+      <fileset dir="${build.classes.dir}">
+        <include name="org/**/*.class"/>
+        <exclude name="org/**/support/**/*.class"/>
+      </fileset>
+      <fileset dir="src">
+        <include name="icons/**/*.*"/>
+      </fileset>
+      <zipfileset dir=".">
+        <include name="LICENSE"/>
+        <include name="META-INF/**/*.*"/>
+      </zipfileset>
+    </jar>
+    <jar file="${build.dir}/xpath-support.jar" compress="false">
+      <fileset dir="${build.classes.dir}">
+        <include name="org/**/support/**/*.class"/>
+      </fileset>
+    </jar>
+  </target>
+
+  <target name="help" depends="init">
+    <mkdir dir="${build.help.dir}" />
+
+    <xslt style="help/html2jh.xsl" in="help/src/root.xhtml" out="${build.help.dir}/root.html">
+      <param name="output" expression="${build.help.dir}/" />
+    </xslt>
+
+    <copy todir="${build.help.dir}">
+      <fileset dir="help/src">
+        <exclude name="**/*.xhtml" />
+      </fileset>
+    </copy>
+
+    <jar file="${build.dir}/help.jar" compress="false">
+      <fileset dir="${build.help.dir}" />
+    </jar>
+  </target>
+
+  <target name="javadoc">
+    <javadoc sourcepath="src" source="1.5" destdir="doc" packagenames="org.*" author="true" windowtitle="XPathView plugin" classpathref="idea.classpath"/>
+  </target>
+
+  <target name="deploy" depends="jar" description="Copy built JARs to IDEA plugin dir">
+    <mkdir dir="${idea.plugins.path}/xpath-view/lib" />
+    <copy todir="${idea.plugins.path}/xpath-view/lib">
+      <fileset dir="${build.dir}">
+        <include name="xpath-support.jar"/>
+        <include name="xpath-view.jar"/>
+      </fileset>
+      <fileset dir="${build.xpath-lang.dir}">
+        <include name="xpath-lang.jar"/>
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="dist" depends="jar, help">
+    <zip file="${build.dir}/src_xpath-view.zip">
+      <zipfileset dir=".">
+        <include name="META-INF/**/*.*"/>
+      </zipfileset>
+      <zipfileset dir="src">
+        <include name="**/*"/>
+        <exclude name="com/**/*" />
+      </zipfileset>
+      <zipfileset dir=".">
+        <include name="build.xml"/>
+      </zipfileset>
+    </zip>
+    <zip file="${build.dir}/src_xpath-lang.zip">
+      <zipfileset dir="../xpath-lang/src">
+        <include name="**/*"/>
+        <exclude name="com/**/*" />
+      </zipfileset>
+      <zipfileset dir="../xpath-lang">
+        <include name="build.xml"/>
+      </zipfileset>
+    </zip>
+
+    <mkdir dir="dist"/>
+
+    <zip file="dist/xpath-view.zip">
+      <zipfileset dir="${build.dir}" prefix="xpath-view/lib">
+        <include name="xpath-support.jar"/>
+        <include name="xpath-view.jar"/>
+      </zipfileset>
+      <zipfileset dir="${build.dir}" prefix="xpath-view/help">
+        <include name="help.jar"/>
+      </zipfileset>
+      <zipfileset dir="${build.xpath-lang.dir}" prefix="xpath-view/lib">
+        <include name="xpath-lang.jar"/>
+      </zipfileset>
+      <zipfileset dir="${build.xpath-lang.dir}/xslt-rt" prefix="xpath-view/lib/rt">
+        <include name="xslt-rt.jar"/>
+      </zipfileset>
+      <zipfileset dir="." prefix="xpath-view">
+        <include name="README.txt"/>
+        <include name="LICENSE"/>
+      </zipfileset>
+      <zipfileset dir="../xpath-lang" prefix="xpath-view">
+        <include name="W3C Document License.htm"/>
+      </zipfileset>
+    </zip>
+
+    <zip file="dist/src.zip">
+      <zipfileset dir="${build.dir}" prefix="xpath-view/src">
+        <include name="src_xpath-view.zip"/>
+        <include name="src_xpath-lang.zip"/>
+      </zipfileset>
+    </zip>
+  </target>
+</project>
+

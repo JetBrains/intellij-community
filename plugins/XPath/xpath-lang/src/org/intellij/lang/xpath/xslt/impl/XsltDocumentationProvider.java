@@ -1,0 +1,291 @@
+/*
+ * Copyright 2005 Sascha Weinreuter
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.intellij.lang.xpath.xslt.impl;
+
+import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import org.intellij.lang.xpath.completion.ElementProvider;
+import org.intellij.lang.xpath.completion.FunctionLookup;
+import org.intellij.lang.xpath.psi.XPathFunction;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.psi.XsltElement;
+import org.intellij.lang.xpath.xslt.psi.impl.XsltLanguage;
+import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.input.SAXBuilder;
+import org.jdom.transform.JDOMSource;
+import org.jdom.xpath.XPath;
+
+import javax.xml.transform.Templates;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.lang.ref.SoftReference;
+import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+class XsltDocumentationProvider implements DocumentationProvider {
+    private SoftReference<Templates> myTemplates;
+    private SoftReference<Document> myDocument;
+
+    @Nullable
+    public String getUrlFor(PsiElement psiElement, PsiElement psiElement1) {
+        if (psiElement instanceof XsltElement) return null;
+
+        final String category;
+        final String name;
+        final XmlTag tag = getTag(psiElement1);
+        if (tag != null) {
+            name = tag.getLocalName();
+            category = "element";
+        } else if (psiElement instanceof XPathFunction) {
+            name = ((XPathFunction)psiElement).getName();
+            category = "function";
+        } else if (psiElement instanceof DocElement) {
+            name = ((DocElement)psiElement).getName();
+            category = ((DocElement)psiElement).getCategory();
+        } else {
+            return null;
+        }
+
+        try {
+            final Document document = getDocumentationDocument();
+            final XPath xPath = XPath.newInstance("//x:" + category + "[@name = '" + name + "']");
+            xPath.addNamespace("x", document.getRootElement().getNamespaceURI());
+            final Element e = (Element)xPath.selectSingleNode(document);
+            if (e != null) {
+                return e.getParentElement().getAttributeValue("base") + e.getAttributeValue("href");
+            }
+        } catch (Exception e) {
+            Logger.getInstance(getClass().getName()).error(e);
+        }
+        return null;
+    }
+
+    @Nullable
+    public String generateDoc(PsiElement psiElement, PsiElement psiElement1) {
+        if (psiElement instanceof DocElement) {
+            final DocElement element = (DocElement)psiElement;
+            return getDocumentation(element.getName(), element.getCategory());
+        }
+
+        if (psiElement instanceof XsltElement) {
+            final XmlTag t = ((XsltElement)psiElement).getTag();
+            PsiElement p = t.getPrevSibling();
+            while (p instanceof PsiWhiteSpace || p instanceof XmlText) {
+                p = p.getPrevSibling();
+            }
+            if (p instanceof XmlComment) {
+                final String commentText = XsltCodeInsightUtil.getCommentText((XmlComment)p);
+                return commentText != null ? commentText.replaceAll("&", "&amp;").replaceAll("<", "&lt;") : null;
+            } else {
+                return null;
+            }
+        }
+
+        final XmlTag tag = getTag(psiElement1);
+        if (tag != null) {
+            return getDocumentation(tag.getLocalName(), "element");
+        } else if (psiElement instanceof XPathFunction) {
+            return getDocumentation(((XPathFunction)psiElement).getName(), "function");
+        }
+
+        return null;
+    }
+
+    private static final Pattern check = Pattern.compile("x:found=\"(true|false)\"");
+
+    @Nullable
+    private String getDocumentation(String name, String type) {
+        try {
+            final Transformer transformer = getTemplate().newTransformer();
+            transformer.setParameter("element", name);
+            transformer.setParameter("type", type);
+            final StringWriter writer = new StringWriter();
+            transformer.transform(new JDOMSource(getDocumentationDocument()), new StreamResult(writer));
+
+            final String s = writer.toString();
+            final Matcher matcher = check.matcher(s);
+            if (matcher.find()) {
+                if (matcher.group(1).equals("true")) {
+                    return s.replaceFirst("<META.+?>", "");
+                }
+            }
+        } catch (Exception e) {
+            Logger.getInstance(getClass().getName()).error(e);
+        }
+        return null;
+    }
+
+    @Nullable
+    private static XmlTag getTag(PsiElement psiElement1) {
+        if (psiElement1 == null) return null;
+        final PsiElement element;
+        if (psiElement1.getParent() instanceof XmlAttribute) {
+            final XmlAttribute xmlAttribute = ((XmlAttribute)psiElement1.getParent());
+            element = xmlAttribute.getParent();
+        } else {
+            element = psiElement1.getParent();
+        }
+        if (element instanceof XmlTag) {
+            final XmlTag tag = (XmlTag)element;
+            if (XsltSupport.isXsltTag(tag)) {
+                return tag;
+            }
+        }
+        return null;
+    }
+
+    private Document getDocumentationDocument() throws IOException, JDOMException {
+        Document d;
+        if (myDocument == null || ((d = myDocument.get()) == null)) {
+            d = new SAXBuilder().build(XsltSupport.class.getResource("resources/documentation.xml"));
+            myDocument = new SoftReference<Document>(d);
+        }
+        return d;
+    }
+
+    private Templates getTemplate() throws TransformerConfigurationException, IOException {
+        Templates t;
+        if (myTemplates == null || (t = myTemplates.get()) == null) {
+            t = TransformerFactory.newInstance().newTemplates(makeSource("resources/documentation.xsl"));
+            myTemplates = new SoftReference<Templates>(t);
+        }
+        return t;
+    }
+
+    private StreamSource makeSource(String name) throws IOException {
+        final URL resource = XsltSupport.class.getResource(name);
+        return new StreamSource(resource.openStream(), resource.toExternalForm());
+    }
+
+    @Nullable
+    public PsiElement getDocumentationElementForLookupItem(PsiManager mgr, Object object, PsiElement psiElement) {
+        if (object instanceof String) {
+            if (psiElement instanceof XmlElement) {
+                final XmlTag tag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class);
+                if (tag != null && XsltSupport.XSLT_NS.equals(tag.getNamespace())) {
+                    final String prefix = tag.getNamespacePrefix();
+                    if (prefix.length() == 0) {
+                        return new DocElement(mgr, psiElement, "element", (String)object);
+                    } else if (((String)object).startsWith(prefix + ":")) {
+                        return new DocElement(mgr, psiElement, "element", ((String)object).substring(prefix.length() + 1));
+                    }
+                }
+            }
+        }
+        if (object instanceof FunctionLookup) {
+            final FunctionLookup lookup = ((FunctionLookup)object);
+            return new DocElement(mgr, psiElement, "function", lookup.getName());
+        } else if (object instanceof ElementProvider) {
+            return ((ElementProvider)object).getElement();
+        } if (object instanceof XsltElement) {
+            return (PsiElement)object;
+        }
+        return null;
+    }
+
+    @Nullable
+    public PsiElement getDocumentationElementForLink(PsiManager mgr, String string, PsiElement psiElement) {
+        final String[] strings = string.split("\\$");
+        if (strings.length == 2) {
+            return new DocElement(mgr, psiElement, strings[0], strings[1]);
+        }
+        return null;
+    }
+
+    @Nullable
+    public String getQuickNavigateInfo(PsiElement element) {
+        return null;
+    }
+
+    static class DocElement extends LightElement {
+        private final PsiElement myElement;
+        private final String myCategory;
+        private final String myName;
+
+        public DocElement(PsiManager mgr, PsiElement element, String category, String name) {
+            super(mgr, XsltLanguage.INSTANCE);
+            myElement = element;
+            myCategory = category;
+            myName = name;
+        }
+
+        public String getCategory() {
+            return myCategory;
+        }
+
+        public String getName() {
+            return myName;
+        }
+
+        public String toString() {
+            return "DocElement";
+        }
+
+        @SuppressWarnings({"ConstantConditions"})
+        public String getText() {
+            return null;
+        }
+
+        public void accept(@NotNull PsiElementVisitor visitor) {
+        }
+
+        public PsiElement copy() {
+            return this;
+        }
+
+        @Nullable
+        public PsiFile getContainingFile() {
+            if (myElement == null) {
+                return null;
+            }
+            PsiFile file = myElement.getContainingFile();
+            final PsiElement context = myElement.getContext();
+            if (file == null && context != null) {
+                file = context.getContainingFile();
+            }
+            PsiFile f;
+            if ((f = PsiTreeUtil.getContextOfType(file, PsiFile.class, true)) instanceof XmlFile) {
+                return f;
+            }
+            return file;
+        }
+    }
+}

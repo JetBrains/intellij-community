@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<idea-plugin url="http://www.intellij.org/twiki/bin/view/Main/XPathViewPlugin" version="2">
+
+  <!-- Plugin name -->
+  <id>XPathView</id>
+  <name>XPathView + XSLT-Support</name>
+
+  <!-- Description -->
+  <description><![CDATA[
+    The XPath part of the plugin provides a possibility to evaluate XPath expressions against any XML document
+    opened in IDEA. It can also generate and show an XPath expression that matches the current node.
+    <p>
+    The XSLT part adds syntax highlighting, analysis, completion, navigation and refactoring of XPath
+    expressions and named templates for XSLT documents.</p>
+  ]]>
+  </description>
+
+  <!-- Plugin version -->
+  <version>3.1-Diana</version>
+
+  <!-- Plugin's vendor -->
+  <vendor email="sascha.weinreuter@cit.de">Sascha Weinreuter</vendor>
+
+  <change-notes>
+    <![CDATA[
+      * Support for XSLT-Runner-Extensions (e.g. a debugger, coming soon)<br>
+      * "Extract XSLT Template" Refactoring (bound to "Extract Method")<br>
+      * Extract/Inline XSLT attribute intentions (literal attributes vs. <tt>xsl:attribute</tt>)<br>
+  ]]>
+  </change-notes>
+
+  <!-- Minimum and maximum IDEA version plugin is supposed to work with -->
+  <idea-version since-build="8113" until-build="8299" />
+
+  <!-- wasn't sure if the plugin manager correctly handles dependent plugins -->
+  <!--<depends>XPathLanguage</depends>-->
+
+  <extensionPoints>
+    <!-- XPathView -->
+    <extensionPoint name="configurationProvider" interface="com.intellij.openapi.options.Configurable"/>
+
+    <!-- XPath Language -->
+    <extensionPoint name="xpath.contextProviderExtension" interface="org.intellij.lang.xpath.context.ContextProviderExtension"/>
+    <extensionPoint name="xpath.functionProvider" interface="org.intellij.lang.xpath.context.functions.XPathFunctionProvider"/>
+
+    <!-- XSLT Support -->
+    <extensionPoint name="xsltRunnerExtension" interface="org.intellij.lang.xpath.xslt.run.XsltRunnerExtension"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="org.intellij.plugins.xpathView.SimpleErrorReportSubmitter" />
+
+    <colorSettingsPage implementation="org.intellij.lang.xpath.XPathColorSettingsPage" />
+
+    <configurationType implementation="org.intellij.lang.xpath.xslt.run.XsltRunConfigType" />
+
+    <applicationService
+        serviceInterface="org.intellij.plugins.xpathView.support.XPathSupport"
+        serviceImplementation="org.intellij.plugins.xpathView.support.jaxen.XPathSupportImpl" />
+
+    <applicationService
+        serviceInterface="org.intellij.lang.xpath.xslt.psi.XsltElementFactory"
+        serviceImplementation="org.intellij.lang.xpath.xslt.psi.impl.XsltElementFactoryImpl" />
+
+    <annotator language="XPath" implementationClass="org.intellij.lang.xpath.validation.XPathAnnotator" />
+    <lang.parserDefinition language="XPath" implementationClass="org.intellij.lang.xpath.XPathParserDefinition" />
+    <lang.braceMatcher language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathPairedBraceMatcher" />
+    <lang.findUsagesProvider language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathFindUsagesProvider" />
+    <lang.namesValidator language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathNamesValidator" />
+    <lang.refactoringSupport language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathRefactoringSupportProvider" />
+    <lang.syntaxHighlighterFactory language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathSyntaxHighlighterFactory" />
+
+    <codeInsight.parameterInfo language="XPath" implementationClass="org.intellij.lang.xpath.XPathParameterInfoHandler" />
+  </extensions>
+
+  <extensions defaultExtensionNs="XPathView">
+    <xpath.functionProvider implementation="org.intellij.plugins.xpathView.support.jaxen.extensions.XPathFunctionProviderImpl" />
+
+    <xpath.contextProviderExtension implementation="org.intellij.lang.xpath.xslt.context.XsltContextProviderExtension" />
+
+    <configurationProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltConfigImpl$UIImpl" />
+  </extensions>
+
+  <!-- Plugin's application components -->
+  <application-components>
+    <!-- XPathView components -->
+    <component>
+      <implementation-class>org.intellij.plugins.xpathView.XPathAppComponent</implementation-class>
+    </component>
+
+    <!-- XPathLang components -->
+    <component>
+      <implementation-class>org.intellij.lang.xpath.XPathSupportLoader</implementation-class>
+    </component>
+
+    <!-- XSLT-Support components -->
+    <component>
+      <interface-class>org.intellij.lang.xpath.xslt.XsltConfig</interface-class>
+      <implementation-class>org.intellij.lang.xpath.xslt.impl.XsltConfigImpl</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringSupport</implementation-class>
+    </component>
+<!--
+    <component>
+      <implementation-class>org.intellij.lang.xpath.xslt.run.XsltRunConfigType</implementation-class>
+    </component>
+-->
+    <component>
+      <implementation-class>org.intellij.lang.xpath.xslt.impl.XsltStuffProvider</implementation-class>
+    </component>
+  </application-components>
+
+  <!-- Plugin's project components -->
+  <project-components>
+    <component>
+      <implementation-class>org.intellij.plugins.xpathView.XPathProjectComponent</implementation-class>
+
+      <!-- save in workspace rather than project file -->
+      <option name="workspace" value="true" />
+    </component>
+
+    <!-- XSLT integration -->
+    <component>
+      <interface-class>org.intellij.lang.xpath.xslt.associations.FileAssociationsManager</interface-class>
+      <implementation-class>org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsManagerImpl</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable</implementation-class>
+      <option name="workspace" value="true" />
+    </component>
+    <component>
+      <interface-class>org.intellij.lang.xpath.xslt.XsltSupport</interface-class>
+      <implementation-class>org.intellij.lang.xpath.xslt.impl.XsltSupportImpl</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.intellij.lang.xpath.xslt.impl.XsltIndex</implementation-class>
+    </component>
+  </project-components>
+
+  <!-- Component's actions -->
+  <actions>
+    <action id="XPathView.Actions.Evaluate" class="org.intellij.plugins.xpathView.XPathEvalAction"
+            text="Evaluate XPath..."
+            description="Evaluate an XPath expression and highlight the result in the XML-Document">
+      <keyboard-shortcut first-keystroke="control alt X" second-keystroke="E" keymap="$default" />
+    </action>
+    <action id="XPathView.Actions.ShowPath" class="org.intellij.plugins.xpathView.ShowXPathAction"
+            text="Show unique XPath" description="Show XPath expression that matches the current node">
+      <keyboard-shortcut first-keystroke="control alt X" second-keystroke="P" keymap="$default" />
+    </action>
+
+    <action id="XPathView.Actions.FindByExpression" class="org.intellij.plugins.xpathView.search.FindByXPathAction"
+            text="Find by XPath..." description="Find Files by XPath Expression">
+      <keyboard-shortcut first-keystroke="control alt X" second-keystroke="F" keymap="$default" />
+    </action>
+
+    <!-- Toolbar -->
+    <group id="XPathView.Toolbar">
+      <reference id="XPathView.Actions.Evaluate" />
+
+      <add-to-group group-id="MainToolBar" anchor="before" relative-to-action="HelpTopics" />
+    </group>
+
+    <group id="XPathView.MainMenu.Search">
+      <separator />
+      <reference id="XPathView.Actions.Evaluate" />
+      <reference id="XPathView.Actions.FindByExpression" />
+
+      <add-to-group group-id="SearchMenu" anchor="after" relative-to-action="StructuralSearchActions" />
+    </group>
+
+    <group id="XPathView.MainMenu.View">
+      <reference id="XPathView.Actions.ShowPath" />
+
+      <add-to-group group-id="CodeEditorViewGroup" anchor="after" relative-to-action="ShowErrorDescription" />
+    </group>
+
+    <!-- Editor Popup -->
+    <group id="XPathView.EditorPopup">
+      <separator />
+      <reference id="XPathView.Actions.Evaluate" />
+      <reference id="XPathView.Actions.ShowPath" />
+
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="RefactoringMenu" />
+    </group>
+
+    <group id="XPathView.XSLT.Associations" popup="true"
+           class="org.intellij.lang.xpath.xslt.associations.impl.AssociationsGroup" text="File Associations" >
+      <add-to-group group-id="XPathView.EditorPopup" anchor="last"
+                    relative-to-action="XPathView.Actions.ShowPathDescription" />
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="AddAntBuildFile" />
+    </group>
+  </actions>
+
+  <helpset file="help.jar" path="/Help.hs" />
+</idea-plugin>

@@ -1,0 +1,38 @@
+<html>
+<head>
+  <style type="text/css">
+    body, table {
+      font-family: Verdana, sans-serif;
+      font-size: 100%;
+      padding-left: 2mm;
+    }
+
+    #footer {
+      font-size: 95%;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+<p>
+  This inspection checks whether any element/attribute names that are used in XPath-expressions are actually part of an
+  associated XML file or are defined in a referenced schema. This helps to avoid problems caused by typos in
+  XPath-expressions that would otherwise occur when running the script and may even then not be recognized immediately.
+</p>
+
+<p>Example:</p>
+
+<p>
+  <code>&lt;xsl:template match="<b>h:txtarea</b>" /></code>
+</p>
+
+<p>
+  If the prefix "h" is bound to the XHTML namespace, the inspection will flag this part of the match-expression as an
+  unknown element name because the correct name of the element is "textarea".
+</p>
+
+
+<p id="footer">Powered by XPathView + XSLT-Support</p>
+</body>
+</html>

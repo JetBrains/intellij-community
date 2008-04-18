@@ -1,0 +1,233 @@
+/*
+ * Copyright 2005 Sascha Weinreuter
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.intellij.lang.xpath.xslt.impl;
+
+import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.ide.IconProvider;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usages.rules.UsageGroupingRuleProvider;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import gnu.trove.TIntObjectHashMap;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.xslt.XsltConfig;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.psi.XsltParameter;
+import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
+import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.lang.xpath.xslt.validation.inspections.UnusedElementInspection;
+import org.intellij.lang.xpath.xslt.validation.inspections.TemplateInvocationInspection;
+import org.intellij.lang.xpath.xslt.validation.inspections.XsltDeclarationInspection;
+
+import javax.swing.*;
+import javax.xml.namespace.QName;
+
+class XsltStuffProvider implements UsageGroupingRuleProvider, IconProvider, InspectionToolProvider {
+    private static final Key<TIntObjectHashMap<Icon>> ICON_KEY = Key.create("MY_CUSTOM_ICON");
+
+    private final XsltConfig myConfig;
+    private final UsageGroupingRule[] myUsageGroupingRules;
+
+    private boolean active;
+
+    public XsltStuffProvider(XsltConfig config) {
+        myConfig = config;
+        myUsageGroupingRules = new UsageGroupingRule[]{ new TemplateUsageGroupingRule() };
+    }
+
+    public Class[] getInspectionClasses() {
+        return new Class[]{
+                UnusedElementInspection.class,
+                TemplateInvocationInspection.class,
+                XsltDeclarationInspection.class
+        };
+    }
+
+    @Nullable
+    public synchronized Icon getIcon(@NotNull PsiElement element, int flags) {
+        if (active || !myConfig.isEnabled()) return null;
+
+        active = true;
+        try {
+            TIntObjectHashMap<Icon> icons = element.getUserData(ICON_KEY);
+            if (icons != null) {
+                final Icon icon = icons.get(flags);
+                if (icon != null) {
+                    return icon;
+                }
+            }
+            if (element instanceof PsiFile) {
+                if (XsltSupport.isXsltFile((PsiFile)element)) {
+                    if (icons == null) {
+                        element.putUserData(ICON_KEY, icons = new TIntObjectHashMap<Icon>(3));
+                    }
+                    final Icon i = XsltSupport.createXsltIcon(element.getIcon(flags));
+                    icons.put(flags, i);
+                    return i;
+                }
+            }
+            return null;
+        } finally {
+            active = false;
+        }
+    }
+
+    @NotNull
+    public UsageGroupingRule[] getActiveRules(Project project) {
+        return myConfig.isEnabled() ? myUsageGroupingRules : UsageGroupingRule.EMPTY_ARRAY;
+    }
+
+    @NotNull
+    public AnAction[] createGroupingActions(UsageView view) {
+        return AnAction.EMPTY_ARRAY;
+    }
+
+    public void initComponent() {
+    }
+
+    public void disposeComponent() {
+    }
+
+    @NotNull
+    public String getComponentName() {
+        return "XsltStuffProvider";
+    }
+
+    private static class TemplateUsageGroup implements UsageGroup {
+        private final XsltTemplate myTemplate;
+
+        public TemplateUsageGroup(@NotNull XsltTemplate template) {
+            myTemplate = template;
+        }
+
+        public Icon getIcon(boolean isOpen) {
+            return myTemplate.getIcon(0);
+        }
+
+        @NotNull
+        public String getText(UsageView view) {
+            final StringBuilder sb = new StringBuilder();
+
+            final XPathExpression expr = myTemplate.getMatchExpression();
+            if (expr != null) sb.append("match='").append(expr.getText()).append("'");
+            final QName mode = myTemplate.getMode();
+
+            if (mode != null) {
+                if (sb.length() > 0) sb.append(", ");
+                sb.append("mode='").append(mode.toString()).append("'");
+            }
+            return "Template (" + sb.toString() + ")";
+        }
+
+        @Nullable
+        public FileStatus getFileStatus() {
+            return null;
+        }
+
+        public boolean isValid() {
+            return myTemplate.isValid();
+        }
+
+        public void update() {
+        }
+
+        public int compareTo(UsageGroup usageGroup) {
+            final TemplateUsageGroup myUsageGroup = ((TemplateUsageGroup)usageGroup);
+            return myTemplate.getTextOffset() - myUsageGroup.myTemplate.getTextOffset();
+        }
+
+        public void navigate(boolean requestFocus) {
+            ((Navigatable)myTemplate.getTag()).navigate(requestFocus);
+        }
+
+        public boolean canNavigate() {
+            return ((Navigatable)myTemplate.getTag()).canNavigate();
+        }
+
+        public boolean canNavigateToSource() {
+            return canNavigate();
+        }
+
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            final TemplateUsageGroup that = (TemplateUsageGroup)o;
+
+            if (!myTemplate.equals(that.myTemplate)) return false;
+
+            assert compareTo(that) == 0;
+            return true;
+        }
+
+        public int hashCode() {
+            return myTemplate.hashCode();
+        }
+    }
+
+    private static class TemplateUsageGroupingRule implements UsageGroupingRule {
+        @Nullable
+        public UsageGroup groupUsage(Usage usage) {
+            if (usage instanceof UsageInfo2UsageAdapter) {
+                final UsageInfo2UsageAdapter u = (UsageInfo2UsageAdapter)usage;
+                final UsageInfo usageInfo = u.getUsageInfo();
+                if (usageInfo instanceof MoveRenameUsageInfo) {
+                    final MoveRenameUsageInfo info = (MoveRenameUsageInfo)usageInfo;
+                    return buildGroup(info.getReferencedElement(), usageInfo, true);
+                } else {
+                    final PsiReference[] references = u.getElement().getReferences();
+                    for (PsiReference reference : references) {
+                        if (reference.getRangeInElement().equals(usageInfo.getRange())) {
+                            return buildGroup(reference.resolve(), usageInfo, false);
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        @Nullable
+        private UsageGroup buildGroup(PsiElement referencedElement, UsageInfo u, boolean mustBeForeign) {
+            if (referencedElement instanceof XsltParameter) {
+                final XsltParameter parameter = (XsltParameter)referencedElement;
+                final XsltTemplate template = XsltCodeInsightUtil.getTemplate(u.getElement(), false);
+                if (template == null) return null;
+
+                final boolean isForeign = XsltCodeInsightUtil.getTemplate(parameter, false) != template;
+                if (template.getMatchExpression() != null && (isForeign || !mustBeForeign)) {
+                    return new TemplateUsageGroup(template);
+                }
+            }
+            return null;
+        }
+    }
+}

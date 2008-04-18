@@ -1,0 +1,33 @@
+<html>
+<head>
+  <style type="text/css">
+    body, table {
+      font-family: Verdana, sans-serif;
+      font-size: 100%;
+      padding-left: 2mm;
+    }
+
+    #footer {
+      font-size: 95%;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+<p>
+  This inspection checks for any accidental use of zero in a predicate index or in a comparision with the function
+  <code>position()</code>. Such is almost always a bug because in XPath, the index starts at one, <em>not</em> at zero.
+</p>
+
+<p>
+  Example:
+</p>
+
+<p>
+  <code>//someelement[<b>position() = 0</b>]</code> or <code>//something[<b>0</b>]</code>
+</p>
+
+<p id="footer">Powered by XPathView + XSLT-Support</p>
+</body>
+</html>

@@ -1,0 +1,136 @@
+/*
+ * Copyright 2005 Sascha Weinreuter
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.intellij.lang.xpath;
+
+import com.intellij.lexer.Lexer;
+import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.SyntaxHighlighterColors;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@SuppressWarnings({"RawUseOfParameterizedType", "unchecked"})
+public class XPathHighlighter extends SyntaxHighlighterBase {
+    private static Map keys1;
+    private static Map keys2;
+
+    @NotNull
+    public Lexer getHighlightingLexer() {
+        return new XPathLexer();
+    }
+
+    static final TextAttributesKey XPATH_KEYWORD = TextAttributesKey.createTextAttributesKey(
+            "XPATH.KEYWORD",
+            SyntaxHighlighterColors.KEYWORD.getDefaultAttributes()
+    );
+
+    static final TextAttributesKey XPATH_STRING = TextAttributesKey.createTextAttributesKey(
+            "XPATH.STRING",
+            SyntaxHighlighterColors.STRING.getDefaultAttributes()
+    );
+
+    static final TextAttributesKey XPATH_NUMBER = TextAttributesKey.createTextAttributesKey(
+            "XPATH.NUMBER",
+            SyntaxHighlighterColors.NUMBER.getDefaultAttributes()
+    );
+
+    static final TextAttributesKey XPATH_OPERATION_SIGN = TextAttributesKey.createTextAttributesKey(
+            "XPATH.OPERATION_SIGN",
+            SyntaxHighlighterColors.OPERATION_SIGN.getDefaultAttributes()
+    );
+
+    static final TextAttributesKey XPATH_PARENTH = TextAttributesKey.createTextAttributesKey(
+            "XPATH.PARENTH",
+            SyntaxHighlighterColors.PARENTHS.getDefaultAttributes()
+    );
+
+    static final TextAttributesKey XPATH_BRACKET = TextAttributesKey.createTextAttributesKey(
+            "XPATH.BRACKET",
+            SyntaxHighlighterColors.BRACKETS.getDefaultAttributes()
+    );
+
+    static final TextAttributesKey XPATH_FUNCTION = TextAttributesKey.createTextAttributesKey(
+            "XPATH.FUNCTION",
+            CodeInsightColors.STATIC_METHOD_ATTRIBUTES.getDefaultAttributes()
+    );
+
+    static final TextAttributesKey XPATH_VARIABLE = TextAttributesKey.createTextAttributesKey(
+            "XPATH.XPATH_VARIABLE",
+            CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES.getDefaultAttributes()
+    );
+
+    static final TextAttributesKey XPATH_PREFIX = TextAttributesKey.createTextAttributesKey(
+            "XPATH.XPATH_PREFIX",
+            HighlighterColors.TEXT.getDefaultAttributes()
+    );
+
+    static final TextAttributesKey XPATH_NAME = TextAttributesKey.createTextAttributesKey(
+            "XPATH.XPATH_NAME",
+            HighlighterColors.TEXT.getDefaultAttributes()
+    );
+
+    static final TextAttributesKey XPATH_TEXT = TextAttributesKey.createTextAttributesKey(
+            "XPATH.XPATH_TEXT",
+            HighlighterColors.TEXT.getDefaultAttributes()
+    );
+
+    static {
+        keys1 = new HashMap();
+        keys2 = new HashMap();
+
+        fillMap(keys1, XPathTokenTypes.BINARY_OPERATIONS, XPATH_OPERATION_SIGN);
+        fillMap(keys1, XPathTokenTypes.KEYWORDS, XPATH_KEYWORD);
+
+        fillMap(keys1, XPathTokenTypes.REST, XPATH_TEXT);
+        
+        keys1.put(XPathTokenTypes.NCNAME, XPATH_NAME);
+
+        keys1.put(XPathTokenTypes.NUMBER, XPATH_NUMBER);
+        keys1.put(XPathTokenTypes.STRING_LITERAL, XPATH_STRING);
+        keys1.put(XPathTokenTypes.FUNCTION_NAME, XPATH_FUNCTION);
+        keys1.put(XPathTokenTypes.EXT_PREFIX, XPATH_PREFIX);
+
+        keys1.put(XPathTokenTypes.DOLLAR, XPATH_VARIABLE);
+        keys1.put(XPathTokenTypes.VARIABLE_NAME, XPATH_VARIABLE);
+        keys1.put(XPathTokenTypes.VARIABLE_PREFIX, XPATH_PREFIX);
+
+        keys1.put(XPathTokenTypes.LPAREN, XPATH_PARENTH);
+        keys1.put(XPathTokenTypes.LBRACKET, XPATH_BRACKET);
+        keys1.put(XPathTokenTypes.RPAREN, XPATH_PARENTH);
+        keys1.put(XPathTokenTypes.RBRACKET, XPATH_BRACKET);
+
+        keys1.put(XPathTokenTypes.BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
+        keys1.put(XPathTokenTypes.BAD_AXIS_NAME, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
+    }
+
+    @NotNull
+    public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+        return pack(((TextAttributesKey)keys1.get(tokenType)), ((TextAttributesKey)keys2.get(tokenType)));
+    }
+
+    public Map getKeys1() {
+        return (Map)((HashMap)keys1).clone();
+    }
+
+    public Map getKeys2() {
+        return (Map)((HashMap)keys2).clone();
+    }
+}
