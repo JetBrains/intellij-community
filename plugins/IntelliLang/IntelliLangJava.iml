@@ -18,7 +18,6 @@
     <orderEntry type="module" module-name="codeInsight-impl" />
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="compiler-impl" />
-    <orderEntry type="module" module-name="IntelliLangAnnotations" />
     <orderEntry type="library" name="CGLIB" level="project" />
     <orderEntry type="library" name="asm" level="project" />
     <orderEntry type="library" name="Jaxen" level="project" />

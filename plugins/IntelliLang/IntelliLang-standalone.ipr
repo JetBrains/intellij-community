@@ -497,7 +497,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/IntelliLang.iml" filepath="$PROJECT_DIR$/IntelliLang.iml" />
-      <module fileurl="file://$PROJECT_DIR$/IntelliLangAnnotations.iml" filepath="$PROJECT_DIR$/IntelliLangAnnotations.iml" />
       <module fileurl="file://$PROJECT_DIR$/../RegExpSupport/regexp-lang-java.iml" filepath="$PROJECT_DIR$/../RegExpSupport/regexp-lang-java.iml" />
     </modules>
   </component>
