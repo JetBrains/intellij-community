@@ -157,19 +157,6 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
 
         registry.registerReferenceProvider(GroovyDocPsiElement.class, new GroovyDocReferenceProvider());
         registry.registerReferenceProvider(GrLiteral.class, new PropertiesReferenceProvider());
-
-/*
-        StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-          public void run() {
-            final ToolWindow dynamicToolWindow = ToolWindowManager.getInstance(project).registerToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID, true, ToolWindowAnchor.RIGHT);
-            dynamicToolWindow.setIcon(IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/dynamicProperty.png"));
-            dynamicToolWindow.setTitle(GroovyBundle.message("dynamic.window"));
-
-            DynamicToolWindowWrapper.getInstance(project).configureWindow(dynamicToolWindow);
-          }
-        });
-*/
-
       }
     });
   }
