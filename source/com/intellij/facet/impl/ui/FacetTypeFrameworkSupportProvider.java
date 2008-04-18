@@ -5,15 +5,14 @@
 package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.*;
-import com.intellij.facet.impl.FacetUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -64,14 +63,15 @@ public abstract class FacetTypeFrameworkSupportProvider<F extends Facet> extends
   }
 
   protected void addSupport(final Module module, final ModifiableRootModel rootModel, final String version, final @Nullable Library library) {
-    ModifiableFacetModel model = FacetManager.getInstance(module).createModifiableModel();
+    FacetManager facetManager = FacetManager.getInstance(module);
+    ModifiableFacetModel model = facetManager.createModifiableModel();
     Facet underlyingFacet = null;
     FacetTypeId<?> underlyingFacetType = myFacetType.getUnderlyingFacetType();
     if (underlyingFacetType != null) {
       underlyingFacet = model.getFacetByType(underlyingFacetType);
       LOG.assertTrue(underlyingFacet != null, underlyingFacetType);
     }
-    F facet = FacetUtil.createFacet(myFacetType, module, underlyingFacet);
+    F facet = facetManager.createFacet(myFacetType, myFacetType.getDefaultFacetName(), underlyingFacet);
     setupConfiguration(facet, rootModel, version);
     if (library != null) {
       onLibraryAdded(facet, library);

@@ -95,7 +95,7 @@ public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F ex
     final Facet underlyingFacet1 = underlyingFacet;
     return new WriteAction<Facet>() {
       protected void run(final Result<Facet> result) {
-        final Facet facet = FacetManagerImpl.createFacet(myFacetType, module, name, detectedConfiguration, underlyingFacet1);
+        final Facet facet = FacetManager.getInstance(module).createFacet(myFacetType, name, detectedConfiguration, underlyingFacet1);
         facet.setImplicit(true);
         ModifiableFacetModel model = FacetManager.getInstance(facet.getModule()).createModifiableModel();
         ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();

@@ -21,14 +21,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.project.Project;
 import com.intellij.facet.autodetecting.FacetDetectorRegistry;
+import com.intellij.facet.ui.CommonFacetSettingsEditor;
 
 import javax.swing.*;
 
 /**
  * @author nik
  *
- * @see com.intellij.facet.FacetTypeRegistry#registerFacetType(FacetType) 
+ * @see com.intellij.facet.FacetTypeRegistry#registerFacetType(FacetType)
  */
 public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   private final @NotNull FacetTypeId<F> myId;
@@ -96,6 +98,11 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
 
   @Nullable
   public Icon getIcon() {
+    return null;
+  }
+
+  @Nullable
+  public CommonFacetSettingsEditor createDefaultConfigurationEditor(@NotNull Project project, @NotNull C configuration) {
     return null;
   }
 }

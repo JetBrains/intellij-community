@@ -19,6 +19,7 @@ package com.intellij.facet;
 import com.intellij.openapi.module.Module;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -33,5 +34,17 @@ public abstract class FacetManager implements FacetModel {
   @NotNull
   public abstract ModifiableFacetModel createModifiableModel();
 
+  @NotNull
+  public abstract <F extends Facet, C extends FacetConfiguration> F createFacet(@NotNull FacetType<F, C> type, @NotNull String name,
+                                                                                   @NotNull C cofiguration, @Nullable Facet underlying);
+
+
+  @NotNull
+  public abstract <F extends Facet, C extends FacetConfiguration> F createFacet(@NotNull FacetType<F, C> type, @NotNull String name,
+                                                                                   @Nullable Facet underlying);
+
+  @NotNull
+  public abstract <F extends Facet, C extends FacetConfiguration> F addFacet(@NotNull FacetType<F, C> type, @NotNull String name, 
+                                                                                   @Nullable Facet underlying);
 
 }

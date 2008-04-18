@@ -32,13 +32,13 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
   @NonNls public static final String COMPONENT_NAME = "FacetManager";
 
   
-  private Module myModule;
-  private FacetTypeRegistry myFacetTypeRegistry;
-  private FacetManagerModel myModel = new FacetManagerModel();
+  private final Module myModule;
+  private final FacetTypeRegistry myFacetTypeRegistry;
+  private final FacetManagerModel myModel = new FacetManagerModel();
 
   private boolean myHasNoFacetsFromBeginning = true;
   private boolean myInsideCommit = false;
-  private MessageBus myMessageBus;
+  private final MessageBus myMessageBus;
 
   public FacetManagerImpl(final Module module, MessageBus messageBus, final FacetTypeRegistry facetTypeRegistry) {
     myModule = module;
@@ -51,6 +51,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
     return new FacetModelImpl(this);
   }
 
+  //todo[nik] remove
   public void createAndCommitFacets(final FacetInfo[] facetInfos) {
     final ModifiableFacetModel model = createModifiableModel();
     Map<FacetInfo, Facet> info2Facet = new HashMap<FacetInfo, Facet>();
@@ -67,7 +68,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
       final FacetInfo underlyingFacetInfo = info.getUnderlyingFacet();
       final Facet underlyingFacet = underlyingFacetInfo != null ? getOrCreateFacet(info2Facet, underlyingFacetInfo) : null;
       //noinspection unchecked
-      facet = createFacet(info.getFacetType(), myModule, info.getName(), info.getConfiguration(), underlyingFacet);
+      facet = createFacet(info.getFacetType(), info.getName(), info.getConfiguration(), underlyingFacet);
       info2Facet.put(info, facet);
     }
 
@@ -144,7 +145,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
       //todo[nik] remove later. This code is written only for compatibility with first Selena EAPs
       name = type.getDefaultFacetName();
     }
-    final Facet facet = createFacet(type, myModule, name, configuration, underlyingFacet);
+    final Facet facet = createFacet(type, name, configuration, underlyingFacet);
     facet.setImplicit(Boolean.parseBoolean(element.getAttributeValue(IMPLICIT_ATTRIBUTE)));
     if (facet instanceof JDOMExternalizable) {
       //todo[nik] remove 
@@ -154,14 +155,30 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
     addFacets(facets, element, facet);
   }
 
-  public static <C extends FacetConfiguration, F extends Facet> F createFacet(final FacetType<F, C> type, final Module module, final String name,
-                                                                  final C configuration, final Facet underlyingFacet) {
-    final F facet = type.createFacet(module, name, configuration, underlyingFacet);
-    Disposer.register(module, facet);
-    assertTrue(facet.getModule() == module, facet, "module");
-    assertTrue(facet.getConfiguration() == configuration, facet, "configuration");
+  @NotNull
+  public <F extends Facet, C extends FacetConfiguration> F createFacet(@NotNull final FacetType<F, C> type, @NotNull final String name, @NotNull final C cofiguration,
+                                                                          @Nullable final Facet underlying) {
+    final F facet = type.createFacet(myModule, name, cofiguration, underlying);
+    Disposer.register(myModule, facet);
+    assertTrue(facet.getModule() == myModule, facet, "module");
+    assertTrue(facet.getConfiguration() == cofiguration, facet, "configuration");
     assertTrue(Comparing.equal(facet.getName(), name), facet, "module");
-    assertTrue(facet.getUnderlyingFacet() == underlyingFacet, facet, "underlyingFacet");
+    assertTrue(facet.getUnderlyingFacet() == underlying, facet, "underlyingFacet");
+    return facet;
+  }
+
+  @NotNull
+  public <F extends Facet, C extends FacetConfiguration> F createFacet(@NotNull final FacetType<F, C> type, @NotNull final String name, @Nullable final Facet underlying) {
+    C configuration = ProjectFacetManager.getInstance(myModule.getProject()).createDefaultConfiguration(type);
+    return createFacet(type, name, configuration, underlying);
+  }
+
+  @NotNull
+  public <F extends Facet, C extends FacetConfiguration> F addFacet(@NotNull final FacetType<F, C> type, @NotNull final String name, @Nullable final Facet underlying) {
+    final ModifiableFacetModel model = createModifiableModel();
+    final F facet = createFacet(type, name, underlying);
+    model.addFacet(facet);
+    model.commit();
     return facet;
   }
 

@@ -34,10 +34,10 @@ import java.util.*;
  */
 public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.ChangeListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectFacetsConfigurator");
-  private Map<Module, ModifiableFacetModel> myModels = new HashMap<Module, ModifiableFacetModel>();
-  private Map<Facet, FacetEditor> myEditors = new HashMap<Facet, FacetEditor>();
-  private Map<Module, FacetTreeModel> myTreeModels = new HashMap<Module, FacetTreeModel>();
-  private Map<FacetInfo, Facet> myInfo2Facet = new HashMap<FacetInfo, Facet>();
+  private final Map<Module, ModifiableFacetModel> myModels = new HashMap<Module, ModifiableFacetModel>();
+  private final Map<Facet, FacetEditor> myEditors = new HashMap<Facet, FacetEditor>();
+  private final Map<Module, FacetTreeModel> myTreeModels = new HashMap<Module, FacetTreeModel>();
+  private final Map<FacetInfo, Facet> myInfo2Facet = new HashMap<FacetInfo, Facet>();
   private Map<Facet, FacetInfo> myFacet2Info = new HashMap<Facet, FacetInfo>();
   private Map<Module, UserDataHolder> mySharedModuleData = new HashMap<Module, UserDataHolder>();
   private Set<Facet> myFacetsToDispose = new HashSet<Facet>();
@@ -80,7 +80,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   }
 
   public Facet createAndAddFacet(Module module, FacetType<?, ?> type, String name, final @Nullable FacetInfo underlyingFacet) {
-    final Facet facet = createFacet(type, module, name, myInfo2Facet.get(underlyingFacet));
+    final Facet facet = FacetManager.getInstance(module).createFacet(type, name, myInfo2Facet.get(underlyingFacet));
     myCreatedFacets.add(facet);
     addFacetInfo(facet);
     getOrCreateModifiableModel(module).addFacet(facet);
@@ -117,10 +117,6 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     myFacet2Info.clear();
     myChangedFacets.clear();
     mySharedModuleData.clear();
-  }
-
-  private static <C extends FacetConfiguration> Facet createFacet(final FacetType<?, C> type, final Module module, String name, final @Nullable Facet underlyingFacet) {
-    return FacetManagerImpl.createFacet(type, module, name, type.createDefaultConfiguration(), underlyingFacet);
   }
 
   private boolean isNewFacet(Facet facet) {
