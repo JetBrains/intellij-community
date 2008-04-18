@@ -20,7 +20,7 @@ import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.repo.MavenRepository;
+import org.jetbrains.idea.maven.repository.MavenRepository;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;

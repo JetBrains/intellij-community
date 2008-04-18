@@ -65,8 +65,8 @@
       <option name="workspace" value="true"/>
     </component>
     <component>
-      <interface-class>org.jetbrains.idea.maven.repo.MavenRepository</interface-class>
-      <implementation-class>org.jetbrains.idea.maven.repo.MavenRepositoryViewer</implementation-class>
+      <interface-class>org.jetbrains.idea.maven.repository.MavenRepository</interface-class>
+      <implementation-class>org.jetbrains.idea.maven.repository.MavenRepositoryViewer</implementation-class>
     </component>
   </project-components>
   <actions>

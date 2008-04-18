@@ -24,8 +24,8 @@ import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
-import org.jetbrains.idea.maven.repo.MavenRepository;
-import org.jetbrains.idea.maven.repo.PluginDocument;
+import org.jetbrains.idea.maven.repository.MavenRepository;
+import org.jetbrains.idea.maven.repository.PluginDocument;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;

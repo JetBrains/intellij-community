@@ -23,7 +23,7 @@ import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.project.ProjectBundle;
-import org.jetbrains.idea.maven.repo.MavenRepository;
+import org.jetbrains.idea.maven.repository.MavenRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;
