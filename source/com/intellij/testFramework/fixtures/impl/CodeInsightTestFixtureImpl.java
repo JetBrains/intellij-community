@@ -309,7 +309,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
       protected void run() throws Throwable {
         configureByFilesInner(filesBefore);
-        completeBasic();
+        final LookupItem[] items = completeBasic();
+        if (items != null) {
+          System.out.println("items = " + Arrays.toString(items));
+        }
         checkResultByFile(fileAfter, myFile, false);
       }
     }.execute().throwException();
