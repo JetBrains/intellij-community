@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.repo;
+package org.jetbrains.idea.maven.repository;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

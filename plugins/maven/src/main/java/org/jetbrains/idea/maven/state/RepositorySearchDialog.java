@@ -1,13 +1,11 @@
 package org.jetbrains.idea.maven.state;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.Alarm;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.repo.RepositoryIndex;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -17,11 +15,9 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
-import java.util.List;
 
 public class RepositorySearchDialog extends DialogWrapper {
-  private RepositoryIndex myIndex = new RepositoryIndex("C:\\temp\\maven-central-index", null);
+  //private RepositoryIndex myIndex = new RepositoryIndex("C:\\temp\\maven-central-index", null);
 
   private MavenId myResult;
 
@@ -108,27 +104,27 @@ public class RepositorySearchDialog extends DialogWrapper {
   }
 
   private void doSearch() {
-    try {
-      final List<MavenId> result = myIndex.search(mySearchField.getText());
-      final AbstractListModel model = new AbstractListModel() {
-        public int getSize() {
-          return result.size();
-        }
-
-        public Object getElementAt(int index) {
-          return result.get(index);
-        }
-      };
-
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          myResultsList.setModel(model);
-        }
-      });
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    //try {
+    //  final List<MavenId> result = myIndex.search(mySearchField.getText());
+    //  final AbstractListModel model = new AbstractListModel() {
+    //    public int getSize() {
+    //      return result.size();
+    //    }
+    //
+    //    public Object getElementAt(int index) {
+    //      return result.get(index);
+    //    }
+    //  };
+    //
+    //  ApplicationManager.getApplication().invokeLater(new Runnable() {
+    //    public void run() {
+    //      myResultsList.setModel(model);
+    //    }
+    //  });
+    //}
+    //catch (IOException e) {
+    //  throw new RuntimeException(e);
+    //}
   }
 
   @Override

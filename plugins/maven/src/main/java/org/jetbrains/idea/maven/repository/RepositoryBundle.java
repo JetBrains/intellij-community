@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.repo;
+package org.jetbrains.idea.maven.repository;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
@@ -8,13 +8,13 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
-class RepoBundle {
+class RepositoryBundle {
   private static Reference<ResourceBundle> ourBundle;
 
   @NonNls
-  private static final String BUNDLE = "RepoBundle";
+  private static final String BUNDLE = "RepositoryBundle";
 
-  private RepoBundle() {
+  private RepositoryBundle() {
   }
 
   public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {

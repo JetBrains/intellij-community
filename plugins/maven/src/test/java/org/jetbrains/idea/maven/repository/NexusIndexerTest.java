@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.repo;
+package org.jetbrains.idea.maven.repository;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
