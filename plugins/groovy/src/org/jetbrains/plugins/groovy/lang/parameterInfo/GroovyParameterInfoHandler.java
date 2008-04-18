@@ -115,7 +115,9 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
   }
 
   public void updateParameterInfo(@NotNull GroovyPsiElement place, UpdateParameterInfoContext context) {
-    final int currIndex = getCurrentParameterIndex(place, context.getEditor().getCaretModel().getOffset());
+    int offset = context.getEditor().getCaretModel().getOffset();
+    offset = CharArrayUtil.shiftForward(context.getEditor().getDocument().getText(), offset, " \t\n");
+    final int currIndex = getCurrentParameterIndex(place, offset);
     context.setCurrentParameter(currIndex);
     final Object[] objects = context.getObjectsToView();
 
