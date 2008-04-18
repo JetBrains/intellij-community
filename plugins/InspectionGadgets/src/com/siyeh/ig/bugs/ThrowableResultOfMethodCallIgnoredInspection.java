@@ -26,7 +26,8 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class ThrowableResultOfMethodCallIgnoredInspection extends BaseInspection {
+public class ThrowableResultOfMethodCallIgnoredInspection
+        extends BaseInspection {
 
     @NotNull
     public String getDisplayName() {
@@ -119,6 +120,8 @@ public class ThrowableResultOfMethodCallIgnoredInspection extends BaseInspection
                     if (usageParent instanceof PsiThrowStatement) {
                         return;
                     } else if (usageParent instanceof PsiReturnStatement) {
+                        return;
+                    } else if (usageParent instanceof PsiExpressionList) {
                         return;
                     }
                 }
