@@ -10,7 +10,7 @@ import com.intellij.testFramework.fixtures.ModuleFixture;
 /**
  * @author mike
  */
-class ModuleFixtureImpl extends BaseFixture implements ModuleFixture {
+public class ModuleFixtureImpl extends BaseFixture implements ModuleFixture {
 
   private Module myModule;
   protected final ModuleFixtureBuilderImpl myBuilder;

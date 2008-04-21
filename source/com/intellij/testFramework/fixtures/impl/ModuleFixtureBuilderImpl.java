@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * @author mike
  */
-abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements ModuleFixtureBuilder<T> {
+public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements ModuleFixtureBuilder<T> {
   private static int ourIndex;
 
   private final ModuleType myModuleType;
