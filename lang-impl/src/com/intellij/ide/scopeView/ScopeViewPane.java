@@ -209,6 +209,6 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     if (data != null) {
       return data;
     }
-    return myViewPanel.getData(dataId);
+    return myViewPanel != null ? myViewPanel.getData(dataId) : null;
   }
 }
