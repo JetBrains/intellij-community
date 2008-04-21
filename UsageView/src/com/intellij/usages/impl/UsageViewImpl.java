@@ -45,6 +45,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
@@ -125,6 +126,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private JPanel myCentralPanel;
   private static final Icon PREVIEW_ICON = IconLoader.getIcon("/actions/preview.png");
   private final GroupNode myRoot;
+  private final MessageBusConnection myMessageBusConnection;
 
   public UsageViewImpl(@NotNull Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -159,6 +161,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     final UsageViewTreeModelBuilder model = new UsageViewTreeModelBuilder(myPresentation, targets);
     myRoot = (GroupNode)model.getRoot();
     myBuilder = new UsageNodeTreeBuilder(getActiveGroupingRules(project), getActiveFilteringRules(project), myRoot);
+
+    myMessageBusConnection = myProject.getMessageBus().connect();
+    myMessageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, new Runnable() {
+      public void run() {
+        rulesChanged();
+      }
+    });
 
     if (!myPresentation.isDetachedMode()) {
       SwingUtilities.invokeLater(new Runnable() {
@@ -363,7 +372,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return toUsageViewToolbar(group);
   }
 
-  public void scheduleDisposeOnClose(final Disposable disposable) {
+  public void scheduleDisposeOnClose(@NotNull Disposable disposable) {
     myDisposables.add(disposable);
   }
 
@@ -440,7 +449,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return list.toArray(new AnAction[list.size()]);
   }
 
-  public void rulesChanged() {
+  private void rulesChanged() {
     final ArrayList<UsageState> states = new ArrayList<UsageState>();
     captureUsagesExpandState(new TreePath(myTree.getModel().getRoot()), states);
     final List<Usage> allUsages = new ArrayList<Usage>(myUsageNodes.keySet());
@@ -522,6 +531,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     if (myTree != null) {
       myTree.requestFocusInWindow();
     }
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   private class CloseAction extends AnAction {
@@ -757,6 +770,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   public void dispose() {
+    myMessageBusConnection.disconnect();
+
     isDisposed = true;
     ToolTipManager.sharedInstance().unregisterComponent(myTree);
     for (Disposable disposable : myDisposables) {

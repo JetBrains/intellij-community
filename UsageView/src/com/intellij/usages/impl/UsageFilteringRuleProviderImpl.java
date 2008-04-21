@@ -16,10 +16,7 @@
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.usageView.UsageViewBundle;
@@ -40,7 +37,7 @@ import java.util.List;
  * @author max
  */
 public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvider {
-  private ReadWriteState myReadWriteState = new ReadWriteState();
+  private final ReadWriteState myReadWriteState = new ReadWriteState();
 
   @NotNull
   public UsageFilteringRule[] getActiveRules(Project project) {
@@ -57,17 +54,14 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
   @NotNull
   public AnAction[] createFilteringActions(UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
-    myReadWriteState = new ReadWriteState();
     if(view.getPresentation().isCodeUsages()) {
       final JComponent component = view.getComponent();
 
-      final ShowReadAccessUsagesAction showReadAccessUsagesAction = new ShowReadAccessUsagesAction(impl);
-      showReadAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R,
-                                                                                                        InputEvent.CTRL_DOWN_MASK)), component);
+      final ShowReadAccessUsagesAction showReadAccessUsagesAction = new ShowReadAccessUsagesAction();
+      showReadAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK)), component);
 
-      final ShowWriteAccessUsagesAction showWriteAccessUsagesAction = new ShowWriteAccessUsagesAction(impl);
-      showWriteAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W,
-                                                                                                         InputEvent.CTRL_DOWN_MASK)), component);
+      final ShowWriteAccessUsagesAction showWriteAccessUsagesAction = new ShowWriteAccessUsagesAction();
+      showWriteAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK)), component);
 
       impl.scheduleDisposeOnClose(new Disposable() {
         public void dispose() {
@@ -110,11 +104,8 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
   }
 
   private class ShowReadAccessUsagesAction extends ToggleAction {
-    private final UsageViewImpl myView;
-
-    public ShowReadAccessUsagesAction(UsageViewImpl view) {
+    public ShowReadAccessUsagesAction() {
       super(UsageViewBundle.message("action.show.read.access"), null, IconLoader.getIcon("/actions/showReadAccess.png"));
-      myView = view;
     }
 
     public boolean isSelected(AnActionEvent e) {
@@ -123,16 +114,15 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
 
     public void setSelected(AnActionEvent e, boolean state) {
       myReadWriteState.setShowReadAccess(state);
-      myView.rulesChanged();
+      Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+      if (project == null) return;
+      project.getMessageBus().syncPublisher(RULES_CHANGED).run();
     }
   }
 
   private class ShowWriteAccessUsagesAction extends ToggleAction {
-    private final UsageViewImpl myView;
-
-    public ShowWriteAccessUsagesAction(UsageViewImpl view) {
+    public ShowWriteAccessUsagesAction() {
       super(UsageViewBundle.message("action.show.write.access"), null, IconLoader.getIcon("/actions/showWriteAccess.png"));
-      myView = view;
     }
 
     public boolean isSelected(AnActionEvent e) {
@@ -141,7 +131,9 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
 
     public void setSelected(AnActionEvent e, boolean state) {
       myReadWriteState.setShowWriteAccess(state);
-      myView.rulesChanged();
+      Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+      if (project == null) return;
+      project.getMessageBus().syncPublisher(RULES_CHANGED).run();
     }
   }
 }

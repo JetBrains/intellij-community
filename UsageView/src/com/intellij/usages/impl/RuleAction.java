@@ -17,6 +17,9 @@ package com.intellij.usages.impl;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.Project;
+import com.intellij.usages.rules.UsageFilteringRuleProvider;
 
 import javax.swing.*;
 
@@ -45,7 +48,12 @@ public abstract class RuleAction extends ToggleAction {
   public void setSelected(AnActionEvent e, boolean state) {
     setOptionValue(state);
     myState = state;
-    myView.rulesChanged();
+
+    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    if (project != null) {
+      project.getMessageBus().syncPublisher(UsageFilteringRuleProvider.RULES_CHANGED).run();
+    }
+
     myView.select();
   }
 }

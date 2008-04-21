@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.usages.UsageView;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 public interface UsageFilteringRuleProvider {
@@ -29,4 +30,6 @@ public interface UsageFilteringRuleProvider {
 
   @NotNull
   AnAction[] createFilteringActions(UsageView view);
+
+  Topic<Runnable> RULES_CHANGED = new Topic<Runnable>("usave view rules changed", Runnable.class);
 }
