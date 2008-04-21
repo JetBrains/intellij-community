@@ -456,7 +456,14 @@ public class RefManagerImpl extends RefManager {
   public boolean belongsToScope(final PsiElement psiElement) {
     if (psiElement == null) return false;
     if (psiElement instanceof PsiCompiledElement) return false;
-    if (psiElement.getContainingFile() == null) return false;
+    final PsiFile containingFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+      public PsiFile compute() {
+        return psiElement.getContainingFile();
+      }
+    });
+    if (containingFile == null) {
+      return false;
+    }
     for (RefManagerExtension extension : myExtensions.values()) {
       if (!extension.belongsToScope(psiElement)) return false;
     }
