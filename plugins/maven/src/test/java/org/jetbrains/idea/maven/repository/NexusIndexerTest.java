@@ -1,14 +1,11 @@
 package org.jetbrains.idea.maven.repository;
 
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.io.FileUtil;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
 import org.codehaus.plexus.PlexusContainer;
-import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.core.MavenFactory;
 import org.sonatype.nexus.index.ArtifactContext;
 import org.sonatype.nexus.index.ArtifactInfo;
@@ -23,7 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-public class NexusIndexerTest extends MavenTestCase {
+public class NexusIndexerTest extends MavenWithDataTestCase {
   private MavenEmbedder embedder;
   private NexusIndexer indexer;
   private IndexUpdater updater;
@@ -56,35 +53,28 @@ public class NexusIndexerTest extends MavenTestCase {
   }
 
   public void testSeraching() throws Exception {
-    addContext(new File(createDataPath("local1_index")), null, null);
+    addContext("local1", new File(getTestDataPath("local1_index")), null, null);
     assertSearchWorks();
   }
 
   public void testCreating() throws Exception {
-    IndexingContext c = addContext(indexDir, new File(createDataPath("local1")), null);
+    IndexingContext c = addContext("local1", indexDir, new File(getTestDataPath("local1")), null);
     indexer.scan(c, new NullScanningListener());
 
     assertSearchWorks();
   }
 
   public void testDownloading() throws Exception {
-    IndexingContext c = addContext(indexDir, null, "file:///" + createDataPath("remote"));
+    IndexingContext c = addContext("remote", indexDir, null, "file:///" + getTestDataPath("remote"));
     updater.fetchAndUpdateIndex(c, new NullTransferListener());
 
     assertSearchWorks();
   }
 
-  private String createDataPath(String relativePath) {
-    String path = PathManager.getHomePath() + "/svnPlugins/maven/src/test/data/" + relativePath;
-    return FileUtil.toSystemIndependentName(path);
-  }
-  
-  private IndexingContext addContext(File indexDir,
-                                        File repoDir,
-                                        String repoUrl) throws Exception {
+  private IndexingContext addContext(String id, File indexDir, File repoDir, String repoUrl) throws Exception {
     return indexer.addIndexingContext(
-        "index",
-        "index",
+        id,
+        id,
         repoDir,
         indexDir,
         repoUrl,

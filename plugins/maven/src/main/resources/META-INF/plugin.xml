@@ -17,7 +17,7 @@
   <depends optional="true" config-file="gwt-support.xml">com.intellij.gwt</depends>
   <depends optional="true" config-file="jee-support.xml">com.intellij.javaee</depends>
 
-  <extensions xmlns="com.intellij">
+  <extensions defaultExtensionNs="com.intellij">
     <projectImportProvider implementation="org.jetbrains.idea.maven.project.action.MavenProjectImportProvider"/>
     <projectOpenProcessor implementation="org.jetbrains.idea.maven.project.action.MavenProjectOpenProcessor"/>
     <projectImportBuilder implementation="org.jetbrains.idea.maven.project.action.MavenImportBuilder"/>
@@ -41,8 +41,7 @@
   </application-components>
   <project-components>
     <component>
-      <interface-class>org.jetbrains.idea.maven.core.MavenCore</interface-class>
-      <implementation-class>org.jetbrains.idea.maven.core.MavenCoreImpl</implementation-class>
+      <implementation-class>org.jetbrains.idea.maven.core.MavenCore</implementation-class>
       <option name="workspace" value="true"/>
     </component>
     <component>
