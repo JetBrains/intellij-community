@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -211,7 +212,7 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
     }
   }
 
-  public boolean isCompilerOutput(VirtualFile file) {
+  private boolean isCompilerOutput(@Nullable VirtualFile file) {
     final VirtualFile compilerOutputPath = myCompilerExtension.getCompilerOutputPath();
     if (compilerOutputPath != null) {
       if (compilerOutputPath.equals(file)) {
@@ -228,7 +229,7 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
 
     if (myCompilerExtension.isCompilerOutputPathInherited()) {
       final String compilerOutput = ProjectStructureConfigurable.getInstance(myRootModel.getModule().getProject()).getProjectConfig().getCompilerOutputUrl();
-      if (Comparing.equal(compilerOutput, file.getUrl())) {
+      if (file != null && Comparing.equal(compilerOutput, file.getUrl())) {
         return true;
       }
     }
