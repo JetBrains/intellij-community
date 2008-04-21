@@ -40,7 +40,7 @@ class TestClass extends TestObject {
     RunConfigurationModule module = myConfiguration.getConfigurationModule();
     configureModule(myJavaParameters, module, data.getMainClassName());
     Location<PsiClass> classLocation = PsiClassLocationUtil.fromClassQualifiedName(module.getProject(), data.getMainClassPsiName());
-    if (JUnitUtil.isJUnit4TestClass(classLocation.getPsiElement(), true)) {
+    if (JUnitUtil.isJUnit4TestClass(classLocation.getPsiElement())) {
       myJavaParameters.getProgramParametersList().add(JUnitStarter.JUNIT4_PARAMETER);
     }
     myJavaParameters.getProgramParametersList().add(data.getMainClassName());

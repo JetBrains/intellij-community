@@ -38,10 +38,7 @@ public class JUnitConfigurationModel {
 
   private static final List<String> ourTestObjects;
   static {
-    ourTestObjects = Arrays.asList(new String[]{
-      JUnitConfiguration.TEST_PACKAGE,
-      JUnitConfiguration.TEST_CLASS,
-      JUnitConfiguration.TEST_METHOD});
+    ourTestObjects = Arrays.asList(JUnitConfiguration.TEST_PACKAGE, JUnitConfiguration.TEST_CLASS, JUnitConfiguration.TEST_METHOD);
   }
 
 
@@ -72,8 +69,6 @@ public class JUnitConfigurationModel {
     return myJUnitDocuments[i];
   }
 
-  public Project getProject() { return myProject; }
-
   public void apply(final Module module, final JUnitConfiguration configuration) {
     final boolean shouldUpdateName = configuration.isGeneratedName();
     applyTo(configuration.getPersistentData(), module);
@@ -87,11 +82,16 @@ public class JUnitConfigurationModel {
     final String className = getJUnitTextValue(CLASS);
     data.TEST_OBJECT = testObject;
     if (testObject != JUnitConfiguration.TEST_PACKAGE) {
-      final PsiClass testClass = JUnitUtil.findPsiClass(className, module, getProject(), false);
+      final PsiClass testClass = JUnitUtil.findPsiClass(className, module, myProject);
       data.METHOD_NAME = getJUnitTextValue(METHOD);
-      if (testClass != null && testClass.isValid()) data.setMainClass(testClass);
-      else data.MAIN_CLASS_NAME = className;
-    } else {
+      if (testClass != null && testClass.isValid()) {
+        data.setMainClass(testClass);
+      }
+      else {
+        data.MAIN_CLASS_NAME = className;
+      }
+    }
+    else {
       data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
       data.MAIN_CLASS_NAME = "";
       data.METHOD_NAME = "";
@@ -106,7 +106,7 @@ public class JUnitConfigurationModel {
     return getDocumentText(index, myJUnitDocuments);
   }
 
-  private String getDocumentText(final int index, final Document[] documents) {
+  private static String getDocumentText(final int index, final Document[] documents) {
     final Document document = documents[index];
     try {
       return document.getText(0, document.getLength());
@@ -128,7 +128,7 @@ public class JUnitConfigurationModel {
     setDocumentText(index, text, myJUnitDocuments);
   }
 
-  private void setDocumentText(final int index, final String text, final Document[] documents) {
+  private static void setDocumentText(final int index, final String text, final Document[] documents) {
     final Document document = documents[index];
     try {
       document.remove(0, document.getLength());

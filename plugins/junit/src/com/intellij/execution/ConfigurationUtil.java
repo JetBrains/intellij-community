@@ -57,17 +57,18 @@ public class ConfigurationUtil {
       }
     }
 
-    boolean hasJunit4 = addAnnotatedMethods(manager, scope, testClassFilter, found, "org.junit.Test", true);
-    hasJunit4 |= addAnnotatedMethods(manager, scope, testClassFilter, found, "org.junit.runner.RunWith", false);
+    boolean hasJunit4 = addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, "org.junit.Test", true);
+    hasJunit4 |= addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, "org.junit.runner.RunWith", false);
     return hasJunit4;
   }
 
-  private static boolean addAnnotatedMethods(final PsiManager manager, final GlobalSearchScope scope, final TestClassFilter testClassFilter,
-                                             final Set<PsiClass> found, final String annotation, final boolean isMethod) {
+  private static boolean addAnnotatedMethodsAnSubclasses(final PsiManager manager, final GlobalSearchScope scope, final TestClassFilter testClassFilter,
+                                                         final Set<PsiClass> found,
+                                                         final String annotation,
+                                                         final boolean isMethod) {
     final Ref<Boolean> isJUnit4 = new Ref<Boolean>(Boolean.FALSE);
     // annotated with @Test
-    PsiClass testAnnotation =
-      JavaPsiFacade.getInstance(manager.getProject()).findClass(annotation, GlobalSearchScope.allScope(manager.getProject()));
+    PsiClass testAnnotation = JavaPsiFacade.getInstance(manager.getProject()).findClass(annotation, GlobalSearchScope.allScope(manager.getProject()));
     if (testAnnotation != null) {
       AnnotatedMembersSearch.search(testAnnotation, scope).forEach(new Processor<PsiMember>() {
         public boolean process(final PsiMember annotated) {
@@ -77,6 +78,12 @@ public class ConfigurationUtil {
               && testClassFilter.isAccepted(containingClass)) {
             found.add(containingClass);
             isJUnit4.set(Boolean.TRUE);
+            ClassInheritorsSearch.search(containingClass, scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
+              public boolean execute(final PsiClass aClass) {
+                if (testClassFilter.isAccepted(aClass)) found.add(aClass);
+                return true;
+              }
+            }));
           }
           return true;
         }
