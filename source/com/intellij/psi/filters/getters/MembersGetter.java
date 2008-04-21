@@ -56,7 +56,7 @@ public class MembersGetter implements ContextGetter{
       }
 
       for (final PsiElement result : processor.getResults()) {
-        if (result instanceof PsiMember) {
+        if (result instanceof PsiMember && !(result instanceof PsiClass)) {
           final PsiMember member = (PsiMember)result;
           if (member.hasModifierProperty(PsiModifier.STATIC) && !PsiTreeUtil.isAncestor(member.getContainingClass(), context, false)) {
             if (result instanceof PsiField && !member.hasModifierProperty(PsiModifier.FINAL)) continue;
