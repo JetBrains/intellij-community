@@ -28,7 +28,6 @@ import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.TimerListener;
 import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -550,9 +549,11 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         public boolean isSelectable(Object value) { return true; }
         public PopupStep onChosen(final Object selectedValue, final boolean finalChoice) {
           if (!myModel.hasChildren(selectedValue)) {
-            final Navigatable navigatable = (Navigatable)selectedValue;
-            if (navigatable.canNavigate()) {
-              navigatable.navigate(true);
+            if (selectedValue instanceof Navigatable) {
+              final Navigatable navigatable = (Navigatable)selectedValue;
+              if (navigatable.canNavigate()) {
+                navigatable.navigate(true);
+              }
             }
             hideHint();
           }
