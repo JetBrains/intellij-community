@@ -446,11 +446,19 @@ public class SimpleColoredComponent extends JComponent {
     return buffer.toString();
   }
 
+  protected void setBorderInsets(Insets insets) {
+    myBorder.setInsets(insets);
+  }
+
   private static final class MyBorder implements Border {
-    private final Insets myInsets;
+    private Insets myInsets;
 
     public MyBorder() {
       myInsets = new Insets(1, 1, 1, 1);
+    }
+
+    public void setInsets(final Insets insets) {
+      myInsets = insets;
     }
 
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {

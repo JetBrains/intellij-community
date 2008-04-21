@@ -199,6 +199,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public synchronized void addItem(LookupItem item) {
     myItems.add(item);
     addItemWeight(item);
+    final Icon icon = myCellRenderer.getRawIcon(item);
+    if (icon != null) {
+      myCellRenderer.updateIconWidth(icon.getIconWidth());
+    }
+
     int maxWidth = myCellRenderer.getMaximumWidth(new LookupItem[]{item});
     myList.setFixedCellWidth(Math.max(maxWidth, myList.getFixedCellWidth()));
   }
@@ -345,7 +350,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     JComponent internalComponent = myEditor.getContentComponent();
     JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
     Point layeredPanePoint=SwingUtilities.convertPoint(internalComponent,location, layeredPane);
-    layeredPanePoint.x = layeredPanePoint.x - myCellRenderer.ICON_WIDTH - 5 /*?*/;
+    layeredPanePoint.x -= myCellRenderer.getIconIndent();
     if (dim.width > layeredPane.getWidth()){
       dim.width = layeredPane.getWidth();
     }

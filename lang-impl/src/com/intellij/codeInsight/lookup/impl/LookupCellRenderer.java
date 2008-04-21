@@ -15,20 +15,19 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.RowIcon;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.StrikeoutLabel;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 class LookupCellRenderer implements ListCellRenderer {
-  private final int ICON_FLAGS;
-  private final Icon EMPTY_ICON;
-  public final int ICON_WIDTH;
+  private final int myIconFlags;
+  private Icon myEmptyIcon = new EmptyIcon(5);
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
   private final Font SMALL_FONT;
@@ -48,17 +47,14 @@ class LookupCellRenderer implements ListCellRenderer {
 
   private static final int MAX_LENGTH = 70;
 
-  private final boolean SHOW_SIGNATURES;
+  private final LookupImpl myLookup;
 
-  private LookupImpl myLookup;
+  private final SimpleColoredComponent myNameComponent;
+  private final StrikeoutLabel myLabel2; // type
+  private final JLabel myLabel3; // type
+  private final JPanel myPanel;
 
-  private StrikeoutLabel myLabel0; // highlighted part of name
-  private StrikeoutLabel myLabel1; // rest of name
-  private StrikeoutLabel myLabel2; // parameters and tail text
-  private JLabel myLabel3; // type
-  private JPanel myPanel;
-
-  private LookupElementPresentationImpl myLookupElementPresentation = new LookupElementPresentationImpl();
+  private final LookupElementPresentationImpl myLookupElementPresentation = new LookupElementPresentationImpl();
 
   public LookupCellRenderer(LookupImpl lookup) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -66,17 +62,11 @@ class LookupCellRenderer implements ListCellRenderer {
     BOLD_FONT = scheme.getFont(EditorFontType.BOLD);
     SMALL_FONT = NORMAL_FONT;
 
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    SHOW_SIGNATURES = settings.SHOW_SIGNATURES_IN_LOOKUPS;
-    ICON_FLAGS = SHOW_SIGNATURES ? Iconable.ICON_FLAG_VISIBILITY : 0;
-    EMPTY_ICON = IconUtil.getEmptyIcon(SHOW_SIGNATURES);
-    ICON_WIDTH = EMPTY_ICON.getIconWidth();
+    myIconFlags = CodeInsightSettings.getInstance().SHOW_SIGNATURES_IN_LOOKUPS ? Iconable.ICON_FLAG_VISIBILITY : 0;
 
     myLookup = lookup;
-    myLabel0 = new StrikeoutLabel("", SwingConstants.LEFT);
-    myLabel0.setOpaque(true);
-    myLabel1 = new StrikeoutLabel("", SwingConstants.LEFT);
-    myLabel1.setOpaque(true);
+    myNameComponent = new MySimpleColoredComponent();
+    myNameComponent.setIpad(new Insets(0, 0, 0, 0));
     myLabel2 = new StrikeoutLabel("", SwingConstants.LEFT);
     myLabel2.setOpaque(true);
     myLabel3 = new JLabel("", SwingConstants.LEFT);
@@ -87,14 +77,11 @@ class LookupCellRenderer implements ListCellRenderer {
         super.paint(g);
       }
     };
-    myPanel.add(myLabel0, BorderLayout.WEST);
-    JPanel panel = new JPanel(new BorderLayout());
-    myPanel.add(panel, BorderLayout.CENTER);
-    panel.add(myLabel1, BorderLayout.WEST);
-    panel.add(myLabel2, BorderLayout.CENTER);
-    panel.add(myLabel3, BorderLayout.EAST);
+    myPanel.add(myNameComponent, BorderLayout.WEST);
+    myPanel.add(myLabel2, BorderLayout.CENTER);
+    myPanel.add(myLabel3, BorderLayout.EAST);
 
-    JLabel label = myLabel0;
+    JLabel label = myLabel3;
     //noinspection HardCodedStringLiteral
     label.setText("W"); //the widest letter known to me
     label.setIcon(null);
@@ -109,12 +96,18 @@ class LookupCellRenderer implements ListCellRenderer {
     UIUtil.removeQuaquaVisualMarginsIn(myPanel);
   }
 
+  public void updateIconWidth(final int iconWidth) {
+    if (iconWidth > myEmptyIcon.getIconWidth()) {
+      myEmptyIcon = new EmptyIcon(iconWidth, 2);
+    }
+  }
+
   public Component getListCellRendererComponent(
-    final JList list,
-    Object value,
-    int index,
-    boolean isSelected,
-    boolean hasFocus) {
+      final JList list,
+      Object value,
+      int index,
+      boolean isSelected,
+      boolean hasFocus) {
 
     final LookupItem item = (LookupItem)value;
     Color background = isSelected ? SELECTED_BACKGROUND_COLOR : BACKGROUND_COLOR;
@@ -150,41 +143,25 @@ class LookupCellRenderer implements ListCellRenderer {
 
   private void setItemTextLabels(LookupItem item, final Color background, final Color foreground, final boolean selected, final String name,
                                  final boolean toStrikeout){
-    final String prefix = myLookup.getPrefix();
-    String text;
-    Icon icon;
-    if (prefix.length() > 0 && StringUtil.startsWithIgnoreCase(name, prefix)){
-      text = name.substring(0, prefix.length());
-      icon = getIcon(item);
-      setItemTextLabel(item, background, text, icon, myLabel0, selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR,
-                       toStrikeout);
+    myNameComponent.clear();
+    myNameComponent.setIcon(getIcon(item));
+    boolean bold = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
+    myNameComponent.setFont(bold ? BOLD_FONT : NORMAL_FONT);
+    myNameComponent.setBackground(background);
 
-      text = name.substring(prefix.length());
-      icon = null;
-      setItemTextLabel(item, background, text, icon, myLabel1, foreground, toStrikeout);
+    int style = bold ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN;
+    if (toStrikeout) {
+      style |= SimpleTextAttributes.STYLE_STRIKEOUT;
+    }
+
+    final String prefix = myLookup.getPrefix();
+    if (prefix.length() > 0 && StringUtil.startsWithIgnoreCase(name, prefix)){
+      myNameComponent.append(name.substring(0, prefix.length()), new SimpleTextAttributes(style, selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR));
+      myNameComponent.append(name.substring(prefix.length()), new SimpleTextAttributes(style, foreground));
     }
     else{
-      text = "";
-      icon = null;
-      setItemTextLabel(item, background, text, icon, myLabel0, selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR,
-                       toStrikeout);
-
-      text = name;
-      icon = getIcon(item);
-      setItemTextLabel(item, background, text, icon, myLabel1, foreground, toStrikeout);
+      myNameComponent.append(name, new SimpleTextAttributes(style, foreground));
     }
-  }
-
-  private void setItemTextLabel(final LookupItem item, final Color background, final String text, final Icon icon,
-                                final StrikeoutLabel label, final Color fg, final boolean strikeout) {
-    boolean bold = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
-
-    label.setText(text);
-    label.setIcon(icon);
-    label.setFont(bold ? BOLD_FONT : NORMAL_FONT);
-    label.setStrikeout(strikeout);
-    label.setBackground(background);
-    label.setForeground(fg);
   }
 
   private void setTailTextLabel(final LookupItem item, final Color background, Color foreground, final boolean selected, final String text,
@@ -229,7 +206,7 @@ class LookupCellRenderer implements ListCellRenderer {
     String text = text3;
 
     final int maxWidth =
-      (list.getFixedCellWidth() - myLabel0.getPreferredSize().width - myLabel1.getPreferredSize().width - myLabel2.getPreferredSize().width) / FONT_WIDTH - 3;
+        (list.getFixedCellWidth() - myNameComponent.getPreferredSize().width - myLabel2.getPreferredSize().width) / FONT_WIDTH - 3;
 
     JLabel label = myLabel3;
     if (text == null) text = "";
@@ -308,33 +285,42 @@ class LookupCellRenderer implements ListCellRenderer {
   }
 
   private Icon getIcon(LookupItem item){
-    Icon icon = (Icon)item.getAttribute(LookupItem.ICON_ATTR);
+    Icon icon = getRawIcon(item);
     if (icon == null) {
-      Object o = item.getObject();
-
-      if (o instanceof Iconable && !(o instanceof PsiElement)) {
-        icon = ((Iconable)o).getIcon(ICON_FLAGS);
-      } else {
-        if (o instanceof LookupValueWithPsiElement) {
-          o = ((LookupValueWithPsiElement)o).getElement();
-        }
-        if (o instanceof PsiElement) {
-          final PsiElement element = (PsiElement)o;
-          if (element.isValid()) {
-            icon = element.getIcon(ICON_FLAGS);
-          }
-        }
-      }
+      return myEmptyIcon;
     }
-    if (icon == null){
-      icon = EMPTY_ICON;
-    } else if (icon.getIconWidth() < EMPTY_ICON.getIconWidth()) {
+
+    if (icon.getIconWidth() < myEmptyIcon.getIconWidth()) {
       final RowIcon rowIcon = new RowIcon(2);
       rowIcon.setIcon(icon, 0);
-      rowIcon.setIcon(new EmptyIcon(EMPTY_ICON.getIconWidth() - icon.getIconWidth()), 1);
-      icon = rowIcon;
+      rowIcon.setIcon(new EmptyIcon(myEmptyIcon.getIconWidth() - icon.getIconWidth()), 1);
+      return rowIcon;
     }
+
     return icon;
+  }
+
+  @Nullable
+  public Icon getRawIcon(final LookupItem item) {
+    Icon icon = (Icon)item.getAttribute(LookupItem.ICON_ATTR);
+    if (icon != null) return icon;
+
+    Object o = item.getObject();
+
+    if (o instanceof Iconable && !(o instanceof PsiElement)) {
+      return ((Iconable)o).getIcon(myIconFlags);
+    }
+
+    if (o instanceof LookupValueWithPsiElement) {
+      o = ((LookupValueWithPsiElement)o).getElement();
+    }
+    if (o instanceof PsiElement) {
+      final PsiElement element = (PsiElement)o;
+      if (element.isValid()) {
+        return element.getIcon(myIconFlags);
+      }
+    }
+    return null;
   }
 
   public int getMaximumWidth(final LookupItem[] items){
@@ -343,7 +329,7 @@ class LookupCellRenderer implements ListCellRenderer {
       maxWidth = Math.max(maxWidth, getTextWidth(item));
     }
     maxWidth = Math.min(maxWidth, MAX_LENGTH * FONT_WIDTH);
-    return maxWidth + EMPTY_ICON.getIconWidth() + myLabel0.getIconTextGap() + FONT_WIDTH;
+    return maxWidth + myEmptyIcon.getIconWidth() + myNameComponent.getIconTextGap() + FONT_WIDTH;
   }
 
   /**
@@ -359,8 +345,7 @@ class LookupCellRenderer implements ListCellRenderer {
     }
 
     String text = getName(item);
-    final @NonNls String TYPE_GAP = "XXX";
-    text += getText3(item) + TYPE_GAP;
+    text += getText3(item) + "XXX";
 
     int width = myPanel.getFontMetrics(NORMAL_FONT).stringWidth(text) + 2;
     String text2 = getText2(item);
@@ -376,6 +361,10 @@ class LookupCellRenderer implements ListCellRenderer {
   private static boolean isToStrikeout(LookupItem item) {
     Object o = item.getObject();
     return o instanceof LookupValueWithUIHint2 && ((LookupValueWithUIHint2)o).isStrikeout();
+  }
+
+  public int getIconIndent() {
+    return myNameComponent.getIconTextGap() + myEmptyIcon.getIconWidth();
   }
 
   private class LookupElementPresentationImpl extends UserDataHolderBase implements LookupElementPresentation {
@@ -404,7 +393,7 @@ class LookupCellRenderer implements ListCellRenderer {
 
     public void setTailText(final String text, final Color foreground, final boolean bold) {
       setTailTextLabel(myItem, myBackground,
-                    mySelected ? SELECTED_FOREGROUND_COLOR : foreground, mySelected, text, bold ? BOLD_FONT : null, isToStrikeout(myItem));
+                       mySelected ? SELECTED_FOREGROUND_COLOR : foreground, mySelected, text, bold ? BOLD_FONT : null, isToStrikeout(myItem));
     }
 
     public void setTypeText(final String text) {
@@ -495,6 +484,13 @@ class LookupCellRenderer implements ListCellRenderer {
 
     public <T> void putUserData(final Key<T> key, final T value) {
       myBasePresentation.putUserData(key, value);
+    }
+  }
+
+  private static class MySimpleColoredComponent extends SimpleColoredComponent {
+    private MySimpleColoredComponent() {
+      setFocusBorderAroundIcon(true);
+      setBorderInsets(new Insets(0, 0, 0, 0));
     }
   }
 }
