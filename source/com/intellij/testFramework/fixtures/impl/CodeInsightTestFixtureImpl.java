@@ -267,13 +267,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final RunResult<PsiReference> runResult = new WriteCommandAction<PsiReference>(myProjectFixture.getProject()) {
       protected void run(final Result<PsiReference> result) throws Throwable {
         configureByFilesInner(filePaths);
-        final int offset = myEditor.getCaretModel().getOffset();
-        final PsiReference psiReference = getFile().findReferenceAt(offset);
-        result.setResult(psiReference);
       }
     }.execute();
     runResult.throwException();
-    return runResult.getResultObject();
+    return getFile().findReferenceAt(myEditor.getCaretModel().getOffset());
   }
 
   @NotNull

@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -56,13 +57,13 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
       if (type1.equalsToText("java.lang.String")) {
         return type1;
       }
-      return unboxAndBalanceTypes(type1, type2);
+      return TypeConversionUtil.unboxAndBalanceTypes(type1, type2);
     }
     if (i == MINUS || i == ASTERISK || i == DIV || i == PERC) {
       PsiType type2 = rOperand.getType();
       PsiType type1 = lOperand.getType();
       if (type1 == null && type2 == null) return null;
-      return unboxAndBalanceTypes(type1, type2);
+      return TypeConversionUtil.unboxAndBalanceTypes(type1, type2);
     }
     if (i == LTLT || i == GTGT || i == GTGTGT) {
       PsiType type1 = lOperand.getType();
@@ -88,16 +89,6 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
 
     LOG.assertTrue(false);
     return null;
-  }
-
-  private static PsiType unboxAndBalanceTypes(PsiType type1, PsiType type2) {
-    if (type1 instanceof PsiClassType) type1 = PsiPrimitiveType.getUnboxedType(type1);
-    if (type2 instanceof PsiClassType) type2 = PsiPrimitiveType.getUnboxedType(type2);
-
-    if (type1 == PsiType.DOUBLE || type2 == PsiType.DOUBLE) return PsiType.DOUBLE;
-    if (type1 == PsiType.FLOAT || type2 == PsiType.FLOAT) return PsiType.FLOAT;
-    if (type1 == PsiType.LONG || type2 == PsiType.LONG) return PsiType.LONG;
-    return PsiType.INT;
   }
 
   public ASTNode findChildByRole(int role) {

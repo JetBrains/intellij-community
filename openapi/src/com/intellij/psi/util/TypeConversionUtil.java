@@ -1110,6 +1110,16 @@ public class TypeConversionUtil {
     return value;
   }
 
+  public static PsiType unboxAndBalanceTypes(PsiType type1, PsiType type2) {
+    if (type1 instanceof PsiClassType) type1 = PsiPrimitiveType.getUnboxedType(type1);
+    if (type2 instanceof PsiClassType) type2 = PsiPrimitiveType.getUnboxedType(type2);
+
+    if (type1 == PsiType.DOUBLE || type2 == PsiType.DOUBLE) return PsiType.DOUBLE;
+    if (type1 == PsiType.FLOAT || type2 == PsiType.FLOAT) return PsiType.FLOAT;
+    if (type1 == PsiType.LONG || type2 == PsiType.LONG) return PsiType.LONG;
+    return PsiType.INT;
+  }
+
   private interface Caster {
     Object cast(Object operand);
   }

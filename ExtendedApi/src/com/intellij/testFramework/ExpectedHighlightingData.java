@@ -259,7 +259,7 @@ public class ExpectedHighlightingData {
       }
     }
 
-    if (failMessage.length() > 0) Assert.fail(failMessage);
+    if (failMessage.length() > 0) Assert.assertTrue(failMessage, false);
   }
 
   private static boolean infosContainsExpectedInfo(Collection<HighlightInfo> infos, HighlightInfo expectedInfo) {
