@@ -155,7 +155,7 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
     public String getHelpTopic() {
       CodeStyleSettingsPanel selectedPanel = mySchemes.get(mySelectedScheme);
       if (selectedPanel == null) {
-        return "preferences.sourceCode";
+        return "reference.settingsdialog.project.codestyle";
       }
       return selectedPanel.getHelpTopic();
     }
