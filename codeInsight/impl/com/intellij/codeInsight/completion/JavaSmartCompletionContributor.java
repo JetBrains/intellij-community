@@ -17,6 +17,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.filters.FilterUtil;
+import com.intellij.psi.filters.getters.InheritorsGetter;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.statistics.JavaStatisticsManager;
@@ -138,8 +139,11 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
 
   private static void addExpectedType(final CompletionResultSet<LookupElement> result, final DefaultInsertHandler defaultHandler,
                                       final ExpectedTypeInfo[] expectedInfos, final PsiType type) {
+    if (!InheritorsGetter.hasAccessibleConstructor(type)) return;
+
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
     if (psiClass == null) return;
+
 
     final LookupItem item = LookupItemUtil.objectToLookupItem(JavaCompletionUtil.eliminateWildcards(type));
     item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
