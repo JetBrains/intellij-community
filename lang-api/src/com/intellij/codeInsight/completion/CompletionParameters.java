@@ -5,6 +5,7 @@
 package com.intellij.codeInsight.completion;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
@@ -15,7 +16,7 @@ public interface CompletionParameters {
   @NotNull
   PsiElement getPosition();
 
-  @NotNull
+  @Nullable
   PsiElement getOriginalPosition();
 
   @NotNull

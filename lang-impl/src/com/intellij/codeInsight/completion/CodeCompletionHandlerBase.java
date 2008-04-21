@@ -294,12 +294,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  @Nullable protected static String appendSuggestion(@Nullable String prefix, String adText) {
-    if (prefix == null) return adText;
-    if (adText == null) return prefix;
-    return prefix + "; " + adText;
-  }
-
   private static void insertLookupString(final CompletionContext context, final int currentOffset, final String newText) {
     Editor editor = context.editor;
     editor.getDocument().replaceString(context.getStartOffset(), currentOffset, newText);
@@ -337,7 +331,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
       if (commonPrefix != null) {
         int matchingRegLength = lookupString.length();
-        while (!lookupString.regionMatches(0, commonPrefix, 0, matchingRegLength--)) ;
+        while (!lookupString.regionMatches(0, commonPrefix, 0, matchingRegLength--)) {}
         commonPrefix = lookupString.substring(0, matchingRegLength + 1);
         if (commonPrefix.length() < lookupString.length()) {
           isStrict = true;
@@ -465,15 +459,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return element;
   }
 
-
-  protected Lookup showLookup(Project project,
-                              final Editor editor,
-                              final LookupItem[] items,
-                              String prefix,
-                              final LookupData data,
-                              PsiFile file, final String bottomText) {
-    return LookupManager.getInstance(project).showLookup(editor, items, prefix, data.itemPreferencePolicy, bottomText);
-  }
 
   protected abstract boolean isAutocompleteOnInvocation();
 
