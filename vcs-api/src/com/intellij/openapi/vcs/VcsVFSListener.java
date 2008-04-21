@@ -126,7 +126,7 @@ public abstract class VcsVFSListener {
     }
   }
 
-  private void executeDelete() {
+  protected void executeDelete() {
     final List<FilePath> filesToDelete = new ArrayList<FilePath>(myDeletedWithoutConfirmFiles);
     final List<FilePath> deletedFiles = new ArrayList<FilePath>(myDeletedFiles);
     myDeletedWithoutConfirmFiles.clear();
