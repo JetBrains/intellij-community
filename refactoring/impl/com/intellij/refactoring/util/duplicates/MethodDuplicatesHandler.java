@@ -93,7 +93,6 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     final int [] dupCount = new int[]{0};
     scope.accept(new PsiRecursiveElementVisitor() {
       @Override public void visitFile(final PsiFile file) {
-        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
         final VirtualFile virtualFile = file.getVirtualFile();
         LOG.assertTrue(virtualFile != null);
         if (invokeOnElements(project, file, method)) {
@@ -113,6 +112,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     if (duplicates.isEmpty()) return false;
     final VirtualFile virtualFile = file.getVirtualFile();
     LOG.assertTrue(virtualFile != null);
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
     final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
     LOG.assertTrue(editor != null);
     final int duplicatesNo = duplicates.size();
