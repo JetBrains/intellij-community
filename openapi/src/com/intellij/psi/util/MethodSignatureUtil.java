@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -28,7 +27,6 @@ import java.util.List;
 
 
 public class MethodSignatureUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.MethodSignatureUtil");
   public static final TObjectHashingStrategy<MethodSignatureBackedByPsiMethod> METHOD_BASED_HASHING_STRATEGY =
     new TObjectHashingStrategy<MethodSignatureBackedByPsiMethod>() {
       public int computeHashCode(final MethodSignatureBackedByPsiMethod signature) {
@@ -68,7 +66,7 @@ public class MethodSignatureUtil {
 
   public static boolean areSignaturesEqual(MethodSignature method1, MethodSignature method2) {
     if (method2 == method1) return true;
-    if (checkDifferentSignaturesLightweight(method1, method2)) return false;
+    if (!areSignaturesEqualLightweight(method1, method2)) return false;
     PsiSubstitutor unifyingSubstitutor = getSuperMethodSignatureSubstitutor(method1, method2);
     return checkSignaturesEqualInner(method1, method2, unifyingSubstitutor);
   }
@@ -91,23 +89,23 @@ public class MethodSignatureUtil {
     return true;
   }
 
-  private static boolean checkDifferentSignaturesLightweight (MethodSignature sig1, MethodSignature sig2) {
+  private static boolean areSignaturesEqualLightweight(MethodSignature sig1, MethodSignature sig2) {
     String name1 = sig1.getName();
     String name2 = sig2.getName();
-    if (!name1.equals(name2)) return true;
+    if (!name1.equals(name2)) return false;
     final PsiType[] parameterTypes1 = sig1.getParameterTypes();
     final PsiType[] parameterTypes2 = sig2.getParameterTypes();
-    if (parameterTypes1.length != parameterTypes2.length) return true;
+    if (parameterTypes1.length != parameterTypes2.length) return false;
 
     // optimization: check for really different types in method parameters
     for (int i = 0; i < parameterTypes1.length; i++) {
       PsiType type1 = parameterTypes1[i];
       PsiType type2 = parameterTypes2[i];
-      if (type1 instanceof PsiPrimitiveType != type2 instanceof PsiPrimitiveType) return true;
-      if (type1 instanceof PsiPrimitiveType && !type1.equals(type2)) return true;
+      if (type1 instanceof PsiPrimitiveType != type2 instanceof PsiPrimitiveType) return false;
+      if (type1 instanceof PsiPrimitiveType && !type1.equals(type2)) return false;
     }
 
-    return false;
+    return true;
   }
 
   public static boolean isSuperMethod(final PsiMethod superMethodCandidate, final PsiMethod derivedMethod) {
@@ -313,7 +311,7 @@ public class MethodSignatureUtil {
 
   public static boolean isSubsignature(MethodSignature superSignature, MethodSignature subSignature) {
     if (subSignature == superSignature) return true;
-    if (checkDifferentSignaturesLightweight(superSignature, subSignature)) return false;
+    if (!areSignaturesEqualLightweight(superSignature, subSignature)) return false;
     PsiSubstitutor unifyingSubstitutor = getSuperMethodSignatureSubstitutor(superSignature, subSignature);
     if (checkSignaturesEqualInner(superSignature, subSignature, unifyingSubstitutor)) return true;
 

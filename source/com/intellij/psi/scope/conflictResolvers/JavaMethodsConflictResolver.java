@@ -6,9 +6,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.util.MethodSignatureUtil;
 
 import java.util.Iterator;
 import java.util.List;
@@ -84,18 +84,18 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     // Specifics
     if (applicable) {
       final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflicts.size()]);
-      for (int i = 0; i < conflictsCount; i++) {
+      for (int i = 1; i < conflictsCount; i++) {
         final CandidateInfo method = newConflictsArray[i];
         for (int j = 0; j < i; j++) {
           final CandidateInfo conflict = newConflictsArray[j];
-          if (conflict == method) break;
+          assert conflict != method;
           switch (isMoreSpecific(method, conflict, applicabilityLevel)) {
             case TRUE:
               conflicts.remove(conflict);
               break;
             case FALSE:
               conflicts.remove(method);
-              continue;
+              break;
             case CONFLICT:
               break;
           }
@@ -165,7 +165,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     boolean available = method.isStaticsScopeCorrect();
     return (visible ? 1 : 0) << 2 |
            (available ? 1 : 0) << 1 |
-           (!(method.getCurrentFileResolveScope() instanceof PsiImportStaticStatement) ? 1 : 0);
+           (method.getCurrentFileResolveScope() instanceof PsiImportStaticStatement ? 0 : 1);
   }
 
   private enum Specifics {
@@ -194,11 +194,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
 
     PsiType retType1 = method1.getReturnType();
-    retType1 = retType1 != null ? substitutor1.substitute(retType1) : null;
+    retType1 = retType1 == null ? null : substitutor1.substitute(retType1);
     PsiType retType2 = method2.getReturnType();
-    retType2 = retType2 != null ? substitutor2.substitute(retType2) : null;
-    if (!Comparing.equal(retType1, retType2)) return false;
-    return true;
+    retType2 = retType2 == null ? null : substitutor2.substitute(retType2);
+    return Comparing.equal(retType1, retType2);
   }
 
   private static Specifics checkSubtyping(PsiType type1, PsiType type2) {
@@ -321,17 +320,15 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     if (isLessBoxing != null) return isLessBoxing;
 
-    if (isMoreSpecific == null) {
-      if (class1 != class2) {
-        if (class2.isInheritor(class1, true) || class1.isInterface() && !class2.isInterface()) {
-          if (MethodSignatureUtil.isSubsignature(method1.getSignature(info1.getSubstitutor()), method2.getSignature(info2.getSubstitutor()))) {
-            isMoreSpecific = Specifics.FALSE;
-          }
+    if (isMoreSpecific == null && class1 != class2) {
+      if (class2.isInheritor(class1, true) || class1.isInterface() && !class2.isInterface()) {
+        if (MethodSignatureUtil.isSubsignature(method1.getSignature(info1.getSubstitutor()), method2.getSignature(info2.getSubstitutor()))) {
+        isMoreSpecific = Specifics.FALSE;
         }
-        else if (class1.isInheritor(class2, true) || class2.isInterface()) {
-          if (MethodSignatureUtil.isSubsignature(method2.getSignature(info2.getSubstitutor()), method1.getSignature(info1.getSubstitutor()))) {
-            isMoreSpecific = Specifics.TRUE;
-          }
+      }
+      else if (class1.isInheritor(class2, true) || class2.isInterface()) {
+        if (MethodSignatureUtil.isSubsignature(method2.getSignature(info2.getSubstitutor()), method1.getSignature(info1.getSubstitutor()))) {
+        isMoreSpecific = Specifics.TRUE;
         }
       }
     }
