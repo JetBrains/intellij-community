@@ -71,11 +71,11 @@ public class JUnitUtil {
   }
 
   public static boolean isTestClass(final PsiClass psiClass) {
-    return isTestClass(psiClass, true, null);
+    return isTestClass(psiClass, true, null, true);
   }
-  private static boolean isTestClass(final PsiClass psiClass, boolean checkAbstract, @Nullable Set<PsiClass> visited) {
+  private static boolean isTestClass(final PsiClass psiClass, boolean checkAbstract, @Nullable Set<PsiClass> visited, boolean checkForTestCaseInheritance) {
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
-    if (isTestCaseInheritor(psiClass)) return true;
+    if (checkForTestCaseInheritance && isTestCaseInheritor(psiClass)) return true;
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
     if (modifierList.findAnnotation("org.junit.runner.RunWith") != null) return true;
@@ -90,13 +90,13 @@ public class JUnitUtil {
       if (visited != null && visited.contains(psiClass)) return false;
       if (visited == null) visited = new THashSet<PsiClass>();
       visited.add(psiClass);
-      return isTestClass(superClass, false, visited);
+      return isTestClass(superClass, false, visited, false);
     }
     return false;
   }
 
-  public static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract) {
-    return isJUnit4TestClass(psiClass,checkAbstract,null);
+  public static boolean isJUnit4TestClass(final PsiClass psiClass) {
+    return isJUnit4TestClass(psiClass, true,null);
   }
   private static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract, @Nullable Set<PsiClass> visited) {
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
@@ -174,16 +174,8 @@ public class JUnitUtil {
     }
   }
 
-  public static PsiClass findPsiClass(final String qualifiedName, final Module module, final Project project, final boolean searchInLibs) {
-    final GlobalSearchScope scope;
-    if (module != null) {
-      scope = searchInLibs
-              ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
-              : GlobalSearchScope.moduleWithDependenciesScope(module);
-    }
-    else {
-      scope = searchInLibs ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-    }
+  public static PsiClass findPsiClass(final String qualifiedName, final Module module, final Project project) {
+    final GlobalSearchScope scope = module == null ? GlobalSearchScope.projectScope(project) : GlobalSearchScope.moduleWithDependenciesScope(module);
     return JavaPsiFacade.getInstance(project).findClass(qualifiedName, scope);
   }
 

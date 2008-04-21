@@ -169,7 +169,7 @@ public class RefactoringListeners {
     public void setPsiElement(final PsiPackage psiPackage) {
       if (myInpackageName == null) return; //we can do nothing
       final String classQName = getClassQName(psiPackage.getQualifiedName());
-      final PsiClass newClass = JUnitUtil.findPsiClass(classQName, myModule, psiPackage.getProject(), false);
+      final PsiClass newClass = JUnitUtil.findPsiClass(classQName, myModule, psiPackage.getProject());
       if (newClass != null) {
         myAccessor.setPsiElement(newClass);
       }

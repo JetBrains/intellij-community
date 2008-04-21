@@ -30,7 +30,7 @@ public class CollectHighlightsUtil {
   }
 
   @NotNull
-  public static List<PsiElement> getElementsInRange(final PsiElement root,
+  public static List<PsiElement> getElementsInRange(@NotNull PsiElement root,
                                                     final int startOffset,
                                                     final int endOffset,
                                                     boolean includeAllParents) {
@@ -56,7 +56,6 @@ public class CollectHighlightsUtil {
 
     final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       int offset = currentOffset;
-
       @Override public void visitElement(PsiElement element) {
         for (Condition<PsiElement> filter : filters) {
           if (!filter.value(element)) return;
