@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -118,7 +119,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
       
       owner = myModifierListOwner;
     }
-    else if (!file.getManager().isInProject(file)) {
+    else if (!file.getManager().isInProject(file) || CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS) {
       owner = getContainer(editor, file);
     }
     else {
@@ -169,5 +170,9 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
 
   public boolean startInWriteAction() {
     return true;
+  }
+
+  public String getAnnotationFQName() {
+    return myAnnotation;
   }
 }

@@ -7,33 +7,13 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiModifierListOwner;
 
-public class AddNotNullAnnotationFix extends AddAnnotationFix {
+public class AddNotNullAnnotationFix extends AddNullableNotNullAnnotationFix {
   public AddNotNullAnnotationFix() {
     super(AnnotationUtil.NOT_NULL, AnnotationUtil.NULLABLE);
   }
   public AddNotNullAnnotationFix(PsiModifierListOwner owner) {
     super(AnnotationUtil.NOT_NULL, owner, AnnotationUtil.NULLABLE);
-  }
-
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (!super.isAvailable(project, editor, file)) {
-      return false;
-    }
-    PsiModifierListOwner owner = getContainer(editor, file);
-    if (owner == null || AnnotationUtil.isAnnotated(owner, AnnotationUtil.NULLABLE, false)) {
-      return false;
-    }
-    if (owner instanceof PsiMethod) {
-      PsiType returnType = ((PsiMethod)owner).getReturnType();
-
-      return returnType != null && !(returnType instanceof PsiPrimitiveType);
-    }
-    return true;
   }
 }
