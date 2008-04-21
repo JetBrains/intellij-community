@@ -27,7 +27,7 @@ public class AddNullableNotNullAnnotationFix extends AddAnnotationFix {
       return false;
     }
     PsiModifierListOwner owner = getContainer(editor, file);
-    if (owner == null || AnnotationUtil.isAnnotated(owner, getAnnotationFQName(), false)) {
+    if (owner == null || AnnotationUtil.isAnnotated(owner, getAnnotationsToRemove()[0], false)) {
       return false;
     }
     if (owner instanceof PsiMethod) {

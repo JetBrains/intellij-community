@@ -172,7 +172,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
     return true;
   }
 
-  public String getAnnotationFQName() {
-    return myAnnotation;
+  public String[] getAnnotationsToRemove() {
+    return myAnnotationsToRemove;
   }
 }
