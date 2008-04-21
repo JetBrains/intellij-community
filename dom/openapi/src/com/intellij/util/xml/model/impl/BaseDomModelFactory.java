@@ -46,7 +46,7 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
   @Nullable
   protected abstract List<M> computeAllModels(@NotNull S scope);
 
-  protected abstract M createCombinedModel(Set<XmlFile> configFiles, DomFileElement<T> mergedModel, M firstModel, final S scope);
+  protected abstract M createCombinedModel(@NotNull Set<XmlFile> configFiles, @NotNull DomFileElement<T> mergedModel, M firstModel, final S scope);
 
   @Nullable
   public M getModel(@NotNull C context){
@@ -110,7 +110,7 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
     return myMultipleDomModelFactory.getAllConfigFiles(scope);
   }
 
-  @NotNull
+  @Nullable
   public DomFileElement<T> createMergedModelRoot(final Set<XmlFile> configFiles) {
     return mySimpleDomModelFactory.createMergedModelRoot(configFiles);
   }

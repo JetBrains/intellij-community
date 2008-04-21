@@ -24,6 +24,7 @@ import com.intellij.util.xml.ModelMerger;
 import com.intellij.util.xml.model.DomModel;
 import com.intellij.util.xml.model.SimpleModelFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,18 +40,12 @@ public abstract class SimpleDomModelFactory<T extends DomElement, M extends DomM
     super(aClass, modelMerger);
   }
 
-  @Deprecated
-  @NotNull
-  public T createMergedModel(Set<XmlFile> configFiles) {
-    return createMergedModelRoot(configFiles).getRootElement();
-  }
-
-  @NotNull
+  @Nullable
   public DomFileElement<T> createMergedModelRoot(Set<XmlFile> configFiles) {
     List<DomFileElement<T>> configs = new ArrayList<DomFileElement<T>>(configFiles.size());
     for (XmlFile configFile : configFiles) {
       ContainerUtil.addIfNotNull(getDomRoot(configFile), configs);
     }
-    return getModelMerger().mergeModels(DomFileElement.class, configs);
+    return configs.isEmpty() ? null : getModelMerger().mergeModels(DomFileElement.class, configs);
   }
 }
