@@ -154,8 +154,12 @@ public class GroovySpacingProcessor extends GroovyPsiElementVisitor {
     Method to start visiting
      */
     private void doInit() {
-      if (myChild1.getPsi().getLanguage() != GROOVY_LANGUAGE ||
-          myChild2.getPsi().getLanguage() != GROOVY_LANGUAGE) {
+      if (myChild1 == null || myChild2 == null) return;
+      PsiElement psi1 = myChild1.getPsi();
+      PsiElement psi2 = myChild2.getPsi();
+      if (psi1 == null || psi2 == null) return;
+      if (psi1.getLanguage() != GROOVY_LANGUAGE ||
+          psi2.getLanguage() != GROOVY_LANGUAGE) {
         return;
       }
 
