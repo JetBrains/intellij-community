@@ -37,4 +37,6 @@ public abstract class FacetEditorsFactory {
 
   public abstract LibrariesValidationComponent createLibrariesValidationComponent(LibraryInfo[] libraryInfos, Module module, 
                                                                          String defaultLibraryName);
+
+  public abstract MultipleFacetEditorHelper createMultipleFacetEditorHelper();
 }

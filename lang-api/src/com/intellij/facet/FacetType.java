@@ -16,14 +16,16 @@
 
 package com.intellij.facet;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.facet.autodetecting.FacetDetectorRegistry;
+import com.intellij.facet.ui.DefaultFacetSettingsEditor;
+import com.intellij.facet.ui.FacetEditor;
+import com.intellij.facet.ui.MultipleFacetSettingsEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.facet.autodetecting.FacetDetectorRegistry;
-import com.intellij.facet.ui.CommonFacetSettingsEditor;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -102,7 +104,12 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   }
 
   @Nullable
-  public CommonFacetSettingsEditor createDefaultConfigurationEditor(@NotNull Project project, @NotNull C configuration) {
+  public DefaultFacetSettingsEditor createDefaultConfigurationEditor(@NotNull Project project, @NotNull C configuration) {
+    return null;
+  }
+
+  @Nullable
+  public MultipleFacetSettingsEditor createMultipleConfigurationsEditor(@NotNull Project project, @NotNull FacetEditor[] editors) {
     return null;
   }
 }

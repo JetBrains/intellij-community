@@ -6,7 +6,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
-import com.intellij.facet.impl.ui.FacetEditor;
+import com.intellij.facet.impl.ui.FacetEditorImpl;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -52,7 +52,7 @@ public class FacetConfigurable extends NamedConfigurable<Facet> {
     return getEditor().getComponent();
   }
 
-  public FacetEditor getEditor() {
+  public FacetEditorImpl getEditor() {
     return myFacetsConfigurator.getOrCreateEditor(myFacet);
   }
 

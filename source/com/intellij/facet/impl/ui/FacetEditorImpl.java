@@ -8,6 +8,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
+import com.intellij.facet.ui.FacetEditor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -26,16 +27,16 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConfigurable {
-  private FacetEditorTab[] myEditorTabs;
-  private FacetErrorPanel myErrorPanel;
+public class FacetEditorImpl extends UnnamedConfigurableGroup implements UnnamedConfigurable, FacetEditor {
+  private final FacetEditorTab[] myEditorTabs;
+  private final FacetErrorPanel myErrorPanel;
   private JComponent myComponent;
   private @Nullable TabbedPaneWrapper myTabbedPane;
   private final FacetEditorContext myContext;
   private final Set<FacetEditorTab> myVisitedTabs = new HashSet<FacetEditorTab>();
   private int mySelectedTabIndex = 0;
 
-  public FacetEditor(final FacetEditorContext context, final FacetConfiguration configuration) {
+  public FacetEditorImpl(final FacetEditorContext context, final FacetConfiguration configuration) {
     myContext = context;
     myErrorPanel = new FacetErrorPanel();
     myEditorTabs = configuration.createEditorTabs(context, myErrorPanel.getValidatorsManager());
@@ -131,5 +132,18 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
 
   public void onFacetSelected() {
     onTabSelected(myEditorTabs[mySelectedTabIndex]);
+  }
+
+  public FacetEditorTab[] getEditorTabs() {
+    return myEditorTabs;
+  }
+
+  public <T extends FacetEditorTab> T getEditorTab(@NotNull final Class<T> aClass) {
+    for (FacetEditorTab editorTab : myEditorTabs) {
+      if (aClass.isInstance(editorTab)) {
+        return aClass.cast(editorTab);
+      }
+    }
+    return null;
   }
 }

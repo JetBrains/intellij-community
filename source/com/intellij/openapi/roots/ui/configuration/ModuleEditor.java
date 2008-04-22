@@ -1,8 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
-import com.intellij.facet.impl.ui.FacetEditor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -478,10 +476,6 @@ public class ModuleEditor implements Place.Navigator {
       unwrappedParams[idx] = param;
     }
     return unwrappedParams;
-  }
-
-  public FacetEditor getOrCreateFacetEditor(final Facet facet) {
-    return myFacetsConfigurator.getOrCreateEditor(facet);
   }
 
   @Nullable

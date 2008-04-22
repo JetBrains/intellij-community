@@ -3,7 +3,7 @@ package com.intellij.facet.impl.ui.facetType;
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.ProjectFacetManager;
-import com.intellij.facet.ui.CommonFacetSettingsEditor;
+import com.intellij.facet.ui.DefaultFacetSettingsEditor;
 import com.intellij.facet.impl.autodetecting.FacetAutodetectingManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.UnnamedConfigurableGroup;
@@ -28,9 +28,9 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
     }
 
     C configuration = ProjectFacetManager.getInstance(project).createDefaultConfiguration(facetType);
-    CommonFacetSettingsEditor defaultSettingsEditor = facetType.createDefaultConfigurationEditor(project, configuration);
+    DefaultFacetSettingsEditor defaultSettingsEditor = facetType.createDefaultConfigurationEditor(project, configuration);
     if (defaultSettingsEditor != null) {
-      myConfigurables.add(new DefaultFacetSettingsEditor<C>(facetType, project, defaultSettingsEditor, configuration));
+      myConfigurables.add(new DefaultFacetSettingsConfigurable<C>(facetType, project, defaultSettingsEditor, configuration));
     }
 
     for (Configurable configurable : myConfigurables) {

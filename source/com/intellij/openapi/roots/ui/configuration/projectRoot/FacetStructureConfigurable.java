@@ -4,6 +4,8 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeRegistry;
+import com.intellij.facet.ui.MultipleFacetSettingsEditor;
+import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.impl.ui.facetType.FacetTypeEditor;
 import com.intellij.facet.impl.autodetecting.FacetAutodetectingManager;
 import com.intellij.facet.impl.autodetecting.FacetAutodetectingManagerImpl;
@@ -13,18 +15,19 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.ui.DetailsComponent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author nik
@@ -42,10 +45,15 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   private static final Icon ICON = IconLoader.getIcon("/modules/modules.png");//todo[nik] use facets icon
   private final ModuleManager myModuleManager;
   private final Map<FacetType<?, ?>, FacetTypeEditor> myFacetTypeEditors = new HashMap<FacetType<?,?>, FacetTypeEditor>();
+  private MultipleFacetSettingsEditor myCurrentMultipleSettingsEditor;
 
   public FacetStructureConfigurable(final Project project, ModuleManager moduleManager) {
     super(project);
     myModuleManager = moduleManager;
+  }
+
+  public static FacetStructureConfigurable getInstance(final @NotNull Project project) {
+    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, FacetStructureConfigurable.class);
   }
 
   protected void loadTree() {
@@ -122,6 +130,54 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     ArrayList<AnAction> actions = new ArrayList<AnAction>();
     addCollapseExpandActions(actions);
     return actions;
+  }
+
+  protected boolean updateMultiSelection(final List<NamedConfigurable> selectedConfigurables) {
+    return updateMultiSelection(selectedConfigurables, getDetailsComponent());
+  }
+
+  public boolean updateMultiSelection(final List<NamedConfigurable> selectedConfigurables, final DetailsComponent detailsComponent) {
+    FacetType selectedFacetType = null;
+    List<FacetEditor> facetEditors = new ArrayList<FacetEditor>();
+    for (NamedConfigurable selectedConfigurable : selectedConfigurables) {
+      if (selectedConfigurable instanceof FacetConfigurable) {
+        FacetConfigurable facetConfigurable = (FacetConfigurable)selectedConfigurable;
+        FacetType facetType = facetConfigurable.getEditableObject().getType();
+        if (selectedFacetType != null && selectedFacetType != facetType) {
+          return false;
+        }
+        selectedFacetType = facetType;
+        facetEditors.add(facetConfigurable.getEditor());
+      }
+    }
+    if (facetEditors.size() <= 1 || selectedFacetType == null) {
+      return false;
+    }
+
+    FacetEditor[] selectedEditors = facetEditors.toArray(new FacetEditor[facetEditors.size()]);
+    MultipleFacetSettingsEditor editor = selectedFacetType.createMultipleConfigurationsEditor(myProject, selectedEditors);
+    if (editor == null) {
+      return false;
+    }
+
+    updateSelection(null);
+    myCurrentMultipleSettingsEditor = editor;
+    detailsComponent.setText(ProjectBundle.message("multiple.facets.banner.0.1.facets", selectedEditors.length,
+                                                        selectedFacetType.getPresentableName()));
+    detailsComponent.setContent(editor.createComponent());
+    return true;
+  }
+
+  protected void updateSelection(@Nullable final NamedConfigurable configurable) {
+    disposeMultipleSettingsEditor();
+    super.updateSelection(configurable);
+  }
+
+  public void disposeMultipleSettingsEditor() {
+    if (myCurrentMultipleSettingsEditor != null) {
+      myCurrentMultipleSettingsEditor.disposeUIResources();
+      myCurrentMultipleSettingsEditor = null;
+    }
   }
 
   protected AbstractAddGroup createAddAction() {

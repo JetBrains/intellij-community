@@ -5,7 +5,7 @@
 package com.intellij.facet.impl;
 
 import com.intellij.facet.*;
-import com.intellij.facet.impl.ui.FacetEditor;
+import com.intellij.facet.impl.ui.FacetEditorImpl;
 import com.intellij.facet.impl.ui.FacetEditorContextBase;
 import com.intellij.facet.impl.ui.FacetTreeModel;
 import com.intellij.facet.impl.ui.ProjectConfigurableContext;
@@ -35,7 +35,7 @@ import java.util.*;
 public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.ChangeListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectFacetsConfigurator");
   private final Map<Module, ModifiableFacetModel> myModels = new HashMap<Module, ModifiableFacetModel>();
-  private final Map<Facet, FacetEditor> myEditors = new HashMap<Facet, FacetEditor>();
+  private final Map<Facet, FacetEditorImpl> myEditors = new HashMap<Facet, FacetEditorImpl>();
   private final Map<Module, FacetTreeModel> myTreeModels = new HashMap<Module, FacetTreeModel>();
   private final Map<FacetInfo, Facet> myInfo2Facet = new HashMap<FacetInfo, Facet>();
   private Map<Facet, FacetInfo> myFacet2Info = new HashMap<Facet, FacetInfo>();
@@ -71,7 +71,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     if (myCreatedFacets.contains(facet)) {
       Disposer.dispose(facet);
     }
-    final FacetEditor facetEditor = myEditors.remove(facet);
+    final FacetEditorImpl facetEditor = myEditors.remove(facet);
     if (facetEditor != null) {
       facetEditor.disposeUIResources();
     }
@@ -140,14 +140,14 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   }
 
   @NotNull
-  public FacetEditor getOrCreateEditor(Facet facet) {
-    FacetEditor editor = myEditors.get(facet);
+  public FacetEditorImpl getOrCreateEditor(Facet facet) {
+    FacetEditorImpl editor = myEditors.get(facet);
     if (editor == null) {
       final Facet underlyingFacet = facet.getUnderlyingFacet();
       final FacetEditorContext parentContext = underlyingFacet != null ? getOrCreateEditor(underlyingFacet).getContext() : null;
       final ModuleConfigurationState state = myModuleStateProvider.fun(facet.getModule());
       final ProjectConfigurableContext context = new MyProjectConfigurableContext(myFacet2Info.get(facet), facet, parentContext, state);
-      editor = new FacetEditor(context, facet.getConfiguration());
+      editor = new FacetEditorImpl(context, facet.getConfiguration());
       editor.getComponent();
       editor.reset();
       myEditors.put(facet, editor);
@@ -178,7 +178,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
       model.commit();
     }
 
-    for (Map.Entry<Facet, FacetEditor> entry : myEditors.entrySet()) {
+    for (Map.Entry<Facet, FacetEditorImpl> entry : myEditors.entrySet()) {
       entry.getValue().onFacetAdded(entry.getKey());
     }
 
@@ -190,14 +190,14 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   }
 
   public void resetEditors() {
-    for (FacetEditor editor : myEditors.values()) {
+    for (FacetEditorImpl editor : myEditors.values()) {
       editor.reset();
     }
   }
 
   public void applyEditors() throws ConfigurationException {
-    for (Map.Entry<Facet,FacetEditor> entry : myEditors.entrySet()) {
-      final FacetEditor editor = entry.getValue();
+    for (Map.Entry<Facet, FacetEditorImpl> entry : myEditors.entrySet()) {
+      final FacetEditorImpl editor = entry.getValue();
       if (editor.isModified()) {
         myChangedFacets.add(entry.getKey());
       }
@@ -211,7 +211,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
         return true;
       }
     }
-    for (FacetEditor editor : myEditors.values()) {
+    for (FacetEditorImpl editor : myEditors.values()) {
       if (editor.isModified()) {
         return true;
       }
@@ -243,7 +243,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     myFacetsToDispose.clear();
     myCreatedFacets.clear();
 
-    for (FacetEditor editor : myEditors.values()) {
+    for (FacetEditorImpl editor : myEditors.values()) {
       editor.disposeUIResources();
     }
     myProjectData = null;
@@ -268,7 +268,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     Module module = moduleRootModel.getModule();
     Facet[] allFacets = getAllFacets(module);
     for (Facet facet : allFacets) {
-      FacetEditor facetEditor = myEditors.get(facet);
+      FacetEditorImpl facetEditor = myEditors.get(facet);
       if (facetEditor != null) {
         ((FacetEditorContextBase)facetEditor.getContext()).fireModuleRootsChanged(moduleRootModel);
       }
@@ -277,7 +277,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
 
   private void fireFacetModelChanged(Module module) {
     for (Facet facet : getAllFacets(module)) {
-      FacetEditor facetEditor = myEditors.get(facet);
+      FacetEditorImpl facetEditor = myEditors.get(facet);
       if (facetEditor != null) {
         ((FacetEditorContextBase)facetEditor.getContext()).fireFacetModelChanged(module);
       }

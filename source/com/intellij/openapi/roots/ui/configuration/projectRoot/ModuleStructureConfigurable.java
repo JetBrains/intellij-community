@@ -60,6 +60,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -124,6 +125,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   protected void updateSelection(@Nullable final NamedConfigurable configurable) {
+    FacetStructureConfigurable.getInstance(myProject).disposeMultipleSettingsEditor();
     ApplicationManager.getApplication().assertIsDispatchThread();
     final String selectedTab = ModuleEditor.getSelectedTab();
     updateSelection(configurable, selectedTab);
@@ -132,6 +134,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   protected boolean isAutoScrollEnabled() {
     return myAutoScrollEnabled;
+  }
+
+  protected boolean updateMultiSelection(final List<NamedConfigurable> selectedConfigurables) {
+    return FacetStructureConfigurable.getInstance(myProject).updateMultiSelection(selectedConfigurables, getDetailsComponent());
   }
 
   private void updateSelection(final NamedConfigurable configurable, final String selectedTab) {
@@ -342,7 +348,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   public String getHelpTopic() {
     return "reference.settingsdialog.project.structure.module";
   }
-
 
 
   public static ModuleStructureConfigurable getInstance(final Project project) {

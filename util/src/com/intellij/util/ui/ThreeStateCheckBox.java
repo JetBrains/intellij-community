@@ -9,6 +9,7 @@ import java.awt.event.ItemEvent;
  */
 public class ThreeStateCheckBox extends JCheckBox {
   private State myState;
+  private boolean myThirdStateEnabled = true;
 
   public static enum State {
     SELECTED, NOT_SELECTED, DONT_CARE
@@ -59,10 +60,23 @@ public class ThreeStateCheckBox extends JCheckBox {
       case SELECTED:
         return State.NOT_SELECTED;
       case NOT_SELECTED:
-        return State.DONT_CARE;
+        if (myThirdStateEnabled) {
+          return State.DONT_CARE;
+        }
+        else {
+          return State.SELECTED;
+        }
       default:
         return State.SELECTED;
     }
+  }
+
+  public boolean isThirdStateEnabled() {
+    return myThirdStateEnabled;
+  }
+
+  public void setThirdStateEnabled(final boolean thirdStateEnabled) {
+    myThirdStateEnabled = thirdStateEnabled;
   }
 
   @Override

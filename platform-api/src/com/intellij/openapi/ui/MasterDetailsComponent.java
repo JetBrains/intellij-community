@@ -60,7 +60,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.MasterDetailsComponent");
   protected static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
   protected NamedConfigurable myCurrentConfigurable;
-  private Splitter mySplitter;
+  private final Splitter mySplitter;
 
 
   @NonNls public static final String TREE_OBJECT = "treeObject";
@@ -170,6 +170,20 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   }
 
   private void updateSelectionFromTree() {
+    TreePath[] treePaths = myTree.getSelectionPaths();
+    if (treePaths != null) {
+      List<NamedConfigurable> selectedConfigurables = new ArrayList<NamedConfigurable>();
+      for (TreePath path : treePaths) {
+        Object lastPathComponent = path.getLastPathComponent();
+        if (lastPathComponent instanceof MyNode) {
+          selectedConfigurables.add(((MyNode)lastPathComponent).getConfigurable());
+        }
+      }
+      if (selectedConfigurables.size() > 1 && updateMultiSelection(selectedConfigurables)) {
+        return;
+      }
+    }
+
     final TreePath path = myTree.getSelectionPath();
     if (path != null) {
       final Object lastPathComp = path.getLastPathComponent();
@@ -180,6 +194,10 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     } else {
       updateSelection(null);
     }
+  }
+
+  protected boolean updateMultiSelection(final List<NamedConfigurable> selectedConfigurables) {
+    return false;
   }
 
   public DetailsComponent getDetailsComponent() {

@@ -8,6 +8,7 @@ import com.intellij.facet.impl.ui.libraries.*;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorsFactory;
 import com.intellij.facet.ui.FacetValidatorsManager;
+import com.intellij.facet.ui.MultipleFacetEditorHelper;
 import com.intellij.facet.ui.libraries.*;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
@@ -28,4 +29,7 @@ public class FacetEditorsFactoryImpl extends FacetEditorsFactory {
     return new LibrariesValidationComponentImpl(libraryInfos, module, defaultLibraryName);
   }
 
+  public MultipleFacetEditorHelper createMultipleFacetEditorHelper() {
+    return new MultipleFacetEditorHelperImpl();
+  }
 }
