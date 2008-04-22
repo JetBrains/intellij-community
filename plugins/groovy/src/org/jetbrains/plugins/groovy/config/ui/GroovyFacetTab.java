@@ -22,6 +22,8 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
@@ -37,7 +39,6 @@ import org.jetbrains.plugins.groovy.config.GroovySDK;
 
 import javax.swing.*;
 import java.awt.event.*;
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -53,6 +54,8 @@ public class GroovyFacetTab extends FacetEditorTab {
   private FacetEditorContext myEditorContext;
   private FacetValidatorsManager myValidatorsManager;
 
+  private LibraryTable.Listener myLibraryListener;
+
 
   private boolean isSdkChanged = false;
 
@@ -62,6 +65,8 @@ public class GroovyFacetTab extends FacetEditorTab {
     myValidatorsManager = validatorsManager;
     setUpComponents();
     reset();
+    myLibraryListener = new MyLibraryTableListener();
+    LibraryTablesRegistrar.getInstance().getLibraryTable().addListener(myLibraryListener);
   }
 
 
@@ -115,11 +120,13 @@ public class GroovyFacetTab extends FacetEditorTab {
   }
 
   public void disposeUIResources() {
-
+    if (myLibraryListener != null) {
+      LibraryTablesRegistrar.getInstance().getLibraryTable().removeListener(myLibraryListener);
+    }
   }
 
   private void createUIComponents() {
-    updateComboBox();
+    setUpComboBox();
   }
 
   private void setUpComponents() {
@@ -144,7 +151,6 @@ public class GroovyFacetTab extends FacetEditorTab {
               if (addVersion && !GroovyConfigUtils.UNDEFINED_VERSION.equals(version)) {
                 GroovyConfigUtils.createGroovyLibrary(path);
                 updateComboBox();
-                reset();
               }
             } else {
               Messages.showErrorDialog(GroovyBundle.message("invalid.groovy.sdk.path.message"), GroovyBundle.message("invalid.groovy.sdk.path.text"));
@@ -156,7 +162,7 @@ public class GroovyFacetTab extends FacetEditorTab {
     }
   }
 
-  private void updateComboBox() {
+  private void setUpComboBox() {
     myComboBox = new GrovySDKComboBox();
     myComboBox.insertItemAt(new GrovySDKComboBox.NoGroovySDKComboBoxItem(), 0);
     myComboBox.addItemListener(new ItemListener() {
@@ -166,5 +172,31 @@ public class GroovyFacetTab extends FacetEditorTab {
     });
     myComboBox.setSelectedIndex(0);
   }
+
+  private void updateComboBox() {
+    setUpComboBox();
+    reset();
+  }
+
+  private class MyLibraryTableListener implements LibraryTable.Listener {
+
+    public void afterLibraryAdded(Library newLibrary) {
+      updateComboBox();
+    }
+
+    public void afterLibraryRenamed(Library library) {
+      updateComboBox();
+    }
+
+    public void afterLibraryRemoved(Library library) {
+      updateComboBox();
+    }
+
+    public void beforeLibraryRemoved(Library library) {
+
+    }
+
+  }
+
 
 }
