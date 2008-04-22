@@ -98,7 +98,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
     return module[0];
   }
 
-  void initModule(Module module) {
+  protected void initModule(Module module) {
     final Set<String> sourcesLeft = new THashSet<String>();
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = rootManager.getModifiableModel();

@@ -79,7 +79,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
     myMockJdkLevel = level;
   }
 
-  void initModule(final Module module) {
+  protected void initModule(final Module module) {
     super.initModule(module);
 
 
