@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PythonFileType;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -24,6 +25,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
@@ -61,6 +64,17 @@ public class PythonSdkType extends SdkType {
         }
       }
     }
+    else if (SystemInfo.isLinux) {
+      VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath("/usr/lib");
+      if (rootDir != null) {
+        VirtualFile[] suspect_dirs = rootDir.getChildren();
+        for(VirtualFile dir: suspect_dirs) {
+          if (dir.isDirectory() && dir.getName().startsWith("python")) {
+            candidates.add(dir.getPath());
+          }
+        }
+      }
+    }
     else if (SystemInfo.isMac) {
       return "/Library/Frameworks/Python.framework/Versions/Current/";
     }
@@ -77,9 +91,26 @@ public class PythonSdkType extends SdkType {
     return isPythonSdkHome(path) || isJythonSdkHome(path);
   }
 
+  /**
+   * Checks if the path is a valid home.
+   * Valid CPython home must contain some standard libraries. Of them we look for re.py, __future__.py and site-packages/.
+   * @param path path to check.
+   * @return true if paths points to a valid home.
+   */
+  @NonNls
   private static boolean isPythonSdkHome(final String path) {
+    /*
     File f = getPythonBinaryPath(path);
     return f != null && f.exists();
+    */
+    File f_re = new File(path, "re.py");
+    File f_future = new File(path, "__future__.py");
+    File f_site = new File(path, "site-packages");
+    return (
+      f_re.exists() &&
+      f_future.exists() &&
+      f_site.exists() &&  f_site.isDirectory()
+    );
   }
 
   private static boolean isJythonSdkHome(final String path) {
@@ -91,9 +122,11 @@ public class PythonSdkType extends SdkType {
     if (SystemInfo.isWindows) {
       return new File(path, "jython.bat");
     }
+    // TODO: support Mac and Linux
     return null;
   }
 
+  @NonNls
   private static File getPythonBinaryPath(final String path) {
     if (SystemInfo.isWindows) {
       return new File(path, "python.exe");
@@ -101,11 +134,24 @@ public class PythonSdkType extends SdkType {
     else if (SystemInfo.isMac) {
       return new File(new File(path, "bin"), "python");
     }
+    else if (SystemInfo.isLinux) {
+      // most probably path is like "/usr/lib/pythonX.Y"; executable is most likely /usr/bin/pythonX.Y
+      Matcher m = Pattern.compile(".*/(python\\d\\.\\d)").matcher(path);
+      File py_binary;
+      if (m.matches()) {
+        String py_name = m.group(1); // $1
+        py_binary = new File("/usr/bin/"+py_name);
+      }
+      else py_binary = new File("/usr/bin/python"); // TODO: search in $PATH
+      if (py_binary.exists()) return py_binary;
+    }
     return null;
   }
 
   public String suggestSdkName(final String currentSdkName, final String sdkHome) {
-    return getVersionString(sdkHome);
+    String name = getVersionString(sdkHome);
+    if (name == null) name = "Unknown at " + sdkHome; // last resort
+    return name;
   }
 
   public AdditionalDataConfigurable createAdditionalDataConfigurable(final SdkModel sdkModel, final SdkModificator sdkModificator) {
@@ -136,7 +182,9 @@ public class PythonSdkType extends SdkType {
 
   public void setupSdkPaths(final Sdk sdk) {
     final SdkModificator sdkModificator = sdk.getSdkModificator();
-    VirtualFile libDir = sdk.getHomeDirectory().findChild("Lib");
+    VirtualFile libDir;
+    if (SystemInfo.isLinux) libDir = sdk.getHomeDirectory();
+    else libDir = sdk.getHomeDirectory().findChild("Lib");
     final String stubsPath =
         PathManager.getSystemPath() + File.separator + "python_stubs" + File.separator + sdk.getHomePath().hashCode() + File.separator;
     if (libDir != null) {
@@ -166,7 +214,7 @@ public class PythonSdkType extends SdkType {
     String binaryPath = getInterpreterPath(sdkHome);
     final boolean isJython = isJythonSdkHome(sdkHome);
     String marker = isJython ? "Jython" : "Python";
-    String version = SdkVersionUtil.readVersionFromProcessOutput(sdkHome, new String[] { binaryPath, "--version" }, marker);
+    String version = SdkVersionUtil.readVersionFromProcessOutput(sdkHome, new String[] { binaryPath, "-V" }, marker);
     if (version != null && isJython) {
       int p = version.indexOf(" on ");
       if (p >= 0) {
