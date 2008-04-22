@@ -1426,6 +1426,32 @@ public class JBTabsImpl extends JComponent
     return max;
   }
 
+  @Nullable
+  private JComponent getSelectedComponent() {
+    final TabInfo selection = getSelectedInfo();
+    if (selection != null) {
+      final JComponent c = selection.getComponent();
+      if (c != null && c.getParent() == this) return c;
+    }
+
+    return null;
+  }
+
+  public Dimension getMinimumSize() {
+    final JComponent c = getSelectedComponent();
+    return c != null ? c.getMinimumSize() : new Dimension(0, 0);
+  }
+
+  public Dimension getMaximumSize() {
+    final JComponent c = getSelectedComponent();
+    return c != null ? c.getMaximumSize() : super.getPreferredSize();
+  }
+
+  public Dimension getPreferredSize() {
+    final JComponent c = getSelectedComponent();
+    return c != null ? c.getPreferredSize() : super.getPreferredSize();
+  }
+
   public int getTabCount() {
     return getTabs().size();
   }
