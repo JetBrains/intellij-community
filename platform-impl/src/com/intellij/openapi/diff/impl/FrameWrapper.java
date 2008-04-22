@@ -165,9 +165,13 @@ public class FrameWrapper {
   }
 
   private class MyJFrame extends JFrame implements DataProvider {
+    private boolean myDisposing;
+
     public MyJFrame() throws HeadlessException {}
 
     public void dispose() {
+      if (myDisposing) return;
+      myDisposing = true;
       saveFrameState(myDimensionKey, this);
       for (Disposable disposable : myDisposables) {
         disposable.dispose();
