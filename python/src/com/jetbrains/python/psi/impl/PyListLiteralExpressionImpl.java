@@ -90,8 +90,10 @@ public class PyListLiteralExpressionImpl extends PyElementImpl implements PyList
     }
   }
 
-
+  @NotNull
   public PyType getType() {
-    return new PyClassType(PyBuiltinCache.getInstance(getProject()).getListClass());
+    PyClass cls = PyBuiltinCache.getInstance(getProject()).getListClass();
+    assert(cls != null);
+    return new PyClassType(cls);
   }
 }
