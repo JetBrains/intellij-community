@@ -601,7 +601,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub> implements Ps
                                                     boolean isInitialClass,
                                                     final PsiElement defaultResolveContext) {
     final PsiClassStub stub = ((PsiClassImpl)aClass).getStub();
-    if (stub == null) {
+    if (stub == null || stub.isAnonymousInQualifiedNew()) {
       return aClass.getParent();
     }
 
