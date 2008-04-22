@@ -256,13 +256,17 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         return null;
       }
 
+      PsiTypeParameterListOwner owner = null;
       PsiType ret;
       if (resolve instanceof PsiVariable) {
         PsiType type = ((PsiVariable)resolve).getType();
         ret = type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type;
+        if (resolve instanceof PsiField) owner = ((PsiField)resolve).getContainingClass();
       }
       else if (resolve instanceof PsiMethod) {
-        ret = ((PsiMethod)resolve).getReturnType();
+        PsiMethod method = (PsiMethod)resolve;
+        ret = method.getReturnType();
+        owner = method;
       }
       else {
         return null;
@@ -274,6 +278,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       }
 
       if (languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
+        if (owner != null && PsiUtil.isRawSubstitutor(owner, result.getSubstitutor())) return TypeConversionUtil.erasure(ret);
         PsiType substitutedType = result.getSubstitutor().substitute(ret);
         return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedType, refExpr);
       }
