@@ -55,8 +55,6 @@ public class OptimizeImportsTest extends IdeaTestCase {
         rootModel.commit();
       }
     });
-
-    GroovyPsiManager.getInstance(getProject()).buildGDK();
   }
 
   public void testNewline() throws Throwable {

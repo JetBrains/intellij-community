@@ -54,7 +54,5 @@ public abstract class GroovyResolveTestCase extends ResolveTestCase {
         rootModel.commit();
       }
     });
-
-    GroovyPsiManager.getInstance(getProject()).buildGDK();
   }
 }

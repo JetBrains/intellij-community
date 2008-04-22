@@ -50,8 +50,6 @@ public class FindUsagesTest extends IdeaTestCase {
     builder.addModule(JavaModuleFixtureBuilder.class).addJdk(TestUtils.getMockJdkHome()).addContentRoot(myFixture.getTempDirPath()+ "/" + getTestName(true)).addSourceRoot("");
     myFixture.setTestDataPath(TestUtils.getTestDataPath() + "/findUsages");
     myFixture.setUp();
-
-    GroovyPsiManager.getInstance(myFixture.getProject()).buildGDK();
   }
 
   protected void tearDown() throws Exception {

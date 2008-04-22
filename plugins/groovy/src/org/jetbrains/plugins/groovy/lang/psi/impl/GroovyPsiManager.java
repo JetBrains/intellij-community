@@ -17,8 +17,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
@@ -32,7 +30,6 @@ import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -106,22 +103,7 @@ public class GroovyPsiManager implements ProjectComponent {
     myCalculatedTypes.clear();
   }
 
-  public void buildGDK() {
-    if (myProject.isDisposed()) return;
-
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) {
-      indicator.pushState();
-      indicator.setIndeterminate(true);
-      indicator.setText(GroovyBundle.message("reading.gdk.classes"));
-    }
-
-    buildGDKImpl();
-
-    if (indicator != null) indicator.popState();
-  }
-
-  private void buildGDKImpl() {
+  private void buildGDK() {
     final HashMap<String, List<PsiMethod>> newMap = new HashMap<String, List<PsiMethod>>();
 
     PsiClass defaultMethodsClass = PsiManager.getInstance(myProject).findClass(DEFAULT_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
@@ -285,7 +267,7 @@ public class GroovyPsiManager implements ProjectComponent {
     if (myRebuildGdkPending) {
       synchronized (this) {
         if (myRebuildGdkPending) {
-          buildGDKImpl();
+          buildGDK();
           myRebuildGdkPending = false;
         }
       }
