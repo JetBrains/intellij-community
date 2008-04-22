@@ -16,16 +16,25 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.Processor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.facet.ui.ValidationResult;
+import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.FacetManager;
 
 import java.util.jar.JarFile;
 import java.util.jar.JarEntry;
@@ -33,6 +42,8 @@ import java.util.jar.Manifest;
 import java.util.jar.Attributes;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Arrays;
 import java.io.File;
 import java.io.IOException;
 
@@ -40,6 +51,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 /**
  * @author ilyas
@@ -50,6 +63,7 @@ public class GroovyConfigUtils {
   public static final String GROOVY_LIB_PATTERN = "groovy-\\d.*";
   public static final String MANIFEST_PATH = "META-INF/MANIFEST.MF";
   public static final String GROOVY_JAR_PATTERN = "groovy-all-\\d.*\\.jar";
+  public static final String GROOVY_LIB_PREFIX = "groovy-";
 
   public static boolean isGroovySdkHome(final VirtualFile file) {
     final Ref<Boolean> result = Ref.create(false);
@@ -123,18 +137,12 @@ public class GroovyConfigUtils {
   }
 
   public static boolean isGroovySdkLibrary(Library library) {
-    return library.getName().matches(GROOVY_LIB_PATTERN);
+    return library != null && library.getName().matches(GROOVY_LIB_PATTERN);
   }
 
   @NotNull
-  @NonNls
-  public static String getLibraryNameByVersion(final String selectedVersion) {
-    return GroovyGrailsConfiguration.GROOVY_LIB_PREFIX + selectedVersion;
-  }
-
-  @NotNull
-  static String getLibNameByVersion(String version) {
-    return GroovyGrailsConfiguration.GROOVY_LIB_PREFIX + version;
+  public static String getLibNameByVersion(String version) {
+    return GROOVY_LIB_PREFIX + version;
   }
 
   @Nullable
@@ -234,5 +242,132 @@ public class GroovyConfigUtils {
     }
 
     return libraries.toArray(new Library[libraries.size()]);
+  }
+
+  public static ValidationResult isGroovySdkHome(String path) {
+    final VirtualFile relativeFile = VfsUtil.findRelativeFile(path, null);
+    if (relativeFile != null && GroovyConfigUtils.isGroovySdkHome(relativeFile)) {
+      return ValidationResult.OK;
+    }
+    return new ValidationResult(GroovyBundle.message("invalid.groovy.sdk.path.message"));
+  }
+
+  public static void createGroovyLibrary(final String path) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        if (path.length() > 0) {
+          String version = getGroovyVersion(path);
+          String libName = generateNewGroovyLibName(version);
+          Library groovyLibrary = createLibFirstTime(libName);
+          Library.ModifiableModel model = groovyLibrary.getModifiableModel();
+          removeOldRoots(model);
+          File srcRoot = new File(path + "/src/main");
+          if (srcRoot.exists()) {
+            model.addRoot(VfsUtil.getUrlForLibraryRoot(srcRoot), OrderRootType.SOURCES);
+          }
+
+          File[] jars;
+          File embeddableDir = new File(path + "/embeddable");
+          if (embeddableDir.exists()) {
+            jars = embeddableDir.listFiles();
+          } else {
+            jars = new File(path + "/lib").listFiles();
+          }
+          if (jars != null)
+            for (File file : jars)
+              if (file.getName().endsWith(".jar"))
+                model.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
+
+          model.commit();
+          saveGroovyVersion(version);
+        }
+      }
+    });
+  }
+
+  private static String generateNewGroovyLibName(String version) {
+    List<Object> libNames = ContainerUtil.map(getGroovyLibraries(), new Function<Library, Object>() {
+      public Object fun(Library library) {
+        return library.getName();
+      }
+    });
+    String originalName = GROOVY_LIB_PREFIX + version;
+    String newName = originalName;
+    int index = 1;
+    while (libNames.contains(newName)) {
+      newName = originalName + "(" + index + ")";
+      index++;
+    }
+    return newName;
+  }
+
+  public static void saveGroovyVersion(String version) {
+    GroovyApplicationSettings settings = GroovyApplicationSettings.getInstance();
+    if (!UNDEFINED_VERSION.equals(version)) {
+      settings.DEFAULT_GROOVY_VERSION = version;
+      if (!(settings.GROOVY_VERSIONS.contains(version))) {
+        settings.GROOVY_VERSIONS.add(version);
+      }
+    }
+  }
+
+  public static void addLibraryToReferringModules(FacetTypeId<?> facetID, Library library) {
+    for (Project prj : ProjectManager.getInstance().getOpenProjects())
+      for (Module module : ModuleManager.getInstance(prj).getModules()) {
+        if (FacetManager.getInstance(module).getFacetByType(facetID) != null) {
+          addLibrary(library, module);
+        }
+      }
+  }
+
+  public static void addLibrary(Library library, Module module) {
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+    if (!libraryReferenced(rootManager, library)) {
+      final ModifiableRootModel moduleModel = rootManager.getModifiableModel();
+      final LibraryOrderEntry addedEntry = moduleModel.addLibraryEntry(library);
+      final OrderEntry[] order = moduleModel.getOrderEntries();
+
+      //place library before jdk
+      assert order[order.length - 1] == addedEntry;
+      int insertionPoint = - -1;
+      for (int i = 0; i < order.length - 1; i++) {
+        if (order[i] instanceof JdkOrderEntry) {
+          insertionPoint = i;
+          break;
+        }
+      }
+      if (insertionPoint >= 0) {
+        for (int i = order.length - 1; i > insertionPoint; i--) {
+          order[i] = order[i - 1];
+        }
+        order[insertionPoint] = addedEntry;
+
+        moduleModel.rearrangeOrderEntries(order);
+      }
+      moduleModel.commit();
+    }
+  }
+
+  public static Library createLibFirstTime(String baseName) {
+    LibraryTable libTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
+    Library library = libTable.getLibraryByName(baseName);
+    if (library == null) {
+      library = LibraryUtil.createLibrary(libTable, baseName);
+    }
+    return library;
+  }
+
+  public static void removeOldRoots(Library.ModifiableModel model) {
+    for (OrderRootType type : OrderRootType.ALL_TYPES)
+      for (String url : model.getUrls(type))
+        model.removeRoot(url, type);
+  }
+
+  public static Collection<String> getGroovyVersions() {
+    return ContainerUtil.map2List(getGroovyLibraries(), new Function<Library, String>() {
+      public String fun(Library library) {
+        return getGroovyLibVersion(library);
+      }
+    });
   }
 }

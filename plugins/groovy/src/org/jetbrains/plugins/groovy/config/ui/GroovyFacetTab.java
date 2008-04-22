@@ -15,25 +15,30 @@
 
 package org.jetbrains.plugins.groovy.config.ui;
 
-import com.intellij.facet.ui.FacetEditorContext;
-import com.intellij.facet.ui.FacetEditorTab;
-import com.intellij.facet.ui.FacetValidatorsManager;
+import com.intellij.facet.ui.*;
 import com.intellij.facet.Facet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDialog;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovySDK;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author ilyas
@@ -55,6 +60,8 @@ public class GroovyFacetTab extends FacetEditorTab {
     myNewButton.setMnemonic(KeyEvent.VK_N);
     myEditorContext = editorContext;
     myValidatorsManager = validatorsManager;
+    setUpComponents();
+    reset();
   }
 
 
@@ -81,10 +88,10 @@ public class GroovyFacetTab extends FacetEditorTab {
         }
       });
     }
+    isSdkChanged = false;
   }
 
   public void apply() throws ConfigurationException {
-    isSdkChanged = false;
   }
 
   public void reset() {
@@ -112,10 +119,48 @@ public class GroovyFacetTab extends FacetEditorTab {
   }
 
   private void createUIComponents() {
+    updateComboBox();
+  }
+
+  private void setUpComponents() {
+
+    if (myEditorContext != null && myEditorContext.getProject() != null) {
+      final Project project = myEditorContext.getProject();
+      myNewButton.addActionListener(new ActionListener() {
+        public void actionPerformed(final ActionEvent e) {
+          final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+          final FileChooserDialog fileChooserDialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
+          final VirtualFile[] files = fileChooserDialog.choose(null, project);
+          if (files.length > 0) {
+            String path = files[0].getPath();
+            if (ValidationResult.OK == GroovyConfigUtils.isGroovySdkHome(path)) {
+              Collection<String> versions = GroovyConfigUtils.getGroovyVersions();
+              String version = GroovyConfigUtils.getGroovyVersion(path);
+              boolean addVersion = !versions.contains(version) ||
+                  Messages.showOkCancelDialog(GroovyBundle.message("duplicate.groovy.lib.version.add", version),
+                      GroovyBundle.message("duplicate.groovy.lib.version"),
+                      GroovyIcons.BIG_ICON) == 0;
+
+              if (addVersion && !GroovyConfigUtils.UNDEFINED_VERSION.equals(version)) {
+                GroovyConfigUtils.createGroovyLibrary(path);
+                updateComboBox();
+                reset();
+              }
+            } else {
+              Messages.showErrorDialog(GroovyBundle.message("invalid.groovy.sdk.path.message"), GroovyBundle.message("invalid.groovy.sdk.path.text"));
+            }
+          }
+        }
+
+      });
+    }
+  }
+
+  private void updateComboBox() {
     myComboBox = new GrovySDKComboBox();
     myComboBox.insertItemAt(new GrovySDKComboBox.NoGroovySDKComboBoxItem(), 0);
-    myComboBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
+    myComboBox.addItemListener(new ItemListener() {
+      public void itemStateChanged(ItemEvent e) {
         isSdkChanged = true;
       }
     });

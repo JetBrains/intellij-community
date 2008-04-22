@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
@@ -141,12 +140,12 @@ public class GroovyFacetEditorTab extends FacetEditorTab {
             ArrayList<String> versions = GroovyApplicationSettings.getInstance().GROOVY_VERSIONS;
             String version = GroovyConfigUtils.getGroovyVersion(path);
             boolean addVersion = !versions.contains(version) ||
-                Messages.showOkCancelDialog(GroovyBundle.message("ask.to.replace.groovy.lib", version),
-                    GroovyBundle.message("replace.groovy.lib"),
+                Messages.showOkCancelDialog(GroovyBundle.message("duplicate.groovy.lib.version.add", version),
+                    GroovyBundle.message("duplicate.groovy.lib.version"),
                     GroovyIcons.BIG_ICON) == 0;
 
             if (addVersion && !GroovyConfigUtils.UNDEFINED_VERSION.equals(version)) {
-              GroovyGrailsConfiguration.getInstance().createGroovyLibs(path);
+              GroovyConfigUtils.createGroovyLibrary(path);
               adjustVersionComboBox(versions.toArray(new String[versions.size()]), version);
             }
           }
@@ -202,7 +201,7 @@ public class GroovyFacetEditorTab extends FacetEditorTab {
     for (Library library : table.getLibraries()) {
       String name = library.getName();
       for (String version : GroovyApplicationSettings.getInstance().GROOVY_VERSIONS) {
-        if ((GroovyGrailsConfiguration.GROOVY_LIB_PREFIX + version).equals(name)) {
+        if ((GroovyConfigUtils.GROOVY_LIB_PREFIX + version).equals(name)) {
           return version;
         }
       }
@@ -241,7 +240,7 @@ public class GroovyFacetEditorTab extends FacetEditorTab {
       String name = library.getName();
       GroovyApplicationSettings settings = GroovyApplicationSettings.getInstance();
       for (String version : settings.GROOVY_VERSIONS) {
-        if (GroovyConfigUtils.getLibraryNameByVersion(version).equals(name)) {
+        if (GroovyConfigUtils.getLibNameByVersion(version).equals(name)) {
           myComboBox.removeItem(version);
         }
       }
