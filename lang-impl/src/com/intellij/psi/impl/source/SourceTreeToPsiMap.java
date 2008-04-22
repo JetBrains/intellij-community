@@ -21,6 +21,6 @@ public class SourceTreeToPsiMap {
   }
 
   public static boolean hasTreeElement(@Nullable PsiElement psiElement) {
-    return psiElement instanceof TreeElement || psiElement instanceof SrcRepositoryPsiElement || psiElement instanceof ASTDelegatePsiElement;
+    return psiElement instanceof TreeElement || psiElement instanceof ASTDelegatePsiElement || psiElement instanceof TreeWrapperPsiElement;
   }
 }

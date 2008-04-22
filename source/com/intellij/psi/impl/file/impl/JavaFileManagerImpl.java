@@ -10,17 +10,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.RepositoryElementsManager;
-import com.intellij.psi.impl.cache.RepositoryIndex;
-import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.file.PsiPackageImpl;
+import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -112,24 +109,20 @@ public class JavaFileManagerImpl implements JavaFileManager {
   }
 
   public PsiClass[] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
-    RepositoryManager repositoryManager = myManager.getRepositoryManager();
-      long[] classIds = repositoryManager.getIndex().getClassesByQualifiedName(qName, null);
-      if (classIds.length == 0) return PsiClass.EMPTY_ARRAY;
+    final Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
+    if (classes.size() == 0) return PsiClass.EMPTY_ARRAY;
+    List<PsiClass> result = new ArrayList<PsiClass>(classes.size());
+    for (PsiClass aClass : classes) {
+      final String qualifiedName = aClass.getQualifiedName();
+      if (qualifiedName == null || !qualifiedName.equals(qName)) continue;
 
-      ArrayList<PsiClass> result = new ArrayList<PsiClass>();
-      for (long classId : classIds) {
-        PsiClass aClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(classId);
+      VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
+      if (!fileIsInScope(scope, vFile)) continue;
 
-        final String qualifiedName = aClass.getQualifiedName();
-        if (qualifiedName == null || !qualifiedName.equals(qName)) continue;
-
-        VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
-        if (!fileIsInScope(scope, vFile)) continue;
-
-        result.add(aClass);
-      }
-      return result.toArray(new PsiClass[result.size()]);
+      result.add(aClass);
     }
+    return result.toArray(new PsiClass[result.size()]);
+  }
 
   @Nullable
   public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
@@ -265,20 +258,15 @@ public class JavaFileManagerImpl implements JavaFileManager {
 
   @Nullable
   private PsiClass _findClass(String qName, GlobalSearchScope scope) {
-    RepositoryManager repositoryManager = myManager.getRepositoryManager();
-    RepositoryIndex index = repositoryManager.getIndex();
-    VirtualFileFilter rootFilter = null;//index.rootFilterBySearchScope(scope);
-    long[] classIds = index.getClassesByQualifiedName(qName, rootFilter);
-    if (classIds.length == 0) return null;
-
-    RepositoryElementsManager repositoryElementsManager = myManager.getRepositoryElementsManager();
     VirtualFile bestFile = null;
     PsiClass bestClass = null;
-    for (long classId : classIds) {
-      PsiClass aClass = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(classId);
-      LOG.assertTrue(aClass != null, "null class returned while looking for : " + qName);
-      LOG.assertTrue(aClass.isValid(), "class is not valid while looking for : " + qName);
-      if (!aClass.isValid()) continue;
+
+    final Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
+
+    for (PsiClass aClass : classes) {
+      final boolean valid = aClass.isValid();
+      LOG.assertTrue(valid);
+      if (!valid) continue;
 
       final String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName == null || !qualifiedName.equals(qName)) continue;
@@ -288,6 +276,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
         LOG.error("aClass=" + aClass);
         continue;
       }
+
       VirtualFile vFile = file.getVirtualFile();
       if (!fileIsInScope(scope, vFile)) continue;
       if (bestFile == null || scope.compare(vFile, bestFile) > 0) {
@@ -295,6 +284,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
         bestClass = aClass;
       }
     }
+
     return bestClass;
   }
 

@@ -3,8 +3,11 @@
  */
 package com.intellij.psi.impl.java.stubs;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.impl.compiled.ClsParameterListImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiParameterListStubImpl;
+import com.intellij.psi.impl.source.PsiParameterListImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.PersistentStringEnumerator;
@@ -19,7 +22,16 @@ public class JavaParameterListElementType extends JavaStubElementType<PsiParamet
   }
 
   public PsiParameterList createPsi(final PsiParameterListStub stub) {
-    throw new UnsupportedOperationException("createPsi is not implemented"); // TODO
+    if (isCompiled(stub)) {
+      return new ClsParameterListImpl(stub);
+    }
+    else {
+      return new PsiParameterListImpl(stub);
+    }
+  }
+
+  public PsiParameterList createPsi(final ASTNode node) {
+    return new PsiParameterListImpl(node);
   }
 
   public PsiParameterListStub createStub(final PsiParameterList psi, final StubElement parentStub) {

@@ -19,6 +19,7 @@ public interface PsiClassStub extends NamedStub<PsiClass> {
   String getBaseClassReferenceText();
 
   boolean isDeprecated();
+  boolean hasDeprecatedAnnotation();
   boolean isInterface();
   boolean isEnum();
   boolean isEnumConstantInitializer();

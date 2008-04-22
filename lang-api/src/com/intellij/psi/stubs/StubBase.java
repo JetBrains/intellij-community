@@ -37,7 +37,7 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
   }
 
   @Nullable
-  public StubElement findChildStubByType(final IElementType elementType) {
+  public <P extends PsiElement> StubElement<P> findChildStubByType(final IStubElementType<?, P> elementType) {
     for (StubElement childStub : getChildrenStubs()) {
       if (childStub.getStubType() == elementType) {
         return childStub;
@@ -63,7 +63,7 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
     return myPsi;
   }
 
-  public <E> E[] getChildrenByType(final IElementType elementType, final E[] array) {
+  public <E extends PsiElement> E[] getChildrenByType(final IElementType elementType, final E[] array) {
     List<E> result = new ArrayList<E>();
     for(StubElement childStub: getChildrenStubs()) {
       if (childStub.getStubType() == elementType) {
@@ -74,7 +74,7 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
     return result.toArray(array);
   }
 
-  public <E> E[] getChildrenByType(final TokenSet filter, final E[] array) {
+  public <E extends PsiElement> E[] getChildrenByType(final TokenSet filter, final E[] array) {
     List<E> result = new ArrayList<E>();
     for(StubElement childStub: getChildrenStubs()) {
       if (filter.contains(childStub.getStubType())) {

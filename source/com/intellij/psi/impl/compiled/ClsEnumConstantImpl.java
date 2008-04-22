@@ -2,7 +2,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
@@ -13,12 +13,8 @@ import org.jetbrains.annotations.NotNull;
 public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsEnumConstantImpl");
 
-  public ClsEnumConstantImpl(ClsClassImpl parent, int startOffset) {
-    super(parent, startOffset);
-  }
-
-  public ClsEnumConstantImpl(PsiManagerImpl manager, long repositoryId) {
-    super(manager, repositoryId);
+  public ClsEnumConstantImpl(final PsiFieldStub stub) {
+    super(stub);
   }
 
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {

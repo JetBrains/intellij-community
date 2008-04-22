@@ -3,12 +3,17 @@
  */
 package com.intellij.psi.impl.java.stubs;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
-import com.intellij.psi.impl.cache.impl.repositoryCache.RecordUtil;
+import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.compiled.ClsReferenceListImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex;
+import com.intellij.psi.impl.source.PsiReferenceListImpl;
+import com.intellij.psi.impl.source.tree.java.PsiTypeParameterExtendsBoundsListImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -26,7 +31,24 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
   }
 
   public PsiReferenceList createPsi(final PsiClassReferenceListStub stub) {
-    throw new UnsupportedOperationException("createPsi is not implemented"); // TODO
+    if (isCompiled(stub)) {
+      return new ClsReferenceListImpl(stub);
+    }
+    else {
+      if (stub.getRole() == PsiReferenceList.Role.EXTENDS_BOUNDS_LIST) {
+        return new PsiTypeParameterExtendsBoundsListImpl(stub, JavaStubElementTypes.EXTENDS_BOUND_LIST);
+      }
+
+      return new PsiReferenceListImpl(stub, stub.getStubType());
+    }
+  }
+
+  public PsiReferenceList createPsi(final ASTNode node) {
+    if (node.getElementType() == JavaStubElementTypes.EXTENDS_BOUND_LIST) {
+      return new PsiTypeParameterExtendsBoundsListImpl(node);
+    }
+    
+    return new PsiReferenceListImpl(node);
   }
 
   public PsiClassReferenceListStub createStub(final PsiReferenceList psi, final StubElement parentStub) {
@@ -110,7 +132,7 @@ public class JavaClassReferenceListElementType extends JavaStubElementType<PsiCl
     if (role == PsiReferenceList.Role.EXTENDS_LIST || role == PsiReferenceList.Role.IMPLEMENTS_LIST) {
       final String[] names = stub.getReferencedNames();
       for (String name : names) {
-        sink.occurrence(JavaSuperClassNameOccurenceIndex.KEY, name);
+        sink.occurrence(JavaSuperClassNameOccurenceIndex.KEY, PsiNameHelper.getShortClassName(name));
       }
     }
   }

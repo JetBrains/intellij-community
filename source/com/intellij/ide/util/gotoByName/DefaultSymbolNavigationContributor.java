@@ -31,6 +31,7 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,7 +41,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 
 import java.util.*;
 
@@ -52,9 +52,9 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     PsiShortNamesCache cache = JavaPsiFacade.getInstance(project).getShortNamesCache();
     HashSet<String> set = new HashSet<String>();
-    cache.getAllMethodNames(includeNonProjectItems, set);
-    cache.getAllFieldNames(includeNonProjectItems, set);
-    cache.getAllClassNames(includeNonProjectItems, set);
+    cache.getAllMethodNames(set);
+    cache.getAllFieldNames(set);
+    cache.getAllClassNames(set);
     return set.toArray(new String[set.size()]);
   }
 
@@ -111,9 +111,15 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
       if (element1 == element2) return 0;
 
       PsiModifierList modifierList1 = element1.getModifierList();
-      LOG.assertTrue(modifierList1 != null, element1.getText());
+      if (modifierList1 == null) {
+        LOG.error("No modifier list for: " + element1.getText());
+      }
+
       PsiModifierList modifierList2 = element2.getModifierList();
-      LOG.assertTrue(modifierList2 != null, element2.getText());
+      if (modifierList2 == null) {
+        LOG.error("No modifier list for: " + element2.getText());
+      }
+
       int level1 = PsiUtil.getAccessLevel(modifierList1);
       int level2 = PsiUtil.getAccessLevel(modifierList2);
       if (level1 != level2) return level2 - level1;

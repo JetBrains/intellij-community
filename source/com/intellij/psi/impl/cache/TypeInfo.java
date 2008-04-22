@@ -1,4 +1,4 @@
-package com.intellij.psi.impl.cache.impl.repositoryCache;
+package com.intellij.psi.impl.cache;
 
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiEllipsisType;
@@ -15,16 +15,26 @@ public class TypeInfo {
   public boolean isEllipsis;
 
   public static TypeInfo create(PsiType type, PsiTypeElement typeElement) {
+    if (type == null) return null;
+
     final boolean isEllipsis = type instanceof PsiEllipsisType;
     int arrayCount = type.getArrayDimensions();
 
-    while (typeElement.getFirstChild() instanceof PsiTypeElement) {
-      typeElement = (PsiTypeElement)typeElement.getFirstChild();
-    }
 
-    String text = typeElement instanceof PsiCompiledElement
-                  ? ((ClsTypeElementImpl)typeElement).getCanonicalText()
-                  : typeElement.getText();
+    final String text;
+    if (typeElement != null) {
+      while (typeElement.getFirstChild() instanceof PsiTypeElement) {
+        typeElement = (PsiTypeElement)typeElement.getFirstChild();
+      }
+
+      text = typeElement instanceof PsiCompiledElement
+             ? ((ClsTypeElementImpl)typeElement).getCanonicalText()
+             : typeElement.getText();
+    }
+    else {
+      type = type.getDeepComponentType();
+      text = type.getInternalCanonicalText();
+    }
 
     TypeInfo result = new TypeInfo();
     result.text = text;

@@ -3,8 +3,10 @@
  */
 package com.intellij.psi.impl.java.stubs;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassInitializerStubImpl;
+import com.intellij.psi.impl.source.PsiClassInitializerImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.PersistentStringEnumerator;
@@ -19,7 +21,12 @@ public class JavaClassInitializerElementType extends JavaStubElementType<PsiClas
   }
 
   public PsiClassInitializer createPsi(final PsiClassInitializerStub stub) {
-    throw new UnsupportedOperationException("createPsi is not implemented"); // TODO
+    assert !isCompiled(stub);
+    return new PsiClassInitializerImpl(stub);
+  }
+
+  public PsiClassInitializer createPsi(final ASTNode node) {
+    return new PsiClassInitializerImpl(node);
   }
 
   public PsiClassInitializerStub createStub(final PsiClassInitializer psi, final StubElement parentStub) {

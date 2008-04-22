@@ -16,7 +16,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -61,7 +61,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
   }
 
   protected PsiCodeFragmentImpl clone() {
-    final PsiCodeFragmentImpl clone = (PsiCodeFragmentImpl)cloneImpl((RepositoryTreeElement)calcTreeElement().clone());
+    final PsiCodeFragmentImpl clone = (PsiCodeFragmentImpl)cloneImpl((FileElement)calcTreeElement().clone());
     clone.myPhysical = false;
     clone.myOriginalFile = this;
     clone.myPseudoImports = new LinkedHashMap<String, String>(myPseudoImports);
@@ -188,9 +188,8 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
       return true;
     } else {
       processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
-      if (lastParent == null)
-      // Parent element should not see our vars
-      {
+      if (lastParent == null) {
+        // Parent element should not see our vars
         return true;
       }
 
@@ -224,8 +223,8 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
   private static class ImportClassUndoableAction implements UndoableAction {
     private final String myClassName;
     private final String myQName;
-    private LinkedHashMap<String,String> myPseudoImports;
-    private Document myDocument;
+    private final LinkedHashMap<String,String> myPseudoImports;
+    private final Document myDocument;
 
     public ImportClassUndoableAction(final String className,
                                      final String qName,

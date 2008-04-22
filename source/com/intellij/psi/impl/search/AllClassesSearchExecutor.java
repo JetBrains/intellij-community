@@ -47,19 +47,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
           public Boolean compute() {
             if (!fileOrDir.isDirectory() && searchScope.contains(fileOrDir)) {
               final PsiFile psiFile = psiManager.findFile(fileOrDir);
-              if (psiFile instanceof PsiJavaFile) {
-                long fileId = repositoryManager.getFileId(fileOrDir);
-                if (fileId >= 0) {
-                  long[] allClasses = repositoryManager.getFileView().getAllClasses(fileId);
-                  for (long allClass : allClasses) {
-                    PsiClass psiClass = (PsiClass)psiManager.getRepositoryElementsManager().findOrCreatePsiElementById(allClass);
-                    if (!processor.process(psiClass)) return false;
-                  }
-                }
-                else {
-                  if (!processScopeRootForAllClasses(psiFile, processor)) return false;
-                }
-              } else if (psiFile instanceof PsiClassOwner) {
+               if (psiFile instanceof PsiClassOwner) {
                 for (PsiClass aClass : ((PsiClassOwner)psiFile).getClasses()) {
                   if (!processor.process(aClass)) return false;
                 }

@@ -3,10 +3,14 @@
  */
 package com.intellij.psi.impl.java.stubs;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiImportStaticStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.impl.java.stubs.impl.PsiImportStatementStubImpl;
+import com.intellij.psi.impl.source.PsiImportStatementImpl;
+import com.intellij.psi.impl.source.PsiImportStaticStatementImpl;
+import com.intellij.psi.impl.source.tree.java.ImportStaticStatementElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -24,7 +28,22 @@ public class JavaImportStatementElementType extends JavaStubElementType<PsiImpor
   }
 
   public PsiImportStatementBase createPsi(final PsiImportStatementStub stub) {
-    throw new UnsupportedOperationException("createPsi is not implemented"); // TODO
+    assert !isCompiled(stub);
+    if (stub.isStatic()) {
+      return new PsiImportStaticStatementImpl(stub);
+    }
+    else {
+      return new PsiImportStatementImpl(stub);
+    }
+  }
+
+  public PsiImportStatementBase createPsi(final ASTNode node) {
+    if (node instanceof ImportStaticStatementElement) {
+      return new PsiImportStaticStatementImpl(node);
+    }
+    else {
+      return new PsiImportStatementImpl(node);
+    }
   }
 
   public PsiImportStatementStub createStub(final PsiImportStatementBase psi, final StubElement parentStub) {

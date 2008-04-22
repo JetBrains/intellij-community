@@ -3,8 +3,10 @@
  */
 package com.intellij.psi.impl.java.stubs;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiImportList;
 import com.intellij.psi.impl.java.stubs.impl.PsiImportListStubImpl;
+import com.intellij.psi.impl.source.PsiImportListImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.PersistentStringEnumerator;
@@ -19,7 +21,12 @@ public class JavaImportListElementType extends JavaStubElementType<PsiImportList
   }
 
   public PsiImportList createPsi(final PsiImportListStub stub) {
-    throw new UnsupportedOperationException("createPsi is not implemented"); // TODO
+    assert !isCompiled(stub);
+    return new PsiImportListImpl(stub);
+  }
+
+  public PsiImportList createPsi(final ASTNode node) {
+    return new PsiImportListImpl(node);
   }
 
   public PsiImportListStub createStub(final PsiImportList psi, final StubElement parentStub) {

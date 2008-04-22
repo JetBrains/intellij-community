@@ -1,8 +1,13 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiTypeParameterListStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
@@ -10,30 +15,19 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author max
  */
-public class ClsTypeParametersListImpl extends ClsElementImpl implements PsiTypeParameterList {
+public class ClsTypeParametersListImpl extends ClsRepositoryPsiElement<PsiTypeParameterListStub> implements PsiTypeParameterList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsTypeParametersListImpl");
 
-  private final PsiElement myParent;
-  private ClsTypeParameterImpl[] myParameters;
-
-  public ClsTypeParametersListImpl(PsiElement parent, ClsTypeParameterImpl[] parameters) {
-    myParent = parent;
-    myParameters = parameters;
-  }
-
-  public ClsTypeParametersListImpl(PsiElement parent) {
-    myParent = parent;
-  }
-
-  public void setParameters(ClsTypeParameterImpl[] parameters) {
-    myParameters = parameters;
+  public ClsTypeParametersListImpl(final PsiTypeParameterListStub stub) {
+    super(stub);
   }
 
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
-    if (myParameters.length != 0) {
+    final PsiTypeParameter[] params = getTypeParameters();
+    if (params.length != 0) {
       buffer.append('<');
-      for (int i = 0; i < myParameters.length; i++) {
-        ClsTypeParameterImpl parameter = myParameters[i];
+      for (int i = 0; i < params.length; i++) {
+        ClsTypeParameterImpl parameter = (ClsTypeParameterImpl)params[i];
         if (i > 0) buffer.append(", ");
         parameter.appendMirrorText(indentLevel, buffer);
       }
@@ -55,14 +49,6 @@ public class ClsTypeParametersListImpl extends ClsElementImpl implements PsiType
     }
   }
 
-  @NotNull
-  public PsiElement[] getChildren() {
-    return myParameters;
-  }
-
-  public PsiElement getParent() {
-    return myParent;
-  }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
@@ -74,7 +60,7 @@ public class ClsTypeParametersListImpl extends ClsElementImpl implements PsiType
   }
 
   public PsiTypeParameter[] getTypeParameters() {
-    return myParameters;
+    return getStub().getChildrenByType(JavaStubElementTypes.TYPE_PARAMETER, PsiTypeParameter.EMPTY_ARRAY);
   }
 
   public int getTypeParameterIndex(PsiTypeParameter typeParameter) {

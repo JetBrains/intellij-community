@@ -1,6 +1,5 @@
 package com.intellij.mock;
 
-import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -16,23 +15,12 @@ import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.cache.impl.CompositeCacheManager;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
-import com.intellij.psi.impl.source.*;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
-import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
-import com.intellij.psi.impl.source.tree.java.PsiTypeParameterExtendsBoundsListImpl;
-import com.intellij.psi.impl.source.tree.java.PsiTypeParameterImpl;
-import com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.IndexPattern;
-import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -112,76 +100,7 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public RepositoryElementsManager getRepositoryElementsManager() {
-    return new EmptyRepositoryElementsManager() {
-      public SrcRepositoryPsiElement createRepositoryPsiElementByTreeElement(PsiManagerEx manager,
-                                                                              RepositoryTreeElement treeElement) {
-        IElementType elementType = treeElement.getElementType();
-        if (elementType == JavaElementType.CLASS) {
-          return new PsiClassImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.ANONYMOUS_CLASS) {
-          return new PsiAnonymousClassImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.ENUM_CONSTANT_INITIALIZER) {
-          return new PsiEnumConstantInitializerImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.METHOD) {
-          return new PsiMethodImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.ANNOTATION_METHOD) {
-          return new PsiAnnotationMethodImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.FIELD) {
-          return new PsiFieldImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.ENUM_CONSTANT) {
-          return new PsiEnumConstantImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.CLASS_INITIALIZER) {
-          return new PsiClassInitializerImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.MODIFIER_LIST) {
-          return new PsiModifierListImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.IMPORT_LIST) {
-          return new PsiImportListImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.EXTENDS_LIST ||
-                 elementType == JavaElementType.IMPLEMENTS_LIST ||
-                 elementType == JavaElementType.THROWS_LIST) {
-          return new PsiReferenceListImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.PARAMETER_LIST) {
-          return new PsiParameterListImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.IMPORT_STATEMENT) {
-          return new PsiImportStatementImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.IMPORT_STATIC_STATEMENT) {
-          return new PsiImportStaticStatementImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.PARAMETER) {
-          return new PsiParameterImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.TYPE_PARAMETER) {
-          return new PsiTypeParameterImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.TYPE_PARAMETER_LIST) {
-          return new PsiTypeParameterListImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.EXTENDS_BOUND_LIST) {
-          return new PsiTypeParameterExtendsBoundsListImpl(manager, treeElement);
-        }
-        else if (elementType == JavaElementType.ANNOTATION) {
-          return new PsiAnnotationImpl(manager, treeElement);
-        }
-        else {
-          LOG.error("Incorrect TreeElement:" + treeElement);
-          return null;
-        }
-      }
-    };
-
+    return new EmptyRepositoryElementsManager();
   }
 
   public RepositoryManager getRepositoryManager() {
@@ -316,49 +235,6 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public void beforeChildRemoval(final PsiTreeChangeEventImpl event) {
-  }
-
-  public void addFileToCacheManager(final PsiFile file) {
-    myFiles.put(file.getViewProvider().getVirtualFile(), file);
-    myCompositeCacheManager.addCacheManager(new CacheManager() {
-      public void initialize() {
-      }
-
-      public void dispose() {
-      }
-
-      @NotNull
-      public CacheUpdater[] getCacheUpdaters() {
-        return new CacheUpdater[0];
-      }
-
-      @NotNull
-      public PsiFile[] getFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope,
-                                        final boolean caseSensitively) {
-        return new PsiFile[]{file};
-      }
-
-      public boolean processFilesWithWord(@NotNull final Processor<PsiFile> processor, @NotNull final String word, final short occurenceMask,
-                                          @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
-        return processor.process(file);
-      }
-
-      @NotNull
-      public PsiFile[] getFilesWithTodoItems() {
-        return PsiFile.EMPTY_ARRAY;
-      }
-
-      public int getTodoCount(@NotNull final VirtualFile file, final IndexPatternProvider patternProvider) {
-        return 0;
-      }
-
-      public int getTodoCount(@NotNull final VirtualFile file, final IndexPattern pattern) {
-        return 0;
-      }
-
-      public void addOrInvalidateFile(@NotNull final VirtualFile file) {
-      }
-    });
   }
 
   public CacheManager getCacheManager() {

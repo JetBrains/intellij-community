@@ -1,17 +1,19 @@
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.InheritanceImplUtil;
+import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiTypeParameterListStub;
+import com.intellij.psi.impl.java.stubs.PsiTypeParameterStub;
 import com.intellij.psi.impl.light.LightEmptyImplementsList;
 import com.intellij.psi.impl.meta.MetaRegistry;
-import com.intellij.psi.impl.source.IndexedRepositoryPsiElement;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
+import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -28,23 +30,19 @@ import java.util.List;
 /**
  *  @author dsl
  */
-public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements PsiTypeParameter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiTypeParameterImpl");
+public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStub> implements PsiTypeParameter {
+  private final LightEmptyImplementsList myLightEmptyImplementsList = new LightEmptyImplementsList(null) {
+    public PsiManager getManager() {
+      return PsiTypeParameterImpl.this.getManager();
+    }
+  };
 
-  private CompositeElement myParsedFromRepository;
-  private PsiTypeParameterExtendsBoundsListImpl myExtendsBoundsList;
-  private LightEmptyImplementsList myLightEmptyImplementsList;
-
-  public PsiTypeParameterImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
-    super(manager, treeElement);
+  public PsiTypeParameterImpl(final PsiTypeParameterStub stub) {
+    super(stub, JavaStubElementTypes.TYPE_PARAMETER);
   }
 
-  public PsiTypeParameterImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner, int index) {
-    super(manager, owner, index);
-  }
-
-  public PsiTypeParameterImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner) {
-    super(manager, owner);
+  public PsiTypeParameterImpl(final ASTNode node) {
+    super(node);
   }
 
   public String getQualifiedName() {
@@ -122,44 +120,8 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
   }
 
-  public boolean isInheritor(PsiClass baseClass, boolean checkDeep) {
+  public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
-  }
-
-  CompositeElement getMirrorTreeElement() {
-    CompositeElement actualTree = getTreeElement();
-    if (actualTree != null) {
-      myParsedFromRepository = null;
-      return actualTree;
-    }
-
-    if (myParsedFromRepository != null) return myParsedFromRepository;
-    long repositoryId = getRepositoryId();
-    if (repositoryId >= 0) {
-      String text;
-      PsiElement owner = myOwner.getParent();
-      if (owner instanceof PsiClass) {
-        text = getRepositoryManager().getClassView().getParameterText(repositoryId, getIndex());
-      }
-      else if (owner instanceof PsiMethod) {
-        text = getRepositoryManager().getMethodView().getTypeParameterText(repositoryId, getIndex());
-      }
-      else {
-        LOG.error("Wrong owner");
-        text = "";
-      }
-      try{
-        PsiTypeParameter typeParameter = JavaPsiFacade.getInstance(myManager.getProject()).getParserFacade().createTypeParameterFromText(text, this);
-        myParsedFromRepository = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(typeParameter);
-        com.intellij.psi.impl.source.DummyHolderFactory.createHolder(myManager, myParsedFromRepository, getParent());
-      }
-      catch(IncorrectOperationException e){
-        LOG.error(e);
-      }
-      return myParsedFromRepository;
-    }
-
-    return calcTreeElement();
   }
 
   @NotNull
@@ -172,25 +134,25 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
 
 
   public int getIndex() {
-    long repositoryId = getRepositoryId();
-    if (repositoryId >= 0) {
-      return super.getIndex();
+    final PsiTypeParameterStub stub = getStub();
+    if (stub != null) {
+      final PsiTypeParameterListStub parentStub = (PsiTypeParameterListStub)stub.getParentStub();
+      return parentStub.getChildrenStubs().indexOf(stub);
     }
-    else {
-      int ret = 0;
-      PsiElement element = getPrevSibling();
-      while(element != null){
-        if(element instanceof PsiTypeParameter)
-          ret++;
-        element = element.getPrevSibling();
-      }
-      return ret;
+
+    int ret = 0;
+    PsiElement element = getPrevSibling();
+    while(element != null){
+      if(element instanceof PsiTypeParameter)
+        ret++;
+      element = element.getPrevSibling();
     }
+    return ret;
   }
 
   @NotNull
   public PsiIdentifier getNameIdentifier() {
-    return (PsiIdentifier) getMirrorTreeElement().findChildByRole(ChildRole.NAME);
+    return (PsiIdentifier) calcTreeElement().findChildByRole(ChildRole.NAME);
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place){
@@ -198,6 +160,11 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
   }
 
   public String getName() {
+    final PsiTypeParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
+    }
+
     return getNameIdentifier().getText();
   }
 
@@ -219,39 +186,12 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     return false;
   }
 
-  public void subtreeChanged() {
-    super.subtreeChanged();
-    myExtendsBoundsList = null;
-    myParsedFromRepository = null;
-  }
-
   @NotNull
   public PsiReferenceList getExtendsList() {
-    if (myOwner != null) {
-      synchronized (PsiLock.LOCK) {
-        if (myExtendsBoundsList == null) {
-          myExtendsBoundsList = new PsiTypeParameterExtendsBoundsListImpl(myManager, this);
-        }
-        return myExtendsBoundsList;
-      }
-    }
-    else {
-      return (PsiReferenceList) calcTreeElement().findChildByRoleAsPsiElement(ChildRole.EXTENDS_LIST);
-    }
-  }
-
-  protected Object clone() {
-    PsiTypeParameterImpl clone = (PsiTypeParameterImpl)super.clone();
-    clone.myExtendsBoundsList = null;
-    clone.myLightEmptyImplementsList = null;
-    clone.myParsedFromRepository = null;
-    return super.clone();
+    return getRequiredStubOrPsiChild(JavaStubElementTypes.EXTENDS_BOUND_LIST);
   }
 
   public PsiReferenceList getImplementsList() {
-    if (myLightEmptyImplementsList == null) {
-      myLightEmptyImplementsList = new LightEmptyImplementsList(myManager);
-    }
     return myLightEmptyImplementsList;
   }
 
@@ -283,18 +223,6 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
   @NotNull
   public PsiClass[] getAllInnerClasses() {
     return PsiClass.EMPTY_ARRAY;
-  }
-
-  public void setOwnerAndIndex(SrcRepositoryPsiElement owner, int index) {
-    super.setOwnerAndIndex(owner, index);
-    if (myOwner == null) {
-      if (myExtendsBoundsList != null) {
-        myExtendsBoundsList.setOwner(this);
-      }
-    }
-    else {
-      myExtendsBoundsList = (PsiTypeParameterExtendsBoundsListImpl)bindSlave(ChildRole.EXTENDS_LIST);
-    }
   }
 
   @NotNull
@@ -338,7 +266,7 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     return null;
   }
 
-  public boolean hasModifierProperty(String name) {
+  public boolean hasModifierProperty(@NotNull String name) {
     return false;
   }
 

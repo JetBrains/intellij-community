@@ -1,26 +1,27 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.PatchedSoftReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousClass {
-  private PsiClassType myCachedBaseType = null;
-  private final Object CACHED_TYPE_LOCK = new Object();
+  private PatchedSoftReference<PsiClassType> myCachedBaseType = null;
 
-  public PsiAnonymousClassImpl(PsiManagerEx manager, long repositoryId) {
-    super(manager, repositoryId);
+  public PsiAnonymousClassImpl(final PsiClassStub stub) {
+    super(stub);
   }
 
-  public PsiAnonymousClassImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
-    super(manager, treeElement);
+  public PsiAnonymousClassImpl(final ASTNode node) {
+    super(node);
   }
 
   protected Object clone() {
@@ -29,69 +30,61 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     return clone;
   }
 
-  public void setRepositoryId(long repositoryId) {
-    super.setRepositoryId(repositoryId);
-  }
-
   public void subtreeChanged() {
     super.subtreeChanged();
     myCachedBaseType = null;
   }
 
   public PsiExpressionList getArgumentList() {
-    return (PsiExpressionList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.ARGUMENT_LIST);
-  }
-
-  public boolean isInQualifiedNew() {
-    final PsiElement parent = getParent();
-    return parent instanceof PsiNewExpression && ((PsiNewExpression)parent).getQualifier() != null;
+    return (PsiExpressionList)getNode().findChildByRoleAsPsiElement(ChildRole.ARGUMENT_LIST);
   }
 
   @NotNull
   public PsiJavaCodeReferenceElement getBaseClassReference() {
-    return (PsiJavaCodeReferenceElement)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.BASE_CLASS_REFERENCE);
+    return (PsiJavaCodeReferenceElement)getNode().findChildByRoleAsPsiElement(ChildRole.BASE_CLASS_REFERENCE);
   }
 
   @NotNull
   public PsiClassType getBaseClassType() {
-    // Only do caching if no tree element is avaliable. Otherwise we're in danger to leak tree element via cached type.
-    synchronized (CACHED_TYPE_LOCK) {
-      if (getTreeElement() != null) {
-        myCachedBaseType = null;
-        return getTypeByTree();
+    final PsiClassStub stub = getStub();
+    if (stub == null) {
+      myCachedBaseType = null;
+      return getTypeByTree();
+    }
+
+    PsiClassType type = null;
+    if (myCachedBaseType != null) type = myCachedBaseType.get();
+    if (type != null) return type;
+
+    if (!isInQualifiedNew()) {
+      final PsiJavaCodeReferenceElement ref;
+      String refText = stub.getBaseClassReferenceText();
+      final DummyHolder holder = DummyHolderFactory
+        .createHolder(getManager(), calcBasesResolveContext(PsiNameHelper.getShortClassName(refText), getExtendsList()));
+      final FileElement holderElement = holder.getTreeElement();
+
+      ref = (PsiJavaCodeReferenceElementImpl)Parsing.parseJavaCodeReferenceText(getManager(), refText,
+                                                                                holderElement.getCharTable());
+      if (ref == null) {
+        type = PsiClassType.getJavaLangObject(getManager(), getResolveScope());
+        myCachedBaseType = new PatchedSoftReference<PsiClassType>(type);
+        return type;
       }
 
-      if (myCachedBaseType == null) {
-        final PsiJavaCodeReferenceElement ref;
-        long repositoryId = getRepositoryId();
-        String refText = getRepositoryManager().getClassView().getBaseClassReferenceText(repositoryId);
-        boolean isInQualifiedNew = getRepositoryManager().getClassView().isInQualifiedNew(repositoryId);
-        if (!isInQualifiedNew) {
-          final DummyHolder holder = DummyHolderFactory
-            .createHolder(myManager, calcBasesResolveContext(PsiNameHelper.getShortClassName(refText), getExtendsList()));
-          final FileElement holderElement = holder.getTreeElement();
-          ref = (PsiJavaCodeReferenceElementImpl)Parsing.parseJavaCodeReferenceText(myManager, refText,
-                                                                                    holderElement.getCharTable());
-          if (ref == null) {
-            myCachedBaseType = PsiClassType.getJavaLangObject(getManager(), getResolveScope());
-            return myCachedBaseType;
-          }
+      TreeUtil.addChildren(holderElement, (TreeElement)ref);
+      ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
 
-          TreeUtil.addChildren(holderElement, (TreeElement)ref);
-          ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
-        }
-        else {
-          return getTypeByTree();
-        }
-
-        myCachedBaseType = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createType(ref);
-      }
-      return myCachedBaseType;
+      type = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(ref);
+      myCachedBaseType = new PatchedSoftReference<PsiClassType>(type);
+      return type;
+    }
+    else {
+      return getTypeByTree();
     }
   }
 
   private PsiClassType getTypeByTree() {
-    return JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createType(getBaseClassReference());
+    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(getBaseClassReference());
   }
 
   public PsiIdentifier getNameIdentifier() {
@@ -177,8 +170,17 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     return super.processDeclarations(processor, state, lastParent, place);
   }
 
-  public void treeElementSubTreeChanged() {
-    myCachedBaseType = null;
-    super.treeElementSubTreeChanged();
+  public boolean isInQualifiedNew() {
+    final PsiClassStub stub = getStub();
+    if (stub != null) {
+      return stub.isAnonymousInQualifiedNew();
+    }
+
+    final PsiElement parent = getParent();
+    return parent instanceof PsiNewExpression && ((PsiNewExpression)parent).getQualifier() != null;
+  }
+
+  public PsiElement getParent() {
+    return SharedImplUtil.getParent(getNode());
   }
 }

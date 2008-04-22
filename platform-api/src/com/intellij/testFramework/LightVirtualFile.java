@@ -10,10 +10,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.Charset;
 
 public class LightVirtualFile extends DeprecatedVirtualFile {
@@ -160,7 +157,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
   }
 
   public InputStream getInputStream() throws IOException {
-    throw new IOException("Cannot get input stream");
+    return new ByteArrayInputStream(contentsToByteArray());
   }
 
   public OutputStream getOutputStream(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {

@@ -6,12 +6,9 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.RepositoryElementsManager;
-import com.intellij.psi.impl.cache.RepositoryIndex;
-import com.intellij.psi.impl.cache.RepositoryManager;
+import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
@@ -20,6 +17,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, AnnotatedPackagesSearch.Parameters> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.AnnotatedPackagesSearcher");
@@ -32,36 +31,24 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
     assert annotationFQN != null;
 
     final PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(annClass.getProject());
-
-    RepositoryManager repositoryManager = psiManager.getRepositoryManager();
-    RepositoryElementsManager repositoryElementsManager = psiManager.getRepositoryElementsManager();
-
-    RepositoryIndex repositoryIndex = repositoryManager.getIndex();
     final SearchScope useScope = p.getScope();
-
-    final VirtualFileFilter rootFilter;
-    if (useScope instanceof GlobalSearchScope) {
-      rootFilter = repositoryIndex.rootFilterBySearchScope((GlobalSearchScope)useScope);
-    }
-    else {
-      rootFilter = null;
-    }
 
     final String annotationShortName = annClass.getName();
     assert annotationShortName != null;
 
-    long[] candidateIds = repositoryIndex.getAnnotationNameOccurencesInMemberDecls(annotationShortName, rootFilter);
-    for (long candidateId : candidateIds) {
-      PsiMember candidate = (PsiMember)repositoryElementsManager.findOrCreatePsiElementById(candidateId);
-      if (!(candidate instanceof PsiClass)) continue;
+    final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : null;
+
+    final Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(annotationShortName, annClass.getProject(), scope);
+    for (PsiAnnotation annotation : annotations) {
+      PsiModifierList modlist = (PsiModifierList)annotation.getParent();
+      final PsiElement owner = modlist.getParent();
+      if (!(owner instanceof PsiClass)) continue;
+      PsiClass candidate = (PsiClass)owner;
       if (!"package-info".equals(candidate.getName())) continue;
 
       LOG.assertTrue(candidate.isValid());
 
-      final PsiAnnotation ann = candidate.getModifierList().findAnnotation(annotationFQN);
-      if (ann == null) continue;
-
-      final PsiJavaCodeReferenceElement ref = ann.getNameReferenceElement();
+      final PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
       if (ref == null) continue;
 
       if (!psiManager.areElementsEquivalent(ref.resolve(), annClass)) continue;
@@ -69,7 +56,7 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
           !((GlobalSearchScope)useScope).contains(candidate.getContainingFile().getVirtualFile())) {
         continue;
       }
-      final String qname = ((PsiClass)candidate).getQualifiedName();
+      final String qname = candidate.getQualifiedName();
       if (qname != null && !consumer.process(JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(
         qname.substring(0, qname.lastIndexOf('.'))))) {
         return false;

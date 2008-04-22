@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.text.BlockSupport;
@@ -464,7 +463,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       final List<PsiFile> files = viewProvider.getAllFiles();
       boolean commitNecessary = false;
       for (PsiFile file : files) {
-        if (file == null || (file instanceof SrcRepositoryPsiElement && ((SrcRepositoryPsiElement)file).getTreeElement() == null)) continue;
+        if (file == null || (file instanceof PsiFileImpl && ((PsiFileImpl)file).getTreeElement() == null)) continue;
         final TextBlock textBlock = getTextBlock(document, file);
         if (textBlock.isLocked()) continue;
 

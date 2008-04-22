@@ -3,60 +3,51 @@ package com.intellij.psi.impl.source.parsing;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.lexer.FilterLexer;
-import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
  */
 public class ImportsTextParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.ImportsTextParsing");
+  private static final TokenSet IMPORT_LIST_STOPPER_BIT_SET = TokenSet.create(CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD, AT);
 
   public ImportsTextParsing(JavaParsingContext context) {
     super(context);
   }
 
-  /**
-   * @stereotype chameleon transforming
-   */
-  public TreeElement parseImportsText(PsiManager manager, Lexer lexer, CharSequence buffer, int startOffset, int endOffset, int state) {
-    if (lexer == null){
-      lexer = new JavaLexer(LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
-    }
-    FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    if (state < 0) filterLexer.start(buffer, startOffset, endOffset,0);
-    else filterLexer.start(buffer, startOffset, endOffset, state);
-
-    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
-
+  public void parseImportStatements(final Lexer filterLexer, final CompositeElement parentNode) {
     CompositeElement invalidElementsGroup = null;
-    while(filterLexer.getTokenType() != null){
+    while(true){
+      IElementType tt = filterLexer.getTokenType();
+      if (tt == null || IMPORT_LIST_STOPPER_BIT_SET.contains(tt) || MODIFIER_BIT_SET.contains(tt)) {
+        break;
+      }
+
       TreeElement element = (TreeElement)parseImportStatement(filterLexer);
       if (element != null){
-        TreeUtil.addChildren(dummyRoot, element);
+        TreeUtil.addChildren(parentNode, element);
         invalidElementsGroup = null;
         continue;
       }
 
       if (invalidElementsGroup == null){
         invalidElementsGroup = Factory.createErrorElement(JavaErrorMessages.message("unexpected.token"));
-        TreeUtil.addChildren(dummyRoot, invalidElementsGroup);
+        TreeUtil.addChildren(parentNode, invalidElementsGroup);
       }
+
       TreeUtil.addChildren(invalidElementsGroup, ParseUtil.createTokenElement(filterLexer, myContext.getCharTable()));
       filterLexer.advance();
     }
-
-    ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
-    return (TreeElement)dummyRoot.getFirstChildNode();
   }
 
-  private ASTNode parseImportStatement(FilterLexer lexer) {
+  @Nullable
+  private ASTNode parseImportStatement(Lexer lexer) {
     if (lexer.getTokenType() != IMPORT_KEYWORD) return null;
 
     final TreeElement importToken = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
@@ -82,7 +73,7 @@ public class ImportsTextParsing extends Parsing {
     }
 
     CompositeElement refElement = parseJavaCodeReference(lexer, true, false);
-    final TreeElement refParameterList = (TreeElement)refElement.getLastChildNode();
+    final TreeElement refParameterList = refElement.getLastChildNode();
     if (refParameterList.getTreePrev().getElementType() == ERROR_ELEMENT){
       final ASTNode qualifier = refElement.findChildByRole(ChildRole.QUALIFIER);
       LOG.assertTrue(qualifier != null);
@@ -118,10 +109,10 @@ public class ImportsTextParsing extends Parsing {
     return statement;
   }
 
-  public CompositeElement convertToImportStaticReference(CompositeElement refElement) {
+  public static CompositeElement convertToImportStaticReference(CompositeElement refElement) {
     final CompositeElement importStaticReference = ASTFactory.composite(IMPORT_STATIC_REFERENCE);
     final CompositeElement referenceParameterList = (CompositeElement)refElement.findChildByRole(ChildRole.REFERENCE_PARAMETER_LIST);
-    TreeUtil.addChildren(importStaticReference, (TreeElement)refElement.getFirstChildNode());
+    TreeUtil.addChildren(importStaticReference, refElement.getFirstChildNode());
     if (referenceParameterList != null) {
       if (referenceParameterList.getFirstChildNode() == null) {
         TreeUtil.remove(referenceParameterList);

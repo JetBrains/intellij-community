@@ -5,8 +5,10 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
-import com.intellij.psi.impl.cache.FieldView;
 import com.intellij.psi.impl.cache.InitializerTooLongException;
+import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
@@ -22,29 +24,25 @@ import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiField, PsiVariableEx {
+public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements PsiField, PsiVariableEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFieldImpl");
 
-  private PsiModifierListImpl myRepositoryModifierList = null;
-
-  private volatile String myCachedName = null;
   private volatile PatchedSoftReference<PsiType> myCachedType = null;
-  private volatile long myCachedFirstFieldInDeclId = -1;
-  private volatile Boolean myCachedIsDeprecated = null;
-  private volatile String myCachedInitializerText = null;
   private volatile Object myCachedInitializerValue = null; // PsiExpression on constant value for literal
 
-  public PsiFieldImpl(PsiManagerEx manager, long repositoryId) {
-    super(manager, repositoryId);
+  public PsiFieldImpl(final PsiFieldStub stub) {
+    super(stub, JavaStubElementTypes.FIELD);
   }
 
-  public PsiFieldImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
-    super(manager, treeElement);
+  public PsiFieldImpl(final ASTNode node) {
+    super(node);
   }
 
   public void subtreeChanged() {
@@ -53,35 +51,14 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   }
 
   private void dropCached() {
-    myCachedName = null;
-    myCachedInitializerText = null;
-    myCachedIsDeprecated = null;
     myCachedInitializerValue = null;
     myCachedType = null;
-    myCachedFirstFieldInDeclId = -1;
   }
 
   protected Object clone() {
     PsiFieldImpl clone = (PsiFieldImpl)super.clone();
-    clone.myRepositoryModifierList = null;
     clone.dropCached();
     return clone;
-  }
-
-  public void setRepositoryId(long repositoryId) {
-    super.setRepositoryId(repositoryId);
-
-    if (repositoryId < 0){
-      if (myRepositoryModifierList != null){
-        myRepositoryModifierList.setOwner(this);
-        myRepositoryModifierList = null;
-      }
-    }
-    else{
-      myRepositoryModifierList = (PsiModifierListImpl)bindSlave(ChildRole.MODIFIER_LIST);
-    }
-
-    dropCached();
   }
 
   public PsiClass getContainingClass() {
@@ -96,21 +73,21 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   }
 
   @NotNull
+  public CompositeElement getNode() {
+    return (CompositeElement)super.getNode();
+  }
+
+  @NotNull
   public final PsiIdentifier getNameIdentifier(){
-    return (PsiIdentifier)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.NAME);
+    return (PsiIdentifier)getNode().findChildByRoleAsPsiElement(ChildRole.NAME);
   }
 
   public String getName() {
-    String cachedName = myCachedName;
-    if (cachedName == null) {
-      if (getTreeElement() != null) {
-        cachedName = myCachedName = getNameIdentifier().getText();
-      }
-      else {
-        cachedName = myCachedName = getRepositoryManager().getFieldView().getName(getRepositoryId());
-      }
+    final PsiFieldStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
     }
-    return cachedName;
+    return getNameIdentifier().getText();
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException{
@@ -120,16 +97,17 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
 
   @NotNull
   public PsiType getType(){
-    if (getTreeElement() == null) {
+    final PsiFieldStub stub = getStub();
+    if (stub != null) {
       PatchedSoftReference<PsiType> cachedType = myCachedType;
       if (cachedType != null) {
         PsiType type = cachedType.get();
         if (type != null) return type;
       }
 
-      String typeText = getRepositoryManager().getFieldView().getTypeText(getRepositoryId());
+      String typeText = RecordUtil.createTypeText(stub.getType());
       try {
-        final PsiType type = JavaPsiFacade.getInstance(myManager.getProject()).getParserFacade().createTypeFromText(typeText, this);
+        final PsiType type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
         myCachedType = new PatchedSoftReference<PsiType>(type);
         return type;
       }
@@ -138,10 +116,9 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
         return null;
       }
     }
-    else {
-      myCachedType = null;
-      return JavaSharedImplUtil.getType(this);
-    }
+
+    myCachedType = null;
+    return JavaSharedImplUtil.getType(this);
   }
 
   public PsiTypeElement getTypeElement(){
@@ -150,26 +127,23 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
       return firstField.getTypeElement();
     }
 
-    return (PsiTypeElement)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.TYPE);
+    return (PsiTypeElement)getNode().findChildByRoleAsPsiElement(ChildRole.TYPE);
   }
 
-  public PsiModifierList getModifierList(){
-    PsiField firstField = findFirstFieldInDeclaration();
-    if (firstField != this){
-      return firstField.getModifierList();
+  @NotNull
+  public PsiModifierList getModifierList() {
+    final PsiModifierList selfModifierList = getSelfModifierList();
+    if (selfModifierList != null) {
+      return selfModifierList;
     }
+    else {
+      return findFirstFieldInDeclaration().getModifierList();
+    }
+  }
 
-    if (getRepositoryId() >= 0){
-      synchronized (PsiLock.LOCK) {
-        if (myRepositoryModifierList == null){
-          myRepositoryModifierList = new PsiModifierListImpl(myManager, this);
-        }
-        return myRepositoryModifierList;
-      }
-    }
-    else{
-      return (PsiModifierList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.MODIFIER_LIST);
-    }
+  @Nullable
+  private PsiModifierList getSelfModifierList() {
+    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
   }
 
   public boolean hasModifierProperty(@NotNull String name) {
@@ -177,56 +151,55 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   }
 
   private PsiField findFirstFieldInDeclaration() {
-    if (myRepositoryModifierList != null) return this; // optmization
+    if (getSelfModifierList() != null) return this;
 
-    CompositeElement treeElement = getTreeElement();
-    if (treeElement == null) {
-      long repositoryId = getRepositoryId();
-      long cachedFirstFieldInDeclId = myCachedFirstFieldInDeclId;
-      if (cachedFirstFieldInDeclId < 0) {
-        cachedFirstFieldInDeclId = myCachedFirstFieldInDeclId = getRepositoryManager().getFieldView().getFirstFieldInDeclaration(repositoryId);
+    final PsiFieldStub stub = getStub();
+    if (stub != null) {
+      final List siblings = stub.getParentStub().getChildrenStubs();
+      final int idx = siblings.indexOf(stub);
+      assert idx >= 0;
+      for (int i = idx - 1; i >= 0; i++) {
+        if (!(siblings.get(i) instanceof PsiFieldStub)) break;
+        PsiFieldStub prevField = (PsiFieldStub)siblings.get(i);
+        final PsiFieldImpl prevFieldPsi = (PsiFieldImpl)prevField.getPsi();
+        if (prevFieldPsi.getSelfModifierList() != null) return prevFieldPsi;
       }
-      long repositoryId1 = cachedFirstFieldInDeclId;
-      if (repositoryId1 == repositoryId) {
-        return this;
+
+      return this;
+    }
+
+    CompositeElement treeElement = getNode();
+
+    ASTNode modifierList = treeElement.findChildByRole(ChildRole.MODIFIER_LIST);
+    if (modifierList == null) {
+      ASTNode prevField = treeElement.getTreePrev();
+      while (prevField != null && prevField.getElementType() != JavaElementType.FIELD) {
+        prevField = prevField.getTreePrev();
       }
-      else {
-        return (PsiField)getRepositoryElementsManager().findOrCreatePsiElementById(repositoryId1);
-      }
+      if (prevField == null) return this;
+      return ((PsiFieldImpl)SourceTreeToPsiMap.treeElementToPsi(prevField)).findFirstFieldInDeclaration();
     }
     else {
-      ASTNode modifierList = treeElement.findChildByRole(ChildRole.MODIFIER_LIST);
-      if (modifierList == null) {
-        ASTNode prevField = treeElement.getTreePrev();
-        while (prevField != null && prevField.getElementType() != JavaElementType.FIELD) {
-          prevField = prevField.getTreePrev();
-        }
-        if (prevField == null) return this;
-        return ((PsiFieldImpl)SourceTreeToPsiMap.treeElementToPsi(prevField)).findFirstFieldInDeclaration();
-      }
-      else {
-        return this;
-      }
+      return this;
     }
   }
 
   public PsiExpression getInitializer() {
-    return (PsiExpression)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.INITIALIZER);
+    return (PsiExpression)getNode().findChildByRoleAsPsiElement(ChildRole.INITIALIZER);
   }
 
   public boolean hasInitializer() {
-    if (getTreeElement() != null){
-      return getInitializer() != null;
-    }
-    else{
-      try{
+    if (getStub() != null) {
+      try {
         return getInitializerText() != null;
       }
-      catch(InitializerTooLongException e){
-        calcTreeElement();
+      catch (InitializerTooLongException e) {
+        getNode();
         return hasInitializer();
       }
     }
+
+    return getInitializer() != null;
   }
 
   public Icon getElementIcon(final int flags) {
@@ -257,7 +230,8 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
       initializer = (PsiExpression)cachedInitializerValue;
     }
     else{
-      if (getTreeElement() != null){
+      final PsiFieldStub stub = getStub();
+      if (stub == null) {
         initializer = getInitializer();
         if (initializer == null) return null;
       }
@@ -265,13 +239,15 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
         try{
           String initializerText = getInitializerText();
           if (initializerText == null) return null;
-          final FileElement holderElement = DummyHolderFactory.createHolder(myManager, this).getTreeElement();
-          CompositeElement exprElement = ExpressionParsing.parseExpressionText(myManager, initializerText, 0, initializerText.length(), holderElement.getCharTable());
+
+          PsiManager manager = getManager();
+          final FileElement holderElement = DummyHolderFactory.createHolder(manager, this).getTreeElement();
+          CompositeElement exprElement = ExpressionParsing.parseExpressionText(manager, initializerText, 0, initializerText.length(), holderElement.getCharTable());
           TreeUtil.addChildren(holderElement, exprElement);
           initializer = (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(exprElement);
         }
         catch(InitializerTooLongException e){
-          calcTreeElement();
+          getNode();
           return computeConstantValue(visitedVars);
         }
       }
@@ -305,42 +281,27 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
     return JavaResolveCache.getInstance(getProject()).computeConstantValueWithCaching(this, OurConstValueComputer.INSTANCE, visitedVars);
   }
 
+  @Nullable
   private String getInitializerText() throws InitializerTooLongException {
-    String initializerText = myCachedInitializerText;
-    if (initializerText == null) {
-      long repositoryId = getRepositoryId();
-      initializerText = getRepositoryManager().getFieldView().getInitializerText(repositoryId);
-      if (initializerText == null) initializerText = "";
-      myCachedInitializerText = initializerText;
+    final PsiFieldStub stub = getStub();
+    if (stub != null) {
+      return stub.getInitializerText();
     }
-    return initializerText.length() > 0 ? initializerText : null;
+
+    throw new RuntimeException("Shall not be called when in stubless mode");
   }
 
   public boolean isDeprecated() {
-    Boolean isDeprecated = myCachedIsDeprecated;
-    if (isDeprecated == null) {
-      boolean deprecated;
-      if (getTreeElement() != null) {
-        PsiDocComment docComment = getDocComment();
-        deprecated = docComment != null && getDocComment().findTagByName("deprecated") != null;
-        if (!deprecated) {
-          deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
-        }
-      }
-      else {
-        FieldView fieldView = getRepositoryManager().getFieldView();
-        deprecated = fieldView.isDeprecated(getRepositoryId());
-        if (!deprecated && fieldView.mayBeDeprecatedByAnnotation(getRepositoryId())) {
-          deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
-        }
-      }
-      isDeprecated = myCachedIsDeprecated = deprecated ? Boolean.TRUE : Boolean.FALSE;
+    final PsiFieldStub stub = getStub();
+    if (stub != null) {
+      return stub.isDeprecated() || stub.hasDeprecatedAnnotation() && PsiImplUtil.isDeprecatedByAnnotation(this);
     }
-    return isDeprecated.booleanValue();
+
+    return PsiImplUtil.isDeprecatedByDocTag(this) || PsiImplUtil.isDeprecatedByAnnotation(this);
   }
 
   public PsiDocComment getDocComment(){
-    CompositeElement treeElement = calcTreeElement();
+    CompositeElement treeElement = getNode();
     if (getTypeElement() != null) {
       return (PsiDocComment)treeElement.findChildByRoleAsPsiElement(ChildRole.DOC_COMMENT);
     }
@@ -424,4 +385,3 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
     return PsiImplUtil.getMemberUseScope(this);
   }
 }
-

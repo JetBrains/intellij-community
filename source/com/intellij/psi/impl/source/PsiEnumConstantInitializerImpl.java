@@ -1,32 +1,29 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.light.LightClassReference;
-import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiEnumConstantInitializer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiEnumConstantInitializerImpl");
   private PsiClassType myCachedBaseType = null;
 
-  public PsiEnumConstantInitializerImpl(PsiManagerEx manager, long repositoryId) {
-    super(manager, repositoryId);
+  public PsiEnumConstantInitializerImpl(final PsiClassStub stub) {
+    super(stub);
   }
 
-  public PsiEnumConstantInitializerImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
-    super(manager, treeElement);
+  public PsiEnumConstantInitializerImpl(final ASTNode node) {
+    super(node);
   }
+
 
   protected Object clone() {
     PsiEnumConstantInitializerImpl clone = (PsiEnumConstantInitializerImpl)super.clone();
     clone.myCachedBaseType = null;
     return clone;
-  }
-
-  public void setRepositoryId(long repositoryId) {
-    super.setRepositoryId(repositoryId);
   }
 
   public void subtreeChanged() {
@@ -44,6 +41,7 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
     return false;
   }
 
+
   @NotNull
   public PsiJavaCodeReferenceElement getBaseClassReference() {
     PsiClass containingClass = getBaseClass();
@@ -59,7 +57,7 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
   }
 
   public PsiElement getParent() {
-    return getDefaultParentByRepository();
+    return getParentByStub();
   }
 
   @NotNull
@@ -70,7 +68,7 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
   @NotNull
   public PsiClassType getBaseClassType() {
     if (myCachedBaseType == null) {
-      myCachedBaseType = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createType(getBaseClass());
+      myCachedBaseType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(getBaseClass());
     }
     return myCachedBaseType;
   }
@@ -135,10 +133,5 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
 
   public String toString() {
     return "PsiAnonymousClass (PsiEnumConstantInitializerImpl)):";
-  }
-
-  public void treeElementSubTreeChanged() {
-    myCachedBaseType = null;
-    super.treeElementSubTreeChanged();
   }
 }

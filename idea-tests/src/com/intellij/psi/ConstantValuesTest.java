@@ -26,7 +26,7 @@ public class ConstantValuesTest extends PsiTestCase{
         public void run() {
           try{
             String rootPath = PathManagerEx.getTestDataPath() + "/psi/constantValues";
-            VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete, false);
+            VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete, true);
 
             ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
             ModifiableRootModel rootModel = rootManager.getModifiableModel();

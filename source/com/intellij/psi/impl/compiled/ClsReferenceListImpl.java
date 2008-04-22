@@ -2,81 +2,63 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
-public class ClsReferenceListImpl extends ClsElementImpl implements PsiReferenceList {
+@SuppressWarnings({"HardCodedStringLiteral"})
+public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassReferenceListStub> implements PsiReferenceList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsReferenceListImpl");
+  private ClsJavaCodeReferenceElementImpl[] myRefs;
 
-  private final PsiElement myParent;
-  private PsiJavaCodeReferenceElement[] myReferences;
-  private volatile PsiClassType[] myTypes;
-  private final String myType;
-
-  public ClsReferenceListImpl(PsiElement parent, PsiJavaCodeReferenceElement[] references, String type) {
-    myParent = parent;
-    myReferences = references;
-    LOG.assertTrue(type != null);
-    myType = type;
-  }
-
-  public ClsReferenceListImpl(PsiElement parent, String type) {
-    myParent = parent;
-    LOG.assertTrue(type != null);
-    myType = type;
-  }
-
-  public void setReferences(@NotNull PsiJavaCodeReferenceElement[] references) {
-    myReferences = references;
-  }
-
-  @NotNull
-  public PsiElement[] getChildren() {
-    return myReferences;
-  }
-
-  public PsiElement getParent() {
-    return myParent;
+  public ClsReferenceListImpl(final PsiClassReferenceListStub stub) {
+    super(stub);
   }
 
   @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
-    return myReferences;
+    synchronized (PsiLock.LOCK) {
+      if (myRefs == null) {
+        final String[] strings = getStub().getReferencedNames();
+        ClsJavaCodeReferenceElementImpl[] res = new ClsJavaCodeReferenceElementImpl[strings.length];
+        for (int i = 0; i < res.length; i++) {
+            res[i] = new ClsJavaCodeReferenceElementImpl(this, strings[i]);
+          }
+        myRefs = res;
+      }
+      return myRefs;
+    }
   }
 
   @NotNull
   public PsiClassType[] getReferencedTypes() {
-    PsiClassType[] types = myTypes;
-    if (types == null) {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory();
-      types = myReferences.length == 0 ? PsiClassType.EMPTY_ARRAY : new PsiClassType[myReferences.length];
-      for (int i = 0; i < myReferences.length; i++) {
-        PsiJavaCodeReferenceElement reference = myReferences[i];
-        types[i] = factory.createType(reference);
-      }
-      myTypes = types;
-    }
-    return types;
+    return getStub().getReferencedTypes();
   }
 
   public Role getRole() {
-    if (PsiKeyword.EXTENDS.equals(myType)) return Role.EXTENDS_LIST;
-    if (PsiKeyword.IMPLEMENTS.equals(myType)) return Role.IMPLEMENTS_LIST;
-    if (PsiKeyword.THROWS.equals(myType)) return Role.THROWS_LIST;
-
-    LOG.error("Unknown type: " + myType);
-    return Role.EXTENDS_LIST;
+    return getStub().getRole();
   }
 
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
-    if (myReferences.length != 0) {
-      buffer.append(myType);
-      buffer.append(" ");
-      for (int i = 0; i < myReferences.length; i++) {
-        PsiJavaCodeReferenceElement ref = myReferences[i];
+    final String[] names = getStub().getReferencedNames();
+    if (names.length != 0) {
+      final Role role = getStub().getRole();
+      switch (role) {
+        case EXTENDS_BOUNDS_LIST:
+        case EXTENDS_LIST:
+          buffer.append("extends ");
+          break;
+        case IMPLEMENTS_LIST:
+          buffer.append("implements ");
+          break;
+        case THROWS_LIST:
+          buffer.append("throws ");
+          break;
+      }
+      for (int i = 0; i < names.length; i++) {
         if (i > 0) buffer.append(", ");
-        ((ClsElementImpl)ref).appendMirrorText(indentLevel, buffer);
+        buffer.append(names[i]);
       }
     }
   }

@@ -10,8 +10,8 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.collection;
 import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ProcessingContext;
@@ -35,7 +35,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
   }
 
   protected PsiElement getParent(@NotNull final PsiElement element) {
-    return element.getParent();
+    return element.getContext();
   }
 
   public Self withElementType(IElementType type) {

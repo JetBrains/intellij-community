@@ -19,7 +19,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -48,12 +48,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubIndexImpl");
   private final Map<StubIndexKey<?,?>, MyIndex<?>> myIndices = new HashMap<StubIndexKey<?,?>, MyIndex<?>>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
-  
+
   public static final int OK = 1;
   public static final int NEED_REBUILD = 2;
   public static final int REBUILD_IN_PROGRESS = 3;
   private final AtomicInteger myRebuildStatus = new AtomicInteger(OK);
-  
+
   private StubIndexState myPreviouslyRegistered;
 
   public StubIndexImpl() throws IOException {
@@ -137,7 +137,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     checkRebuild();
 
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID);
-    
+
     final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
     final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
     final PsiManager psiManager = PsiManager.getInstance(project);
@@ -153,7 +153,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         public void perform(final int id, final TIntArrayList value) {
           final VirtualFile file = IndexInfrastructure.findFileById(dirIndex, fs, id);
           if (file != null && (scope == null || scope.contains(file))) {
-            final PsiFileImpl psiFile = (PsiFileImpl)psiManager.findFile(file);
+            final PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport)psiManager.findFile(file);
             if (psiFile != null) {
               StubTree stubTree = psiFile.getStubTree();
               if (stubTree == null) {
@@ -163,7 +163,15 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                   for (int i = 0; i < value.size(); i++) {
                     final StubElement<?> stub = plained.get(value.get(i));
                     final ASTNode tree = psiFile.findTreeForStub(stubTree, stub);
-                    result.add((Psi)tree.getPsi());
+
+                    if (tree != null) {
+                      if (tree.getElementType() == stub.getStubType()) {
+                        result.add((Psi)tree.getPsi());
+                      }
+                      else {
+                        System.out.println("Oops");
+                      }
+                    }
                   }
                 }
               }
@@ -217,7 +225,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   public <Key> Collection<Key> getAllKeys(final StubIndexKey<Key, ?> indexKey) {
     checkRebuild();
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID);
-    
+
     final MyIndex<Key> index = (MyIndex<Key>)myIndices.get(indexKey);
     try {
       return index.getAllKeys();
@@ -255,8 +263,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       ((MemoryIndexStorage)indexStorage).setBufferingEnabled(enabled);
     }
   }
-  
-  
+
+
   public void clearAllIndices() {
     for (UpdatableIndex index : myIndices.values()) {
       try {
@@ -268,17 +276,17 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       }
     }
   }
-  
+
   public void clearIndex(StubIndexKey<?, ?> indexKey) {
     try {
       myIndices.get(indexKey).clear();
     }
     catch (StorageException e) {
       LOG.error(e);
-      throw new RuntimeException(e); 
+      throw new RuntimeException(e);
     }
   }
-  
+
   private void dropUnregisteredIndices() {
     final Set<String> indicesToDrop = new HashSet<String>(myPreviouslyRegistered != null? myPreviouslyRegistered.registeredIndices : Collections.<String>emptyList());
     for (ID<?, ?> key : myIndices.keySet()) {

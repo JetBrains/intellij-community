@@ -1,13 +1,20 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.*;
-import com.intellij.psi.impl.cache.MethodView;
+import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -19,32 +26,22 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
 
-public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMethod {
+public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements PsiMethod {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiMethodImpl");
 
-  private PsiModifierListImpl myRepositoryModifierList = null; //protected by PsiLock
-  private PsiParameterListImpl myRepositoryParameterList = null; //protected by PsiLock
-  private PsiReferenceListImpl myRepositoryThrowsList = null; //protected by PsiLock
-  private PsiTypeParameterListImpl myRepositoryTypeParameterList; //protected by PsiLock
-
-  @NonNls private volatile String myCachedName = null;
-  private volatile Boolean myCachedIsDeprecated = null;
-  private volatile Boolean myCachedIsConstructor = null;
-  private volatile Boolean myCachedIsVarargs = null;
   private PatchedSoftReference<PsiType> myCachedType = null;
 
-  public PsiMethodImpl(PsiManagerEx manager, long repositoryId) {
-    super(manager, repositoryId);
+  public PsiMethodImpl(final PsiMethodStub stub) {
+    super(stub, JavaStubElementTypes.METHOD);
   }
 
-  public PsiMethodImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
-    super(manager, treeElement);
+  public PsiMethodImpl(final ASTNode node) {
+    super(node);
   }
 
   public void subtreeChanged() {
@@ -54,50 +51,12 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
 
   private void dropCached() {
     myCachedType = null;
-    myCachedName = null;
-    myCachedIsDeprecated = null;
-    myCachedIsConstructor = null;
-    myCachedIsVarargs = null;
   }
 
   protected Object clone() {
     PsiMethodImpl clone = (PsiMethodImpl)super.clone();
-    clone.myRepositoryModifierList = null;
-    clone.myRepositoryParameterList = null;
-    clone.myRepositoryTypeParameterList = null;
-    clone.myRepositoryThrowsList = null;
     clone.dropCached();
     return clone;
-  }
-
-  public void setRepositoryId(long repositoryId) {
-    super.setRepositoryId(repositoryId);
-
-    if (repositoryId < 0){
-      if (myRepositoryModifierList != null){
-        myRepositoryModifierList.setOwner(this);
-        myRepositoryModifierList = null;
-      }
-      if (myRepositoryParameterList != null){
-        myRepositoryParameterList.setOwner(this);
-        myRepositoryParameterList = null;
-      }
-      if (myRepositoryTypeParameterList != null){
-        myRepositoryTypeParameterList.setOwner(this);
-        myRepositoryTypeParameterList = null;
-      }
-      if (myRepositoryThrowsList != null){
-        myRepositoryThrowsList.setOwner(this);
-        myRepositoryThrowsList = null;
-      }
-    }
-    else{
-      myRepositoryModifierList = (PsiModifierListImpl)bindSlave(ChildRole.MODIFIER_LIST);
-      myRepositoryParameterList = (PsiParameterListImpl)bindSlave(ChildRole.PARAMETER_LIST);
-      myRepositoryTypeParameterList = (PsiTypeParameterListImpl) bindSlave(ChildRole.TYPE_PARAMETER_LIST);
-      myRepositoryThrowsList = (PsiReferenceListImpl)bindSlave(ChildRole.THROWS_LIST);
-    }
-    dropCached();
   }
 
   public PsiClass getContainingClass() {
@@ -112,7 +71,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   }
 
   public PsiIdentifier getNameIdentifier() {
-    return (PsiIdentifier)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.NAME);
+    return (PsiIdentifier)(getNode()).findChildByRoleAsPsiElement(ChildRole.NAME);
   }
 
   @NotNull
@@ -146,18 +105,17 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
 
   @NotNull
   public String getName() {
-    @NonNls String name = myCachedName;
-    if (name == null){
-      if (getTreeElement() != null){
-        final PsiIdentifier nameIdentifier = getNameIdentifier();
-        name = nameIdentifier == null ? "<unnamed>" : nameIdentifier.getText();
-      }
-      else{
-        name = getRepositoryManager().getMethodView().getName(getRepositoryId());
-      }
-      myCachedName = name;
+    final String name;
+    final PsiMethodStub stub = getStub();
+    if (stub != null) {
+      name = stub.getName();
     }
-    return name;
+    else {
+      final PsiIdentifier nameIdentifier = getNameIdentifier();
+      name = nameIdentifier == null ? null : nameIdentifier.getText();
+    }
+
+    return name != null ? name : "<unnamed>";
   }
 
   @NotNull
@@ -171,22 +129,12 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   }
 
   public PsiTypeElement getReturnTypeElement() {
-    if (myCachedIsConstructor == Boolean.TRUE) return null;
-    return (PsiTypeElement)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.TYPE);
+    if (isConstructor()) return null;
+    return (PsiTypeElement)(getNode()).findChildByRoleAsPsiElement(ChildRole.TYPE);
   }
 
   public PsiTypeParameterList getTypeParameterList() {
-    long repositoryId = getRepositoryId();
-    if (repositoryId >= 0){
-      synchronized (PsiLock.LOCK) {
-        if (myRepositoryTypeParameterList == null){
-          myRepositoryTypeParameterList = new PsiTypeParameterListImpl(myManager, this);
-        }
-        return myRepositoryTypeParameterList;
-      }
-    }
-
-    return (PsiTypeParameterList) calcTreeElement().findChildByRoleAsPsiElement(ChildRole.TYPE_PARAMETER_LIST);
+    return getRequiredStubOrPsiChild(JavaStubElementTypes.TYPE_PARAMETER_LIST);
   }
 
   public boolean hasTypeParameters() {
@@ -198,27 +146,20 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   }
 
   public PsiType getReturnType() {
-    if (myCachedIsConstructor == Boolean.TRUE) return null;
+    if (isConstructor()) return null;
 
-    if (getTreeElement() != null) {
-      myCachedType = null;
+    final PsiMethodStub stub = getStub();
+    if (stub != null) {
+      final String typeText = RecordUtil.createTypeText(stub.getReturnTypeText());
+      if (typeText == null) return null;
 
-      PsiTypeElement typeElement = getReturnTypeElement();
-      if (typeElement == null) return null;
-      PsiParameterList parameterList = getParameterList();
-      return JavaSharedImplUtil.getType(typeElement, parameterList, this);
-    }
-    else{
       if (myCachedType != null) {
         PsiType type = myCachedType.get();
         if (type != null) return type;
       }
 
-      String typeText = getRepositoryManager().getMethodView().getReturnTypeText(getRepositoryId());
-      if (typeText == null) return null;
-
       try{
-        final PsiType type = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createTypeFromText(typeText, this);
+        final PsiType type = JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(typeText, this);
         myCachedType = new PatchedSoftReference<PsiType>(type);
         return type;
       }
@@ -227,21 +168,17 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
         return null;
       }
     }
+
+    myCachedType = null;
+    PsiTypeElement typeElement = getReturnTypeElement();
+    if (typeElement == null) return null;
+    PsiParameterList parameterList = getParameterList();
+    return JavaSharedImplUtil.getType(typeElement, parameterList, this);
   }
 
   @NotNull
   public PsiModifierList getModifierList() {
-    if (getRepositoryId() >= 0){
-      synchronized (PsiLock.LOCK) {
-        if (myRepositoryModifierList == null){
-          myRepositoryModifierList = new PsiModifierListImpl(myManager, this);
-        }
-        return myRepositoryModifierList;
-      }
-    }
-    else{
-      return (PsiModifierList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.MODIFIER_LIST);
-    }
+    return getRequiredStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
   }
 
   public boolean hasModifierProperty(@NotNull String name) {
@@ -250,94 +187,53 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
 
   @NotNull
   public PsiParameterList getParameterList() {
-    if (getRepositoryId() >= 0){
-      synchronized (PsiLock.LOCK) {
-        if (myRepositoryParameterList == null){
-          myRepositoryParameterList = new PsiParameterListImpl(myManager, this);
-        }
-        return myRepositoryParameterList;
-      }
-    }
-    else{
-      return (PsiParameterList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.PARAMETER_LIST);
-    }
+    return getRequiredStubOrPsiChild(JavaStubElementTypes.PARAMETER_LIST);
   }
 
   @NotNull
   public PsiReferenceList getThrowsList() {
-    if (getRepositoryId() >= 0){
-      synchronized (PsiLock.LOCK) {
-        if (myRepositoryThrowsList == null){
-          myRepositoryThrowsList = new PsiReferenceListImpl(myManager, this, JavaElementType.THROWS_LIST);
-        }
-        return myRepositoryThrowsList;
-      }
-    }
-    else{
-      final CompositeElement compositeElement = calcTreeElement();
-      return (PsiReferenceList)compositeElement.findChildByRoleAsPsiElement(ChildRole.THROWS_LIST);
-    }
+    return getRequiredStubOrPsiChild(JavaStubElementTypes.THROWS_LIST);
   }
 
   public PsiCodeBlock getBody() {
-    return (PsiCodeBlock)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.METHOD_BODY);
+    return (PsiCodeBlock)(getNode()).findChildByRoleAsPsiElement(ChildRole.METHOD_BODY);
+  }
+
+  @NotNull
+  public CompositeElement getNode() {
+    return (CompositeElement)super.getNode();
   }
 
   public boolean isDeprecated() {
-    Boolean deprecated = myCachedIsDeprecated;
-    if (deprecated == null){
-      if (getTreeElement() != null){
-        PsiDocComment docComment = getDocComment();
-        deprecated = docComment != null && docComment.findTagByName("deprecated") != null;
-        if (!deprecated) {
-          deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
-        }
-      }
-      else{
-        MethodView methodView = getRepositoryManager().getMethodView();
-        deprecated = methodView.isDeprecated(getRepositoryId());
-        if (!deprecated && methodView.mayBeDeprecatedByAnnotation(getRepositoryId())) {
-          deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
-        }
-      }
-      myCachedIsDeprecated = deprecated;
+    final PsiMethodStub stub = getStub();
+    if (stub != null) {
+      return stub.isDeprecated() || stub.hasDeprecatedAnnotation() && PsiImplUtil.isDeprecatedByAnnotation(this);
     }
-    return deprecated.booleanValue();
+
+    return PsiImplUtil.isDeprecatedByDocTag(this) || PsiImplUtil.isDeprecatedByAnnotation(this);
   }
 
   public PsiDocComment getDocComment() {
-    return (PsiDocComment)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.DOC_COMMENT);
+    return (PsiDocComment)getNode().findChildByRoleAsPsiElement(ChildRole.DOC_COMMENT);
   }
 
   public boolean isConstructor() {
-    Boolean isConstructor = myCachedIsConstructor;
-    if (isConstructor == null){
-      if (getTreeElement() != null){
-        isConstructor = calcTreeElement().findChildByRole(ChildRole.TYPE) == null;
-      }
-      else{
-        isConstructor = getRepositoryManager().getMethodView().isConstructor(getRepositoryId());
-      }
-      myCachedIsConstructor = isConstructor;
+    final PsiMethodStub stub = getStub();
+    if (stub != null) {
+      return stub.isConstructor();
     }
-    return isConstructor.booleanValue();
+
+    return getNode().findChildByRole(ChildRole.TYPE) == null;
   }
 
   public boolean isVarArgs() {
-    Boolean isVarArgs = myCachedIsVarargs;
-    if (isVarArgs == null) {
-      if (getTreeElement() != null) {
-        PsiParameter[] parameters = getParameterList().getParameters();
-        isVarArgs = parameters.length > 0 && parameters[parameters.length - 1].isVarArgs();
-      }
-      else {
-        isVarArgs = getRepositoryManager().getMethodView().isVarArgs(getRepositoryId());
-      }
-
-      myCachedIsVarargs = isVarArgs;
+    final PsiMethodStub stub = getStub();
+    if (stub != null) {
+      return stub.isVarArgs();
     }
 
-    return isVarArgs.booleanValue();
+    PsiParameter[] parameters = getParameterList().getParameters();
+    return parameters.length > 0 && parameters[parameters.length - 1].isVarArgs();
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -361,20 +257,6 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor){
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
-  }
-
-  public void treeElementSubTreeChanged() {
-    synchronized (PsiLock.LOCK) {
-      myCachedType = null;
-      myCachedName = null;
-      myCachedIsDeprecated = null;
-      myCachedIsConstructor = null;
-      myRepositoryThrowsList = null;
-      myRepositoryModifierList = null;
-      myRepositoryParameterList = null;
-      myRepositoryTypeParameterList = null;
-    }
-    super.treeElementSubTreeChanged();
   }
 
   public PsiElement getOriginalElement() {
@@ -403,4 +285,3 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
     return PsiImplUtil.getMemberUseScope(this);
   }
 }
-

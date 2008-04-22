@@ -3,10 +3,14 @@
  */
 package com.intellij.psi.impl.java.stubs;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiParameter;
-import com.intellij.psi.impl.cache.impl.repositoryCache.RecordUtil;
-import com.intellij.psi.impl.cache.impl.repositoryCache.TypeInfo;
+import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.cache.TypeInfo;
+import com.intellij.psi.impl.compiled.ClsParameterImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiParameterStubImpl;
+import com.intellij.psi.impl.source.PsiParameterImpl;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -22,7 +26,16 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
   }
 
   public PsiParameter createPsi(final PsiParameterStub stub) {
-    throw new UnsupportedOperationException("createPsi is not implemented"); // TODO
+    if (isCompiled(stub)) {
+      return new ClsParameterImpl(stub);
+    }
+    else {
+      return new PsiParameterImpl(stub);
+    }
+  }
+
+  public PsiParameter createPsi(final ASTNode node) {
+    return new PsiParameterImpl(node);
   }
 
   public PsiParameterStub createStub(final PsiParameter psi, final StubElement parentStub) {
@@ -44,6 +57,10 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
     RecordUtil.readTYPE(dataStream, type, nameStorage);
     boolean isEll = dataStream.readBoolean();
     return new PsiParameterStubImpl(parentStub, name, type, isEll);
+  }
+
+  public boolean shouldCreateStub(final ASTNode node) {
+    return node.getTreeParent().getElementType() != JavaElementType.CATCH_SECTION;
   }
 
   public void indexStub(final PsiParameterStub stub, final IndexSink sink) {

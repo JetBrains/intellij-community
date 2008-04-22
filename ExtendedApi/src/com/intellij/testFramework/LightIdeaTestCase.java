@@ -40,7 +40,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -59,6 +59,8 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.IndexableFileSet;
 import com.intellij.util.messages.MessageBusConnection;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -197,7 +199,34 @@ import java.util.Map;
         ourPsiManager = null;
         ourModule = createMainModule();
 
-        ourSourceRoot = DummyFileSystem.getInstance().createRoot("src");
+
+        //ourSourceRoot = DummyFileSystem.getInstance().createRoot("src");
+        
+        final VirtualFile dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
+
+        try {
+          ourSourceRoot = dummyRoot.createChildDirectory(this, "src");
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+
+        FileBasedIndex.getInstance().registerIndexableSet(new IndexableFileSet() {
+          public boolean isInSet(final VirtualFile file) {
+            return file.getFileSystem() == ourSourceRoot.getFileSystem();
+          }
+
+          public void iterateIndexableFilesIn(final VirtualFile file, final ContentIterator iterator) {
+            if (file.isDirectory()) {
+              for (VirtualFile child : file.getChildren()) {
+                iterateIndexableFilesIn(child, iterator);
+              }
+            }
+            else {
+              iterator.processFile(file);
+            }
+          }
+        });
 
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(ourModule);
 
@@ -277,6 +306,7 @@ import java.util.Map;
     if (ourProject == null || isJDKChanged(projectJDK)) {
       initProject(projectJDK);
     }
+
     ProjectManagerEx.getInstanceEx().setCurrentTestProject(ourProject);
 
     for (LocalInspectionTool tool : localInspectionTools) {

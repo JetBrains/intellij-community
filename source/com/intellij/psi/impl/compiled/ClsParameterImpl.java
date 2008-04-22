@@ -2,14 +2,18 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiParameterStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
@@ -18,30 +22,16 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, ClsModifierListOwner {
+public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> implements PsiParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsParameterImpl");
 
-  private final PsiParameterList myParent;
-  private final PsiTypeElement myType;
-  private final int myIdx;
-  private PsiModifierList myModifierList = null;
+  private PsiTypeElement myType;
   private String myMirrorName = null;
   private String myName = null;
   public static final ClsParameterImpl[] EMPTY_ARRAY = new ClsParameterImpl[0];
 
-  public ClsParameterImpl(PsiParameterList parent, PsiTypeElement type, int idx) {
-    myParent = parent;
-    myType = type;
-    myIdx = idx;
-  }
-
-  @NotNull
-  public PsiElement[] getChildren() {
-    return new PsiElement[]{getModifierList(), getTypeElement()};
-  }
-
-  public PsiElement getParent() {
-    return myParent;
+  public ClsParameterImpl(final PsiParameterStub stub) {
+    super(stub);
   }
 
   public PsiIdentifier getNameIdentifier() {
@@ -51,10 +41,9 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
   public String getName() {
     if (myName == null) {
       ClsMethodImpl method = (ClsMethodImpl)getDeclarationScope();
-      if (method.getRepositoryId() < 0) return null;
       PsiMethod sourceMethod = (PsiMethod)method.getNavigationElement();
       if (sourceMethod == method) return null;
-      myName = sourceMethod.getParameterList().getParameters()[myIdx].getName();
+      myName = sourceMethod.getParameterList().getParameters()[getIndex()].getName();
     }
     return myName;
   }
@@ -66,24 +55,27 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
 
   @NotNull
   public PsiTypeElement getTypeElement() {
-    return myType;
+    synchronized (PsiLock.LOCK) {
+      if (myType == null) {
+        myType = new ClsTypeElementImpl(this, RecordUtil.createTypeText(getStub().getParameterType()), ClsTypeElementImpl.VARIANCE_NONE);
+      }
+      return myType;
+    }
   }
 
   @NotNull
   public PsiType getType() {
-    return myType.getType();
+    return getTypeElement().getType();
   }
 
+  @NotNull
   public PsiModifierList getModifierList() {
-    synchronized (PsiLock.LOCK) {
-      if (myModifierList == null) {
-        myModifierList = new ClsModifierListImpl(this, 0);
-      }
-    }
-    return myModifierList;
+    final StubElement<PsiModifierList> child = getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
+    assert child != null;
+    return child.getPsi();
   }
 
-  public boolean hasModifierProperty(String name) {
+  public boolean hasModifierProperty(@NotNull String name) {
     return getModifierList().hasModifierProperty(name);
   }
 
@@ -103,9 +95,9 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
   }
 
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
-    ClsAnnotationImpl[] annotations = getAnnotations();
-    for (ClsAnnotationImpl annotation : annotations) {
-      annotation.appendMirrorText(indentLevel, buffer);
+    PsiAnnotation[] annotations = getAnnotations();
+    for (PsiAnnotation annotation : annotations) {
+      ((ClsAnnotationImpl)annotation).appendMirrorText(indentLevel, buffer);
       buffer.append(" ");
     }
     ((ClsElementImpl)getTypeElement()).appendMirrorText(indentLevel, buffer);
@@ -141,8 +133,8 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
         }
         myMirrorName = name;
       }
+      return myMirrorName;
     }
-    return myMirrorName;
   }
 
   private static String nextName(String name) {
@@ -197,13 +189,20 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
     return getParent().getParent();
   }
 
+  private int getIndex() {
+    final PsiParameterStub stub = getStub();
+    return stub.getParentStub().getChildrenStubs().indexOf(stub);
+  }
+
   public boolean isVarArgs() {
-    return ((PsiMethod) myParent.getParent()).isVarArgs() && myIdx == myParent.getParametersCount() - 1;
+    final PsiParameterList paramList = (PsiParameterList)getParent();
+    final PsiMethod method = (PsiMethod)paramList.getParent();
+    return method.isVarArgs() && getIndex() == paramList.getParametersCount() - 1;
   }
 
   @NotNull
-  public ClsAnnotationImpl[] getAnnotations() {
-    return ((ClsMethodImpl)myParent.getParent()).getParameterAnnotations(myIdx);
+  public PsiAnnotation[] getAnnotations() {
+    return getModifierList().getAnnotations();
   }
 
   public Icon getElementIcon(final int flags) {

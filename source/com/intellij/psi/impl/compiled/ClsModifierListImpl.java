@@ -3,39 +3,20 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
+import com.intellij.psi.impl.source.PsiModifierListImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.cls.ClsUtil;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
-public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierList {
+public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierListStub> implements PsiModifierList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsModifierListImpl");
 
-  private static final TObjectIntHashMap<String> ourModifierNameToFlagMap = new TObjectIntHashMap<String>();
-
-  static {
-    ourModifierNameToFlagMap.put(PsiModifier.PUBLIC, ClsUtil.ACC_PUBLIC);
-    ourModifierNameToFlagMap.put(PsiModifier.PROTECTED, ClsUtil.ACC_PROTECTED);
-    ourModifierNameToFlagMap.put(PsiModifier.PRIVATE, ClsUtil.ACC_PRIVATE);
-    ourModifierNameToFlagMap.put(PsiModifier.STATIC, ClsUtil.ACC_STATIC);
-    ourModifierNameToFlagMap.put(PsiModifier.ABSTRACT, ClsUtil.ACC_ABSTRACT);
-    ourModifierNameToFlagMap.put(PsiModifier.FINAL, ClsUtil.ACC_FINAL);
-    ourModifierNameToFlagMap.put(PsiModifier.NATIVE, ClsUtil.ACC_NATIVE);
-    ourModifierNameToFlagMap.put(PsiModifier.SYNCHRONIZED, ClsUtil.ACC_SYNCHRONIZED);
-    ourModifierNameToFlagMap.put(PsiModifier.TRANSIENT, ClsUtil.ACC_TRANSIENT);
-    ourModifierNameToFlagMap.put(PsiModifier.VOLATILE, ClsUtil.ACC_VOLATILE);
-  }
-
-  private final ClsModifierListOwner myParent;
-  private ClsAnnotationImpl[] myAnnotations = null;
-  private final int myFlags;
-
-  public ClsModifierListImpl(ClsModifierListOwner parent, int flags) {
-    myParent = parent;
-    myFlags = flags;
+  public ClsModifierListImpl(final PsiModifierListStub stub) {
+    super(stub);
   }
 
   @NotNull
@@ -43,17 +24,10 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
     return getAnnotations();
   }
 
-  public PsiElement getParent() {
-    return myParent;
-  }
-
   public boolean hasModifierProperty(@NotNull String name) {
-    int flag = ourModifierNameToFlagMap.get(name);
-    if (flag == 0) {
-      return PsiModifier.PACKAGE_LOCAL.equals(name) &&
-             (myFlags & (ClsUtil.ACC_PUBLIC | ClsUtil.ACC_PROTECTED | ClsUtil.ACC_PRIVATE)) == 0;
-    }
-    return (myFlags & flag) != 0;
+    int flag = PsiModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.get(name);
+    assert flag != 0;
+    return (getStub().getModifiersMask() & flag) != 0;
   }
 
   public boolean hasExplicitModifier(@NotNull String name) {
@@ -70,10 +44,7 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
 
   @NotNull
   public PsiAnnotation[] getAnnotations() {
-    if (myAnnotations == null) {
-      myAnnotations = myParent.getAnnotations();
-    }
-    return myAnnotations;
+    return getStub().getChildrenByType(JavaStubElementTypes.ANNOTATION, PsiAnnotation.EMPTY_ARRAY);
   }
 
   public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
@@ -87,11 +58,13 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
       buffer.append(' ');
     }
 
+    PsiElement parent = getParent();
+
     //TODO : filtering & ordering modifiers can go to CodeStyleManager
-    boolean isInterface = myParent instanceof PsiClass && ((PsiClass)myParent).isInterface();
-    boolean isInterfaceMethod = myParent instanceof PsiMethod && myParent.getParent() instanceof PsiClass && ((PsiClass)myParent.getParent()).isInterface();
-    boolean isInterfaceField = myParent instanceof PsiField && myParent.getParent() instanceof PsiClass && ((PsiClass)myParent.getParent()).isInterface();
-    boolean isInterfaceClass = myParent instanceof PsiClass && myParent.getParent() instanceof PsiClass && ((PsiClass)myParent.getParent()).isInterface();
+    boolean isInterface = parent instanceof PsiClass && ((PsiClass)parent).isInterface();
+    boolean isInterfaceMethod = parent instanceof PsiMethod && parent.getParent() instanceof PsiClass && ((PsiClass)parent.getParent()).isInterface();
+    boolean isInterfaceField = parent instanceof PsiField && parent.getParent() instanceof PsiClass && ((PsiClass)parent.getParent()).isInterface();
+    boolean isInterfaceClass = parent instanceof PsiClass && parent.getParent() instanceof PsiClass && ((PsiClass)parent.getParent()).isInterface();
     if (hasModifierProperty(PsiModifier.PUBLIC)) {
       if (!isInterfaceMethod && !isInterfaceField && !isInterfaceClass) {
         buffer.append(PsiModifier.PUBLIC);

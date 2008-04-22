@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -15,7 +16,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
@@ -199,7 +199,7 @@ public class AllClassesGetter {
     final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(context.getProject());
     final String[] names = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
       public String[] compute() {
-        return cache.getAllClassNames(true);
+        return cache.getAllClassNames();
       }
     });
     Arrays.sort(names, new Comparator<String>() {

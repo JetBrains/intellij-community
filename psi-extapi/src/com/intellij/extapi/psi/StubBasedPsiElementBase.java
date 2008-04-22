@@ -4,9 +4,11 @@
 package com.intellij.extapi.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
@@ -38,12 +40,16 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   @NotNull
   public ASTNode getNode() {
     if (myNode == null) {
-      PsiFileImpl file = (PsiFileImpl)getContainingFile();
-      assert file.getTreeElement() == null;
-      file.loadTreeElement();
-      if (myNode == null) {
-        assert false: "failed to bind stub to AST for element " + this + " in " +
-                      (file.getVirtualFile() == null ? "<unknown file>" : file.getVirtualFile().getPath());
+      synchronized (PsiLock.LOCK) {
+        if (myNode == null) {
+          PsiFileImpl file = (PsiFileImpl)getContainingFile();
+          assert file.getTreeElement() == null;
+          file.loadTreeElement();
+          if (myNode == null) {
+            assert false: "failed to bind stub to AST for element " + this + " in " +
+                          (file.getVirtualFile() == null ? "<unknown file>" : file.getVirtualFile().getPath());
+          }
+        }
       }
     }
 
@@ -123,6 +129,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   public T getStub() {
+    ProgressManager.getInstance().checkCanceled(); // Hope, this is called often
     return myStub;
   }
 

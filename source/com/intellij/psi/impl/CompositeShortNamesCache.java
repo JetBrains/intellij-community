@@ -92,18 +92,18 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
   }
 
   @NotNull
-  public String[] getAllClassNames(boolean searchInLibraries) {
+  public String[] getAllClassNames() {
     Merger<String> merger = new Merger<String>();
     for (PsiShortNamesCache cache : myCaches) {
-      merger.add(cache.getAllClassNames(searchInLibraries));
+      merger.add(cache.getAllClassNames());
     }
     String[] result = merger.getResult();
     return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  public void getAllClassNames(boolean searchInLibraries, @NotNull HashSet<String> dest) {
+  public void getAllClassNames(@NotNull HashSet<String> dest) {
     for (PsiShortNamesCache cache : myCaches) {
-      cache.getAllClassNames(searchInLibraries, dest);
+      cache.getAllClassNames(dest);
     }
   }
 
@@ -128,18 +128,18 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
   }
 
   @NotNull
-  public String[] getAllMethodNames(boolean searchInLibraries) {
+  public String[] getAllMethodNames() {
     Merger<String> merger = new Merger<String>();
     for (PsiShortNamesCache cache : myCaches) {
-      merger.add(cache.getAllMethodNames(searchInLibraries));
+      merger.add(cache.getAllMethodNames());
     }
     String[] result = merger.getResult();
     return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  public void getAllMethodNames(boolean searchInLibraries, @NotNull HashSet<String> set) {
+  public void getAllMethodNames(@NotNull HashSet<String> set) {
     for (PsiShortNamesCache cache : myCaches) {
-      cache.getAllMethodNames(searchInLibraries, set);
+      cache.getAllMethodNames(set);
     }
   }
 
@@ -154,18 +154,18 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
   }
 
   @NotNull
-  public String[] getAllFieldNames(boolean searchInLibraries) {
+  public String[] getAllFieldNames() {
     Merger<String> merger = new Merger<String>();
     for (PsiShortNamesCache cache : myCaches) {
-      merger.add(cache.getAllFieldNames(searchInLibraries));
+      merger.add(cache.getAllFieldNames());
     }
     String[] result = merger.getResult();
     return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  public void getAllFieldNames(boolean searchInLibraries, @NotNull HashSet<String> set) {
+  public void getAllFieldNames(@NotNull HashSet<String> set) {
     for (PsiShortNamesCache cache : myCaches) {
-      cache.getAllFieldNames(searchInLibraries, set);
+      cache.getAllFieldNames(set);
     }
   }
 

@@ -12,16 +12,17 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PackageScope;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -317,5 +318,15 @@ public class PsiImplUtil {
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     PsiIdentifier newNameIdentifier = factory.createIdentifier(name);
     return element.replace(newNameIdentifier);
+  }
+
+  public static boolean isDeprecatedByAnnotation(PsiModifierListOwner owner) {
+    PsiModifierList modifierList = owner.getModifierList();
+    return modifierList != null && modifierList.findAnnotation("java.lang.Deprecated") != null;
+  }
+
+  public static boolean isDeprecatedByDocTag(PsiDocCommentOwner owner) {
+    PsiDocComment docComment = owner.getDocComment();
+    return docComment != null && docComment.findTagByName("deprecated") != null;
   }
 }

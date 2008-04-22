@@ -3,6 +3,7 @@ PsiJavaFileStub [java.util]
     PsiModifierListStub[mask=1025]
     PsiTypeParameterListStub
       PsiTypeParameter[E]
+        PsiRefListStub[EXTENDS_BOUNDS_LIST:]
     PsiRefListStub[EXTENDS_LIST:java.util.Collection<E>]
     PsiRefListStub[IMPLEMENTS_LIST:]
     PsiMethodStub[size:int]
@@ -19,7 +20,7 @@ PsiJavaFileStub [java.util]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
       PsiParameterListStub
-        PsiParameterListStub[p1:java.lang.Object]
+        PsiParameterStub[p1:java.lang.Object]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[iterator:java.util.Iterator<E>]
@@ -36,59 +37,60 @@ PsiJavaFileStub [java.util]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
         PsiTypeParameter[T]
+          PsiRefListStub[EXTENDS_BOUNDS_LIST:]
       PsiParameterListStub
-        PsiParameterListStub[p1:T[]]
+        PsiParameterStub[p1:T[]]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[add:boolean]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
       PsiParameterListStub
-        PsiParameterListStub[p1:E]
+        PsiParameterStub[p1:E]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[remove:boolean]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
       PsiParameterListStub
-        PsiParameterListStub[p1:java.lang.Object]
+        PsiParameterStub[p1:java.lang.Object]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[containsAll:boolean]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
       PsiParameterListStub
-        PsiParameterListStub[p1:java.util.Collection<?>]
+        PsiParameterStub[p1:java.util.Collection<?>]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[addAll:boolean]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
       PsiParameterListStub
-        PsiParameterListStub[p1:java.util.Collection<? extends E>]
+        PsiParameterStub[p1:java.util.Collection<? extends E>]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[addAll:boolean]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
       PsiParameterListStub
-        PsiParameterListStub[p1:int]
+        PsiParameterStub[p1:int]
           PsiModifierListStub[mask=0]
-        PsiParameterListStub[p2:java.util.Collection<? extends E>]
+        PsiParameterStub[p2:java.util.Collection<? extends E>]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[removeAll:boolean]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
       PsiParameterListStub
-        PsiParameterListStub[p1:java.util.Collection<?>]
+        PsiParameterStub[p1:java.util.Collection<?>]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[retainAll:boolean]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
       PsiParameterListStub
-        PsiParameterListStub[p1:java.util.Collection<?>]
+        PsiParameterStub[p1:java.util.Collection<?>]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[clear:void]
@@ -100,7 +102,7 @@ PsiJavaFileStub [java.util]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
       PsiParameterListStub
-        PsiParameterListStub[p1:java.lang.Object]
+        PsiParameterStub[p1:java.lang.Object]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[hashCode:int]
@@ -112,46 +114,46 @@ PsiJavaFileStub [java.util]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
       PsiParameterListStub
-        PsiParameterListStub[p1:int]
+        PsiParameterStub[p1:int]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[set:E]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
       PsiParameterListStub
-        PsiParameterListStub[p1:int]
+        PsiParameterStub[p1:int]
           PsiModifierListStub[mask=0]
-        PsiParameterListStub[p2:E]
+        PsiParameterStub[p2:E]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[add:void]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
       PsiParameterListStub
-        PsiParameterListStub[p1:int]
+        PsiParameterStub[p1:int]
           PsiModifierListStub[mask=0]
-        PsiParameterListStub[p2:E]
+        PsiParameterStub[p2:E]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[remove:E]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
       PsiParameterListStub
-        PsiParameterListStub[p1:int]
+        PsiParameterStub[p1:int]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[indexOf:int]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
       PsiParameterListStub
-        PsiParameterListStub[p1:java.lang.Object]
+        PsiParameterStub[p1:java.lang.Object]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[lastIndexOf:int]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
       PsiParameterListStub
-        PsiParameterListStub[p1:java.lang.Object]
+        PsiParameterStub[p1:java.lang.Object]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[listIterator:java.util.ListIterator<E>]
@@ -163,15 +165,15 @@ PsiJavaFileStub [java.util]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
       PsiParameterListStub
-        PsiParameterListStub[p1:int]
+        PsiParameterStub[p1:int]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[subList:java.util.List<E>]
       PsiModifierListStub[mask=1025]
       PsiTypeParameterListStub
       PsiParameterListStub
-        PsiParameterListStub[p1:int]
+        PsiParameterStub[p1:int]
           PsiModifierListStub[mask=0]
-        PsiParameterListStub[p2:int]
+        PsiParameterStub[p2:int]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]

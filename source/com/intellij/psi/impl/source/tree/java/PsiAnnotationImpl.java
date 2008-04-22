@@ -1,18 +1,15 @@
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.cache.DeclarationView;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.meta.MetaRegistry;
-import com.intellij.psi.impl.source.IndexedRepositoryPsiElement;
-import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
+import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,53 +17,27 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ven
  */
-public class PsiAnnotationImpl extends IndexedRepositoryPsiElement implements PsiAnnotation {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl");
-  private CompositeElement myParsedFromRepository;
-
-  public PsiAnnotationImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
-    super(manager, treeElement);
+public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> implements PsiAnnotation {
+  public PsiAnnotationImpl(final PsiAnnotationStub stub) {
+    super(stub, JavaStubElementTypes.ANNOTATION);
   }
 
-  public PsiAnnotationImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner, int index) {
-    super(manager, owner, index);
+  public PsiAnnotationImpl(final ASTNode node) {
+    super(node);
   }
 
   public PsiJavaCodeReferenceElement getNameReferenceElement() {
     return (PsiJavaCodeReferenceElement)getMirrorTreeElement().findChildByRoleAsPsiElement(ChildRole.CLASS_REFERENCE);
   }
 
-  public void subtreeChanged() {
-    super.subtreeChanged();
-    myParsedFromRepository = null;
-  }
-
-  protected Object clone() {
-    final PsiAnnotationImpl clone = (PsiAnnotationImpl)super.clone();
-    clone.myParsedFromRepository = null;
-    return clone;
-  }
 
   private CompositeElement getMirrorTreeElement() {
-    CompositeElement actualTree = getTreeElement();
-    if (actualTree != null) {
-      myParsedFromRepository = null;
-      return actualTree;
+    final PsiAnnotationStub stub = getStub();
+    if (stub != null) {
+      return stub.getTreeElement();
     }
 
-    if (myParsedFromRepository != null) return myParsedFromRepository;
-    PsiElement owner = myOwner.getParent();
-    long parentId = ((SrcRepositoryPsiElement)owner).getRepositoryId();
-    DeclarationView view = (DeclarationView)getRepositoryManager().getItemView(parentId);
-    final String text = view.getAnnotations(parentId)[getIndex()];
-    try {
-      myParsedFromRepository = (CompositeElement)JavaPsiFacade.getInstance(myManager.getProject()).getParserFacade().createAnnotationFromText(text, this).getNode();
-      return myParsedFromRepository;
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error("Bad annotation in repository!");
-      return null;
-    }
+    return (CompositeElement)getNode();
   }
 
   public PsiAnnotationMemberValue findAttributeValue(String attributeName) {
@@ -105,5 +76,4 @@ public class PsiAnnotationImpl extends IndexedRepositoryPsiElement implements Ps
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMetaBase(this);
   }
-
 }

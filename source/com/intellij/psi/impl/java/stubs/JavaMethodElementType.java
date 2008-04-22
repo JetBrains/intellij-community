@@ -3,33 +3,57 @@
  */
 package com.intellij.psi.impl.java.stubs;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiAnnotationMethod;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.impl.cache.impl.repositoryCache.RecordUtil;
-import com.intellij.psi.impl.cache.impl.repositoryCache.TypeInfo;
+import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.cache.TypeInfo;
+import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiMethodStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaMethodNameIndex;
+import com.intellij.psi.impl.source.PsiAnnotationMethodImpl;
+import com.intellij.psi.impl.source.PsiMethodImpl;
+import com.intellij.psi.impl.source.tree.java.AnnotationMethodElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, PsiMethod> {
-  public JavaMethodElementType() {
-    super("METHOD");
+  public JavaMethodElementType(@NonNls final String name) {
+    super(name);
   }
 
   public PsiMethod createPsi(final PsiMethodStub stub) {
-    throw new UnsupportedOperationException("createPsi is not implemented"); // TODO
+    if (isCompiled(stub)) {
+      return new ClsMethodImpl(stub);
+    }
+    else {
+      return stub.isAnnotationMethod() ? new PsiAnnotationMethodImpl(stub) : new PsiMethodImpl(stub);
+    }
+  }
+
+  public PsiMethod createPsi(final ASTNode node) {
+    if (node instanceof AnnotationMethodElement) {
+      return new PsiAnnotationMethodImpl(node);
+    }
+    else {
+      return new PsiMethodImpl(node);
+    }
   }
 
   public PsiMethodStub createStub(final PsiMethod psi, final StubElement parentStub) {
-    final byte flags = PsiMethodStubImpl.packFlags(psi.isConstructor(), psi instanceof PsiAnnotationMethod, psi.isVarArgs(), psi.isDeprecated());
+    final byte flags = PsiMethodStubImpl.packFlags(psi.isConstructor(),
+                                                   psi instanceof PsiAnnotationMethod,
+                                                   psi.isVarArgs(),
+                                                   RecordUtil.isDeprecatedByDocComment(psi),
+                                                   RecordUtil.isDeprecatedByAnnotation(psi));
 
     String defValueText = null;
     if (psi instanceof PsiAnnotationMethod) {

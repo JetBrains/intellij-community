@@ -5,6 +5,7 @@ import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -129,6 +130,9 @@ public class CompositeElement extends TreeElement implements Cloneable {
       final PsiElement psi = getPsi();
       if (psi instanceof ASTDelegatePsiElement) {
         ((ASTDelegatePsiElement)psi).subtreeChanged();
+      }
+      else if (psi instanceof PsiFile) {
+        ((PsiFile)psi).subtreeChanged();
       }
     }
     

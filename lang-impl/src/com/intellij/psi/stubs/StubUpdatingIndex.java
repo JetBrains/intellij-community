@@ -14,8 +14,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.tree.IFileElementType;
@@ -36,7 +36,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("StubUpdatingIndex");
-  private static final int VERSION = 3;
+  private static final int VERSION = 4;
   private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
     public void save(final DataOutput out, final SerializedStubTree v) throws IOException {
       byte[] value = v.getBytes();
@@ -56,6 +56,12 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     public boolean acceptInput(final VirtualFile file) {
       final FileType fileType = file.getFileType();
       if (fileType instanceof LanguageFileType) {
+
+        // TODO[hack] prevent library sources from indexing... MUST fix to asking current project.
+        if (file.getFileSystem() instanceof JarFileSystem) {
+          return false;
+        }
+
         Language l = ((LanguageFileType)fileType).getLanguage();
         return LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType() instanceof IStubFileElementType;
       }
@@ -94,7 +100,6 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     return new DataIndexer<Integer, SerializedStubTree, FileContent>() {
       public Map<Integer, SerializedStubTree> map(final FileContent inputData) {
         final Map<Integer, SerializedStubTree> result = new HashMap<Integer, SerializedStubTree>();
-        if (!(inputData.getFile() instanceof NewVirtualFile)) return result;
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
@@ -289,7 +294,7 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
       lock.lock();
       try {
         final ValueContainer<SerializedStubTree> valueContainer = getData(key);
-        if (valueContainer.size() == 0) {
+        if (valueContainer.size() != 1) {
           return result;
         }
 

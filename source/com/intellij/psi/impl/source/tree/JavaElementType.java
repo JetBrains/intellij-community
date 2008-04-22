@@ -26,18 +26,21 @@ public interface JavaElementType {
   IElementType ANONYMOUS_CLASS = JavaStubElementTypes.ANONYMOUS_CLASS;
   IElementType ENUM_CONSTANT_INITIALIZER = JavaStubElementTypes.ENUM_CONSTANT_INITIALIZER;
 
-  IElementType TYPE_PARAMETER = JavaStubElementTypes.TYPE_PARAMETER;
   IElementType TYPE_PARAMETER_LIST = JavaStubElementTypes.TYPE_PARAMETER_LIST;
+  IElementType TYPE_PARAMETER = JavaStubElementTypes.TYPE_PARAMETER;
 
+  IElementType IMPORT_LIST = JavaStubElementTypes.IMPORT_LIST;
   IElementType IMPORT_STATEMENT = JavaStubElementTypes.IMPORT_STATEMENT;
   IElementType IMPORT_STATIC_STATEMENT = JavaStubElementTypes.IMPORT_STATIC_STATEMENT;
 
   IElementType MODIFIER_LIST = JavaStubElementTypes.MODIFIER_LIST;
+  IElementType ANNOTATION = JavaStubElementTypes.ANNOTATION;
   IElementType EXTENDS_LIST = JavaStubElementTypes.EXTENDS_LIST;
   IElementType IMPLEMENTS_LIST = JavaStubElementTypes.IMPLEMENTS_LIST;
   IElementType FIELD = JavaStubElementTypes.FIELD;
   IElementType ENUM_CONSTANT = JavaStubElementTypes.ENUM_CONSTANT;
   IElementType METHOD = JavaStubElementTypes.METHOD;
+  IElementType ANNOTATION_METHOD = JavaStubElementTypes.ANNOTATION_METHOD;
 
   IElementType CLASS_INITIALIZER = JavaStubElementTypes.CLASS_INITIALIZER;
   IElementType PARAMETER = JavaStubElementTypes.PARAMETER;
@@ -95,23 +98,9 @@ public interface JavaElementType {
 
   IElementType CATCH_SECTION = new IJavaElementType("CATCH_SECTION");
 
-  IElementType ANNOTATION_METHOD = new IJavaElementType("ANNOTATION_METHOD");
   IElementType ANNOTATION_ARRAY_INITIALIZER = new IJavaElementType("ANNOTATION_ARRAY_INITIALIZER");
-  IElementType ANNOTATION = new IJavaElementType("ANNOTATION");
   IElementType NAME_VALUE_PAIR = new IJavaElementType("NAME_VALUE_PAIR");
   IElementType ANNOTATION_PARAMETER_LIST = new IJavaElementType("ANNOTATION_PARAMETER_LIST");
-
-  IElementType IMPORT_LIST = new IChameleonElementType("IMPORT_LIST_TEXT", StdLanguages.JAVA){
-    public ASTNode parseContents(ASTNode chameleon) {
-      final CharSequence seq = ((LeafElement)chameleon).getInternedText();
-      final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
-      final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(TreeUtil.getFileElement((LeafElement)chameleon).getPsi());
-      final JavaParsingContext context = new JavaParsingContext(SharedImplUtil.findCharTableByTree(chameleon), languageLevel);
-      return context.getImportsTextParsing().parseImportsText(manager, new JavaLexer(languageLevel),
-                                                              seq, 0, seq.length(), 0);
-    }
-    public boolean isParsable(CharSequence buffer, final Project project) {return false;}
-  };
 
   IElementType CODE_BLOCK = new IErrorCounterChameleonElementType("CODE_BLOCK", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {

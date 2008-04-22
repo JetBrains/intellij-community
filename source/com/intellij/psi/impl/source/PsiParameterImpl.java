@@ -1,13 +1,19 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiParameterStub;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -19,50 +25,36 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class PsiParameterImpl extends IndexedRepositoryPsiElement implements PsiParameter {
+public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> implements PsiParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterImpl");
-
-  private String myCachedName = null;
   private PatchedSoftReference<PsiType> myCachedType = null;
-  private Boolean myCachedIsVarArgs = null;
-  private volatile PsiAnnotation[] myCachedAnnotations = null;
 
-  public PsiParameterImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
-    super(manager, treeElement);
+  public PsiParameterImpl(final PsiParameterStub stub) {
+    super(stub, JavaStubElementTypes.PARAMETER);
   }
 
-  public PsiParameterImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner, int index) {
-    super(manager, owner, index);
+  public PsiParameterImpl(final ASTNode node) {
+    super(node);
   }
 
   public void subtreeChanged() {
     super.subtreeChanged();
-    myCachedName = null;
     myCachedType = null;
-    myCachedIsVarArgs = null;
-    myCachedAnnotations = null;
   }
 
   protected Object clone() {
     PsiParameterImpl clone = (PsiParameterImpl)super.clone();
     clone.myCachedType = null;
-    clone.myCachedName = null;
-    clone.myCachedIsVarArgs = null;
-    clone.myCachedAnnotations = null;
 
     return clone;
   }
 
   public final String getName() {
-    if (myCachedName == null){
-      if (getTreeElement() != null){
-        myCachedName = getNameIdentifier().getText();
-      }
-      else{
-        myCachedName = getRepositoryManager().getMethodView().getParameterName(getRepositoryId(), getIndex());
-      }
+    final PsiParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
     }
-    return myCachedName;
+    return getNameIdentifier().getText();
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
@@ -72,25 +64,26 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
 
   @NotNull
   public final PsiIdentifier getNameIdentifier() {
-    return (PsiIdentifier)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.NAME);
+    return (PsiIdentifier)getNode().findChildByRoleAsPsiElement(ChildRole.NAME);
+  }
+
+  @NotNull
+  public CompositeElement getNode() {
+    return (CompositeElement)super.getNode();
   }
 
   @NotNull
   public PsiType getType() {
-    final CompositeElement treeElement = getTreeElement();
-    if (treeElement != null) {
-      myCachedType = null;
-      return JavaSharedImplUtil.getType(this);
-    }
-    else {
+    final PsiParameterStub stub = getStub();
+    if (stub != null) {
       if (myCachedType != null) {
         PsiType type = myCachedType.get();
         if (type != null) return type;
       }
 
-      String typeText = getRepositoryManager().getMethodView().getParameterTypeText(getRepositoryId(), getIndex());
+      String typeText = RecordUtil.createTypeText(stub.getParameterType());
       try {
-        final PsiType type = JavaPsiFacade.getInstance(getManager().getProject()).getParserFacade().createTypeFromText(typeText, this);
+        final PsiType type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
         myCachedType = new PatchedSoftReference<PsiType>(type);
         return type;
       }
@@ -99,18 +92,21 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
         return null;
       }
     }
+
+    myCachedType = null;
+    return JavaSharedImplUtil.getType(this);
   }
 
   @NotNull
   public PsiTypeElement getTypeElement() {
-    return (PsiTypeElement)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.TYPE);
+    return (PsiTypeElement)getNode().findChildByRoleAsPsiElement(ChildRole.TYPE);
   }
 
   public PsiModifierList getModifierList() {
-    return (PsiModifierList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.MODIFIER_LIST);
+    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
   }
 
-  public boolean hasModifierProperty(String name) {
+  public boolean hasModifierProperty(@NotNull String name) {
     return getModifierList().hasModifierProperty(name);
   }
 
@@ -172,44 +168,18 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
   }
 
   public boolean isVarArgs() {
-    final CompositeElement treeElement = getTreeElement();
-    if (treeElement != null) {
-      myCachedType = null;
-      return TreeUtil.findChild(SourceTreeToPsiMap.psiElementToTree(getTypeElement()), Constants.ELLIPSIS) != null;
+    final PsiParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.isParameterTypeEllipsis();
     }
-    else {
-      if (myCachedIsVarArgs == null) {
-        myCachedIsVarArgs = getRepositoryManager().getMethodView().isParameterTypeEllipsis(getRepositoryId(), getIndex());
-      }
-      return myCachedIsVarArgs.booleanValue();
-    }
+
+    myCachedType = null;
+    return TreeUtil.findChild(SourceTreeToPsiMap.psiElementToTree(getTypeElement()), Constants.ELLIPSIS) != null;
   }
 
   @NotNull
   public PsiAnnotation[] getAnnotations() {
-    final CompositeElement treeElement = getTreeElement();
-    if (treeElement == null) {
-      PsiAnnotation[] cachedAnnotations = myCachedAnnotations;
-      if (cachedAnnotations == null) {
-        String[] annotationStrings = getRepositoryManager().getMethodView().getParameterAnnotations(getRepositoryId())[getIndex()];
-        cachedAnnotations = annotationStrings.length == 0 ? PsiAnnotation.EMPTY_ARRAY : new PsiAnnotation[annotationStrings.length];
-        for (int i = 0; i < annotationStrings.length; i++) {
-          try {
-            cachedAnnotations[i] = JavaPsiFacade.getInstance(getManager().getProject()).getParserFacade().createAnnotationFromText(annotationStrings[i], this);
-            LOG.assertTrue(cachedAnnotations[i] != null);
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error("Bad annotation text in repository: " + annotationStrings[i]);
-          }
-        }
-        myCachedAnnotations = cachedAnnotations;
-      }
-      return cachedAnnotations;
-    }
-    else {
-      myCachedAnnotations = null;
-      return getModifierList().getAnnotations();
-    }
+    return getModifierList().getAnnotations();
   }
 
   public ItemPresentation getPresentation() {

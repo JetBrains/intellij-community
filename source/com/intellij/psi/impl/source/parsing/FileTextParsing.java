@@ -10,10 +10,9 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -26,8 +25,6 @@ public class FileTextParsing extends Parsing {
   public static TreeElement parseFileText(PsiManager manager, Lexer lexer, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
     return parseFileText(manager, lexer, buffer, startOffset, endOffset, false, table);
   }
-
-  private static final TokenSet IMPORT_LIST_STOPPER_BIT_SET = TokenSet.create(CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD, AT);
 
   public static TreeElement parseFileText(PsiManager manager, @NotNull Lexer lexer, CharSequence buffer, int startOffset, int endOffset, boolean skipHeader, CharTable table) {
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
@@ -42,7 +39,7 @@ public class FileTextParsing extends Parsing {
         TreeUtil.addChildren(dummyRoot, packageStatement);
       }
 
-      final TreeElement importList = (TreeElement)context.getFileTextParsing().parseImportList(filterLexer);
+      final TreeElement importList = (TreeElement)parseImportList(filterLexer, context);
       TreeUtil.addChildren(dummyRoot, importList);
     }
 
@@ -76,34 +73,18 @@ public class FileTextParsing extends Parsing {
     return dummyRoot.getFirstChildNode();
   }
 
-  public ASTNode parseImportList(Lexer lexer) {
+  public static ASTNode parseImportList(Lexer lexer, final JavaParsingContext context) {
     CompositeElement importList = ASTFactory.composite(IMPORT_LIST);
+
     if (lexer.getTokenType() == IMPORT_KEYWORD) {
-      int startPos = lexer.getTokenStart();
-      int lastPos = lexer.getTokenEnd();
-      boolean prevImportKeyword = true;
-      while (true) {
-        IElementType tokenType = lexer.getTokenType();
-        if (tokenType == IMPORT_KEYWORD) {
-          prevImportKeyword = true;
-        }
-        else if (prevImportKeyword && tokenType == STATIC_KEYWORD) {
-          prevImportKeyword = false;
-        }
-        else {
-          prevImportKeyword = StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType);
-          if (tokenType == null || IMPORT_LIST_STOPPER_BIT_SET.contains(tokenType) || MODIFIER_BIT_SET.contains(tokenType)) break;
-        }
-        lastPos = lexer.getTokenEnd();
-        lexer.advance();
-      }
-      return ASTFactory.leaf(IMPORT_LIST, lexer.getBufferSequence(), startPos, lastPos, myContext.getCharTable());
+      context.getImportsTextParsing().parseImportStatements(lexer, importList);
     }
 
     return importList;
   }
 
-  public ASTNode parsePackageStatement(Lexer lexer) {
+  @Nullable
+  private ASTNode parsePackageStatement(Lexer lexer) {
     final LexerPosition startPos = lexer.getCurrentPosition();
     CompositeElement packageStatement = ASTFactory.composite(PACKAGE_STATEMENT);
 

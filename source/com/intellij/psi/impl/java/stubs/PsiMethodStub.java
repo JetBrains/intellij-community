@@ -4,7 +4,7 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.impl.cache.impl.repositoryCache.TypeInfo;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.stubs.NamedStub;
 
 public interface PsiMethodStub extends NamedStub<PsiMethod> {
@@ -16,6 +16,7 @@ public interface PsiMethodStub extends NamedStub<PsiMethod> {
   TypeInfo getReturnTypeText();
 
   boolean isDeprecated();
+  boolean hasDeprecatedAnnotation();
 
   PsiParameterStub findParameter(int idx);
 }

@@ -3,10 +3,13 @@
  */
 package com.intellij.psi.impl.java.stubs;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.impl.compiled.ClsAnnotationImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
+import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -22,8 +25,17 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
   }
 
   public PsiAnnotation createPsi(final PsiAnnotationStub stub) {
-    throw new UnsupportedOperationException("createPsi is not implemented"); // TODO
+    if (isCompiled(stub)) {
+      return new ClsAnnotationImpl(stub);
+    }
+    else {
+      return new PsiAnnotationImpl(stub);
+    }
   }
+
+  public PsiAnnotation createPsi(final ASTNode node) {
+    return new PsiAnnotationImpl(node);
+  }  
 
   public PsiAnnotationStub createStub(final PsiAnnotation psi, final StubElement parentStub) {
     return new PsiAnnotationStubImpl(parentStub, psi.getText());

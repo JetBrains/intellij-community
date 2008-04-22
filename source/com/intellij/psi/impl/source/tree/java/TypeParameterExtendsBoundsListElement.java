@@ -5,17 +5,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
  */
-public class TypeParameterExtendsBoundsListElement extends RepositoryTreeElement implements Constants {
+public class TypeParameterExtendsBoundsListElement extends CompositeElement implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.TypeParameterExtendsBoundsListElement");
 
   public TypeParameterExtendsBoundsListElement() {
@@ -76,14 +75,6 @@ public class TypeParameterExtendsBoundsListElement extends RepositoryTreeElement
       }
     }
     super.deleteChildInternal(child);
-  }
-
-  public void subtreeChanged() {
-    super.subtreeChanged();
-    final SrcRepositoryPsiElement psiElement = getPsiElement();
-    if (psiElement != null){
-      psiElement.treeElementSubTreeChanged();
-    }
   }
 
   public int getChildRole(final ASTNode child) {

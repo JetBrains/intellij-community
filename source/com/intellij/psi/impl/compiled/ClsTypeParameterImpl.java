@@ -3,10 +3,11 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiTypeParameterStub;
 import com.intellij.psi.impl.light.LightEmptyImplementsList;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -14,14 +15,12 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.cls.ClsFormatException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.text.CharacterIterator;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -29,47 +28,13 @@ import java.util.List;
 /**
  * @author max
  */
-public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParameter {
+public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParameterStub> implements PsiTypeParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsTypeParameterImpl");
-  static ClsTypeParameterImpl[] EMPTY_ARRAY = new ClsTypeParameterImpl[0];
-
-  private String myName;
-  private final ClsReferenceListImpl myBoundsList;
-  private final PsiElement myParent;
-  private final int myIndex;
+  static final ClsTypeParameterImpl[] EMPTY_ARRAY = new ClsTypeParameterImpl[0];
   private LightEmptyImplementsList myLightEmptyImplementsList;
-  private final String mySignature;
 
-  public ClsTypeParameterImpl(PsiElement parent,
-                              CharacterIterator signature,
-                              int index,
-                              String parentSignatureAttribute) throws ClsFormatException {
-    myParent = parent;
-    myIndex = index;
-    StringBuffer name = new StringBuffer();
-    final int signatureBeginIndex = signature.getIndex();
-    while (signature.current() != ':' && signature.current() != CharacterIterator.DONE) {
-      name.append(signature.current());
-      signature.next();
-    }
-    if (signature.current() == CharacterIterator.DONE) {
-      throw new ClsFormatException();
-    }
-    myName = name.toString();
-
-    ArrayList<PsiJavaCodeReferenceElement> bounds = new ArrayList<PsiJavaCodeReferenceElement>();
-    while (signature.current() == ':') {
-      signature.next();
-      PsiJavaCodeReferenceElement bound = GenericSignatureParsing.parseToplevelClassRefSignature(signature, this);
-      if (bound != null && !bound.getQualifiedName().equals("java.lang.Object")) {
-        bounds.add(bound);
-      }
-    }
-
-    PsiJavaCodeReferenceElement[] references = bounds.isEmpty() ? PsiJavaCodeReferenceElement.EMPTY_ARRAY : bounds.toArray(new PsiJavaCodeReferenceElement[bounds.size()]);
-    myBoundsList = new ClsReferenceListImpl(this, references, PsiKeyword.EXTENDS);
-    final int endIndex = signature.getIndex();
-    mySignature = parentSignatureAttribute.substring(signatureBeginIndex, endIndex);
+  public ClsTypeParameterImpl(final PsiTypeParameterStub stub) {
+    super(stub);
   }
 
   public String getQualifiedName() {
@@ -147,7 +112,7 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
     return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
   }
 
-  public boolean isInheritor(PsiClass baseClass, boolean checkDeep) {
+  public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 
@@ -160,12 +125,11 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
   }
 
   public String getName() {
-    return myName;
+    return getStub().getName();
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    myName = name;
-    return this;
+    throw new IncorrectOperationException("Cannot change compiled classes");
   }
 
   @NotNull
@@ -183,7 +147,7 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
 
   @NotNull
   public PsiReferenceList getExtendsList() {
-    return myBoundsList;
+    return getStub().findChildStubByType(JavaStubElementTypes.EXTENDS_BOUND_LIST).getPsi();
   }
 
   public PsiReferenceList getImplementsList() {
@@ -197,7 +161,7 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
 
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
-    return myBoundsList.getReferencedTypes();
+    return getExtendsList().getReferencedTypes();
   }
 
   @NotNull
@@ -293,8 +257,8 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
   }
 
   public void appendMirrorText(final int indentLevel, @NonNls final StringBuffer buffer) {
-    buffer.append(myName);
-    PsiJavaCodeReferenceElement[] bounds = myBoundsList.getReferenceElements();
+    buffer.append(getName());
+    PsiJavaCodeReferenceElement[] bounds = getExtendsList().getReferenceElements();
     if (bounds.length > 0) {
       buffer.append(" extends ");
       for (int i = 0; i < bounds.length; i++) {
@@ -318,27 +282,15 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
     return PsiElement.EMPTY_ARRAY;
   }
 
-  public PsiElement getParent() {
-    return myParent;
-  }
-
   @NotNull
   public PsiTypeParameterListOwner getOwner() {
-    if (myParent instanceof ClsTypeParametersListImpl) {
-      final PsiElement parent = myParent.getParent();
-      if (parent instanceof PsiTypeParameterListOwner) return (PsiTypeParameterListOwner)parent;
-    }
-    LOG.error("Invalid parent for type parameter: " + myParent);
-    return null;
+    return (PsiTypeParameterListOwner)getParent().getParent();
   }
 
 
   public int getIndex() {
-    return myIndex;
-  }
-
-  public String getSignature() {
-    return mySignature;
+    final PsiTypeParameterStub st = getStub();
+    return st.getParentStub().getChildrenStubs().indexOf(st);
   }
 
   public PsiMetaData getMetaData() {

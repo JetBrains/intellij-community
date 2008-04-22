@@ -1,4 +1,4 @@
-package com.intellij.psi.impl.cache.impl.repositoryCache;
+package com.intellij.psi.impl.cache;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.compiled.ClsTypeElementImpl;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
@@ -179,7 +178,7 @@ public class RecordUtil {
     return packed;
   }
 
-  private static boolean isDeprecatedByAnnotation(PsiElement element) {
+  public static boolean isDeprecatedByAnnotation(PsiElement element) {
     if (element instanceof PsiModifierListOwner) {
       PsiModifierList modifierList = ((PsiModifierListOwner)element).getModifierList();
       if (modifierList != null) {
@@ -247,7 +246,7 @@ public class RecordUtil {
     return packed;
   }
 
-  private static boolean isDeprecatedByDocComment(PsiElement psiElement) {
+  public static boolean isDeprecatedByDocComment(PsiElement psiElement) {
     if (!(psiElement instanceof PsiDocCommentOwner)) return false;
 
     final PsiDocCommentOwner owner = (PsiDocCommentOwner)psiElement;

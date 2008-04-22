@@ -7,6 +7,7 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,14 +35,19 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   }
 
   public boolean isInSet(final VirtualFile file) {
-    return myRootManager.getFileIndex().isInContent(file);
+    final ProjectFileIndex index = myRootManager.getFileIndex();
+    return index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file);
   }
 
   public void iterateIndexableFilesIn(final VirtualFile file, final ContentIterator iterator) {
+    if (!isInSet(file)) return;
+
     if (file.isDirectory()) {
-      myRootManager.getFileIndex().iterateContentUnderDirectory(file, iterator);
+      for (VirtualFile child : file.getChildren()) {
+        iterateIndexableFilesIn(child, iterator);
+      }
     }
-    else if (isInSet(file)) {
+    else {
       iterator.processFile(file);
     }
   }

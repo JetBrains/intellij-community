@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
@@ -257,7 +258,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   }
 
   public boolean isPhysical() {
-    return !(myFile.getFileSystem() instanceof DummyFileSystem);
+    return !(myFile.getFileSystem() instanceof DummyFileSystem) && !(myFile.getFileSystem() instanceof TempFileSystem);
   }
 
   /**

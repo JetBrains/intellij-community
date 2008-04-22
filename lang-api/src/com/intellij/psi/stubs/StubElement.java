@@ -14,13 +14,14 @@ public interface StubElement<T extends PsiElement> {
   IStubElementType getStubType();
   StubElement getParentStub();
   List<StubElement> getChildrenStubs();
+
   @Nullable
-  StubElement findChildStubByType(IElementType elementType);
+  <P extends PsiElement> StubElement<P> findChildStubByType(IStubElementType<?, P> elementType);
 
   T getPsi();
 
-  <E> E[] getChildrenByType(final IElementType elementType, final E[] array);
-  <E> E[] getChildrenByType(final TokenSet filter, final E[] array);
+  <E extends PsiElement> E[] getChildrenByType(final IElementType elementType, final E[] array);
+  <E extends PsiElement> E[] getChildrenByType(final TokenSet filter, final E[] array);
 
   @Nullable
   <E extends PsiElement> E getParentStubOfType(final Class<E> parentClass);

@@ -288,6 +288,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
         final ValueContainer<V> container = index.getData(dataKey);
   
         if (restrictToFile != null) {
+          if (!(restrictToFile instanceof VirtualFileWithId)) return;
+          
           final int restrictedFileId = getFileId(restrictToFile);
           for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
             final V value = valueIt.next();
@@ -450,7 +452,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       try {
         for (Document document : documents) {
           final VirtualFile vFile = fdManager.getFile(document);
-          if (!vFile.isValid()) {
+          if (!vFile.isValid() || !(vFile instanceof VirtualFileWithId)) {
             continue; // since the corresponding file is invalid, the document should be ignored
           }
 
@@ -596,7 +598,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       return ((VirtualFileWithId)file).getId();
     }
 
-    return 0;
+    throw new IllegalArgumentException("Virtual file doesn't support id: " + file);
   }
 
   private static CharSequence loadContent(VirtualFile file) {
@@ -686,7 +688,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       else {
         final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(myIndices.size());
         for (ID<?, ?> indexId : myIndices.keySet()) {
-          if (getInputFilter(indexId).acceptInput(file) && IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId))) {
+          if (shouldUpdateIndex(file, indexId)) {
             if (myNeedContentLoading.contains(indexId)) {
               affectedIndices.add(indexId);
             }
@@ -746,7 +748,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         return true;
       }
-      if (!(file instanceof NewVirtualFile)) {
+      if (isMock(file)) {
         return true;
       }
       // TODO: ManagingFS.areChildrenLoaded(file) is not the right method to use here
@@ -883,11 +885,20 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       }
       return true;
     }
-
-    private boolean shouldIndexFile(final VirtualFile file, final ID<?, ?> indexId) {
-      return getInputFilter(indexId).acceptInput(file) && !IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
-    }
   }
+
+  private boolean shouldUpdateIndex(final VirtualFile file, final ID<?, ?> indexId) {
+    return getInputFilter(indexId).acceptInput(file) && (isMock(file) || IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
+  }
+
+  private static boolean isMock(final VirtualFile file) {
+    return !(file instanceof NewVirtualFile);
+  }
+
+  private boolean shouldIndexFile(final VirtualFile file, final ID<?, ?> indexId) {
+    return getInputFilter(indexId).acceptInput(file) && (isMock(file) || !IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
+  }
+
 
   public CollectingContentIterator createContentIterator() {
     return new UnindexedFilesFinder(myIndices.keySet());

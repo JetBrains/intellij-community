@@ -3,13 +3,8 @@ package com.intellij.extapi.psi;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IFileElementType;
@@ -23,28 +18,11 @@ import org.jetbrains.annotations.NotNull;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class PsiFileBase extends PsiFileImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.extapi.psi.PsiFileBase");
   @NotNull private Language myLanguage;
   @NotNull private ParserDefinition myParserDefinition;
 
   protected PsiFileBase(FileViewProvider viewProvider, @NotNull Language language) {
     super(viewProvider);
-    initLanguage(language);
-  }
-
-  /**
-   * Constructor for Irida API compatibility
-   */
-  @Deprecated protected PsiFileBase(Project project, VirtualFile virtualFile, @NotNull Language language) {
-    super((PsiManagerImpl) PsiManager.getInstance(project));
-    initLanguage(language);
-  }
-
-  /**
-   * Constructor for Irida API compatibility
-   */
-  @Deprecated protected PsiFileBase(Project project, String name, CharSequence text, @NotNull Language language) {
-    super((PsiManagerImpl) PsiManager.getInstance(project));
     initLanguage(language);
   }
 

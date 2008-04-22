@@ -1,22 +1,20 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.source.parsing.JavaParsingContext;
-import com.intellij.psi.impl.source.parsing.Parsing;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.impl.java.stubs.PsiImportStatementStub;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl implements PsiImportStaticStatement {
   public static final PsiImportStaticStatementImpl[] EMPTY_ARRAY = new PsiImportStaticStatementImpl[0];
 
-  public PsiImportStaticStatementImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
-    super(manager, treeElement);
+  public PsiImportStaticStatementImpl(final PsiImportStatementStub stub) {
+    super(stub);
   }
 
-  public PsiImportStaticStatementImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner, int index) {
-    super(manager, owner, index);
+  public PsiImportStaticStatementImpl(final ASTNode node) {
+    super(node);
   }
 
   public PsiClass resolveTargetClass() {
@@ -42,22 +40,20 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
     }
   }
 
-  public PsiJavaCodeReferenceElement getImportReference() {
-    return (PsiJavaCodeReferenceElement)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.IMPORT_REFERENCE);
-  }
-
+  @Nullable
   private PsiImportStaticReferenceElement getMemberReference() {
     if (isOnDemand()) {
       return null;
     }
     else {
-      return (PsiImportStaticReferenceElement) getMirrorReference();
+      return (PsiImportStaticReferenceElement) getImportReference();
     }
   }
 
+  @Nullable
   private PsiJavaCodeReferenceElement getClassReference() {
     if (isOnDemand()) {
-      return getMirrorReference();
+      return getImportReference();
     }
     else {
       final PsiImportStaticReferenceElement memberReference = getMemberReference();
@@ -82,42 +78,4 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
   public String toString(){
     return "PsiImportStaticStatement";
   }
-
-  public PsiJavaCodeReferenceElement getMirrorReference() {
-    if (myOwner != null){
-      PsiJavaCodeReferenceElement refElement = getCachedMirrorReference();
-      if (refElement == null) {
-        CompositeElement treeElement = getTreeElement();
-        if (treeElement != null){
-          refElement = (PsiJavaCodeReferenceElement)treeElement.findChildByRole(ChildRole.IMPORT_REFERENCE);
-        }
-        else{
-          final FileElement holderElement = DummyHolderFactory.createHolder(myManager, this).getTreeElement();
-          final JavaParsingContext context = new JavaParsingContext(holderElement.getCharTable(), PsiUtil.getLanguageLevel(this));
-          final String refText = getRepositoryManager().getFileView().getImportQualifiedName(getRepositoryId(), getIndex());
-          if (refText == null) return null;
-          CompositeElement parsedRef = Parsing.parseJavaCodeReferenceText(myManager, refText, context.getCharTable());
-          refElement = (PsiJavaCodeReferenceElement)parsedRef;
-          final boolean onDemand = isOnDemand();
-          if (onDemand) {
-            TreeUtil.addChildren(holderElement, (TreeElement)refElement);
-            ((PsiJavaCodeReferenceElementImpl)refElement).setKindWhenDummy(
-              PsiJavaCodeReferenceElementImpl.CLASS_FQ_NAME_KIND);
-          }
-          else {
-            refElement = (PsiImportStaticReferenceElement)context.getImportsTextParsing().convertToImportStaticReference(parsedRef);
-            TreeUtil.addChildren(holderElement, (TreeElement)refElement);
-          }
-        }
-
-        setCachedMirrorReference(refElement);
-      }
-
-      return refElement;
-    }
-    else{
-      return (PsiJavaCodeReferenceElement)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.IMPORT_REFERENCE);
-    }
-  }
 }
-

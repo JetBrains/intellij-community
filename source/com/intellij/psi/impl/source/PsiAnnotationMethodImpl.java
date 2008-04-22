@@ -2,9 +2,8 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,12 +11,12 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotationMethod {
-  public PsiAnnotationMethodImpl(PsiManagerEx manager, long repositoryId) {
-    super(manager, repositoryId);
+  public PsiAnnotationMethodImpl(final PsiMethodStub stub) {
+    super(stub);
   }
 
-  public PsiAnnotationMethodImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
-    super(manager, treeElement);
+  public PsiAnnotationMethodImpl(final ASTNode node) {
+    super(node);
   }
 
   public boolean hasModifierProperty(@NotNull String name) {
@@ -25,7 +24,7 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
   }
 
   public PsiAnnotationMemberValue getDefaultValue() {
-    final ASTNode node = calcTreeElement().findChildByRole(ChildRole.ANNOTATION_DEFAULT_VALUE);
+    final ASTNode node = getNode().findChildByRole(ChildRole.ANNOTATION_DEFAULT_VALUE);
     if (node == null) return null;
     return (PsiAnnotationMemberValue)node.getPsi();
   }

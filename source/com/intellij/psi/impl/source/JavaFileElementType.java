@@ -54,13 +54,15 @@ public class JavaFileElementType extends IStubFileElementType<PsiJavaFileStub> i
 
   public void serialize(final PsiJavaFileStub stub, final DataOutputStream dataStream, final PersistentStringEnumerator nameStorage)
       throws IOException {
+    dataStream.writeBoolean(stub.isCompiled());
     DataInputOutputUtil.writeNAME(dataStream, stub.getPackageName(), nameStorage);
   }
 
   public PsiJavaFileStub deserialize(final DataInputStream dataStream,
                                      final StubElement parentStub, final PersistentStringEnumerator nameStorage) throws IOException {
+    boolean compiled = dataStream.readBoolean();
     String packName = DataInputOutputUtil.readNAME(dataStream, nameStorage);
-    return new PsiJavaFileStubImpl(packName);
+    return new PsiJavaFileStubImpl(packName, compiled);
   }
 
   public void indexStub(final PsiJavaFileStub stub, final IndexSink sink) {

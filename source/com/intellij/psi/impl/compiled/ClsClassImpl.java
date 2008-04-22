@@ -3,114 +3,40 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.impl.*;
-import com.intellij.psi.impl.cache.ClassView;
+import com.intellij.psi.impl.InheritanceImplUtil;
+import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.meta.MetaRegistry;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.cls.BytePointer;
-import com.intellij.util.cls.ClsFormatException;
-import com.intellij.util.cls.ClsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.text.CharacterIterator;
-import java.text.StringCharacterIterator;
 import java.util.*;
 
-public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, ClsModifierListOwner {
+public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub> implements PsiClass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsClassImpl");
-
-  private ClassFileData myClassFileData; // it's null when repository id exists
-
-  // these fields are not used when has repository id
-  private volatile PsiElement myParent;
-  private volatile PsiField[] myFields = null;
-  private volatile PsiMethod[] myMethods = null;
-  private volatile PsiMethod[] myConstructors = null;
-  private volatile PsiClass[] myInnerClasses = null;
 
   private volatile Map<String, PsiField> myCachedFieldsMap = null;
   private volatile Map<String, PsiMethod[]> myCachedMethodsMap = null;
   private volatile Map<String, PsiClass> myCachedInnersMap = null;
+  private PsiIdentifier myNameIdentifier;
+  private PsiDocComment myDocComment;
 
-
-  private volatile String myQualifiedName = null;
-  private volatile String myName = null;
-  private volatile PsiIdentifier myNameIdentifier = null;
-  private volatile ClsModifierListImpl myModifierList = null;
-  private volatile PsiReferenceList myExtendsList = null;
-  private volatile PsiReferenceList myImplementsList = null;
-  private volatile PsiTypeParameterList myTypeParameters = null;
-  private volatile Boolean myIsDeprecated = null;
-  private volatile PsiDocComment myDocComment = null;
-  private volatile ClsAnnotationImpl[] myAnnotations = null;
-  private volatile Boolean myCachedIsInterface = null;
-  private volatile Boolean myCachedIsAnnotationType = null;
-
-  public ClsClassImpl(PsiManagerImpl manager, ClsElementImpl parent, final ClassFileData classFileData) {
-    super(manager, -1);
-    myParent = parent;
-    myClassFileData = classFileData;
-  }
-
-  public ClsClassImpl(PsiManagerImpl manager, long repositoryId) {
-    super(manager, repositoryId);
-    myClassFileData = null;
-    myParent = null;
-  }
-
-  public void invalidate() {
-    myParent = null;
-    setRepositoryId(-1);
-  }
-
-  boolean isContentsLoaded() {
-    return myClassFileData != null;
-  }
-
-  ClassFileData getClassFileData() {
-    VirtualFile vFile = getContainingFile().getVirtualFile();
-    if (vFile != null) {
-      LOG.assertTrue(!myManager.isAssertOnFileLoading(vFile));
-    }
-    return myClassFileData;
-  }
-
-  public void setRepositoryId(long repositoryId) {
-    super.setRepositoryId(repositoryId);
-    if (repositoryId >= 0) {
-      myClassFileData = null;
-    }
-  }
-
-  public PsiElement getParent() {
-    if (myParent == null) {
-        long repositoryId = getRepositoryId();
-        if (repositoryId >= 0) {
-          long parentId = getRepositoryManager().getClassView().getParent(repositoryId);
-          myParent = getRepositoryElementsManager().findOrCreatePsiElementById(parentId);
-        }
-      }
-    return myParent;
-  }
-
-  public PsiFile getContainingFile() {
-    PsiElement parent = getParent();
-    if (parent == null) {
-      if (!isValid()) throw new PsiInvalidElementAccessException(this);
-      return null;
-    }
-    return parent.getContainingFile();
+  public ClsClassImpl(final PsiClassStub stub) {
+    super(stub);
   }
 
   @NotNull
@@ -170,48 +96,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
   @NotNull
   public String getName() {
-    if (myName == null) {
-      String qName = getQualifiedName();
-      myName = PsiNameHelper.getShortClassName(qName);
-    }
-    return myName;
+    return getStub().getName();
   }
 
   @NotNull
   public PsiTypeParameterList getTypeParameterList() {
-    if (myTypeParameters == null) {
-      long repositoryId = getRepositoryId();
-      PsiTypeParameterList typeParameters = null;
-      if (repositoryId < 0) {
-        if (!parseViaGenericSignature()) {
-          typeParameters = new ClsTypeParametersListImpl(this, ClsTypeParameterImpl.EMPTY_ARRAY);
-        }
-      }
-      else {
-        ClassView classView = getRepositoryManager().getClassView();
-        int count = classView.getParametersListSize(repositoryId);
-        if (count == 0) {
-          typeParameters = new ClsTypeParametersListImpl(this, ClsTypeParameterImpl.EMPTY_ARRAY);
-        }
-        else {
-          StringBuilder compiledParams = new StringBuilder();
-          compiledParams.append('<');
-          for (int i = 0; i < count; i++) {
-            compiledParams.append(classView.getParameterText(repositoryId, i));
-          }
-          compiledParams.append('>');
-          try {
-            final String signature = compiledParams.toString();
-            typeParameters = GenericSignatureParsing.parseTypeParametersDeclaration(new StringCharacterIterator(signature, 0), this, signature);
-          }
-          catch (ClsFormatException e) {
-            LOG.error(e); // dsl: this should not happen
-          }
-        }
-      }
-      setTypeParametersListIfNull(typeParameters);
-    }
-    return myTypeParameters;
+    return getStub().findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST).getPsi();
   }
 
   public boolean hasTypeParameters() {
@@ -225,43 +115,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
   @NotNull
   public String getQualifiedName() {
-    if (myQualifiedName == null) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        try {
-          ClassFileData classFileData = getClassFileData();
-          BytePointer ptr = new BytePointer(classFileData.getData(), classFileData.getConstantPoolEnd() + 2);
-          ptr.offset = classFileData.getOffsetInConstantPool(ClsUtil.readU2(ptr));
-          int tag = ClsUtil.readU1(ptr);
-          if (tag != ClsUtil.CONSTANT_Class) {
-            throw new ClsFormatException();
-          }
-          ptr.offset = classFileData.getOffsetInConstantPool(ClsUtil.readU2(ptr));
-          String className = ClsUtil.readUtf8Info(ptr, '/', '.');
-          myQualifiedName = ClsUtil.convertClassName(className, false);
-        }
-        catch (ClsFormatException e) {
-          myQualifiedName = "";
-        }
-      }
-      else {
-        String qualifiedName = getRepositoryManager().getClassView().getQualifiedName(repositoryId);
-        if (qualifiedName == null) {
-          qualifiedName = "";
-        }
-        myQualifiedName = qualifiedName;
-      }
-    }
-    return myQualifiedName;
+    return getStub().getQualifiedName();
   }
 
   @NotNull
   public PsiModifierList getModifierList() {
-    if (myModifierList == null) {
-      int flags = getAccessFlags();
-      myModifierList = new ClsModifierListImpl(this, flags);
-    }
-    return myModifierList;
+    return getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST).getPsi();
   }
 
   public boolean hasModifierProperty(@NotNull String name) {
@@ -270,141 +129,13 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
   @NotNull
   public PsiReferenceList getExtendsList() {
-    if (myExtendsList == null) {
-      long repositoryId = getRepositoryId();
-      PsiReferenceList extendsList;
-      if (repositoryId < 0) {
-        try {
-          if (parseViaGenericSignature()) return myExtendsList;
-          if (!isInterface()) {
-            extendsList = buildSuperList(PsiKeyword.EXTENDS);
-          }
-          else {
-            extendsList = buildInterfaceList(PsiKeyword.EXTENDS);
-          }
-        }
-        catch (ClsFormatException e) {
-          extendsList = new ClsReferenceListImpl(this, PsiJavaCodeReferenceElement.EMPTY_ARRAY, PsiKeyword.EXTENDS);
-        }
-      }
-      else {
-        ClassView classView = getRepositoryManager().getClassView();
-        String[] refTexts = classView.getExtendsList(repositoryId);
-        ClsJavaCodeReferenceElementImpl[] refs = refTexts.length == 0 ? ClsJavaCodeReferenceElementImpl.EMPTY_ARRAY : new ClsJavaCodeReferenceElementImpl[refTexts.length];
-        for (int i = 0; i < refTexts.length; i++) {
-          refs[i] = new ClsJavaCodeReferenceElementImpl(null, refTexts[i]);
-        }
-        extendsList = new ClsReferenceListImpl(this, refs, PsiKeyword.EXTENDS);
-        for (ClsJavaCodeReferenceElementImpl ref : refs) {
-          ref.setParent(extendsList);
-        }
-      }
-      setExtendsListIfNull(extendsList);
-    }
-    return myExtendsList;
+    return getStub().findChildStubByType(JavaStubElementTypes.EXTENDS_LIST).getPsi();
   }
 
-  private synchronized void setExtendsListIfNull(PsiReferenceList list) {
-    if (myExtendsList == null) {
-      myExtendsList = list;
-    }
-  }
-  private synchronized void setImplementsListIfNull(PsiReferenceList list) {
-    if (myImplementsList == null) {
-      myImplementsList = list;
-    }
-  }
-  private synchronized void setTypeParametersListIfNull(PsiTypeParameterList list) {
-    if (myTypeParameters == null) {
-      myTypeParameters = list;
-    }
-  }
-  private boolean parseViaGenericSignature() {
-    try {
-      String signature = getSignatureAttribute();
-      if (signature == null) return false;
-
-      CharacterIterator iterator = new StringCharacterIterator(signature, 0);
-      setTypeParametersListIfNull(GenericSignatureParsing.parseTypeParametersDeclaration(iterator, this, signature));
-
-      PsiJavaCodeReferenceElement[] supers = GenericSignatureParsing.parseToplevelClassRefSignatures(iterator, this);
-
-      PsiReferenceList implementsList;
-      PsiReferenceList extendsList;
-      if (!isInterface()) {
-        if (supers.length > 0 && !supers[0].getCanonicalText().equals("java.lang.Object")) {
-          extendsList = new ClsReferenceListImpl(this, new PsiJavaCodeReferenceElement[]{supers[0]}, PsiKeyword.EXTENDS);
-        }
-        else {
-          extendsList = new ClsReferenceListImpl(this, PsiJavaCodeReferenceElement.EMPTY_ARRAY, PsiKeyword.EXTENDS);
-        }
-
-        PsiJavaCodeReferenceElement[] interfaces = buildInterfaces(supers);
-        implementsList = new ClsReferenceListImpl(this, interfaces, PsiKeyword.IMPLEMENTS);
-      }
-      else {
-        implementsList = new ClsReferenceListImpl(this, PsiJavaCodeReferenceElement.EMPTY_ARRAY, PsiKeyword.IMPLEMENTS);
-        if (supers.length == 0 || supers[0].getCanonicalText().equals("java.lang.Object")) {
-          supers = buildInterfaces(supers);
-        }
-        extendsList = new ClsReferenceListImpl(this, supers, PsiKeyword.EXTENDS);
-      }
-      setExtendsListIfNull(extendsList);
-      setImplementsListIfNull(implementsList);
-    }
-    catch (ClsFormatException e) {
-      return false;
-    }
-
-    return true;
-  }
-
-  private static PsiJavaCodeReferenceElement[] buildInterfaces(PsiJavaCodeReferenceElement[] supers) {
-    PsiJavaCodeReferenceElement[] interfaces;
-    if (supers.length > 0) {
-      interfaces = new PsiJavaCodeReferenceElement[supers.length - 1];
-      System.arraycopy(supers, 1, interfaces, 0, supers.length - 1);
-    }
-    else {
-      interfaces = PsiJavaCodeReferenceElement.EMPTY_ARRAY;
-    }
-    return interfaces;
-  }
 
   @NotNull
   public PsiReferenceList getImplementsList() {
-    if (myImplementsList == null) {
-      PsiReferenceList implementsList;
-      if (!isInterface()) {
-        long repositoryId = getRepositoryId();
-        if (repositoryId < 0) {
-          try {
-            if (parseViaGenericSignature()) return myImplementsList;
-            implementsList = buildInterfaceList(PsiKeyword.IMPLEMENTS);
-          }
-          catch (ClsFormatException e) {
-            implementsList = new ClsReferenceListImpl(this, PsiJavaCodeReferenceElement.EMPTY_ARRAY, PsiKeyword.IMPLEMENTS);
-          }
-        }
-        else {
-          ClassView classView = getRepositoryManager().getClassView();
-          String[] refTexts = classView.getImplementsList(repositoryId);
-          ClsJavaCodeReferenceElementImpl[] refs = refTexts.length == 0 ? ClsJavaCodeReferenceElementImpl.EMPTY_ARRAY : new ClsJavaCodeReferenceElementImpl[refTexts.length];
-          for (int i = 0; i < refTexts.length; i++) {
-            refs[i] = new ClsJavaCodeReferenceElementImpl(null, refTexts[i]);
-          }
-          implementsList = new ClsReferenceListImpl(this, refs, PsiKeyword.IMPLEMENTS);
-          for (ClsJavaCodeReferenceElementImpl ref : refs) {
-            ref.setParent(implementsList);
-          }
-        }
-      }
-      else {
-        implementsList = new ClsReferenceListImpl(this, PsiJavaCodeReferenceElement.EMPTY_ARRAY, PsiKeyword.IMPLEMENTS);
-      }
-      setImplementsListIfNull(implementsList);
-    }
-    return myImplementsList;
+    return getStub().findChildStubByType(JavaStubElementTypes.IMPLEMENTS_LIST).getPsi();
   }
 
   @NotNull
@@ -445,218 +176,24 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }
 
-  private PsiReferenceList buildSuperList(String type) throws ClsFormatException {
-    ClassFileData classFileData = getClassFileData();
-    int offset = classFileData.getConstantPoolEnd() + 4;
-    if (offset + 2 > myClassFileData.data.length) {
-      throw new ClsFormatException();
-    }
-    int b1 = myClassFileData.data[offset++] & 0xFF;
-    int b2 = myClassFileData.data[offset/*++*/] & 0xFF;
-    int index = (b1 << 8) + b2;
-    ClsJavaCodeReferenceElementImpl ref = index != 0 ? classFileData.buildReference(index) : null;
-    if (ref != null && "java.lang.Object".equals(ref.getCanonicalText())) {
-      ref = null;
-    }
-    PsiReferenceList list = new ClsReferenceListImpl(this,
-                                                     ref != null
-                                                     ? new PsiJavaCodeReferenceElement[]{ref}
-                                                     : PsiJavaCodeReferenceElement.EMPTY_ARRAY,
-                                                     type);
-    if (ref != null) {
-      ref.setParent(list);
-    }
-    return list;
-  }
-
-  private PsiReferenceList buildInterfaceList(String type) throws ClsFormatException {
-    ClassFileData classFileData = getClassFileData();
-    int offset = classFileData.getConstantPoolEnd() + 6;
-    byte[] data = classFileData.getData();
-    if (offset + 2 > data.length) {
-      throw new ClsFormatException();
-    }
-    int b1 = data[offset++] & 0xFF;
-    int b2 = data[offset++] & 0xFF;
-    int count = (b1 << 8) + b2;
-    if (offset + count * 2 > data.length) {
-      throw new ClsFormatException();
-    }
-    ClsJavaCodeReferenceElementImpl[] refs = count == 0 ? ClsJavaCodeReferenceElementImpl.EMPTY_ARRAY : new ClsJavaCodeReferenceElementImpl[count];
-    for (int i = 0; i < count; i++) {
-      b1 = data[offset++] & 0xFF;
-      b2 = data[offset++] & 0xFF;
-      int index = (b1 << 8) + b2;
-      refs[i] = classFileData.buildReference(index);
-    }
-    PsiReferenceList list = new ClsReferenceListImpl(this, refs, type);
-    for (int i = 0; i < count; i++) {
-      refs[i].setParent(list);
-    }
-    return list;
-  }
-
   @NotNull
   public PsiField[] getFields() {
-    PsiField[] fields = myFields;
-    if (fields == null) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        try {
-          ClassFileData classFileData = getClassFileData();
-          BytePointer ptr = new BytePointer(classFileData.getData(), classFileData.getConstantPoolEnd() + 6);
-          int count = ClsUtil.readU2(ptr);
-          ptr.offset += count * 2; // skip interfaces
-          count = ClsUtil.readU2(ptr);
-          ArrayList<PsiField> array = new ArrayList<PsiField>();
-          for (int i = 0; i < count; i++) {
-            PsiField field;
-            if (isEnumField(ptr.offset)) {
-              field = new ClsEnumConstantImpl(this, ptr.offset);
-            }
-            else {
-              field = new ClsFieldImpl(this, ptr.offset);
-            }
-            String name = field.getName();
-            //if (name.indexOf('$') < 0 && name.indexOf('<') < 0){ // skip synthetic fields
-            if (JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isIdentifier(name) && name.indexOf('$') < 0) { // skip synthetic&obfuscated fields
-              array.add(field);
-            }
-            ptr.offset += 6;
-            ClsUtil.skipAttributes(ptr);
-          }
-          fields = array.isEmpty() ? PsiField.EMPTY_ARRAY : array.toArray(new PsiField[array.size()]);
-        }
-        catch (ClsFormatException e) {
-          fields = PsiField.EMPTY_ARRAY;
-        }
-      }
-      else {
-        long[] fieldIds = getRepositoryManager().getClassView().getFields(repositoryId);
-        fields = fieldIds.length == 0 ? PsiField.EMPTY_ARRAY : new PsiField[fieldIds.length];
-        RepositoryElementsManager repositoryElementsManager = getRepositoryElementsManager();
-        for (int i = 0; i < fieldIds.length; i++) {
-          long id = fieldIds[i];
-          fields[i] = (PsiField)repositoryElementsManager.findOrCreatePsiElementById(id);
-        }
-      }
-      myFields = fields;
-    }
-    return fields;
-  }
-
-  private boolean isEnumField(int ptrOffset) {
-    int flags = 0;
-    try {
-      int offset = ptrOffset;
-      byte[] data = getClassFileData().getData();
-      if (offset + 2 > data.length) {
-        throw new ClsFormatException();
-      }
-      int b1 = data[offset++] & 0xFF;
-      int b2 = data[offset] & 0xFF;
-      flags = (b1 << 8) + b2;
-    }
-    catch (ClsFormatException e) {
-    }
-
-    return (flags & ClsUtil.ACC_ENUM) != 0;
+    return getStub().getChildrenByType(Constants.FIELD_BIT_SET, PsiField.EMPTY_ARRAY);
   }
 
   @NotNull
   public PsiMethod[] getMethods() {
-    PsiMethod[] methods = myMethods;
-    if (methods == null) {
-      long repositoryId = getRepositoryId();
-
-      if (repositoryId < 0) {
-        try {
-          ClassFileData classFileData = getClassFileData();
-          BytePointer ptr = new BytePointer(classFileData.getData(), classFileData.getConstantPoolEnd() + 6);
-          int count = ClsUtil.readU2(ptr);
-          ptr.offset += count * 2; // skip interfaces
-          count = ClsUtil.readU2(ptr);
-          for (int i = 0; i < count; i++) { // skip fields
-            ptr.offset += 6;
-            ClsUtil.skipAttributes(ptr);
-          }
-          count = ClsUtil.readU2(ptr);
-          ArrayList<PsiMethod> array = new ArrayList<PsiMethod>();
-          for (int i = 0; i < count; i++) {
-            ClsMethodImpl method = new ClsMethodImpl(this, ptr.offset);
-            String name = method.getName();
-            if (!method.isBridge() && !method.isSynthetic()) { //skip bridge & synthetic methods
-              if (JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isIdentifier(name)) {
-                array.add(method);
-              }
-            }
-            ptr.offset += 6;
-            ClsUtil.skipAttributes(ptr);
-          }
-          methods = array.toArray(new PsiMethod[array.size()]);
-        }
-        catch (ClsFormatException e) {
-          methods = PsiMethod.EMPTY_ARRAY;
-        }
-      }
-      else {
-        long[] methodIds = getRepositoryManager().getClassView().getMethods(repositoryId);
-        methods = methodIds.length == 0 ? PsiMethod.EMPTY_ARRAY : new PsiMethod[methodIds.length];
-        RepositoryElementsManager repositoryElementsManager = getRepositoryElementsManager();
-        for (int i = 0; i < methodIds.length; i++) {
-          long id = methodIds[i];
-          methods[i] = (PsiMethod)repositoryElementsManager.findOrCreatePsiElementById(id);
-        }
-      }
-      myMethods = methods;
-    }
-    return methods;
+    return getStub().getChildrenByType(Constants.METHOD_BIT_SET, PsiMethod.EMPTY_ARRAY);
   }
 
   @NotNull
   public PsiMethod[] getConstructors() {
-    if (myConstructors == null) {
-      myConstructors = PsiImplUtil.getConstructors(this);
-    }
-    return myConstructors;
+    return PsiImplUtil.getConstructors(this);
   }
 
   @NotNull
   public PsiClass[] getInnerClasses() {
-    if (myInnerClasses == null) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        VirtualFile vFile = myClassFileData.vFile;
-        VirtualFile parentFile = vFile.getParent();
-        if (parentFile == null) return PsiClass.EMPTY_ARRAY;
-        String name = vFile.getNameWithoutExtension();
-        String prefix = name + "$";
-        ArrayList<PsiClass> array = new ArrayList<PsiClass>();
-        VirtualFile[] children = parentFile.getChildren();
-        for (VirtualFile child : children) {
-          String childName = child.getNameWithoutExtension();
-          if (childName.startsWith(prefix)) {
-            String innerName = childName.substring(prefix.length());
-            if (innerName.indexOf('$') >= 0) continue;
-            if (!JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isIdentifier(innerName)) continue;
-            PsiClass aClass = new ClsClassImpl(myManager, this, new ClassFileData(child));
-            array.add(aClass);
-          }
-        }
-        myInnerClasses = array.toArray(new PsiClass[array.size()]);
-      }
-      else {
-        long[] classIds = getRepositoryManager().getClassView().getInnerClasses(repositoryId);
-        PsiClass[] classes = new PsiClass[classIds.length];
-        RepositoryElementsManager repositoryElementsManager = getRepositoryElementsManager();
-        for (int i = 0; i < classIds.length; i++) {
-          long id = classIds[i];
-          classes[i] = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(id);
-        }
-        myInnerClasses = classes;
-      }
-    }
-    return myInnerClasses;
+    return getStub().getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -761,52 +298,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public boolean isDeprecated() {
-    if (myIsDeprecated == null) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        try {
-          boolean isDeprecated = readClassAttribute("Deprecated") != null;
-          myIsDeprecated = isDeprecated ? Boolean.TRUE : Boolean.FALSE;
-        }
-        catch (ClsFormatException e) {
-          myIsDeprecated = Boolean.FALSE;
-        }
-      }
-      else {
-        boolean isDeprecated = getRepositoryManager().getClassView().isDeprecated(repositoryId);
-        myIsDeprecated = isDeprecated ? Boolean.TRUE : Boolean.FALSE;
-      }
-    }
-    return myIsDeprecated.booleanValue();
+    return getStub().isDeprecated();
   }
 
   public String getSourceFileName() {
-    long repositoryId = getRepositoryId();
-    if (repositoryId < 0) {
-      try {
-        String sourceFileName = getClassFileData().readUtf8Attribute(readClassAttribute("SourceFile"));
-        if (sourceFileName == null) {
-          sourceFileName = obtainSourceFileNameFromClassFileName();
-          return sourceFileName;
-        }
-        int slashIndex = sourceFileName.lastIndexOf('/');      // We need short name while some compilers do generate fulls
-        if (slashIndex >= 0) {
-          sourceFileName = sourceFileName.substring(slashIndex + 1, sourceFileName.length());
-        }
-        return sourceFileName;
-      }
-      catch (ClsFormatException e) {
-        return null;
-      }
-    }
-    else {
-      ClsFileImpl file = (ClsFileImpl)getContainingFile();
-      String sourceFileName = getRepositoryManager().getFileView().getSourceFileName(file.getRepositoryId());
-      if (sourceFileName == null || sourceFileName.length() == 0) {
-        sourceFileName = obtainSourceFileNameFromClassFileName();
-      }
-      return sourceFileName;
-    }
+    final String sfn = getStub().getSourceFileName();
+    return sfn != null ? sfn : obtainSourceFileNameFromClassFileName();
   }
 
   @NonNls
@@ -820,15 +317,6 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
       }
     }
     return name.substring(0, i) + ".java";
-  }
-
-  private String getSignatureAttribute() throws ClsFormatException {
-    return getClassFileData().readUtf8Attribute(readClassAttribute("Signature"));
-  }
-
-  private BytePointer readClassAttribute(@NonNls String attributeName) throws ClsFormatException {
-    ClassFileData classFileData = getClassFileData();
-    return getClassFileData().findAttribute(classFileData.getOffsetOfAttributesSection(), attributeName);
   }
 
   public PsiDocComment getDocComment() {
@@ -849,95 +337,15 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public boolean isInterface() {
-    Boolean isInterface = myCachedIsInterface;
-    if (isInterface == null) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        isInterface = (getAccessFlags() & ClsUtil.ACC_INTERFACE) != 0;
-      }
-      else {
-        isInterface = getRepositoryManager().getClassView().isInterface(repositoryId);
-      }
-      myCachedIsInterface = isInterface;
-    }
-    return isInterface;
+    return getStub().isInterface();
   }
 
   public boolean isAnnotationType() {
-    Boolean isAnnotationType = myCachedIsAnnotationType;
-    if (isAnnotationType == null) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        isAnnotationType = (getAccessFlags() & ClsUtil.ACC_ANNOTATION) != 0;
-      }
-      else {
-        isAnnotationType = getRepositoryManager().getClassView().isAnnotationType(repositoryId);
-      }
-      myCachedIsAnnotationType = isAnnotationType;
-    }
-    return isAnnotationType;
+    return getStub().isAnnotationType();
   }
 
   public boolean isEnum() {
-    PsiField[] fields = getFields();
-    return fields.length != 0 && fields[0] instanceof ClsEnumConstantImpl;
-  }
-
-  private int getAccessFlags() {
-    long repositoryId = getRepositoryId();
-    if (repositoryId < 0) {
-      try {
-        ClassFileData classFileData = getClassFileData();
-        int offset = classFileData.getConstantPoolEnd();
-        byte[] data = classFileData.getData();
-        if (offset + 2 > data.length) {
-          throw new ClsFormatException();
-        }
-        int b1 = data[offset++] & 0xFF;
-        int b2 = data[offset/*++*/] & 0xFF;
-        int flags = ((b1 << 8) + b2) & ClsUtil.ACC_CLASS_MASK;
-
-        PsiElement parent = getParent();
-        if (parent instanceof PsiClass) {
-          PsiClass aClass = (PsiClass)parent;
-          if (aClass.isInterface()) {
-            flags |= ClsUtil.ACC_STATIC;
-          }
-          else {
-            flags &= ~ClsUtil.ACC_STATIC;
-
-            BytePointer ptr = readClassAttribute("InnerClasses");
-            if (ptr != null) {
-              //Skip attribute_length
-              ptr.offset += 4;
-              int numClasses = ClsUtil.readU2(ptr);
-              int startOffset = ptr.offset + 4;
-              for (int i = 0; i < numClasses; i++) {
-                BytePointer ptr1 = new BytePointer(classFileData.getData(), startOffset + i * 8);
-                int innerNameIdx = ClsUtil.readU2(ptr1);
-                if (innerNameIdx == 0) {
-                  continue;
-                }
-                int innerNameOffset = classFileData.getOffsetInConstantPool(innerNameIdx);
-                String innerName = ClsUtil.convertClassName(ClsUtil.readUtf8Info(classFileData.getData(), innerNameOffset), true);
-                if (getName().equals(innerName)) {
-                  flags = ClsUtil.readU2(ptr1);
-                  break;
-                }
-              }
-            }
-          }
-        }
-        return flags;
-      }
-      catch (ClsFormatException e) {
-        return 0;
-      }
-    }
-    else {
-      ClassView classView = getRepositoryManager().getClassView();
-      return classView.getModifiers(repositoryId);
-    }
+    return getStub().isEnum();
   }
 
   public void appendMirrorText(final int indentLevel, @NonNls final StringBuffer buffer) {
@@ -1117,29 +525,6 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMeta(this);
-  }
-
-  @NotNull
-  public ClsAnnotationImpl[] getAnnotations() {
-    if (myAnnotations == null) {
-      ClsAnnotationsUtil.AttributeReader reader = new ClsAnnotationsUtil.AttributeReader() {
-        public BytePointer readAttribute(String attributeName) {
-          try {
-            return readClassAttribute(attributeName);
-          }
-          catch (ClsFormatException e) {
-            return null;
-          }
-        }
-
-        public ClassFileData getClassFileData() {
-          return ClsClassImpl.this.getClassFileData();
-        }
-      };
-      myAnnotations = ClsAnnotationsUtil.getAnnotationsImpl(this, reader, myModifierList);
-    }
-
-    return myAnnotations;
   }
 
   public ItemPresentation getPresentation() {

@@ -9,12 +9,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.java.stubs.JavaStubElementType;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ChameleonElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 
 public class FormatCommentsProcessor implements PreFormatProcessor {
   public TextRange process(final ASTNode element, final TextRange range) {
@@ -33,7 +33,7 @@ public class FormatCommentsProcessor implements PreFormatProcessor {
     PsiElement psi;
 
     // check for RepositoryTreeElement is optimization
-    if (element instanceof RepositoryTreeElement &&
+    if (element.getElementType() instanceof JavaStubElementType &&
         (psi = element.getPsi()) instanceof PsiDocCommentOwner) {
       final TextRange elementRange = element.getTextRange();
 

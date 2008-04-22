@@ -18,14 +18,15 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.compiled.ClsFileImpl;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
@@ -46,9 +47,6 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaFileBaseImpl");
   private static final Key<ResolveCache.MapPair<PsiJavaFile,ConcurrentMap<String, SoftReference<JavaResolveResult[]>>>> CACHED_CLASSES_MAP_KEY = Key.create("PsiJavaFileBaseImpl.CACHED_CLASSES_MAP_KEY");
 
-  private volatile PsiImportListImpl myRepositoryImportList = null;
-  private volatile String myCachedPackageName = null;
-  private volatile PsiClass[] myCachedClasses = null;
   private final ConcurrentMap<PsiJavaFile,ConcurrentMap<String, SoftReference<JavaResolveResult[]>>> myGuessCache;
 
   @NonNls private static final String[] IMPLICIT_IMPORTS = new String[]{ "java.lang" };
@@ -64,11 +62,6 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     clearCaches();
   }
 
-  public void clearCaches() {
-    myCachedPackageName = null;
-    myCachedClasses = null;
-  }
-
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected PsiJavaFileBaseImpl clone() {
     PsiJavaFileBaseImpl clone = (PsiJavaFileBaseImpl)super.clone();
@@ -76,40 +69,14 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return clone;
   }
 
-  public void setRepositoryId(long repositoryId) {
-    super.setRepositoryId(repositoryId);
-
-    if (repositoryId < 0){
-      if (myRepositoryImportList != null){
-        myRepositoryImportList.setOwner(this);
-        myRepositoryImportList = null;
-      }
-    }
-    else{
-      myRepositoryImportList = (PsiImportListImpl)bindSlave(ChildRole.IMPORT_LIST);
-    }
-    clearCaches();
-  }
-
   @NotNull
   public PsiClass[] getClasses() {
-    PsiClass[] cachedClasses = myCachedClasses;
-    if (cachedClasses == null){
-      if (getTreeElement() != null || getRepositoryId() < 0){
-        LOG.debug("Loading tree for " + getName());
-        cachedClasses = calcTreeElement().getChildrenAsPsiElements(Constants.CLASS_BIT_SET, Constants.PSI_CLASS_ARRAY_CONSTRUCTOR);
-      }
-      else{
-        long[] classIds = getRepositoryManager().getFileView().getClasses(getRepositoryId());
-        cachedClasses = classIds.length > 0 ? new PsiClass[classIds.length] : PsiClass.EMPTY_ARRAY;
-        for(int i = 0; i < classIds.length; i++){
-          long id = classIds[i];
-          cachedClasses[i] = (PsiClass)getRepositoryElementsManager().findOrCreatePsiElementById(id);
-        }
-      }
-      myCachedClasses = cachedClasses;
+    final PsiJavaFileStub stub = (PsiJavaFileStub)getStub();
+    if (stub != null) {
+      return stub.getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.EMPTY_ARRAY);
     }
-    return cachedClasses;
+
+    return calcTreeElement().getChildrenAsPsiElements(Constants.CLASS_BIT_SET, Constants.PSI_CLASS_ARRAY_CONSTRUCTOR);
   }
 
   public PsiPackageStatement getPackageStatement() {
@@ -117,39 +84,29 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @NotNull
-  public String getPackageName(){
-    String cachedPackageName = myCachedPackageName;
-    if (cachedPackageName == null){
-      if (getTreeElement() != null || getRepositoryId() < 0){
-        PsiPackageStatement statement = getPackageStatement();
-        if (statement == null){
-          cachedPackageName = "";
-        }
-        else{
-          cachedPackageName = statement.getPackageName();
-        }
-      }
-      else{
-        cachedPackageName = getRepositoryManager().getFileView().getPackageName(getRepositoryId());
-      }
-      myCachedPackageName = cachedPackageName;
+  public String getPackageName() {
+    PsiJavaFileStub stub = (PsiJavaFileStub)getStub();
+    if (stub != null) {
+      return stub.getPackageName();
     }
-    return cachedPackageName;
+
+    PsiPackageStatement statement = getPackageStatement();
+    if (statement == null) {
+      return "";
+    }
+    else {
+      return statement.getPackageName();
+    }
   }
 
   @NotNull
   public PsiImportList getImportList() {
-    if (getRepositoryId() >= 0){
-      synchronized (PsiLock.LOCK) {
-        if (myRepositoryImportList == null){
-          myRepositoryImportList = new PsiImportListImpl(myManager, this);
-        }
-        return myRepositoryImportList;
-      }
+    final PsiJavaFileStub stub = (PsiJavaFileStub)getStub();
+    if (stub != null) {
+      return stub.getChildrenByType(JavaStubElementTypes.IMPORT_LIST, new PsiImportList[0])[0];
     }
-    else{
-      return (PsiImportList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.IMPORT_LIST);
-    }
+
+    return (PsiImportList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.IMPORT_LIST);
   }
 
   @NotNull
@@ -505,7 +462,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     final LanguageLevel defaultLanguageLevel = LanguageLevelProjectExtension.getInstance(getManager().getProject()).getLanguageLevel();
     for (VirtualFile child : children) {
       if (StdFileTypes.CLASS.equals(child.getFileType())) {
-        return ClsFileImpl.getLanguageLevel(child, defaultLanguageLevel);
+        final PsiFile psiFile = getManager().findFile(child);
+        if (psiFile instanceof PsiJavaFile) return ((PsiJavaFile)psiFile).getLanguageLevel();
       }
     }
 

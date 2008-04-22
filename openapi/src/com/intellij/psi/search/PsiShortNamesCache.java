@@ -64,22 +64,18 @@ public interface PsiShortNamesCache {
    * Returns the list of names of all classes in the project and
    * (optionally) libraries.
    *
-   * @param searchInLibraries if true, libraries are included in the search;
-   *                          otherwise, only the project is searched.
    * @return the list of all class names.
    */
   @NotNull
-  String[] getAllClassNames(boolean searchInLibraries);
+  String[] getAllClassNames();
 
   /**
    * Adds the names of all classes in the project and (optionally) libraries
    * to the specified set.
    *
-   * @param searchInLibraries if true, libraries are included in the search;
-   *                          otherwise, only the project is searched.
-   * @param dest              the set to add the names to.
+   * @param dest the set to add the names to.
    */
-  void getAllClassNames(boolean searchInLibraries, @NotNull HashSet<String> dest);
+  void getAllClassNames(@NotNull HashSet<String> dest);
 
   /**
    * Returns the list of all methods with the specified name in the specified scope.
@@ -98,22 +94,18 @@ public interface PsiShortNamesCache {
    * Returns the list of names of all methods in the project and
    * (optionally) libraries.
    *
-   * @param searchInLibraries if true, libraries are included in the search;
-   *                          otherwise, only the project is searched.
    * @return the list of all method names.
    */
   @NotNull
-  String[] getAllMethodNames(boolean searchInLibraries);
+  String[] getAllMethodNames();
 
   /**
    * Adds the names of all methods in the project and (optionally) libraries
    * to the specified set.
    *
-   * @param searchInLibraries if true, libraries are included in the search;
-   *                          otherwise, only the project is searched.
-   * @param set               the set to add the names to.
+   * @param set the set to add the names to.
    */
-  void getAllMethodNames(boolean searchInLibraries, @NotNull HashSet<String> set);
+  void getAllMethodNames(@NotNull HashSet<String> set);
 
   /**
    * Returns the list of all fields with the specified name in the specified scope.
@@ -129,20 +121,16 @@ public interface PsiShortNamesCache {
    * Returns the list of names of all fields in the project and
    * (optionally) libraries.
    *
-   * @param searchInLibraries if true, libraries are included in the search;
-   *                          otherwise, only the project is searched.
    * @return the list of all field names.
    */
   @NotNull
-  String[] getAllFieldNames(boolean searchInLibraries);
+  String[] getAllFieldNames();
 
   /**
    * Adds the names of all methods in the project and (optionally) libraries
    * to the specified set.
    *
-   * @param searchInLibraries if true, libraries are included in the search;
-   *                          otherwise, only the project is searched.
-   * @param set               the set to add the names to.
+   * @param set the set to add the names to.
    */
-  void getAllFieldNames(boolean searchInLibraries, @NotNull HashSet<String> set);
+  void getAllFieldNames(@NotNull HashSet<String> set);
 }

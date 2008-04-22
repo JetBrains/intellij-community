@@ -1,60 +1,80 @@
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.RepositoryElementsManager;
-import com.intellij.psi.impl.RepositoryPsiElement;
-import com.intellij.psi.impl.cache.RepositoryManager;
+import com.intellij.psi.stubs.PsiFileStub;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class ClsRepositoryPsiElement extends ClsElementImpl implements RepositoryPsiElement{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsRepositoryPsiElement");
+import java.util.List;
 
-  protected final PsiManagerImpl myManager;
-  private volatile long myRepositoryId;
-  private volatile long myCachedParentId = -1;
+public abstract class ClsRepositoryPsiElement<T extends StubElement> extends ClsElementImpl {
+  private final T myStub;
 
-  public ClsRepositoryPsiElement(@NotNull PsiManagerImpl manager, long repositoryId) {
-    myManager = manager;
-    myRepositoryId = repositoryId;
+  protected ClsRepositoryPsiElement(final T stub) {
+    myStub = stub;
   }
 
-  public long getRepositoryId() {
-    return myRepositoryId;
+  public PsiElement getParent() {
+    return myStub.getParentStub().getPsi();
   }
 
-  public boolean isRepositoryIdInitialized() {
-    return true;
+  public PsiManager getManager() {
+    return getContainingFile().getManager();
   }
 
-  public void setRepositoryId(long repositoryId) {
-    myRepositoryId = repositoryId;
-    myCachedParentId = -1;
+  public PsiFile getContainingFile() {
+    StubElement p = myStub;
+    while (!(p instanceof PsiFileStub)) {
+      p = p.getParentStub();
+    }
+    return (PsiFile)p.getPsi();
   }
 
-  protected long getParentId(){
-    if(myCachedParentId > 0) return myCachedParentId;
-    long repositoryId = getRepositoryId();
-    if (repositoryId < 0) return -1;
-    myCachedParentId = getRepositoryManager().getItemView(repositoryId).getParent(repositoryId);
-    return myCachedParentId;
+  public T getStub() {
+    return myStub;
+  }
+
+  @NotNull
+  public PsiElement[] getChildren() {
+    final List stubs = getStub().getChildrenStubs();
+    PsiElement[] children = new PsiElement[stubs.size()];
+    for (int i = 0; i < stubs.size(); i++) {
+      children[i] = ((StubElement)stubs.get(i)).getPsi();
+    }
+    return children;
+  }
+
+  public PsiElement getFirstChild() {
+    final List<StubElement> children = getStub().getChildrenStubs();
+    if (children.isEmpty()) return null;
+    return children.get(0).getPsi();
+  }
+
+  public PsiElement getLastChild() {
+    final List<StubElement> children = getStub().getChildrenStubs();
+    if (children.isEmpty()) return null;
+    return children.get(children.size() - 1).getPsi();
+  }
+
+  public PsiElement getNextSibling() {
+    final PsiElement[] psiElements = getParent().getChildren();
+    final int i = ArrayUtil.indexOf(psiElements, this);
+    if (i < 0 || i >= psiElements.length - 1) {
+      return null;
+    }
+    return psiElements[i + 1];
   }
 
 
-  public void prepareToRepositoryIdInvalidation() {
+  public PsiElement getPrevSibling() {
+    final PsiElement[] psiElements = getParent().getChildren();
+    final int i = ArrayUtil.indexOf(psiElements, this);
+    if (i < 1) {
+      return null;
+    }
+    return psiElements[i - 1];
   }
-
-  public final PsiManager getManager() {
-    return myManager;
-  }
-
-  protected RepositoryManager getRepositoryManager() {
-    return myManager.getRepositoryManager();
-  }
-
-  protected RepositoryElementsManager getRepositoryElementsManager() {
-    return myManager.getRepositoryElementsManager();
-  }
-
 }

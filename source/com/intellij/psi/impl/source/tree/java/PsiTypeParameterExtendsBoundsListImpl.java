@@ -2,43 +2,22 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.SlaveRepositoryPsiElement;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
+import com.intellij.psi.impl.source.JavaStubPsiElement;
+import com.intellij.psi.stubs.IStubElementType;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
-public class PsiTypeParameterExtendsBoundsListImpl extends SlaveRepositoryPsiElement implements PsiReferenceList {
-  private volatile PsiClassType[] myCachedTypes;
-
-  public PsiTypeParameterExtendsBoundsListImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
-    super(manager, treeElement);
+public class PsiTypeParameterExtendsBoundsListImpl extends JavaStubPsiElement<PsiClassReferenceListStub> implements PsiReferenceList {
+  public PsiTypeParameterExtendsBoundsListImpl(final PsiClassReferenceListStub stub, final IStubElementType nodeType) {
+    super(stub, nodeType);
   }
 
-  public PsiTypeParameterExtendsBoundsListImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner) {
-    super(manager, owner);
-  }
-
-  protected Object clone() {
-    PsiTypeParameterExtendsBoundsListImpl clone = (PsiTypeParameterExtendsBoundsListImpl) super.clone();
-    clone.dropCached();
-    return clone;
-  }
-
-  public void setOwner(SrcRepositoryPsiElement owner) {
-    super.setOwner(owner);
-    dropCached();
-  }
-
-  private void dropCached() {
-    myCachedTypes = null;
+  public PsiTypeParameterExtendsBoundsListImpl(final ASTNode node) {
+    super(node);
   }
 
   @NotNull
@@ -49,16 +28,10 @@ public class PsiTypeParameterExtendsBoundsListImpl extends SlaveRepositoryPsiEle
 
   @NotNull
   public PsiClassType[] getReferencedTypes() {
-    if (myCachedTypes == null) {
-      long repositoryId = getRepositoryId();
-      if (getTreeElement() == null && repositoryId >= 0) {
-        myCachedTypes = createTypes(getMirrorElement().getReferenceElements());
-      }
-      else {
-        myCachedTypes = createTypes(getReferenceElements());
-      }
-    }
-    return myCachedTypes;
+    final PsiClassReferenceListStub stub = getStub();
+    if (stub != null) return stub.getReferencedTypes();
+
+    return createTypes(getReferenceElements());
   }
 
   public Role getRole() {
@@ -74,17 +47,6 @@ public class PsiTypeParameterExtendsBoundsListImpl extends SlaveRepositoryPsiEle
     return types;
   }
 
-  private ASTNode getMirrorTreeElement() {
-    CompositeElement mirror = ((PsiTypeParameterImpl) getParent()).getMirrorTreeElement();
-    ASTNode myselfTree = mirror.findChildByRole(ChildRole.EXTENDS_LIST);
-    return myselfTree;
-  }
-
-  private PsiTypeParameterExtendsBoundsListImpl getMirrorElement() {
-    final ASTNode treeElement = getMirrorTreeElement();
-    return (PsiTypeParameterExtendsBoundsListImpl)SourceTreeToPsiMap.treeElementToPsi(treeElement);
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReferenceList(this);
@@ -96,10 +58,5 @@ public class PsiTypeParameterExtendsBoundsListImpl extends SlaveRepositoryPsiEle
 
   public String toString() {
     return "PsiElement(EXTENDS_BOUND_LIST)";
-  }
-
-  public void treeElementSubTreeChanged() {
-    super.treeElementSubTreeChanged();
-    dropCached();
   }
 }

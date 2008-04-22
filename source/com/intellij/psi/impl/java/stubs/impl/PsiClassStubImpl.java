@@ -23,6 +23,8 @@ public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub
   private final static int ANONYMOUS = 0x10;
   private final static int ANON_TYPE = 0x20;
   private final static int IN_QUALIFIED_NEW = 0x40;
+  private final static int DEPRECATED_ANNOTATION = 0x80;
+
   private LanguageLevel myLanguageLevel = null;
   private String mySourceFileName = null;
 
@@ -55,6 +57,10 @@ public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub
     return (myFlags & DEPRECATED) != 0;
   }
 
+  public boolean hasDeprecatedAnnotation() {
+    return (myFlags & DEPRECATED_ANNOTATION) != 0;
+  }
+
   public boolean isInterface() {
     return (myFlags & INTERFACE) != 0;
   }
@@ -84,7 +90,7 @@ public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub
   }
 
   public LanguageLevel getLanguageLevel() {
-    return myLanguageLevel;
+    return myLanguageLevel != null ? myLanguageLevel : LanguageLevel.HIGHEST; // TODO!!!
   }
 
   public String getSourceFileName() {
@@ -113,7 +119,8 @@ public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub
                                boolean isEnumConstantInitializer,
                                boolean isAnonymous,
                                boolean isAnnotationType,
-                               boolean isInQualifiedNew) {
+                               boolean isInQualifiedNew,
+                               boolean hasDeprecatedAnnotation) {
     byte flags = 0;
     if (isDeprecated) flags |= DEPRECATED;
     if (isInterface) flags |= INTERFACE;
@@ -122,6 +129,7 @@ public class PsiClassStubImpl extends StubBase<PsiClass> implements PsiClassStub
     if (isAnonymous) flags |= ANONYMOUS;
     if (isAnnotationType) flags |= ANON_TYPE;
     if (isInQualifiedNew) flags |= IN_QUALIFIED_NEW;
+    if (hasDeprecatedAnnotation) flags |= DEPRECATED_ANNOTATION;
     return flags;
   }
 

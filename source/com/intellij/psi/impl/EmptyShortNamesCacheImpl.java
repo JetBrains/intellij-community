@@ -34,11 +34,11 @@ class EmptyShortNamesCacheImpl implements PsiShortNamesCache {
   }
 
   @NotNull
-  public String[] getAllClassNames(boolean searchInLibraries) {
+  public String[] getAllClassNames() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  public void getAllClassNames(boolean searchInLibraries, @NotNull HashSet<String> dest) {
+  public void getAllClassNames(@NotNull HashSet<String> dest) {
     // do nothing
   }
 
@@ -53,11 +53,11 @@ class EmptyShortNamesCacheImpl implements PsiShortNamesCache {
   }
 
   @NotNull
-  public String[] getAllMethodNames(boolean searchInLibraries) {
+  public String[] getAllMethodNames() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  public void getAllMethodNames(boolean searchInLibraries, @NotNull HashSet<String> set) {
+  public void getAllMethodNames(@NotNull HashSet<String> set) {
     // do nothing
   }
 
@@ -67,11 +67,11 @@ class EmptyShortNamesCacheImpl implements PsiShortNamesCache {
   }
 
   @NotNull
-  public String[] getAllFieldNames(boolean searchInLibraries) {
+  public String[] getAllFieldNames() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  public void getAllFieldNames(boolean checkBoxState, @NotNull HashSet<String> set) {
+  public void getAllFieldNames(@NotNull HashSet<String> set) {
     // do nothing
   }
 }

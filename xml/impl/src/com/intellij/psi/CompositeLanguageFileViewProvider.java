@@ -59,7 +59,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     // copying main tree
     final FileElement treeClone = (FileElement)psiFile.calcTreeElement().clone(); // base language tree clone
     psiFile.setTreeElementPointer(treeClone); // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
-    treeClone.setPsiElement(psiFile);
+    treeClone.setPsi(psiFile);
 
     for (Map.Entry<Language, PsiFile> entry : myRoots.entrySet()) {
       final PsiFile root = entry.getValue();

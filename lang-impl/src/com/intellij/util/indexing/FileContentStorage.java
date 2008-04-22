@@ -85,7 +85,7 @@ public class FileContentStorage {
   public void offer(VirtualFile file) {
     try {
       final byte[] bytes = file.contentsToByteArray();
-      if (bytes != null && bytes.length > 0) {
+      if (bytes != null) {
         synchronized (myLock) {
           final int fileId = FileBasedIndex.getFileId(file);
           myFileIds.add(fileId);
@@ -107,8 +107,7 @@ public class FileContentStorage {
     final int fileId = FileBasedIndex.getFileId(file);
     synchronized (myLock) {
       try {
-        final byte[] bytes = myCache.get(fileId);
-        return bytes.length == 0 ? null : bytes;
+        return myCache.get(fileId);
       }
       finally {
         myKeyBeingRemoved = fileId;

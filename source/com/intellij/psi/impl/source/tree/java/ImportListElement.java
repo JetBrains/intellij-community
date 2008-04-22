@@ -9,11 +9,11 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 
-public class ImportListElement extends RepositoryTreeElement{
+public class ImportListElement extends CompositeElement{
   public ImportListElement() {
     super(Constants.IMPORT_LIST);
   }

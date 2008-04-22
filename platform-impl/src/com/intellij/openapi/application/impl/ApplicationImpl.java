@@ -662,13 +662,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       action.run();
     }
     finally {
-      synchronized (myWriteActionsStack) {
-        myWriteActionsStack.pop();
+      try {
+        synchronized (myWriteActionsStack) {
+          myWriteActionsStack.pop();
+        }
+        fireWriteActionFinished(action);
       }
-      fireWriteActionFinished(action);
-      myActionsLock.writeLock().release();
+      finally {
+        myActionsLock.writeLock().release();
+      }
     }
-
   }
 
   public <T> T runWriteAction(final Computable<T> computation) {

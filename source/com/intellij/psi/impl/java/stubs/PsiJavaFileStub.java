@@ -8,4 +8,5 @@ import com.intellij.psi.stubs.PsiFileStub;
 
 public interface PsiJavaFileStub extends PsiFileStub<PsiJavaFile> {
   String getPackageName();
+  boolean isCompiled();
 }

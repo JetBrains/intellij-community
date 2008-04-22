@@ -3,12 +3,12 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.CharTableImpl;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 
-public class FileElement extends RepositoryTreeElement{
+public class FileElement extends CompositeElement{
   private CharTable myCharTable = new CharTableImpl();
   private PsiManagerEx myManager;
 
@@ -33,8 +33,8 @@ public class FileElement extends RepositoryTreeElement{
   }
 
   public ASTNode copyElement() {
-    SrcRepositoryPsiElement psiElement = getPsiElement();
-    SrcRepositoryPsiElement psiElementCopy = (SrcRepositoryPsiElement)psiElement.copy();
+    PsiFileImpl psiElement = (PsiFileImpl)getPsi();
+    PsiFileImpl psiElementCopy = (PsiFileImpl)psiElement.copy();
     return psiElementCopy.getTreeElement();
   }
 

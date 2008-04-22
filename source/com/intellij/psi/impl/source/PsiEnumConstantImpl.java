@@ -1,17 +1,16 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.cache.FieldView;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -26,24 +25,20 @@ import javax.swing.*;
 /**
  * @author dsl
  */
-public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements PsiEnumConstant {
+public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implements PsiEnumConstant {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiEnumConstantImpl");
-  private MyReference myReference = new MyReference();
-  private PsiModifierListImpl myRepositoryModifierList = null;
-  private String myCachedName = null;
-  private Boolean myCachedIsDeprecated;
-  private Ref<PsiEnumConstantInitializer> myCachedInitializingClass = null;
+  private final MyReference myReference = new MyReference();
 
-  public PsiEnumConstantImpl(PsiManagerEx manager, long repositoryId) {
-    super(manager, repositoryId);
+  public PsiEnumConstantImpl(final PsiFieldStub stub) {
+    super(stub, JavaStubElementTypes.ENUM_CONSTANT);
+  }
+
+  public PsiEnumConstantImpl(final ASTNode node) {
+    super(node);
   }
 
   public String toString() {
     return "PsiEnumConstant:" + getName();
-  }
-
-  public PsiEnumConstantImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
-    super(manager, treeElement);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -60,25 +55,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   }
 
   public PsiEnumConstantInitializer getInitializingClass() {
-    if (myCachedInitializingClass == null) {
-      if (getTreeElement() != null) {
-        myCachedInitializingClass = Ref.create((PsiEnumConstantInitializer)getTreeElement()
-                                                 .findChildByRoleAsPsiElement(ChildRole.ANONYMOUS_CLASS));
-      }
-      else {
-        long initializingClass = getRepositoryManager().getFieldView().getEnumConstantInitializer(getRepositoryId());
-        if (initializingClass < 0) {
-          myCachedInitializingClass = Ref.create(null);
-        }
-        else {
-          PsiEnumConstantInitializer repoElement = (PsiEnumConstantInitializer)getRepositoryElementsManager()
-            .findOrCreatePsiElementById(initializingClass);
-          myCachedInitializingClass = Ref.create(repoElement);
-        }
-      }
-    }
-
-    return myCachedInitializingClass.get();
+    return (PsiEnumConstantInitializer)getStubOrPsiChild(JavaStubElementTypes.ENUM_CONSTANT_INITIALIZER);
   }
 
   public PsiClass getContainingClass() {
@@ -93,45 +70,11 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   }
 
   public PsiModifierList getModifierList() {
-    if (getRepositoryId() >= 0) {
-      synchronized (PsiLock.LOCK) {
-        if (myRepositoryModifierList == null) {
-          myRepositoryModifierList = new PsiModifierListImpl(myManager, this);
-        }
-        return myRepositoryModifierList;
-      }
-    }
-    else {
-      return (PsiModifierList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.MODIFIER_LIST);
-    }
+    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
   }
 
   public boolean hasModifierProperty(String name) {
     return (PsiModifier.PUBLIC.equals(name) || PsiModifier.STATIC.equals(name) || PsiModifier.FINAL.equals(name));
-  }
-
-
-  protected Object clone() {
-    PsiEnumConstantImpl clone = (PsiEnumConstantImpl)super.clone();
-    clone.myRepositoryModifierList = null;
-    clone.dropCached();
-    return clone;
-  }
-
-  public void setRepositoryId(long repositoryId) {
-    super.setRepositoryId(repositoryId);
-
-    if (repositoryId < 0) {
-      if (myRepositoryModifierList != null) {
-        myRepositoryModifierList.setOwner(this);
-        myRepositoryModifierList = null;
-      }
-    }
-    else {
-      myRepositoryModifierList = (PsiModifierListImpl)bindSlave(ChildRole.MODIFIER_LIST);
-    }
-
-    dropCached();
   }
 
   @NotNull
@@ -179,26 +122,11 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   }
 
   public String getName() {
-    if (myCachedName == null) {
-      if (getTreeElement() != null) {
-        myCachedName = getNameIdentifier().getText();
-      }
-      else {
-        myCachedName = getRepositoryManager().getFieldView().getName(getRepositoryId());
-      }
+    final PsiFieldStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
     }
-    return myCachedName;
-  }
-
-  public void subtreeChanged() {
-    super.subtreeChanged();
-    dropCached();
-  }
-
-  private void dropCached() {
-    myCachedName = null;
-    myCachedIsDeprecated = null;
-    myCachedInitializingClass = null;
+    return getNameIdentifier().getText();
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
@@ -211,25 +139,14 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   }
 
   public boolean isDeprecated() {
-    if (myCachedIsDeprecated == null) {
-      boolean deprecated;
-      if (getTreeElement() != null) {
-        PsiDocComment docComment = getDocComment();
-        deprecated = docComment != null && docComment.findTagByName("deprecated") != null;
-        if (!deprecated) {
-          deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
-        }
-      }
-      else {
-        FieldView fieldView = getRepositoryManager().getFieldView();
-        deprecated = fieldView.isDeprecated(getRepositoryId());
-        if (!deprecated && fieldView.mayBeDeprecatedByAnnotation(getRepositoryId())) {
-          deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
-        }
-      }
-      myCachedIsDeprecated = deprecated ? Boolean.TRUE : Boolean.FALSE;
+    final PsiFieldStub stub = getStub();
+    if (stub != null) {
+      return stub.isDeprecated();
     }
-    return myCachedIsDeprecated.booleanValue();
+
+    PsiDocComment docComment = getDocComment();
+    return docComment != null && docComment.findTagByName("deprecated") != null ||
+           getModifierList().findAnnotation("java.lang.Deprecated") != null;
   }
 
   public PsiReference getReference() {

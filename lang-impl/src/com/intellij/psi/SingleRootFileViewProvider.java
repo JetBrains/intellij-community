@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -34,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -177,7 +177,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   private void calcPhysical() {
-    myPhysical = !(getVirtualFile() instanceof LightVirtualFile) && !(getVirtualFile().getFileSystem() instanceof DummyFileSystem) &&
+    myPhysical = !(getVirtualFile() instanceof LightVirtualFile) &&
+                 !(getVirtualFile().getFileSystem() instanceof DummyFileSystem) &&
+                 !(getVirtualFile().getFileSystem() instanceof TempFileSystem) &&
                  isEventSystemEnabled();
   }
 
@@ -266,33 +268,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     if (lang != getBaseLanguage()) return null;
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
     if (parserDefinition != null) {
-      try {
-        return parserDefinition.createFile(this);
-      }
-      catch(AbstractMethodError ame) {
-        // support 5.x version of the API
-        try {
-          return createFileIridaAPI(lang);
-        }
-        catch(Exception ex) {
-          throw ame;
-        }
-      }
+      return parserDefinition.createFile(this);
     }
     return null;
-  }
-
-  private PsiFile createFileIridaAPI(final Language lang) throws Exception {
-    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-    assert parserDefinition != null;
-    //noinspection HardCodedStringLiteral
-    Method m = parserDefinition.getClass().getMethod("createFile", Project.class, VirtualFile.class);
-    PsiFile file = (PsiFile)m.invoke(parserDefinition, myManager.getProject(), myVirtualFile);
-    if (file instanceof PsiFileImpl) {
-      ((PsiFileImpl)file).setViewProvider(this);
-      return file;
-    }
-    throw new IllegalStateException("Original version of ParserDefinition is supported only for PsiFileImpl implementations");
   }
 
   @NotNull

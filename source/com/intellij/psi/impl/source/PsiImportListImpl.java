@@ -1,73 +1,34 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.cache.FileView;
-import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiImportListStub;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Map;
 
-public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiImportList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiImportListImpl");
-  private volatile PsiImportStatementBaseImpl[] myRepositoryImports = null;
-  private volatile PsiImportStatementImpl[] myRepositoryClassImports = null;
-  private volatile PsiImportStaticStatementImpl[] myRepositoryStaticImports = null;
-
+public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> implements PsiImportList {
   private volatile Map<String,PsiImportStatement> myClassNameToImportMap = null;
   private volatile Map<String,PsiImportStatement> myPackageNameToImportMap = null;
   private volatile Map<String,PsiImportStatementBase> myNameToSingleImportMap = null;
+  private static final PsiImportStatementBase[] EMPTY_IMPORTS = new PsiImportStatementBase[0];
 
-  private static final PsiElementArrayConstructor IMPORT_STATEMENT_BASE_IMPL_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor() {
-    public PsiElement[] newPsiElementArray(int length) {
-      return new PsiImportStatementBaseImpl[length];
-    }
-  };
-
-  public PsiImportListImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
-    super(manager, treeElement);
+  public PsiImportListImpl(final PsiImportListStub stub) {
+    super(stub, JavaStubElementTypes.IMPORT_LIST);
   }
 
-  public PsiImportListImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner) {
-    super(manager, owner);
+  public PsiImportListImpl(final ASTNode node) {
+    super(node);
   }
 
   protected Object clone() {
     PsiImportListImpl clone = (PsiImportListImpl)super.clone();
-    clone.myRepositoryImports = null;
-    clone.myRepositoryClassImports = null;
-    clone.myRepositoryStaticImports = null;
     clone.myClassNameToImportMap = null;
     clone.myPackageNameToImportMap = null;
     clone.myNameToSingleImportMap = null;
     return clone;
-  }
-
-  public void setOwner(SrcRepositoryPsiElement owner) {
-    super.setOwner(owner);
-
-    if (myOwner == null) {
-      if (myRepositoryImports != null) {
-        for (int i = 0; i < myRepositoryImports.length; i++) {
-          PsiImportStatementBaseImpl anImport = myRepositoryImports[i];
-          anImport.setOwnerAndIndex(this, i);
-        }
-      }
-      myRepositoryImports = null;
-      myRepositoryClassImports = null;
-      myRepositoryStaticImports = null;
-    }
-    else {
-      myRepositoryImports = (PsiImportStatementBaseImpl[])bindIndexedSlaves(Constants.IMPORT_STATEMENT_BASE_BIT_SET,
-                                                                            IMPORT_STATEMENT_BASE_IMPL_ARRAY_CONSTRUCTOR);
-      myRepositoryClassImports = null;
-      myRepositoryStaticImports = null;
-    }
   }
 
   public void subtreeChanged() {
@@ -79,102 +40,22 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
 
   @NotNull
   public PsiImportStatement[] getImportStatements() {
-    if (myOwner == null) {
-      return calcTreeElement().getChildrenAsPsiElements(Constants.IMPORT_STATEMENT_BIT_SET, Constants.PSI_IMPORT_STATEMENT_ARRAY_CONSTRUCTOR);
-    }
-    else {
-      PsiImportStatementImpl[] repositoryClassImports = myRepositoryClassImports;
-      if (repositoryClassImports == null) {
-        PsiImportStatementBaseImpl[] repositoryImports = calcRepositoryImports();
-        final ArrayList<PsiImportStatementImpl> importStatements = new ArrayList<PsiImportStatementImpl>();
-        for (PsiImportStatementBaseImpl repositoryImport : repositoryImports) {
-          if (repositoryImport instanceof PsiImportStatementImpl) {
-            importStatements.add((PsiImportStatementImpl)repositoryImport);
-          }
-        }
-        repositoryClassImports = myRepositoryClassImports = importStatements.isEmpty() ? PsiImportStatementImpl.EMPTY_ARRAY : importStatements.toArray(new PsiImportStatementImpl[importStatements.size()]);
-      }
-      return repositoryClassImports;
-    }
+    return getStubOrPsiChildren(Constants.IMPORT_STATEMENT_BIT_SET, PsiImportStatementImpl.EMPTY_ARRAY);
   }
 
   @NotNull
   public PsiImportStaticStatement[] getImportStaticStatements() {
-    if (myOwner == null) {
-      return calcTreeElement().getChildrenAsPsiElements(Constants.IMPORT_STATIC_STATEMENT_BIT_SET, Constants.PSI_IMPORT_STATIC_STATEMENT_ARRAY_CONSTRUCTOR);
-    }
-    else {
-      PsiImportStaticStatementImpl[] repositoryStaticImports = myRepositoryStaticImports;
-      if (repositoryStaticImports == null) {
-        PsiImportStatementBaseImpl[] repositoryImports = calcRepositoryImports();
-        final ArrayList<PsiImportStaticStatementImpl> importStatements = new ArrayList<PsiImportStaticStatementImpl>();
-        for (PsiImportStatementBaseImpl repositoryImport : repositoryImports) {
-          if (repositoryImport instanceof PsiImportStaticStatementImpl) {
-            importStatements.add((PsiImportStaticStatementImpl)repositoryImport);
-          }
-        }
-        repositoryStaticImports = myRepositoryStaticImports = importStatements.isEmpty() ? PsiImportStaticStatementImpl.EMPTY_ARRAY : importStatements.toArray(new PsiImportStaticStatementImpl[importStatements.size()]);
-      }
-      return repositoryStaticImports;
-    }
+    return getStubOrPsiChildren(Constants.IMPORT_STATIC_STATEMENT_BIT_SET, PsiImportStaticStatementImpl.EMPTY_ARRAY);
 
   }
 
   @NotNull
   public PsiImportStatementBase[] getAllImportStatements() {
-    if (myOwner != null) {
-      return calcRepositoryImports();
-    }
-    else {
-      return calcTreeElement().getChildrenAsPsiElements(Constants.IMPORT_STATEMENT_BASE_BIT_SET, Constants.PSI_IMPORT_STATEMENT_BASE_ARRAY_CONSTRUCTOR);
-    }
-  }
-
-  private PsiImportStatementBaseImpl[] calcRepositoryImports() {
-    PsiImportStatementBaseImpl[] repositoryImports = myRepositoryImports;
-    if (repositoryImports != null) return repositoryImports;
-
-    synchronized (PsiLock.LOCK) {
-      if (myRepositoryImports != null) return myRepositoryImports; // Double checking...
-
-      ASTNode treeElement = getTreeElement();
-      if (treeElement == null) {
-        final FileView fileView = getRepositoryManager().getFileView();
-        final long repositoryId = getRepositoryId();
-        int count = fileView.getImportStatementsCount(repositoryId);
-        repositoryImports = count == 0 ? PsiImportStatementBaseImpl.EMPTY_ARRAY : new PsiImportStatementBaseImpl[count];
-        for (int i = 0; i < repositoryImports.length; i++) {
-          if (fileView.isImportStatic(repositoryId, i)) {
-            repositoryImports[i] = new PsiImportStaticStatementImpl(myManager, this, i);
-          }
-          else {
-            repositoryImports[i] = new PsiImportStatementImpl(myManager, this, i);
-          }
-        }
-      }
-      else {
-        final ASTNode[] imports = treeElement.getChildren(Constants.IMPORT_STATEMENT_BASE_BIT_SET);
-        int count = imports.length;
-        repositoryImports = count == 0 ? PsiImportStatementBaseImpl.EMPTY_ARRAY : new PsiImportStatementBaseImpl[count];
-        for (int i = 0; i < repositoryImports.length; i++) {
-          final IElementType type = imports[i].getElementType();
-          if (type == Constants.IMPORT_STATEMENT) {
-            repositoryImports[i] = new PsiImportStatementImpl(myManager, this, i);
-          }
-          else if (imports[i].getElementType() == Constants.IMPORT_STATIC_STATEMENT) {
-            repositoryImports[i] = new PsiImportStaticStatementImpl(myManager, this, i);
-          }
-          else {
-            LOG.assertTrue(false, "Unknown child: " + type.toString() + " " + type);
-          }
-        }
-      }
-      return myRepositoryImports = repositoryImports;
-    }
+    return getStubOrPsiChildren(Constants.IMPORT_STATEMENT_BASE_BIT_SET, EMPTY_IMPORTS);
   }
 
   public PsiImportStatement findSingleClassImportStatement(String name) {
-    for (;;) {
+    while (true) {
       Map<String, PsiImportStatement> map = myClassNameToImportMap;
       if (map == null) {
         initializeMaps();
@@ -186,7 +67,7 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
   }
 
   public PsiImportStatement findOnDemandImportStatement(String name) {
-    for (;;) {
+    while (true) {
       Map<String, PsiImportStatement> map = myPackageNameToImportMap;
       if (map == null) {
         initializeMaps();
@@ -198,7 +79,7 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
   }
 
   public PsiImportStatementBase findSingleImportStatement(String name) {
-    for (;;) {
+    while (true) {
       Map<String, PsiImportStatementBase> map = myNameToSingleImportMap;
       if (map == null) {
         initializeMaps();

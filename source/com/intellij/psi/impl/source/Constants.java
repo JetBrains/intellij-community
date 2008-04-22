@@ -97,7 +97,7 @@ public interface Constants extends ElementType {
     }
   };
 
-  TokenSet CLASS_BIT_SET = TokenSet.create(CLASS);
+  TokenSet CLASS_BIT_SET = TokenSet.create(CLASS, ANONYMOUS_CLASS, ENUM_CONSTANT_INITIALIZER);
   TokenSet FIELD_BIT_SET = TokenSet.create(FIELD, ENUM_CONSTANT);
   TokenSet METHOD_BIT_SET = TokenSet.create(METHOD, ANNOTATION_METHOD);
   TokenSet CLASS_INITIALIZER_BIT_SET = TokenSet.create(CLASS_INITIALIZER);

@@ -79,7 +79,11 @@ public class StubTree {
     final int id = Math.abs(FileBasedIndex.getFileId(vFile));
     if (id > 0) {
       final List<SerializedStubTree> datas = FileBasedIndex.getInstance().getValues(StubUpdatingIndex.INDEX_ID, id, project);
-      if (datas.size() == 1) {
+      final int size = datas.size();
+
+      assert size == 1 || size == 0;
+      
+      if (size == 1) {
         StubElement stub = datas.get(0).getStub();
         return new StubTree((PsiFileStub)stub);
       }

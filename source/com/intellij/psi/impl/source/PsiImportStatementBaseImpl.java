@@ -1,82 +1,46 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiImportStatementStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
-import com.intellij.util.PatchedSoftReference;
-import com.intellij.util.PatchedWeakReference;
-
-import java.lang.ref.Reference;
 
 /**
  * @author dsl
  */
-public abstract class PsiImportStatementBaseImpl extends IndexedRepositoryPsiElement implements PsiImportStatementBase{
+public abstract class PsiImportStatementBaseImpl extends JavaStubPsiElement<PsiImportStatementStub> implements PsiImportStatementBase{
   public static final PsiImportStatementBaseImpl[] EMPTY_ARRAY = new PsiImportStatementBaseImpl[0];
-  private Reference myCachedMirrorReference = null;
-  private Boolean myCachedIsOnDemand = null;
 
-  protected PsiImportStatementBaseImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner, int index) {
-    super(manager, owner, index);
+  protected PsiImportStatementBaseImpl(final PsiImportStatementStub stub) {
+    super(stub, stub.isStatic() ? JavaStubElementTypes.IMPORT_STATIC_STATEMENT : JavaStubElementTypes.IMPORT_STATEMENT);
   }
 
-  protected PsiImportStatementBaseImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
-    super(manager, treeElement);
-  }
-
-  public void subtreeChanged() {
-    super.subtreeChanged();
-    myCachedIsOnDemand = null;
-    setCachedMirrorReference(null);
-  }
-
-  public void setOwnerAndIndex(SrcRepositoryPsiElement owner, int index) {
-    super.setOwnerAndIndex(owner, index);
-    setCachedMirrorReference(null);
-  }
-
-  protected Object clone() {
-    PsiImportStatementBaseImpl clone = (PsiImportStatementBaseImpl)super.clone();
-    clone.setCachedMirrorReference(null);
-    return clone;
+  protected PsiImportStatementBaseImpl(final ASTNode node) {
+    super(node);
   }
 
   public boolean isOnDemand(){
-    if (myCachedIsOnDemand == null){
-      boolean onDemand;
-      if (getTreeElement() != null){
-        onDemand = calcTreeElement().findChildByRoleAsPsiElement(ChildRole.IMPORT_ON_DEMAND_DOT) != null;
-      }
-      else{
-        onDemand = getRepositoryManager().getFileView().isImportOnDemand(getRepositoryId(), getIndex());
-      }
-      myCachedIsOnDemand = onDemand ? Boolean.TRUE : Boolean.FALSE;
+    final PsiImportStatementStub stub = getStub();
+    if (stub != null) {
+      return stub.isOnDemand();
     }
-    return myCachedIsOnDemand.booleanValue();
+
+    return calcTreeElement().findChildByRoleAsPsiElement(ChildRole.IMPORT_ON_DEMAND_DOT) != null;
+  }
+
+  public PsiJavaCodeReferenceElement getImportReference() {
+    final PsiImportStatementStub stub = getStub();
+    if (stub != null) {
+      return stub.getReference();
+    }
+    return (PsiJavaCodeReferenceElement)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.IMPORT_REFERENCE);
   }
 
   public PsiElement resolve() {
-    final PsiJavaCodeReferenceElement mirrorReference = getMirrorReference();
-    return mirrorReference == null ? null : mirrorReference.resolve();
-  }
-
-  protected abstract PsiJavaCodeReferenceElement getMirrorReference();
-
-  protected PsiJavaCodeReferenceElement getCachedMirrorReference() {
-    return myCachedMirrorReference == null ? null : (PsiJavaCodeReferenceElement)myCachedMirrorReference.get();
-  }
-
-  protected void setCachedMirrorReference(PsiJavaCodeReferenceElement refElement) {
-    if (refElement == null) {
-      myCachedMirrorReference = null;
-    }
-    else {
-      myCachedMirrorReference = myManager.isBatchFilesProcessingMode()
-                                ? new PatchedWeakReference(refElement)
-                                : (Reference)new PatchedSoftReference(refElement);
-    }
+    final PsiJavaCodeReferenceElement reference = getImportReference();
+    return reference == null ? null : reference.resolve();
   }
 }

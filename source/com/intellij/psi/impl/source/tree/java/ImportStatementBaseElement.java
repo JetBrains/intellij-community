@@ -4,17 +4,18 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 
 /**
  * @author dsl
  */
-public class ImportStatementBaseElement extends RepositoryTreeElement implements Constants {
+public class ImportStatementBaseElement extends CompositeElement implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ImportStatementBaseElement");
-  public ImportStatementBaseElement(IElementType type) {
+
+  protected ImportStatementBaseElement(IElementType type) {
     super(type);
   }
 

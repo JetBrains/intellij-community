@@ -4,13 +4,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.cache.DeclarationView;
 import com.intellij.psi.impl.cache.ModifierFlags;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements PsiModifierList, Constants {
+public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub> implements PsiModifierList, Constants {
   private static final Map<String, IElementType> NAME_TO_KEYWORD_TYPE_MAP = new THashMap<String, IElementType>();
 
   static{
@@ -35,7 +36,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
     NAME_TO_KEYWORD_TYPE_MAP.put(PsiModifier.VOLATILE, VOLATILE_KEYWORD);
   }
 
-  private static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<String>();
+  public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<String>();
 
   static{
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PUBLIC, ModifierFlags.PUBLIC_MASK);
@@ -52,40 +53,91 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.VOLATILE, ModifierFlags.VOLATILE_MASK);
   }
 
-  private int myCachedModifiers = -1;
-  private volatile PsiAnnotation[] myRepositoryAnnotations = null;
-
-  public PsiModifierListImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner) {
-    super(manager, owner);
+  public PsiModifierListImpl(final PsiModifierListStub stub) {
+    super(stub, JavaStubElementTypes.MODIFIER_LIST);
   }
 
-  public PsiModifierListImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
-    super(manager, treeElement);
-  }
-
-  public void subtreeChanged() {
-    super.subtreeChanged();
-    myCachedModifiers = -1;
-    myRepositoryAnnotations = null;
+  public PsiModifierListImpl(final ASTNode node) {
+    super(node);
   }
 
   public boolean hasModifierProperty(@NotNull String name){
-    if (getTreeElement() == null) {
-      long repositoryId = getRepositoryId();
-      if (myCachedModifiers < 0){
-        myCachedModifiers = ((DeclarationView)getRepositoryManager().getItemView(repositoryId)).getModifiers(repositoryId);
-      }
+    final PsiModifierListStub stub = getStub();
+    if (stub != null) {
       int flag = NAME_TO_MODIFIER_FLAG_MAP.get(name);
       assert flag != 0;
-      return (myCachedModifiers & flag) != 0;
+      return (stub.getModifiersMask() & flag) != 0;
     }
-    else {
-      IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
 
-      PsiElement parent = getParent();
-      if (parent instanceof PsiClass){
-        PsiElement pparent = parent.getParent();
-        if (pparent instanceof PsiClass && ((PsiClass)pparent).isInterface()){
+    IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
+
+    PsiElement parent = getParent();
+    if (parent instanceof PsiClass){
+      PsiElement pparent = parent.getParent();
+      if (pparent instanceof PsiClass && ((PsiClass)pparent).isInterface()){
+        if (type == PUBLIC_KEYWORD){
+          return true;
+        }
+        if (type == null){ // package local
+          return false;
+        }
+        if (type == STATIC_KEYWORD){
+          return true;
+        }
+      }
+      if (((PsiClass)parent).isInterface()){
+        if (type == ABSTRACT_KEYWORD){
+          return true;
+        }
+
+        // nested interface is implicitly static
+        if (pparent instanceof PsiClass) {
+          if (type == STATIC_KEYWORD){
+            return true;
+          }
+        }
+      }
+      if (((PsiClass)parent).isEnum()){
+        if (type == STATIC_KEYWORD) {
+          if (!(pparent instanceof PsiFile)) return true;
+        }
+        else if (type == FINAL_KEYWORD) {
+          final PsiField[] fields = ((PsiClass)parent).getFields();
+          for (PsiField field : fields) {
+            if (field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null) return false;
+          }
+          return true;
+        }
+        else if (type == ABSTRACT_KEYWORD) {
+          final PsiMethod[] methods = ((PsiClass)parent).getMethods();
+          for (PsiMethod method : methods) {
+            if (method.hasModifierProperty(PsiModifier.ABSTRACT)) return true;
+          }
+          return false;
+        }
+      }
+    }
+    else if (parent instanceof PsiMethod){
+      PsiClass aClass = ((PsiMethod)parent).getContainingClass();
+      if (aClass != null && aClass.isInterface()){
+        if (type == PUBLIC_KEYWORD){
+          return true;
+        }
+        if (type == null){ // package local
+          return false;
+        }
+        if (type == ABSTRACT_KEYWORD){
+          return true;
+        }
+      }
+    }
+    else if (parent instanceof PsiField){
+      if (parent instanceof PsiEnumConstant) {
+        return type == PUBLIC_KEYWORD || type == STATIC_KEYWORD || type == FINAL_KEYWORD;
+      }
+      else {
+        PsiClass aClass = ((PsiField)parent).getContainingClass();
+        if (aClass != null && aClass.isInterface()){
           if (type == PUBLIC_KEYWORD){
             return true;
           }
@@ -95,87 +147,22 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
           if (type == STATIC_KEYWORD){
             return true;
           }
-        }
-        if (((PsiClass)parent).isInterface()){
-          if (type == ABSTRACT_KEYWORD){
-            return true;
-          }
-
-          // nested interface is implicitly static
-          if (pparent instanceof PsiClass) {
-            if (type == STATIC_KEYWORD){
-              return true;
-            }
-          }
-        }
-        if (((PsiClass)parent).isEnum()){
-          if (type == STATIC_KEYWORD) {
-            if (!(pparent instanceof PsiFile)) return true;
-          }
-          else if (type == FINAL_KEYWORD) {
-            final PsiField[] fields = ((PsiClass)parent).getFields();
-            for (PsiField field : fields) {
-              if (field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null) return false;
-            }
-            return true;
-          }
-          else if (type == ABSTRACT_KEYWORD) {
-            final PsiMethod[] methods = ((PsiClass)parent).getMethods();
-            for (PsiMethod method : methods) {
-              if (method.hasModifierProperty(PsiModifier.ABSTRACT)) return true;
-            }
-            return false;
-          }
-        }
-      }
-      else if (parent instanceof PsiMethod){
-        PsiClass aClass = ((PsiMethod)parent).getContainingClass();
-        if (aClass != null && aClass.isInterface()){
-          if (type == PUBLIC_KEYWORD){
-            return true;
-          }
-          if (type == null){ // package local
-            return false;
-          }
-          if (type == ABSTRACT_KEYWORD){
+          if (type == FINAL_KEYWORD){
             return true;
           }
         }
       }
-      else if (parent instanceof PsiField){
-        if (parent instanceof PsiEnumConstant) {
-          return type == PUBLIC_KEYWORD || type == STATIC_KEYWORD || type == FINAL_KEYWORD;
-        }
-        else {
-          PsiClass aClass = ((PsiField)parent).getContainingClass();
-          if (aClass != null && aClass.isInterface()){
-            if (type == PUBLIC_KEYWORD){
-              return true;
-            }
-            if (type == null){ // package local
-              return false;
-            }
-            if (type == STATIC_KEYWORD){
-              return true;
-            }
-            if (type == FINAL_KEYWORD){
-              return true;
-            }
-          }
-        }
-      }
-
-      if (type == null){ // package local
-        return !hasModifierProperty(PsiModifier.PUBLIC) && !hasModifierProperty(PsiModifier.PRIVATE) && !hasModifierProperty(PsiModifier.PROTECTED);
-      }
-
-      ASTNode treeElement = calcTreeElement();
-      return TreeUtil.findChild(treeElement, type) != null;
     }
+
+    if (type == null){ // package local
+      return !hasModifierProperty(PsiModifier.PUBLIC) && !hasModifierProperty(PsiModifier.PRIVATE) && !hasModifierProperty(PsiModifier.PROTECTED);
+    }
+
+    return TreeUtil.findChild(getNode(), type) != null;
   }
 
   public boolean hasExplicitModifier(@NotNull String name) {
-    final CompositeElement tree = calcTreeElement();
+    final CompositeElement tree = (CompositeElement)getNode();
     IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
     return TreeUtil.findChild(tree, type) != null;
   }
@@ -185,19 +172,22 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
 
     IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
 
-    CompositeElement treeElement = calcTreeElement();
+    CompositeElement treeElement = (CompositeElement)getNode();
     ASTNode parentTreeElement = treeElement.getTreeParent();
     if (value){
-      if (parentTreeElement.getElementType() == JavaElementType.FIELD && parentTreeElement.getTreeParent().getElementType() ==
-                                                                         JavaElementType.CLASS && ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()){
+      if (parentTreeElement.getElementType() == FIELD &&
+          parentTreeElement.getTreeParent().getElementType() == CLASS &&
+          ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()) {
         if (type == PUBLIC_KEYWORD || type == STATIC_KEYWORD || type == FINAL_KEYWORD) return;
       }
-      else if (parentTreeElement.getElementType() == JavaElementType.METHOD && parentTreeElement.getTreeParent().getElementType() ==
-                                                                               JavaElementType.CLASS && ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()){
+      else if (parentTreeElement.getElementType() == METHOD &&
+               parentTreeElement.getTreeParent().getElementType() == CLASS &&
+               ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()) {
         if (type == PUBLIC_KEYWORD || type == ABSTRACT_KEYWORD) return;
       }
-      else if (parentTreeElement.getElementType() == JavaElementType.CLASS && parentTreeElement.getTreeParent().getElementType() ==
-                                                                              JavaElementType.CLASS && ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()){
+      else if (parentTreeElement.getElementType() == CLASS &&
+               parentTreeElement.getTreeParent().getElementType() == CLASS &&
+               ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()) {
         if (type == PUBLIC_KEYWORD) return;
       }
 
@@ -243,23 +233,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
 
   @NotNull
   public PsiAnnotation[] getAnnotations() {
-    if (getRepositoryId() >= 0) {
-      PsiAnnotation[] repositoryAnnotations = myRepositoryAnnotations;
-      if (repositoryAnnotations != null) return repositoryAnnotations;
-      long parentId = ((SrcRepositoryPsiElement)getParent()).getRepositoryId();
-      DeclarationView view = (DeclarationView)getRepositoryManager().getItemView(parentId);
-      String[] annotationStrings = view.getAnnotations(parentId);
-      if (annotationStrings == null) annotationStrings = ArrayUtil.EMPTY_STRING_ARRAY;
-      repositoryAnnotations = annotationStrings.length == 0 ? PsiAnnotation.EMPTY_ARRAY : new PsiAnnotation[annotationStrings.length];
-      for (int i = 0; i < annotationStrings.length; i++) {
-        repositoryAnnotations[i] = new PsiAnnotationImpl(myManager, this, i);
-      }
-      myRepositoryAnnotations = repositoryAnnotations;
-      return repositoryAnnotations;
-    }
-    else {
-      return calcTreeElement().getChildrenAsPsiElements(ANNOTATION_BIT_SET, PSI_ANNOTATION_ARRAY_CONSTRUCTOR);
-    }
+    return getStubOrPsiChildren(JavaStubElementTypes.ANNOTATION, PsiAnnotation.EMPTY_ARRAY);
   }
 
   public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
@@ -277,23 +251,5 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
 
   public String toString(){
     return "PsiModifierList:" + getText();
-  }
-
-  public void setOwner(SrcRepositoryPsiElement owner) {
-    super.setOwner(owner);
-
-    if (myOwner == null) {
-      PsiAnnotation[] repositoryAnnotations = myRepositoryAnnotations;
-      if (repositoryAnnotations != null) {
-        for (int i = 0; i < repositoryAnnotations.length; i++) {
-          PsiAnnotationImpl ref = (PsiAnnotationImpl)repositoryAnnotations[i];
-          ref.setOwnerAndIndex(this, i);
-        }
-      }
-      myRepositoryAnnotations = null;
-    }
-    else {
-      myRepositoryAnnotations = (PsiAnnotation[])bindIndexedSlaves(ANNOTATION_BIT_SET, PSI_ANNOTATION_ARRAY_CONSTRUCTOR);
-    }
   }
 }

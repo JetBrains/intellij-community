@@ -3,13 +3,22 @@
  */
 package com.intellij.psi.impl.java.stubs;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiEnumConstantInitializer;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex;
+import com.intellij.psi.impl.source.PsiAnonymousClassImpl;
+import com.intellij.psi.impl.source.PsiClassImpl;
+import com.intellij.psi.impl.source.PsiEnumConstantInitializerImpl;
+import com.intellij.psi.impl.source.tree.java.AnonymousClassElement;
+import com.intellij.psi.impl.source.tree.java.EnumConstantInitializerElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -27,20 +36,45 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
   }
 
   public PsiClass createPsi(final PsiClassStub stub) {
-    throw new UnsupportedOperationException("createPsi is not implemented"); // TODO
+    if (isCompiled(stub)) {
+      return new ClsClassImpl(stub);
+    }
+    else {
+      if (stub.isEnumConstantInitializer()) {
+        return new PsiEnumConstantInitializerImpl(stub);
+      }
+      else if (stub.isAnonymous()) {
+        return new PsiAnonymousClassImpl(stub);
+      }
+      else {
+        return new PsiClassImpl(stub);
+      }
+    }
+  }
+
+  public PsiClass createPsi(final ASTNode node) {
+    if (node instanceof EnumConstantInitializerElement) {
+      return new PsiEnumConstantInitializerImpl(node);
+    }
+    else if (node instanceof AnonymousClassElement) {
+      return new PsiAnonymousClassImpl(node);
+    }
+
+    return new PsiClassImpl(node);
   }
 
   public PsiClassStub createStub(final PsiClass psi, final StubElement parentStub) {
     final boolean isAnonymous = psi instanceof PsiAnonymousClass;
     final boolean isEnumConst = psi instanceof PsiEnumConstantInitializer;
 
-    byte flags = PsiClassStubImpl.packFlags(psi.isDeprecated(),
+    byte flags = PsiClassStubImpl.packFlags(RecordUtil.isDeprecatedByDocComment(psi),
                                             psi.isInterface(),
                                             psi.isEnum(),
                                             isEnumConst,
                                             isAnonymous,
                                             psi.isAnnotationType(),
-                                            isAnonymous && ((PsiAnonymousClass)psi).isInQualifiedNew());
+                                            isAnonymous && ((PsiAnonymousClass)psi).isInQualifiedNew(),
+                                            RecordUtil.isDeprecatedByAnnotation(psi));
 
     String baseRef = isAnonymous ? ((PsiAnonymousClass)psi).getBaseClassReference().getText() : null;
     final JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
@@ -90,7 +124,7 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
     if (isAnonymous) {
       String baseref = stub.getBaseClassReferenceText();
       if (baseref != null) {
-        sink.occurrence(JavaAnonymousClassBaseRefOccurenceIndex.KEY, baseref);
+        sink.occurrence(JavaAnonymousClassBaseRefOccurenceIndex.KEY, PsiNameHelper.getShortClassName(baseref));
       }
     }
     else {

@@ -97,7 +97,7 @@ public class DummyHolder extends PsiFileImpl {
   public FileElement getTreeElementNoLock() {
     if(myFileElement == null){
       myFileElement = new FileElement(TokenType.DUMMY_HOLDER);
-      myFileElement.setPsiElement(this);
+      myFileElement.setPsi(this);
       if(myTable != null) myFileElement.setCharTable(myTable);
       clearCaches();
     }
@@ -123,7 +123,7 @@ public class DummyHolder extends PsiFileImpl {
     psiFile.myTreeElementPointer = treeClone; // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
     if(isPhysical()) psiFile.myOriginalFile = this;
     else psiFile.myOriginalFile = myOriginalFile;
-    treeClone.setPsiElement(psiFile);
+    treeClone.setPsi(psiFile);
     return psiFile;
   }
 

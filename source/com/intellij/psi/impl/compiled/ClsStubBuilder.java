@@ -10,7 +10,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.cache.ModifierFlags;
-import com.intellij.psi.impl.cache.impl.repositoryCache.TypeInfo;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
@@ -37,9 +37,9 @@ public class ClsStubBuilder {
 
   @Nullable
   public static PsiFileStub build(final VirtualFile vFile, byte[] bytes) throws ClsFormatException {
-    final PsiJavaFileStubImpl file = new PsiJavaFileStubImpl("dont.know.yet");
+    final PsiJavaFileStubImpl file = new PsiJavaFileStubImpl("dont.know.yet", true);
     try {
-      final PsiClassStub result = buildClass(vFile, bytes, file);
+      final PsiClassStub result = buildClass(vFile, bytes, file, 0);
       if (result == null) return null;
 
       file.setPackageName(getPackageName(result));
@@ -50,10 +50,10 @@ public class ClsStubBuilder {
     return file;
   }
 
-  private static PsiClassStub buildClass(final VirtualFile vFile, final byte[] bytes, final StubElement parent) {
+  private static PsiClassStub buildClass(final VirtualFile vFile, final byte[] bytes, final StubElement parent, final int access) {
     ClassReader reader = new ClassReader(bytes);
 
-    final MyClassVisitor classVisitor = new MyClassVisitor(vFile, parent);
+    final MyClassVisitor classVisitor = new MyClassVisitor(vFile, parent, access);
     reader.accept(classVisitor, ClassReader.SKIP_CODE);
     return classVisitor.getResult();
   }
@@ -70,6 +70,7 @@ public class ClsStubBuilder {
 
   private static class MyClassVisitor implements ClassVisitor {
     private final StubElement myParent;
+    private final int myAccess;
     private final VirtualFile myVFile;
     private PsiModifierListStub myModlist;
     private PsiClassStub myResult;
@@ -78,9 +79,10 @@ public class ClsStubBuilder {
     @NonNls private static final String SYNTHETIC_INIT_METHOD = "<init>";
 
 
-    private MyClassVisitor(final VirtualFile vFile, final StubElement parent) {
+    private MyClassVisitor(final VirtualFile vFile, final StubElement parent, final int access) {
       myVFile = vFile;
       myParent = parent;
+      myAccess = access;
     }
 
     public PsiClassStub getResult() {
@@ -93,26 +95,23 @@ public class ClsStubBuilder {
                       final String signature,
                       final String superName,
                       final String[] interfaces) {
-      String fqn = Type.getObjectType(name).getClassName();
-
-      final boolean isInner = fqn.contains("$");
-      if (isInner) {
-        fqn = fqn.replace('$', '.');
-      }
+      String fqn = getClassName(name);
 
       final String shortName = PsiNameHelper.getShortClassName(fqn);
 
-      boolean isDeprecated = (access & Opcodes.ACC_DEPRECATED) != 0;
-      boolean isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
-      boolean isEnum = (access & Opcodes.ACC_ENUM) != 0;
-      boolean isAnnotationType = (access & Opcodes.ACC_ANNOTATION) != 0;
+      final int flags = myAccess != 0 ? myAccess : access;
 
-      final byte flags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false);
+      boolean isDeprecated = (flags & Opcodes.ACC_DEPRECATED) != 0;
+      boolean isInterface = (flags & Opcodes.ACC_INTERFACE) != 0;
+      boolean isEnum = (flags & Opcodes.ACC_ENUM) != 0;
+      boolean isAnnotationType = (flags & Opcodes.ACC_ANNOTATION) != 0;
 
-      myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, flags);
+      final byte stubFlags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false, false);
+
+      myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
       ((PsiClassStubImpl)myResult).setLanguageLevel(convertFromVersion(version));
-      myModlist = new PsiModifierListStubImpl(myResult, packModlistFlags(access));
+      myModlist = new PsiModifierListStubImpl(myResult, packModlistFlags(flags));
 
       CharacterIterator signatureIterator = signature != null ? new StringCharacterIterator(signature) : null;
       if (signatureIterator != null) {
@@ -122,6 +121,9 @@ public class ClsStubBuilder {
         catch (ClsFormatException e) {
           signatureIterator = null;
         }
+      }
+      else {
+        new PsiTypeParameterListStubImpl(myResult);
       }
 
       String convertedSuper;
@@ -134,6 +136,7 @@ public class ClsStubBuilder {
           convertedSuper = parseClassSignature(signatureIterator, convertedInterfaces);
         }
         catch (ClsFormatException e) {
+          new PsiTypeParameterListStubImpl(myResult);
           convertedSuper = parseClassDescription(superName, interfaces, convertedInterfaces);
         }
       }
@@ -157,9 +160,9 @@ public class ClsStubBuilder {
     @Nullable
     private static String parseClassDescription(final String superName, final String[] interfaces, final List<String> convertedInterfaces) {
       final String convertedSuper;
-      convertedSuper = superName != null ? Type.getObjectType(superName).getClassName() : null;
+      convertedSuper = superName != null ? getClassName(superName) : null;
       for (String anInterface : interfaces) {
-        convertedInterfaces.add(Type.getObjectType(anInterface).getClassName());
+        convertedInterfaces.add(getClassName(anInterface));
       }
       return convertedSuper;
     }
@@ -222,9 +225,6 @@ public class ClsStubBuilder {
       if ((access & Opcodes.ACC_STATIC) != 0) {
         flags |= ModifierFlags.STATIC_MASK;
       }
-      if ((access & Opcodes.ACC_SYNCHRONIZED) != 0) {
-        flags |= ModifierFlags.SYNCHRONIZED_MASK;
-      }
       if ((access & Opcodes.ACC_TRANSIENT) != 0) {
         flags |= ModifierFlags.TRANSIENT_MASK;
       }
@@ -257,7 +257,7 @@ public class ClsStubBuilder {
     }
 
     public void visitInnerClass(final String name, final String outerName, final String innerName, final int access) {
-      if (innerName != null && outerName != null && Type.getObjectType(outerName).getClassName().equals(myResult.getQualifiedName())) {
+      if (innerName != null && outerName != null && getClassName(outerName).equals(myResult.getQualifiedName())) {
         final String basename = myVFile.getNameWithoutExtension();
         final VirtualFile dir = myVFile.getParent();
         assert dir != null;
@@ -265,7 +265,7 @@ public class ClsStubBuilder {
         final VirtualFile innerFile = dir.findChild(basename + "$" + innerName + ".class");
         if (innerFile != null) {
           try {
-            buildClass(innerFile, innerFile.contentsToByteArray(), myResult);
+            buildClass(innerFile, innerFile.contentsToByteArray(), myResult, access);
           }
           catch (IOException e) {
             // No inner class file found, ignore.
@@ -275,7 +275,7 @@ public class ClsStubBuilder {
     }
 
     public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
-      final byte flags = PsiFieldStubImpl.packFlags((access & Opcodes.ACC_ENUM) != 0, (access & Opcodes.ACC_DEPRECATED) != 0);
+      final byte flags = PsiFieldStubImpl.packFlags((access & Opcodes.ACC_ENUM) != 0, (access & Opcodes.ACC_DEPRECATED) != 0, false);
       PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, fieldType(desc, signature), constToString(value), flags);
       final PsiModifierListStub modlist = new PsiModifierListStubImpl(stub, packModlistFlags(access));
       return new AnnotationCollectingVisitor(stub, modlist);
@@ -303,7 +303,7 @@ public class ClsStubBuilder {
       }
       final TypeInfo info = new TypeInfo();
       info.arrayCount = (byte)dim;
-      info.text = type.getClassName();
+      info.text = getTypeText(type);
       info.isEllipsis = false;
       return info;
     }
@@ -324,11 +324,11 @@ public class ClsStubBuilder {
       boolean isVarargs = (access & Opcodes.ACC_VARARGS) != 0;
       boolean isAnnotationMethod = myResult.isAnnotationType();
 
-      final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated);
+      final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated, false);
 
       String canonicalMethodName = isConstructor ? myResult.getName() : name;
       PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, canonicalMethodName, null, flags, null);
-      PsiModifierListStub modlist = new PsiModifierListStubImpl(stub, packModlistFlags(access));
+      PsiModifierListStub modlist = new PsiModifierListStubImpl(stub, packMethodFlags(access));
 
       String returnType;
       List<String> args = new ArrayList<String>();
@@ -353,7 +353,6 @@ public class ClsStubBuilder {
         final TypeInfo typeInfo = TypeInfo.fromString(arg);
         if (isEllipsisParam) {
           typeInfo.isEllipsis = true;
-          typeInfo.arrayCount--;
         }
 
         PsiParameterStubImpl parameterStub = new PsiParameterStubImpl(parameterList, "p" + (i + 1), typeInfo, isEllipsisParam);
@@ -363,7 +362,7 @@ public class ClsStubBuilder {
       if (exceptions != null) {
         String[] converted = new String[exceptions.length];
         for (int i = 0; i < converted.length; i++) {
-          converted[i] = Type.getObjectType(exceptions[i]).getClassName();
+          converted[i] = getClassName(exceptions[i]);
         }
         new PsiClassReferenceListStubImpl(JavaStubElementTypes.THROWS_LIST, stub, converted, PsiReferenceList.Role.THROWS_LIST);
       }
@@ -374,12 +373,21 @@ public class ClsStubBuilder {
       return new AnnotationCollectingVisitor(stub, modlist);
     }
 
+    private static int packMethodFlags(final int access) {
+      int commonFlags = packModlistFlags(access);
+      if ((access & Opcodes.ACC_SYNCHRONIZED) != 0) {
+        commonFlags |= ModifierFlags.SYNCHRONIZED_MASK;
+      }
+
+      return commonFlags;
+    }
+
     private static String parseMethodViaDescription(final String desc, final PsiMethodStubImpl stub, final List<String> args) {
       final String returnType;
-      returnType = Type.getReturnType(desc).getClassName();
+      returnType = getTypeText(Type.getReturnType(desc));
       final Type[] argTypes = Type.getArgumentTypes(desc);
       for (Type argType : argTypes) {
-        args.add(argType.getClassName());
+        args.add(getTypeText(argType));
       }
       new PsiTypeParameterListStubImpl(stub);
       return returnType;
@@ -424,7 +432,7 @@ public class ClsStubBuilder {
 
       myDesc = desc;
       if (desc != null) {
-        myBuilder.append('@').append(Type.getType(desc).getClassName());
+        myBuilder.append('@').append(getTypeText(Type.getType(desc)));
       }
     }
 
@@ -435,7 +443,7 @@ public class ClsStubBuilder {
 
     public void visitEnum(final String name, final String desc, final String value) {
       valuePairPrefix(name);
-      myBuilder.append(value);
+      myBuilder.append(getTypeText(Type.getType(desc))).append(".").append(value);
     }
 
     private void valuePairPrefix(final String name) {
@@ -509,7 +517,7 @@ public class ClsStubBuilder {
     public AnnotationVisitor visitParameterAnnotation(final int parameter, final String desc, final boolean visible) {
       return new AnnotationTextCollector(desc, new AnnotationResultCallback() {
         public void callback(final String text) {
-          new PsiAnnotationStubImpl(((PsiMethodStubImpl)myOwner).findParameter(parameter), text);
+          new PsiAnnotationStubImpl(((PsiMethodStubImpl)myOwner).findParameter(parameter).getModList(), text);
         }
       });
     }
@@ -554,5 +562,14 @@ public class ClsStubBuilder {
 
   private interface AnnotationResultCallback {
     void callback(String text);
+  }
+
+  private static String getClassName(final String name) {
+    return getTypeText(Type.getObjectType(name));
+  }
+
+  private static String getTypeText(final Type type) {
+    final String raw = type.getClassName();
+    return raw.replace('$', '.');
   }
 }

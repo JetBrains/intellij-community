@@ -13,13 +13,10 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.text.CharacterIterator;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -62,70 +59,6 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
 
     myQualifiedName = PsiNameHelper.getQualifiedClassName(myCanonicalText, false);
   }
-
-  public ClsJavaCodeReferenceElementImpl(PsiElement psiParent, CharacterIterator signature) throws ClsFormatException {
-    myParent = psiParent;
-    StringBuffer canonicalText = new StringBuffer();
-    LOG.assertTrue(signature.current() == 'L');
-    signature.next();
-    ArrayList<ClsTypeElementImpl> typeParameters = new ArrayList<ClsTypeElementImpl>();
-    while (signature.current() != ';' && signature.current() != CharacterIterator.DONE) {
-      switch (signature.current()) {
-        case '$':
-        case '/':
-        case '.':
-          canonicalText.append('.');
-          break;
-        case '<':
-          canonicalText.append('<');
-          signature.next();
-          do {
-            processTypeArgument(signature, typeParameters, canonicalText);
-          }
-          while (signature.current() != '>');
-          canonicalText.append('>');
-          break;
-        case ' ':
-          break;
-        default:
-          canonicalText.append(signature.current());
-      }
-      signature.next();
-    }
-
-    if (signature.current() == CharacterIterator.DONE) {
-      throw new ClsFormatException();
-    }
-
-    for(int index = 0; index < canonicalText.length(); index++) {
-      final char c = canonicalText.charAt(index);
-      if ('0' <= c && c <= '1') {
-        if (index > 0 && canonicalText.charAt(index-1) == '.') {
-          canonicalText.setCharAt(index-1, '$');
-        }
-      }
-    }
-    myCanonicalText = canonicalText.toString();
-    final int nParams = typeParameters.size();
-    myTypeParameters = nParams == 0 ? ClsTypeElementImpl.EMPTY_ARRAY : new ClsTypeElementImpl[nParams];
-    for (int i = nParams - 1; i >= 0; i--) {
-      myTypeParameters[nParams - i - 1] = typeParameters.get(i);
-    }
-    myQualifiedName = PsiNameHelper.getQualifiedClassName(myCanonicalText, false);
-
-    signature.next();
-  }
-
-  private void processTypeArgument(CharacterIterator signature, ArrayList<ClsTypeElementImpl> typeParameters, StringBuffer canonicalText)
-    throws ClsFormatException {
-    ClsTypeElementImpl typeArgument = GenericSignatureParsing.parseClassOrTypeVariableElement(signature, this);
-    typeParameters.add(typeArgument);
-    canonicalText.append(typeArgument.getCanonicalText());
-    if (signature.current() != '>') {
-      canonicalText.append(',');
-    }
-  }
-
 
   void setParent(PsiElement parent) {
     myParent = parent;

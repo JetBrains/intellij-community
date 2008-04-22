@@ -3,14 +3,20 @@
  */
 package com.intellij.psi.impl.java.stubs;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.impl.cache.InitializerTooLongException;
-import com.intellij.psi.impl.cache.impl.repositoryCache.RecordUtil;
-import com.intellij.psi.impl.cache.impl.repositoryCache.TypeInfo;
+import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.cache.TypeInfo;
+import com.intellij.psi.impl.compiled.ClsEnumConstantImpl;
+import com.intellij.psi.impl.compiled.ClsFieldImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiFieldStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaFieldNameIndex;
+import com.intellij.psi.impl.source.PsiEnumConstantImpl;
+import com.intellij.psi.impl.source.PsiFieldImpl;
+import com.intellij.psi.impl.source.tree.java.EnumConstantElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -28,13 +34,30 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
   }
 
   public PsiField createPsi(final PsiFieldStub stub) {
-    throw new UnsupportedOperationException("createPsi is not implemented"); // TODO
+    final boolean compiled = isCompiled(stub);
+    if (compiled) {
+      return stub.isEnumConstant() ? new ClsEnumConstantImpl(stub) : new ClsFieldImpl(stub);
+    }
+    else {
+      return stub.isEnumConstant() ? new PsiEnumConstantImpl(stub) : new PsiFieldImpl(stub);
+    }
+  }
+
+  public PsiField createPsi(final ASTNode node) {
+    if (node instanceof EnumConstantElement) {
+      return new PsiEnumConstantImpl(node);
+    }
+    else {
+      return new PsiFieldImpl(node);
+    }
   }
 
   public PsiFieldStub createStub(final PsiField psi, final StubElement parentStub) {
     final PsiExpression initializer = psi.getInitializer();
     final TypeInfo type = TypeInfo.create(psi.getType(), psi.getTypeElement());
-    final byte flags = PsiFieldStubImpl.packFlags(psi instanceof PsiEnumConstant, psi.isDeprecated());
+    final byte flags = PsiFieldStubImpl.packFlags(psi instanceof PsiEnumConstant,
+                                                  RecordUtil.isDeprecatedByDocComment(psi),
+                                                  RecordUtil.isDeprecatedByAnnotation(psi));
     return new PsiFieldStubImpl(parentStub, psi.getName(), type, initializer != null ? initializer.getText() : null, flags);
   }
 

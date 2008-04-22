@@ -1,11 +1,13 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiClassInitializerStub;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,35 +16,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implements PsiClassInitializer {
-  private PsiModifierListImpl myRepositoryModifierList = null;
-
-  public PsiClassInitializerImpl(PsiManagerEx manager, long repositoryId) {
-    super(manager, repositoryId);
+public class PsiClassInitializerImpl extends JavaStubPsiElement<PsiClassInitializerStub> implements PsiClassInitializer {
+  public PsiClassInitializerImpl(final PsiClassInitializerStub stub) {
+    super(stub, JavaStubElementTypes.CLASS_INITIALIZER);
   }
 
-  public PsiClassInitializerImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
-    super(manager, treeElement);
-  }
-
-  protected Object clone() {
-    PsiClassInitializerImpl clone = (PsiClassInitializerImpl)super.clone();
-    clone.myRepositoryModifierList = null;
-    return clone;
-  }
-
-  public void setRepositoryId(long repositoryId) {
-    super.setRepositoryId(repositoryId);
-
-    if (repositoryId < 0){
-      if (myRepositoryModifierList != null){
-        myRepositoryModifierList.setOwner(this);
-        myRepositoryModifierList = null;
-      }
-    }
-    else{
-      myRepositoryModifierList = (PsiModifierListImpl)bindSlave(ChildRole.MODIFIER_LIST);
-    }
+  public PsiClassInitializerImpl(final ASTNode node) {
+    super(node);
   }
 
   public PsiClass getContainingClass() {
@@ -56,19 +36,8 @@ public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implem
     return cc != null ? cc : super.getContext();
   }
 
-  public PsiModifierList getModifierList(){
-    long repositoryId = getRepositoryId();
-    if (repositoryId >= 0){
-      synchronized (PsiLock.LOCK) {
-        if (myRepositoryModifierList == null){
-          myRepositoryModifierList = new PsiModifierListImpl(myManager, this);
-        }
-        return myRepositoryModifierList;
-      }
-    }
-    else{
-      return (PsiModifierList)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.MODIFIER_LIST);
-    }
+  public PsiModifierList getModifierList() {
+    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
   }
 
   public boolean hasModifierProperty(@NotNull String name) {
@@ -77,7 +46,7 @@ public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implem
 
   @NotNull
   public PsiCodeBlock getBody(){
-    return (PsiCodeBlock)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.METHOD_BODY);
+    return (PsiCodeBlock)((CompositeElement)getNode()).findChildByRoleAsPsiElement(ChildRole.METHOD_BODY);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
@@ -102,4 +71,3 @@ public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implem
     return createLayeredIcon(Icons.CLASS_INITIALIZER, ElementPresentationUtil.getFlags(this, false));
   }
 }
-

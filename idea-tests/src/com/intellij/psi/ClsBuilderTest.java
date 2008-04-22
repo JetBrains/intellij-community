@@ -16,7 +16,9 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.cls.ClsFormatException;
 
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 
 public class ClsBuilderTest extends LightIdeaTestCase {
@@ -35,15 +37,40 @@ public class ClsBuilderTest extends LightIdeaTestCase {
   public void testManyGenerics() throws Exception {
     doTest("java/util/Collections.class", "UtilCollections.txt");
   }
-  
+
+  public void testHashMap() throws Exception {
+    doTest("java/util/HashMap.class", "UtilHashMap.txt");
+  }
+
+  public void testMap() throws Exception {
+    doTest("java/util/Map.class", "UtilMap.txt");
+  }
+
+  public void testTimeUnit() throws Exception {
+    doTest("java/util/concurrent/TimeUnit.class", "TimeUnit.txt");
+  }
+
   private void doTest(final String classname, final String goldFile) throws IOException, ClsFormatException {
     VirtualFile vFile = findFile(classname);
 
     final PsiFileStub stub = ClsStubBuilder.build(vFile, vFile.contentsToByteArray());
     final String butWas = ((StubBase)stub).printTree();
 
-    String expected = FileUtil.loadTextAndClose(new FileReader(PathManagerEx.getTestDataPath() + "/psi/cls/stubBuilder/" + goldFile));
-    expected = StringUtil.convertLineSeparators(expected);
+    final String goldFilePath = PathManagerEx.getTestDataPath() + "/psi/cls/stubBuilder/" + goldFile;
+    String expected = "";
+    try {
+      expected = FileUtil.loadTextAndClose(new FileReader(goldFilePath));
+      expected = StringUtil.convertLineSeparators(expected);
+    }
+    catch (FileNotFoundException e) {
+      System.out.println("No expected data found at:" + goldFilePath);
+      System.out.println("Creating one.");
+      final FileWriter fileWriter = new FileWriter(goldFilePath);
+      fileWriter.write(butWas);
+      fileWriter.close();
+      fail("No test data found. Created one");
+    }
+
     assertEquals(expected, butWas);
   }
 

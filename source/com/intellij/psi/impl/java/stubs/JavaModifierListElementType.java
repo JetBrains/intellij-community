@@ -3,9 +3,12 @@
  */
 package com.intellij.psi.impl.java.stubs;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.impl.cache.impl.repositoryCache.RecordUtil;
+import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.compiled.ClsModifierListImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiModifierListStubImpl;
+import com.intellij.psi.impl.source.PsiModifierListImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -21,7 +24,16 @@ public class JavaModifierListElementType extends JavaStubElementType<PsiModifier
   }
 
   public PsiModifierList createPsi(final PsiModifierListStub stub) {
-    throw new UnsupportedOperationException("createPsi is not implemented"); // TODO
+    if (isCompiled(stub)) {
+      return new ClsModifierListImpl(stub);
+    }
+    else {
+      return new PsiModifierListImpl(stub);
+    }
+  }
+
+  public PsiModifierList createPsi(final ASTNode node) {
+    return new PsiModifierListImpl(node);
   }
 
   public PsiModifierListStub createStub(final PsiModifierList psi, final StubElement parentStub) {

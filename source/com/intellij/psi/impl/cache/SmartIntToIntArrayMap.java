@@ -1,4 +1,4 @@
-package com.intellij.psi.impl.cache.impl.repositoryCache;
+package com.intellij.psi.impl.cache;
 
 import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;

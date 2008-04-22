@@ -13,9 +13,9 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsAnnotationParameterListImpl");
 
   private ClsNameValuePairImpl[] myAttributes;
-  private final ClsAnnotationImpl myParent;
+  private final PsiAnnotation myParent;
 
-  public ClsAnnotationParameterListImpl(ClsAnnotationImpl parent) {
+  public ClsAnnotationParameterListImpl(PsiAnnotation parent) {
     myParent = parent;
   }
 

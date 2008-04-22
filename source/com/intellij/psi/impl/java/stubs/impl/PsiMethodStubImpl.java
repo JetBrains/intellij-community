@@ -4,8 +4,8 @@
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.impl.cache.impl.repositoryCache.RecordUtil;
-import com.intellij.psi.impl.cache.impl.repositoryCache.TypeInfo;
+import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.java.stubs.PsiParameterListStub;
@@ -25,6 +25,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   private final static int VARARGS = 0x02;
   private final static int ANNOTATION = 0x04;
   private final static int DEPRECATED = 0x08;
+  private final static int DEPRECATED_ANNOTATION = 0x10;
 
 
   public PsiMethodStubImpl(final StubElement parent,
@@ -32,7 +33,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
                            final TypeInfo returnType,
                            final byte flags,
                            final String defaultValueText) {
-    super(parent, JavaStubElementTypes.METHOD);
+    super(parent, isAnnotationMethod(flags) ? JavaStubElementTypes.ANNOTATION_METHOD : JavaStubElementTypes.METHOD);
 
     myReturnType = returnType;
     myFlags = flags;
@@ -68,6 +69,10 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     return (myFlags & DEPRECATED) != 0;
   }
 
+  public boolean hasDeprecatedAnnotation() {
+    return (myFlags & DEPRECATED_ANNOTATION) != 0;
+  }
+
   public PsiParameterStub findParameter(final int idx) {
     PsiParameterListStub list = null;
     for (StubElement child : getChildrenStubs()) {
@@ -101,12 +106,13 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     myReturnType = returnType;
   }
 
-  public static byte packFlags(boolean isConstructor, boolean isAnnotationMethod, boolean isVarargs, boolean isDeprecated) {
+  public static byte packFlags(boolean isConstructor, boolean isAnnotationMethod, boolean isVarargs, boolean isDeprecated, boolean hasDeprecatedAnnotation) {
     byte flags = 0;
     if (isConstructor) flags |= CONSTRUCTOR;
     if (isAnnotationMethod) flags |= ANNOTATION;
     if (isVarargs) flags |= VARARGS;
     if (isDeprecated) flags |= DEPRECATED;
+    if (hasDeprecatedAnnotation) flags |= DEPRECATED_ANNOTATION;
     return flags;
   }
 
@@ -123,7 +129,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     if (isVarArgs()) {
       builder.append("varargs ");
     }
-    if (isDeprecated()) {
+    if (isDeprecated() || hasDeprecatedAnnotation()) {
       builder.append("deprecated ");
     }
 

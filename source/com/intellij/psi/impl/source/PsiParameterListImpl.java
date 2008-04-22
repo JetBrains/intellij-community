@@ -1,86 +1,32 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiParameterListStub;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements PsiParameterList {
+public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStub> implements PsiParameterList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterListImpl");
 
-  private volatile PsiParameter[] myRepositoryParameters = null;
-
-  private static final PsiElementArrayConstructor PARAMETER_IMPL_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor() {
-    public PsiElement[] newPsiElementArray(int length) {
-      return new PsiParameterImpl[length];
-    }
-  };
-
-  public PsiParameterListImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
-    super(manager, treeElement);
+  public PsiParameterListImpl(final PsiParameterListStub stub) {
+    super(stub, JavaStubElementTypes.PARAMETER_LIST);
   }
 
-  public PsiParameterListImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner) {
-    super(manager, owner);
-  }
-
-  public Object clone() {
-    PsiParameterListImpl clone = (PsiParameterListImpl)super.clone();
-    clone.myRepositoryParameters = null;
-    return clone;
-  }
-
-  public void setOwner(SrcRepositoryPsiElement owner) {
-    super.setOwner(owner);
-
-    if (myOwner == null){
-      PsiParameter[] repositoryParameters = myRepositoryParameters;
-      if (repositoryParameters != null){
-        for(int i = 0; i < repositoryParameters.length; i++){
-          PsiParameterImpl parm = (PsiParameterImpl)repositoryParameters[i];
-          parm.setOwnerAndIndex(this, i);
-        }
-      }
-      myRepositoryParameters = null;
-    }
-    else{
-      myRepositoryParameters = (PsiParameterImpl[])bindIndexedSlaves(Constants.PARAMETER_BIT_SET, PARAMETER_IMPL_ARRAY_CONSTRUCTOR);
-    }
+  public PsiParameterListImpl(final ASTNode node) {
+    super(node);
   }
 
   @NotNull
-  public PsiParameter[] getParameters(){
-    PsiParameter[] repositoryParameters = myRepositoryParameters;
-    if (repositoryParameters != null) return repositoryParameters;
-    synchronized (PsiLock.LOCK) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId >= 0) {
-        repositoryParameters = myRepositoryParameters;
-        if (repositoryParameters == null) {
-          int count;
-          CompositeElement treeElement = getTreeElement();
-          if (treeElement != null) {
-            count = treeElement.countChildren(Constants.PARAMETER_BIT_SET);
-          }
-          else {
-            count = getRepositoryManager().getMethodView().getParameterCount(repositoryId);
-          }
-          repositoryParameters = count == 0 ? PsiParameter.EMPTY_ARRAY : new PsiParameterImpl[count];
-          for (int i = 0; i < count; i++) {
-            repositoryParameters[i] = new PsiParameterImpl(myManager, this, i);
-          }
-          myRepositoryParameters = repositoryParameters;
-        }
-        return repositoryParameters;
-      }
-      else{
-        return calcTreeElement().getChildrenAsPsiElements(Constants.PARAMETER_BIT_SET, Constants.PSI_PARAMETER_ARRAY_CONSTRUCTOR);
-      }
-    }
+  public PsiParameter[] getParameters() {
+    return getStubOrPsiChildren(JavaStubElementTypes.PARAMETER, PsiParameter.EMPTY_ARRAY);
   }
 
   public int getParameterIndex(PsiParameter parameter) {
@@ -88,24 +34,18 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
     return PsiImplUtil.getParameterIndex(parameter, this);
   }
 
+  @NotNull
+  public CompositeElement getNode() {
+    return (CompositeElement)super.getNode();
+  }
+
   public int getParametersCount() {
-    long repositoryId = getRepositoryId();
-    if (repositoryId >= 0) {
-      PsiParameter[] repositoryParameters = myRepositoryParameters;
-      if (repositoryParameters == null) {
-        CompositeElement treeElement = getTreeElement();
-        if (treeElement != null) {
-          return treeElement.countChildren(Constants.PARAMETER_BIT_SET);
-        }
-        else {
-          return getRepositoryManager().getMethodView().getParameterCount(repositoryId);
-        }
-      }
-      return repositoryParameters.length;
+    final PsiParameterListStub stub = getStub();
+    if (stub != null) {
+      return stub.getChildrenStubs().size();
     }
-    else{
-      return calcTreeElement().countChildren(Constants.PARAMETER_BIT_SET);
-    }
+
+    return getNode().countChildren(Constants.PARAMETER_BIT_SET);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){

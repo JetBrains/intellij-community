@@ -12,7 +12,8 @@ public class JavaStubElementTypes {
   public static final JavaClassElementType ENUM_CONSTANT_INITIALIZER = new JavaClassElementType("ENUM_CONSTANT_INITIALIZER");
 
   public static final JavaModifierListElementType MODIFIER_LIST = new JavaModifierListElementType();
-  public static final JavaMethodElementType METHOD = new JavaMethodElementType();
+  public static final JavaMethodElementType METHOD = new JavaMethodElementType("METHOD");
+  public static final JavaMethodElementType ANNOTATION_METHOD = new JavaMethodElementType("ANNOTATION_METHOD");
   public static final JavaFieldStubElementType FIELD = new JavaFieldStubElementType("FIELD");
   public static final JavaFieldStubElementType ENUM_CONSTANT = new JavaFieldStubElementType("ENUM_CONSTANT");
 

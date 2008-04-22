@@ -46,7 +46,7 @@ public class DefaultClassNavigationContributor implements GotoClassContributor {
   }
 
   public String[] getNames(Project project, boolean includeNonProjectItems) {
-    return JavaPsiFacade.getInstance(project).getShortNamesCache().getAllClassNames(includeNonProjectItems);
+    return JavaPsiFacade.getInstance(project).getShortNamesCache().getAllClassNames();
   }
 
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {

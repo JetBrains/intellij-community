@@ -59,10 +59,8 @@ public class SignatureParsing {
       }
     }
 
-    if (!bounds.isEmpty()) {
-      String[] sbounds = bounds.toArray(new String[bounds.size()]);
-      new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_BOUND_LIST, parameterStub, sbounds, PsiReferenceList.Role.EXTENDS_LIST);
-    }
+    String[] sbounds = bounds.toArray(new String[bounds.size()]);
+    new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_BOUND_LIST, parameterStub, sbounds, PsiReferenceList.Role.EXTENDS_BOUNDS_LIST);
 
     return parameterStub;
   }
