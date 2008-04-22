@@ -18,10 +18,13 @@ package org.jetbrains.plugins.groovy.config.ui;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetValidatorsManager;
+import com.intellij.facet.Facet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
@@ -66,12 +69,19 @@ public class GroovyFacetTab extends FacetEditorTab {
     return isSdkChanged;
   }
 
-  public void apply() throws ConfigurationException {
-    GrovySDKComboBox.DefaultGroovySDKComboBoxItem item = (GrovySDKComboBox.DefaultGroovySDKComboBoxItem) myComboBox.getSelectedItem();
-    Module module = myEditorContext.getModule();
+  public void onFacetInitialized(@NotNull Facet facet) {
+    final GrovySDKComboBox.DefaultGroovySDKComboBoxItem item = (GrovySDKComboBox.DefaultGroovySDKComboBoxItem) myComboBox.getSelectedItem();
+    final Module module = myEditorContext.getModule();
     if (module != null) {
-      GroovyConfigUtils.updateGroovyLibInModule(module, item.getGroovySDK());
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          GroovyConfigUtils.updateGroovyLibInModule(module, item.getGroovySDK());
+        }
+      });
     }
+  }
+
+  public void apply() throws ConfigurationException {
     isSdkChanged = false;
   }
 

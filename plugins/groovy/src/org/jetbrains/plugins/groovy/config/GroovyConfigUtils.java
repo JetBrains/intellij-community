@@ -172,21 +172,24 @@ public class GroovyConfigUtils {
   public static void updateGroovyLibInModule(@NotNull Module module, @Nullable GroovySDK sdk) {
     ModuleRootManager manager = ModuleRootManager.getInstance(module);
     ModifiableRootModel model = manager.getModifiableModel();
-    LibraryTable libTable = model.getModuleLibraryTable();
-    Library[] libraries = libTable.getLibraries();
-    for (Library library : libraries) {
-      if (isGroovySdkLibrary(library)) {
-        libTable.removeLibrary(library);
+    OrderEntry[] entries = model.getOrderEntries();
+
+    for (OrderEntry entry : entries) {
+      if (entry instanceof LibraryOrderEntry) {
+        LibraryOrderEntry libEntry = (LibraryOrderEntry) entry;
+        Library library = libEntry.getLibrary();
+        if (isGroovySdkLibrary(library)) {
+          model.removeOrderEntry(entry);
+        }
       }
     }
     if (sdk == null || sdk.getGroovyLibrary() == null) return;
     Library newLib = sdk.getGroovyLibrary();
     LibraryOrderEntry addedEntry = model.addLibraryEntry(newLib);
-
     final OrderEntry[] order = model.getOrderEntries();
     //place library before jdk
     assert order[order.length - 1] == addedEntry;
-    int insertionPoint = - -1;
+    int insertionPoint = -1;
     for (int i = 0; i < order.length - 1; i++) {
       if (order[i] instanceof JdkOrderEntry) {
         insertionPoint = i;
@@ -201,5 +204,13 @@ public class GroovyConfigUtils {
       model.rearrangeOrderEntries(order);
     }
     model.commit();
+  }
+
+  public static boolean libraryReferenced(ModuleRootManager rootManager, Library library) {
+    final OrderEntry[] entries = rootManager.getOrderEntries();
+    for (OrderEntry entry : entries) {
+      if (entry instanceof LibraryOrderEntry && library.equals(((LibraryOrderEntry) entry).getLibrary())) return true;
+    }
+    return false;
   }
 }
