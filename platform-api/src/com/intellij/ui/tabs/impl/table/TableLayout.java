@@ -30,11 +30,41 @@ public class TableLayout extends TabLayout {
     TableRow eachTableRow = new TableRow(data);
     data.table.add(eachTableRow);
 
-    int selectedRow = -1;
+
+    data.requiredRows = 1;
     for (TabInfo eachInfo : myTabs.myVisibleInfos) {
       final TabLabel eachLabel = myTabs.myInfo2Label.get(eachInfo);
       final Dimension size = eachLabel.getPreferredSize();
-      if (eachX + size.width <= data.toFitRec.getMaxX()) {
+      if (eachX + size.width >= data.toFitRec.getMaxX()) {
+        data.requiredRows++;
+        eachX = data.toFitRec.x;
+      }
+      eachLabel.setBounds(eachX, 0, size.width, 1);
+      eachX += size.width;
+      data.requiredWidth += size.width;
+    }
+
+
+    int selectedRow = -1;
+    eachX = data.toFitRec.x;
+    data.rowToFitMaxX = (int)data.toFitRec.getMaxX();
+
+    if (data.requiredRows > 1) {
+      final int rowFit = insets.left + data.requiredWidth / data.requiredRows;
+      for (TabInfo eachInfo : myTabs.myVisibleInfos) {
+        final TabLabel eachLabel = myTabs.myInfo2Label.get(eachInfo);
+        final Rectangle eachBounds = eachLabel.getBounds();
+        if (eachBounds.contains(rowFit, 0)) {
+          data.rowToFitMaxX = (int)eachLabel.getBounds().getMaxX();
+          break;
+        }
+      }
+    }
+
+    for (TabInfo eachInfo : myTabs.myVisibleInfos) {
+      final TabLabel eachLabel = myTabs.myInfo2Label.get(eachInfo);
+      final Dimension size = eachLabel.getPreferredSize();
+      if (eachX + size.width <= data.rowToFitMaxX) {
         eachTableRow.add(eachInfo);
         if (myTabs.getSelectedInfo() == eachInfo) {
           selectedRow = eachRow;
@@ -45,18 +75,10 @@ public class TableLayout extends TabLayout {
         eachTableRow = new TableRow(data);
         data.table.add(eachTableRow);
         eachRow++;
-        eachX = insets.left;
+        eachX = insets.left + size.width;
         eachTableRow.add(eachInfo);
         if (myTabs.getSelectedInfo() == eachInfo) {
           selectedRow = eachRow;
-        }
-        if (eachX + size.width <= data.toFitRec.getMaxX()) {
-          eachX += size.width;
-        }
-        else {
-          eachTableRow = new TableRow(data);
-          eachRow++;
-          eachX = insets.left;
         }
       }
     }
@@ -86,8 +108,10 @@ public class TableLayout extends TabLayout {
       eachX = insets.left;
 
       int deltaToFit = 0;
+      boolean toAjust = false;
       if (eachRow.width < data.toFitRec.width && data.table.size() > 1) {
         deltaToFit = (int)Math.floor((double)(data.toFitRec.width - eachRow.width) / (double)eachRow.myColumns.size());
+        toAjust = true;
       }
 
       for (int i = 0; i < eachRow.myColumns.size(); i++) {
@@ -95,7 +119,7 @@ public class TableLayout extends TabLayout {
         final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
 
         int width;
-        if (i < eachRow.myColumns.size() - 1 || deltaToFit == 0) {
+        if (i < eachRow.myColumns.size() - 1 || !toAjust) {
           width = label.getPreferredSize().width + deltaToFit;
         }
         else {

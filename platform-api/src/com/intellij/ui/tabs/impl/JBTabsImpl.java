@@ -17,6 +17,7 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.table.TableLayout;
+import com.intellij.ui.tabs.impl.table.TablePassInfo;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.UIUtil;
@@ -993,9 +994,9 @@ public class JBTabsImpl extends JComponent
 
     int arc = getArcSize();
 
-    final Color topBlickColor = Color.white;
-    final Color rightBlockColor = Color.lightGray;
-    final Color boundsColor = Color.gray;
+    final Color topBlickColor = getTopBlickColor();
+    final Color rightBlockColor = getRightBlockColor();
+    final Color boundsColor = getBoundsColor();
 
     Insets insets = getLayoutInsets();
 
@@ -1033,58 +1034,8 @@ public class JBTabsImpl extends JComponent
         g2d.drawLine(topX, topY + 1, bottomX - curveArc, topY + 1);
       }
 
-      for (int i = myVisibleInfos.size() - 1; i >= 0; i--) {
-        TabInfo each = myVisibleInfos.get(i);
-        if (getSelectedInfo() == each) continue;
 
-        final TabLabel eachLabel = myInfo2Label.get(each);
-        if (eachLabel.getBounds().width == 0) continue;
-
-
-        final TabInfo prev = myLastLayoutPass.getPreviousFor(myVisibleInfos.get(i));
-        final TabInfo next = myLastLayoutPass.getNextFor(myVisibleInfos.get(i));
-
-        final Rectangle eachBounds = eachLabel.getBounds();
-        final GeneralPath path = new GeneralPath();
-
-        boolean firstShowing = prev == null;
-        if (!firstShowing && !leftGhostExists) {
-          firstShowing = myInfo2Label.get(prev).getBounds().width == 0;
-        }
-
-        boolean lastShowing = next == null;
-        if (!lastShowing) {
-          lastShowing = myInfo2Label.get(next).getBounds().width == 0;
-        }
-
-        boolean leftFromSelection = selected != null && i == myVisibleInfos.indexOf(selected) - 1;
-
-
-        int leftX = firstShowing ? eachBounds.x : eachBounds.x - arc - 1;
-        int topY = eachBounds.y + selectionTabVShift;
-        int rigthX = !lastShowing && leftFromSelection ? (int)eachBounds.getMaxX() + arc + 1 : (int)eachBounds.getMaxX();
-        int bottomY = (int)eachBounds.getMaxY() + 1;
-
-        path.moveTo(leftX, bottomY);
-        path.lineTo(leftX, topY + arc);
-        path.quadTo(leftX, topY, leftX + arc, topY);
-        path.lineTo(rigthX - arc, topY);
-        path.quadTo(rigthX, topY, rigthX, topY + arc);
-        path.lineTo(rigthX, bottomY);
-        path.closePath();
-
-        g2d.setColor(getBackground());
-        g2d.fill(path);
-
-        g.setColor(topBlickColor);
-        g.drawLine(leftX, topY + 1, rigthX - arc, topY + 1);
-
-        g.setColor(rightBlockColor);
-        g.drawLine(rigthX - 1, topY + arc - 1, rigthX - 1, bottomY);
-
-        g2d.setColor(boundsColor);
-        g2d.draw(path);
-      }
+      paintNonSelectedTabs(g2d, leftGhostExists);
 
       if (isSingleRow() && mySingleRowLayout.myLastSingRowLayout.leftGhostVisible) {
         final GeneralPath path = new GeneralPath();
@@ -1161,8 +1112,12 @@ public class JBTabsImpl extends JComponent
     else {
       path.lineTo(rightX - arc, topY);
       path.quadTo(rightX, topY, rightX, topY + arc);
-      path.lineTo(rightX, bottomY - arc);
-      path.quadTo(rightX, bottomY, rightX + arc, bottomY);
+      if (myLastLayoutPass.hasCurveSpaceFor(selected)) {
+        path.lineTo(rightX, bottomY - arc);
+        path.quadTo(rightX, bottomY, rightX + arc, bottomY);
+      } else {
+        path.lineTo(rightX, bottomY);
+      }
     }
 
     path.lineTo(lastX, bottomY);
@@ -1236,6 +1191,98 @@ public class JBTabsImpl extends JComponent
     }
 
     config.restore();
+  }
+
+  private Color getBoundsColor() {
+    return Color.gray;
+  }
+
+  private Color getRightBlockColor() {
+    return Color.lightGray;
+  }
+
+  private Color getTopBlickColor() {
+    return Color.white;
+  }
+
+  private void paintNonSelectedTabs(final Graphics2D g2d, final boolean leftGhostExists) {
+    for (int eachRow = 0; eachRow < myLastLayoutPass.getRowCount(); eachRow++) {
+      for (int eachColumn = myLastLayoutPass.getColumnCount(eachRow) - 1; eachColumn >= 0; eachColumn--) {
+        final TabInfo each = myLastLayoutPass.getTabAt(eachRow, eachColumn);
+        if (getSelectedInfo() == each) continue;
+        paintTab(g2d, each, leftGhostExists);
+      }
+    }
+  }
+
+  private void paintTab(final Graphics2D g2d, final TabInfo each, final boolean leftGhostExists) {
+    int tabIndex = myVisibleInfos.indexOf(each);
+
+    final int arc = getArcSize();
+    final Color topBlickColor = getTopBlickColor();
+    final Color rightBlockColor = getRightBlockColor();
+    final Color boundsColor = getBoundsColor();
+    final TabInfo selected = getSelectedInfo();
+    final int selectionTabVShift = getSelectionTabVShift();
+
+
+    final TabLabel eachLabel = myInfo2Label.get(each);
+    if (eachLabel.getBounds().width == 0) return;
+
+
+    final TabInfo prev = myLastLayoutPass.getPreviousFor(myVisibleInfos.get(tabIndex));
+    final TabInfo next = myLastLayoutPass.getNextFor(myVisibleInfos.get(tabIndex));
+
+    final Rectangle eachBounds = eachLabel.getBounds();
+    final GeneralPath path = new GeneralPath();
+
+    boolean firstShowing = prev == null;
+    if (!firstShowing && !leftGhostExists) {
+      firstShowing = myInfo2Label.get(prev).getBounds().width == 0;
+    }
+
+    boolean lastShowing = next == null;
+    if (!lastShowing) {
+      lastShowing = myInfo2Label.get(next).getBounds().width == 0;
+    }
+
+    boolean leftFromSelection = selected != null && tabIndex == myVisibleInfos.indexOf(selected) - 1;
+
+
+    int leftX = firstShowing ? eachBounds.x : eachBounds.x - arc - 1;
+    int topY = eachBounds.y + selectionTabVShift;
+    int rigthX = !lastShowing && leftFromSelection ? (int)eachBounds.getMaxX() + arc + 1 : (int)eachBounds.getMaxX();
+    int bottomY = (int)eachBounds.getMaxY() + 1;
+
+    path.moveTo(leftX, bottomY);
+    path.lineTo(leftX, topY + arc);
+    path.quadTo(leftX, topY, leftX + arc, topY);
+    path.lineTo(rigthX - arc, topY);
+    path.quadTo(rigthX, topY, rigthX, topY + arc);
+    path.lineTo(rigthX, bottomY);
+
+    if (!isSingleRow()) {
+      final TablePassInfo info = myTableLayout.myLastTableLayout;
+      if (!info.isInSelectionRow(each)) {
+        path.lineTo(rigthX, bottomY + getArcSize());
+        path.lineTo(leftX, bottomY + getArcSize());
+        path.lineTo(leftX, bottomY);
+      }
+    }
+
+    path.closePath();
+
+    g2d.setColor(getBackground());
+    g2d.fill(path);
+
+    g2d.setColor(topBlickColor);
+    g2d.drawLine(leftX + arc, topY + 1, rigthX - arc, topY + 1);
+
+    g2d.setColor(rightBlockColor);
+    g2d.drawLine(rigthX - 1, topY + arc - 1, rigthX - 1, bottomY);
+
+    g2d.setColor(boundsColor);
+    g2d.draw(path);
   }
 
   public int getSelectionTabVShift() {

@@ -17,4 +17,11 @@ public abstract class LayoutPassInfo {
     return i < list.size() - 1 ? list.get(i + 1) : null;
   }
 
+  public abstract int getRowCount();
+
+  public abstract int getColumnCount(int row);
+
+  public abstract TabInfo getTabAt(int row, int column);
+
+  public abstract boolean hasCurveSpaceFor(final TabInfo tabInfo);
 }

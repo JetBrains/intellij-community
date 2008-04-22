@@ -47,4 +47,20 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   public TabInfo getNextFor(final TabInfo info) {
     return getNext(myTabs.myVisibleInfos, myTabs.myVisibleInfos.indexOf(info));
   }
+
+  public int getRowCount() {
+    return 1;
+  }
+
+  public int getColumnCount(final int row) {
+    return myTabs.myVisibleInfos.size();
+  }
+
+  public TabInfo getTabAt(final int row, final int column) {
+    return myTabs.myVisibleInfos.get(column);
+  }
+
+  public boolean hasCurveSpaceFor(final TabInfo tabInfo) {
+    return true;
+  }
 }
