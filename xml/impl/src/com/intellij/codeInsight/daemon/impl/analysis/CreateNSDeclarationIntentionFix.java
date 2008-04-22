@@ -263,7 +263,9 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     }
   }
 
-  public static void processExternalUris(final MetaHandler metaHandler, final PsiFile file, final ExternalUriProcessor processor,
+  public static void processExternalUris(final MetaHandler metaHandler,
+                                         final PsiFile file,
+                                         final ExternalUriProcessor processor,
                                          final boolean showProgress) {
     if (!showProgress || ApplicationManager.getApplication().isUnitTestMode()) {
       processExternalUrisImpl(metaHandler, file, processor);

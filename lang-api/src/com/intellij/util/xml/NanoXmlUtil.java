@@ -176,35 +176,36 @@ public class NanoXmlUtil {
     return result.toString();
   }
 
-  public static class BaseXmlBuilder implements IXMLBuilder {
-    private Stack<String> myLocation = new Stack<String>();
+  public static class IXMLBuilderAdapter implements IXMLBuilder {
 
-    public void startBuilding(String systemID, int lineNr) throws Exception {
-      myLocation.push("");
+    public void startBuilding(final String systemID, final int lineNr) throws Exception {
+
     }
 
-    public void newProcessingInstruction(String target, Reader reader) throws Exception {
+    public void newProcessingInstruction(final String target, final Reader reader) throws Exception {
+
     }
 
-    public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
-      myLocation.push(myLocation.peek() + "." + name);
+    public void startElement(final String name, final String nsPrefix, final String nsURI, final String systemID, final int lineNr)
+        throws Exception {
+
     }
 
-    public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
+    public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type)
+        throws Exception {
+
     }
 
-    public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
+    public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) throws Exception {
+
     }
 
-    public void endElement(String name, String nsPrefix, String nsURI) throws Exception {
-      myLocation.pop();
+    public void endElement(final String name, final String nsPrefix, final String nsURI) throws Exception {
+
     }
 
-    public void addPCData(Reader reader, String systemID, int lineNr) throws Exception {
-    }
+    public void addPCData(final Reader reader, final String systemID, final int lineNr) throws Exception {
 
-    protected static String readText(final Reader reader) throws IOException {
-      return new String(StreamUtil.readTextAndConvertSeparators(reader));
     }
 
     @Nullable
@@ -212,12 +213,32 @@ public class NanoXmlUtil {
       return null;
     }
 
-    protected String getLocation() {
-      return myLocation.peek();
-    }
-
     protected static void stop() {
       throw new ParserStoppedException();
+    }
+  }
+
+  public static class BaseXmlBuilder extends IXMLBuilderAdapter {
+    private final Stack<String> myLocation = new Stack<String>();
+
+    public void startBuilding(String systemID, int lineNr) throws Exception {
+      myLocation.push("");
+    }
+
+    public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
+      myLocation.push(myLocation.peek() + "." + name);
+    }
+
+    public void endElement(String name, String nsPrefix, String nsURI) throws Exception {
+      myLocation.pop();
+    }
+
+    protected static String readText(final Reader reader) throws IOException {
+      return new String(StreamUtil.readTextAndConvertSeparators(reader));
+    }
+
+    protected String getLocation() {
+      return myLocation.peek();
     }
   }
 
