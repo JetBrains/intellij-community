@@ -23,10 +23,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.config.GroovySDK;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -86,7 +88,23 @@ public class GroovyFacetTab extends FacetEditorTab {
   }
 
   public void reset() {
-
+    Library[] libraries = GroovyConfigUtils.getGroovyLibrariesByModule(myEditorContext.getModule());
+    if (libraries.length != 1) {
+      myComboBox.setSelectedIndex(0);
+      isSdkChanged = false;
+    } else {
+      Library library = libraries[0];
+      for (int i = 0; i < myComboBox.getItemCount(); i++) {
+        GrovySDKComboBox.DefaultGroovySDKComboBoxItem item = (GrovySDKComboBox.DefaultGroovySDKComboBoxItem) myComboBox.getItemAt(i);
+        GroovySDK sdk = item.getGroovySDK();
+        if (sdk == null) continue;
+        if (library.equals(sdk.getGroovyLibrary())) {
+          myComboBox.setSelectedIndex(i);
+          isSdkChanged = false;
+          break;
+        }
+      }
+    }
   }
 
   public void disposeUIResources() {
@@ -101,5 +119,7 @@ public class GroovyFacetTab extends FacetEditorTab {
         isSdkChanged = true;
       }
     });
+    myComboBox.setSelectedIndex(0);
   }
+
 }

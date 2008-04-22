@@ -32,6 +32,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.Manifest;
 import java.util.jar.Attributes;
 import java.util.List;
+import java.util.ArrayList;
 import java.io.File;
 import java.io.IOException;
 
@@ -183,7 +184,10 @@ public class GroovyConfigUtils {
         }
       }
     }
-    if (sdk == null || sdk.getGroovyLibrary() == null) return;
+    if (sdk == null || sdk.getGroovyLibrary() == null) {
+      model.commit();
+      return;
+    }
     Library newLib = sdk.getGroovyLibrary();
     LibraryOrderEntry addedEntry = model.addLibraryEntry(newLib);
     final OrderEntry[] order = model.getOrderEntries();
@@ -212,5 +216,23 @@ public class GroovyConfigUtils {
       if (entry instanceof LibraryOrderEntry && library.equals(((LibraryOrderEntry) entry).getLibrary())) return true;
     }
     return false;
+  }
+
+  public static Library[] getGroovyLibrariesByModule(Module module) {
+    if (module == null) return new Library[0];
+    ArrayList<Library> libraries = new ArrayList<Library>();
+    ModuleRootManager manager = ModuleRootManager.getInstance(module);
+    ModifiableRootModel model = manager.getModifiableModel();
+    for (OrderEntry entry : model.getOrderEntries()) {
+      if (entry instanceof LibraryOrderEntry) {
+        LibraryOrderEntry libEntry = (LibraryOrderEntry) entry;
+        Library library = libEntry.getLibrary();
+        if (isGroovySdkLibrary(library)) {
+          libraries.add(library);
+        }
+      }
+    }
+
+    return libraries.toArray(new Library[libraries.size()]);
   }
 }
