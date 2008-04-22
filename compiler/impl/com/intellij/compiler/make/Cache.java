@@ -74,9 +74,8 @@ public class Cache {
   }
 
   public int importClassInfo(ClassFileReader reader, SymbolTable symbolTable) throws ClsFormatException, CacheCorruptedException {
-    final int qName = symbolTable.getId(reader.getQualifiedName());
-
     try {
+      final int qName = symbolTable.getId(reader.getQualifiedName());
       synchronized (myViewPool.getClassInfosLock()) {
         final ClassInfoView classInfoView = myViewPool.getClassInfoView(getClassId(qName));
         final int id = classInfoView.getRecordId();
@@ -123,7 +122,7 @@ public class Cache {
       final MethodInfo[] methods = reader.getMethods();
       MemberInfo[] members = ArrayUtil.mergeArrays(fields, methods, MemberInfo.class);
       updateMemberDeclarations(qName, members);
-
+      return qName;
     }
     catch (ClsFormatException e) {
       throw e;
@@ -131,7 +130,6 @@ public class Cache {
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
-    return qName;
   }
 
   public void importClassInfo(Cache fromCache, final int qName) throws CacheCorruptedException {
