@@ -214,20 +214,14 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return Specifics.CONFLICT;
   }
 
-  private Boolean isLessBoxing(PsiType argType, PsiType type1, PsiType type2) {
-    if (argType == null) return null;
+  private boolean isBoxingHappened(PsiType argType, PsiType parameterType) {
+    if (argType == null) return parameterType instanceof PsiPrimitiveType;
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(myArgumentsList);
-    if (type1 instanceof PsiClassType) {
-      type1 = ((PsiClassType)type1).setLanguageLevel(languageLevel);
-    }
-    if (type2 instanceof PsiClassType) {
-      type2 = ((PsiClassType)type2).setLanguageLevel(languageLevel);
+    if (parameterType instanceof PsiClassType) {
+      parameterType = ((PsiClassType)parameterType).setLanguageLevel(languageLevel);
     }
 
-    final boolean boxing1 = TypeConversionUtil.boxingConversionApplicable(type1, argType);
-    final boolean boxing2 = TypeConversionUtil.boxingConversionApplicable(type2, argType);
-    if (boxing1 == boxing2) return null;
-    return boxing1 ? Boolean.FALSE : Boolean.TRUE;
+    return TypeConversionUtil.boxingConversionApplicable(parameterType, argType);
   }
 
   private Specifics isMoreSpecific(final CandidateInfo info1, final CandidateInfo info2, final int applicabilityLevel) {
@@ -284,41 +278,38 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       methodSubstitutor2 = createRawSubstitutor(typeParameters2);
     }
 
-    Specifics isLessBoxing = null;
-    Specifics isMoreSpecific = null;
+    int[] boxingHappened = new int[2];
     for (int i = 0; i < types1.length; i++) {
       PsiType type1 = classSubstitutor1.substitute(methodSubstitutor1.substitute(types1[i]));
       PsiType type2 = classSubstitutor2.substitute(methodSubstitutor2.substitute(types2[i]));
       PsiType argType = i < args.length ? args[i].getType() : null;
 
-      final Boolean boxing = isLessBoxing(argType, type1, type2);
-      if (boxing == Boolean.TRUE) {
-        if (isLessBoxing == Specifics.FALSE) return Specifics.CONFLICT;
-        isLessBoxing = Specifics.TRUE;
-      }
-      else if (boxing == Boolean.FALSE) {
-        if (isLessBoxing == Specifics.TRUE) return Specifics.CONFLICT;
-        isLessBoxing = Specifics.FALSE;
-      }
-      else {
-        final Specifics specifics = checkSubtyping(type1, type2);
-        if (specifics == null) continue;
-        switch (specifics) {
-          case TRUE:
-            if (isMoreSpecific == Specifics.FALSE) return Specifics.CONFLICT;
-            isMoreSpecific = specifics;
-            break;
-          case FALSE:
-            if (isMoreSpecific == Specifics.TRUE) return Specifics.CONFLICT;
-            isMoreSpecific = specifics;
-            break;
-          case CONFLICT:
-            return Specifics.CONFLICT;
-        }
+      boxingHappened[0] += isBoxingHappened(argType, type1) ? 1 : 0;
+      boxingHappened[1] += isBoxingHappened(argType, type2) ? 1 : 0;
+    }
+    if (boxingHappened[0] == 0 && boxingHappened[1] > 0) return Specifics.TRUE;
+    if (boxingHappened[0] > 0 && boxingHappened[1] == 0) return Specifics.FALSE;
+
+    Specifics isMoreSpecific = null;
+    for (int i = 0; i < types1.length; i++) {
+      PsiType type1 = classSubstitutor1.substitute(methodSubstitutor1.substitute(types1[i]));
+      PsiType type2 = classSubstitutor2.substitute(methodSubstitutor2.substitute(types2[i]));
+
+      final Specifics specifics = checkSubtyping(type1, type2);
+      if (specifics == null) continue;
+      switch (specifics) {
+        case TRUE:
+          if (isMoreSpecific == Specifics.FALSE) return Specifics.CONFLICT;
+          isMoreSpecific = specifics;
+          break;
+        case FALSE:
+          if (isMoreSpecific == Specifics.TRUE) return Specifics.CONFLICT;
+          isMoreSpecific = specifics;
+          break;
+        case CONFLICT:
+          return Specifics.CONFLICT;
       }
     }
-
-    if (isLessBoxing != null) return isLessBoxing;
 
     if (isMoreSpecific == null && class1 != class2) {
       if (class2.isInheritor(class1, true) || class1.isInterface() && !class2.isInterface()) {
@@ -363,5 +354,4 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     return substitutor;
   }
-
 }
