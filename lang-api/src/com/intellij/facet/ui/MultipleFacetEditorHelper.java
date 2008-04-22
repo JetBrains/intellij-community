@@ -7,6 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 /**
+ * Use {@link com.intellij.facet.ui.FacetEditorsFactory#createMultipleFacetEditorHelper()} to obtain instance of this class.
+ *
  * @author nik
  */
 public interface MultipleFacetEditorHelper {

@@ -108,6 +108,12 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
     return null;
   }
 
+  /**
+   * Override to allow editing several facets at once
+   * @param project project
+   * @param editors editors of selected facets
+   * @return editor
+   */
   @Nullable
   public MultipleFacetSettingsEditor createMultipleConfigurationsEditor(@NotNull Project project, @NotNull FacetEditor[] editors) {
     return null;
