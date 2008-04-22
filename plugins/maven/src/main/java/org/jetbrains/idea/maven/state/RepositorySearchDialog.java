@@ -1,11 +1,15 @@
 package org.jetbrains.idea.maven.state;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.Alarm;
 import org.jetbrains.idea.maven.core.util.MavenId;
+import org.jetbrains.idea.maven.repository.MavenRepositoryException;
+import org.jetbrains.idea.maven.repository.MavenRepositoryManager;
+import org.sonatype.nexus.index.ArtifactInfo;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -15,10 +19,9 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 public class RepositorySearchDialog extends DialogWrapper {
-  //private RepositoryIndex myIndex = new RepositoryIndex("C:\\temp\\maven-central-index", null);
-
   private MavenId myResult;
 
   private JPanel myMainPanel;
@@ -26,9 +29,11 @@ public class RepositorySearchDialog extends DialogWrapper {
   private JList myResultsList;
 
   private Alarm myAlarm = new Alarm();
+  private Project myProject;
 
   public RepositorySearchDialog(Project project) {
     super(project, true);
+    myProject = project;
 
     configComponents();
 
@@ -104,27 +109,28 @@ public class RepositorySearchDialog extends DialogWrapper {
   }
 
   private void doSearch() {
-    //try {
-    //  final List<MavenId> result = myIndex.search(mySearchField.getText());
-    //  final AbstractListModel model = new AbstractListModel() {
-    //    public int getSize() {
-    //      return result.size();
-    //    }
-    //
-    //    public Object getElementAt(int index) {
-    //      return result.get(index);
-    //    }
-    //  };
-    //
-    //  ApplicationManager.getApplication().invokeLater(new Runnable() {
-    //    public void run() {
-    //      myResultsList.setModel(model);
-    //    }
-    //  });
-    //}
-    //catch (IOException e) {
-    //  throw new RuntimeException(e);
-    //}
+    try {
+      MavenRepositoryManager m = MavenRepositoryManager.getInstance(myProject);
+      final List<ArtifactInfo> result = m.find(mySearchField.getText() + "*");
+      final AbstractListModel model = new AbstractListModel() {
+        public int getSize() {
+          return result.size();
+        }
+
+        public Object getElementAt(int index) {
+          return result.get(index);
+        }
+      };
+
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          myResultsList.setModel(model);
+        }
+      });
+    }
+    catch (MavenRepositoryException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

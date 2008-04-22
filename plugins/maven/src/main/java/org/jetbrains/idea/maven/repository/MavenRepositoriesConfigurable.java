@@ -1,13 +1,9 @@
 package org.jetbrains.idea.maven.repository;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -22,7 +18,7 @@ import java.util.List;
 
 public class MavenRepositoriesConfigurable extends BaseConfigurable {
   private Project myProject;
-  private MavenRepositoryIndex myIndex;
+  private MavenRepositoryManager myManager;
 
   private JPanel myMainPanel;
   private JTable myTable;
@@ -31,9 +27,9 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable {
   private JButton myRemoveButton;
   private JButton myUpdateAllButton;
 
-  public MavenRepositoriesConfigurable(Project project, MavenRepositoryIndex index) {
+  public MavenRepositoriesConfigurable(Project project, MavenRepositoryManager m) {
     myProject = project;
-    myIndex = index;
+    myManager = m;
 
     configControls();
   }
@@ -87,19 +83,19 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable {
     if (!d.isOK()) return;
 
     try {
-      myIndex.add(new MavenRepositoryIndex.IndexInfo(d.getId(), d.getUrl(), true));
+      myManager.add(new MavenRepositoryInfo(d.getId(), d.getUrl(), true));
       reset();
       int lastIndex = myTable.getRowCount() - 1;
       myTable.getSelectionModel().setSelectionInterval(lastIndex, lastIndex);
     }
-    catch (MavenRepositoryIndexException e) {
+    catch (MavenRepositoryException e) {
       Messages.showErrorDialog(e.getMessage(), getDisplayName());
     }
     setModified(true);
   }
 
   private void doEditRepository() {
-    MavenRepositoryIndex.IndexInfo i = getSelectedIndexInfo();
+    MavenRepositoryInfo i = getSelectedIndexInfo();
     if (i == null) return;
 
     EditMavenRepositoryDialog d = new EditMavenRepositoryDialog(
@@ -109,9 +105,9 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable {
     if (!d.isOK()) return;
 
     try {
-      myIndex.change(i, d.getId(), d.getUrl(), true);
+      myManager.change(i, d.getId(), d.getUrl(), true);
     }
-    catch (MavenRepositoryIndexException e) {
+    catch (MavenRepositoryException e) {
       Messages.showErrorDialog(e.getMessage(), getDisplayName());
     }
 
@@ -120,37 +116,22 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable {
 
   private void doRemoveRepository() {
     try {
-      MavenRepositoryIndex.IndexInfo i = getSelectedIndexInfo();
+      MavenRepositoryInfo i = getSelectedIndexInfo();
       if (i == null) return;
-      myIndex.remove(i);
+      myManager.remove(i);
       reset();
     }
-    catch (MavenRepositoryIndexException e) {
+    catch (MavenRepositoryException e) {
       Messages.showErrorDialog(e.getMessage(), getDisplayName());
     }
     setModified(true);
   }
 
   private void doUpdateAllRepositories() {
-    new Task.Backgroundable(myProject, "Updating Maven Repositories...", true) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          for (MavenRepositoryIndex.IndexInfo i : myIndex.getIndexInfos()) {
-            myIndex.update(i, indicator);
-          }
-        }
-        catch (final MavenRepositoryIndexException e) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              Messages.showErrorDialog(e.getMessage(), getDisplayName());
-            }
-          });
-        }
-      }
-    }.queue();
+    myManager.startUpdateAll();
   }
 
-  private MavenRepositoryIndex.IndexInfo getSelectedIndexInfo() {
+  private MavenRepositoryInfo getSelectedIndexInfo() {
     int sel = myTable.getSelectedRow();
     if (sel == -1) return null;
     return ((MyTableModel)myTable.getModel()).getIndexInfo(sel);
@@ -173,13 +154,13 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable {
   }
 
   public void apply() throws ConfigurationException {
-    myIndex.save();
+    myManager.save();
     setModified(false);
   }
 
   public void reset() {
-    List<MavenRepositoryIndex.IndexInfo> infos = new ArrayList<MavenRepositoryIndex.IndexInfo>();
-    for (MavenRepositoryIndex.IndexInfo i : myIndex.getIndexInfos()) {
+    List<MavenRepositoryInfo> infos = new ArrayList<MavenRepositoryInfo>();
+    for (MavenRepositoryInfo i : myManager.getInfos()) {
       if (i.isRemote()) infos.add(i);
     }
     myTable.setModel(new MyTableModel(infos));
@@ -191,9 +172,9 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable {
   private static class MyTableModel extends AbstractTableModel {
     private static final String[] COLUMNS = new String[] { "ID", "URL" };
 
-    private List<MavenRepositoryIndex.IndexInfo> myInfos;
+    private List<MavenRepositoryInfo> myInfos;
 
-    public MyTableModel(List<MavenRepositoryIndex.IndexInfo> infos) {
+    public MyTableModel(List<MavenRepositoryInfo> infos) {
       myInfos = infos;
     }
 
@@ -211,7 +192,7 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable {
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
-      MavenRepositoryIndex.IndexInfo i = getIndexInfo(rowIndex);
+      MavenRepositoryInfo i = getIndexInfo(rowIndex);
       switch (columnIndex) {
         case 0: return i.getId();
         case 1: return i.getRepositoryUrl();
@@ -219,7 +200,7 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable {
       throw new RuntimeException();
     }
 
-    public MavenRepositoryIndex.IndexInfo getIndexInfo(int rowIndex) {
+    public MavenRepositoryInfo getIndexInfo(int rowIndex) {
       return myInfos.get(rowIndex);
     }
   }

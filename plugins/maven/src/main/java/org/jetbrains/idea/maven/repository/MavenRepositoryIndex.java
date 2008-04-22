@@ -28,9 +28,9 @@ public class MavenRepositoryIndex {
   private IndexUpdater myUpdater;
   private File myIndexDir;
 
-  private LinkedHashMap<IndexInfo, IndexingContext> myContexts = new LinkedHashMap<IndexInfo, IndexingContext>();
+  private LinkedHashMap<MavenRepositoryInfo, IndexingContext> myContexts = new LinkedHashMap<MavenRepositoryInfo, IndexingContext>();
 
-  public MavenRepositoryIndex(MavenEmbedder e, File indexDir) throws MavenRepositoryIndexException {
+  public MavenRepositoryIndex(MavenEmbedder e, File indexDir) throws MavenRepositoryException {
     myEmbedder = e;
     myIndexDir = indexDir;
 
@@ -46,7 +46,7 @@ public class MavenRepositoryIndex {
     load();
   }
 
-  private void load() throws MavenRepositoryIndexException {
+  private void load() throws MavenRepositoryException {
     try {
       File f = getListFile();
       if (!f.exists()) return;
@@ -55,10 +55,10 @@ public class MavenRepositoryIndex {
       
       try {
         DataInputStream is = new DataInputStream(fs);
-        myContexts = new LinkedHashMap<IndexInfo, IndexingContext>();
+        myContexts = new LinkedHashMap<MavenRepositoryInfo, IndexingContext>();
         int size = is.readInt();
         while (size-- > 0) {
-          add(new IndexInfo(is));
+          add(new MavenRepositoryInfo(is));
         }
       }
       finally {
@@ -75,9 +75,9 @@ public class MavenRepositoryIndex {
       FileOutputStream fs = new FileOutputStream(getListFile());
       try {
         DataOutputStream os = new DataOutputStream(fs);
-        List<IndexInfo> infos = getIndexInfos();
+        List<MavenRepositoryInfo> infos = getInfos();
         os.writeInt(infos.size());
-        for (IndexInfo i : infos) {
+        for (MavenRepositoryInfo i : infos) {
           i.write(os);
         }
       }
@@ -108,62 +108,61 @@ public class MavenRepositoryIndex {
     }
   }
 
-  public void add(IndexInfo i) throws MavenRepositoryIndexException {
+  public void add(MavenRepositoryInfo i) throws MavenRepositoryException {
     try {
       myContexts.put(i, createContext(i));
     }
     catch (IOException e) {
-      throw new MavenRepositoryIndexException(e);
+      throw new MavenRepositoryException(e);
     }
     catch (UnsupportedExistingLuceneIndexException e) {
-      throw new MavenRepositoryIndexException(e);
+      throw new MavenRepositoryException(e);
     }
   }
 
-  public void change(IndexInfo i, String id, String repositoryPathOrUrl, boolean isRemote) throws MavenRepositoryIndexException {
+  public void change(MavenRepositoryInfo i, String id, String repositoryPathOrUrl, boolean isRemote) throws MavenRepositoryException {
     try {
-      IndexingContext c = createContext(new IndexInfo(id, repositoryPathOrUrl, isRemote));
+      IndexingContext c = createContext(new MavenRepositoryInfo(id, repositoryPathOrUrl, isRemote));
       i.set(id, repositoryPathOrUrl, isRemote);
       IndexingContext oldContext = myContexts.get(i);
-      myIndexer.removeIndexingContext(oldContext, false);
+      deleteContext(oldContext);
       myContexts.put(i, c);
     }
     catch (IOException e) {
-      throw new MavenRepositoryIndexException(e);
+      throw new MavenRepositoryException(e);
     }
     catch (UnsupportedExistingLuceneIndexException e) {
-      throw new MavenRepositoryIndexException(e);
+      throw new MavenRepositoryException(e);
     }
   }
 
-  private IndexingContext createContext(IndexInfo newInfo) throws IOException, UnsupportedExistingLuceneIndexException {
+  private IndexingContext createContext(MavenRepositoryInfo i) throws IOException, UnsupportedExistingLuceneIndexException {
     return myIndexer.addIndexingContext(
-        newInfo.id,
-        newInfo.id,
-        newInfo.getRepositoryFile(),
-        new File(myIndexDir, newInfo.id),
-        newInfo.getRepositoryUrl(),
+        i.getId(),
+        i.getId(),
+        i.getRepositoryFile(),
+        new File(myIndexDir, i.getId()),
+        i.getRepositoryUrl(),
         null, // repo update url
         NexusIndexer.FULL_INDEX);
   }
 
-  public void remove(IndexInfo i) throws MavenRepositoryIndexException {
+  public void remove(MavenRepositoryInfo i) throws MavenRepositoryException {
     try {
       IndexingContext c = myContexts.remove(i);
-      myIndexer.removeIndexingContext(c, false);
+      deleteContext(c);
     }
     catch (IOException e) {
-      throw new MavenRepositoryIndexException(e);
+      throw new MavenRepositoryException(e);
     }
   }
 
-
-  public void update(IndexInfo i, ProgressIndicator progress) throws MavenRepositoryIndexException {
+  public void update(MavenRepositoryInfo i, ProgressIndicator progress) throws MavenRepositoryException {
     try {
-      IndexingContext c = myContexts.get(i);
-
       progress.setText("Updating [" + i.getId() + "]");
-      if (i.isRemote) {
+      if (i.isRemote()) {
+        IndexingContext c = myContexts.get(i);
+
         Proxy proxy = myEmbedder.getSettings().getActiveProxy();
         ProxyInfo proxyInfo = null;
         if(proxy != null) {
@@ -178,74 +177,39 @@ public class MavenRepositoryIndex {
         myUpdater.fetchAndUpdateIndex(c, new TransferListenerAdapter(progress), proxyInfo);
       } else {
         progress.setIndeterminate(true);
+        deleteContext(myContexts.get(i));
+        IndexingContext c = createContext(i);
+        myContexts.put(i, c);
         myIndexer.scan(c);
       }
     }
     catch (IOException e) {
-      throw new MavenRepositoryIndexException(e);
+      throw new MavenRepositoryException(e);
     }
     catch (UnsupportedExistingLuceneIndexException e) {
-      throw new MavenRepositoryIndexException(e);
+      throw new MavenRepositoryException(e);
     }
   }
 
-  public List<ArtifactInfo> find(String pattern) throws MavenRepositoryIndexException {
+  private void deleteContext(IndexingContext c) throws IOException {
+    myIndexer.removeIndexingContext(c, true);
+  }
+
+  public List<MavenRepositoryInfo> getInfos() {
+    return new ArrayList<MavenRepositoryInfo>(myContexts.keySet());
+  }
+
+  public List<ArtifactInfo> find(String pattern) throws MavenRepositoryException {
     try {
       WildcardQuery q = new WildcardQuery(new Term(ArtifactInfo.ARTIFACT_ID, pattern));
       Collection<ArtifactInfo> result = myIndexer.searchFlat(ArtifactInfo.VERSION_COMPARATOR, q);
       return new ArrayList<ArtifactInfo>(result);
     }
     catch (IOException e) {
-      throw new MavenRepositoryIndexException(e);
+      throw new MavenRepositoryException(e);
     }
     catch (IndexContextInInconsistentStateException e) {
-      throw new MavenRepositoryIndexException(e);
-    }
-  }
-
-  public List<IndexInfo> getIndexInfos() {
-    return new ArrayList<IndexInfo>(myContexts.keySet());
-  }
-
-  public static class IndexInfo {
-    private String id;
-    private String repositoryPathOrUrl;
-    private boolean isRemote;
-
-    public IndexInfo(String id, String repositoryPathOrUrl, boolean isRemote) {
-      set(id, repositoryPathOrUrl, isRemote);
-    }
-
-    public void set(String id, String repositoryPathOrUrl, boolean isRemote) {
-      this.id = id;
-      this.repositoryPathOrUrl = repositoryPathOrUrl;
-      this.isRemote = isRemote;
-    }
-
-    public IndexInfo(DataInputStream s) throws IOException {
-      this(s.readUTF(), s.readUTF(),  s.readBoolean());
-    }
-
-    public void write(DataOutputStream s) throws IOException {
-      s.writeUTF(id);
-      s.writeUTF(repositoryPathOrUrl);
-      s.writeBoolean(isRemote);
-    }
-
-    public String getId() {
-      return id;
-    }
-
-    public File getRepositoryFile() {
-      return isRemote ? null : new File(repositoryPathOrUrl);
-    }
-
-    public String getRepositoryUrl() {
-      return isRemote ? repositoryPathOrUrl : null;
-    }
-
-    public boolean isRemote() {
-      return isRemote;
+      throw new MavenRepositoryException(e);
     }
   }
 }

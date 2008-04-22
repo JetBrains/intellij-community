@@ -36,7 +36,7 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
   }
 
   public void testAddingLocal() throws Exception {
-    MavenRepositoryIndex.IndexInfo i = new MavenRepositoryIndex.IndexInfo("local", getTestDataPath("local1"), false);
+    MavenRepositoryInfo i = new MavenRepositoryInfo("local", getTestDataPath("local1"), false);
     index.add(i);
     index.update(i, new EmptyProgressIndicator());
 
@@ -46,8 +46,8 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
   }
 
   public void testAddingSeveral() throws Exception {
-    MavenRepositoryIndex.IndexInfo i1 = new MavenRepositoryIndex.IndexInfo("local1", getTestDataPath("local1"), false);
-    MavenRepositoryIndex.IndexInfo i2 = new MavenRepositoryIndex.IndexInfo("local2", getTestDataPath("local2"), false);
+    MavenRepositoryInfo i1 = new MavenRepositoryInfo("local1", getTestDataPath("local1"), false);
+    MavenRepositoryInfo i2 = new MavenRepositoryInfo("local2", getTestDataPath("local2"), false);
     index.add(i1);
     index.add(i2);
     index.update(i1, new EmptyProgressIndicator());
@@ -63,14 +63,14 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
   }
 
   public void testAddingWithoutUpdate() throws Exception {
-    index.add(new MavenRepositoryIndex.IndexInfo("local", getTestDataPath("local1"), false));
+    index.add(new MavenRepositoryInfo("local", getTestDataPath("local1"), false));
 
     List<ArtifactInfo> result = index.find("junit*");
     assertEquals(0, result.size());
   }
 
   public void testAddingRemote() throws Exception {
-    MavenRepositoryIndex.IndexInfo i = new MavenRepositoryIndex.IndexInfo("remote", "file:///" + getTestDataPath("remote"), true);
+    MavenRepositoryInfo i = new MavenRepositoryInfo("remote", "file:///" + getTestDataPath("remote"), true);
     index.add(i);
     index.update(i, new EmptyProgressIndicator());
 
@@ -80,7 +80,7 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
   }
 
   public void testChanging() throws Exception {
-    MavenRepositoryIndex.IndexInfo i = new MavenRepositoryIndex.IndexInfo("local1", getTestDataPath("local1"), false);
+    MavenRepositoryInfo i = new MavenRepositoryInfo("local1", getTestDataPath("local1"), false);
     index.add(i);
     index.update(i, new EmptyProgressIndicator());
 
@@ -95,7 +95,7 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
   }
 
   public void testRemoving() throws Exception {
-    MavenRepositoryIndex.IndexInfo i = new MavenRepositoryIndex.IndexInfo("remote", "file:///" + getTestDataPath("remote"), true);
+    MavenRepositoryInfo i = new MavenRepositoryInfo("remote", "file:///" + getTestDataPath("remote"), true);
     index.add(i);
     index.update(i, new EmptyProgressIndicator());
 
@@ -106,8 +106,8 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
   }
 
   public void testSaving() throws Exception {
-    MavenRepositoryIndex.IndexInfo i1 = new MavenRepositoryIndex.IndexInfo("local", getTestDataPath("local2"), false);
-    MavenRepositoryIndex.IndexInfo i2 = new MavenRepositoryIndex.IndexInfo("remote", "file:///" + getTestDataPath("remote"), true);
+    MavenRepositoryInfo i1 = new MavenRepositoryInfo("local", getTestDataPath("local2"), false);
+    MavenRepositoryInfo i2 = new MavenRepositoryInfo("remote", "file:///" + getTestDataPath("remote"), true);
     index.add(i1);
     index.add(i2);
     index.update(i1, new EmptyProgressIndicator());
