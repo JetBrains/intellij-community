@@ -55,8 +55,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private PsiFile myFile;
 
   @SuppressWarnings({"UnusedDeclaration"}) //in plugin.xml
-  public HighlightVisitorImpl(PsiManager manager) {
-    this(JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper());
+  public HighlightVisitorImpl(Project project) {
+    this(JavaPsiFacade.getInstance(project).getResolveHelper());
   }
 
   private HighlightVisitorImpl(@NotNull PsiResolveHelper resolveHelper) {
