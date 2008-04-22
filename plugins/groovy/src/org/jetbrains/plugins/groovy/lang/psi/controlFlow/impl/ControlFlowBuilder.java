@@ -632,7 +632,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     public Iterable<? extends Instruction> succ(CallEnvironment env) {
       final Stack<CallInstruction> callStack = getStack(env, this);
-      if (callStack.isEmpty()) return Collections.emptyList();
+      if (callStack.isEmpty()) return Collections.emptyList();     //can be true in case env was not populated (e.g. by DFA)
 
       final CallInstruction callInstruction = callStack.peek();
       final List<InstructionImpl> succ = ((CallInstructionImpl) callInstruction).mySucc;
