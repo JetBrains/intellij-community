@@ -14,7 +14,7 @@
 
   <version>2.3-Diana</version>
   <depends>RegExpLanguage</depends>
-  <idea-version since-build="8243" until-build="8299"/>  <!-- Diana EAP -->
+  <idea-version since-build="8300" />
 
   <vendor email="sascha.weinreuter@cit.de" logo="/org/intellij/plugins/intelliLang/icon_small.png">Sascha Weinreuter</vendor>
 

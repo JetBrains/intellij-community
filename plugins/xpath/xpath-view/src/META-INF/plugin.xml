@@ -31,7 +31,7 @@
   </change-notes>
 
   <!-- Minimum and maximum IDEA version plugin is supposed to work with -->
-  <idea-version since-build="8113" until-build="8299" />
+  <idea-version since-build="8300" />
 
   <!-- wasn't sure if the plugin manager correctly handles dependent plugins -->
   <!--<depends>XPathLanguage</depends>-->
