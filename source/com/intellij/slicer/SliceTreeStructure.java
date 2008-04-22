@@ -36,4 +36,4 @@ public class SliceTreeStructure extends AbstractTreeStructureBase {
   public boolean hasSomethingToCommit() {
     return false;
   }
-}
+  }

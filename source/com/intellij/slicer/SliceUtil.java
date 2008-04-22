@@ -10,9 +10,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.CommonProcessors;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author cdr
@@ -22,6 +27,16 @@ public class SliceUtil {
     PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
     if (method == null) return true;
     expression = simplify(expression);
+    Processor<SliceUsage> uniqueProcessor =
+        new CommonProcessors.UniqueProcessor<SliceUsage>(processor, new TObjectHashingStrategy<SliceUsage>() {
+          public int computeHashCode(final SliceUsage object) {
+            return object.getUsageInfo().hashCode();
+          }
+
+          public boolean equals(final SliceUsage o1, final SliceUsage o2) {
+            return o1.getUsageInfo().equals(o2.getUsageInfo());
+          }
+        });
     if (expression instanceof PsiReferenceExpression) {
       PsiReferenceExpression ref = (PsiReferenceExpression)expression;
       PsiElement resolved = ref.resolve();
@@ -29,10 +44,10 @@ public class SliceUtil {
 
       Collection<PsiExpression> expressions = getExpressionsFlownTo(expression, method, (PsiVariable)resolved);
 
-      return processFlownFromExpressions(expressions, processor, parent, ref);
+      return processFlownFromExpressions(expressions, uniqueProcessor, parent);
     }
     else if (expression instanceof PsiMethodCallExpression) {
-      return processMethodReturnValue((PsiMethodCallExpression)expression, processor, parent);
+      return processMethodReturnValue((PsiMethodCallExpression)expression, uniqueProcessor, parent);
     }
     return true;
   }
@@ -62,7 +77,7 @@ public class SliceUtil {
   }
 
   private static boolean processFlownFromExpressions(final Collection<PsiExpression> expressions, final Processor<SliceUsage> processor,
-                                                     final SliceUsage parent, final PsiReferenceExpression ref) {
+                                                     final SliceUsage parent) {
     for (PsiExpression flowFromExpression : expressions) {
       if (flowFromExpression instanceof PsiReferenceExpression) {
         PsiElement element = ((PsiReferenceExpression)flowFromExpression).resolve();
@@ -105,7 +120,7 @@ public class SliceUtil {
       }
     });
 
-    return processFlownFromExpressions(expressions, processor, parent, methodCallExpr.getMethodExpression());
+    return processFlownFromExpressions(expressions, processor, parent);
   }
 
   private static boolean processFieldUsages(final PsiField field, final Processor<SliceUsage> processor, final SliceUsage parent) {

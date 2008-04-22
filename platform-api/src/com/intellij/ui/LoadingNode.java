@@ -6,7 +6,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 public class LoadingNode extends DefaultMutableTreeNode {
   public LoadingNode() {
-    super(IdeBundle.message("treenode.loading"));
+    this(IdeBundle.message("treenode.loading"));
   }
 
   public LoadingNode(String text) {

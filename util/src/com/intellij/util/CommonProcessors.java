@@ -15,9 +15,12 @@
  */
 package com.intellij.util;
 
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.ArrayList;
 import java.util.Set;
 
 /**
@@ -71,6 +74,22 @@ public class CommonProcessors {
 
     public Collection<T> getResults() {
       return myCollection;
+    }
+  }
+  public static class UniqueProcessor<T> implements Processor<T> {
+    private final Set<T> processed;
+    private final Processor<T> myDelegate;
+
+    public UniqueProcessor(Processor<T> delegate) {
+      this(delegate, TObjectHashingStrategy.CANONICAL);
+    }
+    public UniqueProcessor(Processor<T> delegate, TObjectHashingStrategy<T> strategy) {
+      myDelegate = delegate;
+      processed = new THashSet<T>(strategy);
+    }
+
+    public boolean process(T t) {
+      return !processed.add(t) || myDelegate.process(t);
     }
   }
 

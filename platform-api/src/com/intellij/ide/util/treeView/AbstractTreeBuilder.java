@@ -216,7 +216,6 @@ public abstract class AbstractTreeBuilder implements Disposable {
   @Nullable
   public final
   DefaultMutableTreeNode getNodeForElement(Object element) {
-    //DefaultMutableTreeNode node = (DefaultMutableTreeNode)myElementToNodeMap.get(element);
     DefaultMutableTreeNode node = getFirstNode(element);
     if (node != null) {
       LOG.assertTrue(TreeUtil.isAncestor(myRootNode, node));
@@ -637,7 +636,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     while(eachParent != null) {
       eachParent = eachParent.getParent();
       if (eachParent instanceof DefaultMutableTreeNode) {
-        final Object eachElement = getElementFor(((DefaultMutableTreeNode)eachParent));
+        final Object eachElement = getElementFor((DefaultMutableTreeNode)eachParent);
         if (myLoadingParents.contains(eachElement)) return true;
       }
     }

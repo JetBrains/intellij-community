@@ -1,15 +1,17 @@
 package com.intellij.slicer;
 
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.SmartList;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -39,13 +41,17 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
       myCachedChildren = new ArrayList<SliceNode>();
       storedModificationCount = count;
       if (isValid()) {
-        getValue().processChildren(new Processor<SliceUsage>() {
-          public boolean process(SliceUsage sliceUsage) {
-            SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages, myTreeBuilder);
-            myCachedChildren.add(node);
-            return true;
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+          public void run() {
+            getValue().processChildren(new Processor<SliceUsage>() {
+              public boolean process(SliceUsage sliceUsage) {
+                SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages, myTreeBuilder);
+                myCachedChildren.add(node);
+                return true;
+              }
+            });
           }
-        });
+        }, "Looking for Usages", false, getProject());
       }
     }
     return myCachedChildren;
@@ -66,9 +72,15 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
       targetEqualUsages.put(sliceUsage, eq);
     }
     eq.add(this);
-    if (eq.size() != 1) {
-      SliceNode dup = eq.get(0);
-      duplicate = myTreeBuilder.getNodeForElement(dup);
+    if (eq.size() > 1) {
+      final SliceNode dup = eq.get(0);
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          if (!myTreeBuilder.isDisposed()) {
+            duplicate = myTreeBuilder.getNodeForElement(dup);
+          }
+        }
+      });
     }
   }
   
