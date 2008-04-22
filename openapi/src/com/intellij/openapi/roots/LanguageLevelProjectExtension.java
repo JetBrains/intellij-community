@@ -40,6 +40,11 @@ public class LanguageLevelProjectExtension extends ProjectExtension {
   }
 
   public void readExternal(final Element element) throws InvalidDataException {
+    if (myProject.isDefault()) {
+      return; // TODO[max]: hack to enforce default project always has LangLevel == 1.5. This is necessary until StubUpdatingIndex
+      // is able to determine correct language level for stub parsing.
+    }
+
     final boolean assertKeyword = Boolean.valueOf(element.getAttributeValue(ASSERT_KEYWORD_ATTR)).booleanValue();
     final boolean jdk15 = Boolean.valueOf(element.getAttributeValue(JDK_15_ATTR)).booleanValue();
     if (jdk15) {
