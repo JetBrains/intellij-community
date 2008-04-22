@@ -110,7 +110,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> list = info.quickFixActionRanges;
     for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : list) {
       final IntentionAction action = pair.getFirst().getAction();
-      if (action instanceof HintAction) {
+      if (action instanceof HintAction && action.isAvailable(myProject, myEditor, myFile)) {
         return ((HintAction)action).showHint(myEditor);
       }
     }

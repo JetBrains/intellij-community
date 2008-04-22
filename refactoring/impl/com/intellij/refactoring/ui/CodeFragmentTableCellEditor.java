@@ -19,7 +19,7 @@ import java.awt.*;
 public class CodeFragmentTableCellEditor extends AbstractCellEditor implements TableCellEditor {
   private Document myDocument;
   protected PsiCodeFragment myCodeFragment;
-  private Project myProject;
+  private final Project myProject;
   private EditorTextField myEditorTextField;
 
   public CodeFragmentTableCellEditor(final Project project) {
@@ -40,10 +40,6 @@ public class CodeFragmentTableCellEditor extends AbstractCellEditor implements T
 
   public PsiCodeFragment getCellEditorValue() {
     return myCodeFragment;
-  }
-
-  public void cancelCellEditing() {
-    super.cancelCellEditing();
   }
 
   public boolean stopCellEditing() {

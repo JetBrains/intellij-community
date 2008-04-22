@@ -45,7 +45,6 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class ImportClassFix implements HintAction {
-
   private final PsiJavaCodeReferenceElement myRef;
 
   public ImportClassFix(PsiJavaCodeReferenceElement element) {
@@ -63,10 +62,7 @@ public class ImportClassFix implements HintAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (myRef == null || !myRef.isValid()) return false;
-    if (!file.getManager().isInProject(file)) return false;
-    List<PsiClass> classesToImport = getClassesToImport();
-    return !classesToImport.isEmpty();
+    return myRef != null && myRef.isValid() && file.getManager().isInProject(file);
   }
 
   private List<PsiClass> getClassesToImport() {
@@ -78,7 +74,7 @@ public class ImportClassFix implements HintAction {
       return Collections.emptyList();
     }
     final PsiReferenceParameterList refParameters = myRef.getParameterList();
-    boolean referenceHasTypeParameters = (refParameters != null && refParameters.getTypeParameterElements().length > 0);
+    boolean referenceHasTypeParameters = refParameters != null && refParameters.getTypeParameterElements().length > 0;
     PsiClass[] classes = cache.getClassesByName(name, scope);
     ArrayList<PsiClass> classList = new ArrayList<PsiClass>();
     boolean isAnnotationReference = myRef.getParent() instanceof PsiAnnotation;
@@ -122,15 +118,12 @@ public class ImportClassFix implements HintAction {
   }
 
   public boolean showHint(final Editor editor) {
-
     return doFix(editor, true, false);
   }
 
   public boolean doFix(@NotNull final Editor editor, boolean doShow, final boolean allowCaretNearRef) {
     List<PsiClass> classesToImport = getClassesToImport();
-    if (classesToImport.isEmpty()) {
-      return false;
-    }
+    if (classesToImport.isEmpty()) return false;
     try {
       String name = myRef.getQualifiedName();
       Pattern pattern = Pattern.compile(DaemonCodeAnalyzerSettings.getInstance().NO_AUTO_IMPORT_PATTERN);
