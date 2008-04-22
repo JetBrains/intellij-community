@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.optimizeImports;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
@@ -36,16 +37,19 @@ import java.io.*;
  */
 public class OptimizeImportsTest extends IdeaTestCase {
 
+  protected ProjectJdk getTestProjectJdk() {
+    return JavaSdk.getInstance().createJdk("java sdk", TestUtils.getMockJdkHome(), false);
+  }
+
   protected void setUp() throws Exception {
     super.setUp();
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule()).getModifiableModel();
     VirtualFile root = LocalFileSystem.getInstance().findFileByPath(TestUtils.getTestDataPath() + "/optimizeImports");
     assertNotNull(root);
-    ContentEntry contentEntry = rootModel.addContentEntry(root);
-    rootModel.setJdk(JavaSdk.getInstance().createJdk("java sdk", TestUtils.getMockJdkHome(), false));
-    final VirtualFile sourceRoot = root.findChild(getTestName(true));
-    assertNotNull(sourceRoot);
-    contentEntry.addSourceFolder(sourceRoot, false);
+    final VirtualFile testRoot = root.findChild(getTestName(true));
+    assertNotNull(testRoot);
+    ContentEntry contentEntry = rootModel.addContentEntry(testRoot);
+    contentEntry.addSourceFolder(testRoot, false);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         rootModel.commit();
@@ -146,7 +150,7 @@ public class OptimizeImportsTest extends IdeaTestCase {
 
   private String getResultFromFile(String basePath) throws IOException {
     StringBuffer contents = new StringBuffer();
-    String line = null;
+    String line;
     File aFile = new File(basePath + "/" + "result.test");
     BufferedReader input = new BufferedReader(new FileReader(aFile));
     while ((line = input.readLine()) != null) {

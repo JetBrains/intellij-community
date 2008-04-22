@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -34,13 +35,16 @@ public abstract class GroovyResolveTestCase extends ResolveTestCase {
 
   protected abstract String getTestDataPath();
 
+  protected ProjectJdk getTestProjectJdk() {
+    return JavaSdk.getInstance().createJdk("java sdk", TestUtils.getMockJdkHome(), false);
+  }
+
   protected void setUp() throws Exception {
     super.setUp();
 
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule()).getModifiableModel();
     VirtualFile root = LocalFileSystem.getInstance().findFileByPath(getTestDataPath());
     assertNotNull(root);
-    rootModel.setJdk(JavaSdk.getInstance().createJdk("java sdk", TestUtils.getMockJdkHome(), false));
     final VirtualFile testRoot = root.findChild(getTestName(true));
     ContentEntry contentEntry = rootModel.addContentEntry(testRoot);
     assertNotNull(testRoot);
