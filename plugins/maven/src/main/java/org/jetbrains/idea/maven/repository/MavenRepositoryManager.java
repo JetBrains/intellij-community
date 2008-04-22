@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
+import org.apache.lucene.search.Query;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderException;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +20,7 @@ import org.jetbrains.idea.maven.state.MavenProjectsManager;
 import org.sonatype.nexus.index.ArtifactInfo;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 
 public class MavenRepositoryManager extends DummyProjectComponent {
@@ -153,5 +155,9 @@ public class MavenRepositoryManager extends DummyProjectComponent {
 
   public List<ArtifactInfo> findByGroupId(String groupId) throws MavenRepositoryException {
     return myIndex.findByGroupId(groupId);
+  }
+
+  public Collection<ArtifactInfo> search(Query q) throws MavenRepositoryException {
+    return myIndex.search(q);
   }
 }

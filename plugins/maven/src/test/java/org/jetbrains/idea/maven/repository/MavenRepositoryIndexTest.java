@@ -126,4 +126,17 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
     assertEquals(3, result.size());
     assertEquals("1.2.0", result.get(0).version);
   }
+
+  public void testGetAll() throws Exception {
+    MavenRepositoryInfo i = new MavenRepositoryInfo("local1", getTestDataPath("local1"), false);
+    index.add(i);
+    index.update(i, new EmptyProgressIndicator());
+
+    //Set<String> groups = index.getAll(ArtifactInfo.GROUP_ID);
+    //Set<String> artifacts = index.getAll(ArtifactInfo.ARTIFACT_ID);
+    //Set<String> versions  = index.getAll(ArtifactInfo.VERSION);
+    //assertUnorderedElementsAreEqual(groups, "junit");
+    //assertUnorderedElementsAreEqual(artifacts, "junit");
+    //assertUnorderedElementsAreEqual(versions, "3.8.1", "3.8.2", "4.0");
+  }
 }

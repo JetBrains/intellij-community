@@ -221,4 +221,16 @@ public class MavenRepositoryIndex {
       throw new MavenRepositoryException(e);
     }
   }
+
+  public Collection<ArtifactInfo> search(Query q) throws MavenRepositoryException {
+    try {
+      return myIndexer.searchFlat(q);
+    }
+    catch (IOException e) {
+      throw new MavenRepositoryException(e);
+    }
+    catch (IndexContextInInconsistentStateException e) {
+      throw new MavenRepositoryException(e);
+    }
+  }
 }
