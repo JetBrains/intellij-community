@@ -173,4 +173,9 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     final Facet facet = getSelectedFacet();
     return facet != null ? getFacetConfigurator().getFacetInfo(facet) : null;
   }
+
+  public void clearMaps() {
+    myConfigurables.clear();
+    myNodes.clear();
+  }
 }
