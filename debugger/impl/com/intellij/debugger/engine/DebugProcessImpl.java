@@ -71,6 +71,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class DebugProcessImpl implements DebugProcess {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebugProcessImpl");
@@ -89,11 +90,11 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   private final List<ProcessListener> myProcessListeners = new ArrayList<ProcessListener>();
 
-  private static final int STATE_INITIAL   = 0;
-  private static final int STATE_ATTACHED  = 1;
-  private static final int STATE_DETACHING = 2;
-  private static final int STATE_DETACHED  = 3;
-  private int myState = STATE_INITIAL;
+  protected static final int STATE_INITIAL   = 0;
+  protected static final int STATE_ATTACHED  = 1;
+  protected static final int STATE_DETACHING = 2;
+  protected static final int STATE_DETACHED  = 3;
+  protected final AtomicInteger myState = new AtomicInteger(STATE_INITIAL);
 
   private ExecutionResult  myExecutionResult;
   private RemoteConnection myConnection;
@@ -223,7 +224,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   @SuppressWarnings({"HardCodedStringLiteral"})
   protected void commitVM(VirtualMachine vm) {
     if (!isInInitialState()) {
-      LOG.assertTrue(false, "State is invalid " + myState);
+      LOG.assertTrue(false, "State is invalid " + myState.get());
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myPositionManager = createPositionManager();
@@ -423,14 +424,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
         }
         // negative port number means the caller leaves to debugger to decide at which hport to listen
         //noinspection HardCodedStringLiteral
-        Connector.Argument portArg = myConnection.isUseSockets()
-                                     ? (Connector.Argument)myArguments.get("port")
-                                     : (Connector.Argument)myArguments.get("name");
+        final Connector.Argument portArg = myConnection.isUseSockets() ? myArguments.get("port") : myArguments.get("name");
         if (portArg != null) {
           portArg.setValue(address);
         }
         //noinspection HardCodedStringLiteral
-        final Connector.Argument timeoutArg = (Connector.Argument)myArguments.get("timeout");
+        final Connector.Argument timeoutArg = myArguments.get("timeout");
         if (timeoutArg != null) {
           timeoutArg.setValue("0"); // wait forever
         }
@@ -482,13 +481,13 @@ public abstract class DebugProcessImpl implements DebugProcess {
             throw new CantRunException(DebuggerBundle.message("error.no.shmem.address"));
           }
           //noinspection HardCodedStringLiteral
-          final Connector.Argument nameArg = (Connector.Argument)myArguments.get("name");
+          final Connector.Argument nameArg = myArguments.get("name");
           if (nameArg != null) {
             nameArg.setValue(address);
           }
         }
         //noinspection HardCodedStringLiteral
-        final Connector.Argument timeoutArg = (Connector.Argument)myArguments.get("timeout");
+        final Connector.Argument timeoutArg = myArguments.get("timeout");
         if (timeoutArg != null) {
           timeoutArg.setValue("0"); // wait forever
         }
@@ -653,34 +652,19 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   public boolean isInInitialState() {
-    return myState == STATE_INITIAL;
+    return myState.get() == STATE_INITIAL;
   }
 
   public boolean isAttached() {
-    return myState == STATE_ATTACHED;
+    return myState.get() == STATE_ATTACHED;
   }
 
   public boolean isDetached() {
-    return myState == STATE_DETACHED;
+    return myState.get() == STATE_DETACHED;
   }
 
   public boolean isDetaching() {
-    return myState == STATE_DETACHING;
-  }
-
-  protected void setIsAttached() {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    myState = STATE_ATTACHED;
-  }
-
-  protected void setIsDetaching() {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    myState = STATE_DETACHING;
-  }
-
-  protected void setIsDetached() {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    myState = STATE_DETACHED;
+    return myState.get() == STATE_DETACHING;
   }
 
   public RequestManagerImpl getRequestsManager() {
@@ -689,7 +673,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   public VirtualMachineProxyImpl getVirtualMachineProxy() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (myVirtualMachineProxy == null) throw new VMDisconnectedException();
+    if (myVirtualMachineProxy == null) {
+      throw new VMDisconnectedException();
+    }
     return myVirtualMachineProxy;
   }
 
@@ -716,21 +702,26 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   protected void closeProcess(boolean closedByUser) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+    
+    if (myState.compareAndSet(STATE_INITIAL, STATE_DETACHING) || myState.compareAndSet(STATE_ATTACHED, STATE_DETACHING)) {
+      myVirtualMachineProxy = null;
+      myPositionManager = null;
 
-    if (isDetached() || isDetaching()) {
-      return;
+      try {
+        getManagerThread().close();
+      }
+      finally {
+        myState.set(STATE_DETACHED);
+        try {
+          myDebugProcessDispatcher.getMulticaster().processDetached(this, closedByUser);
+        }
+        finally {
+          setBreakpointsMuted(false);
+          myWaitFor.up();
+        }
+      }
+
     }
-
-    setIsDetaching();
-    myVirtualMachineProxy = null;
-    myPositionManager = null;
-
-    getManagerThread().close();
-
-    setIsDetached();
-    myDebugProcessDispatcher.getMulticaster().processDetached(this, closedByUser);
-    setBreakpointsMuted(false);
-    myWaitFor.up();
   }
 
   private static String formatMessage(String message) {
@@ -1236,7 +1227,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;)Ljava/lang/Class;");
         forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;)Ljava/lang/Class;");
       }
-      final List args = new ArrayList(); // do not use unmodifiable lists because the list is modified by JPDA
+      final List<Mirror> args = new ArrayList<Mirror>(); // do not use unmodifiable lists because the list is modified by JPDA
       final StringReference qNameMirror = virtualMachine.mirrorOf(qName);
       args.add(qNameMirror);
       if (classLoader != null) {
@@ -1255,8 +1246,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     if (LOG.isDebugEnabled()) {
       try {
         Collection<ThreadReferenceProxyImpl> allThreads = getVirtualMachineProxy().allThreads();
-        for (Iterator<ThreadReferenceProxyImpl> iterator = allThreads.iterator(); iterator.hasNext();) {
-          ThreadReferenceProxyImpl threadReferenceProxy = iterator.next();
+        for (ThreadReferenceProxyImpl threadReferenceProxy : allThreads) {
           LOG.debug("Thread name=" + threadReferenceProxy.name() + " suspendCount()=" + threadReferenceProxy.getSuspendCount());
         }
       }
@@ -1760,8 +1750,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
     throws EvaluateException {
     RunToCursorCommand runToCursorCommand = new RunToCursorCommand(suspendContext, document, lineIndex, ignoreBreakpoints);
     if(runToCursorCommand.myRunToCursorBreakpoint == null) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-      throw new EvaluateException(DebuggerBundle.message("error.running.to.cursor.no.executable.code", psiFile.getName(), lineIndex), null);
+      final PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+      throw new EvaluateException(DebuggerBundle.message("error.running.to.cursor.no.executable.code", psiFile != null? psiFile.getName() : "<No File>", lineIndex), null);
     }
     return runToCursorCommand;
   }

@@ -237,28 +237,25 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private void vmAttached() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     LOG.assertTrue(!isAttached());
-    if(isDetached()) {
-      return;
-    }
+    if(myState.compareAndSet(STATE_INITIAL, STATE_ATTACHED)) {
+      final VirtualMachineProxyImpl machineProxy = getVirtualMachineProxy();
+      if (machineProxy.canGetMethodReturnValues()) {
+        MethodExitRequest request = machineProxy.eventRequestManager().createMethodExitRequest();
+        request.setSuspendPolicy(EventRequest.SUSPEND_NONE);
+        myReturnValueWatcher = new MethodReturnValueWatcher(request);
+      }
 
-    setIsAttached();
+      DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().setInitialBreakpointsState();
+      myDebugProcessDispatcher.getMulticaster().processAttached(this);
 
-    final VirtualMachineProxyImpl machineProxy = getVirtualMachineProxy();
-    if (machineProxy.canGetMethodReturnValues()) {
-      MethodExitRequest request = machineProxy.eventRequestManager().createMethodExitRequest();
-      request.setSuspendPolicy(EventRequest.SUSPEND_NONE);
-      myReturnValueWatcher = new MethodReturnValueWatcher(request);
-    }
-
-    DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().setInitialBreakpointsState();
-    myDebugProcessDispatcher.getMulticaster().processAttached(this);
-
-    final String addressDisplayName = DebuggerBundle.getAddressDisplayName(getConnection());
-    final String transportName = DebuggerBundle.getTransportName(getConnection());
-    showStatusText(DebuggerBundle.message("status.connected", addressDisplayName, transportName));
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("leave: processVMStartEvent()");
+      final String addressDisplayName = DebuggerBundle.getAddressDisplayName(getConnection());
+      final String transportName = DebuggerBundle.getTransportName(getConnection());
+      showStatusText(DebuggerBundle.message("status.connected", addressDisplayName, transportName));
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("leave: processVMStartEvent()");
+      }
     }
   }
 

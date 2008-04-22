@@ -1,5 +1,5 @@
 package com.intellij.debugger.engine;
-import com.intellij.debugger.engine.DebugProcess;
+
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.project.Project;
@@ -19,14 +19,26 @@ public class RemoteDebugProcessHandler extends ProcessHandler{
   }
 
   public void startNotify() {
-    DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(this);
-    debugProcess.addDebugProcessListener(new DebugProcessAdapter() {
+    final DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(this);
+    final DebugProcessAdapter listener = new DebugProcessAdapter() {
       //executed in manager thread
       public void processDetached(DebugProcess process, boolean closedByUser) {
+        debugProcess.removeDebugProcessListener(this);
         notifyProcessDetached();
       }
-    });
-    super.startNotify();
+    };
+    debugProcess.addDebugProcessListener(listener);
+    try {
+      super.startNotify();
+    }
+    finally {
+      // in case we added our listener too late, we may have lost processDetached notification,
+      // so check here if process is detached
+      if (!debugProcess.isAttached()) {
+        debugProcess.removeDebugProcessListener(listener);
+        notifyProcessDetached();
+      }
+    }
   }
 
   protected void destroyProcessImpl() {

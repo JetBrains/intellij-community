@@ -458,6 +458,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
         return true;
       }
     }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return true; // need this in unit tests to avoid false alarms when comparing actual output with expected output 
+    }
     return false;
   }
 

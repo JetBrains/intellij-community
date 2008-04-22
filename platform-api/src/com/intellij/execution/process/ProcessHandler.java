@@ -28,18 +28,18 @@ import java.lang.reflect.Proxy;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class ProcessHandler extends UserDataHolderBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.ProcessHandler");
   private final List<ProcessListener> myListeners = new CopyOnWriteArrayList<ProcessListener>();
 
   private static final int STATE_INITIAL     = 0;
-  private static final int STATE_STARTING    = 1;
-  private static final int STATE_STARTED     = 2;
-  private static final int STATE_TERMINATING = 3;
-  private static final int STATE_TERMINATED  = 4;
+  private static final int STATE_RUNNING     = 1;
+  private static final int STATE_TERMINATING = 2;
+  private static final int STATE_TERMINATED  = 3;
 
-  private int myState = STATE_INITIAL;
+  private final AtomicInteger myState = new AtomicInteger(STATE_INITIAL);
 
   private final Semaphore    myWaitSemaphore;
   private ProcessListener myEventMulticaster;
@@ -51,16 +51,11 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   }
 
   public void startNotify() {
-    if(isStartNotified()) {
-      LOG.assertTrue(false, "startNotify called already");
-      return;
-    }
-    myState = STATE_STARTING;
-    try {
+    if(myState.compareAndSet(STATE_INITIAL, STATE_RUNNING)) {
       myEventMulticaster.startNotified(new ProcessEvent(this));
     }
-    finally {
-      myState = STATE_STARTED;
+    else {
+      LOG.assertTrue(false, "startNotify called already");
     }
   }
 
@@ -81,10 +76,10 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   public void destroyProcess() {
     afterStartNotified(new Runnable() {
       public void run() {
-        if (isProcessTerminated() || isProcessTerminating()) return;
-        myState = STATE_TERMINATING;
-        fireProcessWillTerminate(true);
-        destroyProcessImpl();
+        if (myState.compareAndSet(STATE_RUNNING, STATE_TERMINATING)) {
+          fireProcessWillTerminate(true);
+          destroyProcessImpl();
+        }
       }
     });
   }
@@ -92,20 +87,20 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   public void detachProcess() {
     afterStartNotified(new Runnable() {
       public void run() {
-        if (isProcessTerminated() || isProcessTerminating()) return;
-        myState = STATE_TERMINATING;
-        fireProcessWillTerminate(false);
-        detachProcessImpl();
+        if (myState.compareAndSet(STATE_RUNNING, STATE_TERMINATING)) {
+          fireProcessWillTerminate(false);
+          detachProcessImpl();
+        }
       }
     });
   }
 
   public boolean isProcessTerminated() {
-    return myState == STATE_TERMINATED;
+    return myState.get() == STATE_TERMINATED;
   }
 
   public boolean isProcessTerminating() {
-    return myState == STATE_TERMINATING;
+    return myState.get() == STATE_TERMINATING;
   }
 
   public void addProcessListener(final ProcessListener listener) {
@@ -133,8 +128,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
       public void run() {
         LOG.assertTrue(isStartNotified(), "Start notify is not called");
 
-        if (!isProcessTerminating() && !isProcessTerminated()) {
-          myState = STATE_TERMINATING;
+        if (myState.compareAndSet(STATE_RUNNING, STATE_TERMINATING)) {
           try {
             fireProcessWillTerminate(willBeDestroyed);
           }
@@ -143,16 +137,16 @@ public abstract class ProcessHandler extends UserDataHolderBase {
           }
         }
 
-        LOG.assertTrue(isStartNotified(), "All events should be fired after startNotify is called");
-        try {
-          myEventMulticaster.processTerminated(new ProcessEvent(ProcessHandler.this, exitCode));
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-        finally {
-          myState = STATE_TERMINATED;
-          myWaitSemaphore.up();
+        if (myState.compareAndSet(STATE_TERMINATING, STATE_TERMINATED)) {
+          try {
+            myEventMulticaster.processTerminated(new ProcessEvent(ProcessHandler.this, exitCode));
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
+          finally {
+            myWaitSemaphore.up();
+          }
         }
       }
     });
@@ -186,7 +180,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   }
 
   public boolean isStartNotified() {
-    return myState > STATE_INITIAL;
+    return myState.get() > STATE_INITIAL;
   }
 
   private ProcessListener createEventMulticaster() {
