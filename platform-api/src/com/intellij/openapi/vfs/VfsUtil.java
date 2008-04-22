@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.PathUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashSet;
@@ -35,10 +36,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 
 public class VfsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
@@ -648,5 +646,18 @@ public class VfsUtil {
         }
       }
     }
+  }
+
+  public static boolean processFilesRecursively(final VirtualFile root, final Processor<VirtualFile> processor) {
+    final LinkedList<VirtualFile> queue = new LinkedList<VirtualFile>();
+    queue.add(root);
+    while (!queue.isEmpty()) {
+      final VirtualFile file = queue.removeFirst();
+      if (!processor.process(file)) return false;
+      if (file.isDirectory()) {
+        queue.addAll(Arrays.asList(file.getChildren()));
+      }
+    }
+    return true;
   }
 }
