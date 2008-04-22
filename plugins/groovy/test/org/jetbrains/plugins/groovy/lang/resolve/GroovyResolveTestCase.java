@@ -40,11 +40,11 @@ public abstract class GroovyResolveTestCase extends ResolveTestCase {
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule()).getModifiableModel();
     VirtualFile root = LocalFileSystem.getInstance().findFileByPath(getTestDataPath());
     assertNotNull(root);
-    ContentEntry contentEntry = rootModel.addContentEntry(root);
     rootModel.setJdk(JavaSdk.getInstance().createJdk("java sdk", TestUtils.getMockJdkHome(), false));
-    final VirtualFile sourceRoot = root.findChild(getTestName(true));
-    assertNotNull(sourceRoot);
-    contentEntry.addSourceFolder(sourceRoot, false);
+    final VirtualFile testRoot = root.findChild(getTestName(true));
+    ContentEntry contentEntry = rootModel.addContentEntry(testRoot);
+    assertNotNull(testRoot);
+    contentEntry.addSourceFolder(testRoot, false);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         rootModel.commit();
