@@ -111,7 +111,7 @@ public class RepositorySearchDialog extends DialogWrapper {
   private void doSearch() {
     try {
       MavenRepositoryManager m = MavenRepositoryManager.getInstance(myProject);
-      final List<ArtifactInfo> result = m.find(mySearchField.getText() + "*");
+      final List<ArtifactInfo> result = m.findByArtifactId(mySearchField.getText() + "*");
       final AbstractListModel model = new AbstractListModel() {
         public int getSize() {
           return result.size();

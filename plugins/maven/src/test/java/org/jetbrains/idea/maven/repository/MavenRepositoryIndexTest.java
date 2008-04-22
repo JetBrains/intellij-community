@@ -40,7 +40,7 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
     index.add(i);
     index.update(i, new EmptyProgressIndicator());
 
-    List<ArtifactInfo> result = index.find("junit*");
+    List<ArtifactInfo> result = index.findByArtifactId("junit*");
     assertEquals(3, result.size());
     assertEquals("4.0", result.get(0).version);
   }
@@ -53,11 +53,11 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
     index.update(i1, new EmptyProgressIndicator());
     index.update(i2, new EmptyProgressIndicator());
 
-    List<ArtifactInfo> result = index.find("junit*");
+    List<ArtifactInfo> result = index.findByArtifactId("junit*");
     assertEquals(3, result.size());
     assertEquals("4.0", result.get(0).version);
 
-    result = index.find("jmock*");
+    result = index.findByArtifactId("jmock*");
     assertEquals(3, result.size());
     assertEquals("1.2.0", result.get(0).version);
   }
@@ -65,7 +65,7 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
   public void testAddingWithoutUpdate() throws Exception {
     index.add(new MavenRepositoryInfo("local", getTestDataPath("local1"), false));
 
-    List<ArtifactInfo> result = index.find("junit*");
+    List<ArtifactInfo> result = index.findByArtifactId("junit*");
     assertEquals(0, result.size());
   }
 
@@ -74,7 +74,7 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
     index.add(i);
     index.update(i, new EmptyProgressIndicator());
 
-    List<ArtifactInfo> result = index.find("junit*");
+    List<ArtifactInfo> result = index.findByArtifactId("junit*");
     assertEquals(3, result.size());
     assertEquals("4.0", result.get(0).version);
   }
@@ -84,14 +84,14 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
     index.add(i);
     index.update(i, new EmptyProgressIndicator());
 
-    assertEquals(3, index.find("junit*").size());
-    assertEquals(0, index.find("jmock*").size());
+    assertEquals(3, index.findByArtifactId("junit*").size());
+    assertEquals(0, index.findByArtifactId("jmock*").size());
 
     index.change(i, "local2", getTestDataPath("local2"), false);
     index.update(i, new EmptyProgressIndicator());
 
-    assertEquals(0, index.find("junit*").size());
-    assertEquals(3, index.find("jmock*").size());
+    assertEquals(0, index.findByArtifactId("junit*").size());
+    assertEquals(3, index.findByArtifactId("jmock*").size());
   }
 
   public void testRemoving() throws Exception {
@@ -101,7 +101,7 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
 
     index.remove(i);
 
-    List<ArtifactInfo> result = index.find("junit*");
+    List<ArtifactInfo> result = index.findByArtifactId("junit*");
     assertEquals(0, result.size());
   }
 
@@ -118,11 +118,11 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
     shutdownIndex();
     initIndex();
 
-    List<ArtifactInfo> result = index.find("junit*");
+    List<ArtifactInfo> result = index.findByArtifactId("junit*");
     assertEquals(3, result.size());
     assertEquals("4.0", result.get(0).version);
 
-    result = index.find("jmock*");
+    result = index.findByArtifactId("jmock*");
     assertEquals(3, result.size());
     assertEquals("1.2.0", result.get(0).version);
   }

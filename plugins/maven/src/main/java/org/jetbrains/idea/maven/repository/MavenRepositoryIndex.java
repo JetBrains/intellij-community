@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven.repository;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.settings.Proxy;
@@ -199,9 +200,17 @@ public class MavenRepositoryIndex {
     return new ArrayList<MavenRepositoryInfo>(myContexts.keySet());
   }
 
-  public List<ArtifactInfo> find(String pattern) throws MavenRepositoryException {
+  public List<ArtifactInfo> findByGroupId(String pattern) throws MavenRepositoryException {
+    return doFind(pattern, ArtifactInfo.GROUP_ID);
+  }
+
+  public List<ArtifactInfo> findByArtifactId(String pattern) throws MavenRepositoryException {
+    return doFind(pattern, ArtifactInfo.ARTIFACT_ID);
+  }
+
+  private List<ArtifactInfo> doFind(String pattern, String term) throws MavenRepositoryException {
     try {
-      WildcardQuery q = new WildcardQuery(new Term(ArtifactInfo.ARTIFACT_ID, pattern));
+      Query q = new WildcardQuery(new Term(term, pattern));
       Collection<ArtifactInfo> result = myIndexer.searchFlat(ArtifactInfo.VERSION_COMPARATOR, q);
       return new ArrayList<ArtifactInfo>(result);
     }

@@ -38,9 +38,9 @@ public class MavenRepositoryManager extends DummyProjectComponent {
     StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
       public void run() {
         try {
-          if (!MavenProjectsManager.getInstance(myProject).isMavenProject()) return;
           if (ApplicationManager.getApplication().isUnitTestMode()) return;
-          
+          if (!MavenProjectsManager.getInstance(myProject).isMavenProject()) return;
+
           File baseDir = new File(PathManager.getSystemPath(), "Maven");
           File projectIndecesDir = new File(baseDir, myProject.getLocationHash());
 
@@ -147,7 +147,11 @@ public class MavenRepositoryManager extends DummyProjectComponent {
     return myIndex.getInfos();
   }
 
-  public List<ArtifactInfo> find(String pattern) throws MavenRepositoryException {
-    return myIndex.find(pattern);
+  public List<ArtifactInfo> findByArtifactId(String pattern) throws MavenRepositoryException {
+    return myIndex.findByArtifactId(pattern);
+  }
+
+  public List<ArtifactInfo> findByGroupId(String groupId) throws MavenRepositoryException {
+    return myIndex.findByGroupId(groupId);
   }
 }
