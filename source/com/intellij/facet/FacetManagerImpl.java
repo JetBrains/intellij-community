@@ -51,30 +51,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
     return new FacetModelImpl(this);
   }
 
-  //todo[nik] remove
-  public void createAndCommitFacets(final FacetInfo[] facetInfos) {
-    final ModifiableFacetModel model = createModifiableModel();
-    Map<FacetInfo, Facet> info2Facet = new HashMap<FacetInfo, Facet>();
-    for (FacetInfo info : facetInfos) {
-      model.addFacet(getOrCreateFacet(info2Facet, info));
-    }
-    model.commit();
-  }
-
-
-  private Facet getOrCreateFacet(final Map<FacetInfo, Facet> info2Facet, final FacetInfo info) {
-    Facet facet = info2Facet.get(info);
-    if (facet == null) {
-      final FacetInfo underlyingFacetInfo = info.getUnderlyingFacet();
-      final Facet underlyingFacet = underlyingFacetInfo != null ? getOrCreateFacet(info2Facet, underlyingFacetInfo) : null;
-      //noinspection unchecked
-      facet = createFacet(info.getFacetType(), info.getName(), info.getConfiguration(), underlyingFacet);
-      info2Facet.put(info, facet);
-    }
-
-    return facet;
-  }
-
   @NotNull
   public Facet[] getAllFacets() {
     return myModel.getAllFacets();
@@ -344,9 +320,9 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
   }
 
   private static class FacetRenameInfo {
-    private Facet myFacet;
-    private String myOldName;
-    private String myNewName;
+    private final Facet myFacet;
+    private final String myOldName;
+    private final String myNewName;
 
     public FacetRenameInfo(final Facet facet, final String oldName, final String newName) {
       myFacet = facet;
