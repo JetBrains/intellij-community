@@ -36,7 +36,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -1214,22 +1217,4 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myListeners.getMulticaster().changeListCommentChanged(list, oldComment);
   }
 
-  private static class FoldersCutDownWorker {
-    private final Set<String> myPaths;
-
-    private FoldersCutDownWorker() {
-      myPaths = new HashSet<String>();
-    }
-
-    public boolean addCurrent(final VirtualFile file) {
-      final String currentPath = file.getPath();
-      for (String path : myPaths) {
-        if (currentPath.startsWith(path)) {
-          return false;
-        }
-      }
-      myPaths.add(currentPath);
-      return true;
-    }
-  }
 }
