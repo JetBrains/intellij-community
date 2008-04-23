@@ -286,10 +286,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final Project project = myProjectFixture.getProject();
     return new WriteCommandAction<List<IntentionAction>>(project) {
       protected void run(final Result<List<IntentionAction>> result) throws Throwable {
-        final int offset = configureByFilesInner(filePaths);
-        result.setResult(getAvailableIntentions(project, doHighlighting(), offset, myEditor, myFile));
+        configureByFilesInner(filePaths);
+        result.setResult(CodeInsightTestFixtureImpl.this.getAvailableIntentions());
       }
     }.execute().getResultObject();
+  }
+
+  public List<IntentionAction> getAvailableIntentions() {
+    int offset = myEditor.getCaretModel().getOffset();
+    return getAvailableIntentions(myProjectFixture.getProject(), doHighlighting(), offset, myEditor, myFile);
   }
 
   public void launchAction(@NotNull final IntentionAction action) throws Throwable {
