@@ -33,7 +33,7 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
 
   @NotNull
   public PsiElement[] getChildren() {
-    return myRefs;
+    return getReferenceElements();
   }
 
   @NotNull
