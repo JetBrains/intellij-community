@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.UIUtil;
@@ -157,8 +158,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   }
 
   private boolean underProject(final File file) {
-    final String basePath = myProject.getBaseDir().getPath().replace('\\', '/');
-    return file.getAbsolutePath().replace('\\', '/').startsWith(basePath);
+    return ExcludedFileIndex.getInstance(myProject).isInContent(SvnUtil.getVirtualFile(file.getAbsolutePath()));
   }
 
   public WorkingCopyInfo getSelectedWc() {
