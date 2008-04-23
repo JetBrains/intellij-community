@@ -69,11 +69,6 @@ public class Merger {
 
   public void mergeNext() throws SVNException {
     try {
-    Thread.sleep(10000);
-    } catch (InterruptedException e) {
-      
-    }
-    try {
       doMerge();
     } finally {
       if (myProgressIndicator != null) {
