@@ -57,8 +57,9 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   private LibraryTable.Listener myLibraryListener;
 
+  private String oldGroovyLibName = "";
+  private String newGroovyLibName = "";
 
-  private boolean isSdkChanged = false;
 
   public GroovyFacetTab(FacetEditorContext editorContext, FacetValidatorsManager validatorsManager) {
     myNewButton.setMnemonic(KeyEvent.VK_N);
@@ -81,12 +82,12 @@ public class GroovyFacetTab extends FacetEditorTab {
   }
 
   public boolean isModified() {
-    return isSdkChanged;
+    return !oldGroovyLibName.equals(newGroovyLibName);
   }
 
   public void onFacetInitialized(@NotNull Facet facet) {
     fireRootsChangedEvent();
-    isSdkChanged = false;
+    oldGroovyLibName = newGroovyLibName;
   }
 
   private void fireRootsChangedEvent() {
@@ -126,19 +127,20 @@ public class GroovyFacetTab extends FacetEditorTab {
   }
 
   public void apply() throws ConfigurationException {
+    oldGroovyLibName = newGroovyLibName;
   }
 
   public void reset() {
     Library[] libraries = GroovyConfigUtils.getGroovyLibrariesByModule(myEditorContext.getModule());
     if (libraries.length != 1) {
       myComboBox.setSelectedIndex(0);
-      isSdkChanged = false;
+      oldGroovyLibName = newGroovyLibName;
     } else {
       Library library = libraries[0];
       if (library != null &&
           LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraryByName(library.getName()) != null) {
         myComboBox.selectLibrary(library);
-        isSdkChanged = false;
+        oldGroovyLibName = newGroovyLibName;
       }
     }
   }
@@ -175,6 +177,7 @@ public class GroovyFacetTab extends FacetEditorTab {
               if (addVersion && !GroovyConfigUtils.UNDEFINED_VERSION.equals(version)) {
                 String name = myComboBox.generatePointerName(version);
                 myComboBox.addSdk(new GroovySDKPointer(name, path, version));
+                newGroovyLibName = name;
               }
             } else {
               Messages.showErrorDialog(GroovyBundle.message("invalid.groovy.sdk.path.message"), GroovyBundle.message("invalid.groovy.sdk.path.text"));
@@ -190,7 +193,16 @@ public class GroovyFacetTab extends FacetEditorTab {
     myComboBox.insertItemAt(new GrovySDKComboBox.NoGroovySDKComboBoxItem(), 0);
     myComboBox.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
-        isSdkChanged = true;
+        final Object o = e.getItem();
+        if (o instanceof GrovySDKComboBox.GroovySDKComboBoxItem) {
+          final GroovySDK sdk = ((GrovySDKComboBox.GroovySDKComboBoxItem) o).getGroovySDK();
+          newGroovyLibName = sdk.getName();
+        } else if (o instanceof GrovySDKComboBox.GroovySDKPointerItem) {
+          final GroovySDKPointer pointer = ((GrovySDKComboBox.GroovySDKPointerItem) o).getPointer();
+          newGroovyLibName = pointer.getName();
+        } else {
+          newGroovyLibName = "";
+        }
       }
     });
     myComboBox.setSelectedIndex(0);
