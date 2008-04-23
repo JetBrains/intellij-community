@@ -45,6 +45,9 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
 
   }
 
+  public void processLockedFolder(final VirtualFile file) {
+  }
+
   public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {
 
   }

@@ -234,7 +234,9 @@ public class SvnChangeProvider implements ChangeProvider {
         if (virtualFile != null) {
           if (myExcludedFileIndex.isExcludedFile(virtualFile)) return;
           if (parentStatus != FileStatus.IGNORED) {
-            context.getBuilder().processUnversionedFile(virtualFile);
+            if (! SvnUtil.isWorkingCopyRoot(new File(virtualFile.getPath()))) {
+              context.getBuilder().processUnversionedFile(virtualFile);
+            }
           }
         }
         // process children recursively!
@@ -259,6 +261,9 @@ public class SvnChangeProvider implements ChangeProvider {
 
   private void processStatusFirstPass(final FilePath filePath, final SVNStatus status, final SvnChangeProviderContext context,
                                       final FileStatus parentStatus) throws SVNException {
+    if (filePath.isDirectory() && status.isLocked()) {
+      context.getBuilder().processLockedFolder(filePath.getVirtualFile());
+    }
     if (status.getContentsStatus() == SVNStatusType.STATUS_ADDED && status.getCopyFromURL() != null) {
       context.addCopiedFile(filePath, status, status.getCopyFromURL());
     }
