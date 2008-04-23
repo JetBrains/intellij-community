@@ -18,8 +18,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.filters.getters.InheritorsGetter;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -32,6 +30,7 @@ import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -161,12 +160,37 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (typeParameters.length == 0) return false;
 
-    final LocalSearchScope scope = new LocalSearchScope(method.getParameterList());
-    for (final PsiTypeParameter typeParameter : typeParameters) {
-      if (ReferencesSearch.search(typeParameter, scope).findFirst() != null) {
-        return false;
+    final Set<PsiTypeParameter> set = new THashSet<PsiTypeParameter>(Arrays.asList(typeParameters));
+    final PsiTypeVisitor<Boolean> typeParamSearcher = new PsiTypeVisitor<Boolean>() {
+      public Boolean visitType(final PsiType type) {
+        return true;
       }
+
+      public Boolean visitArrayType(final PsiArrayType arrayType) {
+        return arrayType.getComponentType().accept(this);
+      }
+
+      public Boolean visitClassType(final PsiClassType classType) {
+        final PsiClass aClass = classType.resolve();
+        if (aClass instanceof PsiTypeParameter && set.contains(aClass)) return false;
+
+        final PsiType[] types = classType.getParameters();
+        for (final PsiType psiType : types) {
+          if (!psiType.accept(this)) return false;
+        }
+        return true;
+      }
+
+      public Boolean visitWildcardType(final PsiWildcardType wildcardType) {
+        final PsiType bound = wildcardType.getBound();
+        return bound == null || bound.accept(this);
+      }
+    };
+
+    for (final PsiParameter parameter : method.getParameterList().getParameters()) {
+      if (!parameter.getType().accept(typeParamSearcher)) return false;
     }
+
     return true;
   }
 
