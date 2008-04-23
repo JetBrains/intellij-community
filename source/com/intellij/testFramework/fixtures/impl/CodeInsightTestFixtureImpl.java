@@ -698,6 +698,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return configureByFileInner(findFile(filePath));
   }
 
+  public void configureFromExistingVirtualFile(VirtualFile f) throws IOException {
+    configureByFileInner(f);
+  }
+
   private int configureByFileInner(final VirtualFile copy) throws IOException {
     return configureInner(copy, SelectionAndCaretMarkupLoader.fromFile(copy, getProject()));
   }
