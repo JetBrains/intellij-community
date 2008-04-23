@@ -1,20 +1,12 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.LookupData;
 import com.intellij.codeInsight.completion.simple.CompletionCharHandler;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -66,32 +58,7 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
   private int myGrouping;
   private Map<Object,Object> myAttributes = null;
   public static final LookupItem[] EMPTY_ARRAY = new LookupItem[0];
-  public static final CompletionCharHandler DEFAULT_COMPLETION_CHAR_HANDLER = new CompletionCharHandler() {
-    public TailType handleCompletionChar(@NotNull final Editor editor, @NotNull final LookupElement lookupElement, final char completionChar) {
-      if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
-        final int offset = editor.getCaretModel().getOffset();
-        final Document document = editor.getDocument();
-        final CharSequence sequence = document.getCharsSequence();
-        int i = offset;
-        while (i < sequence.length() && Character.isJavaIdentifierPart(sequence.charAt(i))) i++;
-        document.deleteString(offset, i);
-        PsiDocumentManager.getInstance(editor.getProject()).commitDocument(editor.getDocument());
-      }
-      final LookupItem<?> item = (LookupItem)lookupElement;
-      switch(completionChar){
-        case '.': return TailType.DOT;
-        case ',': return TailType.COMMA;
-        case ';': return TailType.SEMICOLON;
-        case '=': return TailType.EQ;
-        case ' ': return TailType.SPACE;
-        case ':': return TailType.CASE_COLON; //?
-      }
-      final TailType attr = item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
-      return attr != null ? attr : TailType.NONE;
-    }
-
-  };
-  @NotNull private CompletionCharHandler<T> myCompletionCharHandler = DEFAULT_COMPLETION_CHAR_HANDLER;
+  @NotNull private CompletionCharHandler<T> myCompletionCharHandler = SimpleInsertHandler.DEFAULT_COMPLETION_CHAR_HANDLER;
   private final Set<String> myAllLookupStrings = new THashSet<String>();
   private String myPresentable;
 
@@ -215,10 +182,6 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
     return this;
   }
 
-  public LookupItem<T> setInsertHandler(@NotNull final SimpleInsertHandler handler) {
-    return setInsertHandler(new MyInsertHandler(handler));
-  }
-
   public LookupItem<T> setCompletionCharHandler(@NotNull final CompletionCharHandler<T> completionCharHandler) {
     myCompletionCharHandler = completionCharHandler;
     return this;
@@ -295,48 +258,9 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
     myAttributes.putAll(item.myAttributes);
   }
 
-  private class MyInsertHandler implements InsertHandler {
-    private final SimpleInsertHandler myHandler;
-
-    public MyInsertHandler(final SimpleInsertHandler handler) {
-      myHandler = handler;
-    }
-
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      final LookupItem.MyInsertHandler that = (LookupItem.MyInsertHandler)o;
-
-      if (!myHandler.equals(that.myHandler)) return false;
-
-      return true;
-    }
-
-    public int hashCode() {
-      return myHandler.hashCode();
-    }
-
-    public void handleInsert(final CompletionContext context,
-                             final int startOffset, final LookupData data, final LookupItem item,
-                             final boolean signatureSelected, final char completionChar) {
-      final Editor editor = context.editor;
-      TailType tailType = myCompletionCharHandler.handleCompletionChar(editor, item, completionChar);
-      if (tailType == null) {
-        tailType = DEFAULT_COMPLETION_CHAR_HANDLER.handleCompletionChar(editor, item, completionChar);
-      }
-      assert tailType != null;
-      final int tailOffset;
-      try {
-        tailOffset = myHandler.handleInsert(editor, startOffset, LookupItem.this, data.items, tailType);
-      }
-      catch (IncorrectOperationException e) {
-        throw new RuntimeException(e);
-      }
-      assert !PsiDocumentManager.getInstance(context.project).isDocumentBlockedByPsi(editor.getDocument()) : "InsertHandler has left document locked by PSI operations: " + myHandler;
-      tailType.processTail(editor, tailOffset);
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      editor.getSelectionModel().removeSelection();
-    }
+  @NotNull
+  public CompletionCharHandler<T> getCompletionCharHandler() {
+    return myCompletionCharHandler;
   }
+
 }

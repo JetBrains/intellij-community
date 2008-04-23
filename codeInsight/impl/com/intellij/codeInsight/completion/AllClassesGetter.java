@@ -41,7 +41,8 @@ public class AllClassesGetter {
 
   private final ElementFilter myFilter;
   private static final SimpleInsertHandler INSERT_HANDLER = new SimpleInsertHandler() {
-    public int handleInsert(final Editor editor, final int startOffset, final LookupElement item, final LookupElement[] allItems, final TailType tailType) {
+    public int handleInsert(final Editor editor, final int startOffset, final LookupElement item, final LookupElement[] allItems, final TailType tailType,
+                            final char completionChar) {
       final PsiClass psiClass = (PsiClass)item.getObject();
       int endOffset = editor.getCaretModel().getOffset();
       final String qname = psiClass.getQualifiedName();

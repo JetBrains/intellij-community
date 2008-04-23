@@ -12,10 +12,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.StdLanguages;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -106,17 +104,30 @@ public class JavaCompletionContributor extends CompletionContributor{
       public String advertise(@NotNull final CompletionParameters parameters, final ProcessingContext context) {
         if (parameters.getCompletionType() == CompletionType.CLASS_NAME && parameters.getInvocationCount() == 1 && parameters.getOriginalFile().getLanguage() ==
                                                                                                                    StdLanguages.JAVA) {
-          return CompletionBundle.message("completion.class.name.hint.2", KeymapUtil.getFirstKeyboardShortcutText(
-              ActionManager.getInstance().getAction(IdeActions.ACTION_CLASS_NAME_COMPLETION)));
+          if (shouldShowFeature(parameters, CodeCompletionFeatures.SECOND_CLASS_NAME_COMPLETION)) {
+            final String shortcut = getShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION);
+            if (shortcut != null) {
+              return CompletionBundle.message("completion.class.name.hint.2", shortcut);
+            }
+          }
         }
 
         if (parameters.getCompletionType() != CompletionType.SMART && shouldSuggestSmartCompletion(parameters.getPosition())) {
-          return CompletionBundle.message("completion.smart.hint", KeymapUtil.getFirstKeyboardShortcutText(
-              ActionManager.getInstance().getAction(IdeActions.ACTION_SMART_TYPE_COMPLETION)));
+          if (shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_SMARTTYPE_GENERAL)) {
+            final String shortcut = getShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION);
+            if (shortcut != null) {
+              return CompletionBundle.message("completion.smart.hint", shortcut);
+            }
+          }
         }
+        
         if (parameters.getCompletionType() != CompletionType.CLASS_NAME && shouldSuggestClassNameCompletion(parameters.getPosition())) {
-          return CompletionBundle.message("completion.class.name.hint", KeymapUtil.getFirstKeyboardShortcutText(
-              ActionManager.getInstance().getAction(IdeActions.ACTION_CLASS_NAME_COMPLETION)));
+          if (shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_CLASSNAME)) {
+            final String shortcut = getShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION);
+            if (shortcut != null) {
+              return CompletionBundle.message("completion.class.name.hint", shortcut);
+            }
+          }
         }
         return null;
       }

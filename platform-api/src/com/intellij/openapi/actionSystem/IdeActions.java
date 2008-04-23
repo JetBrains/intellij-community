@@ -189,6 +189,7 @@ public interface IdeActions {
   @NonNls String ACTION_NEW_ELEMENT = "NewElement";
 
   @NonNls String ACTION_QUICK_JAVADOC = "QuickJavaDoc";
+  @NonNls String ACTION_QUICK_IMPLEMENTATIONS = "QuickImplementations";
   @NonNls String ACTION_CHECKIN_PROJECT = "CheckinProject";
 
   @NonNls String GROUP_USAGE_VIEW_POPUP = "UsageView.Popup";

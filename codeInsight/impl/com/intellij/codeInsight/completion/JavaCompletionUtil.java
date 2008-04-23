@@ -274,7 +274,7 @@ public class JavaCompletionUtil {
                                 final int startOffset,
                                 final LookupElement item,
                                 final LookupElement[] allItems,
-                                final TailType tailType) throws IncorrectOperationException {
+                                final TailType tailType, final char completionChar) throws IncorrectOperationException {
           suggestedNameInfo.nameChoosen(item.getLookupString());
           return editor.getCaretModel().getOffset();
         }

@@ -11,8 +11,12 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NonNls;
 
 public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements HintManager.ActionToIgnore {
+  @NonNls public static final String CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE = "codeassists.quickjavadoc.lookup";
+  @NonNls public static final String CODEASSISTS_QUICKJAVADOC_FEATURE = "codeassists.quickjavadoc";
+
   public ShowJavaDocInfoAction() {
     setEnabledInModalContext(true);
     setInjectedContext(true);
@@ -88,9 +92,9 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
     final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
 
     if (project != null && editor != null) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc");
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_FEATURE);
       if (LookupManager.getInstance(project).getActiveLookup() != null) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc.lookup");
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE);
       }
       actionPerformedImpl(project, editor);
     }

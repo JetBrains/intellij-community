@@ -51,10 +51,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupUpdateProcessor;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
 public class ShowImplementationsAction extends AnAction {
+  @NonNls public static final String CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE = "codeassists.quickdefinition.lookup";
+  @NonNls public static final String CODEASSISTS_QUICKDEFINITION_FEATURE = "codeassists.quickdefinition";
 
   public ShowImplementationsAction() {
     setEnabledInModalContext(true);
@@ -147,9 +150,9 @@ public class ShowImplementationsAction extends AnAction {
   private static void showImplementations(final PsiElement[] impls, final Project project, final String text, final Editor editor) {
     if (impls == null || impls.length == 0) return;
 
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickdefinition");
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKDEFINITION_FEATURE);
     if (LookupManager.getInstance(project).getActiveLookup() != null) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickdefinition.lookup");
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE);
     }
 
     final ImplementationViewComponent component = new ImplementationViewComponent(impls);

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.completion.CodeCompletionHandler;
 import com.intellij.codeInsight.completion.SmartCodeCompletionHandler;
+import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
 /**
- *
+ * @author peter
  */
 public class SmartCodeCompletionAction extends BaseCodeInsightAction implements HintManager.ActionToIgnore{
   private static boolean ourDoingSmartCodeCompleteAction;
@@ -32,10 +33,10 @@ public class SmartCodeCompletionAction extends BaseCodeInsightAction implements 
         try {
           ourDoingSmartCodeCompleteAction = true;
           if (file.getViewProvider().getLanguages().contains(StdLanguages.JAVA)) {
-            FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.general");
+            FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_SMARTTYPE_GENERAL);
             new SmartCodeCompletionHandler().invoke(project, editor, file);
           } else {
-            FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.basic");
+            FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_BASIC);
             new CodeCompletionHandler().invoke(project, editor, file);
           }
         }

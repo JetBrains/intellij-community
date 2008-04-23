@@ -90,8 +90,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
     HintManager.getInstance().hideAllHints();
 
-    if (time != 0) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.second.classname");
+    if (time != 0 && myCompletionType == CompletionType.CLASS_NAME) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_CLASS_NAME_COMPLETION);
     }
 
     final PsiFile file = psiFile;
@@ -260,7 +260,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         }
 
         if (!StringUtil.startsWithIgnoreCase(uniqueText, prefix)) {
-          FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.camelHumps");
+          FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CAMEL_HUMPS);
         }
 
         insertLookupString(context, offset2, uniqueText);

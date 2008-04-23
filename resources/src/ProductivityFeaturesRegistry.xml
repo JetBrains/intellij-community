@@ -128,6 +128,16 @@
       <dependency id="editing.completion.smarttype.general"/>
       </feature>
     <feature
+      id="editing.completion.finishByExclamation"
+      tip-file="FinishByExclamation.html"
+      min-usage-count="4"
+      first-show="10"
+      successive-show="3">
+      <dependency id="editing.completion.basic"/>
+      <dependency id="editing.completion.smarttype.general"/>
+      <dependency id="editing.completion.finishByDotEtc"/>
+      </feature>
+    <feature
       id="editing.completion.variable.name"
       tip-file="VariableNameCompletion.html"
       min-usage-count="7"

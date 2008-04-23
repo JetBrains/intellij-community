@@ -41,6 +41,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -163,6 +164,20 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
     handleParenses(hasParams, needLeftParenth, tailType);
     handleBrackets();
+
+    if (myLookupItem.getObject() instanceof PsiVariable) {
+      if (completionChar == '!' && PsiType.BOOLEAN.isAssignableFrom(((PsiVariable) myLookupItem.getObject()).getType())) {
+        PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
+        final PsiReferenceExpression ref =
+            PsiTreeUtil.findElementOfClassAtOffset(myFile, myState.tailOffset - 1, PsiReferenceExpression.class, false);
+        if (ref != null) {
+          FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EXCLAMATION_FINISH);
+          myDocument.insertString(ref.getTextRange().getStartOffset(), "!");
+          myState.caretOffset++;
+          myState.tailOffset++;
+        }
+      }
+    }
 
     RangeMarker saveMaker = null;
     final boolean generateAnonymousBody = myLookupItem.getAttribute(LookupItem.GENERATE_ANONYMOUS_BODY_ATTR) != null;

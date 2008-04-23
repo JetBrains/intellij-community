@@ -52,10 +52,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
 
   private String[] getFeaturesToShow(Project project) {
     List<String> result = new ArrayList<String>();
-    ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
-    Set<String> ids = registry.getFeatureIds();
-    for (Iterator<String> iterator = ids.iterator(); iterator.hasNext();) {
-      String id = iterator.next();
+    for (String id : ProductivityFeaturesRegistry.getInstance().getFeatureIds()) {
       if (isToBeShown(id, project)) {
         result.add(id);
       }
@@ -63,7 +60,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Appl
     return result.toArray(new String[result.size()]);
   }
 
-  private boolean isToBeShown(String featureId, Project project) {
+  public boolean isToBeShown(String featureId, Project project) {
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
     FeatureDescriptor descriptor = registry.getFeatureDescriptor(featureId);
     if (!descriptor.isUnused()) return false;

@@ -22,6 +22,7 @@ public class JavaCharFilter extends CharFilter {
   }
 
   public Result acceptChar(char c, @NotNull final String prefix, final Lookup lookup) {
+    if (lookup.isCompletion() && c == '!') return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     if (lookup.isCompletion() && c == '.' && isWithinLiteral(lookup)) return Result.ADD_TO_PREFIX;
     return null;
   }
