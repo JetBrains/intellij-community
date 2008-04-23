@@ -10,16 +10,17 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
+import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
+import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.EventDispatcher;
@@ -40,6 +41,8 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   private Collection<Change> myAllChanges;
   private Map<Change, LocalChangeList> myChangeListsMap;
 
+  private ChangesBrowserExtender myExtender;
+
   public MultipleChangeListBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
                                    final ChangeList initialListSelection,
                                    final boolean capableOfExcludingChanges,
@@ -50,6 +53,8 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     myHeaderPanel.add(myChangeListChooser, BorderLayout.EAST);
     myShowingAllChangeLists = changeLists.equals(ChangeListManager.getInstance(project).getChangeLists());
     ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
+
+    myExtender = new Extender(this);
   }
 
   @Override
@@ -93,8 +98,8 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     return myAllChanges;
   }
 
-  public interface SelectedListChangeListener extends EventListener {
-    void selectedListChanged();
+  public ChangesBrowserExtender getExtender() {
+    return myExtender;
   }
 
   public void addSelectedListChangeListener(SelectedListChangeListener listener) {
@@ -245,6 +250,43 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
 
     public void actionPerformed(AnActionEvent e) {
       askAndMove(myProject, new Change[]{myChange}, null);
+    }
+  }
+
+  private static class Extender implements ChangesBrowserExtender {
+    private final MultipleChangeListBrowser myBrowser;
+
+    private Extender(final MultipleChangeListBrowser browser) {
+      myBrowser = browser;
+    }
+
+    public void addToolbarActions(final DialogWrapper dialogWrapper) {
+      myBrowser.addToolbarAction(new RollbackDialogAction());
+      final EditSourceInCommitAction editSourceAction = new EditSourceInCommitAction(dialogWrapper);
+      editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myBrowser);
+      myBrowser.addToolbarAction(editSourceAction);
+
+      myBrowser.addToolbarAction(ActionManager.getInstance().getAction("Vcs.CheckinProjectToolbar"));
+      myBrowser.addToolbarActions(CommitMessage.getToolbarActions());
+    }
+
+    public void addSelectedListChangeListener(final SelectedListChangeListener listener) {
+      myBrowser.addSelectedListChangeListener(listener);
+    }
+
+    public List<AbstractVcs> getAffectedVcses() {
+      Set<AbstractVcs> result = new HashSet<AbstractVcs>();
+      for (Change change : myBrowser.myAllChanges) {
+        final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myBrowser.myProject);
+        if (vcs != null) {
+          result.add(vcs);
+        }
+      }
+      return new ArrayList<AbstractVcs>(result);
+    }
+
+    public List<Change> getCurrentIncludedChanges() {
+      return myBrowser.getCurrentIncludedChanges();
     }
   }
 }

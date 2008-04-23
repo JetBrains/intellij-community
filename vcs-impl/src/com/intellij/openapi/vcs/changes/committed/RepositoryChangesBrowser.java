@@ -1,8 +1,7 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.actions.EditSourceAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.changes.Change;
@@ -11,6 +10,7 @@ import com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -19,7 +19,9 @@ import java.util.List;
 /**
  * @author yole
  */
-public class RepositoryChangesBrowser extends ChangesBrowser {
+public class RepositoryChangesBrowser extends ChangesBrowser implements DataProvider {
+  private CommittedChangesBrowserUseCase myUseCase;
+
   public RepositoryChangesBrowser(final Project project, final List<CommittedChangeList> changeLists) {
     super(project, changeLists, Collections.<Change>emptyList(), null, false, false);
   }
@@ -42,5 +44,22 @@ public class RepositoryChangesBrowser extends ChangesBrowser {
     });
     OpenRepositoryVersionAction action = new OpenRepositoryVersionAction();
     toolBarGroup.add(action);
+
+    ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("RepositoryChangesBrowserToolbar");
+    final AnAction[] actions = group.getChildren(null);
+    for (AnAction anAction : actions) {
+      toolBarGroup.add(anAction);
+    }
+  }
+
+  public void setUseCase(final CommittedChangesBrowserUseCase useCase) {
+    myUseCase = useCase;
+  }
+
+  public Object getData(@NonNls final String dataId) {
+    if (CommittedChangesBrowserUseCase.CONTEXT_NAME.equals(dataId)) {
+      return myUseCase;
+    }
+    return null;
   }
 }

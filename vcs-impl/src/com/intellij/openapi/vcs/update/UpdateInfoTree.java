@@ -43,6 +43,7 @@ import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction;
@@ -273,7 +274,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
       myLoadingChangeListsLabel = null;
     }
     myCommittedChangeLists = receivedChanges;
-    myTreeBrowser.setItems(myCommittedChangeLists, false);
+    myTreeBrowser.setItems(myCommittedChangeLists, false, CommittedChangesBrowserUseCase.UPDATE);
     myTreeBrowser.clearEmptyText();
     if (CommittedChangesCache.getInstance(myProject).hasEmptyCaches()) {
       myTreeBrowser.appendEmptyText("Click ", SimpleTextAttributes.REGULAR_ATTRIBUTES);

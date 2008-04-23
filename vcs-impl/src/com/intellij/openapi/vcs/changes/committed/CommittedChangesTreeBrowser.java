@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -61,7 +60,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   private final Project myProject;
   private final TreeWithEmptyText myChangesTree;
-  private final ChangesBrowser myChangesView;
+  private final RepositoryChangesBrowser myChangesView;
   private List<CommittedChangeList> myChangeLists;
   private List<CommittedChangeList> mySelectedChangeLists;
   private ChangeListGroupingStrategy myGroupingStrategy = ChangeListGroupingStrategy.DATE;
@@ -178,7 +177,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myChangesView.dispose();
   }
 
-  public void setItems(@NotNull List<CommittedChangeList> items, final boolean keepFilter) {
+  public void setItems(@NotNull List<CommittedChangeList> items, final boolean keepFilter, final CommittedChangesBrowserUseCase useCase) {
+    myChangesView.setUseCase(useCase);
     myChangeLists = items;
     if (!keepFilter) {
       myFilteringStrategy.setFilterBase(items);

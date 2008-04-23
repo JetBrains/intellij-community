@@ -145,7 +145,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     }
     myBrowser.setEmptyText(VcsBundle.message("committed.changes.empty.message"));
     if (StringUtil.isEmpty(myFilterComponent.getFilter())) {
-      myBrowser.setItems(myChangesFromProvider, keepFilter);
+      myBrowser.setItems(myChangesFromProvider, keepFilter, CommittedChangesBrowserUseCase.COMMITTED);
     }
     else {
       final String[] strings = myFilterComponent.getFilter().split(" ");
@@ -158,7 +158,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
           filteredChanges.add(changeList);
         }
       }
-      myBrowser.setItems(filteredChanges, keepFilter);
+      myBrowser.setItems(filteredChanges, keepFilter, CommittedChangesBrowserUseCase.COMMITTED);
     }
   }
 

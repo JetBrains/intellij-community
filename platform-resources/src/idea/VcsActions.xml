@@ -132,6 +132,9 @@
       <action id="CommittedChanges.Revert" class="com.intellij.openapi.vcs.changes.actions.RevertChangesAction"
               icon="/actions/rollback.png"/>
     </group>
+    
+    <group id="RepositoryChangesBrowserToolbar">
+    </group>
 
     <group id="IncomingChangesToolbar">
       <action id="IncomingChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction"
