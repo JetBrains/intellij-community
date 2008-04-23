@@ -168,7 +168,7 @@ public class GroovyFacetTab extends FacetEditorTab {
                       GroovyIcons.BIG_ICON) == 0;
 
               if (addVersion && !GroovyConfigUtils.UNDEFINED_VERSION.equals(version)) {
-                String name = GroovyConfigUtils.generateNewGroovyLibName(version);
+                String name = myComboBox.generatePointerName(version);
                 myComboBox.addSdk(new GroovySDKPointer(name, path, version));
               }
             } else {
