@@ -45,7 +45,4 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor implements PsiS
     return true;
   }
 
-  public PsiType substituteNoErase(final PsiType type) {
-    return type;
-  }
 }

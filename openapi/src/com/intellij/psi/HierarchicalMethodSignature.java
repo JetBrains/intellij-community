@@ -29,7 +29,7 @@ import java.util.List;
 public abstract class HierarchicalMethodSignature extends MethodSignatureBackedByPsiMethod {
 
   public HierarchicalMethodSignature(final MethodSignatureBackedByPsiMethod signature) {
-    super(signature.getMethod(), signature.getSubstitutor(), signature.isRaw(), signature.isInGenericContext(),
+    super(signature.getMethod(), signature.getSubstitutor(), signature.isRaw(), 
           signature.getParameterTypes(), signature.getTypeParameters());
   }
 

@@ -99,6 +99,7 @@ public class HighlightMethodUtil {
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
       PsiType superReturnType = superMethodSignature.getSubstitutor().substitute(superMethod.getReturnType());
+      if (superMethodSignature.isRaw()) superReturnType = TypeConversionUtil.erasure(superReturnType);
       if (returnType == null || superReturnType == null || method == superMethod) continue;
       PsiClass superClass = superMethod.getContainingClass();
       if (superClass == null) continue;

@@ -35,8 +35,4 @@ public interface MethodSignature {
   @NotNull PsiTypeParameter[] getTypeParameters();
   boolean isRaw();
 
-  /**
-   * @return true if the signature is both isRaw and containing class has non-raw type parameter bindings
-   */
-  boolean isInGenericContext();
 }

@@ -43,9 +43,4 @@ public class MethodSignatureHandMade extends MethodSignatureBase {
     }
     return false;
   }
-
-  public boolean isInGenericContext() {
-    return !isRaw();
-  }
-
 }

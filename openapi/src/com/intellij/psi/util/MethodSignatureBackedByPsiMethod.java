@@ -25,17 +25,14 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.MethodSignatureBackedByPsiMethod");
   private final PsiMethod myMethod;
   private final boolean myIsRaw;
-  private final boolean myIsInGenericContext;
 
   protected MethodSignatureBackedByPsiMethod(@NotNull PsiMethod method,
                                              PsiSubstitutor substitutor,
                                              boolean isRaw,
-                                             final boolean isInGenericContext,
                                              PsiType[] parameterTypes,
                                              PsiTypeParameter[] methodTypeParameters) {
     super(substitutor, parameterTypes, methodTypeParameters);
     myIsRaw = isRaw;
-    myIsInGenericContext = isInGenericContext;
     if (!method.isValid()) {
       LOG.error("Invalid method: "+method);
     }
@@ -49,10 +46,6 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
 
   public boolean isRaw() {
     return myIsRaw;
-  }
-
-  public boolean isInGenericContext() {
-    return myIsInGenericContext;
   }
 
   public boolean equals(Object o) {
@@ -73,7 +66,9 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
   }
 
   public static MethodSignatureBackedByPsiMethod create(PsiMethod method, PsiSubstitutor substitutor) {
-    final boolean isRaw = PsiUtil.isRawSubstitutor(method, substitutor);
+    return create(method, substitutor, PsiUtil.isRawSubstitutor(method, substitutor));
+  }
+  public static MethodSignatureBackedByPsiMethod create(PsiMethod method, PsiSubstitutor substitutor, boolean isRaw) {
     PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiType[] parameterTypes = new PsiType[parameters.length];
@@ -81,7 +76,6 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
       parameterTypes[i] = parameters[i].getType();
     }
 
-    boolean isInGenericContext = false;
     if (isRaw) {
       for (PsiTypeParameter typeParameter : methodTypeParameters) {
         substitutor = substitutor.put(typeParameter, null);
@@ -89,9 +83,8 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
       methodTypeParameters = PsiTypeParameter.EMPTY_ARRAY;
 
       for (int i = 0; i < parameterTypes.length; i++) {
-        parameterTypes[i] = TypeConversionUtil.erasure(parameterTypes[i]);
+        parameterTypes[i] = TypeConversionUtil.erasure(substitutor.substitute(parameterTypes[i]));
       }
-      isInGenericContext = false;
     }
     else {
       final PsiClass containingClass = method.getContainingClass();
@@ -99,13 +92,12 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
         final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(containingClass);
         while (iterator.hasNext()) {
           if (substitutor.substitute(iterator.next()) != null) {
-            isInGenericContext = true;
             break;
           }
         }
       }
     }
 
-    return new MethodSignatureBackedByPsiMethod(method, substitutor, isRaw, isInGenericContext, parameterTypes, methodTypeParameters);
+    return new MethodSignatureBackedByPsiMethod(method, substitutor, isRaw, parameterTypes, methodTypeParameters);
   }
 }
