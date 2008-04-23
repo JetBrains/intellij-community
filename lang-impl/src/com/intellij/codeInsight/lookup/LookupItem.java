@@ -43,7 +43,6 @@ public class LookupItem<T> extends UserDataHolderBase implements Comparable, Loo
   public static final Object DO_AUTOCOMPLETE_ATTR = Key.create("DO_AUTOCOMPLETE_ATTR");
 
   public static final Object GENERATE_ANONYMOUS_BODY_ATTR = Key.create("GENERATE_ANONYMOUS_BODY_ATTR");
-  public static final Object CONTAINING_CLASS_ATTR = Key.create("CONTAINING_CLASS_ATTR"); // used for dummy-constructors
   public static final Object BRACKETS_COUNT_ATTR = Key.create("BRACKETS_COUNT_ATTR");
   public static final Object OVERWRITE_ON_AUTOCOMPLETE_ATTR = Key.create("OVERWRITE_ON_AUTOCOMPLETE_ATTR");
   public static final Object NEW_OBJECT_ATTR = Key.create("NEW_OBJECT_ATTR");
