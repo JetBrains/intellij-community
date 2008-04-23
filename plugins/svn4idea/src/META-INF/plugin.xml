@@ -31,6 +31,18 @@
       <add-to-group group-id="VcsGroups" anchor="last"/>      
     </group>
 
+    <action id="IntegrateChangeListsAction" class="org.jetbrains.idea.svn.actions.IntegrateChangeListsAction" popup="true">
+      <add-to-group group-id="CommittedChangesToolbar" anchor="last"/>
+    </action>
+
+    <action id="ConfigureBranches" class="org.jetbrains.idea.svn.actions.ConfigureBranchesAction" popup="true">
+      <add-to-group group-id="CommittedChangesToolbar" anchor="last"/>
+    </action>
+
+    <action id="IntegrateChangeSetAction" class="org.jetbrains.idea.svn.actions.IntegrateChangeSetAction" popup="true">
+      <add-to-group group-id="RepositoryChangesBrowserToolbar" anchor="last"/>
+    </action>
+
     <group id="SubversionGroup">
       <action id="Subversion.Share" class="org.jetbrains.idea.svn.actions.ShareProjectAction"/>
       <separator/>
@@ -88,6 +100,8 @@
                         serviceImplementation="org.jetbrains.idea.svn.SvnApplicationSettings"/>
     <projectService serviceInterface="org.jetbrains.idea.svn.SvnBranchConfigurationManager"
                     serviceImplementation="org.jetbrains.idea.svn.SvnBranchConfigurationManager"/>
+    <applicationService serviceInterface="org.jetbrains.idea.svn.SvnBranchMapperManager"
+      serviceImplementation="org.jetbrains.idea.svn.SvnBranchMapperManager"/>
 
     <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs"/>
 

@@ -23,17 +23,26 @@
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnBranchConfiguration;
+import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -55,6 +64,10 @@ public class SvnChangeList implements CommittedChangeList {
   private Set<String> myAddedPaths = new HashSet<String>();
   private Set<String> myDeletedPaths = new HashSet<String>();
   private List<Change> myChanges;
+
+  private File myWcRoot;
+  private SVNURL myBranchUrl;
+  private boolean myBranchInfoLoaded;
 
   public SvnChangeList(SvnVcs vcs, @NotNull final SvnRepositoryLocation location, final SVNLogEntry logEntry, String repositoryRoot) {
     myVcs = vcs;
@@ -78,12 +91,14 @@ public class SvnChangeList implements CommittedChangeList {
       }
     }
     myRepositoryRoot = repositoryRoot;
+    updateBranchInfo();
   }
 
   public SvnChangeList(SvnVcs vcs, @NotNull SvnRepositoryLocation location, DataInput stream) throws IOException {
     myVcs = vcs;
     myLocation = location;
     readFromStream(stream);
+    updateBranchInfo();
   }
 
   public String getCommitterName() {
@@ -208,6 +223,65 @@ public class SvnChangeList implements CommittedChangeList {
     int count = stream.readInt();
     for(int i=0; i<count; i++) {
       paths.add(stream.readUTF());
+    }
+  }
+
+  public SVNURL getBranchUrl() {
+    if (! myBranchInfoLoaded) {
+      updateBranchInfo();
+    }
+    return myBranchUrl;
+  }
+
+  public File getWCRootRoot() {
+    if (! myBranchInfoLoaded) {
+      updateBranchInfo();
+    }
+    return myWcRoot;
+  }
+
+  private void updateBranchInfo() {
+    final Collection<Change> changes = getChanges();
+    myBranchInfoLoaded = true;
+
+    FilePath anyFile = null;
+    SVNURL anyUrl = null;
+    if (! changes.isEmpty()) {
+      try {
+        final Change firstChange = changes.iterator().next();
+        SvnRepositoryContentRevision revision = (SvnRepositoryContentRevision) firstChange.getBeforeRevision();
+        revision = (revision == null) ? (SvnRepositoryContentRevision) firstChange.getAfterRevision() : revision;
+        anyFile = revision.getFile();
+        anyUrl = SVNURL.parseURIDecoded(revision.getFullPath());
+      } catch (SVNException e) {
+        return;
+      }
+    }
+
+    if ((anyFile == null) || (anyUrl == null)) {
+      return;
+    }
+
+    myWcRoot = SvnUtil.getWorkingCopyRoot(anyFile.getIOFile());
+    myBranchUrl = getBranchForUrl(anyFile, anyUrl);
+  }
+
+  @Nullable
+  private SVNURL getBranchForUrl(final FilePath file, final SVNURL url) {
+    final Project project = myVcs.getProject();
+    final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
+    if (vcsRoot == null) {
+      return null;
+    }
+    final SvnBranchConfiguration configuration;
+    try {
+      configuration = SvnBranchConfigurationManager.getInstance(project).get(vcsRoot);
+      return configuration.getWorkingBranch(project, url);
+    }
+    catch (SVNException e) {
+      return null;
+    } catch (VcsException e1) {
+      return null;
     }
   }
 }

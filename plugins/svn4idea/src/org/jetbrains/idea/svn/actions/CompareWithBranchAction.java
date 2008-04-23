@@ -70,13 +70,13 @@ public class CompareWithBranchAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     assert project != null;
-    VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+
     SelectBranchPopup.show(project, virtualFile, new SelectBranchPopup.BranchSelectedCallback() {
-      public void branchSelected(final Project project, final VirtualFile virtualFile, final SvnBranchConfiguration configuration,
-                                 final String url, final long revision) {
+      public void branchSelected(final Project project, final SvnBranchConfiguration configuration, final String url, final long revision) {
         new CompareWithBranchOperation(project, virtualFile, configuration).compareWithBranch(url, revision);
       }
-    });
+    }, SvnBundle.message("compare.with.branch.popup.title"));
   }
 
   @Override

@@ -16,28 +16,28 @@
 
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
-import java.util.Map;
-import java.util.HashMap;
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author yole
@@ -75,7 +75,8 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     SvnBranchConfiguration configuration = myConfigurationBean.myConfigurationMap.get(vcsRoot.getPath());
     if (configuration == null) {
       configuration = load(vcsRoot);
-      myConfigurationBean.myConfigurationMap.put(vcsRoot.getPath(), configuration);
+
+      setConfiguration(vcsRoot, configuration);
     }
     return configuration;
   }
@@ -133,6 +134,8 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
 
   public void setConfiguration(VirtualFile vcsRoot, SvnBranchConfiguration configuration) {
     myConfigurationBean.myConfigurationMap.put(vcsRoot.getPath(), configuration);
+    
+    SvnBranchMapperManager.getInstance().notifyMappingChanged(myProject, vcsRoot, configuration);
   }
 
   public ConfigurationBean getState() {

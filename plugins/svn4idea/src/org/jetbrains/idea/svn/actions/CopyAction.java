@@ -36,25 +36,24 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.CopyDialog;
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class CopyAction extends BasicAction {
   protected String getActionName(AbstractVcs vcs) {
@@ -193,36 +192,4 @@ public class CopyAction extends BasicAction {
     return false;
   }
 
-  private static class CopyEventHandler implements ISVNEventHandler {
-    private ProgressIndicator myProgress;
-
-    public CopyEventHandler(ProgressIndicator progress) {
-      myProgress = progress;
-    }
-
-    public void handleEvent(SVNEvent event, double p) {
-      String path = event.getFile() != null ? event.getFile().getName() : event.getPath();
-      if (path == null) {
-        return;
-      }
-      if (event.getAction() == SVNEventAction.COMMIT_ADDED) {
-        myProgress.setText2(SvnBundle.message("progress.text2.adding", path));
-      }
-      else if (event.getAction() == SVNEventAction.COMMIT_DELETED) {
-        myProgress.setText2(SvnBundle.message("progress.text2.deleting", path));
-      }
-      else if (event.getAction() == SVNEventAction.COMMIT_MODIFIED) {
-        myProgress.setText2(SvnBundle.message("progress.text2.sending", path));
-      }
-      else if (event.getAction() == SVNEventAction.COMMIT_REPLACED) {
-        myProgress.setText2(SvnBundle.message("progress.text2.replacing", path));
-      }
-      else if (event.getAction() == SVNEventAction.COMMIT_DELTA_SENT) {
-        myProgress.setText2(SvnBundle.message("progress.text2.transmitting.delta", path));
-      }
-    }
-
-    public void checkCancelled() {
-    }
-  }
 }

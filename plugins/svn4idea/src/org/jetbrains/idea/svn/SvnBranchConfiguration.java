@@ -16,10 +16,25 @@
 
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.integrate.SvnBranchItem;
+import org.tmatesoft.svn.core.ISVNDirEntryHandler;
+import org.tmatesoft.svn.core.SVNDirEntry;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
+import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNLogClient;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File;
+import java.util.*;
 
 /**
  * @author yole
@@ -101,5 +116,185 @@ public class SvnBranchConfiguration {
   public String getRelativeUrl(String url) {
     String baseUrl = getBaseUrl(url);
     return baseUrl == null ? null : url.substring(baseUrl.length());
+  }
+
+  @Nullable
+  public SVNURL getWorkingBranch(final Project project, final SVNURL someUrl) throws SVNException {
+    final BranchSearcher branchSearcher = new BranchSearcher(someUrl);
+    final UrlIterator iterator = new UrlIterator(project);
+    iterator.iterateUrls(branchSearcher);
+
+    return branchSearcher.getResult();
+    /*SVNURL candidate = urlIsParent(myTrunkUrl, someUrl);
+    if (candidate != null) {
+      return candidate;
+    }
+
+    for (String branchUrl : myBranchUrls) {
+      candidate = urlIsParent(branchUrl, someUrl);
+      if (candidate != null) {
+        return candidate;
+      }
+
+      final List<SvnBranchItem> children = getBranches(branchUrl, project);
+      for (SvnBranchItem child : children) {
+        candidate = urlIsParent(child.getUrl(), someUrl);
+        if (candidate != null) {
+          return candidate;
+        }
+      }
+    }
+    return null;*/
+  }
+
+  private class UrlIterator {
+    private final Project myProject;
+
+    private UrlIterator(final Project project) {
+      myProject = project;
+    }
+
+    public void iterateUrls(final UrlListener listener) throws SVNException {
+      if (listener.accept(myTrunkUrl)) {
+        return;
+      }
+
+      for (String branchUrl : myBranchUrls) {
+        // use more exact comparison first (paths longer)
+        final List<SvnBranchItem> children = getBranchesWithoutProgress(myProject, branchUrl);
+        for (SvnBranchItem child : children) {
+          if (listener.accept(child.getUrl())) {
+            return;
+          }
+        }
+
+        if (listener.accept(branchUrl)) {
+          return;
+        }
+      }
+    }
+  }
+
+  public Map<String,String> getUrl2FileMappings(final Project project, final VirtualFile root) {
+    try {
+      final BranchRootSearcher searcher = new BranchRootSearcher(SvnVcs.getInstance(project), root);
+      final UrlIterator iterator = new UrlIterator(project);
+      iterator.iterateUrls(searcher);
+      return searcher.getBranchesUnder();
+    } catch (SVNException e) {
+      return null;
+    }
+  }
+
+  private class BranchRootSearcher implements UrlListener {
+    private final VirtualFile myRoot;
+    private final SVNURL myRootUrl;
+    // url path to file path
+    private final Map<String, String> myBranchesUnder;
+
+    private BranchRootSearcher(final SvnVcs vcs, final VirtualFile root) throws SVNException {
+      myRoot = root;
+      myBranchesUnder = new HashMap<String, String>();
+      final SVNWCClient client = vcs.createWCClient();
+      final SVNInfo info = client.doInfo(new File(myRoot.getPath()), SVNRevision.WORKING);
+      myRootUrl = info.getURL();
+    }
+
+    public boolean accept(final String url) throws SVNException {
+      if (myRootUrl != null) {
+        final File baseDir = new File(myRoot.getPath());
+        final String baseUrl = myRootUrl.getPath();
+
+        final SVNURL branchUrl = SVNURL.parseURIEncoded(url);
+        if (myRootUrl.equals(SVNURLUtil.getCommonURLAncestor(myRootUrl, branchUrl))) {
+          final File file = SvnUtil.fileFromUrl(baseDir, baseUrl, branchUrl.getPath());
+          myBranchesUnder.put(url, file.getAbsolutePath());
+        }
+      }
+      return false; // iterate everything
+    }
+
+    public Map<String, String> getBranchesUnder() {
+      return myBranchesUnder;
+    }
+  }
+
+  private interface UrlListener {
+    boolean accept(final String url) throws SVNException;
+  }
+
+  private static class BranchSearcher implements UrlListener {
+    private final SVNURL mySomeUrl;
+    private SVNURL myResult;
+
+    private BranchSearcher(final SVNURL someUrl) {
+      mySomeUrl = someUrl;
+    }
+
+    public boolean accept(final String url) throws SVNException {
+      myResult = urlIsParent(url, mySomeUrl);
+      return myResult != null;
+    }
+
+    public SVNURL getResult() {
+      return myResult;
+    }
+  }
+
+  @Nullable
+  private static SVNURL urlIsParent(final String parentCandidate, final SVNURL child) throws SVNException {
+    final SVNURL parentUrl = SVNURL.parseURIEncoded(parentCandidate);
+    if(parentUrl.equals(SVNURLUtil.getCommonURLAncestor(parentUrl, child))) {
+      return parentUrl;
+    }
+    return null;
+  }
+
+  public static List<SvnBranchItem> getBranches(final String url, final Project project) throws SVNException {
+    final ArrayList<SvnBranchItem> result = new ArrayList<SvnBranchItem>();
+    final Ref<SVNException> ex = new Ref<SVNException>();
+    boolean rc = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        if (indicator != null) {
+          indicator.setIndeterminate(true);
+        }
+        try {
+          getBranchesImpl(project, url, result, true);
+        }
+        catch (SVNException e) {
+          ex.set(e);
+        }
+      }
+    }, SvnBundle.message("compare.with.branch.progress.loading.branches"), true, project);
+    if (!rc) {
+      return Collections.emptyList();
+    }
+    if (!ex.isNull()) {
+      throw ex.get();
+    }
+    return result;
+  }
+
+  private static List<SvnBranchItem> getBranchesWithoutProgress(final Project project, final String url) throws SVNException {
+    final ArrayList<SvnBranchItem> result = new ArrayList<SvnBranchItem>();
+    getBranchesImpl(project, url, result, false);
+    return result;
+  }
+
+  private static void getBranchesImpl(final Project project, final String url, final ArrayList<SvnBranchItem> result,
+                               final boolean underProgress) throws SVNException {
+    final SVNLogClient logClient;
+      logClient = SvnVcs.getInstance(project).createLogClient();
+      logClient.doList(SVNURL.parseURIEncoded(url), SVNRevision.UNDEFINED, SVNRevision.HEAD, false, new ISVNDirEntryHandler() {
+        public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
+          if (underProgress) {
+            ProgressManager.getInstance().checkCanceled();
+          }
+          final String url = dirEntry.getURL().toString();
+          result.add(new SvnBranchItem(url, dirEntry.getDate(), dirEntry.getRevision()));
+        }
+      });
+      Collections.sort(result);
   }
 }

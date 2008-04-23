@@ -15,16 +15,22 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -256,5 +262,95 @@ public class SvnUtil {
       }
       return result;
     }
+  }
+
+  @Nullable
+  public static String getRepositoryUUID(final SvnVcs vcs, final File file) {
+    final SVNWCClient client = vcs.createWCClient();
+    try {
+      final SVNInfo info = client.doInfo(file, SVNRevision.WORKING);
+      return (info == null) ? null : info.getRepositoryUUID();
+    } catch (SVNException e) {
+      return null;
+    }
+  }
+
+  @Nullable
+  public static String getRepositoryUUID(final SvnVcs vcs, final SVNURL url) {
+    final SVNWCClient client = vcs.createWCClient();
+    try {
+      final SVNInfo info = client.doInfo(url, SVNRevision.WORKING, SVNRevision.WORKING);
+      return (info == null) ? null : info.getRepositoryUUID();
+    } catch (SVNException e) {
+      return null;
+    }
+  }
+
+  @Nullable
+  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final File file) {
+    final SVNWCClient client = vcs.createWCClient();
+    try {
+      final SVNInfo info = client.doInfo(file, SVNRevision.WORKING);
+      return (info == null) ? null : info.getRepositoryRootURL();
+    } catch (SVNException e) {
+      return null;
+    }
+  }
+
+  public static boolean isWorkingCopyRoot(final File file) {
+    try {
+      return SVNWCUtil.isWorkingCopyRoot(file);
+    } catch (SVNException e) {
+      return false;
+    }
+  }
+
+  @Nullable
+  public static File getWorkingCopyRoot(final File inFile) {
+    File file = inFile;
+    while ((file != null) && (file.isFile() || (! file.exists()))) {
+      file = file.getParentFile();
+    }
+
+    if (file == null) {
+      return null;
+    }
+
+    try {
+      return SVNWCUtil.getWorkingCopyRoot(file, true);
+    } catch (SVNException e) {
+      return null;
+    }
+  }
+
+  @Nullable
+  public static SVNURL getWorkingCopyUrl(final SvnVcs vcs, final File file) {
+    try {
+      if(SVNWCUtil.isWorkingCopyRoot(file)) {
+        final SVNWCClient client = vcs.createWCClient();
+        final SVNInfo info = client.doInfo(file, SVNRevision.WORKING);
+        return info.getURL();
+      }
+    } catch (SVNException e) {
+      //
+    }
+    return null;
+  }
+
+  public static File fileFromUrl(final File baseDir, final String baseUrl, final String fullUrl) throws SVNException {
+    assert fullUrl.startsWith(baseUrl);
+
+    final String part = fullUrl.substring(baseUrl.length()).replace('/', File.separatorChar).replace('\\', File.separatorChar);
+    return new File(baseDir, part);
+  }
+
+  public static VirtualFile getVirtualFile(final String filePath) {
+    @NonNls final String path = "file://" + filePath.replace(File.separatorChar, '/');
+    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+      @Nullable
+      public VirtualFile compute() {
+        return VirtualFileManager.getInstance().findFileByUrl(path);
+      }
+    });
   }
 }

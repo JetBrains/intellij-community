@@ -16,6 +16,19 @@
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
+    <orderEntry type="module" module-name="vcs-api" />
+    <orderEntry type="module" module-name="lvcs-openapi" />
+    <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="vcs-impl" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/ganymed.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -27,18 +40,6 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/ganymed.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module" module-name="vcs-api" />
-    <orderEntry type="module" module-name="lvcs-openapi" />
-    <orderEntry type="module" module-name="platform-api" />
     <orderEntryProperties />
   </component>
   <component name="VcsManagerConfiguration">

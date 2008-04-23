@@ -25,16 +25,16 @@ import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -111,6 +111,10 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
           }
           else if (event.getAction() == SVNEventAction.COMMIT_DELTA_SENT) {
             progress.setText2(SvnBundle.message("progress.text2.transmitting.delta", path));
+          }
+          else if (event.getAction() == SVNEventAction.COMMIT_COMPLETED) {
+            WindowManager.getInstance().getStatusBar(mySvnVcs.getProject())
+              .setInfo(SvnBundle.message("status.text.comitted.revision", event.getRevision()));
           }
         }
 

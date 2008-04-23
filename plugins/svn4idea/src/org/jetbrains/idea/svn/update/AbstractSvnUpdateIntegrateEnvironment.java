@@ -31,20 +31,14 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
 import java.util.*;
@@ -70,7 +64,8 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     throws ProcessCanceledException {
 
     final ArrayList<VcsException> exceptions = new ArrayList<VcsException>();
-    ISVNEventHandler eventHandler = new UpdateEventHandler(myVcs, progressIndicator, updatedFiles);
+    UpdateEventHandler eventHandler = new UpdateEventHandler(myVcs, progressIndicator);
+    eventHandler.setUpdatedFiles(updatedFiles);
 
     boolean totalUpdate = true;
     AbstractUpdateIntegrateCrawler crawler = createCrawler(eventHandler, totalUpdate, exceptions, updatedFiles);
@@ -152,130 +147,4 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
 
   @Nullable
   public abstract Configurable createConfigurable(Collection<FilePath> collection);
-
-  private static FileGroup createFileGroup(String name, String id) {
-    return new FileGroup(name, name, false, id, true);
-  }
-
-  private static class UpdateEventHandler implements ISVNEventHandler {
-    private final ProgressIndicator myProgressIndicator;
-    private final UpdatedFiles myUpdatedFiles;
-    private int myExternalsCount;
-    private final SvnVcs myVCS;
-    @NonNls public static final String SKIP_ID = "skip";
-
-    public UpdateEventHandler(SvnVcs vcs, ProgressIndicator progressIndicator, UpdatedFiles updatedFiles) {
-      myProgressIndicator = progressIndicator;
-      myUpdatedFiles = updatedFiles;
-      myVCS = vcs;
-      myExternalsCount = 1;
-    }
-
-    public void handleEvent(SVNEvent event, double progress) {
-      if (event == null || event.getFile() == null) {
-        return;
-      }
-      String path = event.getFile().getAbsolutePath();
-      String displayPath = event.getFile().getName();
-      String text2 = null;
-      String text = null;
-      if (event.getAction() == SVNEventAction.UPDATE_ADD ||
-          event.getAction() == SVNEventAction.ADD) {
-        text2 = SvnBundle.message("progress.text2.added", displayPath);
-        if (myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).getFiles().contains(path)) {
-          myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).getFiles().remove(path);
-          if (myUpdatedFiles.getGroupById(REPLACED_ID) == null) {
-            myUpdatedFiles.registerGroup(createFileGroup(SvnBundle.message("status.group.name.replaced"), REPLACED_ID));
-          }
-          addFileToGroup(REPLACED_ID, event);
-        } else {
-          addFileToGroup(FileGroup.CREATED_ID, event);
-        }
-      }
-      else if (event.getAction() == SVNEventAction.UPDATE_NONE) {
-        // skip it
-        return;
-      }
-      else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
-        text2 = SvnBundle.message("progress.text2.deleted", displayPath);
-        addFileToGroup(FileGroup.REMOVED_FROM_REPOSITORY_ID, event);
-      }
-      else if (event.getAction() == SVNEventAction.UPDATE_UPDATE) {
-        if (event.getContentsStatus() == SVNStatusType.CONFLICTED || event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
-          addFileToGroup(FileGroup.MERGED_WITH_CONFLICT_ID, event);
-          text2 = SvnBundle.message("progress.text2.conflicted", displayPath);
-        }
-        else if (event.getContentsStatus() == SVNStatusType.MERGED || event.getPropertiesStatus() == SVNStatusType.MERGED) {
-          text2 = SvnBundle.message("progres.text2.merged", displayPath);
-          addFileToGroup(FileGroup.MERGED_ID, event);
-        }
-        else if (event.getContentsStatus() == SVNStatusType.CHANGED || event.getPropertiesStatus() == SVNStatusType.CHANGED) {
-          text2 = SvnBundle.message("progres.text2.updated", displayPath);
-          addFileToGroup(FileGroup.UPDATED_ID, event);
-        }
-        else if (event.getContentsStatus() == SVNStatusType.UNCHANGED && event.getPropertiesStatus() == SVNStatusType.UNCHANGED) {
-          text2 = SvnBundle.message("progres.text2.updated", displayPath);
-        }
-        else {
-          text2 = "";
-          addFileToGroup(FileGroup.UNKNOWN_ID, event);
-        }
-      }
-      else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
-        myExternalsCount++;
-        if (myUpdatedFiles.getGroupById(EXTERNAL_ID) == null) {
-          myUpdatedFiles.registerGroup(new FileGroup(SvnBundle.message("status.group.name.externals"),
-                                                     SvnBundle.message("status.group.name.externals"),
-                                                     false, EXTERNAL_ID, true));
-        }
-        addFileToGroup(EXTERNAL_ID, event);
-        text = SvnBundle.message("progress.text.updating.external.location", event.getFile().getAbsolutePath());
-      }
-      else if (event.getAction() == SVNEventAction.RESTORE) {
-        text2 = SvnBundle.message("progress.text2.restored.file", displayPath);
-        addFileToGroup(FileGroup.RESTORED_ID, event);
-      }
-      else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED && event.getRevision() >= 0) {
-        myExternalsCount--;
-        text2 = SvnBundle.message("progres.text2.updated.to.revision", event.getRevision());
-        if (myExternalsCount == 0) {
-          myExternalsCount = 1;
-          WindowManager.getInstance().getStatusBar(myVCS.getProject()).setInfo(
-            SvnBundle.message("status.text.updated.to.revision", event.getRevision()));
-        }
-      }
-      else if (event.getAction() == SVNEventAction.SKIP) {
-        text2 = SvnBundle.message("progress.text2.skipped.file", displayPath);
-        if (myUpdatedFiles.getGroupById(SKIP_ID) == null) {
-          myUpdatedFiles.registerGroup(new FileGroup(SvnBundle.message("update.group.name.skipped"),
-                                                     SvnBundle.message("update.group.name.skipped"), false, SKIP_ID, true));
-        }
-        addFileToGroup(SKIP_ID, event);
-      }
-
-      if (myProgressIndicator != null) {
-        if (text != null) {
-          myProgressIndicator.setText(text);
-        }
-        if (text2 != null) {
-          myProgressIndicator.setText2(text2);
-        }
-      }
-    }
-
-    private void addFileToGroup(final String id, final SVNEvent event) {
-      myUpdatedFiles.getGroupById(id).add(event.getFile().getAbsolutePath());
-    }
-
-    public void checkCancelled() throws SVNCancelException {
-      if (myProgressIndicator != null) {
-        myProgressIndicator.checkCanceled();
-        if (myProgressIndicator.isCanceled()) {
-          SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"));
-        }
-      }
-    }
-  }
-
-
 }

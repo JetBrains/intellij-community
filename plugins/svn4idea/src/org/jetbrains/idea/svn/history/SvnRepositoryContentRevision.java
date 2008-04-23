@@ -137,12 +137,7 @@ public class SvnRepositoryContentRevision implements ContentRevision {
         progress.setText2(SvnBundle.message("progress.text2.revision.information", myRevision));
       }
       try {
-        String fullPath = myRepositoryRoot;
-        if (!fullPath.endsWith("/") && !myPath.startsWith("/")) {
-          fullPath += "/";
-        }
-        fullPath += myPath;
-        SVNRepository repository = myVcs.createRepository(fullPath);
+        SVNRepository repository = myVcs.createRepository(getFullPath());
         try {
           repository.getFile("", myRevision, null, myDst);
         }
@@ -154,5 +149,18 @@ public class SvnRepositoryContentRevision implements ContentRevision {
         myException = e;
       }
     }
+  }
+
+  public String getFullPath() {
+    String fullPath = myRepositoryRoot;
+    if (!fullPath.endsWith("/") && !myPath.startsWith("/")) {
+      fullPath += "/";
+    }
+    fullPath += myPath;
+    return fullPath;
+  }
+
+  public String getPath() {
+    return myPath;
   }
 }
