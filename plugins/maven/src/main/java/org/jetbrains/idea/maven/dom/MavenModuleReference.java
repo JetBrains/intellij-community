@@ -82,7 +82,7 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
   public Object[] getVariants() {
     List<DomFileElement<MavenModel>> files = DomService.getInstance().getFileElements(MavenModel.class,
                                                                                       myElement.getProject(),
-                                                                                      GlobalSearchScope.allScope(getProject()));
+                                                                                      GlobalSearchScope.projectScope(getProject()));
 
     List<Object> result = new ArrayList<Object>();
 
@@ -121,7 +121,7 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
   }
 
   public LocalQuickFix[] getQuickFixes() {
-    if (resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
+    if (myText.isEmpty() || resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
     return new LocalQuickFix[] {new CreatePomFix()};
   }
 
