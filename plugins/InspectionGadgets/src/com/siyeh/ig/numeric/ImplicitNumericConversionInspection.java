@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -245,7 +246,8 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
     private class ImplicitNumericConversionVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
+        @Override public void visitBinaryExpression(
+                PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             checkExpression(expression);
         }
@@ -256,17 +258,20 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
             checkExpression(expression);
         }
 
-        @Override public void visitLiteralExpression(PsiLiteralExpression expression) {
+        @Override public void visitLiteralExpression(
+                PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             checkExpression(expression);
         }
 
-        @Override public void visitPostfixExpression(PsiPostfixExpression expression) {
+        @Override public void visitPostfixExpression(
+                PsiPostfixExpression expression) {
             super.visitPostfixExpression(expression);
             checkExpression(expression);
         }
 
-        @Override public void visitPrefixExpression(PsiPrefixExpression expression) {
+        @Override public void visitPrefixExpression(
+                PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
             checkExpression(expression);
         }
@@ -283,7 +288,8 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
             checkExpression(expression);
         }
 
-        @Override public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+        @Override public void visitTypeCastExpression(
+                PsiTypeCastExpression expression) {
             super.visitTypeCastExpression(expression);
             checkExpression(expression);
         }
@@ -303,6 +309,9 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
         private void checkExpression(PsiExpression expression) {
             final PsiElement parent = expression.getParent();
             if (parent instanceof PsiParenthesizedExpression) {
+                return;
+            }
+            if (isArgumentOfStringIndexOf(parent)) {
                 return;
             }
             final PsiType expressionType = expression.getType();
@@ -325,6 +334,32 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
                 return;
             }
             registerError(expression, expression, expressionType, expectedType);
+        }
+
+        private boolean isArgumentOfStringIndexOf(PsiElement parent) {
+            if (!(parent instanceof PsiExpressionList)) {
+                return false;
+            }
+            final PsiElement grandParent = parent.getParent();
+            if (!(grandParent instanceof PsiMethodCallExpression)) {
+                return false;
+            }
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression) grandParent;
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            if (!HardcodedMethodConstants.INDEX_OF.equals(methodName) &&
+                    !HardcodedMethodConstants.LAST_INDEX_OF.equals(methodName)) {
+                return false;
+            }
+            final PsiMethod method = methodCallExpression.resolveMethod();
+            if (method == null) {
+                return false;
+            }
+            final PsiClass aClass = method.getContainingClass();
+            final String className = aClass.getQualifiedName();
+            return "java.lang.String".equals(className);
         }
     }
 
