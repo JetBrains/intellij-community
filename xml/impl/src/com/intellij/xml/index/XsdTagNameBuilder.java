@@ -1,7 +1,6 @@
 package com.intellij.xml.index;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -19,17 +18,13 @@ public class XsdTagNameBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
   private final static Logger LOG = Logger.getInstance("#com.intellij.xml.index.XsdTagNameBuilder");
 
   @Nullable
-  public static Collection<String> computeTagNames(final VirtualFile file) {
-    InputStream is = null;
+  public static Collection<String> computeTagNames(final InputStream is) {
     try {
-      is = file.getInputStream();
       final XsdTagNameBuilder builder = new XsdTagNameBuilder();
       NanoXmlUtil.parse(is, builder);
       return builder.myTagNames;
     }
-    catch (IOException e) {
-      LOG.error(e);
-    } finally {
+    finally {
       try {
         if (is != null) {
           is.close();
@@ -39,7 +34,6 @@ public class XsdTagNameBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
         LOG.error(e);
       }
     }
-    return null;
   }
 
   private Collection<String> myTagNames = new ArrayList<String>();

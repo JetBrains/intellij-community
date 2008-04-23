@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.io.ByteArrayInputStream;
 
 /**
  * @author Dmitry Avdeev
@@ -26,7 +27,7 @@ public class XmlSchemaIndex extends ScalarIndexExtension<String> {
   public DataIndexer<String, Void, FileContent> getIndexer() {
     return new DataIndexer<String, Void, FileContent>() {
       public Map<String, Void> map(final FileContent inputData) {
-        final Collection<String> tags = XsdTagNameBuilder.computeTagNames(inputData.getFile());
+        final Collection<String> tags = XsdTagNameBuilder.computeTagNames(new ByteArrayInputStream(inputData.getContent()));
         if (tags != null && !tags.isEmpty()) {
           final HashMap<String, Void> map = new HashMap<String, Void>(tags.size());
           for (String tag : tags) {
