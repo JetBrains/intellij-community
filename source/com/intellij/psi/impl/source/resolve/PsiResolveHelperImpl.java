@@ -581,6 +581,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                                      final PsiTypeParameter typeParameter,
                                                      PsiSubstitutor substitutor,
                                                      final boolean forCompletion) {
+    Pair<PsiType, ConstraintType> constraint = null;
     PsiType expectedType = null;
 
     if (parent instanceof PsiVariable && methodCall.equals(((PsiVariable)parent).getInitializer())) {
@@ -598,30 +599,31 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     else if (parent instanceof PsiExpressionList && forCompletion) {
       final PsiElement pParent = parent.getParent();
       if (pParent instanceof PsiCallExpression && parent.equals(((PsiCallExpression)pParent).getArgumentList())) {
-        final Pair<PsiType, ConstraintType> constraint =
-          inferTypeForCompletionFromCallContext(methodCall, (PsiExpressionList)parent, (PsiCallExpression)pParent, typeParameter);
-        if (constraint != null) return constraint;
+        constraint = inferTypeForCompletionFromCallContext(methodCall, (PsiExpressionList)parent, (PsiCallExpression)pParent, typeParameter);
       }
     }
 
+    final Pair<PsiType, ConstraintType> result;
     final PsiManager manager = typeParameter.getManager();
     final GlobalSearchScope scope = parent.getResolveScope();
-    if (expectedType == null) {
-      expectedType = forCompletion ?
-             PsiType.NULL :
-             PsiType.getJavaLangObject(manager, scope);
+    PsiType returnType = null;
+    if (constraint == null) {
+      if (expectedType == null) {
+        expectedType = forCompletion ?
+               PsiType.NULL :
+               PsiType.getJavaLangObject(manager, scope);
+      }
+
+      returnType = ((PsiMethod)typeParameter.getOwner()).getReturnType();
+
+      constraint = getSubstitutionForTypeParameterConstraint(typeParameter, returnType, expectedType, false, PsiUtil.getLanguageLevel(parent));
     }
 
-    PsiType returnType = ((PsiMethod)typeParameter.getOwner()).getReturnType();
-    final Pair<PsiType, ConstraintType> constraint =
-      getSubstitutionForTypeParameterConstraint(typeParameter, returnType, expectedType, false, PsiUtil.getLanguageLevel(parent));
-
-    final Pair<PsiType, ConstraintType> result;
     if (constraint == null) {
       final PsiSubstitutor finalSubstitutor = substitutor.put(typeParameter, null);
       PsiType superType = finalSubstitutor.substitute(typeParameter.getSuperTypes()[0]);
       if (superType == null) superType = PsiType.getJavaLangObject(manager, scope);
-      if (forCompletion && superType != null && !(superType instanceof PsiWildcardType)) {
+      if (forCompletion && !(superType instanceof PsiWildcardType)) {
         result = new Pair<PsiType, ConstraintType>(PsiWildcardType.createExtends(manager, superType), ConstraintType.EQUALS);
       }
       else {
@@ -630,8 +632,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     }
     else {
       PsiType guess = constraint.getFirst();
-      if (guess == null) guess = TypeConversionUtil.typeParameterErasure(typeParameter);
-      if (forCompletion && guess != null && !(guess instanceof PsiWildcardType)) guess = PsiWildcardType.createExtends(manager, guess);
+      if (forCompletion && !(guess instanceof PsiWildcardType)) {
+        if (constraint.getSecond() == ConstraintType.SUPERTYPE) guess = PsiWildcardType.createExtends(manager, guess);
+        else if (constraint.getSecond() == ConstraintType.SUBTYPE) guess = PsiWildcardType.createSuper(manager, guess);
+      }
 
       //The following code is the result of deep thought, do not shit it out before discussing with [ven]
       if (returnType instanceof PsiClassType && typeParameter.equals(((PsiClassType)returnType).resolve())) {
