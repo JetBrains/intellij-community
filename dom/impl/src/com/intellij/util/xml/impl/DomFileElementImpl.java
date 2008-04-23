@@ -261,6 +261,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   @NotNull
   public final T getRootElement() {
+    assert isValid();
     return (T)getRootHandler().getProxy();
   }
 
