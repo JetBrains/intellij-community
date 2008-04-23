@@ -16,18 +16,13 @@
 
 <body>
 <p>
-  TODO:
-</p>
-
-<p>Example:</p>
-
-<p>
-  <code>&lt;xsl:template match="<b>h:txtarea</b>" /></code>
+  This inspection checks for problems in invocations of named XSLT templates, such as missing arguments, passing
+  arguments that are not declared by the template or passing an argument for a certain parameter more than once.
 </p>
 
 <p>
-  If the prefix "h" is bound to the XHTML namespace, the inspection will flag this part of the match-expression as an
-  unknown element name because the correct name of the element is "textarea".
+  The inspection assumes that parameters declared with a default-value are optional and will not complain if an
+  invocation does not specify an argument for such parameters.
 </p>
 
 

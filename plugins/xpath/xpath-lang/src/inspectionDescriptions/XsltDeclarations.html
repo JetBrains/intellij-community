@@ -16,20 +16,13 @@
 
 <body>
 <p>
-  TODO:
+  This inspections checks for various problems in declarations of XSLT variables, parameters and named templates:
 </p>
-
-<p>Example:</p>
-
-<p>
-  <code>&lt;xsl:template match="<b>h:txtarea</b>" /></code>
-</p>
-
-<p>
-  If the prefix "h" is bound to the XHTML namespace, the inspection will flag this part of the match-expression as an
-  unknown element name because the correct name of the element is "textarea".
-</p>
-
+<ul>
+  <li>Duplicate declarations</li>
+  <li>Possibly unwanted shadowing of parameters/variables from an outer scope</li>
+  <li>Illegal identifiers</li>
+</ul>
 
 <p id="footer">Powered by XPathView + XSLT-Support</p>
 </body>
