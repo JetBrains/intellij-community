@@ -673,9 +673,9 @@ public class DependenciesImportingTest extends ImportingTestCase {
 
     assertModules("project", "m");
 
-    assertEquals(1, resolutionProblems.size());
-    assertEquals(1, resolutionProblems.get(0).second.size());
-    assertEquals("Unresolved dependency: xxx:yyy:pom:1:compile", resolutionProblems.get(0).second.get(0));
+    assertEquals(1, myResolutionProblems.size());
+    assertEquals(1, myResolutionProblems.get(0).second.size());
+    assertEquals("Unresolved dependency: xxx:yyy:pom:1:compile", myResolutionProblems.get(0).second.get(0));
   }
 
   public void testPomTypeDependency() throws Exception {
@@ -712,9 +712,9 @@ public class DependenciesImportingTest extends ImportingTestCase {
     importProject();
 
     assertModuleLibDeps("project");
-    assertEquals(1, resolutionProblems.size());
+    assertEquals(1, myResolutionProblems.size());
 
-    List<String> problems = resolutionProblems.get(0).second;
+    List<String> problems = myResolutionProblems.get(0).second;
     assertEquals(1, problems.size());
     assertTrue(problems.toString(), problems.get(0).contains("xxx:yyy:pom:4.0"));
   }

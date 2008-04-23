@@ -10,13 +10,13 @@ public class FoldersConfiguratorTest extends ImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    projectRoot.getChildren(); // make sure fs is cached
+    myProjectRoot.getChildren(); // make sure fs is cached
 
-    new File(projectRoot.getPath(), "target/foo").mkdirs();
+    new File(myProjectRoot.getPath(), "target/foo").mkdirs();
     updateFolders();
 
     assertExcludes("project", "target/foo");
-    assertNull(projectRoot.findChild("target"));
+    assertNull(myProjectRoot.findChild("target"));
   }
 
   public void testUpdatingFoldersForAllTheProjects() throws Exception {
@@ -45,8 +45,8 @@ public class FoldersConfiguratorTest extends ImportingTestCase {
     assertExcludes("m1");
     assertExcludes("m2");
 
-    new File(projectRoot.getPath(), "m1/target/foo").mkdirs();
-    new File(projectRoot.getPath(), "m2/target/bar").mkdirs();
+    new File(myProjectRoot.getPath(), "m1/target/foo").mkdirs();
+    new File(myProjectRoot.getPath(), "m2/target/bar").mkdirs();
 
     updateFolders();
 
@@ -74,8 +74,8 @@ public class FoldersConfiguratorTest extends ImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    new File(projectRoot.getPath(), "target/generated-sources").mkdirs();
-    new File(projectRoot.getPath(), "target/foo").mkdirs();
+    new File(myProjectRoot.getPath(), "target/generated-sources").mkdirs();
+    new File(myProjectRoot.getPath(), "target/foo").mkdirs();
 
     updateFolders();
 
@@ -83,7 +83,7 @@ public class FoldersConfiguratorTest extends ImportingTestCase {
   }
 
   public void testDoesNotExcludeRegisteredSources() throws Exception {
-    new File(projectRoot.getPath(), "target/src").mkdirs();
+    new File(myProjectRoot.getPath(), "target/src").mkdirs();
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -112,7 +112,7 @@ public class FoldersConfiguratorTest extends ImportingTestCase {
                   "  </plugins>" +
                   "</build>");
 
-    new File(projectRoot.getPath(), "target/foo").mkdirs();
+    new File(myProjectRoot.getPath(), "target/foo").mkdirs();
 
     updateFolders();
 
@@ -124,7 +124,7 @@ public class FoldersConfiguratorTest extends ImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    createModule("newModule");
+    createModule("userModule");
     updateFolders(); // shouldn't throw exceptions
   }
 

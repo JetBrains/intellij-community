@@ -39,7 +39,7 @@ public class NexusIndexerTest extends MavenWithDataTestCase {
     assertNotNull(indexer);
     assertNotNull(updater);
 
-    indexDir = new File(dir, "index");
+    indexDir = new File(myDir, "index");
     assertNotNull(indexDir);
   }
 

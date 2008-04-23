@@ -150,18 +150,18 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
 
     importProject();
 
-    assertEquals(2, resolutionProblems.size());
+    assertEquals(2, myResolutionProblems.size());
 
-    File f1 = resolutionProblems.get(0).first;
-    File f2 = resolutionProblems.get(1).first;
+    File f1 = myResolutionProblems.get(0).first;
+    File f2 = myResolutionProblems.get(1).first;
 
     assertTrue(f1.toString(), f1.getPath().endsWith("m1\\pom.xml"));
     assertTrue(f2.toString(), f2.getPath().endsWith("m2\\pom.xml"));
 
-    assertOrderedElementsAreEqual(resolutionProblems.get(0).second,
+    assertOrderedElementsAreEqual(myResolutionProblems.get(0).second,
                                   "Unresolved dependency: xxx:xxx:jar:1:compile",
                                   "Unresolved dependency: yyy:yyy:jar:2:compile");
-    assertOrderedElementsAreEqual(resolutionProblems.get(1).second,
+    assertOrderedElementsAreEqual(myResolutionProblems.get(1).second,
                                   "Unresolved dependency: zzz:zzz:jar:3:compile");
   }
   
@@ -193,7 +193,7 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
                           "<version>1</version>");
 
     importProject();
-    assertEquals(0, resolutionProblems.size());
+    assertEquals(0, myResolutionProblems.size());
   }
 
   public void testReportingInvalidExtensions() throws Exception {
@@ -211,11 +211,11 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
                   "  </extensions>" +
                   "</build>");
 
-    assertEquals(1, resolutionProblems.size());
+    assertEquals(1, myResolutionProblems.size());
 
-    File f = resolutionProblems.get(0).first;
-    assertEquals(new File(projectPom.getPath()), f);
-    assertOrderedElementsAreEqual(resolutionProblems.get(0).second, "Unresolved build extension: xxx:yyy:jar:1");
+    File f = myResolutionProblems.get(0).first;
+    assertEquals(new File(myProjectPom.getPath()), f);
+    assertOrderedElementsAreEqual(myResolutionProblems.get(0).second, "Unresolved build extension: xxx:yyy:jar:1");
   }
   
   public void testMultipleUnresolvedBuildExtensions() throws Exception {
@@ -266,23 +266,23 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
 
     importProject();
 
-    assertEquals(resolutionProblems.toString(), 3, resolutionProblems.size());
+    assertEquals(myResolutionProblems.toString(), 3, myResolutionProblems.size());
 
-    File f1 = resolutionProblems.get(0).first;
-    File f2 = resolutionProblems.get(1).first;
-    File f3 = resolutionProblems.get(2).first;
+    File f1 = myResolutionProblems.get(0).first;
+    File f2 = myResolutionProblems.get(1).first;
+    File f3 = myResolutionProblems.get(2).first;
 
-    assertEquals(new File(projectPom.getPath()), f1);
+    assertEquals(new File(myProjectPom.getPath()), f1);
     assertTrue(f2.toString(), f2.getPath().endsWith("m1\\pom.xml"));
     assertTrue(f3.toString(), f3.getPath().endsWith("m2\\pom.xml"));
 
-    assertOrderedElementsAreEqual(resolutionProblems.get(0).second,
+    assertOrderedElementsAreEqual(myResolutionProblems.get(0).second,
                                   "Unresolved build extension: xxx:xxx:jar:1",
                                   "Unresolved build extension: yyy:yyy:jar:1",
                                   "Unresolved build extension: zzz:zzz:jar:1");
-    assertOrderedElementsAreEqual(resolutionProblems.get(1).second,
+    assertOrderedElementsAreEqual(myResolutionProblems.get(1).second,
                                   "Unresolved build extension: xxx:xxx:jar:1");
-    assertOrderedElementsAreEqual(resolutionProblems.get(2).second,
+    assertOrderedElementsAreEqual(myResolutionProblems.get(2).second,
                                   "Unresolved build extension: yyy:yyy:jar:1",
                                   "Unresolved build extension: zzz:zzz:jar:1");
   }

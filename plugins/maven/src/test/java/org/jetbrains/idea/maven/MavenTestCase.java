@@ -1,10 +1,16 @@
 package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import junit.framework.TestCase;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.project.MavenImporterSettings;
@@ -17,16 +23,30 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class MavenTestCase extends IdeaTestCase {
-  protected File dir;
-  protected VirtualFile projectRoot;
+public abstract class MavenTestCase extends TestCase {
+  protected IdeaProjectTestFixture myTestFixture;
+  protected TempDirTestFixture myTempDirFixture;
 
-  protected VirtualFile projectPom;
-  protected List<VirtualFile> allPoms = new ArrayList<VirtualFile>();
+  protected Project myProject;
+
+  protected File myDir;
+  protected VirtualFile myProjectRoot;
+
+  protected VirtualFile myProjectPom;
+  protected List<VirtualFile> myAllPoms = new ArrayList<VirtualFile>();
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    
+    myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
+    myTempDirFixture.setUp();
+
+    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder().getFixture();
+    myTestFixture.setUp();
+
+    myProject = myTestFixture.getProject();
+
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
@@ -40,11 +60,27 @@ public abstract class MavenTestCase extends IdeaTestCase {
   }
 
   protected void setUpInWriteAction() throws Exception {
-    dir = createTempDirectory();
+    myDir = new File(myTempDirFixture.getTempDirPath());
 
-    File projectDir = new File(dir, "project");
+    File projectDir = new File(myDir, "project");
     projectDir.mkdirs();
-    projectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
+    myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myTestFixture.tearDown();
+    myTempDirFixture.tearDown();
+    super.tearDown();
+  }
+
+  @Override
+  protected void runTest() throws Throwable {
+    new WriteAction() {
+      protected void run(Result result) throws Throwable {
+        MavenTestCase.super.runTest();
+      }
+    }.execute();
   }
 
   protected MavenCore getMavenCore() {
@@ -65,19 +101,19 @@ public abstract class MavenTestCase extends IdeaTestCase {
   }
 
   protected String getProjectPath() {
-    return projectRoot.getPath();
+    return myProjectRoot.getPath();
   }
 
   protected String getParentPath() {
-    return projectRoot.getParent().getPath();
+    return myProjectRoot.getParent().getPath();
   }
 
   protected void createProjectPom(String xml) throws IOException {
-    projectPom = createPomFile(projectRoot, xml);
+    myProjectPom = createPomFile(myProjectRoot, xml);
   }
 
   protected void updateProjectPom(String xml) throws IOException {
-    setFileContent(projectPom, xml);
+    setFileContent(myProjectPom, xml);
   }
 
   protected VirtualFile createModulePom(String relativePath, String xml) throws IOException {
@@ -85,12 +121,12 @@ public abstract class MavenTestCase extends IdeaTestCase {
   }
 
   protected void updateModulePom(String relativePath, String xml) throws IOException {
-    setFileContent(projectRoot.findFileByRelativePath(relativePath + "/pom.xml"), xml);
+    setFileContent(myProjectRoot.findFileByRelativePath(relativePath + "/pom.xml"), xml);
   }
 
   private VirtualFile createPomFile(VirtualFile dir, String xml) throws IOException {
     VirtualFile f = dir.createChildData(null, "pom.xml");
-    allPoms.add(f);
+    myAllPoms.add(f);
     return setFileContent(f, xml);
   }
 
@@ -110,7 +146,7 @@ public abstract class MavenTestCase extends IdeaTestCase {
   }
 
   protected void createProfilesXml(String xml) throws IOException {
-    VirtualFile f = projectRoot.createChildData(null, "profiles.xml");
+    VirtualFile f = myProjectRoot.createChildData(null, "profiles.xml");
     f.setBinaryContent(createValidProfiles(xml).getBytes());
   }
 

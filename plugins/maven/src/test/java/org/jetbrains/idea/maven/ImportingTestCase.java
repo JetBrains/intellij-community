@@ -6,6 +6,7 @@ package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -32,8 +33,8 @@ import java.util.*;
 
 public abstract class ImportingTestCase extends MavenTestCase {
   protected MavenImporterSettings myPrefs;
-  protected MavenProjectModel projectModel;
-  protected ArrayList<Pair<File, List<String>>> resolutionProblems;
+  protected MavenProjectModel myProjectModel;
+  protected ArrayList<Pair<File, List<String>>> myResolutionProblems;
 
   @Override
   protected void setUpInWriteAction() throws Exception {
@@ -44,13 +45,14 @@ public abstract class ImportingTestCase extends MavenTestCase {
   }
 
   @Override
-  protected void setUpModule() {
-  }
-
-  @Override
   protected void tearDown() throws Exception {
     removeFromLocalRepository("test");
     super.tearDown();
+  }
+
+  protected void createModule(String name) throws IOException {
+    VirtualFile f = createProjectSubFile(name + "/" +name + ".iml");
+    ModuleManager.getInstance(myProject).newModule(f.getPath(), StdModuleTypes.JAVA);
   }
 
   protected PomTreeStructure.RootNode createMavenTree() {
@@ -58,7 +60,7 @@ public abstract class ImportingTestCase extends MavenTestCase {
                                               myProject.getComponent(MavenRepository.class),
                                               myProject.getComponent(MavenEventsHandler.class)) {
       {
-        for (VirtualFile pom : allPoms) {
+        for (VirtualFile pom : myAllPoms) {
           this.root.addUnder(new PomNode(pom));
         }
       }
@@ -297,7 +299,7 @@ public abstract class ImportingTestCase extends MavenTestCase {
   }
 
   protected void importProjectWithProfiles(String... profiles) throws MavenException {
-    doImportProjects(Collections.singletonList(projectPom), profiles);
+    doImportProjects(Collections.singletonList(myProjectPom), profiles);
   }
 
   protected void importSeveralProjects(VirtualFile... files) throws MavenException {
@@ -312,11 +314,11 @@ public abstract class ImportingTestCase extends MavenTestCase {
       p.createMavenProjectModel(files, new HashMap<VirtualFile, Module>(), profilesList, new Progress());
       p.createMavenToIdeaMapping();
 
-      resolutionProblems = new ArrayList<Pair<File, List<String>>>();
-      p.resolve(myProject, profilesList, resolutionProblems);
+      myResolutionProblems = new ArrayList<Pair<File, List<String>>>();
+      p.resolve(myProject, profilesList, myResolutionProblems);
 
       p.commit(myProject, profilesList);
-      projectModel = p.getMavenProjectModel();
+      myProjectModel = p.getMavenProjectModel();
     }
     catch (CanceledException e) {
       throw new RuntimeException(e);
@@ -324,7 +326,7 @@ public abstract class ImportingTestCase extends MavenTestCase {
   }
 
   protected void executeGoal(String relativePath, String goal) {
-    VirtualFile pom = projectRoot.findFileByRelativePath(relativePath + "/pom.xml");
+    VirtualFile pom = myProjectRoot.findFileByRelativePath(relativePath + "/pom.xml");
 
     MavenRunnerParameters rp = new MavenRunnerParameters(pom.getPath(), Arrays.asList(goal), null);
     MavenRunnerSettings rs = new MavenRunnerSettings();

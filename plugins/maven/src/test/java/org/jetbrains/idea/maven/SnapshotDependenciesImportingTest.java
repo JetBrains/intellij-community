@@ -10,7 +10,7 @@ public class SnapshotDependenciesImportingTest extends ImportingTestCase {
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
 
-    remoteRepoDir = new File(dir, "remote");
+    remoteRepoDir = new File(myDir, "remote");
     remoteRepoDir.mkdirs();
   }
 

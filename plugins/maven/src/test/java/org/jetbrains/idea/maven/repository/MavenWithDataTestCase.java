@@ -12,7 +12,7 @@ public abstract class MavenWithDataTestCase extends MavenTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
-    workingData = new File(dir, "testData");
+    workingData = new File(myDir, "testData");
     FileUtil.copyDir(new File(getOriginalTestDataPath()), workingData);
   }
 

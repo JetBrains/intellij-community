@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,14 +19,10 @@ public class WorkingWithOpenProjectTest extends ImportingTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
-  }
-
-  @Override
-  protected void openProject() {
-    ProjectManagerEx.getInstanceEx().openProject(myProject);
   }
 
   @Override
@@ -41,7 +36,7 @@ public class WorkingWithOpenProjectTest extends ImportingTestCase {
   }
 
   public void testShouldNotFailOnAddingNewContentRootWithAPomFile() throws Exception {
-    File newRootDir = new File(dir, "newRoot");
+    File newRootDir = new File(myDir, "newRoot");
     newRootDir.mkdirs();
 
     File pomFile = new File(newRootDir, "pom.xml");
@@ -53,7 +48,7 @@ public class WorkingWithOpenProjectTest extends ImportingTestCase {
   }
   
   public void testSavingAllDocumentBeforeSynchronization() throws Exception {
-    Document d = FileDocumentManager.getInstance().getDocument(projectPom);
+    Document d = FileDocumentManager.getInstance().getDocument(myProjectPom);
     d.setText(createValidPom("<groupId>test</groupId>" +
                              "<artifactId>project</artifactId>" +
                              "<version>1</version>" +
@@ -66,7 +61,7 @@ public class WorkingWithOpenProjectTest extends ImportingTestCase {
                              "  </dependency>" +
                              "</dependencies>"));
     
-    MavenProjectsManager.getInstance(myProject).setOriginalFiles(Collections.singleton(projectPom));
+    MavenProjectsManager.getInstance(myProject).setOriginalFiles(Collections.singleton(myProjectPom));
     new MavenImportProcessor(myProject).synchronize(new ArrayList<Pair<File, List<String>>>());
 
     assertModuleLibDep("project", "junit:junit:4.0");

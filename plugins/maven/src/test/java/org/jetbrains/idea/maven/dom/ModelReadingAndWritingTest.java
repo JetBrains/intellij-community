@@ -99,7 +99,7 @@ public abstract class ModelReadingAndWritingTest extends MavenTestCase {
   }
 
   private Document getProjectPomDocument() {
-    return FileDocumentManager.getInstance().getDocument(projectPom);
+    return FileDocumentManager.getInstance().getDocument(myProjectPom);
   }
 
   private void formatAndSaveProjectPomDocument() {

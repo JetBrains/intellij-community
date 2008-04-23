@@ -541,13 +541,13 @@ public class StructureImportingTest extends ImportingTestCase {
   }
 
   public void testRefreshFSAfterImport() throws Exception {
-    projectRoot.getChildren(); // make sure fs is cached
-    new File(projectRoot.getPath(), "foo").mkdirs();
+    myProjectRoot.getChildren(); // make sure fs is cached
+    new File(myProjectRoot.getPath(), "foo").mkdirs();
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    assertNotNull(projectRoot.findChild("foo"));
+    assertNotNull(myProjectRoot.findChild("foo"));
   }
 }

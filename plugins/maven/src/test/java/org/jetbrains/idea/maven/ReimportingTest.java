@@ -3,11 +3,8 @@ package org.jetbrains.idea.maven;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
-
-import java.io.File;
 
 public class ReimportingTest extends ImportingTestCase {
   private int questionsCount;
@@ -123,11 +120,7 @@ public class ReimportingTest extends ImportingTestCase {
   }
 
   public void testDoesNotAskToRemoveManuallyAdderModules() throws Exception {
-    File f = createTempDirectory();
-    ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
-    model.newModule(f.getPath() + "/userModule.iml", StdModuleTypes.JAVA);
-    model.commit();
-
+    createModule("userModule");
     assertModules("project", "m1", "m2", "userModule");
 
     importProject();

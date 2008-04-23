@@ -27,7 +27,7 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
 
   private void initIndex() throws Exception {
     embedder = MavenFactory.createEmbedderForExecute(getMavenCoreSettings());
-    index = new MavenRepositoryIndex(embedder, new File(dir, "index"));
+    index = new MavenRepositoryIndex(embedder, new File(myDir, "index"));
   }
 
   private void shutdownIndex() throws MavenEmbedderException {
