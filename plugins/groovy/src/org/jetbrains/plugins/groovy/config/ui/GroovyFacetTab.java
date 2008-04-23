@@ -85,10 +85,15 @@ public class GroovyFacetTab extends FacetEditorTab {
   }
 
   public void onFacetInitialized(@NotNull Facet facet) {
+    fireRootsChangedEvent();
+    isSdkChanged = false;
+  }
+
+  private void fireRootsChangedEvent() {
     final GrovySDKComboBox.DefaultGroovySDKComboBoxItem selectedItem = (GrovySDKComboBox.DefaultGroovySDKComboBoxItem) myComboBox.getSelectedItem();
     final Module module = myEditorContext.getModule();
-    final Project project = facet.getModule().getProject();
     if (module != null) {
+      final Project project = module.getProject();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           GroovySDK sdk = null;
@@ -118,7 +123,6 @@ public class GroovyFacetTab extends FacetEditorTab {
         }
       });
     }
-    isSdkChanged = false;
   }
 
   public void apply() throws ConfigurationException {
@@ -131,7 +135,8 @@ public class GroovyFacetTab extends FacetEditorTab {
       isSdkChanged = false;
     } else {
       Library library = libraries[0];
-      if (library != null) {
+      if (library != null &&
+          LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraryByName(library.getName()) != null) {
         myComboBox.selectLibrary(library);
         isSdkChanged = false;
       }
@@ -192,7 +197,7 @@ public class GroovyFacetTab extends FacetEditorTab {
   }
 
   private void updateComboBox() {
-    setUpComboBox();
+    myComboBox.refresh();
     reset();
   }
 
