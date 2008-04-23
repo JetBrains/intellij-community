@@ -153,4 +153,10 @@ public class ForCanBeForEachInspection{
     private void currentActiveDiscountInIteration(String deliveryDiscount, Iterator iterator) {
         //To change body of created methods use File | Settings | File Templates.
     }
+
+    public void showBug( List<? extends Vector> list ) {
+        for ( int i = 0 ; i < list.size() ; i++ ) { 
+            System.out.println( list.get( i ) );
+        }
+    }
 }

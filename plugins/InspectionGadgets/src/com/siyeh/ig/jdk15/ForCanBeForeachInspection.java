@@ -224,12 +224,18 @@ public class ForCanBeForeachInspection extends BaseInspection{
                 return PsiType.getJavaLangObject(context.getManager(),
                         context.getResolveScope());
             }
-            PsiType parameterType = parameterTypes[0];
-            if (!(parameterType instanceof PsiWildcardType)) {
-                return parameterType;
+            final PsiType parameterType = parameterTypes[0];
+            if (parameterType instanceof PsiWildcardType) {
+                final PsiWildcardType wildcardType =
+                        (PsiWildcardType) parameterType;
+                return wildcardType.getExtendsBound();
+            } else if (parameterType instanceof PsiCapturedWildcardType) {
+                final PsiCapturedWildcardType capturedWildcardType =
+                        (PsiCapturedWildcardType) parameterType;
+                final PsiWildcardType wildcardType =
+                        capturedWildcardType.getWildcard();
+                return wildcardType.getExtendsBound();
             }
-            final PsiWildcardType type = (PsiWildcardType)parameterType;
-            parameterType = type.getExtendsBound();
             return parameterType;
         }
 
