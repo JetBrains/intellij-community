@@ -121,7 +121,7 @@ public class MavenModuleReference implements PsiReference, LocalQuickFixProvider
   }
 
   public LocalQuickFix[] getQuickFixes() {
-    if (myText.isEmpty() || resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
+    if (myText.length() == 0 || resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
     return new LocalQuickFix[] {new CreatePomFix()};
   }
 
