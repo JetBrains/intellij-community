@@ -67,7 +67,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       return;
     }
     final Document document = editor.getDocument();
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
 
     if (file == null) {
       myOriginalHandler.execute(editor, dataContext);

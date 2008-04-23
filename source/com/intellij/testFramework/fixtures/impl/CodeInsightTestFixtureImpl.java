@@ -31,17 +31,18 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -358,8 +359,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public void type(final char c) {
     EditorActionManager actionManager = EditorActionManager.getInstance();
-    TypedAction action = actionManager.getTypedAction();
-    action.actionPerformed(getEditor(), c, DataManager.getInstance().getDataContext());
+    final DataContext dataContext = DataManager.getInstance().getDataContext();
+    if (c == '\b') {
+      actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE).execute(getEditor(), dataContext);
+      return;
+    }
+
+    actionManager.getTypedAction().actionPerformed(getEditor(), c, dataContext);
   }
 
   public JavaPsiFacade getJavaFacade() {
