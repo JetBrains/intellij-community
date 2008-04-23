@@ -73,7 +73,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
     @NotNull
     public String buildErrorString(Object... infos) {
         final PsiType type = (PsiType) infos[1];
-        final PsiType expectedType = (PsiType)infos[1];
+        final PsiType expectedType = (PsiType)infos[2];
         return InspectionGadgetsBundle.message(
                 "implicit.numeric.conversion.problem.descriptor",
                 type.getPresentableText(), expectedType.getPresentableText());
