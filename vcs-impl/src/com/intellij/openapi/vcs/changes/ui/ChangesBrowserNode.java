@@ -22,10 +22,15 @@ import java.util.List;
  */
 public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   protected int myCount = -1;
-  private int myDirectoryCount = -1;
+  protected int myDirectoryCount = -1;
   public static final Object IGNORED_FILES_TAG = new Object() {
     public String toString() {
       return VcsBundle.message("changes.nodetitle.ignored.files");
+    }
+  };
+  public static final Object LOCKED_FOLDERS_TAG = new Object() {
+    public String toString() {
+      return VcsBundle.message("changes.nodetitle.locked.folders");
     }
   };
   public static final Object UNVERSIONED_FILES_TAG = new Object() {
@@ -63,6 +68,9 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     }
     if (userObject == IGNORED_FILES_TAG) {
       return new ChangesBrowserIgnoredFilesNode(userObject);
+    }
+    if (userObject == LOCKED_FOLDERS_TAG) {
+      return new ChangesBrowserLockedFoldersNode(userObject);
     }
     return new ChangesBrowserNode(userObject);
   }

@@ -16,9 +16,9 @@
 
 package com.intellij.openapi.vcs.changes;
 
-import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -43,6 +43,9 @@ public class EmptyChangelistBuilder implements ChangelistBuilder {
   }
 
   public void processIgnoredFile(final VirtualFile file) {
+  }
+
+  public void processLockedFolder(final VirtualFile file) {
   }
 
   public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {

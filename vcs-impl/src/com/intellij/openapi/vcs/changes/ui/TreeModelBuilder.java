@@ -77,7 +77,7 @@ public class TreeModelBuilder {
                                      final List<FilePath> locallyDeletedFiles,
                                      final List<VirtualFile> modifiedWithoutEditing,
                                      final MultiMap<String, VirtualFile> switchedFiles,
-                                     @Nullable final List<VirtualFile> ignoredFiles) {
+                                     @Nullable final List<VirtualFile> ignoredFiles, @Nullable final List<VirtualFile> lockedFolders) {
 
     for (ChangeList list : changeLists) {
       ChangesBrowserNode listNode = ChangesBrowserNode.create(myProject, list);
@@ -100,6 +100,9 @@ public class TreeModelBuilder {
     }
     if (ignoredFiles != null && !ignoredFiles.isEmpty()) {
       buildVirtualFiles(ignoredFiles, ChangesBrowserNode.IGNORED_FILES_TAG);
+    }
+    if (lockedFolders != null && !lockedFolders.isEmpty()) {
+      buildVirtualFiles(lockedFolders, ChangesBrowserNode.LOCKED_FOLDERS_TAG);
     }
 
     if (!locallyDeletedFiles.isEmpty()) {

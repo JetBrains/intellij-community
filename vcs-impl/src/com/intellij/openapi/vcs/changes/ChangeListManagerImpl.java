@@ -36,10 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -66,6 +63,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private VirtualFileHolder myUnversionedFilesHolder;
   private VirtualFileHolder myModifiedWithoutEditingHolder;
   private VirtualFileHolder myIgnoredFilesHolder;
+  private VirtualFileHolder myLockedFoldersHolder;
   private DeletedFilesHolder myDeletedFilesHolder = new DeletedFilesHolder();
   private SwitchedFileHolder mySwitchedFilesHolder;
   private final List<LocalChangeList> myChangeLists = new ArrayList<LocalChangeList>();
@@ -116,6 +114,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myUnversionedFilesHolder = new VirtualFileHolder(project);
     myModifiedWithoutEditingHolder = new VirtualFileHolder(project);
     myIgnoredFilesHolder = new VirtualFileHolder(project);
+    myLockedFoldersHolder = new VirtualFileHolder(project);
     mySwitchedFilesHolder = new SwitchedFileHolder(project);
   }
 
@@ -292,6 +291,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       final VirtualFileHolder ignoredHolder;
       final DeletedFilesHolder deletedHolder;
       final SwitchedFileHolder switchedHolder;
+      final VirtualFileHolder lockedFoldersHolder;
 
       if (wasEverythingDirty) {
         myUpdateException = null;
@@ -302,6 +302,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         deletedHolder = myDeletedFilesHolder.copy();
         modifiedWithoutEditingHolder = myModifiedWithoutEditingHolder.copy();
         ignoredHolder = myIgnoredFilesHolder.copy();
+        lockedFoldersHolder = myLockedFoldersHolder.copy();
         switchedHolder = mySwitchedFilesHolder.copy();
 
         if (wasEverythingDirty) {
@@ -309,6 +310,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           deletedHolder.cleanAll();
           modifiedWithoutEditingHolder.cleanAll();
           ignoredHolder.cleanAll();
+          lockedFoldersHolder.cleanAll();
           switchedHolder.cleanAll();
         }
       }
@@ -317,6 +319,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         deletedHolder = myDeletedFilesHolder;
         modifiedWithoutEditingHolder = myModifiedWithoutEditingHolder;
         ignoredHolder = myIgnoredFilesHolder;
+        lockedFoldersHolder = myLockedFoldersHolder;
         switchedHolder = mySwitchedFilesHolder;
       }
 
@@ -338,12 +341,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           deletedHolder.cleanScope(scope);
           modifiedWithoutEditingHolder.cleanScope(scope);
           ignoredHolder.cleanScope(scope);
+          lockedFoldersHolder.cleanScope(scope);
           switchedHolder.cleanScope(scope);
         }
 
         try {
           final ChangeProvider changeProvider = vcs.getChangeProvider();
           if (changeProvider != null) {
+            final FoldersCutDownWorker foldersCutDownWorker = new FoldersCutDownWorker();
             try {
               myUpdateChangesProgressIndicator = new EmptyProgressIndicator();
               changeProvider.getChanges(scope, new ChangelistBuilder() {
@@ -407,6 +412,17 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                     }
                     // if a file was previously marked as switched through recursion, remove it from switched list
                     switchedHolder.removeFile(file);
+                    ChangesViewManager.getInstance(myProject).scheduleRefresh();
+                  }
+                }
+
+                public void processLockedFolder(final VirtualFile file) {
+                  if (file == null) return;
+                  if (myDisposed) throw new DisposedException();
+                  if (scope.belongsTo(new FilePathImpl(file))) {
+                    if (foldersCutDownWorker.addCurrent(file)) {
+                      lockedFoldersHolder.addFile(file);
+                    }
                     ChangesViewManager.getInstance(myProject).scheduleRefresh();
                   }
                 }
@@ -478,11 +494,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                                 (!myDeletedFilesHolder.equals(deletedHolder)) ||
                                 (!myModifiedWithoutEditingHolder.equals(modifiedWithoutEditingHolder)) ||
                                 (!myIgnoredFilesHolder.equals(ignoredHolder)) ||
+                                (!myLockedFoldersHolder.equals(lockedFoldersHolder)) ||
                                 (!mySwitchedFilesHolder.equals(switchedHolder));
         myUnversionedFilesHolder = unversionedHolder;
         myDeletedFilesHolder = deletedHolder;
         myModifiedWithoutEditingHolder = modifiedWithoutEditingHolder;
         myIgnoredFilesHolder = ignoredHolder;
+        myLockedFoldersHolder = lockedFoldersHolder;
         mySwitchedFilesHolder = switchedHolder;
         if (statusChanged) {
           myListeners.getMulticaster().unchangedFileStatusChanged();
@@ -618,6 +636,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   List<VirtualFile> getIgnoredFiles() {
     return new ArrayList<VirtualFile>(myIgnoredFilesHolder.getFiles());
+  }
+
+  List<VirtualFile> getLockedFolders() {
+    return new ArrayList<VirtualFile>(myLockedFoldersHolder.getFiles());
   }
 
   List<FilePath> getDeletedFiles() {
@@ -1190,5 +1212,24 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   public void notifyChangeListCommentChanged(final LocalChangeList list, final String oldComment) {
     myListeners.getMulticaster().changeListCommentChanged(list, oldComment);
+  }
+
+  private static class FoldersCutDownWorker {
+    private final Set<String> myPaths;
+
+    private FoldersCutDownWorker() {
+      myPaths = new HashSet<String>();
+    }
+
+    public boolean addCurrent(final VirtualFile file) {
+      final String currentPath = file.getPath();
+      for (String path : myPaths) {
+        if (currentPath.startsWith(path)) {
+          return false;
+        }
+      }
+      myPaths.add(currentPath);
+      return true;
+    }
   }
 }

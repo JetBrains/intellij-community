@@ -40,6 +40,8 @@ public interface ChangelistBuilder {
   void processModifiedWithoutCheckout(VirtualFile file);
   void processIgnoredFile(VirtualFile file);
 
+  void processLockedFolder(VirtualFile file);
+
   /**
    * Report a file which has been updated to a branch other than that of the files around it
    * ("switched"). Changed files (reported through {@link #processChange}) can also be reported as switched.

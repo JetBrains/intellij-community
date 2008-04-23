@@ -5,10 +5,10 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 
@@ -23,6 +23,8 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> {
     myProject = project;
     if (!userObject.isDirectory()) {
       myCount = 1;
+    } else {
+      myDirectoryCount = 1;
     }
   }
 

@@ -116,13 +116,14 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
 
   public void updateModel(List<? extends ChangeList> changeLists, List<VirtualFile> unversionedFiles, final List<FilePath> locallyDeletedFiles,
                           List<VirtualFile> modifiedWithoutEditing,
-                          MultiMap<String, VirtualFile> switchedFiles, 
-                          @Nullable List<VirtualFile> ignoredFiles) {
+                          MultiMap<String, VirtualFile> switchedFiles,
+                          @Nullable List<VirtualFile> ignoredFiles,
+                          final List<VirtualFile> lockedFolders) {
     storeState();
 
     TreeModelBuilder builder = new TreeModelBuilder(myProject, isShowFlatten());
     final DefaultTreeModel model = builder.buildModel(changeLists, unversionedFiles, locallyDeletedFiles, modifiedWithoutEditing, 
-                                                      switchedFiles, ignoredFiles);
+                                                      switchedFiles, ignoredFiles, lockedFolders);
     setModel(model);
     setCellRenderer(new ChangesBrowserNodeRenderer(myProject, isShowFlatten(), true));
 

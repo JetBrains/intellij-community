@@ -23,8 +23,8 @@ import com.intellij.openapi.vcs.changes.ChangelistBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -54,6 +54,9 @@ public class MockChangelistBuilder implements ChangelistBuilder {
   }
 
   public void processIgnoredFile(VirtualFile file) {
+  }
+
+  public void processLockedFolder(final VirtualFile file) {
   }
 
   public void processSwitchedFile(VirtualFile file, String branch, final boolean recursive) {

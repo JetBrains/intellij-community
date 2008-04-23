@@ -183,7 +183,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
                        changeListManager.getDeletedFiles(),
                        changeListManager.getModifiedWithoutEditing(),
                        changeListManager.getSwitchedFilesMap(),
-                       SHOW_IGNORED_MODE ? changeListManager.getIgnoredFiles() : null);
+                       SHOW_IGNORED_MODE ? changeListManager.getIgnoredFiles() : null, changeListManager.getLockedFolders());
   }
 
   public void readExternal(Element element) throws InvalidDataException {
