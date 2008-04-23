@@ -24,6 +24,10 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigrableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
+import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -252,15 +256,25 @@ public class GroovyConfigUtils {
     return new ValidationResult(GroovyBundle.message("invalid.groovy.sdk.path.message"));
   }
 
-  public static void createGroovyLibrary(final String path) {
+  public static Library createGroovyLibrary(final String path, final String name,final @Nullable Project project) {
+    if (project == null) return null;
+    final Ref<Library> libRef = new Ref<Library>();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         if (path.length() > 0) {
+
           String version = getGroovyVersion(path);
-          String libName = generateNewGroovyLibName(version);
-          Library groovyLibrary = createLibFirstTime(libName);
-          Library.ModifiableModel model = groovyLibrary.getModifiableModel();
-          removeOldRoots(model);
+          String libName = name != null ? name : generateNewGroovyLibName(version);
+
+          // create library
+          StructureConfigrableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
+          LibraryTableModifiableModelProvider provider = context.createModifiableModelProvider(LibraryTablesRegistrar.APPLICATION_LEVEL, true);
+          LibraryTable.ModifiableModel modifiableModel = provider.getModifiableModel();
+          Library library = modifiableModel.createLibrary(libName);
+          libRef.set(library);
+
+          // fill library
+          final Library.ModifiableModel model = ((LibrariesModifiableModel) modifiableModel).getLibraryEditor(library).getModel();
           File srcRoot = new File(path + "/src/main");
           if (srcRoot.exists()) {
             model.addRoot(VfsUtil.getUrlForLibraryRoot(srcRoot), OrderRootType.SOURCES);
@@ -278,14 +292,14 @@ public class GroovyConfigUtils {
               if (file.getName().endsWith(".jar"))
                 model.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
 
-          model.commit();
           saveGroovyVersion(version);
         }
       }
     });
+    return libRef.get();
   }
 
-  private static String generateNewGroovyLibName(String version) {
+  public static String generateNewGroovyLibName(String version) {
     List<Object> libNames = ContainerUtil.map(getGroovyLibraries(), new Function<Library, Object>() {
       public Object fun(Library library) {
         return library.getName();
@@ -295,7 +309,7 @@ public class GroovyConfigUtils {
     String newName = originalName;
     int index = 1;
     while (libNames.contains(newName)) {
-      newName = originalName + "(" + index + ")";
+      newName = originalName + " (" + index + ")";
       index++;
     }
     return newName;

@@ -145,7 +145,7 @@ public class GroovyFacetEditorTab extends FacetEditorTab {
                     GroovyIcons.BIG_ICON) == 0;
 
             if (addVersion && !GroovyConfigUtils.UNDEFINED_VERSION.equals(version)) {
-              GroovyConfigUtils.createGroovyLibrary(path);
+              GroovyConfigUtils.createGroovyLibrary(path, null, project);
               adjustVersionComboBox(versions.toArray(new String[versions.size()]), version);
             }
           }

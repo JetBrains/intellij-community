@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovySDK;
+import org.jetbrains.plugins.groovy.config.util.GroovySDKPointer;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -84,12 +85,36 @@ public class GroovyFacetTab extends FacetEditorTab {
   }
 
   public void onFacetInitialized(@NotNull Facet facet) {
-    final GrovySDKComboBox.DefaultGroovySDKComboBoxItem item = (GrovySDKComboBox.DefaultGroovySDKComboBoxItem) myComboBox.getSelectedItem();
+    final GrovySDKComboBox.DefaultGroovySDKComboBoxItem selectedItem = (GrovySDKComboBox.DefaultGroovySDKComboBoxItem) myComboBox.getSelectedItem();
     final Module module = myEditorContext.getModule();
+    final Project project = facet.getModule().getProject();
     if (module != null) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          GroovyConfigUtils.updateGroovyLibInModule(module, item.getGroovySDK());
+          GroovySDK sdk = null;
+          if (selectedItem instanceof GrovySDKComboBox.GroovySDKPointerItem) {
+            GrovySDKComboBox.GroovySDKPointerItem pointerItem = (GrovySDKComboBox.GroovySDKPointerItem) selectedItem;
+            String name = pointerItem.getName();
+            String path = pointerItem.getPath();
+            Library library = GroovyConfigUtils.createGroovyLibrary(path, name, project);
+            if (library != null) {
+              sdk = new GroovySDK(library);
+            }
+          } else {
+            sdk = selectedItem.getGroovySDK();
+          }
+          GroovyConfigUtils.updateGroovyLibInModule(module, sdk);
+
+          // create other libraries by their pointers
+          for (int i = 0; i < myComboBox.getItemCount(); i++) {
+            Object item = myComboBox.getItemAt(i);
+            if (item != selectedItem && item instanceof GrovySDKComboBox.GroovySDKPointerItem) {
+              GrovySDKComboBox.GroovySDKPointerItem pointerItem = (GrovySDKComboBox.GroovySDKPointerItem) item;
+              String name = pointerItem.getName();
+              String path = pointerItem.getPath();
+              GroovyConfigUtils.createGroovyLibrary(path, name, project);
+            }
+          }
         }
       });
     }
@@ -106,15 +131,9 @@ public class GroovyFacetTab extends FacetEditorTab {
       isSdkChanged = false;
     } else {
       Library library = libraries[0];
-      for (int i = 0; i < myComboBox.getItemCount(); i++) {
-        GrovySDKComboBox.DefaultGroovySDKComboBoxItem item = (GrovySDKComboBox.DefaultGroovySDKComboBoxItem) myComboBox.getItemAt(i);
-        GroovySDK sdk = item.getGroovySDK();
-        if (sdk == null) continue;
-        if (library.equals(sdk.getGroovyLibrary())) {
-          myComboBox.setSelectedIndex(i);
-          isSdkChanged = false;
-          break;
-        }
+      if (library != null) {
+        myComboBox.selectLibrary(library);
+        isSdkChanged = false;
       }
     }
   }
@@ -149,15 +168,14 @@ public class GroovyFacetTab extends FacetEditorTab {
                       GroovyIcons.BIG_ICON) == 0;
 
               if (addVersion && !GroovyConfigUtils.UNDEFINED_VERSION.equals(version)) {
-                GroovyConfigUtils.createGroovyLibrary(path);
-                updateComboBox();
+                String name = GroovyConfigUtils.generateNewGroovyLibName(version);
+                myComboBox.addSdk(new GroovySDKPointer(name, path, version));
               }
             } else {
               Messages.showErrorDialog(GroovyBundle.message("invalid.groovy.sdk.path.message"), GroovyBundle.message("invalid.groovy.sdk.path.text"));
             }
           }
         }
-
       });
     }
   }
