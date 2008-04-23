@@ -205,24 +205,30 @@ class LookupCellRenderer implements ListCellRenderer {
 
     String text = text3;
 
-    final int maxWidth =
-        (list.getFixedCellWidth() - myNameComponent.getPreferredSize().width - myLabel2.getPreferredSize().width) / FONT_WIDTH - 3;
+    final int listWidth = Math.max(list.getFixedCellWidth(), list.getWidth());
+    final int maxWidth = listWidth - myNameComponent.getPreferredSize().width - myLabel2.getPreferredSize().width - 3 * FONT_WIDTH;
 
     JLabel label = myLabel3;
     if (text == null) text = "";
-    else text += " ";
 
-    while (text.length() > maxWidth) {
-      String repl = text.replaceFirst("<((<\\.\\.\\.>)|[^<>])*>", "<...>");
-      if (repl.equals(text)) {
-        //text = "...";
-        break;
-      }
-      text = repl;
-    }
+    else text += " ";
 
     label.setText(text);
     label.setFont(NORMAL_FONT);
+
+    if (maxWidth > 0) {
+      while (label.getPreferredSize().width > maxWidth) {
+        String repl = text.replaceFirst("<((<\\.\\.\\.>)|[^<>])*>", "<...>");
+        if (repl.equals(text)) {
+          //text = "...";
+          break;
+        }
+        text = repl;
+        label.setText(text);
+      }
+    }
+
+
     Color sampleBackground = background;
 
     Object o = item.getObject();
