@@ -64,12 +64,11 @@ public abstract class BasicDomElementsInspection<T extends DomElement> extends D
     if (oldSize != holder.getSize()) return;
 
     if (!helper.checkRequired(element, holder).isEmpty()) return;
-    if (element instanceof GenericDomValue) {
-      helper.checkExtendClass((GenericDomValue)element, holder);
-    }
     if (!(element instanceof GenericAttributeValue) && !GenericDomValue.class.equals(ReflectionUtil.getRawType(element.getDomElementType()))) {
-      helper.checkNameIdentity(element, holder);
+      if (!helper.checkNameIdentity(element, holder).isEmpty()) return;
     }
+
+    helper.checkCustomAnnotations(element, holder);
   }
 
 }

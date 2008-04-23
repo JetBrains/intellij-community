@@ -15,22 +15,24 @@
  */
 package com.intellij.util.xml.highlighting;
 
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Annotation;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author peter
  */
 public abstract class DomHighlightingHelper {
+  private final DomCustomAnnotationChecker[] myCustomCheckers = Extensions.getExtensions(DomCustomAnnotationChecker.EP_NAME);
 
   @NotNull
   public abstract List<DomElementProblemDescriptor> checkRequired(DomElement element, DomElementAnnotationHolder holder);
-
-  @NotNull
-  public abstract List<DomElementProblemDescriptor> checkExtendClass(GenericDomValue element, DomElementAnnotationHolder holder);
 
   @NotNull
   public abstract List<DomElementProblemDescriptor> checkResolveProblems(GenericDomValue element, DomElementAnnotationHolder holder);
@@ -39,4 +41,22 @@ public abstract class DomHighlightingHelper {
   public abstract List<DomElementProblemDescriptor> checkNameIdentity(DomElement element, DomElementAnnotationHolder holder);
 
   public abstract void runAnnotators(DomElement element, DomElementAnnotationHolder holder, Class<? extends DomElement> rootClass);
+
+  @NotNull
+  public List<DomElementProblemDescriptor> checkCustomAnnotations(final DomElement element, final DomElementAnnotationHolder holder) {
+    List<DomElementProblemDescriptor> result = null;
+    for (final DomCustomAnnotationChecker<?> checker : myCustomCheckers) {
+      final List<DomElementProblemDescriptor> list = checkAnno(element, checker, holder);
+      if (!list.isEmpty()) {
+        if (result == null) result = new SmartList<DomElementProblemDescriptor>();
+        result.addAll(list);
+      }
+    }
+    return result == null ? Collections.<DomElementProblemDescriptor>emptyList() : result;
+  }
+
+  private <T extends Annotation> List<DomElementProblemDescriptor> checkAnno(final DomElement element, final DomCustomAnnotationChecker<T> checker, DomElementAnnotationHolder holder) {
+    final T annotation = element.getAnnotation(checker.getAnnotationClass());
+    return annotation != null ? checker.checkForProblems(annotation, element, holder, this) : Collections.<DomElementProblemDescriptor>emptyList();
+  }
 }
