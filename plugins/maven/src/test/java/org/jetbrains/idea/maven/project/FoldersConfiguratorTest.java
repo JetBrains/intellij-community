@@ -1,10 +1,10 @@
 package org.jetbrains.idea.maven.project;
 
-import org.jetbrains.idea.maven.ImportingTestCase;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.File;
 
-public class FoldersConfiguratorTest extends ImportingTestCase {
+public class FoldersConfiguratorTest extends MavenImportingTestCase {
   public void testUpdatingExternallyCreatedFolders() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

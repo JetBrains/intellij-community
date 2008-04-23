@@ -31,7 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public abstract class ImportingTestCase extends MavenTestCase {
+public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenImporterSettings myPrefs;
   protected MavenProjectModel myProjectModel;
   protected ArrayList<Pair<File, List<String>>> myResolutionProblems;

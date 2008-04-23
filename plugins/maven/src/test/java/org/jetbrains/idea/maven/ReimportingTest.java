@@ -6,7 +6,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 
-public class ReimportingTest extends ImportingTestCase {
+public class ReimportingTest extends MavenImportingTestCase {
   private int questionsCount;
 
   @Override

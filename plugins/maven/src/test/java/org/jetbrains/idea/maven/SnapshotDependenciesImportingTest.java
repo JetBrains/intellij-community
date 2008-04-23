@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven;
 import java.io.File;
 import java.io.IOException;
 
-public class SnapshotDependenciesImportingTest extends ImportingTestCase {
+public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
   private File remoteRepoDir;
 
   @Override

@@ -4,7 +4,7 @@ import com.intellij.openapi.util.io.FileUtil;
 
 import java.util.List;
 
-public class DependenciesImportingTest extends ImportingTestCase {
+public class DependenciesImportingTest extends MavenImportingTestCase {
   public void testLibraryDependency() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

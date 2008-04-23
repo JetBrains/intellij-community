@@ -38,12 +38,8 @@ public abstract class MavenTestCase extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    
-    myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
-    myTempDirFixture.setUp();
 
-    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder().getFixture();
-    myTestFixture.setUp();
+    setUpFixtures();
 
     myProject = myTestFixture.getProject();
 
@@ -59,6 +55,14 @@ public abstract class MavenTestCase extends TestCase {
     });
   }
 
+  protected void setUpFixtures() throws Exception {
+    myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
+    myTempDirFixture.setUp();
+
+    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder().getFixture();
+    myTestFixture.setUp();
+  }
+
   protected void setUpInWriteAction() throws Exception {
     myDir = new File(myTempDirFixture.getTempDirPath());
 
@@ -69,9 +73,13 @@ public abstract class MavenTestCase extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    tearDownFixtures();
+    super.tearDown();
+  }
+
+  protected void tearDownFixtures() throws Exception {
     myTestFixture.tearDown();
     myTempDirFixture.tearDown();
-    super.tearDown();
   }
 
   @Override

@@ -4,7 +4,7 @@ import org.jetbrains.idea.maven.project.MavenException;
 
 import java.io.File;
 
-public class InvalidProjectImportingTest extends ImportingTestCase {
+public class InvalidProjectImportingTest extends MavenImportingTestCase {
   public void testUnknownProblem() throws Exception {
     try {
       importProject("");

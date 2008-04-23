@@ -1,6 +1,6 @@
 package org.jetbrains.idea.maven;
 
-public class ContentRootsImportingTest extends ImportingTestCase {
+public class ContentRootsImportingTest extends MavenImportingTestCase {
   public void testSimpleProjectStructure() throws Exception {
     createStdProjectFolders();
 

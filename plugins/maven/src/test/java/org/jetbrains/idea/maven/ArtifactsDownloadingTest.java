@@ -4,7 +4,7 @@ import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
 
 import java.io.File;
 
-public class ArtifactsDownloadingTest extends ImportingTestCase {
+public class ArtifactsDownloadingTest extends MavenImportingTestCase {
   public void testSimple() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

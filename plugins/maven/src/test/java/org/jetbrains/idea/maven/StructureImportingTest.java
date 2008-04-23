@@ -8,7 +8,7 @@ import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 
 import java.io.File;
 
-public class StructureImportingTest extends ImportingTestCase {
+public class StructureImportingTest extends MavenImportingTestCase {
   public void testUsingRelativePathForTheProject() throws Exception {
     assertFalse(((ProjectEx)myProject).isSavePathsRelative());
 
