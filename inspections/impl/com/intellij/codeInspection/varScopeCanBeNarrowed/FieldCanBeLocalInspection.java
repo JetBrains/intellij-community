@@ -128,7 +128,13 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
             final PsiElement resolved = readBeforeWrite.resolve();
             if (resolved instanceof PsiField) {
               final PsiField field = (PsiField)resolved;
-              candidates.remove(field);
+              PsiElement parent = body.getParent();
+              if (parent instanceof PsiMethod && ((PsiMethod)parent).isConstructor()) {
+                if (field.getInitializer() == null || ((PsiMethod)parent).getContainingClass().getInitializers().length > 0) candidates.remove(field);
+              }
+              else {
+                candidates.remove(field);
+              }
             }
           }
         }
@@ -176,14 +182,13 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (!myField.isValid()) return; //weird. should not get here when field becomes invalid
 
-      PsiManager manager = PsiManager.getInstance(project);
       final Collection<PsiReference> refs = ReferencesSearch.search(myField).findAll();
       if (refs.isEmpty()) return;
       Set<PsiReference> refsSet = new HashSet<PsiReference>(refs);
       PsiCodeBlock anchorBlock = findAnchorBlock(refs);
       if (anchorBlock == null) return; //was assert, but need to fix the case when obsolete inspection highlighting is left
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-      final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(manager.getProject());
+      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+      final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       final String propertyName = styleManager.variableNameToPropertyName(myField.getName(), VariableKind.FIELD);
       String localName = styleManager.propertyNameToVariableName(propertyName, VariableKind.LOCAL_VARIABLE);
       localName = RefactoringUtil.suggestUniqueVariableName(localName, anchorBlock, myField);
@@ -195,7 +200,8 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         if (anchor instanceof PsiExpressionStatement &&
             ((PsiExpressionStatement) anchor).getExpression() instanceof PsiAssignmentExpression) {
           final PsiAssignmentExpression expression = (PsiAssignmentExpression) ((PsiExpressionStatement) anchor).getExpression();
-          if (expression.getLExpression() instanceof PsiReferenceExpression &&
+          if (expression.getOperationTokenType() == JavaTokenType.EQ &&
+              expression.getLExpression() instanceof PsiReferenceExpression &&
               ((PsiReferenceExpression) expression.getLExpression()).isReferenceTo(myField)) {
             final PsiExpression initializer = expression.getRExpression();
             final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), initializer);
@@ -206,10 +212,10 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
             refsSet.remove(expression.getLExpression());
             retargetReferences(elementFactory, localName, refsSet);
           } else {
-            newDeclaration = addDeclarationWithoutInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refsSet);
+            newDeclaration = addDeclarationWithFieldInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refsSet);
           }
         } else {
-          newDeclaration = addDeclarationWithoutInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refsSet);
+          newDeclaration = addDeclarationWithFieldInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refsSet);
         }
       }
       catch (IncorrectOperationException e) {
@@ -257,12 +263,12 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       }
     }
 
-    private PsiElement addDeclarationWithoutInitializerAndRetargetReferences(final PsiElementFactory elementFactory,
-                                                                             final String localName,
-                                                                             final PsiCodeBlock anchorBlock, final PsiElement anchor,
-                                                                             final Set<PsiReference> refs)
+    private PsiElement addDeclarationWithFieldInitializerAndRetargetReferences(final PsiElementFactory elementFactory, final String localName,
+                                                                               final PsiCodeBlock anchorBlock,
+                                                                               final PsiElement anchor,
+                                                                               final Set<PsiReference> refs)
       throws IncorrectOperationException {
-      final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), null);
+      final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), myField.getInitializer());
       final PsiElement newDeclaration = anchorBlock.addBefore(decl, anchor);
 
       retargetReferences(elementFactory, localName, refs);
