@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NonNls;
     public static final String INDEX_OF = "indexOf";
     public static final String JAVA_LANG = "java.lang";
     public static final String ITERATOR = "iterator";
+    public static final String LAST_INDEX_OF = "lastIndexOf";
     public static final String LENGTH = "length";
     public static final String MAIN = "main";
     public static final String NEXT = "next";

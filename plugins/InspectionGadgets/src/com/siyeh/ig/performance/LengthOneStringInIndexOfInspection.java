@@ -124,7 +124,7 @@ public class LengthOneStringInIndexOfInspection
                     call.getMethodExpression();
             @NonNls final String name = methodExpression.getReferenceName();
             if (!HardcodedMethodConstants.INDEX_OF.equals(name) &&
-                    !"lastIndexOf".equals(name)) {
+                    !HardcodedMethodConstants.LAST_INDEX_OF.equals(name)) {
                 return false;
             }
             final PsiMethod method = call.resolveMethod();

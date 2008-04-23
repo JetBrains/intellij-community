@@ -419,7 +419,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 "containsValue".equals(methodName) ||
                 "contains".equals(methodName) ||
                 HardcodedMethodConstants.INDEX_OF.equals(methodName) ||
-                "lastIndexOf".equals(methodName)) {
+                HardcodedMethodConstants.LAST_INDEX_OF.equals(methodName)) {
             final PsiClass containingClass = method.getContainingClass();
             if (ClassUtils.isSubclass(containingClass,
                     "java.util.Map") || ClassUtils.isSubclass(containingClass,
