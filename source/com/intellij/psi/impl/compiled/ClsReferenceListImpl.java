@@ -32,6 +32,11 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
   }
 
   @NotNull
+  public PsiElement[] getChildren() {
+    return myRefs;
+  }
+
+  @NotNull
   public PsiClassType[] getReferencedTypes() {
     return getStub().getReferencedTypes();
   }
