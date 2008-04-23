@@ -154,9 +154,9 @@ public class ActionMenuItem extends JMenuItem {
   }
 
   private void updateIcon() {
-    if (myAction instanceof ToggleAction && myPresentation.getIcon() == null) {
-      ToggleAction stateAction = (ToggleAction)myAction;
-      if (stateAction.isSelected(myEvent)) {
+    if (myAction instanceof Toggleable && myPresentation.getIcon() == null) {
+      myAction.update(myEvent);
+      if (Boolean.TRUE.equals(myEvent.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY))) {
         setIcon(ourCheckedIcon);
         setDisabledIcon(IconLoader.getDisabledIcon(ourCheckedIcon));
       }

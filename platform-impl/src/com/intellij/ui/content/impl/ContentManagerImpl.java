@@ -8,8 +8,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -17,8 +19,8 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -51,12 +53,14 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private final Set<Content> myContentWithChangedComponent = new HashSet<Content>();
 
   private boolean myDisposed;
+  private Project myProject;
 
   /**
    * WARNING: as this class adds listener to the ProjectManager which is removed on projectClosed event, all instances of this class
    * must be created on already OPENED projects, otherwise there will be memory leak!
    */
   public ContentManagerImpl(ContentUI contentUI, boolean canCloseContents, Project project) {
+    myProject = project;
     myCanCloseContents = canCloseContents;
     myContents = new ArrayList<Content>();
     myListeners = new EventListenerList();
@@ -334,6 +338,11 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   public void setSelectedContent(@NotNull final Content content, final boolean requestFocus) {
+    if (isSelected(content) && requestFocus) {
+      requestFocus(content);
+      return;
+    }
+
     if (!checkSelectionChangeShouldBeProcessed(content)) return;
     if (!myContents.contains(content)) {
       throw new IllegalArgumentException("Cannot find content:" + content.getDisplayName());
@@ -446,10 +455,20 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   public void requestFocus(Content content) {
-    Content toSelect = content == null ? getSelectedContent() : content;
+    final Content toSelect = content == null ? getSelectedContent() : content;
     if (toSelect == null) return;
     assert myContents.contains(toSelect);
 
+
+    IdeFocusManager.getInstance(myProject).requestFocus(new ActionCallback.Runnable(content) {
+      public ActionCallback run() {
+        doRequestFocus(toSelect);
+        return new ActionCallback.Done();
+      }
+    }, true);
+  }
+
+  private void doRequestFocus(final Content toSelect) {
     JComponent toFocus = toSelect.getPreferredFocusableComponent();
     toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(toFocus);
 

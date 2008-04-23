@@ -24,6 +24,8 @@ public interface RunnerLayoutUi  {
 
   RunnerLayoutUi initTabDefaults(int tabId, @Nullable String defaultTabText, @Nullable Icon defaultTabIcon);
 
+  RunnerLayoutUi initStartupContent(@NotNull String id);
+
   @NotNull
   Content addContent(@NotNull Content content);
 
@@ -38,10 +40,16 @@ public interface RunnerLayoutUi  {
 
   boolean removeContent(@Nullable Content content, boolean dispose);
 
+  boolean isFocusOnStartup(Content content);
+
+  RunnerLayoutUi setFocusOnStartup(@Nullable Content content);
+
+  void focusStartupContent(@Nullable Content defaultContent);
+
   @Nullable
   Content findContent(@NotNull String contentId);
 
-  void setSelected(@Nullable Content content);
+  void selectAndFocus(@Nullable Content content);
 
   RunnerLayoutUi addListener(@NotNull ContentManagerListener listener, @NotNull Disposable parent);
 

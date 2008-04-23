@@ -149,11 +149,14 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
     return myContent2Cell.isEmpty();
   }
 
-  public void restoreLastUiState() {
+  public ActionCallback restoreLastUiState() {
     myLastUiStateWasRestored = true;
+    final ActionCallback result = new ActionCallback(myPlaceInGrid2Cell.values().size());
     for (final GridCell cell : myPlaceInGrid2Cell.values()) {
-      cell.restoreLastUiState();
+      cell.restoreLastUiState().notifyWhenDone(result);
     }
+
+    return result;
   }
 
   public void saveUiState() {

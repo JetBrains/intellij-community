@@ -21,8 +21,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class ActionCallback {
 
-  ExecutionCallback myDone = new ExecutionCallback();
-  ExecutionCallback myRejected = new ExecutionCallback();
+  ExecutionCallback myDone;
+  ExecutionCallback myRejected;
+
+  public ActionCallback() {
+    myDone = new ExecutionCallback();
+    myRejected = new ExecutionCallback();
+  }
+
+  public ActionCallback(int countToDone) {
+    assert countToDone >= 1;
+
+    myDone = new ExecutionCallback(countToDone);
+    myRejected = new ExecutionCallback();
+  }
 
   public void setDone() {
     myDone.setExecuted();
@@ -59,6 +71,12 @@ public class ActionCallback {
   public static class Done extends ActionCallback {
     public Done() {
       setDone();
+    }
+  }
+
+  public static class Rejected extends ActionCallback {
+    public Rejected() {
+      setRejected();
     }
   }
 

@@ -242,7 +242,9 @@ public class GridCell implements Disposable {
     myTabs.setSideComponentVertical(!horizontal);
   }
 
-  public void restoreLastUiState() {
+  public ActionCallback restoreLastUiState() {
+    final ActionCallback result = new ActionCallback();
+
     restoreProportions();
 
     Content[] contents = getContents();
@@ -253,8 +255,12 @@ public class GridCell implements Disposable {
     }
 
     if (!isRestoringFromDetach() && myContainer.getTab().isDetached(myPlaceInGrid)) {
-      detach();
+      detach().notifyWhenDone(result);
+    } else {
+      result.setDone();
     }
+
+    return result;
   }
 
   private Content[] getContents() {
@@ -327,7 +333,7 @@ public class GridCell implements Disposable {
     }
   }
 
-  public void detach() {
+  public ActionCallback detach() {
     myContext.saveUiState();
 
     final DimensionService dimService = DimensionService.getInstance();
@@ -343,33 +349,37 @@ public class GridCell implements Disposable {
       targetBounds.setSize(storedSize);
     }
 
+    final ActionCallback result = new ActionCallback();
+
     if (storedLocation == null || storedSize == null) {
       if (myContents.size() > 0) {
         myContext.validate(myContents.getKeys().iterator().next(), new ActionCallback.Runnable() {
           public ActionCallback run() {
             if (!myTabs.getComponent().isShowing()) {
-              detachTo(targetBounds.getLocation(), targetBounds.getSize(), false);
+              detachTo(targetBounds.getLocation(), targetBounds.getSize(), false).notifyWhenDone(result);
             } else {
-              detachForShowingTabs();
+              detachForShowingTabs().notifyWhenDone(result);
             }
 
             return new ActionCallback.Done();
           }
         });
 
-        return;
+        return result;
       }
     }
 
-    detachTo(targetBounds.getLocation(), targetBounds.getSize(), false);
+    detachTo(targetBounds.getLocation(), targetBounds.getSize(), false).notifyWhenDone(result);
+
+    return result;
   }
 
-  private void detachForShowingTabs() {
-    detachTo(myTabs.getComponent().getLocationOnScreen(), myTabs.getComponent().getSize(), false);
+  private ActionCallback detachForShowingTabs() {
+    return detachTo(myTabs.getComponent().getLocationOnScreen(), myTabs.getComponent().getSize(), false);
   }
 
-  private void detachTo(Point screenPoint, Dimension size, boolean dragging) {
-    if (isDetached()) return;
+  private ActionCallback detachTo(Point screenPoint, Dimension size, boolean dragging) {
+    if (isDetached()) return new ActionCallback.Done();
 
     final Content[] contents = getContents();
 
@@ -392,6 +402,8 @@ public class GridCell implements Disposable {
     myContext.saveUiState();
 
     myTabs.updateTabActions(true);
+
+    return new ActionCallback.Done();
   }
 
   private void ensureVisible() {

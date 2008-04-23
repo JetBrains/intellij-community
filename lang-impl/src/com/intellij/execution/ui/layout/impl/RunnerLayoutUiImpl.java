@@ -35,7 +35,7 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
     myLayout = ApplicationManager.getApplication().getComponent(RunnerLayoutSettings.class).getLayout(runnerType);
     Disposer.register(parent, this);
 
-    myContentUI = new RunnerContentUi(myProject, ActionManager.getInstance(), IdeFocusManager.getInstance(myProject), myLayout,
+    myContentUI = new RunnerContentUi(myProject, this, ActionManager.getInstance(), IdeFocusManager.getInstance(myProject), myLayout,
                                            runnerTitle + " - " + sessionName);
 
 
@@ -57,6 +57,11 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
 
   public RunnerLayoutUi initTabDefaults(int id, String text, Icon icon) {
     getLayout().setDefault(id, text, icon);
+    return this;
+  }
+
+  public RunnerLayoutUi initStartupContent(final String id) {
+    getLayout().setDefaultToFocusOnstartup(id);
     return this;
   }
 
@@ -132,14 +137,31 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
     return myViewsContentManager;
   }
 
-  public void setSelected(final Content content) {
+  public void selectAndFocus(@Nullable final Content content) {
     if (content == null) return;
-    getContentManager().setSelectedContent(content);
+    getContentManager().setSelectedContent(content, true);
   }
 
   public boolean removeContent(final Content content, final boolean dispose) {
     if (content == null) return false;
     return getContentManager().removeContent(content, dispose);
+  }
+
+  public boolean isFocusOnStartup(final Content content) {
+    final String id = content.getUserData(View.ID);
+    return getLayout().isToFocusOnStartup(id);
+  }
+
+  public RunnerLayoutUi setFocusOnStartup(@Nullable final Content content) {
+    getLayout().setToFocusOnStartup(content != null ? content.getUserData(View.ID) : null);
+    return this;
+  }
+
+  public void focusStartupContent(@Nullable final Content defaultContent) {
+    final String toFocus = getLayout().getToFocusOnStartup();
+    if (toFocus != null) {
+      selectAndFocus(findContent(toFocus));
+    }
   }
 
   public void removeContent(String id, final boolean dispose) {
@@ -170,13 +192,6 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
       }
     }
     return null;
-  }
-
-  public void toFront(@NotNull final String id) {
-    final Content content = findContent(id);
-    if (content != null) {
-      setSelected(content);
-    }
   }
 
   public RunnerLayoutUi addListener(@NotNull final ContentManagerListener listener, @NotNull final Disposable parent) {

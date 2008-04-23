@@ -97,7 +97,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     myUi = RunnerLayoutUi.Factory.getInstance(project).create("JavaDebugger", DebuggerBundle.message("title.generic.debug.dialog"), sessionName, this);
 
-    myUi.initTabDefaults(0, "Debugger", null);
+    myUi.initTabDefaults(0, "Debugger", null).initStartupContent(DebuggerContentInfo.FRAME_CONTENT);
 
     final DebuggerSettings debuggerSettings = DebuggerSettings.getInstance();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -189,9 +189,6 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
         }
       }
     }, this);
-
-
-    myUi.setSelected(framesContent);
   }
 
   private Project getProject() {
@@ -465,7 +462,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   }
 
   public void showFramePanel() {
-    myUi.setSelected(myUi.findContent(DebuggerContentInfo.FRAME_CONTENT));
+    myUi.selectAndFocus(myUi.findContent(DebuggerContentInfo.FRAME_CONTENT));
   }
 
   private class MyDebuggerStateManager extends DebuggerStateManager {

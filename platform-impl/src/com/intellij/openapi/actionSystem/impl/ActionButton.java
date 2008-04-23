@@ -57,8 +57,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
   public void paintChildren(Graphics g) {}
 
   public int getPopState() {
-    if (myAction instanceof ToggleAction) {
-      Boolean selected = (Boolean)myPresentation.getClientProperty(ToggleAction.SELECTED_PROPERTY);
+    if (myAction instanceof Toggleable) {
+      Boolean selected = (Boolean)myPresentation.getClientProperty(Toggleable.SELECTED_PROPERTY);
       boolean flag1 = selected != null && selected.booleanValue();
       return getPopState(flag1);
     }

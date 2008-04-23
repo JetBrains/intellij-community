@@ -15,16 +15,13 @@
  */
 package com.intellij.openapi.actionSystem;
 
-import org.jetbrains.annotations.NonNls;
-
 import javax.swing.*;
 
 /**
  * An action which has a selected state, and which toggles its selected state when performed.
  * Can be used to represent a menu item with a checkbox, or a toolbar button which keeps its pressed state.
  */
-public abstract class ToggleAction extends AnAction {
-  @NonNls public static final String SELECTED_PROPERTY = "selected";
+public abstract class ToggleAction extends AnAction implements Toggleable {
 
   public ToggleAction(){
   }

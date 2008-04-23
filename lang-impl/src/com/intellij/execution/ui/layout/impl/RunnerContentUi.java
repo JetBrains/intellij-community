@@ -69,13 +69,16 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   private boolean myMinimizeActionEnabled = true;
   private boolean myMoveToGridActionEnabled = true;
+  private RunnerLayoutUi myRunnerUi;
 
   public RunnerContentUi(Project project,
+                         RunnerLayoutUi ui,
                          ActionManager actionManager,
                          IdeFocusManager focusManager,
                          RunnerLayout settings,
                          String sessionName) {
     myProject = project;
+    myRunnerUi = ui;
     myLayoutSettings = settings;
     myActionManager = actionManager;
     mySessionName = sessionName;
@@ -391,22 +394,27 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return hasToolbarContent;
   }
 
-  private void restoreLastUiState() {
-    if (isStateBeingRestored()) return;
+  private ActionCallback restoreLastUiState() {
+    if (isStateBeingRestored()) return new ActionCallback.Rejected();
 
     try {
       setStateIsBeingRestored(true, this);
 
-      if (!RunnerContentUi.ensureValid(myTabs.getComponent())) return;
+      if (!RunnerContentUi.ensureValid(myTabs.getComponent())) return new ActionCallback.Rejected();
 
 
       List<TabInfo> tabs = new ArrayList<TabInfo>();
       tabs.addAll(myTabs.getTabs());
+
+      final ActionCallback result = new ActionCallback(tabs.size());
+
       for (TabInfo each : tabs) {
-        getGridFor(each).restoreLastUiState();
+        getGridFor(each).restoreLastUiState().notifyWhenDone(result);
       }
 
       restoreLastSelectedTab();
+
+      return result;
     }
     finally {
       setStateIsBeingRestored(false, this);
@@ -564,6 +572,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   private class MyComponent extends Wrapper.FocusHolder implements DataProvider {
+
+    private boolean myWasEverAdded;
+
     public MyComponent() {
       setOpaque(true);
       setFocusCycleRoot(true);
@@ -587,7 +598,14 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            restoreLastUiState();
+            restoreLastUiState().doWhenDone(new Runnable() {
+              public void run() {
+                if (!myWasEverAdded) {
+                  myWasEverAdded = true;
+                  myRunnerUi.focusStartupContent(null);
+                }
+              }
+            });
           }
         });
       }
@@ -868,6 +886,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   public IdeFocusManager getFocusManager() {
     return myFocusManager;
+  }
+
+  public RunnerLayoutUi getRunnerLayoutUi() {
+    return myRunnerUi;
   }
 
 

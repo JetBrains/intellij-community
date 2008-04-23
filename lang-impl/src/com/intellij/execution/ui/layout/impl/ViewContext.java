@@ -1,5 +1,6 @@
 package com.intellij.execution.ui.layout.impl;
 
+import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -37,6 +38,8 @@ public interface ViewContext extends Disposable {
   ActionManager getActionManager();
 
   IdeFocusManager getFocusManager();
+
+  RunnerLayoutUi getRunnerLayoutUi();
 
   GridCell findCellFor(final Content content);
 

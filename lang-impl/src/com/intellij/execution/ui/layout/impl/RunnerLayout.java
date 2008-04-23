@@ -1,9 +1,10 @@
 package com.intellij.execution.ui.layout.impl;
 
+import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
+import com.intellij.util.ui.update.ComparableObjectCheck;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,7 @@ public class RunnerLayout {
   private Map<Integer, Tab.Default> myDefaultTabs = new HashMap<Integer, Tab.Default>();
 
   protected General myGeneral = new General();
+  private String myDefaultToFocus;
 
 
   public RunnerLayout(final String ID) {
@@ -207,8 +209,26 @@ public class RunnerLayout {
     return 0;
   }
 
+  public boolean isToFocusOnStartup(final String id) {
+    return ComparableObjectCheck.equals(id, getToFocusOnStartup());
+  }
+
+  public void setToFocusOnStartup(final String id) {
+    myGeneral.focusOnStart = id;
+  }
+
+  public void setDefaultToFocusOnstartup(String id) {
+    myDefaultToFocus = id;
+  }
+
+  @Nullable
+  public String getToFocusOnStartup() {
+    return myGeneral.focusOnStart != null ? myGeneral.focusOnStart : myDefaultToFocus;
+  }
+
   public static class General {
     public volatile boolean horizontalToolbar = false;
     public volatile int selectedTab = 0;
+    public volatile String focusOnStart;
   }
 }
