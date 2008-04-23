@@ -102,7 +102,7 @@ public class GroovyFacetTab extends FacetEditorTab {
             GrovySDKComboBox.GroovySDKPointerItem pointerItem = (GrovySDKComboBox.GroovySDKPointerItem) selectedItem;
             String name = pointerItem.getName();
             String path = pointerItem.getPath();
-            Library library = GroovyConfigUtils.createGroovyLibrary(path, name, project);
+            Library library = GroovyConfigUtils.createGroovyLibrary(path, name, project, true);
             if (library != null) {
               sdk = new GroovySDK(library);
             }
@@ -118,7 +118,7 @@ public class GroovyFacetTab extends FacetEditorTab {
               GrovySDKComboBox.GroovySDKPointerItem pointerItem = (GrovySDKComboBox.GroovySDKPointerItem) item;
               String name = pointerItem.getName();
               String path = pointerItem.getPath();
-              GroovyConfigUtils.createGroovyLibrary(path, name, project);
+              GroovyConfigUtils.createGroovyLibrary(path, name, project, true);
             }
           }
         }

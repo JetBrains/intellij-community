@@ -47,12 +47,10 @@ import java.util.jar.Attributes;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Arrays;
 import java.io.File;
 import java.io.IOException;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -137,7 +135,14 @@ public class GroovyConfigUtils {
       }
     });
     return groovyLibs.toArray(new Library[groovyLibs.size()]);
+  }
 
+  public static String[] getGroovyLibNames() {
+    return ContainerUtil.map2Array(getGroovyLibraries(), String.class, new Function<Library, String>() {
+      public String fun(Library library) {
+        return library.getName();
+      }
+    });
   }
 
   public static boolean isGroovySdkLibrary(Library library) {
@@ -200,6 +205,8 @@ public class GroovyConfigUtils {
       model.commit();
       return;
     }
+
+    saveGroovyDefaultLibName(sdk.getName());
     Library newLib = sdk.getGroovyLibrary();
     LibraryOrderEntry addedEntry = model.addLibraryEntry(newLib);
     final OrderEntry[] order = model.getOrderEntries();
@@ -256,47 +263,70 @@ public class GroovyConfigUtils {
     return new ValidationResult(GroovyBundle.message("invalid.groovy.sdk.path.message"));
   }
 
-  public static Library createGroovyLibrary(final String path, final String name,final @Nullable Project project) {
+  public static Library createGroovyLibrary(final String path, final String name, final @Nullable Project project, final boolean inModuleSettings) {
     if (project == null) return null;
     final Ref<Library> libRef = new Ref<Library>();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        if (path.length() > 0) {
-
-          String version = getGroovyVersion(path);
-          String libName = name != null ? name : generateNewGroovyLibName(version);
-
-          // create library
-          StructureConfigrableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
-          LibraryTableModifiableModelProvider provider = context.createModifiableModelProvider(LibraryTablesRegistrar.APPLICATION_LEVEL, true);
-          LibraryTable.ModifiableModel modifiableModel = provider.getModifiableModel();
-          Library library = modifiableModel.createLibrary(libName);
-          libRef.set(library);
-
-          // fill library
-          final Library.ModifiableModel model = ((LibrariesModifiableModel) modifiableModel).getLibraryEditor(library).getModel();
-          File srcRoot = new File(path + "/src/main");
-          if (srcRoot.exists()) {
-            model.addRoot(VfsUtil.getUrlForLibraryRoot(srcRoot), OrderRootType.SOURCES);
-          }
-
-          File[] jars;
-          File embeddableDir = new File(path + "/embeddable");
-          if (embeddableDir.exists()) {
-            jars = embeddableDir.listFiles();
-          } else {
-            jars = new File(path + "/lib").listFiles();
-          }
-          if (jars != null)
-            for (File file : jars)
-              if (file.getName().endsWith(".jar"))
-                model.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
-
-          saveGroovyVersion(version);
-        }
+        libRef.set(createGroovyLibImmediately(path, name, project, inModuleSettings));
       }
     });
     return libRef.get();
+  }
+
+  private static Library createGroovyLibImmediately(String path, String name, Project project, boolean inModuleSettings) {
+    String version = getGroovyVersion(path);
+    String libName = name != null ? name : generateNewGroovyLibName(version);
+    if (path.length() > 0) {
+      // create library
+      LibraryTable.ModifiableModel modifiableModel = null;
+      Library library = null;
+
+      if (inModuleSettings) {
+        StructureConfigrableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
+        LibraryTableModifiableModelProvider provider = context.createModifiableModelProvider(LibraryTablesRegistrar.APPLICATION_LEVEL, true);
+        modifiableModel = provider.getModifiableModel();
+        library = modifiableModel.createLibrary(libName);
+      } else {
+        LibraryTable libTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
+        library = libTable.getLibraryByName(libName);
+        if (library == null) {
+          library = LibraryUtil.createLibrary(libTable, libName);
+        }
+      }
+
+      // fill library
+      final Library.ModifiableModel model;
+      if (inModuleSettings) {
+        model = ((LibrariesModifiableModel) modifiableModel).getLibraryEditor(library).getModel();
+      } else {
+        model = library.getModifiableModel();
+      }
+      File srcRoot = new File(path + "/src/main");
+      if (srcRoot.exists()) {
+        model.addRoot(VfsUtil.getUrlForLibraryRoot(srcRoot), OrderRootType.SOURCES);
+      }
+
+      File[] jars;
+      File embeddableDir = new File(path + "/embeddable");
+      if (embeddableDir.exists()) {
+        jars = embeddableDir.listFiles();
+      } else {
+        jars = new File(path + "/lib").listFiles();
+      }
+      if (jars != null) {
+        for (File file : jars) {
+          if (file.getName().endsWith(".jar")) {
+            model.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
+          }
+        }
+      }
+      if (!inModuleSettings) {
+        model.commit();
+      }
+      return library;
+    }
+    return null;
   }
 
   public static String generateNewGroovyLibName(String version) {
@@ -315,14 +345,17 @@ public class GroovyConfigUtils {
     return newName;
   }
 
-  public static void saveGroovyVersion(String version) {
+  public static void saveGroovyDefaultLibName(String name) {
     GroovyApplicationSettings settings = GroovyApplicationSettings.getInstance();
-    if (!UNDEFINED_VERSION.equals(version)) {
-      settings.DEFAULT_GROOVY_VERSION = version;
-      if (!(settings.GROOVY_VERSIONS.contains(version))) {
-        settings.GROOVY_VERSIONS.add(version);
-      }
+    if (!UNDEFINED_VERSION.equals(name)) {
+      settings.DEFAULT_GROOVY_LIB_NAME = name;
     }
+  }
+
+  @Nullable
+  public static String getGroovyDefaultLibName() {
+    GroovyApplicationSettings settings = GroovyApplicationSettings.getInstance();
+    return settings.DEFAULT_GROOVY_LIB_NAME;
   }
 
   public static void addLibraryToReferringModules(FacetTypeId<?> facetID, Library library) {
@@ -384,4 +417,11 @@ public class GroovyConfigUtils {
       }
     });
   }
+
+  @Nullable
+  public static Library getGroovyLibrary(String name) {
+    LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable();
+    return table.getLibraryByName(name);
+  }
+
 }
