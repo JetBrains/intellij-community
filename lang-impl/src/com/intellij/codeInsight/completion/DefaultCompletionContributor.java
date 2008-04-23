@@ -23,7 +23,25 @@ public class DefaultCompletionContributor extends CompletionContributor{
   public void registerCompletionProviders(final CompletionRegistrar registrar) {
     registrar.extend(psiElement(), new CompletionAdvertiser() {
       public String advertise(@NotNull final CompletionParameters parameters, final ProcessingContext context) {
-        if (new Random().nextInt(10) < 5 &&
+        if (shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_REPLACE)) {
+          final String shortcut = getShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
+          if (shortcut != null) {
+            return LangBundle.message("completion.replace.ad", shortcut);
+          }
+        }
+
+        final Random random = new Random();
+        if (random.nextInt(5) < 2 && shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC)) {
+          return LangBundle.message("completion.dot.etc.ad");
+        }
+        if (random.nextInt(5) < 2 && shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_SMART_ENTER)) {
+          final String shortcut = getShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT);
+          if (shortcut != null) {
+            return LangBundle.message("completion.smart.enter.ad", shortcut);
+          }
+        }
+
+        if (random.nextInt(5) < 2 &&
             (shouldShowFeature(parameters, ShowJavaDocInfoAction.CODEASSISTS_QUICKJAVADOC_FEATURE) || shouldShowFeature(parameters, ShowJavaDocInfoAction.CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE))) {
           final String shortcut = getShortcut(IdeActions.ACTION_QUICK_JAVADOC);
           if (shortcut != null) {
@@ -41,7 +59,7 @@ public class DefaultCompletionContributor extends CompletionContributor{
 
         if (Calendar.getInstance().get(Calendar.MONTH) == 3 && Calendar.getInstance().get(Calendar.DATE) == 1 ||
             CompletionData.findPrefixStatic(parameters.getPosition(), parameters.getOffset()).length() > 42) {
-          final int i = new Random().nextInt(data.length * 5);
+          final int i = random.nextInt(data.length * 5);
           if (i < data.length) {
             return new String(data[i]);
           }

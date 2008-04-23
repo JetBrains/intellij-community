@@ -3,6 +3,7 @@ package com.intellij.codeInsight.lookup.impl.actions;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -17,7 +18,7 @@ public class ChooseItemCompleteStatementAction extends EditorAction {
 
   private static class Handler extends EditorWriteActionHandler {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.completeStatement");
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_SMART_ENTER);
 
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
       lookup.finishLookup(Lookup.COMPLETE_STATEMENT_SELECT_CHAR);

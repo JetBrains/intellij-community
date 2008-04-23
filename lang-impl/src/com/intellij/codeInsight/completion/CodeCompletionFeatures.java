@@ -16,4 +16,7 @@ public interface CodeCompletionFeatures {
   @NonNls String EDITING_COMPLETION_BASIC = "editing.completion.basic";
   @NonNls String EDITING_COMPLETION_CLASSNAME = "editing.completion.classname";
   @NonNls String EDITING_COMPLETION_CAMEL_HUMPS = "editing.completion.camelHumps";
+  @NonNls String EDITING_COMPLETION_REPLACE = "editing.completion.replace";
+  @NonNls String EDITING_COMPLETION_FINISH_BY_DOT_ETC = "editing.completion.finishByDotEtc";
+  @NonNls String EDITING_COMPLETION_FINISH_BY_SMART_ENTER = "editing.completion.finishBySmartEnter";
 }

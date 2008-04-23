@@ -59,6 +59,8 @@ public interface IdeActions {
   @NonNls String ACTION_CODE_COMPLETION = "CodeCompletion";
   @NonNls String ACTION_SMART_TYPE_COMPLETION = "SmartTypeCompletion";
   @NonNls String ACTION_CLASS_NAME_COMPLETION = "ClassNameCompletion";
+  @NonNls String ACTION_CHOOSE_LOOKUP_ITEM_REPLACE = "EditorChooseLookupItemReplace";
+  @NonNls String ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT = "EditorChooseLookupItemCompleteStatement";
 
   @NonNls String GROUP_EXTERNAL_TOOLS = "ExternalToolsGroup";
 

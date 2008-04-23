@@ -4,6 +4,7 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -57,7 +58,7 @@ class TypedHandler implements TypedActionHandler {
       if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP){
         LookupItem item = lookup.getCurrentItem();
         if (item != null){
-          FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.finishByDotEtc");
+          FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
           lookup.finishLookup(charTyped);
           return;
         }

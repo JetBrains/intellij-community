@@ -159,6 +159,14 @@
       successive-show="8"
       />
     <feature
+      id="editing.completion.finishBySmartEnter"
+      tip-file="FinishBySmartEnter.html"
+      min-usage-count="7"
+      first-show="4"
+      successive-show="8">
+      <dependency id="editing.completion.finishByDotEtc"/>
+      </feature>
+    <feature
       id="editing.completion.camelHumps"
       tip-file="CamelHumpsInCodeCompletion.html"
       min-usage-count="8"
