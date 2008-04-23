@@ -79,7 +79,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     }
     myLibraryCompositionSettings = new LibraryCompositionSettings(missingLibraries, myDescription.getDefaultLibraryName(), baseDir, myDescription.getDefaultLibraryName(), null);
     if (addedJars != null) {
-      myLibraryCompositionSettings.setAddedJars(usedLibraries);
+      myLibraryCompositionSettings.setAddedJars(new ArrayList<VirtualFile>(addedJars));
     }
     return new ValidationResult(text, new LibrariesQuickFix(this, myLibraryCompositionSettings, myContext.getLibrariesContainer()));
   }
