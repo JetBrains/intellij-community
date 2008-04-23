@@ -163,7 +163,7 @@ public abstract class SdkType {
 
   public static <T extends SdkType> T findInstance(final Class<T> sdkTypeClass) {
     for (SdkType sdkType : Extensions.getExtensions(EP_NAME)) {
-      if (sdkTypeClass.isInstance(sdkType)) {
+      if (sdkTypeClass.equals(sdkType.getClass())) {
         //noinspection unchecked
         return (T)sdkType;
       }
