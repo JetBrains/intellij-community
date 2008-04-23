@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -146,8 +147,13 @@ public class TypedHandler implements TypedActionHandler {
       EditorModificationUtil.deleteSelectedText(editor);
     }
 
-    FileType fileType = file.getLanguage().getAssociatedFileType();
-    if (fileType == null) {
+    final VirtualFile virtualFile = file.getVirtualFile();
+    FileType fileType;
+
+    if (virtualFile != null){
+      fileType = virtualFile.getFileType();
+    }
+    else {
       fileType = file.getFileType();
     }
 

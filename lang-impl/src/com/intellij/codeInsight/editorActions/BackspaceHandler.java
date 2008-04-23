@@ -56,11 +56,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       delegate.beforeCharDeleted(c, file, editor);
     }
 
-    FileType fileType = file.getLanguage().getAssociatedFileType();
-    if (fileType == null) {
-      fileType = file.getFileType();
-    }
-    
+    FileType fileType = file.getFileType();
     final QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(file);
 
     HighlighterIterator hiterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
