@@ -3,15 +3,24 @@ package org.jetbrains.idea.maven.repository;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderException;
+import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.core.MavenFactory;
 import org.sonatype.nexus.index.ArtifactInfo;
 
 import java.io.File;
 import java.util.List;
 
-public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
+public class MavenRepositoryIndexTest extends MavenTestCase {
+  private MavenWithDataTestFixture myDataTestFixture;
   private MavenRepositoryIndex index;
   private MavenEmbedder embedder;
+
+  @Override
+  protected void setUpFixtures() throws Exception {
+    super.setUpFixtures();
+    myDataTestFixture = new MavenWithDataTestFixture(new File(myTempDirFixture.getTempDirPath()));
+    myDataTestFixture.setUp();
+  }
 
   @Override
   protected void setUpInWriteAction() throws Exception {
@@ -36,7 +45,7 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
   }
 
   public void testAddingLocal() throws Exception {
-    MavenRepositoryInfo i = new MavenRepositoryInfo("local", getTestDataPath("local1"), false);
+    MavenRepositoryInfo i = new MavenRepositoryInfo("local", myDataTestFixture.getTestDataPath("local1"), false);
     index.add(i);
     index.update(i, new EmptyProgressIndicator());
 
@@ -46,8 +55,8 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
   }
 
   public void testAddingSeveral() throws Exception {
-    MavenRepositoryInfo i1 = new MavenRepositoryInfo("local1", getTestDataPath("local1"), false);
-    MavenRepositoryInfo i2 = new MavenRepositoryInfo("local2", getTestDataPath("local2"), false);
+    MavenRepositoryInfo i1 = new MavenRepositoryInfo("local1", myDataTestFixture.getTestDataPath("local1"), false);
+    MavenRepositoryInfo i2 = new MavenRepositoryInfo("local2", myDataTestFixture.getTestDataPath("local2"), false);
     index.add(i1);
     index.add(i2);
     index.update(i1, new EmptyProgressIndicator());
@@ -63,14 +72,14 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
   }
 
   public void testAddingWithoutUpdate() throws Exception {
-    index.add(new MavenRepositoryInfo("local", getTestDataPath("local1"), false));
+    index.add(new MavenRepositoryInfo("local", myDataTestFixture.getTestDataPath("local1"), false));
 
     List<ArtifactInfo> result = index.findByArtifactId("junit*");
     assertEquals(0, result.size());
   }
 
   public void testAddingRemote() throws Exception {
-    MavenRepositoryInfo i = new MavenRepositoryInfo("remote", "file:///" + getTestDataPath("remote"), true);
+    MavenRepositoryInfo i = new MavenRepositoryInfo("remote", "file:///" + myDataTestFixture.getTestDataPath("remote"), true);
     index.add(i);
     index.update(i, new EmptyProgressIndicator());
 
@@ -80,14 +89,14 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
   }
 
   public void testChanging() throws Exception {
-    MavenRepositoryInfo i = new MavenRepositoryInfo("local1", getTestDataPath("local1"), false);
+    MavenRepositoryInfo i = new MavenRepositoryInfo("local1", myDataTestFixture.getTestDataPath("local1"), false);
     index.add(i);
     index.update(i, new EmptyProgressIndicator());
 
     assertEquals(3, index.findByArtifactId("junit*").size());
     assertEquals(0, index.findByArtifactId("jmock*").size());
 
-    index.change(i, "local2", getTestDataPath("local2"), false);
+    index.change(i, "local2", myDataTestFixture.getTestDataPath("local2"), false);
     index.update(i, new EmptyProgressIndicator());
 
     assertEquals(0, index.findByArtifactId("junit*").size());
@@ -95,7 +104,7 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
   }
 
   public void testRemoving() throws Exception {
-    MavenRepositoryInfo i = new MavenRepositoryInfo("remote", "file:///" + getTestDataPath("remote"), true);
+    MavenRepositoryInfo i = new MavenRepositoryInfo("remote", "file:///" + myDataTestFixture.getTestDataPath("remote"), true);
     index.add(i);
     index.update(i, new EmptyProgressIndicator());
 
@@ -106,8 +115,8 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
   }
 
   public void testSaving() throws Exception {
-    MavenRepositoryInfo i1 = new MavenRepositoryInfo("local", getTestDataPath("local2"), false);
-    MavenRepositoryInfo i2 = new MavenRepositoryInfo("remote", "file:///" + getTestDataPath("remote"), true);
+    MavenRepositoryInfo i1 = new MavenRepositoryInfo("local", myDataTestFixture.getTestDataPath("local2"), false);
+    MavenRepositoryInfo i2 = new MavenRepositoryInfo("remote", "file:///" + myDataTestFixture.getTestDataPath("remote"), true);
     index.add(i1);
     index.add(i2);
     index.update(i1, new EmptyProgressIndicator());
@@ -125,18 +134,5 @@ public class MavenRepositoryIndexTest extends MavenWithDataTestCase {
     result = index.findByArtifactId("jmock*");
     assertEquals(3, result.size());
     assertEquals("1.2.0", result.get(0).version);
-  }
-
-  public void testGetAll() throws Exception {
-    MavenRepositoryInfo i = new MavenRepositoryInfo("local1", getTestDataPath("local1"), false);
-    index.add(i);
-    index.update(i, new EmptyProgressIndicator());
-
-    //Set<String> groups = index.getAll(ArtifactInfo.GROUP_ID);
-    //Set<String> artifacts = index.getAll(ArtifactInfo.ARTIFACT_ID);
-    //Set<String> versions  = index.getAll(ArtifactInfo.VERSION);
-    //assertUnorderedElementsAreEqual(groups, "junit");
-    //assertUnorderedElementsAreEqual(artifacts, "junit");
-    //assertUnorderedElementsAreEqual(versions, "3.8.1", "3.8.2", "4.0");
   }
 }

@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -18,6 +19,7 @@ import java.util.List;
 
 public abstract class MavenCompletionAndResolutionTestCase extends MavenImportingTestCase {
   protected CodeInsightTestFixture myCodeInsightFixture;
+  private boolean myOriginalAutoCompletion;
 
   @Override
   protected void setUpFixtures() throws Exception {
@@ -29,10 +31,14 @@ public abstract class MavenCompletionAndResolutionTestCase extends MavenImportin
     myTempDirFixture = myCodeInsightFixture.getTempDirFixture();
 
     myCodeInsightFixture.enableInspections(MavenModelInspection.class);
+
+    myOriginalAutoCompletion = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
+    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false;
   }
 
   @Override
   protected void tearDownFixtures() throws Exception {
+    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = myOriginalAutoCompletion;
     myCodeInsightFixture.tearDown();
   }
 

@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.repository;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.options.Configurable;
@@ -8,10 +9,13 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import org.apache.lucene.search.Query;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenFactory;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
@@ -43,11 +47,7 @@ public class MavenRepositoryManager extends DummyProjectComponent {
           if (ApplicationManager.getApplication().isUnitTestMode()) return;
           if (!MavenProjectsManager.getInstance(myProject).isMavenProject()) return;
 
-          File baseDir = new File(PathManager.getSystemPath(), "Maven");
-          File projectIndecesDir = new File(baseDir, myProject.getLocationHash());
-
-          myEmbedder = MavenFactory.createEmbedderForExecute(MavenCore.getInstance(myProject).getState());
-          myIndex = new MavenRepositoryIndex(myEmbedder, projectIndecesDir);
+          initIndex();
 
           StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
             public void run() {
@@ -70,6 +70,32 @@ public class MavenRepositoryManager extends DummyProjectComponent {
     });
   }
 
+  @TestOnly
+  public void initIndex() throws MavenException, MavenRepositoryException {
+    File baseDir = new File(PathManager.getSystemPath(), "Maven");
+    File projectIndecesDir = new File(baseDir, myProject.getLocationHash());
+
+    myEmbedder = MavenFactory.createEmbedderForExecute(MavenCore.getInstance(myProject).getState());
+    myIndex = new MavenRepositoryIndex(myEmbedder, projectIndecesDir);
+  }
+
+  public void disposeComponent() {
+    closeIndex();
+  }
+
+  @TestOnly
+  public void closeIndex() {
+    try {
+      if (myIndex != null) myIndex.close();
+      if (myEmbedder != null) myEmbedder.stop();
+      myIndex = null;
+      myEmbedder = null;
+    }
+    catch (MavenEmbedderException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private void addAndUpdateLocalRepository() throws MavenRepositoryException {
     String repoDir = myEmbedder.getLocalRepository().getBasedir();
     List<MavenRepositoryInfo> infos = myIndex.getInfos();
@@ -81,16 +107,6 @@ public class MavenRepositoryManager extends DummyProjectComponent {
     MavenRepositoryInfo i = new MavenRepositoryInfo("local", repoDir, false);
     myIndex.add(i);
     startUpdate(i);
-  }
-
-  public void disposeComponent() {
-    try {
-      if (myIndex != null) myIndex.close();
-      if (myEmbedder != null) myEmbedder.stop();
-    }
-    catch (MavenEmbedderException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public Configurable createConfigurable() {
@@ -133,6 +149,12 @@ public class MavenRepositoryManager extends DummyProjectComponent {
               myIndex.update(each, indicator);
             }
           }
+
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              rehighlightAllPoms();
+            }
+          });
         }
         catch (final MavenRepositoryException e) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -143,6 +165,11 @@ public class MavenRepositoryManager extends DummyProjectComponent {
         }
       }
     }.queue();
+  }
+
+  private void rehighlightAllPoms() {
+    ((PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker()).incCounter();
+    DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
   public List<MavenRepositoryInfo> getInfos() {

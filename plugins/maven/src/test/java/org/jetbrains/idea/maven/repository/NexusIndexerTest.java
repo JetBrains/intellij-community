@@ -6,6 +6,7 @@ import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
 import org.codehaus.plexus.PlexusContainer;
+import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.core.MavenFactory;
 import org.sonatype.nexus.index.ArtifactContext;
 import org.sonatype.nexus.index.ArtifactInfo;
@@ -20,11 +21,19 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-public class NexusIndexerTest extends MavenWithDataTestCase {
+public class NexusIndexerTest extends MavenTestCase {
+  private MavenWithDataTestFixture myDataTestFixture;
   private MavenEmbedder embedder;
   private NexusIndexer indexer;
   private IndexUpdater updater;
   private File indexDir;
+
+  @Override
+  protected void setUpFixtures() throws Exception {
+    super.setUpFixtures();
+    myDataTestFixture = new MavenWithDataTestFixture(new File(myTempDirFixture.getTempDirPath()));
+    myDataTestFixture.setUp();
+  }
 
   @Override
   protected void setUpInWriteAction() throws Exception {
@@ -53,19 +62,19 @@ public class NexusIndexerTest extends MavenWithDataTestCase {
   }
 
   public void testSeraching() throws Exception {
-    addContext("local1", new File(getTestDataPath("local1_index")), null, null);
+    addContext("local1", new File(myDataTestFixture.getTestDataPath("local1_index")), null, null);
     assertSearchWorks();
   }
 
   public void testCreating() throws Exception {
-    IndexingContext c = addContext("local1", indexDir, new File(getTestDataPath("local1")), null);
+    IndexingContext c = addContext("local1", indexDir, new File(myDataTestFixture.getTestDataPath("local1")), null);
     indexer.scan(c, new NullScanningListener());
 
     assertSearchWorks();
   }
 
   public void testDownloading() throws Exception {
-    IndexingContext c = addContext("remote", indexDir, null, "file:///" + getTestDataPath("remote"));
+    IndexingContext c = addContext("remote", indexDir, null, "file:///" + myDataTestFixture.getTestDataPath("remote"));
     updater.fetchAndUpdateIndex(c, new NullTransferListener());
 
     assertSearchWorks();
