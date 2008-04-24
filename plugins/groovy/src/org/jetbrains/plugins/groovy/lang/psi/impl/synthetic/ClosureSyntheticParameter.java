@@ -34,7 +34,7 @@ public class ClosureSyntheticParameter extends LightParameter implements Navigat
   private GrClosableBlock myClosure;
 
   public ClosureSyntheticParameter(PsiManager manager, GrClosableBlock closure) {
-    super(manager, GrClosableBlock.IT_PARAMETER_NAME, null, manager.getElementFactory().createTypeByFQClassName("groovy.lang.GroovyObject", closure.getResolveScope()), closure);
+    super(manager, GrClosableBlock.IT_PARAMETER_NAME, null, manager.getElementFactory().createTypeByFQClassName("java.lang.Object", closure.getResolveScope()), closure);
     myClosure = closure;
   }
 

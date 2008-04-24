@@ -142,7 +142,7 @@ public class GrClosureType extends PsiClassType {
   }
 
   public static GrClosureType create(GrClosableBlock closure) {
-    return new GrClosureType(closure.getResolveScope(), closure.getReturnType(), closure.getParameters(), closure.getManager());
+    return new GrClosureType(closure.getResolveScope(), closure.getReturnType(), closure.getAllParameters(), closure.getManager());
   }
 
   public static GrClosureType create (GlobalSearchScope scope, PsiType returnType, PsiParameter[] parameters, PsiManager manager) {

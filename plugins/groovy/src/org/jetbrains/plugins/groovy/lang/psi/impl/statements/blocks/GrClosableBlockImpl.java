@@ -94,7 +94,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return GrParameter.EMPTY_ARRAY;
   }
 
-  private PsiParameter[] getAllParameters() {
+  public PsiParameter[] getAllParameters() {
     if (hasParametersSection()) return getParameters();
     return new PsiParameter[]{getSyntheticItParameter()};
   }

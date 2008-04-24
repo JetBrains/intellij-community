@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -69,9 +70,9 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
       public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
         PsiElement resolved = referenceExpression.resolve();
-        if (resolved instanceof GrVariable && !(resolved instanceof GrField) &&
+        if (resolved instanceof GrVariableBase && !(resolved instanceof GrField) &&
             !PsiTreeUtil.isAncestor(toEval, resolved, false)) {
-          namesList.add(((GrVariable) resolved).getName());
+          namesList.add(((GrVariableBase) resolved).getName());
         }
       }
 
