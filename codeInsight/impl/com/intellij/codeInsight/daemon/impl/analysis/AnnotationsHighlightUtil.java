@@ -72,6 +72,7 @@ public class AnnotationsHighlightUtil {
 
   @Nullable
   public static HighlightInfo checkMemberValueType(PsiAnnotationMemberValue value, PsiType expectedType) {
+    if (value == null) return null;
     if (value instanceof PsiAnnotation) {
       PsiJavaCodeReferenceElement nameRef = ((PsiAnnotation)value).getNameReferenceElement();
       if (nameRef == null) return null;
