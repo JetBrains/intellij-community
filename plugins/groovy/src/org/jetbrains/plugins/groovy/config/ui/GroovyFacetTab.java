@@ -175,7 +175,11 @@ public class GroovyFacetTab extends FacetEditorTab {
       final Project project = myEditorContext.getProject();
       myNewButton.addActionListener(new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
-          final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+          final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
+            public boolean isFileSelectable(VirtualFile file) {
+              return super.isFileSelectable(file) && GroovyConfigUtils.isGroovySdkHome(file);
+            }
+          };
           final FileChooserDialog fileChooserDialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
           final VirtualFile[] files = fileChooserDialog.choose(null, project);
           if (files.length > 0) {
