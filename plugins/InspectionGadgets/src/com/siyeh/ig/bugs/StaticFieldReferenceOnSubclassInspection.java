@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,14 +46,15 @@ public class StaticFieldReferenceOnSubclassInspection
         final PsiClass referencedClass = (PsiClass)infos[1];
         return InspectionGadgetsBundle.message(
                 "static.field.via.subclass.problem.descriptor",
-                declaringClass.getQualifiedName(), referencedClass.getQualifiedName());
+                declaringClass.getQualifiedName(),
+                referencedClass.getQualifiedName());
     }
 
     protected InspectionGadgetsFix buildFix(Object... infos){
-        return new StaticCallOnSubclassFix();
+        return new StaticFieldOnSubclassFix();
     }
 
-    private static class StaticCallOnSubclassFix extends InspectionGadgetsFix{
+    private static class StaticFieldOnSubclassFix extends InspectionGadgetsFix{
 
         @NotNull
         public String getName(){
@@ -63,8 +64,8 @@ public class StaticFieldReferenceOnSubclassInspection
 
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
-            final PsiIdentifier name = (PsiIdentifier) descriptor
-                    .getPsiElement();
+            final PsiIdentifier name =
+                    (PsiIdentifier) descriptor.getPsiElement();
             final PsiReferenceExpression expression =
                     (PsiReferenceExpression) name.getParent();
             assert expression != null;
@@ -75,24 +76,25 @@ public class StaticFieldReferenceOnSubclassInspection
     }
 
     public BaseInspectionVisitor buildVisitor(){
-        return new StaticCallOnSubclassVisitor();
+        return new StaticFieldOnSubclassVisitor();
     }
 
-    private static class StaticCallOnSubclassVisitor
+    private static class StaticFieldOnSubclassVisitor
             extends BaseInspectionVisitor{
 
-        @Override public void visitReferenceExpression(PsiReferenceExpression expression){
+        @Override public void visitReferenceExpression(
+                PsiReferenceExpression expression){
             super.visitReferenceExpression(expression);
+            final PsiElement qualifier = expression.getQualifier();
+            if(!(qualifier instanceof PsiReferenceExpression)){
+                return;
+            }
             final PsiElement referent = expression.resolve();
             if(!(referent instanceof PsiField)){
                 return;
             }
             final PsiField field = (PsiField) referent;
             if(!field.hasModifierProperty(PsiModifier.STATIC)){
-                return;
-            }
-            final PsiElement qualifier = expression.getQualifier();
-            if(!(qualifier instanceof PsiReferenceExpression)){
                 return;
             }
             final PsiElement qualifierReferent =
