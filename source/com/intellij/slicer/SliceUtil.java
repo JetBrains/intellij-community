@@ -123,7 +123,7 @@ public class SliceUtil {
     return processFlownFromExpressions(expressions, processor, parent);
   }
 
-  private static boolean processFieldUsages(final PsiField field, final Processor<SliceUsage> processor, final SliceUsage parent) {
+  static boolean processFieldUsages(final PsiField field, final Processor<SliceUsage> processor, final SliceUsage parent) {
     return ReferencesSearch.search(field).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference reference) {
         PsiElement element = reference.getElement();
@@ -137,7 +137,7 @@ public class SliceUtil {
     });
   }
 
-  private static boolean processParameterUsages(final PsiParameter parameter, final Processor<SliceUsage> processor, final SliceUsage parent) {
+  static boolean processParameterUsages(final PsiParameter parameter, final Processor<SliceUsage> processor, final SliceUsage parent) {
     PsiElement declarationScope = parameter.getDeclarationScope();
     if (!(declarationScope instanceof PsiMethod)) return true;
     PsiMethod method = (PsiMethod)declarationScope;

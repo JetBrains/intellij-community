@@ -2,6 +2,8 @@ package com.intellij.slicer;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiParameter;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
@@ -23,8 +25,15 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
 
   public void processChildren(Processor<SliceUsage> processor) {
     PsiElement element = getElement();
-    if (!(element instanceof PsiExpression)) return;
-    SliceUtil.processUsagesFlownDownToTheExpression((PsiExpression)element, processor, this);
+    if (element instanceof PsiExpression) {
+      SliceUtil.processUsagesFlownDownToTheExpression((PsiExpression)element, processor, this);
+    }
+    else if (element instanceof PsiField) {
+      SliceUtil.processFieldUsages((PsiField)element, processor, this);
+    }
+    else if (element instanceof PsiParameter) {
+      SliceUtil.processParameterUsages((PsiParameter)element, processor, this);
+    }
   }
 
   public void customizeTreeCellRenderer(ColoredTreeCellRenderer treeCellRenderer) {

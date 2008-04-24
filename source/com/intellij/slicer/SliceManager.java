@@ -7,7 +7,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiParameter;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
@@ -60,10 +62,20 @@ public class SliceManager implements ProjectComponent {
 
   }
 
-  public void slice(final PsiExpression expression) {
-    final Content[] myContent = new Content[1];
+  public void slice(PsiElement element) {
     final SliceToolwindowSettings sliceToolwindowSettings = SliceToolwindowSettings.getInstance(myProject);
-    final SlicePanel slicePanel = new SlicePanel(myProject, new SliceUsage(new UsageInfo(expression), null)) {
+    SliceUsage usage;              
+    if (element instanceof PsiField) {
+      usage = new SliceFieldUsage(new UsageInfo(element), null, (PsiField)element);
+    }
+    else if (element instanceof PsiParameter) {
+      usage = new SliceParameterUsage(new UsageInfo(element), (PsiParameter)element, null);
+    }
+    else {
+      usage = new SliceUsage(new UsageInfo(element), null);
+    }
+    final Content[] myContent = new Content[1];
+    final SlicePanel slicePanel = new SlicePanel(myProject, usage) {
       protected void close() {
         myContentManager.removeContent(myContent[0], true);
       }
