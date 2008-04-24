@@ -15,7 +15,7 @@ public class GroovyWithIfExprSurrounder extends GroovyConditionSurrounder {
   protected TextRange surroundExpression(GrExpression expression) {
     GrIfStatement ifStatement = (GrIfStatement) GroovyPsiElementFactory.getInstance(expression.getProject()).createTopElementFromText("if(a){4\n}");
     replaceToOldExpression((GrExpression)ifStatement.getCondition(), expression);
-    ifStatement = (GrIfStatement) expression.replaceWithStatement(ifStatement);
+    ifStatement = expression.replaceWithStatement(ifStatement);
     GrStatement thenBranch = ifStatement.getThenBranch();
 
     assert thenBranch instanceof GrBlockStatement;
