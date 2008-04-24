@@ -78,7 +78,7 @@ public class GroovyConfigUtils {
     return result.get();
   }
 
-  public static void processFilesUnderGDKRoot(VirtualFile file, final Processor<VirtualFile> processor) {
+  private static void processFilesUnderGDKRoot(VirtualFile file, final Processor<VirtualFile> processor) {
     if (file != null && file.isDirectory()) {
       final VirtualFile child = file.findChild("bin");
 
@@ -260,9 +260,11 @@ public class GroovyConfigUtils {
   }
 
   public static ValidationResult isGroovySdkHome(String path) {
-    final VirtualFile relativeFile = VfsUtil.findRelativeFile(path, null);
-    if (relativeFile != null && GroovyConfigUtils.isGroovySdkHome(relativeFile)) {
-      return ValidationResult.OK;
+    if (path != null) {
+      final VirtualFile relativeFile = VfsUtil.findRelativeFile(path, null);
+      if (relativeFile != null && GroovyConfigUtils.isGroovySdkHome(relativeFile)) {
+        return ValidationResult.OK;
+      }
     }
     return new ValidationResult(GroovyBundle.message("invalid.groovy.sdk.path.message"));
   }

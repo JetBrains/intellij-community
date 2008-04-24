@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -71,10 +72,19 @@ public class GroovyFacetEditor {
 
   public String getSelectedVersion() {
     String version = null;
-    if (myComboBox != null) {
+    if (myComboBox != null && myComboBox.getSelectedItem() != null) {
       version = myComboBox.getSelectedItem().toString();
     }
     return version;
+  }
+
+  @Nullable
+  public String getNewSdkPath(){
+    return myPathToGroovy.getText();
+  }
+
+  public boolean addNewSdk(){
+    return myAddNewGdkCb.isSelected() && myPathToGroovy.isVisible();
   }
 
   private void adjustVersionComboBox(String[] versions, String defaultVersion) {
@@ -97,15 +107,23 @@ public class GroovyFacetEditor {
       myAddNewGdkCb.setSelected(false);
       myAddNewGdkCb.setVisible(true);
       myPathToGroovy.setEnabled(false);
+      myPathToGroovy.setVisible(false);
     } else {
       myAddNewGdkCb.setSelected(true);
-      myAddNewGdkCb.setVisible(false);
       myAddNewGdkCb.setEnabled(true);
+      myAddNewGdkCb.setVisible(false);
+      myComboBox.setVisible(false);
+      myPathToGroovy.setEnabled(true);
+      myPathToGroovy.setVisible(true);
     }
 
     myAddNewGdkCb.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent event) {
-        myPathToGroovy.setEnabled(myAddNewGdkCb.isSelected());
+        boolean status = myAddNewGdkCb.isSelected();
+        myPathToGroovy.setEnabled(status);
+        myPathToGroovy.setVisible(status);
+        myPathToGroovy.setVisible(status);
+        myComboBox.setEnabled(!status);
       }
     });
   }
@@ -114,32 +132,16 @@ public class GroovyFacetEditor {
     myPathToGroovy.getButton().addActionListener(new ActionListener() {
 
       public void actionPerformed(final ActionEvent e) {
-        final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
-        final FileChooserDialog fileChooserDialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
-        final VirtualFile[] files = fileChooserDialog.choose(null, project);
+        final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
+          public boolean isFileSelectable(VirtualFile file) {
+            return super.isFileSelectable(file) && GroovyConfigUtils.isGroovySdkHome(file);
+          }
+        };
+        final FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
+        final VirtualFile[] files = dialog.choose(null, project);
         if (files.length > 0) {
           String path = files[0].getPath();
           myPathToGroovy.setText(path);
-          ValidationResult validationResult = new MyFacetEditorValidator().check();
-          if (validationResult == ValidationResult.OK) {
-            Collection<String> versions = GroovyConfigUtils.getGroovyVersions();
-            String version = GroovyConfigUtils.getGroovyVersion(path);
-            boolean addVersion = !versions.contains(version) ||
-                Messages.showOkCancelDialog(GroovyBundle.message("duplicate.groovy.lib.version.add", version),
-                    GroovyBundle.message("duplicate.groovy.lib.version"),
-                    GroovyIcons.BIG_ICON) == 0;
-
-            if (addVersion && !GroovyConfigUtils.UNDEFINED_VERSION.equals(version)) {
-              final Library library = GroovyConfigUtils.createGroovyLibrary(path, null, project, false);
-              if (library != null) {
-                final String newLibName = library.getName();
-                GroovyConfigUtils.saveGroovyDefaultLibName(newLibName);
-                adjustVersionComboBox(GroovyConfigUtils.getGroovyLibNames(), newLibName);
-              }
-            }
-          } else {
-            Messages.showErrorDialog(GroovyBundle.message("invalid.groovy.sdk.path.message"), GroovyBundle.message("invalid.groovy.sdk.path.text"));
-          }
         }
       }
     });
@@ -159,7 +161,11 @@ public class GroovyFacetEditor {
   }
 
   private void createUIComponents() {
-    // custom component creation code
+    myComboBox = new JComboBox(){
+      public void setEnabled(boolean enabled) {
+        super.setEnabled(!myAddNewGdkCb.isSelected() && enabled);
+      }
+    };
   }
 
   private class MyFacetEditorValidator extends FacetEditorValidator {
