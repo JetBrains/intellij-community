@@ -322,11 +322,11 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
       if (!method.getName().equals(data.getMethodName())) return null;
       if (!method.getContainingClass().equals(myClass.getPsiElement())) return null;
       return new RefactoringElementListener() {
-        public void elementMoved(final PsiElement newElement) {
+        public void elementMoved(@NotNull final PsiElement newElement) {
           setMethod((PsiMethod)newElement);
         }
 
-        public void elementRenamed(final PsiElement newElement) {
+        public void elementRenamed(@NotNull final PsiElement newElement) {
           setMethod((PsiMethod)newElement);
         }
 

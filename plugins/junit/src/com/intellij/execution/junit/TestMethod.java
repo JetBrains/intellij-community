@@ -18,7 +18,6 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiClass;
@@ -26,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
+import org.jetbrains.annotations.NotNull;
 
 class TestMethod extends TestObject {
   public TestMethod(final Project project,
@@ -72,11 +72,11 @@ class TestMethod extends TestObject {
       if (!method.getName().equals(configuration.getPersistentData().getMethodName())) return null;
       if (!method.getContainingClass().equals(configuration.myClass.getPsiElement())) return null;
       return new RefactoringElementListener() {
-        public void elementMoved(final PsiElement newElement) {
+        public void elementMoved(@NotNull final PsiElement newElement) {
           setMethod(configuration, (PsiMethod)newElement);
         }
 
-        public void elementRenamed(final PsiElement newElement) {
+        public void elementRenamed(@NotNull final PsiElement newElement) {
           setMethod(configuration, (PsiMethod)newElement);
         }
 
