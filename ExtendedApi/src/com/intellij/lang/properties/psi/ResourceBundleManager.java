@@ -19,7 +19,7 @@ import java.util.List;
 
 public abstract class ResourceBundleManager {
   private static final ExtensionPointName<ResourceBundleManager> RESOURCE_BUNDLE_MANAGER = ExtensionPointName.create("com.intellij.resourceBundleManager");
-  protected Project myProject;
+  protected final Project myProject;
 
   protected ResourceBundleManager(final Project project) {
     myProject = project;
@@ -78,7 +78,7 @@ public abstract class ResourceBundleManager {
   }
 
   public static class ResourceBundleNotFoundException extends Exception {
-    private IntentionAction myFix;
+    private final IntentionAction myFix;
 
     public ResourceBundleNotFoundException(final String message, IntentionAction setupResourceBundle) {
       super(message);

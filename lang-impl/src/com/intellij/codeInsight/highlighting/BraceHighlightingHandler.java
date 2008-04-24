@@ -193,7 +193,7 @@ public class BraceHighlightingHandler {
     }, 300);
   }
 
-  EditorHighlighter getEditorHighlighter() {
+  private EditorHighlighter getEditorHighlighter() {
     return ((EditorEx)myEditor).getHighlighter();
   }
 

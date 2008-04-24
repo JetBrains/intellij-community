@@ -55,7 +55,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
 
   private JTextField myValue;
   private JComboBox myKey;
-  private TextFieldWithHistory myPropertiesFile;
+  private final TextFieldWithHistory myPropertiesFile;
   private JPanel myPanel;
   private JCheckBox myUseResourceBundle;
   private final Project myProject;
@@ -126,6 +126,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     }
 
     myPropertiesFile = new TextFieldWithHistory();
+    myPropertiesFile.setHistorySize(-1);
     myPropertiesFilePanel.add(GuiUtils.constructFieldWithBrowseButton(myPropertiesFile, new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         TreeClassChooserFactory chooserFactory = TreeClassChooserFactory.getInstance(myProject);
@@ -403,7 +404,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
         if (lastPath != null && lastPath.equals(path1)) return -1;
         if (lastPath != null && lastPath.equals(path2)) return 1;
         int r = LastSelectedPropertiesFileStore.getUseCount(path2) - LastSelectedPropertiesFileStore.getUseCount(path1);
-        return r != 0 ? r : path1.compareTo(path2);
+        return r == 0 ? path1.compareTo(path2) : r;
       }
     });
     myPropertiesFile.setHistory(paths);

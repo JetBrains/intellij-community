@@ -80,7 +80,7 @@ public class LastSelectedPropertiesFileStore implements PersistentStateComponent
     StatisticsManager.getInstance().incUseCount(new StatisticsInfo(PROPERTIES_FILE_STATISTICS_KEY, FileUtil.toSystemDependentName(VfsUtil.urlToPath(url))));
   }
 
-  public void readExternal(@NonNls Element element) {
+  private void readExternal(@NonNls Element element) {
     lastSelectedUrls.clear();
     List list = element.getChildren("entry");
     for (Object o : list) {
@@ -96,7 +96,7 @@ public class LastSelectedPropertiesFileStore implements PersistentStateComponent
     lastSelectedFileUrl = element.getAttributeValue("lastSelectedFileUrl");
   }
 
-  public void writeExternal(@NonNls Element element) {
+  private void writeExternal(@NonNls Element element) {
     for (Map.Entry<String, String> entry : lastSelectedUrls.entrySet()) {
       String context = entry.getKey();
       String url = entry.getValue();

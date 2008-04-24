@@ -27,7 +27,6 @@ public class TextFieldWithHistory extends JComboBox {
   private final MyModel myModel;
 
   public TextFieldWithHistory() {
-    super();
     myModel = new MyModel();
     setModel(myModel);
     setEditable(true);
@@ -51,6 +50,9 @@ public class TextFieldWithHistory extends JComboBox {
     getTextEditor().addKeyListener(listener);
   }
 
+  /**
+   * @param aHistorySize -1 means unbounded
+   */
   public void setHistorySize(int aHistorySize) {
     myHistorySize = aHistorySize;
   }
@@ -104,7 +106,7 @@ public class TextFieldWithHistory extends JComboBox {
     }
 
     public int getSize() {
-      return Math.min(myHistorySize, myFullList.size());
+      return Math.min(myHistorySize == -1 ? Integer.MAX_VALUE : myHistorySize, myFullList.size());
     }
 
     public void addElement(Object obj) {
