@@ -149,6 +149,17 @@ public class NanoXmlUtil {
   }
 
   @NotNull
+  public static XmlFileHeader parseHeader(final InputStream inputStream) {
+    try {
+      return parseHeader(new MyXMLReader(inputStream));
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
+  @NotNull
   public static XmlFileHeader parseHeader(PsiFile file) {
     try {
       return parseHeader(createReader(file));
