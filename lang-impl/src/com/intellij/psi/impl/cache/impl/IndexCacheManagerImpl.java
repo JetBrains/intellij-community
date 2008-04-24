@@ -61,12 +61,14 @@ public class IndexCacheManagerImpl implements CacheManager{
   }
 
   public boolean processFilesWithWord(@NotNull final Processor<PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
+    final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+
     Processor<VirtualFile> virtualFileProcessor = new Processor<VirtualFile>() {
       public boolean process(final VirtualFile virtualFile) {
         LOG.assertTrue(virtualFile.isValid());
         return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
           public Boolean compute() {
-            if (scope.contains(virtualFile)) {
+            if (scope.contains(virtualFile) && (index.isInContent(virtualFile) || index.isInSource(virtualFile))) {
               final PsiFile psiFile = myPsiManager.findFile(virtualFile);
               return psiFile == null || psiFileProcessor.process(psiFile);
             }
