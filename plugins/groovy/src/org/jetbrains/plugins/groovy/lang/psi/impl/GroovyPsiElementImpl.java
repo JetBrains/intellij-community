@@ -62,7 +62,7 @@ public abstract class GroovyPsiElementImpl extends ASTWrapperPsiElement implemen
     }
   }
 
-  public GrStatement replaceWithStatement(@NotNull GrStatement newStmt) {
+  public <T extends GrStatement> T replaceWithStatement(@NotNull T newStmt) {
     PsiElement parent = getParent();
     if (parent == null) {
       throw new PsiInvalidElementAccessException(this);
@@ -70,7 +70,7 @@ public abstract class GroovyPsiElementImpl extends ASTWrapperPsiElement implemen
     ASTNode parentNode = parent.getNode();
     ASTNode newNode = newStmt.getNode();
     parentNode.replaceChild(this.getNode(), newNode);
-    return (GrStatement) newNode.getPsi();
+    return (T) newNode.getPsi();
   }
 
   public <T extends GroovyPsiElement> Iterable<T> childrenOfType(final TokenSet tokSet) {

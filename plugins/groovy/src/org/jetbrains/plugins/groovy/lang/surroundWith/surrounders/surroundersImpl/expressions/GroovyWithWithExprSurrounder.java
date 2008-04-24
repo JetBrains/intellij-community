@@ -15,7 +15,7 @@ public class GroovyWithWithExprSurrounder extends GroovyExpressionSurrounder {
   protected TextRange surroundExpression(GrExpression expression) {
     GrMethodCallExpression call = (GrMethodCallExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createTopElementFromText("with(a){4\n}");
     replaceToOldExpression(call.getExpressionArguments()[0], expression);
-    expression.replaceWithStatement(call);
+    call = (GrMethodCallExpression) expression.replaceWithStatement(call);
     GrClosableBlock block = call.getClosureArguments()[0];
 
     GrStatement statementInBody = block.getStatements()[0];

@@ -26,7 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 public interface GrStatement extends GrTopStatement, GrCondition {
   public static final GrStatement[] EMPTY_ARRAY = new GrStatement[0];
   
-  GrStatement replaceWithStatement (GrStatement statement);
+  <T extends GrStatement> T replaceWithStatement (T statement);
 
   void removeStatement() throws IncorrectOperationException;
 }

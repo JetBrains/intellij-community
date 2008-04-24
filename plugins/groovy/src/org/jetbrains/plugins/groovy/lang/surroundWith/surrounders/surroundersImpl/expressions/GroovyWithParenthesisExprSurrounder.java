@@ -28,7 +28,7 @@ public class GroovyWithParenthesisExprSurrounder extends GroovyExpressionSurroun
   protected TextRange surroundExpression(GrExpression expression) {
     GrParenthesizedExpression result = (GrParenthesizedExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createExpressionFromText("(a)");
     replaceToOldExpression(result.getOperand(), expression);
-    expression.replaceWithExpression(result, true);
+    result = (GrParenthesizedExpression) expression.replaceWithExpression(result, true);
     return new TextRange(result.getTextRange().getEndOffset(), result.getTextRange().getEndOffset());
   }
 

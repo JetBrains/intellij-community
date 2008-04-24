@@ -15,7 +15,7 @@ public class GroovyWithWhileExprSurrounder extends GroovyConditionSurrounder {
   protected TextRange surroundExpression(GrExpression expression) {
     GrWhileStatement whileStatement = (GrWhileStatement) GroovyPsiElementFactory.getInstance(expression.getProject()).createTopElementFromText("while(a){4\n}");
     replaceToOldExpression((GrExpression)whileStatement.getCondition(), expression);
-    expression.replaceWithStatement(whileStatement);
+    whileStatement = (GrWhileStatement) expression.replaceWithStatement(whileStatement);
     GrStatement body = whileStatement.getBody();
 
     assert body instanceof GrBlockStatement;

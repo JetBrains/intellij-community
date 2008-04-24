@@ -89,7 +89,7 @@ public class CreateLocalVariableFromUsageFix implements IntentionAction {
 
     TypeConstraint[] constraints = GroovyExpectedTypesUtil.calculateTypeConstraints(myRefExpression);
     if (anchor.equals(myRefExpression)) {
-      decl = (GrVariableDeclaration) myRefExpression.replaceWithStatement(decl);
+      decl = myRefExpression.replaceWithStatement(decl);
     } else {
       decl = myOwner.addVariableDeclarationBefore(decl, anchor);
     }
