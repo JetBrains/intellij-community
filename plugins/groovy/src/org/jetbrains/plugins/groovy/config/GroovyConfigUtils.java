@@ -15,46 +15,44 @@
 
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryUtil;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigrableContext;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
-import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetTypeId;
+import com.intellij.facet.ui.ValidationResult;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.util.Processor;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigrableContext;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.facet.ui.ValidationResult;
-import com.intellij.facet.FacetTypeId;
-import com.intellij.facet.FacetManager;
-
-import java.util.jar.JarFile;
-import java.util.jar.JarEntry;
-import java.util.jar.Manifest;
-import java.util.jar.Attributes;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.io.File;
-import java.io.IOException;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 /**
  * @author ilyas
@@ -169,17 +167,7 @@ public class GroovyConfigUtils {
   public static void updateGroovyLibInModule(@NotNull Module module, @Nullable GroovySDK sdk) {
     ModuleRootManager manager = ModuleRootManager.getInstance(module);
     ModifiableRootModel model = manager.getModifiableModel();
-    OrderEntry[] entries = model.getOrderEntries();
-
-    for (OrderEntry entry : entries) {
-      if (entry instanceof LibraryOrderEntry) {
-        LibraryOrderEntry libEntry = (LibraryOrderEntry) entry;
-        Library library = libEntry.getLibrary();
-        if (isGroovySdkLibrary(library)) {
-          model.removeOrderEntry(entry);
-        }
-      }
-    }
+    removeGroovyLibrariesFormModule(model);
     if (sdk == null || sdk.getGroovyLibrary() == null) {
       model.commit();
       return;
@@ -190,6 +178,19 @@ public class GroovyConfigUtils {
     LibraryOrderEntry addedEntry = model.addLibraryEntry(newLib);
     placeEntryToCorrectPlace(model, addedEntry);
     model.commit();
+  }
+
+  public static void removeGroovyLibrariesFormModule(ModifiableRootModel model) {
+    OrderEntry[] entries = model.getOrderEntries();
+    for (OrderEntry entry : entries) {
+      if (entry instanceof LibraryOrderEntry) {
+        LibraryOrderEntry libEntry = (LibraryOrderEntry) entry;
+        Library library = libEntry.getLibrary();
+        if (isGroovySdkLibrary(library)) {
+          model.removeOrderEntry(entry);
+        }
+      }
+    }
   }
 
   public static void placeEntryToCorrectPlace(ModifiableRootModel model, LibraryOrderEntry addedEntry) {
@@ -409,6 +410,7 @@ public class GroovyConfigUtils {
 
   @Nullable
   public static Library getGroovyLibrary(String name) {
+    if (name == null) return null;
     LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable();
     return table.getLibraryByName(name);
   }

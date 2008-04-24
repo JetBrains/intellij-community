@@ -15,28 +15,34 @@
 
 package org.jetbrains.plugins.groovy.config.ui;
 
-import com.intellij.facet.ui.*;
 import com.intellij.facet.Facet;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.module.Module;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.ui.FacetEditorContext;
+import com.intellij.facet.ui.FacetEditorTab;
+import com.intellij.facet.ui.FacetValidatorsManager;
+import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDialog;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.config.GroovySDK;
 import org.jetbrains.plugins.groovy.config.util.GroovySDKPointer;
+import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -131,16 +137,24 @@ public class GroovyFacetTab extends FacetEditorTab {
   }
 
   public void reset() {
-    Library[] libraries = GroovyConfigUtils.getGroovyLibrariesByModule(myEditorContext.getModule());
-    if (libraries.length != 1) {
-      myComboBox.setSelectedIndex(0);
-      oldGroovyLibName = newGroovyLibName;
-    } else {
-      Library library = libraries[0];
-      if (library != null &&
-          LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraryByName(library.getName()) != null) {
-        myComboBox.selectLibrary(library);
+    Module module = myEditorContext.getModule();
+    if (module != null && FacetManager.getInstance(module).getFacetByType(GroovyFacet.ID) != null) {
+      Library[] libraries = GroovyConfigUtils.getGroovyLibrariesByModule(myEditorContext.getModule());
+      if (libraries.length != 1) {
+        myComboBox.setSelectedIndex(0);
         oldGroovyLibName = newGroovyLibName;
+      } else {
+        Library library = libraries[0];
+        if (library != null &&
+            LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraryByName(library.getName()) != null) {
+          myComboBox.selectLibrary(library);
+          oldGroovyLibName = newGroovyLibName;
+        }
+      }
+    } else {
+      Library library = GroovyConfigUtils.getGroovyLibrary(GroovyApplicationSettings.getInstance().DEFAULT_GROOVY_LIB_NAME);
+      if (library != null) {
+        myComboBox.selectLibrary(library);
       }
     }
   }
