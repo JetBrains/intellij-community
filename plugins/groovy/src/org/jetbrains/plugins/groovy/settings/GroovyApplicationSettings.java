@@ -44,11 +44,8 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
   public String EXTRACT_METHOD_VISIBILITY = null;
   public Boolean IS_DEBUG_ENABLED_IN_SCRIPT = null;
 
-
   // Groovy configuration settings
   public String DEFAULT_GROOVY_LIB_NAME = null;
-  public ArrayList<String> GROOVY_VERSIONS = new ArrayList<String>();
-  public String GROOVY_INSTALL_PATH = null;
 
   @Transient
   private boolean myJsSupportEnabled = false;

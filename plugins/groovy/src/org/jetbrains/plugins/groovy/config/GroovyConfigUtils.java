@@ -93,7 +93,6 @@ public class GroovyConfigUtils {
   }
 
   public static String getGroovyVersion(@NotNull String path) {
-    if (!GroovyGrailsConfiguration.isGroovyConfigured(path)) return UNDEFINED_VERSION;
     String groovyJarVersion = getGroovyGrailsJarVersion(path + "/lib", "groovy-\\d.*\\.jar", MANIFEST_PATH);
     return groovyJarVersion != null ? groovyJarVersion : UNDEFINED_VERSION;
   }
@@ -156,31 +155,7 @@ public class GroovyConfigUtils {
 
   @Nullable
   public static String getGroovyLibVersion(Library library) {
-    VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
-    for (VirtualFile file : files) {
-      if (file.getName().matches(GROOVY_JAR_PATTERN)) {
-        String path = file.getPresentableUrl();
-        File realFile = new File(path);
-        if (realFile.exists()) {
-          File parentFile = realFile.getParentFile();
-          if (parentFile != null) {
-            File libHome = parentFile.getParentFile();
-            if (libHome != null) {
-              String version = getGroovyVersion(libHome.getPath());
-              if (version != null) return version;
-            }
-          }
-          /*JarFile jarFile = new JarFile(realFile);
-         JarEntry jarEntry = jarFile.getJarEntry(MANIFEST_PATH);
-         if (jarEntry == null) {
-           continue;
-         }
-         Manifest manifest = new Manifest(jarFile.getInputStream(jarEntry));
-         return manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);*/
-        }
-      }
-    }
-    return null;
+    return getGroovyVersion(getGroovyLibraryHome(library));
   }
 
   public static GroovySDK[] getGroovySDKs() {
@@ -245,20 +220,24 @@ public class GroovyConfigUtils {
     return false;
   }
 
-  public static Library[] getGroovyLibrariesByModule(Module module) {
+  public static Library[] getGroovyLibrariesByModule(final Module module) {
     if (module == null) return new Library[0];
-    ArrayList<Library> libraries = new ArrayList<Library>();
-    ModuleRootManager manager = ModuleRootManager.getInstance(module);
-    ModifiableRootModel model = manager.getModifiableModel();
-    for (OrderEntry entry : model.getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry) {
-        LibraryOrderEntry libEntry = (LibraryOrderEntry) entry;
-        Library library = libEntry.getLibrary();
-        if (isGroovySdkLibrary(library)) {
-          libraries.add(library);
+    final ArrayList<Library> libraries = new ArrayList<Library>();
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        ModuleRootManager manager = ModuleRootManager.getInstance(module);
+        ModifiableRootModel model = manager.getModifiableModel();
+        for (OrderEntry entry : model.getOrderEntries()) {
+          if (entry instanceof LibraryOrderEntry) {
+            LibraryOrderEntry libEntry = (LibraryOrderEntry) entry;
+            Library library = libEntry.getLibrary();
+            if (isGroovySdkLibrary(library)) {
+              libraries.add(library);
+            }
+          }
         }
       }
-    }
+    });
 
     return libraries.toArray(new Library[libraries.size()]);
   }
@@ -432,6 +411,40 @@ public class GroovyConfigUtils {
   public static Library getGroovyLibrary(String name) {
     LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable();
     return table.getLibraryByName(name);
+  }
+
+  public static boolean isGroovyConfigured(Module module) {
+    return module != null && getGroovyLibrariesByModule(module).length > 0;
+  }
+
+  @NotNull
+  public static String getGroovyInstallPath(Module module) {
+    if (module == null) return "";
+    Library[] libraries = getGroovyLibrariesByModule(module);
+    if (libraries.length == 0) return "";
+    Library library = libraries[0];
+    return getGroovyLibraryHome(library);
+  }
+
+  @NotNull
+  private static String getGroovyLibraryHome(Library library) {
+    String path = "";
+    for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
+      if (file.getName().matches(GROOVY_JAR_PATTERN)) {
+        String jarPath = file.getPresentableUrl();
+        File realFile = new File(jarPath);
+        if (realFile.exists()) {
+          File parentFile = realFile.getParentFile();
+          if (parentFile != null) {
+            File libHome = parentFile.getParentFile();
+            if (libHome != null) {
+              path = libHome.getPath();
+            }
+          }
+        }
+      }
+    }
+    return path;
   }
 
 }

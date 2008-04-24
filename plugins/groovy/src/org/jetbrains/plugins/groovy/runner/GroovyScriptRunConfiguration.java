@@ -35,6 +35,8 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Element;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.codehaus.groovy.grails.web.context.GrailsConfigUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -115,13 +117,13 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
       RunnerSettings runnerSettings,
       ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
     GroovyGrailsConfiguration groovyConfig = GroovyGrailsConfiguration.getInstance();
-    if (!groovyConfig.isGroovyConfigured()) {
-      throw new ExecutionException("Groovy is not configured");
-    }
-
     final Module module = getModule();
     if (module == null) {
       throw new ExecutionException("Module is not specified");
+    }
+
+    if (!GroovyConfigUtils.isGroovyConfigured(module)) {
+      throw new ExecutionException("Groovy is not configured");
     }
 
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
@@ -155,10 +157,8 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     GroovyGrailsConfiguration config = GroovyGrailsConfiguration.getInstance();
 
     //add starter configuration parameters
-    String groovyHome = config.getGroovyInstallPath();
-    if (groovyHome != null) {
-      params.getVMParametersList().addParametersString("-Dgroovy.home=" + "\"" + groovyHome + "\"");
-    }
+    String groovyHome = GroovyConfigUtils.getGroovyInstallPath(module);
+    params.getVMParametersList().addParametersString("-Dgroovy.home=" + "\"" + groovyHome + "\"");
 
     // add user parameters
     params.getVMParametersList().addParametersString(vmParams);

@@ -40,6 +40,7 @@ import org.jetbrains.groovy.compiler.rt.MessageCollector;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.grails.module.GrailsModuleType;
 
 import java.io.*;
@@ -90,7 +91,7 @@ public class GroovyCompiler implements TranslatingCompiler {
 
       Module module = entry.getKey();
       ModuleType moduleType = module.getModuleType();
-      String groovyPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath();
+      String groovyPath = GroovyConfigUtils.getGroovyInstallPath(module);
       String grailsPath = GroovyGrailsConfiguration.getInstance().getGrailsInstallPath();
 
       String libPath = (moduleType instanceof GrailsModuleType && grailsPath != null && grailsPath.length() > 0 ||
@@ -301,12 +302,14 @@ public class GroovyCompiler implements TranslatingCompiler {
   public boolean validateConfiguration(CompileScope compileScope) {
     if (compileScope.getFiles(GroovyFileType.GROOVY_FILE_TYPE, true).length == 0) return true;
 
-    final String groovyInstallPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath();
-    final String grailsInstallPath = GroovyGrailsConfiguration.getInstance().getGrailsInstallPath();
-    if ((groovyInstallPath == null || groovyInstallPath.length() == 0) &&
-        (grailsInstallPath == null || grailsInstallPath.length() == 0)) {
-      Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.facet"), GroovyBundle.message("cannot.compile"));
-      return false;
+    for (Module module : compileScope.getAffectedModules()) {
+      final String groovyInstallPath = GroovyConfigUtils.getGroovyInstallPath(module);
+      final String grailsInstallPath = GroovyGrailsConfiguration.getInstance().getGrailsInstallPath();
+      if (groovyInstallPath.length() == 0 &&
+          (grailsInstallPath == null || grailsInstallPath.length() == 0)) {
+        Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.facet"), GroovyBundle.message("cannot.compile"));
+        return false;
+      }
     }
 
     Set<Module> nojdkModules = new HashSet<Module>();
