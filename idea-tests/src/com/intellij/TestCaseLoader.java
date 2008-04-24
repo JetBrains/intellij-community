@@ -15,15 +15,10 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class TestCaseLoader {
@@ -141,9 +136,50 @@ public class TestCaseLoader {
       }
     }
   }
+  
+  private static List<String> ourRanklist = getTeamCityRankList();
+  private static List<String> getTeamCityRankList() {
+    final String filepath = System.getProperty("teamcity.tests.testsToRunFirst.file", null);
+    if (filepath == null) {
+      return Collections.emptyList();
+    }
+
+    List<String> result = new ArrayList<String>();
+    try {
+      BufferedReader reader = new BufferedReader(new FileReader(filepath));
+      do {
+        final String classname = reader.readLine();
+        if (classname == null) break;
+        result.add(classname);
+      }
+      while (true);
+      return result;
+    }
+    catch (IOException e) {
+      return Collections.emptyList();
+    }
+  }
+
+  private static int getRank(Class aClass) {
+    final String name = aClass.getName();
+    if (ourRanklist.contains(name)) {
+      return ourRanklist.indexOf(name);
+    }
+    return Integer.MAX_VALUE;
+  }
 
   public List<Class> getClasses() {
-    return Collections.unmodifiableList(myClassList);
+    List<Class> result = new ArrayList<Class>(myClassList);
+
+    if (!ourRanklist.isEmpty()) {
+      Collections.sort(result, new Comparator<Class>() {
+        public int compare(final Class o1, final Class o2) {
+          return getRank(o1) - getRank(o2);
+        }
+      });
+    }
+
+    return result;
   }
 
 }
