@@ -30,13 +30,12 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.codehaus.groovy.grails.web.context.GrailsConfigUtils;
 
 import java.io.File;
 import java.util.ArrayList;
