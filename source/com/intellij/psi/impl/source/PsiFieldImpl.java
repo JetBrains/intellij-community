@@ -137,7 +137,13 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
       return selfModifierList;
     }
     else {
-      return findFirstFieldInDeclaration().getModifierList();
+      final PsiField firstField = findFirstFieldInDeclaration();
+      if (firstField == this) {
+        LOG.error("Missing modifier list for sequence of fields: '" + getText() + "'");
+        return null;
+      } 
+
+      return firstField.getModifierList();
     }
   }
 
@@ -164,8 +170,6 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
         final PsiFieldImpl prevFieldPsi = (PsiFieldImpl)prevField.getPsi();
         if (prevFieldPsi.getSelfModifierList() != null) return prevFieldPsi;
       }
-
-      return this;
     }
 
     CompositeElement treeElement = getNode();
