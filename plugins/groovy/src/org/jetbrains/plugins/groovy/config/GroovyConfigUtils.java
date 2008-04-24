@@ -162,17 +162,21 @@ public class GroovyConfigUtils {
         String path = file.getPresentableUrl();
         File realFile = new File(path);
         if (realFile.exists()) {
-          try {
-            JarFile jarFile = new JarFile(realFile);
-            JarEntry jarEntry = jarFile.getJarEntry(MANIFEST_PATH);
-            if (jarEntry == null) {
-              continue;
+          File parentFile = realFile.getParentFile();
+          if (parentFile != null) {
+            File libHome = parentFile.getParentFile();
+            if (libHome != null) {
+              String version = getGroovyVersion(libHome.getPath());
+              if (version != null) return version;
             }
-            Manifest manifest = new Manifest(jarFile.getInputStream(jarEntry));
-            return manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-          } catch (IOException e) {
-            continue;
           }
+          /*JarFile jarFile = new JarFile(realFile);
+         JarEntry jarEntry = jarFile.getJarEntry(MANIFEST_PATH);
+         if (jarEntry == null) {
+           continue;
+         }
+         Manifest manifest = new Manifest(jarFile.getInputStream(jarEntry));
+         return manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);*/
         }
       }
     }
