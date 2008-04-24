@@ -12,12 +12,14 @@ import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.ex.StatusBarEx;
 
 public class StatusBarUpdater {
   private final Project myProject;
 
   private String myLastStatusText;
-  private CaretListener myCaretListener;
+  private final CaretListener myCaretListener;
 
   public StatusBarUpdater(Project project) {
     myProject = project;
@@ -39,10 +41,9 @@ public class StatusBarUpdater {
         public void selectionChanged(FileEditorManagerEvent e) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              if (myProject.isDisposed()) {
-                return;
+              if (!myProject.isDisposed()) {
+                updateStatus();
               }
-              updateStatus();
             }
           });
         }
@@ -71,9 +72,13 @@ public class StatusBarUpdater {
       text = "";
     }
 
+    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (!text.equals(myLastStatusText)){
-      WindowManager.getInstance().getStatusBar(myProject).setInfo(text);
+      statusBar.setInfo(text);
       myLastStatusText = text;
+    }
+    if (statusBar instanceof StatusBarEx) {
+      ((StatusBarEx)statusBar).update(editor);
     }
   }
 }

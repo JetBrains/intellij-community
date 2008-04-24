@@ -1095,10 +1095,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           updateFileIcon(file); // file type can change after renaming
         }
       }
-      else if (VirtualFile.PROP_WRITABLE.equals(e.getPropertyName())) {
-        updateIconAndStatusbar(e);
-      }
-      else if (VirtualFile.PROP_ENCODING.equals(e.getPropertyName())) {
+      else if (VirtualFile.PROP_WRITABLE.equals(e.getPropertyName()) || VirtualFile.PROP_ENCODING.equals(e.getPropertyName())) {
         updateIconAndStatusbar(e);
       }
     }

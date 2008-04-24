@@ -38,7 +38,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   private final MyUISettingsListener myUISettingsListener;
   private InfoAndProgressPanel myInfoAndProgressPanel;
 
-  private UISettings myUISettings;
+  private final UISettings myUISettings;
   private AsyncProcessIcon myRefreshIcon;
   private EmptyIcon myEmptyRefreshIcon;
   private final List<StatusBarPatch> myFileStatusComponents = new ArrayList<StatusBarPatch>();
@@ -287,7 +287,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
 
   public static class SeparatorBorder implements Border {
 
-    private boolean myLeft;
+    private final boolean myLeft;
 
     public SeparatorBorder(final boolean left) {
       myLeft = left;
@@ -316,12 +316,6 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     public static class Left extends SeparatorBorder {
       public Left() {
         super(true);
-      }
-    }
-
-    public static class Right extends SeparatorBorder {
-      public Right() {
-        super(false);
       }
     }
   }

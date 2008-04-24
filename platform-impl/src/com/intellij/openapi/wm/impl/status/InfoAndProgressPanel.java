@@ -29,18 +29,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
-  private ProcessPopup myPopup;
+  private final ProcessPopup myPopup;
   private final TextPanel myInfoPanel = new TextPanel(true);
 
   private final ArrayList<ProgressIndicatorEx> myOriginals = new ArrayList<ProgressIndicatorEx>();
-  private ArrayList<TaskInfo> myInfos = new ArrayList<TaskInfo>();
-  private Map<InlineProgressIndicator, ProgressIndicatorEx> myInline2Original = new HashMap<InlineProgressIndicator, ProgressIndicatorEx>();
-  private MultiValuesMap<ProgressIndicatorEx, InlineProgressIndicator> myOriginal2Inlines =
-    new MultiValuesMap<ProgressIndicatorEx, InlineProgressIndicator>();
+  private final ArrayList<TaskInfo> myInfos = new ArrayList<TaskInfo>();
+  private final Map<InlineProgressIndicator, ProgressIndicatorEx> myInline2Original = new HashMap<InlineProgressIndicator, ProgressIndicatorEx>();
+  private final MultiValuesMap<ProgressIndicatorEx, InlineProgressIndicator> myOriginal2Inlines = new MultiValuesMap<ProgressIndicatorEx, InlineProgressIndicator>();
 
-  private MergingUpdateQueue myUpdateQueue;
-  private AsyncProcessIcon myProgressIcon;
-  private Alarm myQueryAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final MergingUpdateQueue myUpdateQueue;
+  private final AsyncProcessIcon myProgressIcon;
+  private final Alarm myQueryAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private boolean myShouldClosePopupAndOnProcessFinish;
   private final CompoundBorder myCompoundBorder;
@@ -106,7 +105,7 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     }
   }
 
-  public void removeProgress(InlineProgressIndicator progress) {
+  private void removeProgress(InlineProgressIndicator progress) {
     synchronized (myOriginals) {
       if (!myInline2Original.containsKey(progress)) return;
 

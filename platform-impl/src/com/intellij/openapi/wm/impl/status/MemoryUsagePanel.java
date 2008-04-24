@@ -168,11 +168,6 @@ class MemoryUsagePanel extends JPanel implements StatusBarPatch{
       g.drawString(info, x + (totalBarLength - infoWidth) / 2, y + (barHeight + infoHeight) / 2);
     }
 
-    public final int getLineHeight() {
-      final FontMetrics fontMetrics = getFontMetrics(UIUtil.getLabelFont());
-      return fontMetrics.getHeight() - fontMetrics.getDescent();
-    }
-
     public final int getPreferedWidth() {
       return getFontMetrics(UIUtil.getLabelFont()).stringWidth(SAMPLE_STRING);
     }

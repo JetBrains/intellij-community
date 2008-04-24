@@ -15,8 +15,7 @@ import javax.swing.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-//Made public for Fabrique
-public class PositionPanel extends TextPanel implements StatusBarPatch {
+class PositionPanel extends TextPanel implements StatusBarPatch {
   public PositionPanel(StatusBar statusBar) {
     super(false, "#########");
 

@@ -23,9 +23,9 @@ import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
 
 public class IdeMessagePanel extends JPanel implements MessagePoolListener, StatusBarPatch {
-  private IconPane myIdeFatal;
+  private final IconPane myIdeFatal;
 
-  private IconPane[] myIcons;
+  private final IconPane[] myIcons;
   private static final String INTERNAL_ERROR_NOTICE = DiagnosticBundle.message("error.notification.tooltip");
 
   private long myPreviousExceptionTimeStamp;
@@ -173,7 +173,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Stat
       myIdeFatal.deactivate();
     }
     else {
-      myIdeFatal.activate(INTERNAL_ERROR_NOTICE, true);
+      myIdeFatal.activate(INTERNAL_ERROR_NOTICE);
       if (!myNotificationPopupAlreadyShown) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
@@ -205,10 +205,10 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Stat
   }
 
   private class IconPane extends JLabel {
-    private IconWrapper myIcon;
-    private String myEmptyText;
+    private final IconWrapper myIcon;
+    private final String myEmptyText;
     private boolean myIsActive;
-    private ActionListener myListener;
+    private final ActionListener myListener;
 
     public IconPane(Icon aIcon, String aEmptyText, ActionListener aListener) {
       myIcon = new IconWrapper(aIcon);
@@ -231,7 +231,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Stat
       return myIcon;
     }
 
-    public void activate(String aDisplayingText, boolean aShouldBlink) {
+    public void activate(String aDisplayingText) {
       setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       myIsActive = true;
       myIcon.setIconPainted(true);
@@ -253,7 +253,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Stat
   }
 
   private class IconWrapper implements Icon {
-    private Icon myIcon;
+    private final Icon myIcon;
     private boolean myEnabled;
     private boolean myShouldPaint = true;
 
