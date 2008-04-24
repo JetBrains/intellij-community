@@ -1,13 +1,15 @@
 package com.intellij.execution.ui.layout.impl;
 
+import com.intellij.execution.ui.layout.LayoutStateDefaults;
+import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -21,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
+public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions {
    private Project myProject;
   private RunnerLayout myLayout;
   private JPanel myContentPanel;
@@ -49,18 +51,18 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
   }
 
   @NotNull
-  public RunnerLayoutUi setTopToolbar(@NotNull ActionGroup actions, @NotNull String place) {
+  public LayoutViewOptions setTopToolbar(@NotNull ActionGroup actions, @NotNull String place) {
     myContentUI.setTopActions(actions, place);
     return this;
   }
 
 
-  public RunnerLayoutUi initTabDefaults(int id, String text, Icon icon) {
+  public LayoutStateDefaults initTabDefaults(int id, String text, Icon icon) {
     getLayout().setDefault(id, text, icon);
     return this;
   }
 
-  public RunnerLayoutUi initStartupContent(final String id) {
+  public LayoutStateDefaults initStartupContent(final String id) {
     getLayout().setDefaultToFocusOnstartup(id);
     return this;
   }
@@ -126,7 +128,7 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
     return myLayout;
   }
 
-  public void updateToolbarNow() {
+  public void updateActionsNow() {
     myContentUI.updateActionsImmediately();
   }
 
@@ -152,7 +154,7 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
     return getLayout().isToFocusOnStartup(id);
   }
 
-  public RunnerLayoutUi setFocusOnStartup(@Nullable final Content content) {
+  public LayoutViewOptions setFocusOnStartup(@Nullable final Content content) {
     getLayout().setToFocusOnStartup(content != null ? content.getUserData(View.ID) : null);
     return this;
   }
@@ -175,7 +177,7 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
     return myContentUI.getLayoutActions();
   }
 
-  public RunnerLayoutUi setLeftToolbar(@NotNull final ActionGroup leftToolbar, @NotNull final String place) {
+  public LayoutViewOptions setLeftToolbar(@NotNull final ActionGroup leftToolbar, @NotNull final String place) {
     myContentUI.setLeftToolbar(leftToolbar, place);
     return this;
   }
@@ -214,14 +216,24 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi {
   }
 
   @NotNull
-  public RunnerLayoutUi setMinimizeActionEnabled(final boolean enabled) {
+  public LayoutViewOptions setMinimizeActionEnabled(final boolean enabled) {
     myContentUI.setMinimizeActionEnabled(enabled);
     return this;
   }
 
   @NotNull
-  public RunnerLayoutUi setMoveToGridActionEnabled(final boolean enabled) {
+  public LayoutViewOptions setMoveToGridActionEnabled(final boolean enabled) {
     myContentUI.setMovetoGridActionEnabled(enabled);
+    return this;
+  }
+
+  @NotNull
+  public LayoutStateDefaults getDefaults() {
+    return this;
+  }
+
+  @NotNull
+  public LayoutViewOptions getOptions() {
     return this;
   }
 }

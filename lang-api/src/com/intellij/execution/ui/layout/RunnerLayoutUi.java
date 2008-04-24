@@ -1,8 +1,6 @@
 package com.intellij.execution.ui.layout;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.ui.content.Content;
@@ -15,16 +13,10 @@ import javax.swing.*;
 public interface RunnerLayoutUi  {
 
   @NotNull
-  JComponent getComponent();
+  LayoutStateDefaults getDefaults();
 
   @NotNull
-  RunnerLayoutUi setTopToolbar(@NotNull ActionGroup actions, @NotNull String place);
-
-  RunnerLayoutUi setLeftToolbar(@NotNull ActionGroup leftToolbar, @NotNull String place);
-
-  RunnerLayoutUi initTabDefaults(int tabId, @Nullable String defaultTabText, @Nullable Icon defaultTabIcon);
-
-  RunnerLayoutUi initStartupContent(@NotNull String id);
+  LayoutViewOptions getOptions();
 
   @NotNull
   Content addContent(@NotNull Content content);
@@ -40,12 +32,6 @@ public interface RunnerLayoutUi  {
 
   boolean removeContent(@Nullable Content content, boolean dispose);
 
-  boolean isFocusOnStartup(Content content);
-
-  RunnerLayoutUi setFocusOnStartup(@Nullable Content content);
-
-  void focusStartupContent(@Nullable Content defaultContent);
-
   @Nullable
   Content findContent(@NotNull String contentId);
 
@@ -55,17 +41,12 @@ public interface RunnerLayoutUi  {
 
   void removeListener(@NotNull final ContentManagerListener listener);
 
-  void updateToolbarNow();
-
-  AnAction getLayoutActions();
+  @NotNull
+  JComponent getComponent();
 
   boolean isDisposed();
 
-  @NotNull
-  RunnerLayoutUi setMinimizeActionEnabled(boolean enabled);
-
-  @NotNull
-  RunnerLayoutUi setMoveToGridActionEnabled(boolean enabled);
+  void updateActionsNow();
 
   enum PlaceInGrid {
     left, center, right, bottom

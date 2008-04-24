@@ -103,7 +103,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     final RunProfile profile = myEnvironment.getRunProfile();
 
     myUi = RunnerLayoutUi.Factory.getInstance(myProject).create("JavaRunner", myExecutor.getId(), profile.getName(), this);
-    myUi.setMoveToGridActionEnabled(false).setMinimizeActionEnabled(false);
+    myUi.getOptions().setMoveToGridActionEnabled(false).setMinimizeActionEnabled(false);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new MyRunContentDescriptor(profile, myExecutionResult, myReuseProhibited, myUi.getComponent(), this);
@@ -132,7 +132,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
 
     MyRunContentDescriptor contentDescriptor = new MyRunContentDescriptor(profile, myExecutionResult, myReuseProhibited, myUi.getComponent(), this);
 
-    myUi.setLeftToolbar(createActionToolbar(contentDescriptor, myUi.getComponent()), ActionPlaces.UNKNOWN);
+    myUi.getOptions().setLeftToolbar(createActionToolbar(contentDescriptor, myUi.getComponent()), ActionPlaces.UNKNOWN);
 
     return contentDescriptor;
   }
@@ -187,7 +187,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     final AnAction stopAction = ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
     actionGroup.add(stopAction);
     actionGroup.addSeparator();
-    actionGroup.add(myUi.getLayoutActions());
+    actionGroup.add(myUi.getOptions().getLayoutActions());
     actionGroup.addSeparator();
     actionGroup.add(new CloseAction(myExecutor, contentDescriptor, myProject));
     actionGroup.add(new ContextHelpAction(myExecutor.getHelpId()));

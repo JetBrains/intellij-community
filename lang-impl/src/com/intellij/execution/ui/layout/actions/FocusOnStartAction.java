@@ -15,11 +15,11 @@ public class FocusOnStartAction extends BaseRunnerViewAction implements Toggleab
   }
 
   private static boolean isToFocus(final ViewContext context, final Content[] content) {
-    return context.getRunnerLayoutUi().isFocusOnStartup(content[0]);
+    return context.getRunnerLayoutUi().getOptions().isFocusOnStartup(content[0]);
   }
 
   protected void actionPerformed(final AnActionEvent e, final ViewContext context, final Content[] content) {
     final boolean toFocus = isToFocus(context, content);
-    context.getRunnerLayoutUi().setFocusOnStartup(toFocus ? null : content[0]);
+    context.getRunnerLayoutUi().getOptions().setFocusOnStartup(toFocus ? null : content[0]);
   }
 }

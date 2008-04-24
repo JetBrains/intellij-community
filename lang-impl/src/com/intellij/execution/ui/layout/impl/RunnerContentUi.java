@@ -602,7 +602,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
               public void run() {
                 if (!myWasEverAdded) {
                   myWasEverAdded = true;
-                  myRunnerUi.focusStartupContent(null);
+                  ((RunnerLayoutUiImpl)myRunnerUi).focusStartupContent(null);
                 }
               }
             });

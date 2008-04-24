@@ -51,9 +51,9 @@ public class XDebugSessionTab implements Disposable {
     mySessionName = sessionName;
 
     myUi = RunnerLayoutUi.Factory.getInstance(project).create("Debug", "unknown!", sessionName, this);
-    myUi.initTabDefaults(0, "Debug", null);
+    myUi.getDefaults().initTabDefaults(0, "Debug", null);
 
-    myUi.setTopToolbar(createTopToolbar(), ActionPlaces.DEBUGGER_TOOLBAR);
+    myUi.getOptions().setTopToolbar(createTopToolbar(), ActionPlaces.DEBUGGER_TOOLBAR);
   }
   
   private Content createConsoleContent() {
@@ -187,14 +187,14 @@ public class XDebugSessionTab implements Disposable {
     //addAction(group, DebuggerActions.EXPORT_THREADS);
     group.addSeparator();
 
-    group.add(myUi.getLayoutActions());
+    group.add(myUi.getOptions().getLayoutActions());
 
     group.addSeparator();
 
     group.add(new CloseAction(executor, myRunContentDescriptor, myProject));
     group.add(new ContextHelpAction(executor.getHelpId()));
 
-    myUi.setLeftToolbar(group, ActionPlaces.DEBUGGER_TOOLBAR);
+    myUi.getOptions().setLeftToolbar(group, ActionPlaces.DEBUGGER_TOOLBAR);
 
     return myRunContentDescriptor;
   }

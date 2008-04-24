@@ -97,7 +97,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     myUi = RunnerLayoutUi.Factory.getInstance(project).create("JavaDebugger", DebuggerBundle.message("title.generic.debug.dialog"), sessionName, this);
 
-    myUi.initTabDefaults(0, "Debugger", null).initStartupContent(DebuggerContentInfo.FRAME_CONTENT);
+    myUi.getDefaults().initTabDefaults(0, "Debugger", null).initStartupContent(DebuggerContentInfo.FRAME_CONTENT);
 
     final DebuggerSettings debuggerSettings = DebuggerSettings.getInstance();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -105,7 +105,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
         public void changeEvent(DebuggerContextImpl newContext, int event) {
           switch (event) {
             case DebuggerSession.EVENT_DETACHED:
-              myUi.updateToolbarNow();
+              myUi.updateActionsNow();
 
               if (debuggerSettings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION) {
                 try {
@@ -132,7 +132,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     stepping.add(actionManager.getAction(DebuggerActions.STEP_OUT));
     stepping.addSeparator();
     stepping.add(actionManager.getAction(DebuggerActions.RUN_TO_CURSOR));
-    myUi.setTopToolbar(stepping, ActionPlaces.DEBUGGER_TOOLBAR);
+    myUi.getOptions().setTopToolbar(stepping, ActionPlaces.DEBUGGER_TOOLBAR);
 
 
     myWatchPanel = new MainWatchPanel(getProject(), getContextManager());
@@ -254,14 +254,14 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     addAction(group, DebuggerActions.EXPORT_THREADS);
     group.addSeparator();
 
-    group.add(myUi.getLayoutActions());
+    group.add(myUi.getOptions().getLayoutActions());
 
     group.addSeparator();
 
     group.add(new CloseAction(executor, myRunContentDescriptor, getProject()));
     group.add(new ContextHelpAction(executor.getHelpId()));
 
-    myUi.setLeftToolbar(group, ActionPlaces.DEBUGGER_TOOLBAR);
+    myUi.getOptions().setLeftToolbar(group, ActionPlaces.DEBUGGER_TOOLBAR);
 
 
     return myRunContentDescriptor;
