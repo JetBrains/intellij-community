@@ -4,8 +4,6 @@ import org.jetbrains.idea.maven.repository.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.repository.MavenRepositoryManager;
 import org.jetbrains.idea.maven.repository.MavenWithDataTestFixture;
 
-import java.io.File;
-
 public class DependencyCompletionAndResolutionTest extends MavenCompletionAndResolutionTestCase {
   private MavenWithDataTestFixture myDataTestFixture;
   private MavenRepositoryManager myRepositoryManager;
@@ -13,18 +11,14 @@ public class DependencyCompletionAndResolutionTest extends MavenCompletionAndRes
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    myDataTestFixture = new MavenWithDataTestFixture(myDir);
+    myDataTestFixture.setUp();
+
     myRepositoryManager = MavenRepositoryManager.getInstance(myProject);
     myRepositoryManager.initIndex();
     myRepositoryManager.add(new MavenRepositoryInfo("local1", myDataTestFixture.getTestDataPath("local1"), false));
     myRepositoryManager.add(new MavenRepositoryInfo("local2", myDataTestFixture.getTestDataPath("local2"), false));
     myRepositoryManager.startUpdateAll();
-  }
-
-  @Override
-  protected void setUpFixtures() throws Exception {
-    super.setUpFixtures();
-    myDataTestFixture = new MavenWithDataTestFixture(new File(myTempDirFixture.getTempDirPath()));
-    myDataTestFixture.setUp();
   }
 
   @Override

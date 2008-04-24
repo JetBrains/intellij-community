@@ -16,7 +16,7 @@ import org.jetbrains.idea.maven.core.MavenFactory;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
-import org.jetbrains.idea.maven.repository.PluginPluginInfo;
+import org.jetbrains.idea.maven.repository.MavenPluginInfo;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
@@ -133,10 +133,12 @@ public class MavenKeymapExtension implements KeymapExtension {
   }
 
   private static void collectGoals(final MavenPluginsRepository repository, final MavenId mavenId, final Collection<String> list) {
-    final PluginPluginInfo plugin = repository.loadPluginInfo(mavenId);
+    final MavenPluginInfo plugin = repository.loadPluginInfo(mavenId);
     if (plugin == null) return;
 
-    list.addAll(plugin.getGoals());
+    for (MavenPluginInfo.Mojo m : plugin.getMojos()) {
+      list.add(m.getQualifiedGoal());
+    }
   }
 
   static class MavenGoalAction extends AnAction {

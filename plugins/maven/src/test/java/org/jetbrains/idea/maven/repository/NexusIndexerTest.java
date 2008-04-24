@@ -5,7 +5,6 @@ import org.apache.lucene.search.WildcardQuery;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
-import org.codehaus.plexus.PlexusContainer;
 import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.core.MavenFactory;
 import org.sonatype.nexus.index.ArtifactContext;
@@ -16,6 +15,7 @@ import org.sonatype.nexus.index.context.IndexContextInInconsistentStateException
 import org.sonatype.nexus.index.context.IndexingContext;
 import org.sonatype.nexus.index.scan.ScanningResult;
 import org.sonatype.nexus.index.updater.IndexUpdater;
+import org.codehaus.plexus.PlexusContainer;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,15 +29,10 @@ public class NexusIndexerTest extends MavenTestCase {
   private File indexDir;
 
   @Override
-  protected void setUpFixtures() throws Exception {
-    super.setUpFixtures();
+  public void setUp() throws Exception {
+    super.setUp();
     myDataTestFixture = new MavenWithDataTestFixture(new File(myTempDirFixture.getTempDirPath()));
     myDataTestFixture.setUp();
-  }
-
-  @Override
-  protected void setUpInWriteAction() throws Exception {
-    super.setUpInWriteAction();
 
     embedder = MavenFactory.createEmbedderForExecute(getMavenCoreSettings());
 

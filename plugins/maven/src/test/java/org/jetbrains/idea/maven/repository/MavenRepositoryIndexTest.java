@@ -20,15 +20,12 @@ public class MavenRepositoryIndexTest extends MavenTestCase {
   private File myIndexDir;
 
   @Override
-  protected void setUpFixtures() throws Exception {
-    super.setUpFixtures();
-    myDataTestFixture = new MavenWithDataTestFixture(new File(myTempDirFixture.getTempDirPath()));
-    myDataTestFixture.setUp();
-  }
+  public void setUp() throws Exception {
+    super.setUp();
 
-  @Override
-  protected void setUpInWriteAction() throws Exception {
-    super.setUpInWriteAction();
+    myDataTestFixture = new MavenWithDataTestFixture(myDir);
+    myDataTestFixture.setUp();
+
     initIndex();
   }
 

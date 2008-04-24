@@ -25,7 +25,7 @@ import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
-import org.jetbrains.idea.maven.repository.PluginPluginInfo;
+import org.jetbrains.idea.maven.repository.MavenPluginInfo;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;
@@ -605,7 +605,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     private void addPlugin(final List<PluginNode> pluginNodes, final MavenId mavenId, final boolean detachable) {
       if (!hasPlugin(mavenId)) {
-        PluginPluginInfo plugin = getRepository().loadPluginInfo(mavenId);
+        MavenPluginInfo plugin = getRepository().loadPluginInfo(mavenId);
         insertSorted(pluginNodes, plugin == null
                                   ? new InvalidPluginNode(this, mavenId, detachable)
                                   : new ValidPluginNode(this, plugin, detachable));
@@ -1055,12 +1055,12 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
   }
 
   public class ValidPluginNode extends PluginNode {
-    public ValidPluginNode(PomNode parent, final PluginPluginInfo plugin, boolean detachable) {
+    public ValidPluginNode(PomNode parent, final MavenPluginInfo plugin, boolean detachable) {
       super(parent, new MavenId(plugin.getGroupId(), plugin.getArtifactId(), plugin.getVersion()), detachable);
       addPlainText(plugin.getGoalPrefix());
       addColoredFragment(" (" + getId().toString() + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
-      for (String goal  : plugin.getGoals()) {
-        goalNodes.add(new PluginGoalNode(this, goal));
+      for (MavenPluginInfo.Mojo mojo : plugin.getMojos()) {
+        goalNodes.add(new PluginGoalNode(this, mojo.getQualifiedGoal()));
       }
     }
   }

@@ -39,7 +39,7 @@ public abstract class MavenTestCase extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    setUpFixtures();
+    setUpCommonFixtures();
 
     myProject = myTestFixture.getProject();
 
@@ -55,7 +55,7 @@ public abstract class MavenTestCase extends TestCase {
     });
   }
 
-  protected void setUpFixtures() throws Exception {
+  protected void setUpCommonFixtures() throws Exception {
     myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     myTempDirFixture.setUp();
 
@@ -73,11 +73,11 @@ public abstract class MavenTestCase extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    tearDownFixtures();
+    tearDownCommonFixtures();
     super.tearDown();
   }
 
-  protected void tearDownFixtures() throws Exception {
+  protected void tearDownCommonFixtures() throws Exception {
     myTestFixture.tearDown();
     myTempDirFixture.tearDown();
   }
@@ -106,6 +106,10 @@ public abstract class MavenTestCase extends TestCase {
   protected String getRepositoryPath() {
     String path = getMavenCoreSettings().getEffectiveLocalRepository().getPath();
     return FileUtil.toSystemIndependentName(path);
+  }
+
+  protected void setRepositoryPath(String path) {
+    getMavenCoreSettings().setLocalRepository(path);
   }
 
   protected String getProjectPath() {

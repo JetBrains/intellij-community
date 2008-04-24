@@ -22,7 +22,7 @@ public abstract class MavenCompletionAndResolutionTestCase extends MavenImportin
   private boolean myOriginalAutoCompletion;
 
   @Override
-  protected void setUpFixtures() throws Exception {
+  protected void setUpCommonFixtures() throws Exception {
     myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder().getFixture();
 
     myCodeInsightFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture);
@@ -37,7 +37,7 @@ public abstract class MavenCompletionAndResolutionTestCase extends MavenImportin
   }
 
   @Override
-  protected void tearDownFixtures() throws Exception {
+  protected void tearDownCommonFixtures() throws Exception {
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = myOriginalAutoCompletion;
     myCodeInsightFixture.tearDown();
   }

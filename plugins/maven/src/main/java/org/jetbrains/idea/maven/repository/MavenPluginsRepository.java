@@ -32,7 +32,7 @@ public class MavenPluginsRepository extends DummyProjectComponent {
   private final Project myProject;
   private final MavenCore myMavenCore;
 
-  private final Map<MavenId, PluginPluginInfo> pluginCache = new HashMap<MavenId, PluginPluginInfo>();
+  private final Map<MavenId, MavenPluginInfo> pluginCache = new HashMap<MavenId, MavenPluginInfo>();
 
   public static MavenPluginsRepository getInstance(Project p) {
     return p.getComponent(MavenPluginsRepository.class);
@@ -49,8 +49,8 @@ public class MavenPluginsRepository extends DummyProjectComponent {
   }
 
   @Nullable
-  public PluginPluginInfo loadPluginInfo(MavenId mavenId) {
-    PluginPluginInfo p = pluginCache.get(mavenId);
+  public MavenPluginInfo loadPluginInfo(MavenId mavenId) {
+    MavenPluginInfo p = pluginCache.get(mavenId);
     if (p != null) return p;
 
     p = doLoadPluginInfo(mavenId);
@@ -61,7 +61,7 @@ public class MavenPluginsRepository extends DummyProjectComponent {
   }
 
   @Nullable
-  private PluginPluginInfo doLoadPluginInfo(MavenId mavenId) {
+  private MavenPluginInfo doLoadPluginInfo(MavenId mavenId) {
     String path = findPluginPath(mavenId.groupId, mavenId.artifactId, mavenId.version);
     if (path == null) return null;
 
@@ -114,7 +114,7 @@ public class MavenPluginsRepository extends DummyProjectComponent {
   }
 
   @Nullable
-  private PluginPluginInfo createPluginDocument(String path, boolean loud) {
+  private MavenPluginInfo createPluginDocument(String path, boolean loud) {
     try {
       ZipFile jar = new ZipFile(path);
       ZipEntry entry = jar.getEntry(MAVEN_PLUGIN_DESCRIPTOR);
@@ -126,10 +126,11 @@ public class MavenPluginsRepository extends DummyProjectComponent {
 
       InputStream is = jar.getInputStream(entry);
       try {
-        return new PluginPluginInfo(is);
+        return new MavenPluginInfo(is);
       }
       finally {
         is.close();
+        jar.close();
       }
     }
     catch (IOException e) {
@@ -148,10 +149,10 @@ public class MavenPluginsRepository extends DummyProjectComponent {
   }
 
   @NotNull
-  public Collection<PluginPluginInfo> choosePlugins() {
+  public Collection<MavenPluginInfo> choosePlugins() {
     final File localRepository = getLocalRepository();
     if (localRepository == null) {
-      return new ArrayList<PluginPluginInfo>();
+      return new ArrayList<MavenPluginInfo>();
     }
 
     final VirtualFile repoDir = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
@@ -164,9 +165,9 @@ public class MavenPluginsRepository extends DummyProjectComponent {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, true);
     VirtualFile[] pluginFiles = FileChooser.chooseFiles(myProject, descriptor, repoDir);
 
-    Collection<PluginPluginInfo> pluginDocuments = new ArrayList<PluginPluginInfo>();
+    Collection<MavenPluginInfo> pluginDocuments = new ArrayList<MavenPluginInfo>();
     for (VirtualFile pluginFile : pluginFiles) {
-      PluginPluginInfo mavenPluginDocument = createPluginDocument(pluginFile.getPath(), true);
+      MavenPluginInfo mavenPluginDocument = createPluginDocument(pluginFile.getPath(), true);
       if (mavenPluginDocument != null) {
         pluginDocuments.add(mavenPluginDocument);
       }
