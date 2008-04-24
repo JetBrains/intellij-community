@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.repository;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.io.FileUtil;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.WildcardQuery;
@@ -24,14 +25,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 public class MavenRepositoryIndex {
+  protected static final String INDICES_LIST_FILE = "list.dat";
+
   private MavenEmbedder myEmbedder;
   private NexusIndexer myIndexer;
   private IndexUpdater myUpdater;
-  private File myIndexDir;
 
+  private File myIndexDir;
   private LinkedHashMap<MavenRepositoryInfo, IndexingContext> myContexts = new LinkedHashMap<MavenRepositoryInfo, IndexingContext>();
 
-  public MavenRepositoryIndex(MavenEmbedder e, File indexDir) throws MavenRepositoryException {
+  public MavenRepositoryIndex(MavenEmbedder e, File indexDir) {
     myEmbedder = e;
     myIndexDir = indexDir;
 
@@ -43,32 +46,42 @@ public class MavenRepositoryIndex {
     catch (ComponentLookupException ex) {
       throw new RuntimeException(ex);
     }
-
-    load();
   }
 
-  private void load() throws MavenRepositoryException {
+  public void load() throws MavenRepositoryException {
     try {
-      File f = getListFile();
-      if (!f.exists()) return;
-
-      FileInputStream fs = new FileInputStream(f);
-      
       try {
-        DataInputStream is = new DataInputStream(fs);
-        myContexts = new LinkedHashMap<MavenRepositoryInfo, IndexingContext>();
-        int size = is.readInt();
-        while (size-- > 0) {
-          add(new MavenRepositoryInfo(is));
+        File f = getListFile();
+        if (!f.exists()) return;
+
+        FileInputStream fs = new FileInputStream(f);
+
+        try {
+          DataInputStream is = new DataInputStream(fs);
+          myContexts = new LinkedHashMap<MavenRepositoryInfo, IndexingContext>();
+          int size = is.readInt();
+          while (size-- > 0) {
+            add(new MavenRepositoryInfo(is));
+          }
+        }
+        finally {
+          fs.close();
         }
       }
-      finally {
-        fs.close();
+      catch (Exception e){
+        throw new MavenRepositoryException(e);
       }
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    catch (MavenRepositoryException e) {
+      closeOpenIndices();
+      clearIndices();
+
+      throw e;
     }
+  }
+
+  private void clearIndices() {
+    FileUtil.delete(myIndexDir);
   }
 
   public void save() {
@@ -92,15 +105,20 @@ public class MavenRepositoryIndex {
   }
 
   private File getListFile() {
-    return new File(myIndexDir, "list.dat");
+    return new File(myIndexDir, INDICES_LIST_FILE);
   }
 
   public void close() {
+    closeOpenIndices();
+  }
+
+  private void closeOpenIndices() {
     try {
       Collection<IndexingContext> contexts = myIndexer.getIndexingContexts().values();
       for (IndexingContext c : new ArrayList<IndexingContext>(contexts)) {
         myIndexer.removeIndexingContext(c, false);
       }
+      myContexts.clear();
     }
     catch (IOException e) {
       // shouldn't throw any exception, since we are not deleting the
@@ -160,7 +178,6 @@ public class MavenRepositoryIndex {
 
   public void update(MavenRepositoryInfo i, ProgressIndicator progress) throws MavenRepositoryException {
     try {
-      progress.setText("Updating [" + i.getId() + "]");
       if (i.isRemote()) {
         IndexingContext c = myContexts.get(i);
 
@@ -178,9 +195,13 @@ public class MavenRepositoryIndex {
         myUpdater.fetchAndUpdateIndex(c, new TransferListenerAdapter(progress), proxyInfo);
       } else {
         progress.setIndeterminate(true);
+
+        // NexusIndexer.scan does not overwrite an existing index, so we have to
+        // remove it manually.
         deleteContext(myContexts.get(i));
         IndexingContext c = createContext(i);
         myContexts.put(i, c);
+        
         myIndexer.scan(c);
       }
     }

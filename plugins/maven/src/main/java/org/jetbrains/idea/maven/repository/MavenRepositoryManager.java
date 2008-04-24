@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import org.apache.lucene.search.Query;
@@ -20,11 +19,13 @@ import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenFactory;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.project.MavenException;
+import org.jetbrains.idea.maven.project.MavenImportToolWindow;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 import org.sonatype.nexus.index.ArtifactInfo;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class MavenRepositoryManager extends DummyProjectComponent {
@@ -55,28 +56,40 @@ public class MavenRepositoryManager extends DummyProjectComponent {
                 addAndUpdateLocalRepository();
               }
               catch (MavenRepositoryException e) {
-                throw new RuntimeException(e);
+                showErrorWhenProjectIsOpen(new MavenException(e));
               }
             }
           });
         }
         catch (MavenException e) {
-          throw new RuntimeException(e);
-        }
-        catch (MavenRepositoryException e) {
-          throw new RuntimeException(e);
+          showErrorWhenProjectIsOpen(e);
         }
       }
     });
   }
 
+  private void showErrorWhenProjectIsOpen(final MavenException e) {
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+      public void run() {
+        new MavenImportToolWindow(myProject, "Maven Repository Manager").displayErrors(e);
+      }
+    });
+  }
+
   @TestOnly
-  public void initIndex() throws MavenException, MavenRepositoryException {
+  public void initIndex() throws MavenException {
     File baseDir = new File(PathManager.getSystemPath(), "Maven");
     File projectIndecesDir = new File(baseDir, myProject.getLocationHash());
 
     myEmbedder = MavenFactory.createEmbedderForExecute(MavenCore.getInstance(myProject).getState());
     myIndex = new MavenRepositoryIndex(myEmbedder, projectIndecesDir);
+
+    try {
+      myIndex.load();
+    }
+    catch (MavenRepositoryException e) {
+      new MavenException("Couldn't load Maven Repositories: " + e.getMessage());
+    }
   }
 
   public void disposeComponent() {
@@ -137,17 +150,17 @@ public class MavenRepositoryManager extends DummyProjectComponent {
     doStartUpdate(null);
   }
 
-  private void doStartUpdate(final MavenRepositoryInfo i) {
+  private void doStartUpdate(final MavenRepositoryInfo info) {
     new Task.Backgroundable(myProject, "Updating Maven Repositories...", true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          if (i != null) {
-            myIndex.update(i, indicator);
-          }
-          else {
-            for (MavenRepositoryInfo each : myIndex.getInfos()) {
-              myIndex.update(each, indicator);
-            }
+          List<MavenRepositoryInfo> infos = info != null
+                                            ? Collections.singletonList(info)
+                                            : myIndex.getInfos();
+
+          for (MavenRepositoryInfo each : infos) {
+            indicator.setText("Updating [" + each.getId() + "]");
+            myIndex.update(each, indicator);
           }
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -156,12 +169,8 @@ public class MavenRepositoryManager extends DummyProjectComponent {
             }
           });
         }
-        catch (final MavenRepositoryException e) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              Messages.showErrorDialog(e.getMessage(), "Maven Repository Index");
-            }
-          });
+        catch (MavenRepositoryException e) {
+          showErrorWhenProjectIsOpen(new MavenException(e));
         }
       }
     }.queue();

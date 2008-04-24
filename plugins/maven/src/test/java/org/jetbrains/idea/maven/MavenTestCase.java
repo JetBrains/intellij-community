@@ -88,7 +88,7 @@ public abstract class MavenTestCase extends TestCase {
       protected void run(Result result) throws Throwable {
         MavenTestCase.super.runTest();
       }
-    }.execute();
+    }.executeSilently().throwException();
   }
 
   protected MavenCore getMavenCore() {
