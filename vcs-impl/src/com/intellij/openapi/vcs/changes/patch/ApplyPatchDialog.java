@@ -260,6 +260,10 @@ public class ApplyPatchDialog extends DialogWrapper {
     myPatchesFailedToLoad = new HashSet<FilePatch>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
+        if (!patchFile.isValid()) {
+          queueUpdateStatus("Cannot find patch file");
+          return;
+        }
         PatchReader reader;
         try {
           reader = new PatchReader(patchFile);
