@@ -16,15 +16,20 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.psi.*;
-import com.intellij.psi.scope.*;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
 
-import java.util.*;
+import java.util.EnumSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author ven
@@ -57,7 +62,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
-    if (myResolveTargetKinds.contains(ResolveUtil.getResolveKind(element))) {
+    if (myResolveTargetKinds.contains(getResolveKind(element))) {
       PsiNamedElement namedElement = (PsiNamedElement) element;
 
       if (myTypeArguments.length > 0 && namedElement instanceof PsiClass) {
@@ -116,13 +121,25 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   }
 
   public boolean shouldProcess(Class elementClass) {
-    if (PsiMethod.class.isAssignableFrom(elementClass)) return shouldProcess(ResolveKind.METHOD);
-    if (PsiVariable.class.isAssignableFrom(elementClass)) return shouldProcess(ResolveKind.PROPERTY);
-    if (PsiClass.class.isAssignableFrom(elementClass)) return shouldProcess(ResolveKind.CLASS_OR_PACKAGE);
-    return true;
+    if (PsiMethod.class.isAssignableFrom(elementClass)) return shouldProcess(METHOD);
+    if (PsiVariable.class.isAssignableFrom(elementClass)) return shouldProcess(PROPERTY);
+    if (PsiPackage.class.isAssignableFrom(elementClass)) return shouldProcess(PACKAGE);
+    if (PsiClass.class.isAssignableFrom(elementClass)) return shouldProcess(CLASS);
+    return false;
   }
 
   public boolean hasCandidates() {
     return myCandidates.size() > 0;
+  }
+
+  private static ResolveKind getResolveKind(PsiElement element) {
+    if (element instanceof PsiVariable) return PROPERTY;
+    if (element instanceof GrReferenceExpression) return PROPERTY;
+
+    else if (element instanceof PsiMethod) return METHOD;
+
+    else if (element instanceof PsiPackage) return PACKAGE;
+
+    return CLASS;
   }
 }

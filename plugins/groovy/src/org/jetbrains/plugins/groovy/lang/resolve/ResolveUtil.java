@@ -81,15 +81,6 @@ public class ResolveUtil {
     return true;
   }
 
-  public static ClassHint.ResolveKind getResolveKind(PsiElement element) {
-    if (element instanceof PsiVariable) return PROPERTY;
-    if (element instanceof GrReferenceExpression) return PROPERTY;
-
-    else if (element instanceof PsiMethod) return METHOD;
-
-    else return CLASS_OR_PACKAGE;
-  }
-
   public static boolean processNonCodeMethods(PsiType type, PsiScopeProcessor processor, Project project) {
     return processNonCodeMethods(type, processor, project, new HashSet<String>());
   }

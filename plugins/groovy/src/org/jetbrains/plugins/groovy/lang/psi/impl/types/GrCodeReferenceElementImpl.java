@@ -42,9 +42,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.EnumSet;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -266,7 +268,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     return false;
   }
 
-  private static class MyResolver implements ResolveCache.PolyVariantResolver<GrCodeReferenceElementImpl> {
+  private static class OurResolver implements ResolveCache.PolyVariantResolver<GrCodeReferenceElementImpl> {
 
     public GroovyResolveResult[] resolve(GrCodeReferenceElementImpl reference, boolean incompleteCode) {
       if (reference.getReferenceName() == null) return GroovyResolveResult.EMPTY_ARRAY;
@@ -339,7 +341,9 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
               }
             }
           } else {
-            ResolverProcessor processor = new ClassResolverProcessor(refName, ref);
+            EnumSet<ClassHint.ResolveKind> kinds = kind == CLASS ? EnumSet.of(ClassHint.ResolveKind.CLASS) :
+                EnumSet.of(ClassHint.ResolveKind.PACKAGE, ClassHint.ResolveKind.CLASS);
+            ResolverProcessor processor = new ClassResolverProcessor(refName, ref, kinds);
             ResolveUtil.treeWalkUp(ref, processor);
             GroovyResolveResult[] candidates = processor.getCandidates();
             if (candidates.length > 0) return candidates;
@@ -386,7 +390,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     }
   }
 
-  private static MyResolver RESOLVER = new MyResolver();
+  private static OurResolver RESOLVER = new OurResolver();
 
   public GroovyResolveResult advancedResolve() {
     ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, false);

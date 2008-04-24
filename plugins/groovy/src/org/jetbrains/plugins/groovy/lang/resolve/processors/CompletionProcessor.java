@@ -44,7 +44,7 @@ public class CompletionProcessor extends ResolverProcessor {
   }
 
   public static ResolverProcessor createClassCompletionProcessor(PsiElement place) {
-    return new CompletionProcessor(place, EnumSet.of(ResolveKind.CLASS_OR_PACKAGE), null);
+    return new CompletionProcessor(place, EnumSet.of(ResolveKind.PACKAGE, ResolveKind.CLASS), null);
   }
 
   public GroovyResolveResult[] getCandidates() {

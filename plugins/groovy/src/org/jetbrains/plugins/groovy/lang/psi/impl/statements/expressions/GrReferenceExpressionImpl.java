@@ -63,6 +63,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.Collections;
+import java.util.EnumSet;
 
 /**
  * @author ilyas
@@ -385,7 +386,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       GroovyResolveResult[] propertyCandidates = processor.getCandidates();
       if (propertyCandidates.length > 0) return propertyCandidates;
       if (refExpr.getKind() == Kind.TYPE_OR_PROPERTY) {
-        ResolverProcessor classProcessor = new ClassResolverProcessor(refExpr.getReferenceName(), refExpr);
+        EnumSet<ClassHint.ResolveKind> kinds = refExpr.getParent() instanceof GrReferenceExpression ?
+            EnumSet.of(ClassHint.ResolveKind.CLASS, ClassHint.ResolveKind.PACKAGE) :
+            EnumSet.of(ClassHint.ResolveKind.CLASS);
+        ResolverProcessor classProcessor = new ClassResolverProcessor(refExpr.getReferenceName(), refExpr, kinds);
         resolveImpl(refExpr, classProcessor);
         return classProcessor.getCandidates();
       }

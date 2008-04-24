@@ -5,7 +5,8 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
  */
 public interface ClassHint {
   enum ResolveKind {
-    CLASS_OR_PACKAGE,
+    CLASS,
+    PACKAGE,
     METHOD,
     PROPERTY
   }

@@ -24,11 +24,11 @@ import java.util.EnumSet;
  * @author ven
  */
 public class ClassResolverProcessor extends ResolverProcessor {
-  public ClassResolverProcessor(String refName, GrReferenceElement ref) {
-    super(refName, EnumSet.of(ClassHint.ResolveKind.CLASS_OR_PACKAGE), ref, ref.getTypeArguments());
+  public ClassResolverProcessor(String refName, GrReferenceElement ref, EnumSet<ResolveKind> kinds) {
+    super(refName, kinds, ref, ref.getTypeArguments());
   }
 
   public ClassResolverProcessor(String refName, PsiElement place) {
-    super(refName, EnumSet.of(ClassHint.ResolveKind.CLASS_OR_PACKAGE), place, PsiType.EMPTY_ARRAY);
+    super(refName, EnumSet.of(ClassHint.ResolveKind.CLASS), place, PsiType.EMPTY_ARRAY);
   }
 }
