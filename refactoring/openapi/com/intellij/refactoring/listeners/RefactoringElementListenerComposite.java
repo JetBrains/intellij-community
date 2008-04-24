@@ -17,6 +17,7 @@
 package com.intellij.refactoring.listeners;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -27,13 +28,13 @@ public class RefactoringElementListenerComposite implements RefactoringElementLi
     myListeners.add(listener);
   }
 
-  public void elementMoved(final PsiElement newElement){
+  public void elementMoved(@NotNull final PsiElement newElement){
     for (RefactoringElementListener myListener : myListeners) {
       myListener.elementMoved(newElement);
     }
   }
 
-  public void elementRenamed(final PsiElement newElement){
+  public void elementRenamed(@NotNull final PsiElement newElement){
     for (RefactoringElementListener myListener : myListeners) {
       myListener.elementRenamed(newElement);
     }

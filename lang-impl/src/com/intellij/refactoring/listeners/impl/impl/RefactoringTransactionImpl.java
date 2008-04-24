@@ -5,6 +5,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +57,7 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
       myListenerList = myOldElementToListenerListMap.get(oldElement);
     }
 
-    public void elementMoved(final PsiElement newElement) {
+    public void elementMoved(@NotNull final PsiElement newElement) {
       myRunnables.add(new Runnable() {
         public void run() {
           for (RefactoringElementListener refactoringElementListener : myListenerList) {
@@ -66,7 +67,7 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
       });
     }
 
-    public void elementRenamed(final PsiElement newElement) {
+    public void elementRenamed(@NotNull final PsiElement newElement) {
       myRunnables.add(new Runnable() {
         public void run() {
           for (RefactoringElementListener refactoringElementListener : myListenerList) {

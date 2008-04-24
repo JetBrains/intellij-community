@@ -201,9 +201,9 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(UsageInfo[] usages) {
     for (PsiElement element : myRenameProcessor.getElements()) {
       RenameUtil.doRename(element, myNewName, extractUsagesForElement(element, usages), myProject, new RefactoringElementListener() {
-        public void elementMoved(PsiElement newElement) {}
+        public void elementMoved(@NotNull PsiElement newElement) {}
 
-        public void elementRenamed(PsiElement newElement) {}
+        public void elementRenamed(@NotNull PsiElement newElement) {}
       });
     }
 

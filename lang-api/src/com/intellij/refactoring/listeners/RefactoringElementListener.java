@@ -16,6 +16,7 @@
 package com.intellij.refactoring.listeners;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * {@linkplain RefactoringElementListenerProvider} recieves a notifictaion of what happened
@@ -26,9 +27,9 @@ public interface RefactoringElementListener {
   /**
    * Invoked in write action and command.
    */
-  void elementMoved(PsiElement newElement);
+  void elementMoved(@NotNull PsiElement newElement);
   /**
    * Invoked in write action and command.
    */
-  void elementRenamed(PsiElement newElement);
+  void elementRenamed(@NotNull PsiElement newElement);
 }

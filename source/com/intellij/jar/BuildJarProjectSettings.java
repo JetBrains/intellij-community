@@ -1,6 +1,5 @@
 package com.intellij.jar;
 
-import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -11,8 +10,8 @@ import com.intellij.openapi.compiler.make.*;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.deployment.LibraryLink;
-import com.intellij.openapi.deployment.PackagingConfiguration;
 import com.intellij.openapi.deployment.ModuleLink;
+import com.intellij.openapi.deployment.PackagingConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -31,6 +30,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import gnu.trove.THashSet;
@@ -285,11 +285,11 @@ public class BuildJarProjectSettings implements PersistentStateComponent<Element
       mySettings = settings;
     }
 
-    public void elementMoved(PsiElement newElement) {
+    public void elementMoved(@NotNull PsiElement newElement) {
       mySettings.setMainClass(((PsiClass)newElement).getQualifiedName());
     }
 
-    public void elementRenamed(PsiElement newElement) {
+    public void elementRenamed(@NotNull PsiElement newElement) {
       mySettings.setMainClass(((PsiClass)newElement).getQualifiedName());
     }
   }

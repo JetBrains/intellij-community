@@ -17,6 +17,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -101,11 +102,11 @@ public class UIDesignerPaletteProvider implements PaletteItemProvider, ProjectCo
         myItem = item;
       }
 
-      public void elementMoved(PsiElement newElement) {
+      public void elementMoved(@NotNull PsiElement newElement) {
         elementRenamed(newElement);
       }
 
-      public void elementRenamed(PsiElement newElement) {
+      public void elementRenamed(@NotNull PsiElement newElement) {
         PsiClass psiClass = (PsiClass) newElement;
         final String qName = ClassUtil.getJVMClassName(psiClass);
         if (qName != null) {

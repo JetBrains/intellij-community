@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import org.jetbrains.annotations.NotNull;
 
 public class RefactoringListeners {
   public static RefactoringElementListener getListener(final PsiPackage psiPackage, final Accessor<PsiPackage> accessor) {
@@ -78,15 +79,15 @@ public class RefactoringListeners {
       myPath = path;
     }
 
-    public void elementMoved(final PsiElement newElement) {
+    public void elementMoved(@NotNull final PsiElement newElement) {
       setName((T)newElement);
     }
 
-    public void elementRenamed(final PsiElement newElement) {
+    public void elementRenamed(@NotNull final PsiElement newElement) {
       setName((T)newElement);
     }
 
-    private void setName(T newElement) {
+    private void setName(@NotNull T newElement) {
       String qualifiedName = getQualifiedName(newElement);
       if (myPath.length() > 0) {
         qualifiedName = qualifiedName + "." + myPath;
