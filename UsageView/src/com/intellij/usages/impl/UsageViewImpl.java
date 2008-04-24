@@ -23,6 +23,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
@@ -470,7 +471,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         }
       }
     });
-    setupCentralPanel();
+    if (myCentralPanel != null) {
+      setupCentralPanel();
+    }
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         if (isDisposed) return;
@@ -533,10 +536,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  public Project getProject() {
-    return myProject;
-  }
-
   private class CloseAction extends AnAction {
     private CloseAction() {
       super(UsageViewBundle.message("action.close"), null, IconLoader.getIcon("/actions/cancel.png"));
@@ -590,8 +589,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private void doReRun() {
-    final Runnable process = new Runnable() {
-      public void run() {
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, UsageViewManagerImpl.getProgressTitle(myPresentation)) {
+      public void run(@NotNull final ProgressIndicator indicator) {
         setSearchInProgress(true);
         final com.intellij.usages.UsageViewManager usageViewManager = com.intellij.usages.UsageViewManager.getInstance(myProject);
         usageViewManager.setCurrentSearchCancelled(false);
@@ -609,8 +608,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
         setSearchInProgress(false);
       }
-    };
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, UsageViewManagerImpl.getProgressTitle(myPresentation), process, null, null);
+    });
   }
 
   private void reset() {
