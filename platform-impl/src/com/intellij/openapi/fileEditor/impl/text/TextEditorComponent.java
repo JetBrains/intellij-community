@@ -238,6 +238,7 @@ class TextEditorComponent extends JPanel implements DataProvider{
    */
   private void updateStatusBar(){
     final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
+    if (statusBar == null) return;
     final Editor editor = getEditor();
     statusBar.update(editor);
   }

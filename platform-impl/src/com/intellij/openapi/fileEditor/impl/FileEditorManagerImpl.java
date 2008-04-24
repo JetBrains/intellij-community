@@ -361,7 +361,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           LOG.assertTrue(window.getSelectedEditor() != null);
           window.closeFile(file, false);
           if (window.getTabCount() == 0 && nextFile != null) {
-            EditorWithProviderComposite newComposite = newEditorComposite(nextFile, null);
+            EditorWithProviderComposite newComposite = newEditorComposite(nextFile);
             window.setEditor(newComposite, true); // newComposite can be null
           }
         }
@@ -389,11 +389,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       throw new IllegalArgumentException("file is not valid: " + file);
     }
     assertThread();
-    return openFileImpl(file, focusEditor, null);
-  }
-
-  @NotNull private Pair<FileEditor[], FileEditorProvider[]> openFileImpl(final VirtualFile file, final boolean focusEditor, final HistoryEntry entry) {
-    return openFileImpl2(mySplitters.getOrCreateCurrentWindow(file), file, focusEditor, entry);
+    return openFileImpl2(mySplitters.getOrCreateCurrentWindow(file), file, focusEditor, null);
   }
 
   @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(final EditorWindow window, final VirtualFile file, final boolean focusEditor,
@@ -581,7 +577,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
 
-  private EditorWithProviderComposite newEditorComposite(final VirtualFile file, final HistoryEntry entry) {
+  private EditorWithProviderComposite newEditorComposite(final VirtualFile file) {
     if (file == null) {
       return null;
     }
@@ -612,29 +608,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       final FileEditorProvider provider = providers[i];
 
 // Restore myEditor state
-      FileEditorState state = null;
-      if (entry != null) {
-        state = entry.getState(provider);
-      }
-      if (state == null/* && !open*/) {
-        // We have to try to get state from the history only in case
-        // if myEditor is not opened. Otherwise history enty might have a state
-        // no in sych with the current myEditor state.
-        state = editorHistoryManager.getState(file, provider);
-      }
+      FileEditorState state = editorHistoryManager.getState(file, provider);
       if (state != null) {
         editor.setState(state);
       }
     }
     return newComposite;
-  }
-
-  public List<FileEditor> openEditor(@NotNull final OpenFileDescriptor descriptor, final boolean focusEditor, final String fileEditorProviderId) {
-    final List<FileEditor> list = openEditor(descriptor, focusEditor);
-
-    setSelectedEditor(descriptor.getFile(), fileEditorProviderId);
-
-    return list;
   }
 
   @NotNull
@@ -1131,8 +1110,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         updateFileIcon(file);
         if (file.equals(getSelectedFiles()[0])) { // update "write" status
           final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
-          LOG.assertTrue(statusBar != null);
-          statusBar.somethingChanged();
+          assert statusBar != null;
+          statusBar.update(getSelectedTextEditor());
         }
       }
     }

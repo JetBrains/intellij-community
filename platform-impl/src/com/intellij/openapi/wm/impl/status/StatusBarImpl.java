@@ -159,10 +159,6 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     }
   }
 
-  public void somethingChanged() {
-    update(getEditor());
-  }
-
   Editor getEditor() {
     final Project project = getProject();
     if (project == null) return null;

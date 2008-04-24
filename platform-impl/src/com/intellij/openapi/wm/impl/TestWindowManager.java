@@ -56,10 +56,6 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
 
     }
 
-    public void somethingChanged() {
-
-    }
-
     public void fireNotificationPopup(@NotNull JComponent content, final Color backgroundColor) {
     }
 
