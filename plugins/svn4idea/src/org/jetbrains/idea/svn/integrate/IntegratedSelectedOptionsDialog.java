@@ -158,7 +158,8 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   }
 
   private boolean underProject(final File file) {
-    return ExcludedFileIndex.getInstance(myProject).isInContent(SvnUtil.getVirtualFile(file.getAbsolutePath()));
+    final VirtualFile vf = SvnUtil.getVirtualFile(file.getAbsolutePath());
+    return (vf == null) || ExcludedFileIndex.getInstance(myProject).isInContent(vf);
   }
 
   public WorkingCopyInfo getSelectedWc() {
