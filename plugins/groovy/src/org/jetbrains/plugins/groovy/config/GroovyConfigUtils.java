@@ -213,6 +213,11 @@ public class GroovyConfigUtils {
     saveGroovyDefaultLibName(sdk.getName());
     Library newLib = sdk.getGroovyLibrary();
     LibraryOrderEntry addedEntry = model.addLibraryEntry(newLib);
+    placeEntryToCorrectPlace(model, addedEntry);
+    model.commit();
+  }
+
+  public static void placeEntryToCorrectPlace(ModifiableRootModel model, LibraryOrderEntry addedEntry) {
     final OrderEntry[] order = model.getOrderEntries();
     //place library before jdk
     assert order[order.length - 1] == addedEntry;
@@ -230,7 +235,6 @@ public class GroovyConfigUtils {
       order[insertionPoint] = addedEntry;
       model.rearrangeOrderEntries(order);
     }
-    model.commit();
   }
 
   public static boolean libraryReferenced(ModuleRootManager rootManager, Library library) {
