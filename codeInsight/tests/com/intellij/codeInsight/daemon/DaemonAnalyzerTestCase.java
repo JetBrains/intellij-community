@@ -197,7 +197,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     final PsiFile file = myFile;
     final Editor editor = myEditor;
 
-    final List<HighlightInfo> result = collectHighlighInfos(file, editor);
+    final List<HighlightInfo> result = new ArrayList<HighlightInfo>();
 
     if (doTestLineMarkers()) {
       collectLineMarkersForFile(file, editor, result);
@@ -222,6 +222,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
         });
       }
     }
+
+    result.addAll(collectHighlighInfos(file, editor));
 
     boolean isToLaunchExternal = true;
     for (HighlightInfo info : result) {
