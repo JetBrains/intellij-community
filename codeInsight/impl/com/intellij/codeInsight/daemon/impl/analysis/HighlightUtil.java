@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -237,8 +238,9 @@ public class HighlightUtil {
     }
 
     try {
-      PsiModifierList modifierListCopy =
-        JavaPsiFacade.getInstance(refElement.getProject()).getElementFactory().createFieldFromText("int a;", null).getModifierList();
+      Project project = refElement.getProject();
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+      PsiModifierList modifierListCopy = facade.getElementFactory().createFieldFromText("int a;", null).getModifierList();
       modifierListCopy.setModifierProperty(PsiModifier.STATIC, modifierList.hasModifierProperty(PsiModifier.STATIC));
       int i = 0;
       if (refElement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
@@ -251,8 +253,7 @@ public class HighlightUtil {
       for (; i < modifiers.length; i++) {
         String modifier = modifiers[i];
         modifierListCopy.setModifierProperty(modifier, true);
-        if (JavaPsiFacade.getInstance(refElement.getProject()).getResolveHelper()
-          .isAccessible(refElement, modifierListCopy, place, accessObjectClass, fileResolveScope)) {
+        if (facade.getResolveHelper().isAccessible(refElement, modifierListCopy, place, accessObjectClass, fileResolveScope)) {
           IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(refElement.getModifierList(), modifier, true, true);
           TextRange fixRange = new TextRange(errorResult.startOffset, errorResult.endOffset);
           PsiElement ref = place.getReferenceNameElement();

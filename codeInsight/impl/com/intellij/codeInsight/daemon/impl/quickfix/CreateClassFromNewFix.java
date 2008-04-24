@@ -40,7 +40,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     setupClassFromNewExpression(psiClass, newExpression);
   }
 
-  public static void setupClassFromNewExpression(final PsiClass psiClass, final PsiNewExpression newExpression) {
+  protected static void setupClassFromNewExpression(final PsiClass psiClass, final PsiNewExpression newExpression) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(newExpression.getProject()).getElementFactory();
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {

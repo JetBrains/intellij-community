@@ -22,6 +22,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -1054,6 +1055,9 @@ public class HighlightMethodUtil {
         info.navigationShift = +1;
         return info;
       }
+      if (classReference != null && aClass.hasModifierProperty(PsiModifier.PROTECTED) && callingProtectedConstructorFromDerivedClass(constructorCall, aClass)) {
+        return buildAccessProblem(classReference, typeResolveResult, aClass);
+      }
     }
     else {
       PsiElement place = list;
@@ -1082,14 +1086,9 @@ public class HighlightMethodUtil {
         return info;
       }
       else {
-        if (!result.isAccessible() || callingProtectedConstructorFromDerivedClass(constructor, constructorCall)) {
-          String description = HighlightUtil.buildProblemWithAccessDescription(classReference, result);
-          HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, description);
-          info.navigationShift = +1;
-          if (classReference != null && result.isStaticsScopeCorrect()) {
-            HighlightUtil.registerAccessQuickFixAction(constructor, classReference, info, result.getCurrentFileResolveScope());
-          }
-          return info;
+        if (classReference != null && (!result.isAccessible() ||
+         constructor.hasModifierProperty(PsiModifier.PROTECTED) && callingProtectedConstructorFromDerivedClass(constructorCall, aClass))) {
+          return buildAccessProblem(classReference, result, constructor);
         }
         else if (!result.isApplicable()) {
           String constructorName = HighlightMessageUtil.getSymbolName(constructor, result.getSubstitutor());
@@ -1125,19 +1124,28 @@ public class HighlightMethodUtil {
     return null;
   }
 
-  private static boolean callingProtectedConstructorFromDerivedClass(PsiMethod constructor, PsiConstructorCall place) {
-    if (!constructor.hasModifierProperty(PsiModifier.PROTECTED)) return false;
-    PsiClass constructorClass = constructor.getContainingClass();
+  private static HighlightInfo buildAccessProblem(@NotNull PsiJavaCodeReferenceElement classReference, JavaResolveResult result, PsiMember elementToFix) {
+    String description = HighlightUtil.buildProblemWithAccessDescription(classReference, result);
+    HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, classReference, description);
+    info.navigationShift = +1;
+    if (result.isStaticsScopeCorrect()) {
+      HighlightUtil.registerAccessQuickFixAction(elementToFix, classReference, info, result.getCurrentFileResolveScope());
+    }
+    return info;
+  }
+
+  private static boolean callingProtectedConstructorFromDerivedClass(PsiConstructorCall place, PsiClass constructorClass) {
     if (constructorClass == null) return false;
     // indirect instantiation via anonymous class is ok
     if (place instanceof PsiNewExpression && ((PsiNewExpression)place).getAnonymousClass() != null) return false;
     PsiElement curElement = place;
+    PsiClass containingClass = constructorClass.getContainingClass();
     while (true) {
       PsiClass aClass = PsiTreeUtil.getParentOfType(curElement, PsiClass.class);
       if (aClass == null) return false;
       curElement = aClass;
-      if (aClass.isInheritor(constructorClass, true) && !JavaPsiFacade.getInstance(aClass.getProject())
-        .arePackagesTheSame(aClass, constructorClass)) {
+      if ((aClass.isInheritor(constructorClass, true) || containingClass != null && aClass.isInheritor(containingClass, true))
+          && !JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, constructorClass)) {
         return true;
       }
     }

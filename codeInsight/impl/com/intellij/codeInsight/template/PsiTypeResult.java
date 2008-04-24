@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PsiTypeResult implements RecalculatableResult {
   private final SmartTypePointer myTypePointer;
-  private JavaPsiFacade myFacade;
+  private final JavaPsiFacade myFacade;
 
   public PsiTypeResult(@NotNull PsiType type, Project project) {
     final PsiType actualType = PsiUtil.convertAnonymousToBaseType(type);
@@ -32,8 +32,7 @@ public class PsiTypeResult implements RecalculatableResult {
     try {
       PsiTypeCastExpression cast = (PsiTypeCastExpression)myFacade.getElementFactory().createExpressionFromText("(" + text + ")a", context);
       final PsiTypeElement castType = cast.getCastType();
-      if (castType == null) return false;
-      return castType.getType().equals(type);
+      return castType != null && castType.getType().equals(type);
     }
     catch (IncorrectOperationException e) {
       // Indeed, not equal if cannot parse to a type.

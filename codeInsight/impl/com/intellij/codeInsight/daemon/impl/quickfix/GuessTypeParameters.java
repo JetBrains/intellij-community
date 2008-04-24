@@ -21,7 +21,7 @@ import java.util.Map;
  * @author ven
   */
 public class GuessTypeParameters {
-  PsiElementFactory myFactory;
+  private final PsiElementFactory myFactory;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters"); 
 
   public GuessTypeParameters(PsiElementFactory factory) {
@@ -138,9 +138,9 @@ public class GuessTypeParameters {
     return null;
   }
 
-  private static int SUBSTITUTED_NONE = 0;
-  private static int SUBSTITUTED_IN_REF = 1;
-  private static int SUBSTITUTED_IN_PARAMETERS = 2;
+  private static final int SUBSTITUTED_NONE = 0;
+  private static final int SUBSTITUTED_IN_REF = 1;
+  private static final int SUBSTITUTED_IN_PARAMETERS = 2;
 
   private int substituteToTypeParameters (PsiTypeElement typeElement,
                                           PsiTypeElement inplaceTypeElement,
@@ -187,8 +187,8 @@ public class GuessTypeParameters {
   }
 
   public static class MyTypeVisitor extends PsiTypeVisitor<PsiType> {
-    private GlobalSearchScope myResolveScope;
-    private PsiManager myManager;
+    private final GlobalSearchScope myResolveScope;
+    private final PsiManager myManager;
 
     public MyTypeVisitor(PsiManager manager, GlobalSearchScope resolveScope) {
       myManager = manager;

@@ -69,10 +69,10 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
   }
 
   private static class WildcardTypePointer implements SmartTypePointer {
-    private PsiWildcardType myType;
-    private PsiManager myManager;
+    private final PsiWildcardType myType;
+    private final PsiManager myManager;
     private final SmartTypePointer myBoundPointer;
-    private boolean myIsExtending;
+    private final boolean myIsExtending;
 
     public WildcardTypePointer(PsiWildcardType type, SmartTypePointer boundPointer) {
       myType = type;
@@ -122,7 +122,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
       for (Map.Entry<SmartPsiElementPointer, SmartTypePointer> entry : set) {
         PsiElement element = entry.getKey().getElement();
         if (element instanceof PsiTypeParameter) {
-          resurrected.put(((PsiTypeParameter)element), entry.getValue().getType());
+          resurrected.put((PsiTypeParameter)element, entry.getValue().getType());
         }
       }
       Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator((PsiClass) classElement);
@@ -133,7 +133,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
         }
       }
       final PsiSubstitutor resurrectedSubstitutor = PsiSubstitutorImpl.createSubstitutor(resurrected);
-      myType = new PsiImmediateClassType(((PsiClass)classElement), resurrectedSubstitutor);
+      myType = new PsiImmediateClassType((PsiClass)classElement, resurrectedSubstitutor);
       return myType;
     }
   }
