@@ -104,6 +104,18 @@ public class InlineMethodTest extends CodeInsightTestCase {
 
   public void testEnumConstructor() throws Exception { doTest(); }
 
+  public void testEnumConstantConstructorParameter() throws Exception {  // IDEADEV-26133
+    doTest(); 
+  }
+
+  public void testEnumConstantConstructorParameterComplex() throws Exception {  // IDEADEV-26133
+    doTest();
+  }
+
+  public void testEnumConstantConstructorParameterComplex2() throws Exception {  // IDEADEV-26133
+    doTest();
+  }
+
   private void doTest() throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineMethod/" + name + ".java";

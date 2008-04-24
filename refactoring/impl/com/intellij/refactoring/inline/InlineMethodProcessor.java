@@ -16,7 +16,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -336,7 +335,16 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     addParmAndThisVarInitializers(blockData, methodCall);
 
     PsiElement anchor = RefactoringUtil.getParentStatement(methodCall, true);
-    if (anchor == null) return;
+    if (anchor == null) {
+      PsiEnumConstant enumConstant = PsiTreeUtil.getParentOfType(methodCall, PsiEnumConstant.class);
+      if (enumConstant != null) {
+        PsiExpression returnExpr = getSimpleReturnedExpression(myMethod);
+        if (returnExpr != null) {
+          methodCall.replace(returnExpr);
+        }
+      }
+      return;
+    }
     PsiElement anchorParent = anchor.getParent();
     PsiLocalVariable thisVar = null;
     PsiLocalVariable[] parmVars = new PsiLocalVariable[blockData.parmVars.length];
@@ -471,7 +479,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private boolean isStrictlyFinal(PsiParameter parameter) {
-    PsiSearchHelper searchHelper = myManager.getSearchHelper();
     final PsiReference[] references =
       ReferencesSearch.search(parameter, GlobalSearchScope.projectScope(myProject), false).toArray(new PsiReference[0]);
     for (PsiReference reference : references) {
@@ -1004,6 +1011,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       else {
         final PsiField field = PsiTreeUtil.getParentOfType(ref, PsiField.class);
         if (field != null) {
+          if (field instanceof PsiEnumConstant) {
+            inlineEnumConstantParameter(refsVector, ref);
+            continue;
+          }
           field.normalizeDeclaration();
           final PsiExpression initializer = field.getInitializer();
           LOG.assertTrue(initializer != null);
@@ -1034,6 +1045,47 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     myAddedBraces = addedBracesVector.toArray(new PsiBlockStatement[addedBracesVector.size()]);
     return refsVector.toArray(new PsiReferenceExpression[refsVector.size()]);
+  }
+
+  private void inlineEnumConstantParameter(final List<PsiReferenceExpression> refsVector,
+                                           final PsiReferenceExpression ref) throws IncorrectOperationException {
+    PsiExpression expr = getSimpleReturnedExpression(myMethod);
+    if (expr != null) {
+      refsVector.add(ref);
+    }
+    else {
+      PsiCall call = PsiTreeUtil.getParentOfType(ref, PsiCall.class);
+      @NonNls String text = "new Object() { " + myMethod.getReturnTypeElement().getText() + " evaluate() { return " + call.getText() + ";}}.evaluate";
+      PsiExpression callExpr = JavaPsiFacade.getInstance(myProject).getParserFacade().createExpressionFromText(text, call);
+      PsiElement classExpr = ref.replace(callExpr);
+      classExpr.accept(new JavaRecursiveElementVisitor() {
+        public void visitReturnStatement(final PsiReturnStatement statement) {
+          super.visitReturnStatement(statement);
+          PsiExpression expr = statement.getReturnValue();
+          if (expr instanceof PsiMethodCallExpression) {
+            refsVector.add(((PsiMethodCallExpression) expr).getMethodExpression());
+          }
+        }
+      });
+      if (classExpr.getParent() instanceof PsiMethodCallExpression) {
+        PsiExpressionList args = ((PsiMethodCallExpression)classExpr.getParent()).getArgumentList();
+        PsiExpression[] argExpressions = args.getExpressions();
+        if (argExpressions.length > 0) {
+          args.deleteChildRange(argExpressions [0], argExpressions [argExpressions.length-1]);
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private static PsiExpression getSimpleReturnedExpression(final PsiMethod method) {
+    PsiCodeBlock body = method.getBody();
+    if (body == null) return null;
+    PsiStatement[] psiStatements = body.getStatements();
+    if (psiStatements.length != 1) return null;
+    PsiStatement statement = psiStatements[0];
+    if (!(statement instanceof PsiReturnStatement)) return null;
+    return ((PsiReturnStatement) statement).getReturnValue();
   }
 
   private static void addMarkedElements(final List<PsiReferenceExpression> array, PsiElement scope) {
@@ -1073,6 +1125,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Nullable
   private PsiExpression getSimpleFieldInitializer(PsiField field, PsiClassInitializer initializer) {
     final PsiStatement[] statements = initializer.getBody().getStatements();
     if (statements.length != 1) return null;
