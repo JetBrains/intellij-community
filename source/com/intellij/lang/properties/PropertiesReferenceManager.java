@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -40,6 +41,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
   private final Queue<VirtualFile> myChangedFiles = new ConcurrentLinkedQueue<VirtualFile>();
   private final MessageBusConnection myConnection;
   private final Object LOCK = new Object();
+  private final PropertiesFilesManager.PropertiesFileListener myPropertiesFileListener;
 
   public static PropertiesReferenceManager getInstance(Project project) {
     return project.getComponent(PropertiesReferenceManager.class);
@@ -64,6 +66,23 @@ public class PropertiesReferenceManager implements ProjectComponent {
         });
       }
     });
+    myPropertiesFileListener = new PropertiesFilesManager.PropertiesFileListener() {
+      public void fileAdded(final VirtualFile propertiesFile) {
+        PsiFile psi = myPsiManager.findFile(propertiesFile);
+        if (psi instanceof PropertiesFile) {
+          beforePropertiesFileChange((PropertiesFile)psi, null);
+        }
+      }
+
+      public void fileRemoved(final VirtualFile propertiesFile) {
+
+      }
+
+      public void fileChanged(final VirtualFile propertiesFile, final VirtualFilePropertyEvent event) {
+
+      }
+    };
+    propertiesFilesManager.addPropertiesFileListener(myPropertiesFileListener);
   }
 
   public void projectOpened() {
@@ -114,6 +133,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
   }
 
   public void disposeComponent() {
+    myPropertiesFilesManager.removePropertiesFileListener(myPropertiesFileListener);
     myConnection.disconnect();
   }
 

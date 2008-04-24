@@ -15,10 +15,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author max
@@ -28,7 +28,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
   private final VirtualFileListener myVirtualFileListener;
   private final VirtualFileManager myVirtualFileManager;
   private final FileTypeManager myFileTypeManager;
-  private final List<PropertiesFileListener> myPropertiesFileListeners = new ArrayList<PropertiesFileListener>();
+  private final List<PropertiesFileListener> myPropertiesFileListeners = new CopyOnWriteArrayList<PropertiesFileListener>();
 
   public static PropertiesFilesManager getInstance() {
     return ApplicationManager.getApplication().getComponent(PropertiesFilesManager.class);
