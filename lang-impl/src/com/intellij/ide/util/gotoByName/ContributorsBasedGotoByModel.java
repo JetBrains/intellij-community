@@ -36,6 +36,7 @@ import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.ProcessCanceledException;
 
 import javax.swing.*;
 import java.util.*;
@@ -61,6 +62,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
       try {
         names.addAll(Arrays.asList(contributor.getNames(myProject, checkBoxState)));
       }
+      catch(ProcessCanceledException ex) {
+        // index corruption detected, ignore
+      }
       catch(Exception ex) {
         LOG.error(ex);
       }
@@ -74,6 +78,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
     for (ChooseByNameContributor contributor : myContributors) {
       try {
         items.addAll(Arrays.asList(contributor.getItemsByName(name, pattern, myProject, checkBoxState)));
+      }
+      catch(ProcessCanceledException ex) {
+        // index corruption detected, ignore
       }
       catch(Exception ex) {
         LOG.error(ex);
