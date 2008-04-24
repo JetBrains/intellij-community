@@ -62,7 +62,7 @@ public class ImportClassFix implements HintAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myRef != null && myRef.isValid() && file.getManager().isInProject(file);
+    return myRef != null && myRef.isValid() && file.getManager().isInProject(file) && !getClassesToImport().isEmpty();
   }
 
   private List<PsiClass> getClassesToImport() {

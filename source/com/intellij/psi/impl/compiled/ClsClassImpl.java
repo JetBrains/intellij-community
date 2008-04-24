@@ -83,15 +83,17 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub> implemen
 
   @NotNull
   public PsiIdentifier getNameIdentifier() {
-    if (myNameIdentifier == null) {
-      String qName = getQualifiedName();
-      String name = PsiNameHelper.getShortClassName(qName);
-      if (name.length() == 0) {
-        name = "_";
+    synchronized (PsiLock.LOCK) {
+      if (myNameIdentifier == null) {
+        String qName = getQualifiedName();
+        String name = PsiNameHelper.getShortClassName(qName);
+        if (name.length() == 0) {
+          name = "_";
+        }
+        myNameIdentifier = new ClsIdentifierImpl(this, name);
       }
-      myNameIdentifier = new ClsIdentifierImpl(this, name);
+      return myNameIdentifier;
     }
-    return myNameIdentifier;
   }
 
   @NotNull
@@ -322,10 +324,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub> implemen
   public PsiDocComment getDocComment() {
     if (!isDeprecated()) return null;
 
-    if (myDocComment == null) {
-      myDocComment = new ClsDocCommentImpl(this);
+    synchronized (PsiLock.LOCK) {
+      if (myDocComment == null) {
+        myDocComment = new ClsDocCommentImpl(this);
+      }
+      return myDocComment;
     }
-    return myDocComment;
   }
 
   public PsiJavaToken getLBrace() {

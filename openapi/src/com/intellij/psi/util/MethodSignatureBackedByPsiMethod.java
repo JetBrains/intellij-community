@@ -15,11 +15,9 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.psi.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Iterator;
 
 public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.MethodSignatureBackedByPsiMethod");
@@ -72,9 +70,6 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiType[] parameterTypes = new PsiType[parameters.length];
-    for (int i = 0; i < parameterTypes.length; i++) {
-      parameterTypes[i] = parameters[i].getType();
-    }
 
     if (isRaw) {
       for (PsiTypeParameter typeParameter : methodTypeParameters) {
@@ -83,18 +78,12 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
       methodTypeParameters = PsiTypeParameter.EMPTY_ARRAY;
 
       for (int i = 0; i < parameterTypes.length; i++) {
-        parameterTypes[i] = TypeConversionUtil.erasure(substitutor.substitute(parameterTypes[i]));
+        parameterTypes[i] = TypeConversionUtil.erasure(substitutor.substitute(parameters[i].getType()));
       }
     }
-    else {
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null) {
-        final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(containingClass);
-        while (iterator.hasNext()) {
-          if (substitutor.substitute(iterator.next()) != null) {
-            break;
-          }
-        }
+    else{
+      for (int i = 0; i < parameterTypes.length; i++) {
+        parameterTypes[i] = parameters[i].getType();
       }
     }
 

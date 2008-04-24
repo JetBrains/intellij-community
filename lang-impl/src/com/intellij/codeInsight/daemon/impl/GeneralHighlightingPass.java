@@ -394,6 +394,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         progress.cancel();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            try {
+              Thread.sleep(new Random().nextInt(100));
+            }
+            catch (InterruptedException e) {
+              LOG.error(e);
+            }
             DaemonCodeAnalyzer.getInstance(myProject).restart();
           }
         }, myProject.getDisposed());
