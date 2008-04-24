@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovyManyStat
 public class GroovyWithWhileSurrounder extends GroovyManyStatementsSurrounder {
   protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
-    GrWhileStatement whileStatement = (GrWhileStatement) factory.createTopElementFromText("while(a){}");
+    GrWhileStatement whileStatement = (GrWhileStatement) factory.createTopElementFromText("while(a){\n}");
     addStatements(((GrBlockStatement) whileStatement.getBody()).getBlock(), elements);
     return whileStatement;
   }

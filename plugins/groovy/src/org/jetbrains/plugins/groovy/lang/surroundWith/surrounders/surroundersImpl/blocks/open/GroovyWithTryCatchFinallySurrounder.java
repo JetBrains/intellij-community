@@ -18,7 +18,7 @@ public class GroovyWithTryCatchFinallySurrounder extends GroovyWithTryCatchSurro
 
   protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
-    GrTryCatchStatement tryStatement = (GrTryCatchStatement) factory.createTopElementFromText("try {} catch(exception e){\n} finally{\n}");
+    GrTryCatchStatement tryStatement = (GrTryCatchStatement) factory.createTopElementFromText("try {\n} catch(exception e){\n} finally{\n}");
     addStatements(tryStatement.getTryBlock(), elements);
     return tryStatement;
   }

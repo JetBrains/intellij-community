@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 public class GroovyWithIfSurrounder extends GroovyManyStatementsSurrounder {
   protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
-    GrIfStatement ifStatement = (GrIfStatement) factory.createTopElementFromText("if (a) {}");
+    GrIfStatement ifStatement = (GrIfStatement) factory.createTopElementFromText("if (a) {\n}");
     addStatements(((GrBlockStatement)ifStatement.getThenBranch()).getBlock(), elements);
     return ifStatement;
   }

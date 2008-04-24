@@ -2,12 +2,9 @@ package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.surroundWith.Surrounder;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -15,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 
 /**
@@ -85,12 +82,7 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
       }
     }
 
-    final TextRange range = newStmt.getTextRange();
-    final TextRange selectionRange = getSurroundSelectionRange(newStmt);
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(newStmt.getContainingFile());
-    final RangeMarker marker = document.createRangeMarker(selectionRange);
-    newStmt.getManager().getCodeStyleManager().reformatText(newStmt.getContainingFile(), range.getStartOffset(), range.getEndOffset());
-    return new TextRange(marker.getStartOffset(), marker.getEndOffset());
+    return getSurroundSelectionRange(newStmt);
   }
 
   protected void addStatements(GrCodeBlock block, PsiElement[] elements) throws IncorrectOperationException {

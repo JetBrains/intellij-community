@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovyManyStat
 public class GroovyWithWithStatementsSurrounder extends GroovyManyStatementsSurrounder {
   protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
-    GrMethodCallExpression withCall = (GrMethodCallExpression) factory.createTopElementFromText("with(a){}");
+    GrMethodCallExpression withCall = (GrMethodCallExpression) factory.createTopElementFromText("with(a){\n}");
     addStatements(withCall.getClosureArguments()[0], elements);
     return withCall;
   }
