@@ -23,6 +23,8 @@ public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
   public boolean charDeleted(final char c, final PsiFile file, final Editor editor) {
     int offset = editor.getCaretModel().getOffset();
     final CharSequence chars = editor.getDocument().getCharsSequence();
+    if (editor.getDocument().getTextLength() <= offset) return false; //virtual space after end of file
+
     char c1 = chars.charAt(offset);
     if (c == '<' && myToDeleteGt) {
       if (c1 != '>') return true;
