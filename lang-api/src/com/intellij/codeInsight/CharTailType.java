@@ -16,12 +16,13 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
 */
 public class CharTailType extends TailType {
-  final char myChar;
+  private final char myChar;
 
   public CharTailType(final char aChar) {
     myChar = aChar;
@@ -29,5 +30,10 @@ public class CharTailType extends TailType {
 
   public int processTail(final Editor editor, final int tailOffset) {
     return insertChar(editor, tailOffset, myChar);
+  }
+
+  @NonNls
+  public String toString() {
+    return "CharTailType:\'" + myChar + "\'";
   }
 }

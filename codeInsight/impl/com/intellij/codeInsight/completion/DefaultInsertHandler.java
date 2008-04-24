@@ -78,7 +78,9 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
           public TailType handleCompletionChar(@NotNull final Editor editor,
                                                @NotNull final LookupElement<PsiMethod> element, final char completionChar) {
             if (completionChar == '(') {
-              return element.getObject().getParameterList().getParameters().length > 0 ? TailType.NONE : TailType.SEMICOLON;
+              final PsiMethod psiMethod = element.getObject();
+              return psiMethod.getParameterList().getParameters().length > 0 || psiMethod.getReturnType() != PsiType.VOID
+                     ? TailType.NONE : TailType.SEMICOLON;
             }
             if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
               return TailTypes.SMART_COMPLETION;

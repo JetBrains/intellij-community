@@ -414,11 +414,14 @@ public class JavaSmartCompletionContributor extends CompletionContributor{
         final PsiElement parent = lastElement.getParent();
         if (parent instanceof PsiTypeCastExpression) {
           context.setDummyIdentifier("");
+          return;
         }
-        else if (parent instanceof PsiParenthesizedExpression) {
+        if (parent instanceof PsiParenthesizedExpression) {
           context.setDummyIdentifier("xxx)yyy "); // to handle type cast
+          return;
         }
       }
+      context.setDummyIdentifier("xxx");
     }
   }
 
