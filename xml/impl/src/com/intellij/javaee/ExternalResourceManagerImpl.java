@@ -54,6 +54,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @NonNls private static final String LOCATION_ATTR = "location";
   @NonNls private static final String IGNORED_RESOURCE_ELEMENT = "ignored-resource";
   private static final String DEFAULT_VERSION = null;
+  @NonNls public static final String STANDARD_SCHEMAS = "/standardSchemas/";
 
   public ExternalResourceManagerImpl(PathMacrosImpl pathMacros) {
     addInternalResource(XmlUtil.XSLT_URI,"xslt-1_0.xsd");
@@ -111,11 +112,11 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   public void initComponent() { }
 
   public void addInternalResource(@NonNls String resource, @NonNls String fileName) {
-    addStdResource(resource, "/standardSchemas/" + fileName);
+    addStdResource(resource, STANDARD_SCHEMAS + fileName);
   }
 
   public void addInternalResource(@NonNls String resource, @NonNls String version, @NonNls String fileName) {
-    addStdResource(resource, version, "/standardSchemas/" + fileName, getClass());
+    addStdResource(resource, version, STANDARD_SCHEMAS + fileName, getClass());
   }
 
   public void addStdResource(@NonNls String resource, @NonNls String fileName){

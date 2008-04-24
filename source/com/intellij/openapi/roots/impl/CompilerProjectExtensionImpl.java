@@ -9,6 +9,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
+import com.intellij.openapi.roots.ProjectExtension;
+import com.intellij.openapi.roots.WatchedRootsProvider;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -29,13 +31,13 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
 
   private VirtualFilePointer myCompilerOutput;
   private LocalFileSystem.WatchRequest myCompilerOutputWatchRequest;
-  private Project myProject;
+  private final Project myProject;
 
   public CompilerProjectExtensionImpl(final Project project) {
     myProject = project;
   }
 
-  public void readExternal(final Element element) throws InvalidDataException {
+  private void readExternal(final Element element) throws InvalidDataException {
     final Element outputPathChild = element.getChild(OUTPUT_TAG);
     if (outputPathChild != null) {
       String outputPath = outputPathChild.getAttributeValue(URL);
@@ -43,7 +45,7 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
     }
   }
 
-  public void writeExternal(final Element element) throws WriteExternalException {
+  private void writeExternal(final Element element) throws WriteExternalException {
     if (myCompilerOutput != null) {
       final Element pathElement = new Element(OUTPUT_TAG);
       pathElement.setAttribute(URL, myCompilerOutput.getUrl());
@@ -83,7 +85,7 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
   }
 
   @NotNull
-  public Set<String> getRootsToWatch() {
+  private Set<String> getRootsToWatch() {
     final Set<String> rootsToWatch = new HashSet<String>();
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
@@ -103,5 +105,39 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
       rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(url));
     }
     return rootsToWatch;
+  }
+
+  private static CompilerProjectExtensionImpl getImpl(final Project project) {
+    return ((CompilerProjectExtensionImpl)CompilerProjectExtension.getInstance(project));
+  }
+
+  public static class MyProjectExtension extends ProjectExtension {
+    private final Project myProject;
+
+    public MyProjectExtension(final Project project) {
+
+      myProject = project;
+    }
+
+    public void readExternal(final Element element) throws InvalidDataException {
+      getImpl(myProject).readExternal(element);
+    }
+
+    public void writeExternal(final Element element) throws WriteExternalException {
+      getImpl(myProject).writeExternal(element);
+    }
+  }
+
+  public static class MyWatchedRootsProvider implements WatchedRootsProvider {
+    private final Project myProject;
+
+    public MyWatchedRootsProvider(final Project project) {
+      myProject = project;
+    }
+
+    @NotNull
+    public Set<String> getRootsToWatch() {
+      return getImpl(myProject).getRootsToWatch();
+    }
   }
 }

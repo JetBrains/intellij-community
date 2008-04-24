@@ -486,10 +486,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       rootPaths.add(module.getModuleFilePath());
     }
 
-    for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
-      if (extension instanceof RootsContainerProjectExtension) {
-        rootPaths.addAll(((RootsContainerProjectExtension)extension).getRootsToWatch());
-      }
+    for (WatchedRootsProvider extension : Extensions.getExtensions(WatchedRootsProvider.EP_NAME, myProject)) {
+      rootPaths.addAll(extension.getRootsToWatch());
     }
 
     final String projectFile = myProject.getStateStore().getProjectFilePath();

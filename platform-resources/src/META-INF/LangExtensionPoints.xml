@@ -115,6 +115,7 @@
                   interface="com.intellij.navigation.ChooseByNameContributor"/>
 
   <extensionPoint name="projectExtension" interface="com.intellij.openapi.roots.ProjectExtension" area="IDEA_PROJECT"/>
+  <extensionPoint name="roots.watchedRootsProvider" interface="com.intellij.openapi.roots.WatchedRootsProvider" area="IDEA_PROJECT"/>
   <extensionPoint name="moduleExtension" interface="com.intellij.openapi.roots.ModuleExtension" area="IDEA_MODULE"/>
   <extensionPoint name="orderRootType" interface="com.intellij.openapi.roots.OrderRootType"/>
   <extensionPoint name="directoryIndexExcludePolicy" interface="com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy"
@@ -170,6 +171,7 @@
   <!-- File-Based Index-->
   <extensionPoint name="fileBasedIndex" interface="com.intellij.util.indexing.FileBasedIndexExtension"/>
   <extensionPoint name="stubIndex" interface="com.intellij.psi.stubs.StubIndexExtension"/>
+  <extensionPoint name="indexedRootsProvider" interface="com.intellij.util.indexing.IndexedRootsProvider"/>
 
   <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>
   <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>

@@ -2,6 +2,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -46,7 +47,15 @@ public class UnindexedFilesUpdater implements CacheUpdater {
     projectFileIndex.iterateContent(processor);
 
     Set<VirtualFile> visitedRoots = new HashSet<VirtualFile>();
-
+    for (IndexedRootsProvider provider : Extensions.getExtensions(IndexedRootsProvider.EP_NAME)) {
+      final Set<VirtualFile> rootsToIndex = provider.getRootsToIndex(myProject);
+      for (VirtualFile root : rootsToIndex) {
+        if (!visitedRoots.contains(root)) {
+          visitedRoots.add(root);
+          iterateRecursively(root, processor);
+        }
+      }
+    }
     for (Module module : modules) {
       OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {

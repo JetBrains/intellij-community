@@ -4,19 +4,16 @@
  */
 package com.intellij.openapi.roots;
 
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class CompilerProjectExtension extends RootsContainerProjectExtension {
+public abstract class CompilerProjectExtension {
 
   public static CompilerProjectExtension getInstance(Project project) {
-    for (ProjectExtension extension : Extensions.getExtensions(EP_NAME, project)) {
-      if (CompilerProjectExtension.class.isAssignableFrom(extension.getClass())) return (CompilerProjectExtension)extension;
-    }
-    return null;
+    return ServiceManager.getService(project, CompilerProjectExtension.class);
   }
 
   @Nullable
