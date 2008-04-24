@@ -22,7 +22,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -244,24 +243,24 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
 
   @NotNull
-  public <K, V> List<V> getValues(final ID<K, V> indexId, K dataKey, Project project) {
+  public <K, V> List<V> getValues(final ID<K, V> indexId, K dataKey, final VirtualFileFilter filter) {
     final List<V> values = new ArrayList<V>();
-    processValuesImpl(indexId, dataKey, project, true, null, new ValueProcessor<V>() {
+    processValuesImpl(indexId, dataKey, true, null, new ValueProcessor<V>() {
       public void process(final VirtualFile file, final V value) {
         values.add(value);
       }
-    });
+    }, filter);
     return values;
   }
 
   @NotNull
-  public <K, V> Collection<VirtualFile> getContainingFiles(final ID<K, V> indexId, K dataKey, @NotNull Project project) {
+  public <K, V> Collection<VirtualFile> getContainingFiles(final ID<K, V> indexId, K dataKey, final VirtualFileFilter filter) {
     final Set<VirtualFile> files = new HashSet<VirtualFile>();
-    processValuesImpl(indexId, dataKey, project, false, null, new ValueProcessor<V>() {
+    processValuesImpl(indexId, dataKey, false, null, new ValueProcessor<V>() {
       public void process(final VirtualFile file, final V value) {
         files.add(file);
       }
-    });
+    }, filter);
     return files;
   }
 
@@ -269,12 +268,15 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   public static interface ValueProcessor<V> {
     void process(VirtualFile file, V value);
   }
-  public <K, V> void processValues(final ID<K, V> indexId, final K dataKey, final Project project, final @Nullable VirtualFile inFile, ValueProcessor<V> processor) {
-    processValuesImpl(indexId, dataKey, project, false, inFile, processor);
+
+  public <K, V> void processValues(final ID<K, V> indexId, final K dataKey, final @Nullable VirtualFile inFile,
+                                   ValueProcessor<V> processor, final VirtualFileFilter filter) {
+    processValuesImpl(indexId, dataKey, false, inFile, processor, filter);
   }
   
-  private <K, V> void processValuesImpl(final ID<K, V> indexId, final K dataKey, final Project project, boolean ensureValueProcessedOnce,
-                                        final @Nullable VirtualFile restrictToFile, ValueProcessor<V> processor) {
+  private <K, V> void processValuesImpl(final ID<K, V> indexId, final K dataKey, boolean ensureValueProcessedOnce,
+                                        final @Nullable VirtualFile restrictToFile, ValueProcessor<V> processor,
+                                        final VirtualFileFilter filter) {
     try {
       ensureUpToDate(indexId);
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
@@ -299,14 +301,13 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
           }
         }
         else {
-          final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
           final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
           for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
             final V value = valueIt.next();
             for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext();) {
               final int id = inputIdsIterator.next();
-              VirtualFile file = IndexInfrastructure.findFileById(dirIndex, fs, id);
-              if (file != null) {
+              VirtualFile file = IndexInfrastructure.findFileById(fs, id);
+              if (file != null && filter.accept(file)) {
                 processor.process(file, value);
                 if (ensureValueProcessedOnce) {
                   break; // continue with the next value

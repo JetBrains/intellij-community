@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -138,7 +137,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID);
 
-    final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
     final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
     final PsiManager psiManager = PsiManager.getInstance(project);
 
@@ -151,7 +149,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       final ValueContainer<TIntArrayList> container = index.getData(key);
       container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
         public void perform(final int id, final TIntArrayList value) {
-          final VirtualFile file = IndexInfrastructure.findFileById(dirIndex, fs, id);
+          final VirtualFile file = IndexInfrastructure.findFileById(fs, id);
           if (file != null && (scope == null || scope.contains(file))) {
             final PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport)psiManager.findFile(file);
             if (psiFile != null) {

@@ -17,6 +17,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DupOutputStream;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.messages.MessageBus;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -572,6 +573,46 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return roots.toArray(new VirtualFile[roots.size()]);
   }
 
+  private final TIntObjectHashMap<VirtualFile> myIdToDirCache = new TIntObjectHashMap<VirtualFile>();
+
+  private void clearIdCache() {
+    synchronized (myIdToDirCache) {
+      myIdToDirCache.clear();
+    }
+  }
+
+  @Nullable
+  public VirtualFile findFileById(final int id) {
+    synchronized (myIdToDirCache) {
+      final VirtualFile cached = myIdToDirCache.get(id);
+      if (cached != null) {
+        return cached;
+      }
+
+      final VirtualFile result = doFindFile(id);
+      if (result != null && result.isDirectory()) {
+        myIdToDirCache.put(id, result);
+      }
+      return result;
+    }
+  }
+
+  private VirtualFile doFindFile(final int id) {
+    final int parentId = getParent(id);
+    if (parentId == 0) {
+      synchronized (LOCK) {
+        for (NewVirtualFile root : myRoots.values()) {
+          if (root.getId() == id) return root;
+        }
+        return null;
+      }
+    }
+    else {
+      VirtualFile parentFile = findFileById(parentId);
+      return parentFile != null ? parentFile.findChild(getName(id)) : null;
+    }
+  }
+
   public VirtualFile[] getRoots(final NewVirtualFileSystem fs) {
     List<VirtualFile> roots = new ArrayList<VirtualFile>();
     synchronized (LOCK) {
@@ -655,6 +696,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       LOG.error("Deleting a file, which does not exist: " + file.getPath());
     }
     else {
+      clearIdCache();
+
       final int id = getFileId(file);
 
       final VirtualFile parent = file.getParent();

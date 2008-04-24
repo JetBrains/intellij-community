@@ -16,7 +16,6 @@ public abstract class DirectoryIndex {
   public abstract void checkConsistency();
 
   public abstract DirectoryInfo getInfoForDirectory(VirtualFile dir);
-  public abstract DirectoryInfo getInfoForDirectoryId(int dirId);
 
   @NotNull
   public abstract

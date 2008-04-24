@@ -7,6 +7,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -17,9 +18,9 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.structure.DomStructureViewBuilder;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Gregory.Shrago
@@ -31,7 +32,7 @@ public class DomServiceImpl extends DomService {
   }
 
   public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> description, Project project) {
-    return FileBasedIndex.getInstance().getContainingFiles(DomFileIndex.NAME, description.getName(), project);
+    return FileBasedIndex.getInstance().getContainingFiles(DomFileIndex.NAME, description.getName(), VirtualFileFilter.ALL);
   }
 
   public <T extends DomElement> List<DomFileElement<T>> getFileElements(final Class<T> clazz, final Project project, @Nullable final GlobalSearchScope scope) {

@@ -5,8 +5,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
@@ -106,7 +104,7 @@ public class IndexInfrastructure {
   }
 
   @Nullable
-  public static VirtualFile findFileById(final DirectoryIndex dirIndex, final PersistentFS fs, final int id) {
+  public static VirtualFile findFileById(final PersistentFS fs, final int id) {
     if (ourUnitTestMode) {
       final VirtualFile testFile = findTestFile(id);
       if (testFile != null) {
@@ -114,12 +112,17 @@ public class IndexInfrastructure {
       }
     }
 
+    return fs.findFileById(id);
+
+    /*
+
     final boolean isDirectory = fs.isDirectory(id);
     final DirectoryInfo directoryInfo = isDirectory ? dirIndex.getInfoForDirectoryId(id) : dirIndex.getInfoForDirectoryId(fs.getParent(id));
     if (directoryInfo != null && (directoryInfo.contentRoot != null || directoryInfo.sourceRoot != null || directoryInfo.libraryClassRoot != null)) {
       return isDirectory? directoryInfo.directory : directoryInfo.directory.findChild(fs.getName(id));
     }
     return null;
+    */
   }
 
   @Nullable

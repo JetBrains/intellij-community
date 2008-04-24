@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
@@ -77,14 +78,14 @@ public class IndexCacheManagerImpl implements CacheManager{
 
     final Set<VirtualFile> vFiles = new HashSet<VirtualFile>();
 
-    FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), myProject, null, new FileBasedIndex.ValueProcessor<Integer>() {
+    FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
       public void process(final VirtualFile file, final Integer value) {
         final int mask = value.intValue();
         if ((mask & occurrenceMask) != 0) {
           vFiles.add(file);
         }
       }
-    });
+    }, VirtualFileFilter.ALL);
 
     for (VirtualFile vFile : vFiles) {
       if (!virtualFileProcessor.process(vFile)) {
@@ -102,9 +103,7 @@ public class IndexCacheManagerImpl implements CacheManager{
     for (IndexPattern indexPattern : CacheUtil.getIndexPatterns()) {
       final Collection<VirtualFile> files = fileBasedIndex.getContainingFiles(
         TodoIndex.NAME, 
-        new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), 
-        myProject
-      );
+        new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), VirtualFileFilter.ALL);
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           for (VirtualFile file : files) {
@@ -137,13 +136,12 @@ public class IndexCacheManagerImpl implements CacheManager{
   private int fetchCount(final FileBasedIndex fileBasedIndex, final VirtualFile file, final IndexPattern indexPattern) {
     final int[] count = new int[] {0};
     fileBasedIndex.processValues(
-      TodoIndex.NAME, new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), myProject, file, 
+      TodoIndex.NAME, new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), file,
       new FileBasedIndex.ValueProcessor<Integer>() {
         public void process(final VirtualFile file, final Integer value) {
           count[0] += value.intValue();
         }
-      }
-    );
+      }, VirtualFileFilter.ALL);
     return count[0];
   }
 

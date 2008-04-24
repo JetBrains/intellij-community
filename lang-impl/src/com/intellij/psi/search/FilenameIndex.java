@@ -2,6 +2,7 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.indexing.*;
@@ -50,7 +51,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   }
 
   public static PsiFile[] getFilesByName(final Project project, final String name, final GlobalSearchScope scope) {
-    final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, name, project);
+    final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, name, VirtualFileFilter.ALL);
     if (files.isEmpty()) return PsiFile.EMPTY_ARRAY;
     List<PsiFile> result = new ArrayList<PsiFile>();
     for(VirtualFile file: files) {

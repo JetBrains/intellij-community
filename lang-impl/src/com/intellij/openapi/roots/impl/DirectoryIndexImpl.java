@@ -11,9 +11,9 @@ import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
@@ -26,7 +26,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
-import gnu.trove.TIntObjectHashMap;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +45,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
   private Map<VirtualFile, Set<String>> myExcludeRootsMap;
   private Map<VirtualFile, DirectoryInfo> myDirToInfoMap = Collections.synchronizedMap(new THashMap<VirtualFile, DirectoryInfo>());
-  private TIntObjectHashMap<DirectoryInfo> myDirIdToInfoMap = new TIntObjectHashMap<DirectoryInfo>();
   private Map<String, VirtualFile[]> myPackageNameToDirsMap = Collections.synchronizedMap(new THashMap<String, VirtualFile[]>());
 
   private DirectoryIndexExcludePolicy[] myExcludePolicies;
@@ -100,9 +98,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     Assert.assertTrue(!myDisposed);
 
     Map<VirtualFile, DirectoryInfo> oldDirToInfoMap = myDirToInfoMap;
-    TIntObjectHashMap<DirectoryInfo> oldDirIdToInfoMap = myDirIdToInfoMap;
     myDirToInfoMap = new THashMap<VirtualFile, DirectoryInfo>();
-    myDirIdToInfoMap = new TIntObjectHashMap<DirectoryInfo>();
 
     Map<String, VirtualFile[]> oldPackageNameToDirsMap = myPackageNameToDirsMap;
     myPackageNameToDirsMap = new THashMap<String, VirtualFile[]>();
@@ -111,10 +107,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
     if (myIsLasyMode) {
       Map<VirtualFile, DirectoryInfo> newDirToInfoMap = myDirToInfoMap;
-      TIntObjectHashMap<DirectoryInfo> newDirIdToInfoMap = myDirIdToInfoMap;
       Map<String, VirtualFile[]> newPackageNameToDirsMap = myPackageNameToDirsMap;
       myDirToInfoMap = oldDirToInfoMap;
-      myDirIdToInfoMap = oldDirIdToInfoMap;
       myPackageNameToDirsMap = oldPackageNameToDirsMap;
 
       Set<VirtualFile> allDirsSet = newDirToInfoMap.keySet();
@@ -123,7 +117,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
 
       myDirToInfoMap = newDirToInfoMap;
-      myDirIdToInfoMap = newDirIdToInfoMap;
       myPackageNameToDirsMap = newPackageNameToDirsMap;
     }
 
@@ -132,14 +125,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     for (VirtualFile file : keySet) {
       DirectoryInfo info1 = myDirToInfoMap.get(file);
       DirectoryInfo info2 = oldDirToInfoMap.get(file);
-      Assert.assertEquals(info1, info2);
-    }
-
-    int[] idSet = myDirIdToInfoMap.keys();
-    Assert.assertEquals(idSet.length, oldDirIdToInfoMap.size());
-    for (int id : idSet) {
-      DirectoryInfo info1 = myDirIdToInfoMap.get(id);
-      DirectoryInfo info2 = oldDirIdToInfoMap.get(id);
       Assert.assertEquals(info1, info2);
     }
 
@@ -242,7 +227,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
   private void cleapAllMaps() {
     myDirToInfoMap.clear();
-    clearIdMap();
     myPackageNameToDirsMap.clear();
   }
 
@@ -251,7 +235,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     VirtualFile dir = forDir;
     do {
       myDirToInfoMap.remove(dir);
-      removeInfoById(((VirtualFileWithId)dir).getId());
       dir = dir.getParent();
     }
     while (dir != null);
@@ -648,19 +631,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     return myDirToInfoMap.get(dir);
   }
 
-  public DirectoryInfo getInfoForDirectoryId(int dirId) {
-    checkAvailability();
-    dispatchPendingEvents();
-
-    if (myIsLasyMode) {
-      DirectoryInfo info = getInfoById(dirId);
-      if (info != null) return info;
-      doInitialize(false, null);
-    }
-
-    return getInfoById(dirId);
-  }
-
   private PackageSink mySink = new PackageSink();
 
   private class PackageSink extends QueryFactory<VirtualFile, VirtualFile[]> {
@@ -803,10 +773,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     if (info == null) {
       info = new DirectoryInfo(dir);
       myDirToInfoMap.put(dir, info);
-      if (dir instanceof VirtualFileWithId) {
-        // need this check to filter out deprecated virtual file implementations
-        putInfoById(((VirtualFileWithId)dir).getId(), info);
-      }
     }
     return info;
   }
@@ -870,34 +836,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     info.packageName = newPackageName;
   }
 
-  private DirectoryInfo getInfoById(int id) {
-    final TIntObjectHashMap<DirectoryInfo> map = myDirIdToInfoMap;
-    synchronized (map) {
-      return map.get(id);
-    }
-  }
-
-  private void putInfoById(int id, DirectoryInfo info) {
-    final TIntObjectHashMap<DirectoryInfo> map = myDirIdToInfoMap;
-    synchronized (map) {
-      map.put(id, info);
-    }
-  }
-
-  private DirectoryInfo removeInfoById(int id) {
-    final TIntObjectHashMap<DirectoryInfo> map = myDirIdToInfoMap;
-    synchronized (map) {
-      return map.remove(Math.abs(id));
-    }
-  }
-
-  private void clearIdMap() {
-    final TIntObjectHashMap<DirectoryInfo> map = myDirIdToInfoMap;
-    synchronized (map) {
-      map.clear();
-    }
-  }
-  
   @Nullable
   private static String getPackageNameForSubdir(String parentPackageName, String subdirName) {
     if (parentPackageName == null) return null;
@@ -980,7 +918,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       if (list == null) return;
 
       for (VirtualFile dir : list) {
-        removeInfoById(((VirtualFileWithId)dir).getId());
         DirectoryInfo info = myDirToInfoMap.remove(dir);
         if (info != null) {
           setPackageName(dir, info, null);

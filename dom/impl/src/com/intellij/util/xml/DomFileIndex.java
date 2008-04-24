@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
@@ -18,8 +19,8 @@ import com.intellij.util.xml.impl.DomApplicationComponent;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 
-import java.util.*;
 import java.io.ByteArrayInputStream;
+import java.util.*;
 
 /**
  * @author peter
@@ -77,7 +78,7 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
   }
 
   public static Collection<VirtualFile> getAllFiles(Class<? extends DomFileDescription> description, Project project) {
-    return FileBasedIndex.getInstance().getContainingFiles(NAME, description.getName(), project);
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, description.getName(), VirtualFileFilter.ALL);
   }
 
   public DataIndexer<String, Void, FileContent> getIndexer() {
