@@ -230,6 +230,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         }
         finally {
           myFacetsConfigurator.disposeEditors();
+          ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps();
           myFacetsConfigurator = createFacetsConfigurator();
           myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
         }
