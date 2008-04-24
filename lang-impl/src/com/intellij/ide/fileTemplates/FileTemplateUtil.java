@@ -310,9 +310,9 @@ public class FileTemplateUtil{
       try{
         Field pathsField = FileResourceLoader.class.getDeclaredField("paths");
         pathsField.setAccessible(true);
-        Vector<String> paths = (Vector<String>)pathsField.get(this);
-        paths.removeAllElements();
-        paths.addElement(modifiedPatternsPath.getAbsolutePath());
+        ArrayList<String> paths = (ArrayList<String>)pathsField.get(this);
+        paths.clear();
+        paths.add(modifiedPatternsPath.getAbsolutePath());
         if(ApplicationManager.getApplication().isUnitTestMode()){
           File file1 = new File(PathManagerEx.getTestDataPath());
           File testsDir = new File(new File(file1, "ide"), "fileTemplates");
