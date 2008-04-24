@@ -35,7 +35,7 @@ import java.util.concurrent.locks.Lock;
 public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileContent> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
 
-  public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("StubUpdatingIndex");
+  public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
   private static final int VERSION = 4;
   private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
     public void save(final DataOutput out, final SerializedStubTree v) throws IOException {

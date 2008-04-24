@@ -11,6 +11,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.psi.stubs.StubIndexKey;
+import com.intellij.psi.stubs.StubUpdatingIndex;
 import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +21,7 @@ import java.util.Locale;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class IndexInfrastructure {
-  private static final int VERSION = 3;
+  private static final int VERSION = 4;
   private final static TObjectLongHashMap<ID<?, ?>> myIndexIdToCreationStamp = new TObjectLongHashMap<ID<?, ?>>();
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
@@ -35,7 +37,12 @@ public class IndexInfrastructure {
   }
 
   public static File getIndexRootDir(final ID<?, ?> indexName) {
-    final File indexDir = new File(getPersistenceRoot(), indexName.toString().toLowerCase(Locale.US));
+    final String dirName = indexName.toString().toLowerCase(Locale.US);
+    // store StubIndices under StubUpdating index' root to ensure they are deleted 
+    // when StubUpdatingIndex version is changed 
+    final File indexDir = (indexName instanceof StubIndexKey)? 
+                          new File(getIndexRootDir(StubUpdatingIndex.INDEX_ID), dirName) : 
+                          new File(getPersistenceRoot(), dirName);
     indexDir.mkdirs();
     return indexDir;
   }
