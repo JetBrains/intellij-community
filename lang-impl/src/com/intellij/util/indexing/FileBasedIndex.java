@@ -149,7 +149,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
         final MapIndexStorage<K, V> storage = new MapIndexStorage<K, V>(IndexInfrastructure.getStorageFile(name), extension.getKeyDescriptor(), extension.getValueExternalizer());
         final IndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
         final UpdatableIndex<K, V, FileContent> index = createIndex(extension, memStorage);
-        myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, extension.getInputFilter()));
+        myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, new IndexableFilesFilter(extension.getInputFilter())));
         break;
       }
       catch (IOException e) {
@@ -921,5 +921,17 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     return false;
+  }
+  
+  private static class IndexableFilesFilter implements InputFilter {
+    private final InputFilter myDelegate;
+
+    private IndexableFilesFilter(InputFilter delegate) {
+      myDelegate = delegate;
+    }
+
+    public boolean acceptInput(final VirtualFile file) {
+      return (file instanceof VirtualFileWithId) && myDelegate.acceptInput(file);
+    }
   }
 }
