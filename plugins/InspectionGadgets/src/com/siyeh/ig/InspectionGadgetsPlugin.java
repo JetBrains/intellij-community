@@ -1000,6 +1000,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(BigDecimalEqualsInspection.class);
         m_inspectionClasses.add(CachedNumberConstructorCallInspection.class);
         m_inspectionClasses.add(CastThatLosesPrecisionInspection.class);
+        m_inspectionClasses.add(CharUsedInArithmeticContextInspection.class);
         m_inspectionClasses.add(ComparisonOfShortAndCharInspection.class);
         m_inspectionClasses.add(ComparisonToNaNInspection.class);
         m_inspectionClasses.add(ConfusingFloatingPointLiteralInspection.class);

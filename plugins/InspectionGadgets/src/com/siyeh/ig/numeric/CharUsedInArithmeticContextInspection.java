@@ -15,18 +15,22 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.TypeUtils;import com.siyeh.InspectionGadgetsBundle;
-import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.openapi.project.Project;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class CharUsedInArithmeticContextInspection extends BaseInspection {
+
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -39,23 +43,36 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
                 "char.used.in.arithmetic.context.problem.descriptor");
     }
 
+    @NotNull
     @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiExpression expression = (PsiExpression) infos[0];
-        if (!(expression instanceof PsiLiteralExpression)) {
-            return null;
-        }
+    protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+        final List<InspectionGadgetsFix> result = new ArrayList();
+        final PsiElement expression = (PsiElement)infos[0];
         PsiElement parent = expression.getParent();
+        if (parent instanceof PsiExpression) {
+            final PsiExpression binaryExpression =
+                    (PsiExpression)parent;
+            final PsiType type = binaryExpression.getType();
+            if (type != null && type != PsiType.CHAR) {
+                final String typeText = type.getCanonicalText();
+                result.add(new CharUsedInArithmeticContentCastFix(typeText));
+            }
+        }
+        if (!(expression instanceof PsiLiteralExpression)) {
+            return result.toArray(new InspectionGadgetsFix[result.size()]);
+        }
         while (parent instanceof PsiBinaryExpression) {
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) parent;
             if (TypeUtils.expressionHasType("java.lang.String",
                     binaryExpression)) {
-                return new CharUsedInArithmeticContentFix();
+                result.add(new CharUsedInArithmeticContentFix());
+                break;
             }
             parent = parent.getParent();
         }
-        return null;
+
+        return result.toArray(new InspectionGadgetsFix[result.size()]);
     }
 
     private static class CharUsedInArithmeticContentFix
@@ -83,6 +100,35 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
         }
     }
 
+    private static class CharUsedInArithmeticContentCastFix
+            extends InspectionGadgetsFix {
+
+        private final String typeText;
+
+        CharUsedInArithmeticContentCastFix(String typeText) {
+            this.typeText = typeText;
+        }
+
+        @NotNull
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "char.used.in.arithmetic.context.cast.quickfix", typeText);
+        }
+
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            if (!(element instanceof PsiExpression)) {
+                return;
+            }
+            final PsiExpression expression = (PsiExpression)element;
+            final String expressionText = expression.getText();
+            replaceExpression(expression,
+                    '(' + typeText + ')' + expressionText);
+        }
+    }
+
+
     public BaseInspectionVisitor buildVisitor() {
         return new CharUsedInArithmeticContextVisitor();
     }
@@ -93,11 +139,6 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
         @Override
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            //final IElementType tokenType = expression.getOperationTokenType();
-            //if (!JavaTokenType.PLUS.equals(tokenType) &&
-            //        !JavaTokenType.MINUS.equals(tokenType)) {
-            //    return;
-            //}
             final PsiExpression lhs = expression.getLOperand();
             final PsiType lhsType = lhs.getType();
             if (PsiType.CHAR.equals(lhsType)) {
