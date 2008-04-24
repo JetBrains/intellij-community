@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 
 public class MergeElseIfIntention extends Intention {
@@ -18,10 +19,9 @@ public class MergeElseIfIntention extends Intention {
   public void processIntention(@NotNull PsiElement element)
       throws IncorrectOperationException {
     final GrIfStatement parentStatement = (GrIfStatement) element;
-    assert parentStatement != null;
-    final GrOpenBlock elseBranch =
-        (GrOpenBlock) parentStatement.getElseBranch();
-    assert elseBranch != null;
+    GrBlockStatement elseBlockStatement = (GrBlockStatement) parentStatement.getElseBranch();
+    assert elseBlockStatement != null;
+    final GrOpenBlock elseBranch = elseBlockStatement.getBlock();
     final GrStatement elseBranchContents = elseBranch.getStatements()[0];
     IntentionUtils.replaceStatement("if(" + parentStatement.getCondition().getText()+ ")"+ parentStatement.getThenBranch().getText() + "else " + elseBranchContents.getText(), parentStatement);
   }
