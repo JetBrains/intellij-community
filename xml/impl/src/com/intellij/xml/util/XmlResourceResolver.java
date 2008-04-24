@@ -14,6 +14,8 @@ import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.actions.ValidateXmlActionHandler;
 import com.intellij.xml.XmlBundle;
 import org.apache.xerces.xni.XMLResourceIdentifier;
@@ -110,7 +112,15 @@ public class XmlResourceResolver implements XMLEntityResolver {
         if (baseFile == null) {
           baseFile = myFile;
         }
-        PsiFile psiFile = ExternalResourceManager.getInstance().getResourceLocation(systemId, baseFile, null);
+
+        String version = null;
+        if (baseFile == myFile) {
+          final XmlDocument document = myFile.getDocument();
+          final XmlTag rootTag = document != null ? document.getRootTag():null;
+          version = rootTag != null ? rootTag.getAttributeValue("version"):null;
+        }
+        
+        PsiFile psiFile = ExternalResourceManager.getInstance().getResourceLocation(systemId, baseFile, version);
         if (psiFile == null) {
           psiFile = XmlUtil.findXmlFile(baseFile, systemId);
         }
