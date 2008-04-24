@@ -68,7 +68,7 @@ public class IndexCacheManagerImpl implements CacheManager{
         LOG.assertTrue(virtualFile.isValid());
         return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
           public Boolean compute() {
-            if (scope.contains(virtualFile) && (index.isInContent(virtualFile) || index.isInSource(virtualFile))) {
+            if (scope.contains(virtualFile) && (index.isInContent(virtualFile) || index.isInLibrarySource(virtualFile))) {
               final PsiFile psiFile = myPsiManager.findFile(virtualFile);
               return psiFile == null || psiFileProcessor.process(psiFile);
             }
