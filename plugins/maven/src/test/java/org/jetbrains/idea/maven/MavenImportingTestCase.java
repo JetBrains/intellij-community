@@ -21,7 +21,7 @@ import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.repository.MavenRepository;
+import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
 import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
@@ -56,12 +56,13 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected PomTreeStructure.RootNode createMavenTree() {
-    PomTreeStructure s = new PomTreeStructure(myProject, myProject.getComponent(MavenProjectsManager.class),
-                                              myProject.getComponent(MavenRepository.class),
+    PomTreeStructure s = new PomTreeStructure(myProject,
+                                              MavenProjectsManager.getInstance(myProject),
+                                              MavenPluginsRepository.getInstance(myProject),
                                               myProject.getComponent(MavenEventsHandler.class)) {
       {
         for (VirtualFile pom : myAllPoms) {
-          this.root.addUnder(new PomNode(pom));
+          this.root.addUnder(new PomTreeStructure.PomNode(pom));
         }
       }
 

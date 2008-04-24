@@ -39,38 +39,39 @@
       <implementation-class>org.jetbrains.idea.maven.core.MavenApplicationComponent</implementation-class>
     </component>
   </application-components>
+
   <project-components>
     <component>
       <implementation-class>org.jetbrains.idea.maven.core.MavenCore</implementation-class>
       <option name="workspace" value="true"/>
     </component>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.repository.MavenRepositoryManager</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.idea.maven.state.MavenProjectsManager</implementation-class>
     </component>
     <component>
-      <interface-class>org.jetbrains.idea.maven.runner.MavenRunner</interface-class>
-      <implementation-class>org.jetbrains.idea.maven.runner.MavenRunnerImpl</implementation-class>
-      <option name="workspace" value="true"/>
+      <implementation-class>org.jetbrains.idea.maven.repository.MavenRepositoryManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.repository.MavenPluginsRepository</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.navigator.MavenProjectNavigator</implementation-class>
-    </component>
-    <component>
-      <interface-class>org.jetbrains.idea.maven.events.MavenEventsHandler</interface-class>
-      <implementation-class>org.jetbrains.idea.maven.events.MavenEventsComponent</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent</implementation-class>
       <option name="workspace" value="true"/>
     </component>
     <component>
-      <interface-class>org.jetbrains.idea.maven.repository.MavenRepository</interface-class>
-      <implementation-class>org.jetbrains.idea.maven.repository.MavenRepositoryViewer</implementation-class>
+      <interface-class>org.jetbrains.idea.maven.events.MavenEventsHandler</interface-class>
+      <implementation-class>org.jetbrains.idea.maven.events.MavenEventsComponent</implementation-class>
+    </component>
+    <component>
+      <interface-class>org.jetbrains.idea.maven.runner.MavenRunner</interface-class>
+      <implementation-class>org.jetbrains.idea.maven.runner.MavenRunnerImpl</implementation-class>
+      <option name="workspace" value="true"/>
     </component>
   </project-components>
+
   <actions>
     <group id="Maven.Core">
       <action id="Maven.ShowSettings"

@@ -15,8 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.core.MavenFactory;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
-import org.jetbrains.idea.maven.repository.MavenRepository;
-import org.jetbrains.idea.maven.repository.PluginDocument;
+import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
+import org.jetbrains.idea.maven.repository.PluginPluginInfo;
 import org.jetbrains.idea.maven.runner.MavenRunner;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
@@ -69,7 +69,7 @@ public class MavenKeymapExtension implements KeymapExtension {
 
   public static void createActions(@NotNull Project project) {
     final MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    final MavenRepository repository = project.getComponent(MavenRepository.class);
+    final MavenPluginsRepository repository = MavenPluginsRepository.getInstance(project);
     final MavenEventsHandler eventsHandler = project.getComponent(MavenEventsHandler.class);
 
     final List<MavenGoalAction> actionList = new ArrayList<MavenGoalAction>();
@@ -115,7 +115,7 @@ public class MavenKeymapExtension implements KeymapExtension {
     return EventsBundle.message("maven.event.unknown.project");
   }
 
-  private static Collection<String> getGoals(MavenProjectsManager projectsManager, MavenRepository repository, VirtualFile file) {
+  private static Collection<String> getGoals(MavenProjectsManager projectsManager, MavenPluginsRepository repository, VirtualFile file) {
     Collection<String> result = new HashSet<String>();
     result.addAll(MavenFactory.getStandardGoalsList());
 
@@ -132,14 +132,11 @@ public class MavenKeymapExtension implements KeymapExtension {
     return result;
   }
 
-  private static void collectGoals(final MavenRepository repository, final MavenId mavenId, final Collection<String> list) {
-    final PluginDocument pluginDocument = repository.loadPlugin(mavenId);
-    if (pluginDocument != null) {
-      final PluginDocument.Plugin plugin = pluginDocument.getPlugin();
-      for (PluginDocument.Mojo mojo : plugin.getMojos().getMojoList()) {
-        list.add(plugin.getGoalPrefix() + ":" + mojo.getGoal());
-      }
-    }
+  private static void collectGoals(final MavenPluginsRepository repository, final MavenId mavenId, final Collection<String> list) {
+    final PluginPluginInfo plugin = repository.loadPluginInfo(mavenId);
+    if (plugin == null) return;
+
+    list.addAll(plugin.getGoals());
   }
 
   static class MavenGoalAction extends AnAction {

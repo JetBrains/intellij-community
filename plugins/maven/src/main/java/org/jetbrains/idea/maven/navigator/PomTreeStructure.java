@@ -24,8 +24,8 @@ import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
-import org.jetbrains.idea.maven.repository.MavenRepository;
-import org.jetbrains.idea.maven.repository.PluginDocument;
+import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
+import org.jetbrains.idea.maven.repository.PluginPluginInfo;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;
@@ -43,7 +43,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
   protected MavenProjectsManager myProjectsManager;
 
-  private final MavenRepository myRepository;
+  private final MavenPluginsRepository myRepository;
   protected final MavenEventsHandler myEventsHandler;
 
   protected final RootNode root = new RootNode();
@@ -65,7 +65,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
   private static final Icon iconProfilesOpen = IconLoader.getIcon("/images/profilesOpen.png");
   private static final Icon iconProfilesClosed = IconLoader.getIcon("/images/profilesClosed.png");
 
-  public PomTreeStructure(Project project, MavenProjectsManager cache, MavenRepository repository, final MavenEventsHandler eventsHandler) {
+  public PomTreeStructure(Project project, MavenProjectsManager cache, MavenPluginsRepository repository, final MavenEventsHandler eventsHandler) {
     this.project = project;
     myProjectsManager = cache;
     myRepository = repository;
@@ -73,7 +73,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }
 
-  public MavenRepository getRepository() {
+  public MavenPluginsRepository getRepository() {
     return myRepository;
   }
 
@@ -605,10 +605,10 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     private void addPlugin(final List<PluginNode> pluginNodes, final MavenId mavenId, final boolean detachable) {
       if (!hasPlugin(mavenId)) {
-        PluginDocument pluginDocument = getRepository().loadPlugin(mavenId);
-        insertSorted(pluginNodes, pluginDocument == null
+        PluginPluginInfo plugin = getRepository().loadPluginInfo(mavenId);
+        insertSorted(pluginNodes, plugin == null
                                   ? new InvalidPluginNode(this, mavenId, detachable)
-                                  : new ValidPluginNode(this, pluginDocument.getPlugin(), detachable));
+                                  : new ValidPluginNode(this, plugin, detachable));
       }
     }
 
@@ -1055,19 +1055,19 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
   }
 
   public class ValidPluginNode extends PluginNode {
-    public ValidPluginNode(PomNode parent, final PluginDocument.Plugin plugin, boolean detachable) {
+    public ValidPluginNode(PomNode parent, final PluginPluginInfo plugin, boolean detachable) {
       super(parent, new MavenId(plugin.getGroupId(), plugin.getArtifactId(), plugin.getVersion()), detachable);
       addPlainText(plugin.getGoalPrefix());
       addColoredFragment(" (" + getId().toString() + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
-      for (PluginDocument.Mojo mojo : plugin.getMojos().getMojoList()) {
-        goalNodes.add(new PluginGoalNode(this, plugin.getGoalPrefix(), mojo.getGoal()));
+      for (String goal  : plugin.getGoals()) {
+        goalNodes.add(new PluginGoalNode(this, goal));
       }
     }
   }
 
   class PluginGoalNode extends GoalNode {
-    public PluginGoalNode(PluginNode parent, String pluginPrefix, String goal) {
-      super(parent, pluginPrefix + ":" + goal);
+    public PluginGoalNode(PluginNode parent, String goal) {
+      super(parent, goal);
       setUniformIcon(iconPluginGoal);
     }
   }

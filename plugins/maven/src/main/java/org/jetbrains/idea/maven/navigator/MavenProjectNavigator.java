@@ -23,7 +23,7 @@ import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.project.ProjectBundle;
-import org.jetbrains.idea.maven.repository.MavenRepository;
+import org.jetbrains.idea.maven.repository.MavenPluginsRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsManager;
 
 import javax.swing.*;
@@ -56,7 +56,7 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
 
   private Map<VirtualFile, PomNode> fileToNode = new LinkedHashMap<VirtualFile, PomNode>();
 
-  public MavenProjectNavigator(final Project project, MavenProjectsManager projectsManager, MavenRepository repository, MavenEventsHandler eventsHandler) {
+  public MavenProjectNavigator(final Project project, MavenProjectsManager projectsManager, MavenPluginsRepository repository, MavenEventsHandler eventsHandler) {
     super(project, projectsManager, repository, eventsHandler);
 
     tree = new SimpleTree() {

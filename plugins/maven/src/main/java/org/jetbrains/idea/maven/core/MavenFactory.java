@@ -138,13 +138,19 @@ public class MavenFactory {
   }
 
   public static String getRepositoryFromSettings(File file) {
-    JDOMReader reader = new JDOMReader();
     try {
-      reader.init(new FileInputStream(file));
+      FileInputStream is = new FileInputStream(file);
+      try {
+        JDOMReader reader = new JDOMReader(is);
+        return reader.getChildText(reader.getRootElement(), LOCAL_REPOSITORY_TAG);
+      }
+      finally {
+        is.close();
+      }
     }
     catch (IOException ignore) {
+      return null;
     }
-    return reader.getChildText(reader.getRootElement(), LOCAL_REPOSITORY_TAG);
   }
 
   public static List<String> getStandardPhasesList() {

@@ -9,20 +9,18 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.List;
 
 public class JDOMReader {
+  private Element myRootElement;
+  private Namespace myNamespace;
 
-  protected Element rootElement;
-  private Namespace namespace;
-
-  public void init(InputStream is) {
+  public JDOMReader(InputStream s) {
     try {
-      Document document = new SAXBuilder().build(is);
+      Document document = new SAXBuilder().build(s);
       if (document.hasRootElement()) {
-        rootElement = document.getRootElement();
-        this.namespace = rootElement.getNamespace();
+        myRootElement = document.getRootElement();
+        myNamespace = myRootElement.getNamespace();
       }
     }
     catch (JDOMException ignore) {
@@ -32,19 +30,18 @@ public class JDOMReader {
   }
 
   public Element getRootElement() {
-    return rootElement;
+    return myRootElement;
   }
 
-  protected Element getChild(Element element, @NonNls String tag) {
-    return element == null ? null : element.getChild(tag, namespace);
+  public Element getChild(Element element, @NonNls String tag) {
+    return element.getChild(tag, myNamespace);
   }
 
-  @SuppressWarnings({"unchecked"})
-  protected List<Element> getChildren(Element element, @NonNls String tag) {
-    return (List<Element>)(element == null ? Collections.EMPTY_LIST : element.getChildren(tag, namespace));
+  public List<Element> getChildren(Element element, @NonNls String tag) {
+    return element.getChildren(tag, myNamespace);
   }
 
   public String getChildText(Element element, @NonNls String tag) {
-    return element == null ? null : element.getChildText(tag, namespace);
+    return element.getChildText(tag, myNamespace);
   }
 }
