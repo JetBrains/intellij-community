@@ -19,41 +19,18 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotationStub> implements PsiAnnotation, Navigatable {
-  public static final ClsAnnotationImpl[] EMPTY_ARRAY = new ClsAnnotationImpl[0];
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsAnnotationImpl");
   private ClsJavaCodeReferenceElementImpl myReferenceElement;
   private ClsAnnotationParameterListImpl myParameterList;
-  private boolean myIsInitialized = false;
+  private final Object lock = new Object();
 
   public ClsAnnotationImpl(final PsiAnnotationStub stub) {
     super(stub);
   }
 
-  private void init() {
-    if (myIsInitialized) return;
-    myIsInitialized = true;
-
-    final PsiAnnotationStub stub = getStub();
-    final CompositeElement mirror = stub.getTreeElement();
-    myReferenceElement = new ClsJavaCodeReferenceElementImpl(this, mirror.findChildByRole(ChildRole.CLASS_REFERENCE).getText());
-
-    final PsiAnnotationParameterList paramList = (PsiAnnotationParameterList)mirror.findChildByRoleAsPsiElement(ChildRole.PARAMETER_LIST);
-
-    myParameterList = new ClsAnnotationParameterListImpl(this);
-    PsiNameValuePair[] psiAttributes = paramList.getAttributes();
-    ClsNameValuePairImpl[] attributes = new ClsNameValuePairImpl[psiAttributes.length];
-    myParameterList.setAttributes(attributes);
-    for (int i = 0; i < attributes.length; i++) {
-      attributes[i] = new ClsNameValuePairImpl(myParameterList);
-      attributes[i].setNameIdentifier(new ClsIdentifierImpl(attributes[i], psiAttributes[i].getName()));
-      attributes[i].setMemberValue(ClsAnnotationsUtil.getMemberValue(psiAttributes[i].getValue(), attributes[i]));
-    }
-  }
-
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
-    init();
-    buffer.append("@").append(myReferenceElement.getCanonicalText());
-    myParameterList.appendMirrorText(indentLevel, buffer);
+    buffer.append("@").append(getReferenceElement().getCanonicalText());
+    ((ClsAnnotationParameterListImpl)getParameterList()).appendMirrorText(indentLevel, buffer);
   }
 
   public void setMirror(@NotNull TreeElement element) {
@@ -68,8 +45,7 @@ public class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotationStub
 
   @NotNull
   public PsiElement[] getChildren() {
-    init();
-    return new PsiElement[]{myReferenceElement, myParameterList};
+    return new PsiElement[]{getReferenceElement(), getParameterList()};
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -83,19 +59,35 @@ public class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotationStub
 
   @NotNull
   public PsiAnnotationParameterList getParameterList() {
-    init();
-    return myParameterList;
+    synchronized (lock) {
+      if (myParameterList == null) {
+        final PsiAnnotationStub stub = getStub();
+        final CompositeElement mirror = stub.getTreeElement();
+
+        final PsiAnnotationParameterList paramList = (PsiAnnotationParameterList)mirror.findChildByRoleAsPsiElement(ChildRole.PARAMETER_LIST);
+
+        myParameterList = new ClsAnnotationParameterListImpl(this);
+        PsiNameValuePair[] psiAttributes = paramList.getAttributes();
+        ClsNameValuePairImpl[] attributes = new ClsNameValuePairImpl[psiAttributes.length];
+        myParameterList.setAttributes(attributes);
+        for (int i = 0; i < attributes.length; i++) {
+          attributes[i] = new ClsNameValuePairImpl(myParameterList);
+          attributes[i].setNameIdentifier(new ClsIdentifierImpl(attributes[i], psiAttributes[i].getName()));
+          attributes[i].setMemberValue(ClsAnnotationsUtil.getMemberValue(psiAttributes[i].getValue(), attributes[i]));
+        }
+      }
+
+      return myParameterList;
+    }
   }
 
   @Nullable public String getQualifiedName() {
-    init();
-    if (myReferenceElement == null) return null;
-    return myReferenceElement.getCanonicalText();
+    if (getReferenceElement() == null) return null;
+    return getReferenceElement().getCanonicalText();
   }
 
   public PsiJavaCodeReferenceElement getNameReferenceElement() {
-    init();
-    return myReferenceElement;
+    return getReferenceElement();
   }
 
   public PsiAnnotationMemberValue findAttributeValue(String attributeName) {
@@ -116,4 +108,17 @@ public class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotationStub
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMetaBase(this);
   }
+
+  private ClsJavaCodeReferenceElementImpl getReferenceElement() {
+    synchronized (lock) {
+      if (myReferenceElement == null) {
+        final PsiAnnotationStub stub = getStub();
+        final CompositeElement mirror = stub.getTreeElement();
+        myReferenceElement = new ClsJavaCodeReferenceElementImpl(this, mirror.findChildByRole(ChildRole.CLASS_REFERENCE).getText());
+      }
+
+      return myReferenceElement;
+    }
+  }
+
 }
