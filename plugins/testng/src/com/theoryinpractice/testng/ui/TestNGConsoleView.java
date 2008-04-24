@@ -106,6 +106,7 @@ public class TestNGConsoleView implements ConsoleView
                 //first 4 chars are '\t at '
                 int startIndex = lines[i].indexOf('a') + 3;
                 if (lines[i].length() > 4 && (lines[i].startsWith("org.testng.", startIndex)
+                        || lines[i].startsWith("org.junit.", startIndex)
                         || lines[i].startsWith("sun.reflect.DelegatingMethodAccessorImpl", startIndex)
                         || lines[i].startsWith("sun.reflect.NativeMethodAccessorImpl", startIndex)
                         || lines[i].startsWith("java.lang.reflect.Method", startIndex)
