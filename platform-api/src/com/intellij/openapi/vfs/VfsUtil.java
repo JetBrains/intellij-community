@@ -23,8 +23,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashSet;
@@ -36,7 +36,10 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 public class VfsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
@@ -631,6 +634,7 @@ public class VfsUtil {
     }
     return file;
   }
+
   public static <E extends Throwable> VirtualFile doActionAndRestoreEncoding(VirtualFile fileBefore, ThrowableComputable<VirtualFile, E> action) throws E {
     Charset charsetBefore = EncodingManager.getInstance().getEncoding(fileBefore, true);
     VirtualFile fileAfter = null;
@@ -648,16 +652,25 @@ public class VfsUtil {
     }
   }
 
-  public static boolean processFilesRecursively(final VirtualFile root, final Processor<VirtualFile> processor) {
-    final LinkedList<VirtualFile> queue = new LinkedList<VirtualFile>();
-    queue.add(root);
-    while (!queue.isEmpty()) {
-      final VirtualFile file = queue.removeFirst();
-      if (!processor.process(file)) return false;
-      if (file.isDirectory()) {
-        queue.addAll(Arrays.asList(file.getChildren()));
+  @Nullable
+  public static <T> T processInputStream(final VirtualFile file, final Function<InputStream, T> function) {
+    InputStream stream = null;
+    try {
+      stream = file.getInputStream();
+      return function.fun(stream);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    } finally {
+      try {
+        if (stream != null) {
+          stream.close();
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     }
-    return true;
+    return null;
   }
 }
