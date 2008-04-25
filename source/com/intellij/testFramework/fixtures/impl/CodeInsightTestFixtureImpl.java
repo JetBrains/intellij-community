@@ -326,19 +326,26 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void testCompletionVariants(final String fileBefore, final String... expectedItems) throws Throwable {
+    final List<String> result = getCompletionVariants(fileBefore);
+    UsefulTestCase.assertSameElements(result, expectedItems);
+  }
+
+  public List<String> getCompletionVariants(final String fileBefore) throws Throwable {
+    final List<String> result = new ArrayList<String>();
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
       protected void run() throws Throwable {
         configureByFilesInner(fileBefore);
         LookupItem[] lookupItems = completeBasic();
         UsefulTestCase.assertNotNull("No lookup was shown, probably there was only one lookup element that was inserted automatically", lookupItems);
-        UsefulTestCase.assertSameElements(ContainerUtil.map(lookupItems, new Function<LookupItem, String>() {
+        result.addAll(ContainerUtil.map(lookupItems, new Function<LookupItem, String>() {
           public String fun(final LookupItem lookupItem) {
             return lookupItem.getLookupString();
           }
-        }), expectedItems);
+        }));
       }
     }.execute().throwException();
+    return result;
   }
 
   public void testRename(final String fileBefore, final String fileAfter, final String newName, final String... additionalFiles) throws Throwable {

@@ -273,4 +273,6 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   void configureFromExistingVirtualFile(VirtualFile f) throws IOException;
 
   PsiFile addFileToProject(@NonNls String relativePath, @NonNls String fileText) throws IOException;
+
+  List<String> getCompletionVariants(String fileBefore) throws Throwable;
 }
