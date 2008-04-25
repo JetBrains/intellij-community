@@ -61,6 +61,9 @@ public class UnusedElementInspection extends XsltInspection {
             if (!XsltSupport.isVariableOrParamName(attribute)) {
                 return;
             }
+            if (!XsltSupport.isXsltFile(attribute.getContainingFile())) {
+                return;
+            }
             final XmlTag tag = attribute.getParent();
             if (XsltSupport.isTopLevelElement(tag)) {
                 return;
