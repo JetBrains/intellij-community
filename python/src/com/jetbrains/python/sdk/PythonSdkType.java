@@ -6,7 +6,6 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.projectRoots.impl.SdkVersionUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -182,30 +181,33 @@ public class PythonSdkType extends SdkType {
 
   public void setupSdkPaths(final Sdk sdk) {
     final SdkModificator sdkModificator = sdk.getSdkModificator();
-    VirtualFile libDir;
-    if (SystemInfo.isLinux) libDir = sdk.getHomeDirectory();
-    else libDir = sdk.getHomeDirectory().findChild("Lib");
-    final String stubsPath =
-        PathManager.getSystemPath() + File.separator + "python_stubs" + File.separator + sdk.getHomePath().hashCode() + File.separator;
-    if (libDir != null) {
-      if (SystemInfo.isMac) {
-        for (VirtualFile child : libDir.getChildren()) {
-          if (child.getName().startsWith("python")) {
-            sdkModificator.addRoot(child, OrderRootType.SOURCES);
-            sdkModificator.addRoot(child, OrderRootType.CLASSES);
-            break;
-          }
+    String sdk_path = sdk.getHomePath();
+    String bin_path = getInterpreterPath(sdk_path);
+    final String stubs_path =
+        PathManager.getSystemPath() + File.separator + "python_stubs" + File.separator + sdk_path.hashCode() + File.separator;
+    // we have a number of lib dirs, those listed in pyton's sys.path
+    String script = // a script printing sys.path
+      "import sys\n"+
+      "for x in sys.path:\n"+
+      "  sys.stdout.write(x+chr(10))"
+    ;
+    final List<String> paths = SdkUtil.getProcessOutput(sdk_path, new String[] {bin_path, "-c", script}).getStdout();
+    if ((paths != null) && paths.size() > 0) {
+      // add every path as root.
+      for (String path: paths) {
+        if (path.indexOf(File.separator) < 0) continue; // TODO: interpret 'specail' paths reasonably
+        VirtualFile child = LocalFileSystem.getInstance().findFileByPath(path);
+        if (child != null) {
+          // NOTE: maybe handle .zip / .egg files specially?
+          sdkModificator.addRoot(child, OrderRootType.SOURCES);
+          sdkModificator.addRoot(child, OrderRootType.CLASSES);
         }
-        generateStubs(sdk.getHomePath(), stubsPath);
+        else LOG.info("Bogus sys.path entry "+path);
       }
-      else {
-        sdkModificator.addRoot(libDir, OrderRootType.SOURCES);
-        sdkModificator.addRoot(libDir, OrderRootType.CLASSES);
-        generateStubs(sdk.getHomePath(), stubsPath);
-      }
-      sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(stubsPath), OrderRootType.SOURCES);
+      generateStubs(sdk_path, stubs_path);
+      sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path), OrderRootType.SOURCES);
     }
-
+    
     sdkModificator.commitChanges();
   }
 
@@ -213,14 +215,17 @@ public class PythonSdkType extends SdkType {
   public String getVersionString(final String sdkHome) {
     String binaryPath = getInterpreterPath(sdkHome);
     final boolean isJython = isJythonSdkHome(sdkHome);
-    String marker = isJython ? "Jython" : "Python";
-    String version = SdkVersionUtil.readVersionFromProcessOutput(sdkHome, new String[] { binaryPath, "-V" }, marker);
-    if (version != null && isJython) {
-      int p = version.indexOf(" on ");
-      if (p >= 0) {
-        return version.substring(0, p);
-      }
+    String version_regexp, version_opt;
+    if (isJython) {
+      version_regexp = "(Jython \\S+) on .*";
+      version_opt = "--version";
     }
+    else { // CPython
+      version_regexp = "(Python \\S+).*";
+      version_opt = "-V";
+    }
+    Pattern pattern = Pattern.compile(version_regexp);
+    String version = SdkUtil.getFirstMatch(SdkUtil.getProcessOutput(sdkHome, new String[] {binaryPath, version_opt}).getStderr(), pattern);
     return version;
   }
 
