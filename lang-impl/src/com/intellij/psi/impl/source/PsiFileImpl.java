@@ -50,7 +50,7 @@ public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFi
   protected IElementType myContentElementType;
 
   protected PsiFile myOriginalFile = null;
-  private FileViewProvider myViewProvider;
+  private final FileViewProvider myViewProvider;
   private static final Key<Document> HARD_REFERENCE_TO_DOCUMENT = new Key<Document>("HARD_REFERENCE_TO_DOCUMENT");
   private final Object myStubLock = new Object();
   private WeakReference<StubTree> myStub;
@@ -92,7 +92,7 @@ public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFi
     final FileElement noLockAttempt = (FileElement)_getTreeElement();
     if (noLockAttempt != null) return noLockAttempt;
 
-    synchronized (PsiLock.LOCK) {
+    synchronized (myStubLock) {
       return getTreeElementNoLock();
     }
   }
@@ -102,9 +102,6 @@ public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFi
       setTreeElement(loadTreeElement());
     }
     return (FileElement)_getTreeElement();
-  }
-
-  public void prepareToRepositoryIdInvalidation() {
   }
 
   protected boolean isKeepTreeElementByHardReference() {
@@ -120,7 +117,7 @@ public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFi
       FileElement treeElement = (FileElement)((Reference)pointer).get();
       if (treeElement != null) return treeElement;
 
-      synchronized (PsiLock.LOCK) {
+      synchronized (myStubLock) {
         if (myTreeElementPointer == pointer) {
           myTreeElementPointer = null;
         }
@@ -564,7 +561,7 @@ public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFi
                    : new PatchedSoftReference<ASTNode>(treeElement);
     }
 
-    synchronized (PsiLock.LOCK) {
+    synchronized (myStubLock) {
       myTreeElementPointer = newPointer;
     }
   }
@@ -586,7 +583,7 @@ public abstract class PsiFileImpl extends TreeWrapperPsiElement implements PsiFi
     FileElement treeElement = getTreeElement();
     if (treeElement != null) return treeElement;
 
-    synchronized (PsiLock.LOCK) {
+    synchronized (myStubLock) {
       treeElement = getTreeElement();
       if (treeElement != null) return treeElement;
 
