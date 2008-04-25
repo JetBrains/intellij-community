@@ -26,16 +26,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
 import java.util.Arrays;
 
@@ -66,6 +62,8 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
         caretModel.moveToOffset(offset + 3);
         return;
       }
+
+      if (PsiTreeUtil.getParentOfType(elementAt, GrImportStatement.class) != null) return;
 
       if (parameters.length == 0) {
         if (offset == document.getTextLength() || document.getCharsSequence().charAt(offset) != '(') {
