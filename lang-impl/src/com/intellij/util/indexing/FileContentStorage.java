@@ -87,9 +87,11 @@ public class FileContentStorage {
       final byte[] bytes = file.contentsToByteArray();
       if (bytes != null) {
         synchronized (myLock) {
-          final int fileId = FileBasedIndex.getFileId(file);
-          myFileIds.add(fileId);
-          myCache.put(fileId, bytes);
+          final int fileId = Math.abs(FileBasedIndex.getFileId(file));
+          final boolean added = myFileIds.add(fileId);
+          if (added) {
+            myCache.put(fileId, bytes);
+          }
         }
       }
     }
@@ -104,14 +106,15 @@ public class FileContentStorage {
 
   @Nullable
   public synchronized byte[] remove(VirtualFile file) {
-    final int fileId = FileBasedIndex.getFileId(file);
+    final int fileId = Math.abs(FileBasedIndex.getFileId(file));
     synchronized (myLock) {
       try {
-        return myCache.get(fileId);
+        final byte[] bytes = myCache.get(fileId);
+        myKeyBeingRemoved = fileId;
+        final boolean wasStoredInCache = myCache.remove(fileId);
+        return wasStoredInCache? bytes : null;
       }
       finally {
-        myKeyBeingRemoved = fileId;
-        myCache.remove(fileId);
         myFileIds.remove(fileId);
         myKeyBeingRemoved = -1;
       }

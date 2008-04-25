@@ -711,9 +711,12 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
             myFileContentAttic.offer(file);
           }
           else {
-            byte[] content;
+            // first check if there is an unprocessed content from previous events
+            byte[] content = myFileContentAttic.remove(file);
             try {
-              content = file.contentsToByteArray();
+              if (content == null) {
+                content = file.contentsToByteArray();
+              }
             }
             catch (IOException e) {
               content = ArrayUtil.EMPTY_BYTE_ARRAY;
