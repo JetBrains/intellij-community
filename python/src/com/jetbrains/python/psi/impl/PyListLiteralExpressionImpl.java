@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PyListLiteralExpressionImpl extends PyElementImpl implements PyListLiteralExpression {
   public PyListLiteralExpressionImpl(ASTNode astNode) {
@@ -90,10 +91,11 @@ public class PyListLiteralExpressionImpl extends PyElementImpl implements PyList
     }
   }
 
-  @NotNull
+
+  @Nullable
   public PyType getType() {
-    PyClass cls = PyBuiltinCache.getInstance(getProject()).getListClass();
-    assert(cls != null);
-    return new PyClassType(cls);
+    PyClass the_class = PyBuiltinCache.getInstance(getProject()).getListClass();
+    if (the_class == null) return null;
+    else return new PyClassType(the_class);
   }
 }
