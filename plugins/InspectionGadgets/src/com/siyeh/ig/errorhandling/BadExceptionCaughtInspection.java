@@ -51,6 +51,7 @@ public class BadExceptionCaughtInspection extends BaseInspection {
         parseString(exceptionsString, exceptionList);
     }
 
+    @NotNull
     public String getID() {
         return "ProhibitedExceptionCaught";
     }
