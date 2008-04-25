@@ -444,11 +444,18 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
   private boolean createPropertiesFileIfNotExists() {
     if (getPropertiesFile() != null) return true;
     final String path = FileUtil.toSystemIndependentName(myPropertiesFile.getText());
+    if (StringUtil.isEmptyOrSpaces(path)) {
+      String message = CodeInsightBundle.message("i18nize.empty.file.path", myPropertiesFile.getText());
+      Messages.showErrorDialog(myProject, message, CodeInsightBundle.message("i18nize.error.creating.properties.file"));
+      myPropertiesFile.requestFocusInWindow();
+      return false;
+    }
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(path);
     if (fileType != StdFileTypes.PROPERTIES) {
       String message = CodeInsightBundle.message("i18nize.cant.create.properties.file.because.its.name.is.associated",
                                                  myPropertiesFile.getText(), fileType.getDescription());
       Messages.showErrorDialog(myProject, message, CodeInsightBundle.message("i18nize.error.creating.properties.file"));
+      myPropertiesFile.requestFocusInWindow();
       return false;
     }
 
