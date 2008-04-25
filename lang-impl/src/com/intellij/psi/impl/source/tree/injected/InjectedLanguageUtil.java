@@ -147,7 +147,13 @@ public class InjectedLanguageUtil {
 
   public static void enumerate(@NotNull PsiElement host, @NotNull PsiFile containingFile, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor, boolean probeUp) {
     //do not inject into nonphysical files except during completion
-    if (!containingFile.isPhysical() && containingFile.getOriginalFile() == null) return;
+    if (!containingFile.isPhysical() && containingFile.getOriginalFile() == null) {
+      final PsiElement context = containingFile.getContext();
+      if (context == null) return;
+
+      final PsiFile file = context.getContainingFile();
+      if (file == null || (!file.isPhysical() && file.getOriginalFile() == null)) return;
+    }
     Places places = probeElementsUp(host, containingFile, probeUp);
     if (places == null) return;
     for (Place place : places) {
