@@ -28,6 +28,9 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
 
   public FacetModelImpl(final FacetManagerImpl manager) {
     myManager = manager;
+  }
+
+  public void addFacetsFromManager() {
     for (Facet facet : myManager.getAllFacets()) {
       addFacet(facet);
     }
