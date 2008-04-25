@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-class JavaWithRunnableSurrounder extends JavaStatementsSurrounder{
+public class JavaWithRunnableSurrounder extends JavaStatementsSurrounder{
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.runnable.template");
   }
@@ -92,7 +92,7 @@ class JavaWithRunnableSurrounder extends JavaStatementsSurrounder{
       return false;
     }
     final Collection<PsiReference> references = ReferencesSearch.search(variable, new LocalSearchScope(scope)).findAll();
-    boolean foundOnce = (variable.getInitializer() != null);
+    boolean foundOnce = (variable instanceof PsiParameter) || (variable.getInitializer() != null);
     for (PsiReference reference : references) {
       if (reference instanceof PsiReferenceExpression) {
         if (PsiUtil.isAccessedForWriting((PsiReferenceExpression) reference)) {
