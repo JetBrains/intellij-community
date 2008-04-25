@@ -33,6 +33,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   private DefaultActionGroup myToolBarGroup;
   private final JPanel myListPanel;
   private ShowDiffAction.DiffExtendUIFactory myDiffExtendUIFactory = new DiffToolbarActionsFactory();
+  private String myToggleActionTitle = VcsBundle.message("commit.dialog.include.action.name");
 
   public static DataKey<ChangesBrowser> DATA_KEY = DataKey.create("com.intellij.openapi.vcs.changes.ui.ChangesBrowser");
 
@@ -107,6 +108,10 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     myDiffExtendUIFactory = diffExtendUIFactory;
   }
 
+  public void setToggleActionTitle(final String toggleActionTitle) {
+    myToggleActionTitle = toggleActionTitle;
+  }
+
   public JPanel getHeaderPanel() {
     return myHeaderPanel;
   }
@@ -138,7 +143,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     private final Change myChange;
 
     public ToggleChangeAction(final Change change) {
-      super(VcsBundle.message("commit.dialog.include.action.name"));
+      super(myToggleActionTitle);
       myChange = change;
     }
 
