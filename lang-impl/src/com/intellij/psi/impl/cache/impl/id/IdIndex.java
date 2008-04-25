@@ -74,7 +74,11 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
       return Collections.emptyMap();
     }
   };
-  
+
+  public int getCacheSize() {
+    return DEFAULT_CACHE_SIZE;
+  }
+
   public int getVersion() {
     return 8;
   }

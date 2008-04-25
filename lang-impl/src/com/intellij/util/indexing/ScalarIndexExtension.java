@@ -11,7 +11,7 @@ import java.io.IOException;
  * 
  */
 public abstract class ScalarIndexExtension<K> implements FileBasedIndexExtension<K, Void>{
-  
+
   public final DataExternalizer<Void> getValueExternalizer() {
     return VoidDataExternalizer.INSTANCE;
   }
@@ -25,5 +25,9 @@ public abstract class ScalarIndexExtension<K> implements FileBasedIndexExtension
     public Void read(final DataInput in) throws IOException {
       return null;
     }
+  }
+
+  public int getCacheSize() {
+    return DEFAULT_CACHE_SIZE;
   }
 }

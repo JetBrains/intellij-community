@@ -96,6 +96,10 @@ public class StubUpdatingIndex implements CustomImplementationFileBasedIndexExte
     return INDEX_ID;
   }
 
+  public int getCacheSize() {
+    return 5; // no need to cache many serialized trees 
+  }
+
   public DataIndexer<Integer, SerializedStubTree, FileContent> getIndexer() {
     return new DataIndexer<Integer, SerializedStubTree, FileContent>() {
       public Map<Integer, SerializedStubTree> map(final FileContent inputData) {

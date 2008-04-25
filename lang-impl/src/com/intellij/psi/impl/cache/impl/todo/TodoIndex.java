@@ -106,7 +106,11 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
              fileType instanceof CustomFileType; 
     }
   };
-  
+
+  public int getCacheSize() {
+    return DEFAULT_CACHE_SIZE;
+  }
+
   public int getVersion() {
     return 3;
   }

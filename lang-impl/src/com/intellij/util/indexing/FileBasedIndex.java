@@ -146,7 +146,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        final MapIndexStorage<K, V> storage = new MapIndexStorage<K, V>(IndexInfrastructure.getStorageFile(name), extension.getKeyDescriptor(), extension.getValueExternalizer());
+        final MapIndexStorage<K, V> storage = new MapIndexStorage<K, V>(IndexInfrastructure.getStorageFile(name), extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getCacheSize());
         final IndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
         final UpdatableIndex<K, V, FileContent> index = createIndex(extension, memStorage);
         myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, new IndexableFilesFilter(extension.getInputFilter())));

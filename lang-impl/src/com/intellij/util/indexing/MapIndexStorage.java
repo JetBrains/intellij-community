@@ -27,16 +27,15 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   private final PersistentEnumerator.DataDescriptor<Key> myKeyDescriptor;
   private final ValueContainerExternalizer<Value> myValueContainerExternalizer;
 
-  public MapIndexStorage(
-    File storageFile, 
-    final PersistentEnumerator.DataDescriptor<Key> keyDescriptor, 
-    final DataExternalizer<Value> valueExternalizer) throws IOException {
+  public MapIndexStorage(File storageFile, final PersistentEnumerator.DataDescriptor<Key> keyDescriptor, final DataExternalizer<Value> valueExternalizer,
+                         final int cacheSize) throws IOException {
 
     myStorageFile = storageFile;
     myKeyDescriptor = keyDescriptor;
     myValueContainerExternalizer = new ValueContainerExternalizer<Value>(valueExternalizer);
     myMap = new PersistentHashMap<Key,ValueContainer<Value>>(myStorageFile, myKeyDescriptor, myValueContainerExternalizer);
-    myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(16 * 1024, 4 * 1024) {
+
+    myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(cacheSize, (int)(Math.ceil(cacheSize * 0.25)) /* 25% from the main cache size*/) {
       @NotNull
       public synchronized ChangeTrackingValueContainer<Value> get(final Key key) {
         return super.get(key);

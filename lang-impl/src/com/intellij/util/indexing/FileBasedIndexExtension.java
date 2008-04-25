@@ -10,7 +10,8 @@ import com.intellij.util.io.PersistentEnumerator;
  */
 public interface FileBasedIndexExtension<K, V> {
   ExtensionPointName<FileBasedIndexExtension> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.fileBasedIndex");
-  
+  int DEFAULT_CACHE_SIZE = 16 * 1024;
+
   ID<K, V> getName();
   
   DataIndexer<K, V, FileContent> getIndexer();
@@ -24,4 +25,6 @@ public interface FileBasedIndexExtension<K, V> {
   boolean dependsOnFileContent();
   
   int getVersion();
+  
+  int getCacheSize();
 }
