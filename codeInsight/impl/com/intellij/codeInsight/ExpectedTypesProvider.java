@@ -203,7 +203,9 @@ public class ExpectedTypesProvider {
 
     @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       if (myForCompletion) {
-        expression.getParent().accept(this);
+        final MyParentVisitor visitor = new MyParentVisitor(expression, myForCompletion, myClassProvider);
+        expression.getParent().accept(visitor);
+        myResult = visitor.getResult();
         return;
       }
 
@@ -491,7 +493,9 @@ public class ExpectedTypesProvider {
       PsiExpression op2 = expr.getROperand();
       PsiJavaToken sign = expr.getOperationSign();
       if (myForCompletion && op1.equals(myExpr)) {
-        expr.getParent().accept(this);
+        final MyParentVisitor visitor = new MyParentVisitor(expr, myForCompletion, myClassProvider);
+        expr.getParent().accept(visitor);
+        myResult = visitor.getResult();
         for (final ExpectedTypeInfo info : myResult) {
           ((ExpectedTypeInfoImpl)info).myTailType = TailType.NONE;
         }
