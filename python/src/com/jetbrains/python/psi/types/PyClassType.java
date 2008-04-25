@@ -6,6 +6,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyResolveUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 public class PyClassType implements PyType {
   private PyClass myClass;
 
-  public PyClassType(final PyClass aClass) {
+  public PyClassType(@NotNull final PyClass aClass) {
     myClass = aClass;
   }
 
@@ -24,6 +25,7 @@ public class PyClassType implements PyType {
 
   @Nullable
   public PsiElement resolveMember(final String name) {
+    if (myClass == null) return null;
     final PsiElement resolveResult = PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myClass, null, null);
     if (resolveResult != null) {
       return resolveResult;
