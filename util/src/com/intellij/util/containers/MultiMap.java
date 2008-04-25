@@ -16,25 +16,38 @@
 
 package com.intellij.util.containers;
 
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
  */
-public class MultiMap<K, V> extends FactoryMap<K, List<V>> {
-  
-  protected List<V> create(final K key) {
+public class MultiMap<K, V> {
+
+  private final Map<K, Collection<V>> myMap;
+
+  public MultiMap() {
+    myMap = createMap();
+  }
+
+  protected Map<K, Collection<V>> createMap() {
+    return new java.util.HashMap<K, Collection<V>>();
+  }
+
+  protected Collection<V> createCollection() {
     return new ArrayList<V>();
   }
 
   public void putValue(K key, V value) {
-    final List<V> list = get(key);
+    Collection<V> list = myMap.get(key);
+    if (list == null) {
+      list = createCollection();
+      myMap.put(key, list);
+    }
     list.add(value);
   }
 
   public boolean isEmpty() {
-    for(List<V> valueList: myMap.values()) {
+    for(Collection<V> valueList: myMap.values()) {
       if (!valueList.isEmpty()) {
         return false;
       }
@@ -42,16 +55,28 @@ public class MultiMap<K, V> extends FactoryMap<K, List<V>> {
     return true;    
   }
 
-  public List<V> remove(final Object k) {
-    return myMap.remove(k);
-  }
-
   public boolean containsScalarValue(V value) {
-    for(List<V> valueList: myMap.values()) {
+    for(Collection<V> valueList: myMap.values()) {
       if (valueList.contains(value)) {
         return true;
       }
     }
     return false;
+  }
+
+  public Collection<V> get(final K key) {
+    return myMap.get(key);
+  }
+
+  public Set<K> keySet() {
+    return myMap.keySet();
+  }
+
+  public int size() {
+    return myMap.size();
+  }
+
+  public void put(final K key, final Collection<V> values) {
+    myMap.put(key, values);
   }
 }

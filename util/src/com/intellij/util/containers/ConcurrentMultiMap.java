@@ -16,14 +16,14 @@
 
 package com.intellij.util.containers;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 /**
  * @author peter
  */
 public class ConcurrentMultiMap<K,V> extends MultiMap<K,V> {
-  protected Map<K, List<V>> createMap() {
-    return new ConcurrentHashMap<K, List<V>>();
+  protected Map<K, Collection<V>> createMap() {
+    return new ConcurrentHashMap<K, Collection<V>>();
   }
 }

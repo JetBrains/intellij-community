@@ -151,7 +151,7 @@ public class TreeModelBuilder {
     ChangesBrowserNode baseNode = ChangesBrowserNode.create(myProject, ChangesBrowserNode.SWITCHED_FILES_TAG);
     model.insertNodeInto(baseNode, root, root.getChildCount());
     for(String branchName: switchedFiles.keySet()) {
-      final List<VirtualFile> switchedFileList = switchedFiles.get(branchName);
+      final Collection<VirtualFile> switchedFileList = switchedFiles.get(branchName);
       if (switchedFileList.size() > 0) {
         ChangesBrowserNode branchNode = ChangesBrowserNode.create(myProject, branchName);
         model.insertNodeInto(branchNode, baseNode, baseNode.getChildCount());

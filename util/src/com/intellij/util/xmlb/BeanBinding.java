@@ -30,10 +30,8 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.Collection;
 
 class BeanBinding implements Binding {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xmlb.BeanBinding");
@@ -156,7 +154,7 @@ class BeanBinding implements Binding {
 
     for (Object o1 : data.keySet()) {
       Binding binding = (Binding)o1;
-      List<Object> nn = data.get(binding);
+      Collection<Object> nn = data.get(binding);
       binding.deserialize(result, nn.toArray(new Object[nn.size()]));
     }
 

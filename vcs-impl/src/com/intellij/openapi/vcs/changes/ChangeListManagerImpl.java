@@ -873,7 +873,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       }
     }
     for(LocalChangeList fromList: map.keySet()) {
-      final List<Change> changesInList = map.get(fromList);
+      final Collection<Change> changesInList = map.get(fromList);
       myListeners.getMulticaster().changesMoved(changesInList, fromList, list);
     }
   }

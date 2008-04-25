@@ -8,8 +8,8 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.MultiMap;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author peter
@@ -25,8 +25,8 @@ public class PrattRegistry {
     ourMap.putValue(type, new Trinity<Integer, PathPattern, TokenParser>(priority, pattern, parser));
   }
 
-  public static List<Trinity<Integer, PathPattern, TokenParser>> getParsers(IElementType type) {
-    final List<Trinity<Integer, PathPattern, TokenParser>> trinities = ourMap.get(type);
+  public static Collection<Trinity<Integer, PathPattern, TokenParser>> getParsers(IElementType type) {
+    final Collection<Trinity<Integer,PathPattern,TokenParser>> trinities = ourMap.get(type);
     return trinities == null ? Collections.<Trinity<Integer, PathPattern, TokenParser>>emptyList() : trinities;
   }
 
