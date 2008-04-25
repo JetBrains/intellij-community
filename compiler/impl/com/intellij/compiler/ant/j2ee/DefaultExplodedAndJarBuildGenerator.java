@@ -26,7 +26,8 @@ public class DefaultExplodedAndJarBuildGenerator extends ExplodedAndJarBuildGene
   public static final DefaultExplodedAndJarBuildGenerator INSTANCE = new DefaultExplodedAndJarBuildGenerator();
 
   @NotNull 
-  public Tag[] generateTagsForExplodedTarget(@NotNull final BuildInstruction instruction, @NotNull final ExplodedAndJarTargetParameters parameters)
+  public Tag[] generateTagsForExplodedTarget(@NotNull final BuildInstruction instruction, @NotNull final ExplodedAndJarTargetParameters parameters,
+                                             final int instructionCount)
     throws Exception {
     final File moduleBaseDir = parameters.getChunk().getBaseDir();
     final List<Tag> tags = new SmartList<Tag>();
@@ -57,7 +58,7 @@ public class DefaultExplodedAndJarBuildGenerator extends ExplodedAndJarBuildGene
         if (instruction.isExternalDependencyInstruction()) return true;
         final String outputRelativePath = instruction.getOutputRelativePath();
         final String destFile = BuildProperties.propertyRef(parameters.getExplodedPathParameter()) + outputRelativePath;
-        final @NonNls String jarDirProperty = "jar.dir";
+        final @NonNls String jarDirProperty = parameters.getBuildExplodedTargetName() + ".jar.dir" + instructionCount;
         tags.add(new Dirname(jarDirProperty, destFile));
         tags.add(new Mkdir(BuildProperties.propertyRef(jarDirProperty)));
         tags.add(generateExplodedTag(instruction, destFile, moduleBaseDir, parameters.getGenerationOptions()));

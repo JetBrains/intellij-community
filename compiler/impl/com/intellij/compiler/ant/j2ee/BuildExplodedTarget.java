@@ -23,9 +23,11 @@ public class BuildExplodedTarget extends Target {
 
     // reverse order to get overwriting instructions later
     buildRecipe.visitInstructions(new BuildInstructionVisitor() {
+      private int myInstructionCount;
+
       public boolean visitInstruction(final BuildInstruction instruction) throws Exception {
         for (final ExplodedAndJarBuildGenerator generator : generators) {
-          final Tag[] tags = generator.generateTagsForExplodedTarget(instruction, parameters);
+          final Tag[] tags = generator.generateTagsForExplodedTarget(instruction, parameters, myInstructionCount);
           if (tags != null) {
             for (final Tag tag : tags) {
               add(tag);
@@ -33,9 +35,11 @@ public class BuildExplodedTarget extends Target {
             return true;
           }
         }
-        for (final Tag tag : DefaultExplodedAndJarBuildGenerator.INSTANCE.generateTagsForExplodedTarget(instruction, parameters)) {
+        for (final Tag tag : DefaultExplodedAndJarBuildGenerator.INSTANCE.generateTagsForExplodedTarget(instruction, parameters,
+                                                                                                        myInstructionCount)) {
           add(tag);
         }
+        myInstructionCount++;
         return super.visitInstruction(instruction);
       }
     }, true);

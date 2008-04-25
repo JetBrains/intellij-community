@@ -19,7 +19,8 @@ public abstract class ExplodedAndJarBuildGenerator {
   public static final ExtensionPointName<ExplodedAndJarBuildGenerator> EP_NAME = ExtensionPointName.create("com.intellij.explodedAndJarBuildGenerator");
 
   @Nullable
-  public Tag[] generateTagsForExplodedTarget(@NotNull BuildInstruction instruction, @NotNull ExplodedAndJarTargetParameters parameters)
+  public Tag[] generateTagsForExplodedTarget(@NotNull BuildInstruction instruction, @NotNull ExplodedAndJarTargetParameters parameters,
+                                             final int instructionCount)
     throws Exception {
     return null;
   }
