@@ -1,17 +1,19 @@
 package com.intellij.psi.scope.conflictResolvers;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,6 +33,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     int conflictsCount = conflicts.size();
     if (conflictsCount <= 0) return null;
     if (conflictsCount == 1) return conflicts.get(0);
+    checkSameSignatures(conflicts);
+
+    conflictsCount = conflicts.size();
+    if (conflictsCount == 1) return conflicts.get(0);
+
     int maxCheckLevel = -1;
     int[] checkLevels = new int[conflictsCount];
     int index = 0;
@@ -61,26 +68,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     conflictsCount = conflicts.size();
     if (conflictsCount == 1) return conflicts.get(0);
 
-    CandidateInfo[] conflictsArray = conflicts.toArray(new CandidateInfo[conflictsCount]);
-
-    outer:
-    for (int i = 0; i < conflictsCount; i++) {
-      final CandidateInfo method = conflictsArray[i];
-      // check overriding
-      for (final CandidateInfo info : conflicts) {
-        if (info == method) break;
-        // candidates should go in order of class hierarchy traversal
-        // in order for this to work
-        if (checkOverriding(method, info)) {
-          conflicts.remove(method);
-          continue outer;
-        }
-      }
-    }
-
-    conflictsCount = conflicts.size();
-    if (conflictsCount == 1) return conflicts.get(0);
-
     // Specifics
     if (applicable) {
       final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflicts.size()]);
@@ -107,6 +94,34 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
 
     return null;
+  }
+
+  private static void checkSameSignatures(final List<CandidateInfo> conflicts) {
+    // candidates should go in order of class hierarchy traversal
+    // in order for this to work
+    Map<MethodSignature, CandidateInfo> signatures = new HashMap<MethodSignature, CandidateInfo>();
+    for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext();) {
+      CandidateInfo info = iterator.next();
+      PsiMethod method = (PsiMethod)info.getElement();
+      assert method != null;
+      MethodSignature signature = method.getSignature(info.getSubstitutor());
+      CandidateInfo existing = signatures.get(signature);
+      if (existing != null) {
+        PsiMethod existingMethod = (PsiMethod)existing.getElement();
+        assert existingMethod != null;
+        if (existingMethod != method) {
+          PsiType returnType1 = method.getReturnType();
+          PsiType returnType2 = existingMethod.getReturnType();
+          if (returnType1 != null && returnType2 != null) {
+            returnType1 = info.getSubstitutor().substitute(returnType1);
+            returnType2 = existing.getSubstitutor().substitute(returnType2);
+            if (returnType1.isAssignableFrom(returnType2)) iterator.remove();
+          }
+        }
+        continue;
+      }
+      signatures.put(signature, info);
+    }
   }
 
   private static void checkParametersNumber(final List<CandidateInfo> conflicts, final int argumentsCount) {
@@ -172,32 +187,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     FALSE,
     TRUE,
     CONFLICT
-  }
-
-  private static boolean checkOverriding(final CandidateInfo one, final CandidateInfo two) {
-    final PsiMethod method1 = (PsiMethod)one.getElement();
-    final PsiMethod method2 = (PsiMethod)two.getElement();
-    PsiClass class1 = method1.getContainingClass();
-    PsiClass class2 = method2.getContainingClass();
-    if (method1 != method2 && class1 == class2) return false;
-    final PsiParameter[] params1 = method1.getParameterList().getParameters();
-    final PsiParameter[] params2 = method2.getParameterList().getParameters();
-    if (params1.length != params2.length) return false;
-    final PsiSubstitutor substitutor1 = one.getSubstitutor();
-    final PsiSubstitutor substitutor2 = two.getSubstitutor();
-    for (int i = 0; i < params1.length; i++) {
-      final PsiType type1 = substitutor1.substitute(params1[i].getType());
-      final PsiType type2 = substitutor2.substitute(params2[i].getType());
-      if (type1 == null || !type1.equals(type2)) {
-        return false;
-      }
-    }
-
-    PsiType retType1 = method1.getReturnType();
-    retType1 = retType1 == null ? null : substitutor1.substitute(retType1);
-    PsiType retType2 = method2.getReturnType();
-    retType2 = retType2 == null ? null : substitutor2.substitute(retType2);
-    return Comparing.equal(retType1, retType2);
   }
 
   private static Specifics checkSubtyping(PsiType type1, PsiType type2) {
