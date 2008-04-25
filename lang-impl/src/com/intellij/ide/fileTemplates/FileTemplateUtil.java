@@ -310,7 +310,7 @@ public class FileTemplateUtil{
       try{
         Field pathsField = FileResourceLoader.class.getDeclaredField("paths");
         pathsField.setAccessible(true);
-        ArrayList<String> paths = (ArrayList<String>)pathsField.get(this);
+        Collection paths = (Collection)pathsField.get(this);
         paths.clear();
         paths.add(modifiedPatternsPath.getAbsolutePath());
         if(ApplicationManager.getApplication().isUnitTestMode()){
