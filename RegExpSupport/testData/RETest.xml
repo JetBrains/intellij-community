@@ -381,6 +381,10 @@
       <expected>ERR</expected>
     </test>
     <test verify="false">
+      <pattern><![CDATA[a\p{<error descr="Character family name expected">*</error>}b]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test verify="false">
       <pattern><![CDATA[[<warning descr="Redundant character range">\w-\w</warning>]]]></pattern>
       <expected>OK</expected>
     </test>
@@ -698,7 +702,7 @@
       <pattern>([ab]+)=\2</pattern>
       <expected>ERR</expected>
     </test>
-    <test>
+    <test verify="false">
       <pattern>([ab]+)=\3</pattern>
       <expected>ERR</expected>
     </test>
@@ -786,6 +790,15 @@
     <!-- broke by TokenType modifications -->
     <test>
       <pattern>[^^]</pattern>
+      <expected>OK</expected>
+    </test>
+    <!-- caused "Probably a bug: eating token without its type checking" errors in Diana -->
+    <test verify="false">
+      <pattern><![CDATA[a<error>)</error>b]]></pattern>
+      <expected>OK</expected>
+    </test>
+    <test verify="false">
+      <pattern><![CDATA[\s*@return(?:s)?\s*(?:(?:\{|:)?\s*(?<error>(</error>[^\s\}]+)\s*\}?\s*)?(.*)]]></pattern>
       <expected>OK</expected>
     </test>
   </regressions>

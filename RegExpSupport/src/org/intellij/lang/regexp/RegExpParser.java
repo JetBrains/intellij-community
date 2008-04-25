@@ -163,7 +163,6 @@ class RegExpParser implements PsiParser {
             builder.advanceLexer();
         } else {
             if (RegExpTT.QUANTIFIERS.contains(builder.getTokenType())) {
-                builder.advanceLexer();
                 builder.error("Dangling metacharacter");
             }
         }
@@ -365,10 +364,8 @@ class RegExpParser implements PsiParser {
     private static void patternExpected(PsiBuilder builder) {
         final IElementType token = builder.getTokenType();
         if (token == RegExpTT.GROUP_END) {
-            builder.advanceLexer();
             builder.error("Unmatched closing ')'");
         } else if (RegExpTT.QUANTIFIERS.contains(token)) {
-            builder.advanceLexer();
             builder.error("Dangling metacharacter");
         } else {
             builder.error("Pattern expected");
