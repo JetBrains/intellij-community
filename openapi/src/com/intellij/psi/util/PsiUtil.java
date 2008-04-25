@@ -25,7 +25,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
@@ -104,77 +103,17 @@ public final class PsiUtil extends PsiUtilBase {
   }
 
   public static JavaResolveResult getAccessObjectClass(PsiExpression accessObject) {
-    if (accessObject instanceof PsiSuperExpression) {
-      final PsiJavaCodeReferenceElement qualifier = ((PsiSuperExpression) accessObject).getQualifier();
-      if (qualifier != null) { // E.super.f
-        final JavaResolveResult result = qualifier.advancedResolve(false);
-        final PsiElement resolve = result.getElement();
-        if (resolve instanceof PsiClass) {
-          final PsiClass psiClass;
-          final PsiSubstitutor substitutor;
-          if (resolve instanceof PsiTypeParameter) {
-            final PsiClassType parameterType = JavaPsiFacade.getInstance(resolve.getProject()).getElementFactory().createType((PsiTypeParameter) resolve);
-            final PsiType superType = result.getSubstitutor().substitute(parameterType);
-            if (superType instanceof PsiArrayType) {
-              LanguageLevel languageLevel = getLanguageLevel(accessObject);
-              return JavaPsiFacade.getInstance(resolve.getProject()).getElementFactory()
-                .getArrayClassType(((PsiArrayType)superType).getComponentType(), languageLevel).resolveGenerics();
-            }
-            else if (superType instanceof PsiClassType) {
-              final PsiClassType type = (PsiClassType)superType;
-              substitutor = type.resolveGenerics().getSubstitutor();
-              psiClass = type.resolve();
-            }
-            else {
-              psiClass = null;
-              substitutor = PsiSubstitutor.EMPTY;
-            }
-          }
-          else {
-            psiClass = (PsiClass) resolve;
-            substitutor = PsiSubstitutor.EMPTY;
-          }
-          if (psiClass != null) {
-            return new CandidateInfo(psiClass, substitutor);
-          }
-          else
-            return JavaResolveResult.EMPTY;
-        }
-        return JavaResolveResult.EMPTY;
-      }
-      else {
-        PsiElement scope = accessObject.getContext();
-        PsiElement lastParent = accessObject;
-        while (scope != null) {
-          if (scope instanceof PsiClass) {
-            if (scope instanceof PsiAnonymousClass) {
-              if (lastParent instanceof PsiExpressionList) {
-                lastParent = scope;
-                scope = scope.getContext();
-                continue;
-              }
-            }
-            return new CandidateInfo(scope, PsiSubstitutor.EMPTY);
-          }
-          lastParent = scope;
-          scope = scope.getContext();
-        }
-        return JavaResolveResult.EMPTY;
+    PsiType type = accessObject.getType();
+    if (type instanceof PsiClassType) {
+      return ((PsiClassType)type).resolveGenerics();
+    }
+    if (type == null && accessObject instanceof PsiReferenceExpression) {
+      JavaResolveResult resolveResult = ((PsiReferenceExpression)accessObject).advancedResolve(false);
+      if (resolveResult.getElement() instanceof PsiClass) {
+        return resolveResult;
       }
     }
-    else {
-      PsiType type = accessObject.getType();
-      if (type instanceof PsiClassType) {
-        return ((PsiClassType)type).resolveGenerics();
-      }
-      if (type == null && accessObject instanceof PsiReferenceExpression) {
-        JavaResolveResult resolveResult = ((PsiReferenceExpression)accessObject).advancedResolve(false);
-        if (resolveResult.getElement() instanceof PsiClass) {
-          return resolveResult;
-        }
-      }
-      return JavaResolveResult.EMPTY;
-    }
+    return JavaResolveResult.EMPTY;
   }
 
   public static boolean isConstantExpression(PsiExpression expression) {

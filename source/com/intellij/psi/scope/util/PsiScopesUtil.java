@@ -324,11 +324,9 @@ public class PsiScopesUtil {
     }
     else if (resolve instanceof PsiClass) {
       PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
-      //if (qualifier instanceof PsiSuperExpression) {
+      if (!(qualifier instanceof PsiSuperExpression)) {
         processor.setAccessClass((PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement());
-      //}
-      //else
-      //  processor.setAccessClass((PsiClass)resolve);
+      }
     }
 
     processor.setIsConstructor(false);
