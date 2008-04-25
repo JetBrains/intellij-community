@@ -49,7 +49,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
     dropCached();
   }
 
-  private void dropCached() {
+  protected void dropCached() {
     myCachedType = null;
   }
 
