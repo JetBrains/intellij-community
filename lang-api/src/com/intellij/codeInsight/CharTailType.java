@@ -32,6 +32,21 @@ public class CharTailType extends TailType {
     return insertChar(editor, tailOffset, myChar);
   }
 
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (!(o instanceof CharTailType)) return false;
+
+    final CharTailType that = (CharTailType)o;
+
+    if (myChar != that.myChar) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return (int)myChar;
+  }
+
   @NonNls
   public String toString() {
     return "CharTailType:\'" + myChar + "\'";
