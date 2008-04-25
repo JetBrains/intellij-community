@@ -96,14 +96,21 @@ public class ResolveImportUtil {
 
   @Nullable
   private static PsiElement resolveInRoot(final VirtualFile root, final String referencedName, final PyReferenceExpression importRef) {
+    final PsiManager psi_mgr = PsiManager.getInstance(importRef.getProject());
     final VirtualFile childFile = root.findChild(referencedName + ".py");
     if (childFile != null) {
-      return PsiManager.getInstance(importRef.getProject()).findFile(childFile);
+      return psi_mgr.findFile(childFile);
     }
 
     final VirtualFile childDir = root.findChild(referencedName);
     if (childDir != null) {
-      return PsiManager.getInstance(importRef.getProject()).findDirectory(childDir);
+      return psi_mgr.findDirectory(childDir);
+    }
+
+    // NOTE: a preliminary attempt to resolve to a C lib
+    VirtualFile clib_file = root.findChild(referencedName + ".so"); // TODO: platform-dependent choice of .so | .pyd
+    if (clib_file != null) {
+      return psi_mgr.findFile(clib_file);
     }
     return null;
   }
