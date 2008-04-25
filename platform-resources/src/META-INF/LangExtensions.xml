@@ -224,6 +224,8 @@
   <!-- execution -->
   <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>
 
+  <findUsagesHandlerFactory implementation="com.intellij.find.findUsages.DefaultFindUsagesHandlerFactory" id="default" order="last"/>
+
   <cutElementMarker implementation="com.intellij.ide.PsiCutElementMarker"/>
 
   <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.PlainTextLineSelectioner"/>

@@ -5,15 +5,12 @@ package com.intellij.find.findUsages;
 
 import com.intellij.CommonBundle;
 import com.intellij.find.FindBundle;
-import com.intellij.find.FindManager;
-import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -683,58 +680,11 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     return psiElement instanceof PsiPackage;
   }
 
-
-  public static void setupForProject(Project project) {
-    final FindUsagesOptions findClassOptions = FindUsagesHandler.createFindUsagesOptions(project);
-    final FindUsagesOptions findMethodOptions = FindUsagesHandler.createFindUsagesOptions(project);
-    findMethodOptions.isCheckDeepInheritance = false;
-    findMethodOptions.isIncludeSubpackages = false;
-    findMethodOptions.isSearchForTextOccurences = false;
-    final FindUsagesOptions findPackageOptions = FindUsagesHandler.createFindUsagesOptions(project);
-    final FindUsagesOptions findThrowOptions = FindUsagesHandler.createFindUsagesOptions(project);
-    final FindUsagesOptions findVariableOptions = FindUsagesHandler.createFindUsagesOptions(project);
-    findVariableOptions.isCheckDeepInheritance = false;
-    findVariableOptions.isIncludeSubpackages = false;
-    findVariableOptions.isSearchForTextOccurences = false;
-
-    ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().registerFindUsagesHandler(
-        new FindUsagesHandlerFactory() {
-          public boolean canFindUsages(final PsiElement element) {
-            return true;
-          }
-
-          public FindUsagesHandler createFindUsagesHandler(final PsiElement element, final boolean forHighlightUsages) {
-            if (element instanceof PsiDirectory) {
-              final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
-              return psiPackage == null
-                     ? null
-                     : new JavaFindUsagesHandler(psiPackage, findClassOptions, findMethodOptions, findPackageOptions, findThrowOptions,
-                                                      findVariableOptions);
-            }
-
-            if (element instanceof PsiMethod && !forHighlightUsages) {
-              final PsiMethod[] methods = SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, JavaFindUsagesHandler.ACTION_STRING);
-              if (methods.length > 1) {
-                return new JavaFindUsagesHandler(element, methods, findClassOptions, findMethodOptions, findPackageOptions,
-                                                    findThrowOptions, findVariableOptions);
-              }
-              if (methods.length == 1) {
-                return new JavaFindUsagesHandler(methods[0], findClassOptions, findMethodOptions, findPackageOptions,
-                                                    findThrowOptions, findVariableOptions);
-              }
-              return null;
-            }
-
-            return new JavaFindUsagesHandler(element, findClassOptions, findMethodOptions, findPackageOptions,
-                                                      findThrowOptions, findVariableOptions);
-          }
-        });
-  }
-
   public Collection<PsiReference> findReferencesToHighlight(final PsiElement target, final SearchScope searchScope) {
     if (target instanceof PsiMethod) {
       return MethodReferencesSearch.search((PsiMethod)target, searchScope, true).findAll();
     }
     return super.findReferencesToHighlight(target, searchScope);
   }
+
 }

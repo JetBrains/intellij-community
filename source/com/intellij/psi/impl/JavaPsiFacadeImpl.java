@@ -112,7 +112,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     );
 
 
-    JavaFindUsagesHandler.setupForProject(project);
     JavaChangeUtilSupport.setup();
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
     HelperFactory.setFactory(new JavaHelperFactory());

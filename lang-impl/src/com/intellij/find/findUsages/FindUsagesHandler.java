@@ -24,7 +24,7 @@ import java.util.Collection;
 /**
  * @author peter
  */
-public class FindUsagesHandler {
+public abstract class FindUsagesHandler {
   private final PsiElement myPsiElement;
 
   protected FindUsagesHandler(@NotNull PsiElement psiElement) {

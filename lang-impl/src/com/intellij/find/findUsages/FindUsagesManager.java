@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -92,25 +93,6 @@ public class FindUsagesManager implements JDOMExternalizable {
   public FindUsagesManager(final Project project, com.intellij.usages.UsageViewManager anotherManager) {
     myProject = project;
     myAnotherManager = anotherManager;
-
-    myHandlers.add(new FindUsagesHandlerFactory() {
-      public boolean canFindUsages(final PsiElement element) {
-        if (element instanceof PsiFile) {
-          if (((PsiFile)element).getVirtualFile() == null) return false;
-        }
-        else if (!LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage()).canFindUsagesFor(element)) {
-          return false;
-        }
-        return true;
-      }
-
-      public FindUsagesHandler createFindUsagesHandler(final PsiElement element, final boolean forHighlightUsages) {
-        if (canFindUsages(element)) {
-          return new FindUsagesHandler(element);
-        }
-        return null;
-      }
-    });
   }
 
   public void registerFindUsagesHandler(FindUsagesHandlerFactory handler) {
@@ -119,6 +101,11 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   public boolean canFindUsages(@NotNull final PsiElement element) {
     for (FindUsagesHandlerFactory factory : myHandlers) {
+      if (factory.canFindUsages(element)) {
+        return true;
+      }
+    }
+    for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
       if (factory.canFindUsages(element)) {
         return true;
       }
@@ -206,6 +193,14 @@ public class FindUsagesManager implements JDOMExternalizable {
   @Nullable
   public FindUsagesHandler getFindUsagesHandler(PsiElement element, final boolean forHighlightUsages) {
     for (FindUsagesHandlerFactory factory : myHandlers) {
+      if (factory.canFindUsages(element)) {
+        final FindUsagesHandler handler = factory.createFindUsagesHandler(element, forHighlightUsages);
+        if (handler != null) {
+          return handler;
+        }
+      }
+    }
+    for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
       if (factory.canFindUsages(element)) {
         final FindUsagesHandler handler = factory.createFindUsagesHandler(element, forHighlightUsages);
         if (handler != null) {
@@ -618,4 +613,5 @@ public class FindUsagesManager implements JDOMExternalizable {
       if (elements == null || elements.length == 0) myFindUsagesHistory.remove(data);
     }
   }
+
 }
