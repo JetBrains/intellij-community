@@ -29,13 +29,13 @@ import org.picocontainer.defaults.NotConcreteRegistrationException;
  * @author Alexander Kireyev
  * todo: optimize memory print
  */
-public class ExtensionComponentAdapter implements ComponentAdapter, LoadingOrder.Orderable, AssignableToComponentAdapter {
+public class ExtensionComponentAdapter implements LoadingOrder.Orderable, AssignableToComponentAdapter {
   private Object myComponentInstance;
-  private String myImplementationClassName;
-  private Element myExtensionElement;
-  private PicoContainer myContainer;
-  private PluginDescriptor myPluginDescriptor;
-  private boolean myDeserializeInstance;
+  private final String myImplementationClassName;
+  private final Element myExtensionElement;
+  private final PicoContainer myContainer;
+  private final PluginDescriptor myPluginDescriptor;
+  private final boolean myDeserializeInstance;
   private ComponentAdapter myDelegate;
   private Class myImplementationClass;
 

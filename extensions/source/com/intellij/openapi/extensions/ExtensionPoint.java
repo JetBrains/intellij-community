@@ -27,20 +27,20 @@ public interface ExtensionPoint<T> {
 
   String getBeanClassName();
 
-  void registerExtension(T extension);
-  void registerExtension(T extension, LoadingOrder order);
+  void registerExtension(@NotNull T extension);
+  void registerExtension(@NotNull T extension, @NotNull LoadingOrder order);
 
   @NotNull
   T[] getExtensions();
 
   @Nullable
   T getExtension();
-  boolean hasExtension(T extension);
+  boolean hasExtension(@NotNull T extension);
 
-  void unregisterExtension(T extension);
+  void unregisterExtension(@NotNull T extension);
 
-  void addExtensionPointListener(ExtensionPointListener<T> listener);
-  void removeExtensionPointListener(ExtensionPointListener<T> extensionPointListener);
+  void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener);
+  void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
 
   void reset();
 
