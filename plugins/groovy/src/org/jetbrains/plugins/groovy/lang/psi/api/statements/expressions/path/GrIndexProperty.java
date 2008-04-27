@@ -17,12 +17,13 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ilyas
  */
-public interface GrIndexProperty extends GrCallExpression {
+public interface GrIndexProperty extends GrExpression {
   @NotNull
   GrExpression getSelectedExpression();
 

@@ -25,14 +25,17 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ilyas
  */
-public class GrIndexPropertyImpl extends GrCallExpressionImpl implements GrIndexProperty {
+public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProperty {
 
   public GrIndexPropertyImpl(@NotNull ASTNode node) {
     super(node);
@@ -53,6 +56,10 @@ public class GrIndexPropertyImpl extends GrCallExpressionImpl implements GrIndex
     return result;
   }
 
+  public GrArgumentList getArgumentList() {
+    return findChildByClass(GrArgumentList.class);
+  }
+
   public PsiType getType() {
     GrExpression selected = getSelectedExpression();
     PsiType thisType = selected.getType();
@@ -67,11 +74,6 @@ public class GrIndexPropertyImpl extends GrCallExpressionImpl implements GrIndex
       return TypesUtil.getOverloadedOperatorType(thisType, "getAt", this, argTypes);
     }
     return null;
-  }
-
-  @Nullable
-  public PsiMethod resolveMethod() {
-    return null; //todo
   }
 
   @NotNull
