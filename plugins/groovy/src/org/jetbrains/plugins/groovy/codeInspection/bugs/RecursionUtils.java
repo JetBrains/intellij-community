@@ -167,7 +167,11 @@ class RecursionUtils {
 
   private static boolean ifStatementMayReturnBeforeRecursing(
       GrIfStatement ifStatement, GrMethod method) {
-    final GrExpression test = (GrExpression) ifStatement.getCondition();
+    GrCondition condition = ifStatement.getCondition();
+    if (!(condition instanceof GrExpression)) {
+      return false;
+    }
+    final GrExpression test = (GrExpression) condition;
     if (expressionDefinitelyRecurses(test, method)) {
       return false;
     }
