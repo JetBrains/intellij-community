@@ -25,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ilyas
@@ -64,9 +63,18 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
         PsiType componentType = ((PsiArrayType) thisType).getComponentType();
         return TypesUtil.boxPrimitiveType(componentType, getManager(), getResolveScope());
       }
-      
-      PsiType[] argTypes = PsiUtil.getArgumentTypes(selected, false, true);
-      return TypesUtil.getOverloadedOperatorType(thisType, "getAt", this, argTypes);
+
+      GrArgumentList argList = getArgumentList();
+      if (argList != null) {
+        GrExpression[] arguments = argList.getExpressionArguments();
+        PsiType[] argTypes = new PsiType[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+          PsiType argType = arguments[i].getType();
+          if (argType == null) argType = TypesUtil.getJavaLangObject(argList);
+          argTypes[i] = argType;
+        }
+        return TypesUtil.getOverloadedOperatorType(thisType, "getAt", this, argTypes);
+      }
     }
     return null;
   }
