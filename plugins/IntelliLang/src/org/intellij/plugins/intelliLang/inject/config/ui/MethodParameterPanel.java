@@ -133,6 +133,14 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
         setMethodName("");
     }
 
+    public String getClassName() {
+        final PsiType type = getClassType();
+        if (type == null) {
+            return myClassField.getText();
+        }
+        return type.getCanonicalText();
+    }
+
     @Nullable
     private PsiMethod makeMethod(String signature) {
         try {
@@ -171,7 +179,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     }
 
     protected void apply(MethodParameterInjection other) {
-        other.setClassName(myClassField.getText());
+        other.setClassName(getClassName());
         other.setMethodSignature(buildSignature(myMethod));
         other.setSelection(getSelection());
         other.setApplyInHierarchy(myHierarchy.isSelected());
