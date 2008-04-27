@@ -20,7 +20,6 @@ import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
@@ -70,10 +69,5 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       return TypesUtil.getOverloadedOperatorType(thisType, "getAt", this, argTypes);
     }
     return null;
-  }
-
-  @NotNull
-  public GroovyResolveResult[] getMethodVariants() {
-    return GroovyResolveResult.EMPTY_ARRAY;
   }
 }
