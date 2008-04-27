@@ -31,11 +31,10 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 public class GroovyCreateClassDialog extends DialogWrapper {
-  private JPanel contentPane;
+  private JPanel myContentPane;
   private JLabel myInformationLabel;
   private MySizeTextField myPackageTextField;
   private JButton myPackageChooseButton;
-  private JButton buttonOK;
   private PsiDirectory myTargetDirectory;
   private Project myProject;
   private String myClassName;
@@ -52,7 +51,6 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     myModule = module;
     setModal(true);
     setTitle(title);
-    getRootPane().setDefaultButton(buttonOK);
 
     myInformationLabel.setText(GroovyInspectionBundle.message("dialog.create.class.label.0", targetClassName));
     myPackageTextField.setText(targetPackageName != null ? targetPackageName : "");
@@ -91,7 +89,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
 
     myPackageTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
-        getOKAction().setEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(myPackageTextField.getText()));
+        getOKAction().setEnabled(PsiManager.getInstance(myProject).getNameHelper().isQualifiedName(myPackageTextField.getText()));
       }
     });
 
@@ -101,11 +99,11 @@ public class GroovyCreateClassDialog extends DialogWrapper {
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)), myPackageTextField);
 
-    return contentPane;
+    return myContentPane;
   }
 
   public JComponent getContentPane() {
-    return contentPane;
+    return myContentPane;
   }
 
   public PsiDirectory getTargetDirectory() {
