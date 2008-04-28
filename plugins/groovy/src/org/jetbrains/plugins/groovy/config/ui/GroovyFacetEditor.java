@@ -25,20 +25,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
 
 /**
  * @author ilyas
@@ -176,7 +173,7 @@ public class GroovyFacetEditor {
           final VirtualFile relativeFile = VfsUtil.findRelativeFile(o.toString(), null);
           if (relativeFile != null && GroovyConfigUtils.isGroovySdkHome(relativeFile)) return ValidationResult.OK;
         }
-        return new ValidationResult(GroovyBundle.message("invalid.groovy.sdk.path.message"));
+        return new ValidationResult(GroovyBundle.message("invalid.grails.sdk.path.message"));
       }
       return ValidationResult.OK;
     }

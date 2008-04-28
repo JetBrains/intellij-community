@@ -35,7 +35,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
-import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -115,7 +114,6 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
       RunnerInfo runnerInfo,
       RunnerSettings runnerSettings,
       ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
-    GroovyGrailsConfiguration groovyConfig = GroovyGrailsConfiguration.getInstance();
     final Module module = getModule();
     if (module == null) {
       throw new ExecutionException("Module is not specified");
@@ -152,8 +150,6 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
 
     params.configureByModule(module, JavaParameters.JDK_AND_CLASSES);
     params.setWorkingDirectory(getAbsoluteWorkDir());
-
-    GroovyGrailsConfiguration config = GroovyGrailsConfiguration.getInstance();
 
     //add starter configuration parameters
     String groovyHome = GroovyConfigUtils.getGroovyInstallPath(module);

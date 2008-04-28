@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
+import org.jetbrains.plugins.groovy.config.GroovyGrailsFacetLoader;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -104,6 +104,6 @@ public abstract class GroovyUtils {
   public static boolean isSuitableModule(Module module) {
     if (module == null) return false;
     ModuleType moduleType = module.getModuleType();
-    return moduleType instanceof JavaModuleType || moduleType.getId().equals(GroovyGrailsConfiguration.PLUGIN_MODULE_ID);
+    return moduleType instanceof JavaModuleType || moduleType.getId().equals(GroovyGrailsFacetLoader.PLUGIN_MODULE_ID);
   }
 }

@@ -25,7 +25,7 @@ import javax.swing.*;
  *
  * @author ilyas
  */
-public class GroovySDKPointer implements AbstractGroovySDK {
+public class GroovySDKPointer implements AbstractSDK {
 
   private final String myGroovyLibraryName;
   private final String myPathToLibrary;
@@ -37,7 +37,7 @@ public class GroovySDKPointer implements AbstractGroovySDK {
     myVersion = version;
   }
 
-  public String getName() {
+  public String getLibraryName() {
     return myGroovyLibraryName;
   }
 

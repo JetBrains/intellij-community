@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.config.ui.GroovyFacetEditor;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -116,9 +117,9 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
     public void addSupport(final Module module, final ModifiableRootModel rootModel, @Nullable Library library) {
       String version = myFacetEditor.getSelectedVersion();
       if (version != null && !myFacetEditor.addNewSdk()) {
-        library = GroovyConfigUtils.getGroovyLibrary(version);
+        library = LibrariesUtil.getLibraryByName(version);
         if (library != null) {
-          GroovyConfigUtils.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(library));
+          LibrariesUtil.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(library));
         }
       } else if (myFacetEditor.getNewSdkPath() != null) {
         String path = myFacetEditor.getNewSdkPath();
@@ -127,7 +128,7 @@ public class GroovyFacetSupportProvider extends FacetTypeFrameworkSupportProvide
           String name = GroovyConfigUtils.generateNewGroovyLibName(GroovyConfigUtils.getGroovyVersion(path));
           version = name;
           library = GroovyConfigUtils.createGroovyLibrary(path, name, module.getProject(), false);
-          GroovyConfigUtils.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(library));
+          LibrariesUtil.placeEntryToCorrectPlace(rootModel, rootModel.addLibraryEntry(library));
         } else {
           Messages.showErrorDialog(GroovyBundle.message("invalid.groovy.sdk.path.message"), GroovyBundle.message("invalid.groovy.sdk.path.text"));
           version = null;

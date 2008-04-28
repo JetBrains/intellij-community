@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.compiler;
 
+import com.intellij.compiler.impl.javaCompiler.OutputItemImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,17 +32,16 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
-import com.intellij.compiler.impl.javaCompiler.OutputItemImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.groovy.compiler.rt.MessageCollector;
+import org.jetbrains.plugins.grails.config.GrailsConfigUtils;
+import org.jetbrains.plugins.grails.module.GrailsModuleType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.grails.module.GrailsModuleType;
 
 import java.io.*;
 import java.util.*;
@@ -92,7 +92,7 @@ public class GroovyCompiler implements TranslatingCompiler {
       Module module = entry.getKey();
       ModuleType moduleType = module.getModuleType();
       String groovyPath = GroovyConfigUtils.getGroovyInstallPath(module);
-      String grailsPath = GroovyGrailsConfiguration.getInstance().getGrailsInstallPath();
+      String grailsPath = GrailsConfigUtils.getGrailsInstallPath(module);
 
       String libPath = (moduleType instanceof GrailsModuleType && grailsPath != null && grailsPath.length() > 0 ||
           groovyPath == null || groovyPath.length() == 0 ? grailsPath : groovyPath) + "/lib";
@@ -277,7 +277,7 @@ public class GroovyCompiler implements TranslatingCompiler {
 
     //Grails injections  support
     printer.println(GroovycRunner.IS_GRAILS);
-    printer.println(GroovyGrailsConfiguration.getInstance().isGrailsConfigured(module) &&
+    printer.println(GrailsConfigUtils.isGrailsConfigured(module) &&
         module.getModuleType() instanceof GrailsModuleType);
 
     //production output
@@ -304,7 +304,7 @@ public class GroovyCompiler implements TranslatingCompiler {
 
     for (Module module : compileScope.getAffectedModules()) {
       final String groovyInstallPath = GroovyConfigUtils.getGroovyInstallPath(module);
-      final String grailsInstallPath = GroovyGrailsConfiguration.getInstance().getGrailsInstallPath();
+      final String grailsInstallPath = GrailsConfigUtils.getGrailsInstallPath(module);
       if (groovyInstallPath.length() == 0 &&
           (grailsInstallPath == null || grailsInstallPath.length() == 0)) {
         Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.facet"), GroovyBundle.message("cannot.compile"));

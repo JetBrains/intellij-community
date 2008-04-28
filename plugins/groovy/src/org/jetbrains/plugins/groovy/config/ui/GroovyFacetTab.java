@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.config.GroovySDK;
 import org.jetbrains.plugins.groovy.config.util.GroovySDKPointer;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -80,7 +81,7 @@ public class GroovyFacetTab extends FacetEditorTab {
 
   @Nls
   public String getDisplayName() {
-    return GroovyBundle.message("groovy.sdk.configuration");
+    return GroovyBundle.message("grails.sdk.configuration");
   }
 
   public JComponent createComponent() {
@@ -152,7 +153,7 @@ public class GroovyFacetTab extends FacetEditorTab {
         }
       }
     } else {
-      Library library = GroovyConfigUtils.getGroovyLibrary(GroovyApplicationSettings.getInstance().DEFAULT_GROOVY_LIB_NAME);
+      Library library = LibrariesUtil.getLibraryByName(GroovyApplicationSettings.getInstance().DEFAULT_GROOVY_LIB_NAME);
       if (library != null) {
         myComboBox.selectLibrary(library);
       }
@@ -188,8 +189,8 @@ public class GroovyFacetTab extends FacetEditorTab {
               Collection<String> versions = GroovyConfigUtils.getGroovyVersions();
               String version = GroovyConfigUtils.getGroovyVersion(path);
               boolean addVersion = !versions.contains(version) ||
-                  Messages.showOkCancelDialog(GroovyBundle.message("duplicate.groovy.lib.version.add", version),
-                      GroovyBundle.message("duplicate.groovy.lib.version"),
+                  Messages.showOkCancelDialog(GroovyBundle.message("duplicate.grails.lib.version.add", version),
+                      GroovyBundle.message("duplicate.grails.lib.version"),
                       GroovyIcons.BIG_ICON) == 0;
 
               if (addVersion && !GroovyConfigUtils.UNDEFINED_VERSION.equals(version)) {
@@ -198,7 +199,7 @@ public class GroovyFacetTab extends FacetEditorTab {
                 newGroovyLibName = name;
               }
             } else {
-              Messages.showErrorDialog(GroovyBundle.message("invalid.groovy.sdk.path.message"), GroovyBundle.message("invalid.groovy.sdk.path.text"));
+              Messages.showErrorDialog(GroovyBundle.message("invalid.grails.sdk.path.message"), GroovyBundle.message("invalid.grails.sdk.path.text"));
             }
           }
         }
@@ -214,10 +215,10 @@ public class GroovyFacetTab extends FacetEditorTab {
         final Object o = e.getItem();
         if (o instanceof GroovySDKComboBox.GroovySDKComboBoxItem) {
           final GroovySDK sdk = ((GroovySDKComboBox.GroovySDKComboBoxItem) o).getGroovySDK();
-          newGroovyLibName = sdk.getName();
+          newGroovyLibName = sdk.getLibraryName();
         } else if (o instanceof GroovySDKComboBox.GroovySDKPointerItem) {
           final GroovySDKPointer pointer = ((GroovySDKComboBox.GroovySDKPointerItem) o).getPointer();
-          newGroovyLibName = pointer.getName();
+          newGroovyLibName = pointer.getLibraryName();
         } else {
           newGroovyLibName = "";
         }

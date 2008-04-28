@@ -18,8 +18,8 @@ package org.jetbrains.plugins.groovy.config.util;
 /**
  * @author ilyas
  */
-public interface AbstractGroovySDK {
+public interface AbstractSDK {
 
-  String getName();
+  String getLibraryName();
 
 }

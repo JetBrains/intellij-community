@@ -114,6 +114,9 @@
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.GrailsModuleActions</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.grails.config.GrailsFacetListener</implementation-class>
+    </component>
   </module-components>
 
   <actions>
@@ -191,7 +194,7 @@
       <implementation-class>org.jetbrains.plugins.groovy.GroovyLoader</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration</implementation-class>
+      <implementation-class>org.jetbrains.plugins.groovy.config.GroovyGrailsFacetLoader</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory</implementation-class>

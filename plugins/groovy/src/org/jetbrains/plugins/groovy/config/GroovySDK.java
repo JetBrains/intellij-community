@@ -17,33 +17,36 @@ package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.config.util.AbstractGroovySDK;
+import org.jetbrains.plugins.groovy.config.util.AbstractSDK;
 
 import javax.swing.*;
 
 /**
  * @author ilyas
  */
-public class GroovySDK implements AbstractGroovySDK {
+public class GroovySDK implements AbstractSDK {
 
-  private final Library myGroovyLibrary;
-  private final String mySdkVersion;
+  protected Library myLibrary;
+  protected String mySdkVersion;
 
   public GroovySDK(Library library) {
-    myGroovyLibrary = library;
+    myLibrary = library;
     mySdkVersion = GroovyConfigUtils.getGroovyLibVersion(library);
   }
 
-  public Library getGroovyLibrary() {
-    return myGroovyLibrary;
+  public GroovySDK() {
+  }
+
+  public Library getLibrary() {
+    return myLibrary;
   }
 
   public String getSdkVersion() {
     return mySdkVersion;
   }
 
-  public String getName(){
-    return myGroovyLibrary.getName();
+  public String getLibraryName(){
+    return myLibrary.getName();
   }
 
   public Icon getIcon(){
