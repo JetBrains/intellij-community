@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -30,19 +31,21 @@ public class ChangeFormComponentTypeFix implements IntentionAction {
     myComponentTypeToSet = componentTypeToSet;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("uidesigner.change.gui.component.type");
   }
 
+  @NotNull
   public String getFamilyName() {
     return getText();
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     CommandProcessor.getInstance().executeCommand(file.getProject(), new Runnable() {
       public void run() {
         final ReadonlyStatusHandler readOnlyHandler = ReadonlyStatusHandler.getInstance(myFormFile.getProject());

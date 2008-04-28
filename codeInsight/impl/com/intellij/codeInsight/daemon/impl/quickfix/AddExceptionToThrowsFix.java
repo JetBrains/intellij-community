@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -32,7 +33,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     return false;
   }
 
-  public void invoke(final Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull final Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -135,7 +136,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     CodeStyleManager.getInstance(project).reformat(targetMethod.getThrowsList());
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
     if (myWrongElement == null || !myWrongElement.isValid()) return false;
 
@@ -148,6 +149,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     return true;
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.exception.to.throws.family");
   }

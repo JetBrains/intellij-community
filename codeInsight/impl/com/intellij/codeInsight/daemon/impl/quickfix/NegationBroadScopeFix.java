@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
@@ -20,6 +21,7 @@ public class NegationBroadScopeFix implements IntentionAction {
     myPrefixExpression = prefixExpression;
   }
 
+  @NotNull
   public String getText() {
     String text = myPrefixExpression.getOperand().getText();
     text += " ";
@@ -43,11 +45,12 @@ public class NegationBroadScopeFix implements IntentionAction {
     return QuickFixBundle.message("negation.broader.scope.text", text);
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("negation.broader.scope.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (myPrefixExpression == null || !myPrefixExpression.isValid()) return false;
 
     PsiElement parent = myPrefixExpression.getParent();
@@ -59,7 +62,7 @@ public class NegationBroadScopeFix implements IntentionAction {
     return binaryExpression.getLOperand() == myPrefixExpression && TypeConversionUtil.isBooleanType(binaryExpression.getType());
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiExpression operand = myPrefixExpression.getOperand();
     PsiElement unnegated = myPrefixExpression.replace(operand);
     PsiElement parent = unnegated.getParent();

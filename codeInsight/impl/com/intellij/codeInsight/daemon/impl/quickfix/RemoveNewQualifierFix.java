@@ -38,7 +38,7 @@ public class RemoveNewQualifierFix implements IntentionAction {
     return QuickFixBundle.message("remove.qualifier.fix");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
         expression != null
         && expression.isValid()
@@ -46,7 +46,7 @@ public class RemoveNewQualifierFix implements IntentionAction {
         && expression.getManager().isInProject(expression);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(expression.getContainingFile())) return;
     PsiJavaCodeReferenceElement classReference = expression.getClassReference();
     expression.getQualifier().delete();

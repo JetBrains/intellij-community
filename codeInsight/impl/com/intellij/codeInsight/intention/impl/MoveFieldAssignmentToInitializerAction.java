@@ -31,7 +31,7 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     return CodeInsightBundle.message("intention.move.field.assignment.to.declaration");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiAssignmentExpression assignment = getAssignmentUnderCaret(editor, file);
     if (assignment == null) return false;
     PsiField field = getAssignedField(assignment);
@@ -136,7 +136,7 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     return PsiTreeUtil.getParentOfType(element, PsiAssignmentExpression.class, false, PsiMember.class);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiAssignmentExpression assignment = getAssignmentUnderCaret(editor, file);
     if (assignment == null) return;
     PsiField field = getAssignedField(assignment);

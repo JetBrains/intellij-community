@@ -25,11 +25,11 @@ public class EditFoldingOptionsAction implements IntentionAction {
     return getText();
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return editor.getFoldingModel().isOffsetCollapsed(editor.getCaretModel().getOffset());
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     EditorOptions editorOptions = ShowSettingsUtil.getInstance().findApplicationConfigurable(EditorOptions.class);
     final DefaultSearchableConfigurable configurable = new DefaultSearchableConfigurable(editorOptions);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {

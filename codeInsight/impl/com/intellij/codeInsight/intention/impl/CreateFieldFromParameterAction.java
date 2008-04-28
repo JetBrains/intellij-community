@@ -104,7 +104,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     return CodeInsightBundle.message("intention.create.field.from.parameter.family");
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     invoke(project, editor, file, !ApplicationManager.getApplication().isUnitTestMode());
   }
 

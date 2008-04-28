@@ -92,10 +92,12 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
 
         if (!name.equals(text)) {
           final LocalQuickFix localQuickFix = new LocalQuickFix() {
+            @NotNull
             public String getName() {
               return XmlBundle.message("change.root.element.to", doctype.getNameElement().getText());
             }
 
+            @NotNull
             public String getFamilyName() {
               return getName();
             }

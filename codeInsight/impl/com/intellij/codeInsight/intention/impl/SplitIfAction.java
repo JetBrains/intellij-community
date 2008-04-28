@@ -56,7 +56,7 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
     return CodeInsightBundle.message("intention.split.if.family");
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
 
     try {
       if (!CodeInsightUtilBase.prepareFileForWrite(file)) { return; }

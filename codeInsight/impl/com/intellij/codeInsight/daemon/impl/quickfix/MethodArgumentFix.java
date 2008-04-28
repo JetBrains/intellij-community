@@ -28,7 +28,7 @@ public abstract class MethodArgumentFix implements IntentionAction {
     myToType = toType instanceof PsiEllipsisType ? ((PsiEllipsisType) toType).toArrayType() : toType;
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
         myToType != null
         && myToType.isValid()
@@ -42,7 +42,7 @@ public abstract class MethodArgumentFix implements IntentionAction {
     return true;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiExpression expression = myArgList.getExpressions()[myIndex];
 

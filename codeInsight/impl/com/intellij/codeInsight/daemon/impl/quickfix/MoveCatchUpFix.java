@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class MoveCatchUpFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix");
@@ -22,17 +23,19 @@ public class MoveCatchUpFix implements IntentionAction {
         myMoveBeforeSection = moveBeforeSection;
     }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("move.catch.up.text",
                                   HighlightUtil.formatType(myCatchSection.getCatchType()),
                                   HighlightUtil.formatType(myMoveBeforeSection.getCatchType()));
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("move.catch.up.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
            myCatchSection != null
         && myCatchSection.isValid()
@@ -49,7 +52,7 @@ public class MoveCatchUpFix implements IntentionAction {
         ;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myCatchSection.getContainingFile())) return;
     try {
       PsiTryStatement statement = myCatchSection.getTryStatement();

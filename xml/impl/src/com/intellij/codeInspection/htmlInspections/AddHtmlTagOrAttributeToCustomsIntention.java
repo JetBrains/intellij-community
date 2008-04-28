@@ -61,11 +61,11 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
     return XmlBundle.message("fix.html.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     final InspectionProfile inspectionProfile = profileManager.getInspectionProfile(file);
     final ModifiableModel model = inspectionProfile.getModifiableModel();

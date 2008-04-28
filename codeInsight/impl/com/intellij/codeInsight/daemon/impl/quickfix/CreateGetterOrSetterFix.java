@@ -11,6 +11,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -29,6 +30,7 @@ public class CreateGetterOrSetterFix implements IntentionAction{
     myPropertyName = PropertyUtil.suggestPropertyName(project, field);
   }
 
+  @NotNull
   public String getText() {
     @NonNls final String what;
     if (myCreateGetter && myCreateSetter) {
@@ -47,11 +49,12 @@ public class CreateGetterOrSetterFix implements IntentionAction{
     return QuickFixBundle.message(what, myField.getName());
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.accessor.for.unused.field.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myField.isValid()) return false;
     PsiClass aClass = myField.getContainingClass();
     if (aClass == null) {
@@ -66,7 +69,7 @@ public class CreateGetterOrSetterFix implements IntentionAction{
     return true;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiClass aClass = myField.getContainingClass();
     if (myCreateGetter) {
       aClass.add(PropertyUtil.generateGetterPrototype(myField));

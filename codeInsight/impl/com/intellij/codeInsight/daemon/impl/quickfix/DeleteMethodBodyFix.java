@@ -8,6 +8,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -19,19 +20,21 @@ public class DeleteMethodBodyFix implements IntentionAction {
     myMethod = method;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("delete.body.text");
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("delete.body.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myMethod.isValid() && myMethod.getManager().isInProject(myMethod) && myMethod.getBody() != null;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiCodeBlock body = myMethod.getBody();
     assert body != null;
     body.delete();

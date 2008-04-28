@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -18,23 +19,25 @@ public class AddNewArrayExpressionFix implements IntentionAction {
     myInitializer = initializer;
   }
 
+  @NotNull
   public String getText() {
     PsiExpression expr = myInitializer.getInitializers()[0];
     PsiType type = expr.getType();
     return QuickFixBundle.message("add.new.array.text", type.getPresentableText());
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.new.array.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myInitializer.isValid() || !myInitializer.getManager().isInProject(myInitializer)) return false;
     PsiExpression[] initializers = myInitializer.getInitializers();
     return initializers.length > 0 && initializers[0].getType() != null;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiManager manager = file.getManager();
     PsiExpression expr = myInitializer.getInitializers()[0];
     PsiType type = expr.getType();

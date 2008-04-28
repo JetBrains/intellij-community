@@ -44,13 +44,13 @@ public class MethodThrowsFix implements IntentionAction {
     return QuickFixBundle.message("fix.throws.list.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myMethod != null
         && myMethod.isValid()
         && myMethod.getManager().isInProject(myMethod);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
     PsiJavaCodeReferenceElement[] referenceElements = myMethod.getThrowsList().getReferenceElements();
     try {

@@ -23,6 +23,8 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class DeferFinalAssignmentFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.DeferFinalAssignmentFix");
 
@@ -34,15 +36,17 @@ public class DeferFinalAssignmentFix implements IntentionAction {
     this.expression = expression;
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("defer.final.assignment.with.temp.family");
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("defer.final.assignment.with.temp.text", variable.getName());
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(variable.getContainingFile())) return;
 
     if (variable instanceof PsiField) {
@@ -175,7 +179,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
     return JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(name, variable, true);
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
         variable != null
         && variable.isValid()

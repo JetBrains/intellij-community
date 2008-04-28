@@ -75,11 +75,11 @@ public class FormClassAnnotator implements Annotator {
           return UIBundle.message("remove.field.initializer.quick.fix");
         }
 
-        public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+        public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
           return field.getInitializer() != null;
         }
 
-        public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+        public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
           final PsiExpression initializer = field.getInitializer();
           LOG.assertTrue(initializer != null);
           initializer.delete();

@@ -27,11 +27,11 @@ public class ImplementMethodsFix implements IntentionAction {
     return QuickFixBundle.message("implement.methods.fix");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myClass.isValid() && myClass.getManager().isInProject(myClass);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
     OverrideImplementUtil.chooseAndImplementMethods(project, editor, myClass);
   }

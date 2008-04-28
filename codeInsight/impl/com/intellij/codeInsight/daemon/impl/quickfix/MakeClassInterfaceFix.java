@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class MakeClassInterfaceFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MakeClassInterfaceFix");
@@ -22,19 +23,21 @@ public class MakeClassInterfaceFix implements IntentionAction {
     myMakeInterface = makeInterface;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message(myMakeInterface? "make.class.an.interface.text":"make.interface.an.class.text", myClass.getName());
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("make.class.an.interface.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myClass.isValid() && myClass.getManager().isInProject(myClass);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(myClass)) return;
     try {
       final PsiReferenceList extendsList = myMakeInterface? myClass.getExtendsList() : myClass.getImplementsList();

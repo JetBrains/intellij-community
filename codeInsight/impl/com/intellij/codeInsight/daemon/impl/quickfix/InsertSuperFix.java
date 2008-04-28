@@ -11,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class InsertSuperFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.InsertSuperFix");
@@ -21,15 +22,17 @@ public class InsertSuperFix implements IntentionAction {
     myConstructor = constructor;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("insert.super.constructor.call.text");
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("insert.super.constructor.call.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myConstructor.isValid()
         && myConstructor.getBody() != null
         && myConstructor.getBody().getLBrace() != null
@@ -37,7 +40,7 @@ public class InsertSuperFix implements IntentionAction {
     ;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myConstructor.getContainingFile())) return;
     try {
       PsiStatement superCall =

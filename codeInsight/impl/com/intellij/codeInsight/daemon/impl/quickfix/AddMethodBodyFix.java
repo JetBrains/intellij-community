@@ -31,7 +31,7 @@ public class AddMethodBodyFix implements IntentionAction {
     return getText();
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myMethod != null
         && myMethod.isValid()
         && myMethod.getBody() == null
@@ -39,7 +39,7 @@ public class AddMethodBodyFix implements IntentionAction {
         && myMethod.getManager().isInProject(myMethod);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
 
     try {

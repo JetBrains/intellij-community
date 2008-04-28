@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class AddReturnFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddReturnFix");
   private final PsiMethod myMethod;
@@ -24,15 +26,17 @@ public class AddReturnFix implements IntentionAction {
     myMethod = method;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("add.return.statement.family");
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.return.statement.text");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myMethod != null
         && myMethod.isValid()
         && myMethod.getManager().isInProject(myMethod)
@@ -41,7 +45,7 @@ public class AddReturnFix implements IntentionAction {
         ;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
 
     try {

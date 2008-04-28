@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -28,19 +29,21 @@ public class ChangeBoundFieldTypeFix implements IntentionAction {
     myTypeToSet = typeToSet;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("uidesigner.change.bound.field.type");
   }
 
+  @NotNull
   public String getFamilyName() {
     return getText();
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     CommandProcessor.getInstance().executeCommand(myField.getProject(), new Runnable() {
       public void run() {
         try {

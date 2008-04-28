@@ -24,7 +24,7 @@ public class SimplifyBooleanExpressionAction implements IntentionAction{
     return new SimplifyBooleanExpressionFix(null,null).getFamilyName();
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiExpression expression = getExpressionToSimplify(editor, file);
     return expression != null && SimplifyBooleanExpressionFix.canBeSimplified(expression);
   }
@@ -42,7 +42,7 @@ public class SimplifyBooleanExpressionAction implements IntentionAction{
     return expression;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiExpression expression = getExpressionToSimplify(editor, file);
     SimplifyBooleanExpressionFix.simplifyExpression(expression);

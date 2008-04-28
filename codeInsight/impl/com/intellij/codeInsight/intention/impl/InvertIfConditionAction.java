@@ -57,11 +57,12 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     return getFamilyName();
   }
 
+  @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.invert.if.condition");
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
     PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(file.findElementAt(

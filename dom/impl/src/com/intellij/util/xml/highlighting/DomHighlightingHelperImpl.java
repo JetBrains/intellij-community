@@ -234,6 +234,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       parentTag = _parentTag;
     }
 
+    @NotNull
     public String getName() {
       return XmlBundle.message("insert.required.tag.fix", tagName);
     }
@@ -243,6 +244,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       return getName();
     }
 
+    @NotNull
     public String getFamilyName() {
       return getName();
     }

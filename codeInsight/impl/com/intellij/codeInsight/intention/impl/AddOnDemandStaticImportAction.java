@@ -45,7 +45,7 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
     return false;
   }
 
-  public void invoke(final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();

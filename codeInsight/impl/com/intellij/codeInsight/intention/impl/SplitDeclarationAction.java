@@ -85,7 +85,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
     return false;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
     PsiManager psiManager = PsiManager.getInstance(project);

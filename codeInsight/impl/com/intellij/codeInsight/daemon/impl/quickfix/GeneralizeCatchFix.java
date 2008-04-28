@@ -35,7 +35,7 @@ public class GeneralizeCatchFix implements IntentionAction {
     return QuickFixBundle.message("generalize.catch.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(myElement != null
           && myElement.isValid()
           && myUnhandledException != null
@@ -66,7 +66,7 @@ public class GeneralizeCatchFix implements IntentionAction {
     return myCatchParameter != null;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(myElement.getContainingFile())) return;
     PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
     PsiTypeElement type = factory.createTypeElement(myUnhandledException);

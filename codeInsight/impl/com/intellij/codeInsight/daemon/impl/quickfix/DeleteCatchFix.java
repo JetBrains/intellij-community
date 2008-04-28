@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class DeleteCatchFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix");
@@ -19,21 +20,23 @@ public class DeleteCatchFix implements IntentionAction {
     this.myCatchParameter = myCatchParameter;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("delete.catch.text", HighlightUtil.formatType(myCatchParameter.getType()));
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("delete.catch.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myCatchParameter != null
            && myCatchParameter.isValid()
            && PsiManager.getInstance(project).isInProject(myCatchParameter.getContainingFile());
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myCatchParameter.getContainingFile())) return;
     try {
       PsiTryStatement tryStatement = ((PsiCatchSection)myCatchParameter.getDeclarationScope()).getTryStatement();

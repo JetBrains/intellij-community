@@ -21,6 +21,8 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class MethodParameterFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodReturnFix");
 
@@ -36,17 +38,19 @@ public class MethodParameterFix implements IntentionAction {
     myFixWholeHierarchy = fixWholeHierarchy;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("fix.parameter.type.text",
                                   myMethod.getName(),
                                   myParameterType.getCanonicalText() );
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("fix.parameter.type.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myMethod != null
         && myMethod.isValid()
         && myMethod.getManager().isInProject(myMethod)
@@ -56,7 +60,7 @@ public class MethodParameterFix implements IntentionAction {
         && !Comparing.equal(myParameterType, myMethod.getReturnType());
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
     try {
       PsiMethod method = myMethod;

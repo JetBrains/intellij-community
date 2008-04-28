@@ -42,11 +42,11 @@ public class SetupJDKFix implements IntentionAction {
     return QuickFixBundle.message("setup.jdk.location.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return JavaPsiFacade.getInstance(project).findClass("java.lang.Object", file.getResolveScope()) == null;
   }
 
-  public void invoke(Project project, Editor editor, final PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, final PsiFile file) {
     Sdk projectJdk = JdkChooserPanel.chooseAndSetJDK(project);
     if (projectJdk == null) return;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

@@ -14,6 +14,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
+import org.jetbrains.annotations.NotNull;
 
 public class SuperMethodReturnFix implements IntentionAction {
 
@@ -25,6 +26,7 @@ public class SuperMethodReturnFix implements IntentionAction {
     mySuperMethod = superMethod;
   }
 
+  @NotNull
   public String getText() {
     String name = PsiFormatUtil.formatMethod(
             mySuperMethod,
@@ -36,11 +38,12 @@ public class SuperMethodReturnFix implements IntentionAction {
                                   HighlightUtil.formatType(mySuperMethodType));
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("fix.super.method.return.type.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
             mySuperMethod != null
             && mySuperMethod.isValid()
@@ -49,7 +52,7 @@ public class SuperMethodReturnFix implements IntentionAction {
             && mySuperMethodType.isValid();
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(mySuperMethod.getContainingFile())) return;
     ChangeSignatureProcessor processor = new ChangeSignatureProcessor(
             project,

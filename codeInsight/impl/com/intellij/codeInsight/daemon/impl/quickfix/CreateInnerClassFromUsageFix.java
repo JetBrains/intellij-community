@@ -33,7 +33,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     return QuickFixBundle.message("create.inner.class.from.usage.text", StringUtil.capitalize(myKind.getDescription()), varName);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiJavaCodeReferenceElement element = getRefElement();
     assert element != null;
     final String superClassName = getSuperClassName(element);
@@ -47,7 +47,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     }
   }
 
-  public boolean isAvailable(final Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return super.isAvailable(project, editor, file) && getPossibleTargets(getRefElement()).length > 0;
   }
 

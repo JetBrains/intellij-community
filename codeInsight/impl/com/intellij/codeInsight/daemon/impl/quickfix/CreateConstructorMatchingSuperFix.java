@@ -37,11 +37,12 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
     myClass = aClass;
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.constructor.matching.super");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myClass.isValid() || !myClass.getManager().isInProject(myClass)) return false;
     setText(QuickFixBundle.message("create.constructor.matching.super"));
     return true;

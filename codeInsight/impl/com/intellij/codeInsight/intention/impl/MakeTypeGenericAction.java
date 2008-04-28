@@ -77,7 +77,7 @@ public class MakeTypeGenericAction extends PsiElementBaseIntentionAction {
     return Pair.create(variable, type);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final CaretModel caretModel = editor.getCaretModel();
     final int position = caretModel.getOffset();
     final PsiElement element = file.findElementAt(position);

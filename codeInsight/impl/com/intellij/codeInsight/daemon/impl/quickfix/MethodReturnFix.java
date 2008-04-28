@@ -13,6 +13,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import org.jetbrains.annotations.NotNull;
 
 public class MethodReturnFix implements IntentionAction {
   private final PsiMethod myMethod;
@@ -25,17 +26,19 @@ public class MethodReturnFix implements IntentionAction {
     myFixWholeHierarchy = fixWholeHierarchy;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("fix.return.type.text",
                                   myMethod.getName(),
                                   myReturnType.getCanonicalText());
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("fix.return.type.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myMethod != null
         && myMethod.isValid()
         && myMethod.getManager().isInProject(myMethod)
@@ -46,7 +49,7 @@ public class MethodReturnFix implements IntentionAction {
         && !Comparing.equal(myReturnType, myMethod.getReturnType());
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
     PsiMethod method = myFixWholeHierarchy ? myMethod.findDeepestSuperMethod() : myMethod;
     if (method == null) method = myMethod;

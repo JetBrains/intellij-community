@@ -692,7 +692,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       return getText();
     }
 
-    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
       return true;
     }
 
@@ -755,11 +755,11 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       return getText();
     }
 
-    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
       return true;
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       if (myElement != null && myElement.isValid()) {
         commentOutDead(PsiTreeUtil.getParentOfType(myElement, PsiModifierListOwner.class));        
       }

@@ -37,12 +37,12 @@ public class RenamePublicClassFix implements IntentionAction {
     return QuickFixBundle.message("rename.public.class.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myClass.isValid() &&
            JavaPsiFacade.getInstance(file.getProject()).getNameHelper().isIdentifier(file.getVirtualFile().getNameWithoutExtension());
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     LOG.assertTrue (file == myClass.getContainingFile());
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     VirtualFile vFile = file.getVirtualFile();

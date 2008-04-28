@@ -25,7 +25,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
     return "Unimplement Interface/Class";
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
     final PsiReference psiReference = TargetElementUtil.findReference(editor);
     if (psiReference == null) return false;

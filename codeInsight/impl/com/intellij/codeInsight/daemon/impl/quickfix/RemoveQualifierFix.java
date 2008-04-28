@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
@@ -25,15 +26,17 @@ public class RemoveQualifierFix implements IntentionAction {
     myResolved = resolved;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("remove.qualifier.action.text");
   }
 
+  @NotNull
   public String getFamilyName() {
     return getText();
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
       myQualifier != null
       && myQualifier.isValid()
@@ -45,7 +48,7 @@ public class RemoveQualifierFix implements IntentionAction {
       ;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     myQualifier.delete();
     myExpression.bindToElement(myResolved);

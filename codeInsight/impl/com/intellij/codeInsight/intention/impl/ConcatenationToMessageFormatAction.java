@@ -33,7 +33,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     return CodeInsightBundle.message("intention.replace.concatenation.with.formatted.output.text");
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiBinaryExpression concatenation = getEnclosingLiteralConcatenation(file, editor);
     PsiManager manager = concatenation.getManager();
@@ -174,7 +174,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     return arg;
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_4) >= 0 && getEnclosingLiteralConcatenation(file, editor) != null;
   }
 

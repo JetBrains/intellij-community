@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
@@ -18,11 +19,12 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
     return false;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("add.runtime.exception.to.throws.text");
   }
 
-  public void invoke(final Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull final Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -44,7 +46,7 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
     return false;
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
     PsiClassType exception = getRuntimeExceptionAtCaret(editor, file);
     if (exception == null) return false;
@@ -75,6 +77,7 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
   }
 
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.runtime.exception.to.throws.family");
   }

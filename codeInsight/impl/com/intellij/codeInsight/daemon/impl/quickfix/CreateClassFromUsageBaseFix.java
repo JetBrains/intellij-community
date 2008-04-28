@@ -75,7 +75,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
     return Character.isUpperCase(name.charAt(0));
   }
 
-  public boolean isAvailable(final Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final PsiJavaCodeReferenceElement element = getRefElement();
     if (element == null ||
         !element.getManager().isInProject(element) ||

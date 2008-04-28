@@ -63,7 +63,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     return QuickFixBundle.message("make.final.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myClass != null
            && myClass.isValid()
            && myClass.getManager().isInProject(myClass)
@@ -77,7 +77,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     return PsiTreeUtil.isAncestor(variable, aClass, false);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
     if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
     try {

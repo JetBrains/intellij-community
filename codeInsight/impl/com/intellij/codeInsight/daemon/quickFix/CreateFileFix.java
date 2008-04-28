@@ -81,7 +81,7 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
     }
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     long current = System.currentTimeMillis();
 
     if (current - myIsAvailableTimeStamp > REFRESH_INTERVAL) {
@@ -92,7 +92,7 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
     return myIsAvailable;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     myIsAvailableTimeStamp = 0; // to revalidate applicability
 
     try {

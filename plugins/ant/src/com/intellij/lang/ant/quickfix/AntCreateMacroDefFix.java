@@ -59,11 +59,11 @@ public class AntCreateMacroDefFix extends BaseIntentionAction {
     }
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final AntStructuredElement element = myUndefinedElement;
     final AntProject antProject = (myFile == null) ? element.getAntProject() : myFile.getAntProject();
     final AntElement anchor =

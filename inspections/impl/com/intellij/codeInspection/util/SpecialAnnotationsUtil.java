@@ -113,11 +113,11 @@ public class SpecialAnnotationsUtil {
         return family;
       }
 
-      public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
         return true;
       }
 
-      public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         doQuickFixInternal(project, targetList, qualifiedName, context);
       }
 

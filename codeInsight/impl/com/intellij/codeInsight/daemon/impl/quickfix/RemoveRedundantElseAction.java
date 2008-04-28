@@ -52,7 +52,7 @@ public class RemoveRedundantElseAction extends PsiElementBaseIntentionAction {
     return false;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
     PsiIfStatement ifStatement = (PsiIfStatement)elementAt.getParent();

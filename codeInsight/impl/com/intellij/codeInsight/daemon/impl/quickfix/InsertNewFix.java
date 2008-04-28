@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class InsertNewFix implements IntentionAction {
   private final PsiMethodCallExpression myMethodCall;
@@ -20,21 +21,23 @@ public class InsertNewFix implements IntentionAction {
     myClass = aClass;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("insert.new.fix");
   }
 
+  @NotNull
   public String getFamilyName() {
     return getText();
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myMethodCall != null
     && myMethodCall.isValid()
     && myMethodCall.getManager().isInProject(myMethodCall);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(myMethodCall.getContainingFile())) return;
     PsiElementFactory factory = JavaPsiFacade.getInstance(myMethodCall.getProject()).getElementFactory();
     PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText("new X()",null);

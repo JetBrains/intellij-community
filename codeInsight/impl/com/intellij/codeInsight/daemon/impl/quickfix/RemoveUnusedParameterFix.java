@@ -16,6 +16,8 @@ import com.intellij.refactoring.changeSignature.ParameterInfo;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class RemoveUnusedParameterFix implements IntentionAction {
   private final PsiParameter myParameter;
 
@@ -23,22 +25,24 @@ public class RemoveUnusedParameterFix implements IntentionAction {
     myParameter = parameter;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("remove.unused.parameter.text", myParameter.getName());
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("remove.unused.parameter.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
       myParameter.isValid()
       && myParameter.getDeclarationScope() instanceof PsiMethod
       && myParameter.getManager().isInProject(myParameter);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myParameter.getContainingFile())) return;
     removeReferences(myParameter);
   }
