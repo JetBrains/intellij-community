@@ -5,9 +5,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.XmlName;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
@@ -22,6 +20,7 @@ import java.util.*;
  * @author mike
  */
 public class ExtensionDomExtender extends DomExtender<Extensions> {
+  private static final PsiClassConverter CLASS_CONVERTER = new GlobalScopePsiClassConverter();
 
 
   public Object[] registerExtensions(@NotNull final Extensions extensions, @NotNull final DomExtensionsRegistrar registrar) {
@@ -69,7 +68,8 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         public Object[] registerExtensions(@NotNull final DomElement domElement, @NotNull final DomExtensionsRegistrar registrar) {
           final String interfaceName = extensionPoint.getInterface().getStringValue();
           if (interfaceName != null) {
-            registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class);
+            registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class).setConverter(
+                CLASS_CONVERTER);
 
             final PsiClass implClass =
               JavaPsiFacade.getInstance(manager.getProject()).findClass(interfaceName, GlobalSearchScope.allScope(manager.getProject()));
@@ -149,7 +149,8 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   interface SimpleTagValue extends DomElement {
-    @com.intellij.util.xml.TagValue
+    @TagValue
     String getValue();
   }
+
 }

@@ -1,10 +1,7 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.util.xml.Attribute;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.NameValue;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,10 +22,12 @@ public interface ExtensionPoint extends DomElement {
   GenericAttributeValue<String> getQualifiedName();
 
   @NotNull
+  @Convert(GlobalScopePsiClassConverter.class)
   GenericAttributeValue<PsiClass> getInterface();
 
   @NotNull
   @Attribute("beanClass")
+  @Convert(GlobalScopePsiClassConverter.class)
   GenericAttributeValue<PsiClass> getBeanClass();
 
   @NotNull
