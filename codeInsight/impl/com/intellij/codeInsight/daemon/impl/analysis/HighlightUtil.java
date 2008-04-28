@@ -1283,9 +1283,8 @@ public class HighlightUtil {
 
   @Nullable
   public static HighlightInfo checkMemberReferencedBeforeConstructorCalled(PsiElement expression) {
-    if (expression.getParent() instanceof PsiJavaCodeReferenceElement) return null;
     PsiClass referencedClass;
-    String resolvedName;
+    @NonNls String resolvedName;
     PsiType type;
     if (expression instanceof PsiJavaCodeReferenceElement) {
       PsiElement resolved = ((PsiJavaCodeReferenceElement)expression).advancedResolve(true).getElement();
@@ -1362,11 +1361,17 @@ public class HighlightUtil {
       }
     }
     else if (expression instanceof PsiThisExpression) {
-      type = ((PsiThisExpression)expression).getType();
+      PsiThisExpression thisExpression = (PsiThisExpression)expression;
+      type = thisExpression.getType();
       referencedClass = PsiUtil.resolveClassInType(type);
-      resolvedName = referencedClass == null
-                     ? null
-                     : PsiFormatUtil.formatClass(referencedClass, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME);
+      if (thisExpression.getQualifier() != null) {
+        resolvedName = referencedClass == null
+                       ? null
+                       : PsiFormatUtil.formatClass(referencedClass, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME) + ".this";
+      }
+      else {
+        resolvedName = "this";
+      }
     }
     else {
       return null;
