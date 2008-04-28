@@ -8,6 +8,8 @@ import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.MacroFactory;
+import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
@@ -99,6 +101,9 @@ public class XmlTagInsertHandler extends BasicInsertHandler {
         editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 1);
       }
     }
+
+    final TailType tailType = SimpleInsertHandler.DEFAULT_COMPLETION_CHAR_HANDLER.handleCompletionChar(editor, item, completionChar);
+    tailType.processTail(editor, editor.getCaretModel().getOffset());
   }
 
   protected boolean isValidTag(final XmlTag tag) {

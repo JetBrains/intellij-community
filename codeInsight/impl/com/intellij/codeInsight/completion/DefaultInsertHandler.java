@@ -77,14 +77,13 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
         simpleItem.setCompletionCharHandler(new CompletionCharHandler<PsiMethod>() {
           public TailType handleCompletionChar(@NotNull final Editor editor,
                                                @NotNull final LookupElement<PsiMethod> element, final char completionChar) {
+            if (completionChar == '!') return element.getTailType();
             if (completionChar == '(') {
               final PsiMethod psiMethod = element.getObject();
               return psiMethod.getParameterList().getParameters().length > 0 || psiMethod.getReturnType() != PsiType.VOID
                      ? TailType.NONE : TailType.SEMICOLON;
             }
-            if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-              return TailTypes.SMART_COMPLETION;
-            }
+            if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) return TailTypes.SMART_COMPLETION;
             return null;
           }
         });
@@ -469,11 +468,6 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   }
 
   private TailType getTailType(final char completionChar){
-    return getTailType(completionChar, myLookupItem);
-  }
-
-  @NotNull
-  public static TailType getTailType(final char completionChar, final LookupItem<?> item) {
     switch(completionChar){
       case '.': return TailType.DOT;
       case ',': return TailType.COMMA;
@@ -484,9 +478,10 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       case '(': return TailTypes.SMART_LPARENTH;
       case '<': case '>': case '[': return TailType.createSimpleTailType(completionChar);
       case Lookup.COMPLETE_STATEMENT_SELECT_CHAR: return TailTypes.SMART_COMPLETION;
+      case '!': if (!(myLookupItem.getObject() instanceof PsiVariable)) return TailType.EXCLAMATION;
     }
-    final TailType attr = item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
-    return attr != null ? attr : TailType.NONE;
+    final TailType attr = myLookupItem.getTailType();
+    return attr != TailType.UNKNOWN ? attr : TailType.NONE;
   }
 
   private void handleTemplate(final int templateStartOffset, final boolean signatureSelected, final char completionChar){

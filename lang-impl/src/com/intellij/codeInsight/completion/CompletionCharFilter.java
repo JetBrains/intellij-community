@@ -25,6 +25,7 @@ public class CompletionCharFilter extends CharFilter {
       case '=':
       case ' ':
       case ':':
+      case '!':
       case '(':
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
 

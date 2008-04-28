@@ -66,6 +66,7 @@ public abstract class TailType {
   };
 
   public static final TailType SEMICOLON = new CharTailType(';');
+  public static final TailType EXCLAMATION = new CharTailType('!');
 
   public static final TailType COMMA = new TailType(){
     public int processTail(final Editor editor, int tailOffset) {
