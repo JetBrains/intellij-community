@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.validity;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,8 +22,8 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 
 public class GroovyUnreachableStatementInspection extends BaseInspection {
 
@@ -56,28 +54,25 @@ public class GroovyUnreachableStatementInspection extends BaseInspection {
   }
 
   private static class Visitor extends BaseInspectionVisitor {
-    public void visitStatement(GrStatement statement) {
-      super.visitStatement(statement);
-      final GrStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(statement, GrStatement.class);
-      if (prevStatement == null) {
-        return;
+    public void visitClosure(GrClosableBlock closure) {
+      super.visitClosure(closure);
+      GrStatement[] statements = closure.getStatements();
+      for (int i = 0; i < statements.length - 1; i++) {
+        checkPair(statements[i], statements[i+1]);
       }
-      if (!ControlFlowUtils.statementMayCompleteNormally(prevStatement)) {
-        registerError(statement);
-      }
-
     }
 
-    public void visitExpression(GrExpression grExpression) {
-      final PsiElement parent = grExpression.getParent();
-      if (parent instanceof GrCodeBlock) {
-        final GrStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(grExpression, GrStatement.class);
-        if (prevStatement == null) {
-          return;
-        }
-        if (!ControlFlowUtils.statementMayCompleteNormally(prevStatement)) {
-          registerError(grExpression);
-        }
+    public void visitOpenBlock(GrOpenBlock block) {
+      super.visitOpenBlock(block);
+      GrStatement[] statements = block.getStatements();
+      for (int i = 0; i < statements.length - 1; i++) {
+        checkPair(statements[i], statements[i+1]);
+      }
+    }
+
+    private void checkPair(GrStatement prev, GrStatement statement) {
+      if (!ControlFlowUtils.statementMayCompleteNormally(prev)) {
+        registerError(statement);
       }
     }
   }
