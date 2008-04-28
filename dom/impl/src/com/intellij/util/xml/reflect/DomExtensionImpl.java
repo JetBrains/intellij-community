@@ -4,14 +4,12 @@
 package com.intellij.util.xml.reflect;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.util.SmartList;
 import com.intellij.util.xml.Converter;
-import com.intellij.util.xml.ExtendClass;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.impl.ConvertAnnotationImpl;
 import com.intellij.util.xml.impl.DomChildDescriptionImpl;
-import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
@@ -27,7 +25,7 @@ public class DomExtensionImpl implements DomExtension {
   private final XmlName myXmlName;
   private final Type myType;
   private Converter myConverter;
-  private String myExtendClass;
+  private List<Annotation> myCustomAnnos = new SmartList<Annotation>();
   private boolean mySoft;
   private int myCount = 1;
   private Map myUserMap;
@@ -57,8 +55,8 @@ public class DomExtensionImpl implements DomExtension {
     return this;
   }
 
-  public DomExtension setExtendClass(@NotNull @NonNls final String className) {
-    myExtendClass = className;
+  public DomExtension addCustomAnnotation(@NotNull final Annotation anno) {
+    myCustomAnnos.add(anno);
     return this;
   }
 
@@ -89,38 +87,8 @@ public class DomExtensionImpl implements DomExtension {
     if (myConverter != null) {
       t.addCustomAnnotation(new ConvertAnnotationImpl(myConverter, mySoft));
     }
-    if (myExtendClass != null) {
-      t.addCustomAnnotation(new ExtendClass() {
-
-
-        public boolean instantiatable() {
-          return false;
-        }
-
-        public boolean canBeDecorator() {
-          return false;
-        }
-
-        public boolean allowEmpty() {
-          return false;
-        }
-
-        public boolean allowAbstract() {
-          return true;
-        }
-
-        public boolean allowInterface() {
-          return true;
-        }
-
-        public String value() {
-          return myExtendClass;
-        }
-
-        public Class<? extends Annotation> annotationType() {
-          return ExtendClass.class;
-        }
-      });
+    for (final Annotation anno : myCustomAnnos) {
+      t.addCustomAnnotation(anno);
     }
     return t;
   }

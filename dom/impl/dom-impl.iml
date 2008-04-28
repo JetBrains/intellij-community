@@ -9,17 +9,13 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="dom-openapi" exported="" />
-    <orderEntry type="module" module-name="idea" />
     <orderEntry type="library" name="CGLIB" level="project" />
     <orderEntry type="module" module-name="ui-impl" />
-    <orderEntry type="module" module-name="plugins-management" />
-    <orderEntry type="module" module-name="ExtendedApi" />
-    <orderEntry type="module" module-name="UsageView" />
     <orderEntry type="module" module-name="resources" />
     <orderEntry type="module" module-name="resources_eng" />
-    <orderEntry type="module" module-name="inspections-impl" />
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="module" module-name="xml" />
+    <orderEntry type="module" module-name="util" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
