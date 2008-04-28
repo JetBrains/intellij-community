@@ -184,8 +184,8 @@
   <extensionPoint name="structureViewBuilder"
                   beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"/>
 
-  <extensionPoint name="macro" beanClass="com.intellij.ide.macro.Macro"/>
-  <extensionPoint name="printOption" beanClass="com.intellij.codeEditor.printing.PrintOption"/>
+  <extensionPoint name="macro" interface="com.intellij.ide.macro.Macro"/>
+  <extensionPoint name="printOption" interface="com.intellij.codeEditor.printing.PrintOption"/>
 
   <extensionPoint name="indexPatternBuilder" interface="com.intellij.psi.impl.search.IndexPatternBuilder"/>
 

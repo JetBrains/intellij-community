@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.util.xml.impl;
+package com.intellij.util.xml;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,7 +21,9 @@ import org.jetbrains.annotations.Nullable;
 public class PsiClassConverter extends Converter<PsiClass> implements CustomReferenceConverter<PsiClass> {
 
   public PsiClass fromString(final String s, final ConvertContext context) {
-    return s == null ? null: DomJavaUtil.findClass(s, context.getFile(), context.getModule(), null);
+    final DomElement element = context.getInvocationElement();
+    final GlobalSearchScope scope = element instanceof GenericDomValue ? getScope((GenericDomValue)element) : null;
+    return DomJavaUtil.findClass(s, context.getFile(), context.getModule(), scope);
   }
 
   @Nullable
@@ -59,7 +61,7 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
   }
 
   @Nullable
-  private static GlobalSearchScope getScope(final GenericDomValue domValue) {
+  protected GlobalSearchScope getScope(final GenericDomValue domValue) {
     final Module module = domValue.getModule();
     return module == null ? null : GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
   }
