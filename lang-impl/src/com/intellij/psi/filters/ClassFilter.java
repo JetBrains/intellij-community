@@ -29,8 +29,7 @@ public class ClassFilter implements ElementFilter{
   }
 
   private boolean filterMatches(final Class hintClass) {
-    if (ReflectionCache.isAssignable(myFilter,hintClass)) return true;
-    return false;
+    return ReflectionCache.isAssignable(myFilter, hintClass);
   }
 
   public boolean isAcceptable(Object element, PsiElement context){

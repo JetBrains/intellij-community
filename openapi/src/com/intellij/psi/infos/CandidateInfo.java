@@ -32,14 +32,17 @@ public class CandidateInfo implements JavaResolveResult {
   private final PsiElement myCurrentFileResolveContext;
   private boolean myPackagePrefixPackageReference;
 
-  public CandidateInfo(PsiElement candidate, PsiSubstitutor substitutor, boolean accessProblem, boolean staticsProblem, PsiElement currFileContext){
+  private CandidateInfo(PsiElement candidate, PsiSubstitutor substitutor, Boolean accessProblem, boolean staticsProblem, PsiElement currFileContext, PsiElement place, PsiClass accessClass) {
     myCandidate = candidate;
-    myAccessProblem = accessProblem ? Boolean.TRUE : Boolean.FALSE;
+    myAccessProblem = accessProblem;
     myStaticsProblem = staticsProblem;
     mySubstitutor = substitutor;
     myCurrentFileResolveContext = currFileContext;
-    myAccessClass = null;
-    myPlace = null;
+    myAccessClass = accessClass;
+    myPlace = place;
+  }
+  public CandidateInfo(PsiElement candidate, PsiSubstitutor substitutor, boolean accessProblem, boolean staticsProblem, PsiElement currFileContext) {
+    this(candidate, substitutor, accessProblem ? Boolean.TRUE : Boolean.FALSE, staticsProblem, currFileContext, null, null);
   }
 
   public CandidateInfo(PsiElement candidate, PsiSubstitutor substitutor, boolean accessProblem, boolean staticsProblem){
@@ -56,12 +59,7 @@ public class CandidateInfo implements JavaResolveResult {
                        PsiClass accessClass,
                        boolean staticsProblem,
                        PsiElement currFileContext){
-    myStaticsProblem = staticsProblem;
-    myAccessClass = accessClass;
-    myPlace = place;
-    mySubstitutor = substitutor;
-    myCandidate = candidate;
-    myCurrentFileResolveContext = currFileContext;
+    this(candidate, substitutor, null, staticsProblem, currFileContext, place, accessClass);
   }
 
   public CandidateInfo(PsiElement candidate, PsiSubstitutor substitutor){
@@ -143,8 +141,7 @@ public class CandidateInfo implements JavaResolveResult {
   }
 
   public int hashCode() {
-    int result;
-    result = (myPlace != null ? myPlace.hashCode() : 0);
+    int result = myPlace != null ? myPlace.hashCode() : 0;
     result = 31 * result + (myAccessClass != null ? myAccessClass.hashCode() : 0);
     result = 31 * result + (myCandidate != null ? myCandidate.hashCode() : 0);
     result = 31 * result + (myAccessProblem != null ? myAccessProblem.hashCode() : 0);

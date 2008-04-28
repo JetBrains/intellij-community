@@ -20,7 +20,7 @@ import com.intellij.util.SmartList;
  * To change this template use Options | File Templates.
  */
 public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo> implements NameHint{
-  protected final PsiConflictResolver[] myResolvers;
+  private final PsiConflictResolver[] myResolvers;
   private JavaResolveResult[] myCachedResult = null;
   protected String myName;
   protected final PsiElement myPlace;

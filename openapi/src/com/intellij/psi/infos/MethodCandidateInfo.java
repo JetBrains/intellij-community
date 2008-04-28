@@ -23,7 +23,7 @@ import com.intellij.psi.util.PsiUtil;
  */
 public class MethodCandidateInfo extends CandidateInfo{
   private int myApplicabilityLevel = 0;
-  private PsiExpressionList myArgumentList;
+  private final PsiExpressionList myArgumentList;
   private PsiType[] myTypeArguments;
   private PsiSubstitutor myCalcedSubstitutor = null;
 

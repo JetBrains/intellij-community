@@ -35,6 +35,6 @@ public class ExpectedTypesGetter implements ContextGetter{
         result.add(defaultType);
       }
     }
-    return result.toArray(PsiType.EMPTY_ARRAY);
+    return result.toArray(new PsiType[result.size()]);
   }
 }

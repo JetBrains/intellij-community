@@ -30,7 +30,7 @@ import java.util.List;
  * Date: May 11, 2005
  */
 public class EmptyIntentionAction implements IntentionAction{
-  private String myName;
+  private final String myName;
 
   @Deprecated
   public EmptyIntentionAction(@NotNull final String name, @NotNull List<IntentionAction> options) {
@@ -51,11 +51,11 @@ public class EmptyIntentionAction implements IntentionAction{
     return myName;
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true; //edit inspection settings is always enabled
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
   }
 
   public boolean startInWriteAction() {
