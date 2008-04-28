@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.content.AlertIcon;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,7 +40,7 @@ public final class TabInfo {
   private ActionGroup myTabLabelActions;
   private String myTabActionPlace;
 
-  private Icon myAlertIcon;
+  private AlertIcon myAlertIcon;
 
   private int myBlinkCount;
   private boolean myAlertRequested;
@@ -54,6 +55,7 @@ public final class TabInfo {
   private Color myDefaultWaveColor;
 
   private SimpleTextAttributes myDefaultAttributes;
+  private static final AlertIcon DEFAULT_ALERT_ICON = new AlertIcon(IconLoader.getIcon("/nodes/tabAlert.png"));
 
   public TabInfo(final JComponent component) {
     myComponent = component;
@@ -196,8 +198,8 @@ public final class TabInfo {
     return myLastFocusOwner != null ? myLastFocusOwner.get() : null;
   }
 
-  public TabInfo setAlertIcon(final Icon alertIcon) {
-    Icon old = myAlertIcon;
+  public TabInfo setAlertIcon(final AlertIcon alertIcon) {
+    AlertIcon old = myAlertIcon;
     myAlertIcon = alertIcon;
     myChangeSupport.firePropertyChange(ALERT_ICON, old, myAlertIcon);
     return this;
@@ -225,8 +227,8 @@ public final class TabInfo {
     return getText();
   }
 
-  public Icon getAlertIcon() {
-    return myAlertIcon == null ? IconLoader.getIcon("/nodes/tabAlert.png") : myAlertIcon;
+  public AlertIcon getAlertIcon() {
+    return myAlertIcon == null ? DEFAULT_ALERT_ICON : myAlertIcon;
   }
 
   public void resetAlertRequest() {

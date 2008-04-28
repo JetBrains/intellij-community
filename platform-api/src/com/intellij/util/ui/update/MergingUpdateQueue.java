@@ -51,7 +51,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   public MergingUpdateQueue(@NonNls String name, int mergingTimeSpan, boolean isActive, JComponent modalityStateComponent, @Nullable Disposable parent) {
-    this(name, mergingTimeSpan, isActive, modalityStateComponent, null, null);
+    this(name, mergingTimeSpan, isActive, modalityStateComponent, parent, null);
   }
 
   public MergingUpdateQueue(@NonNls String name, int mergingTimeSpan, boolean isActive, JComponent modalityStateComponent, @Nullable Disposable parent, @Nullable JComponent activationComponent) {

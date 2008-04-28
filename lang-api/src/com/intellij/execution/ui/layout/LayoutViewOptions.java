@@ -19,6 +19,8 @@ public interface LayoutViewOptions {
   @NotNull
   LayoutViewOptions setMoveToGridActionEnabled(boolean enabled);
 
+  @NotNull
+  LayoutViewOptions setAttractionPolicy(@NotNull String contentId, LayoutAttractionPolicy policy);
 
   boolean isFocusOnStartup(Content content);
 

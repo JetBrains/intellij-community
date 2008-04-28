@@ -338,8 +338,12 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   public void setSelectedContent(@NotNull final Content content, final boolean requestFocus) {
+    setSelectedContent(content, requestFocus, true);
+  }
+
+  public void setSelectedContent(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus) {
     if (isSelected(content) && requestFocus) {
-      requestFocus(content);
+      requestFocus(content, forcedFocus);
       return;
     }
 
@@ -362,7 +366,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
         }
 
         addSelectedContent(content);
-        requestFocus(content);
+        requestFocus(content, forcedFocus);
       }
     };
 
@@ -454,7 +458,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return true;
   }
 
-  public void requestFocus(Content content) {
+  public void requestFocus(Content content, boolean forced) {
     final Content toSelect = content == null ? getSelectedContent() : content;
     if (toSelect == null) return;
     assert myContents.contains(toSelect);
@@ -465,7 +469,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
         doRequestFocus(toSelect);
         return new ActionCallback.Done();
       }
-    }, true);
+    }, forced);
   }
 
   private void doRequestFocus(final Content toSelect) {

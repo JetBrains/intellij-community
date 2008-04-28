@@ -160,11 +160,16 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public boolean removeContent(@NotNull final Content content, final boolean dispose) { return false; }
     public void removeContentManagerListener(@NotNull final ContentManagerListener l) { }
     public void removeFromSelection(@NotNull final Content content) { }
-    public void requestFocus(@Nullable final Content content) { }
     public void selectNextContent() { }
     public void selectPreviousContent() { }
     public void setSelectedContent(@NotNull final Content content) { }
     public void setSelectedContent(@NotNull final Content content, final boolean requestFocus) { }
+
+    public void setSelectedContent(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus) {
+    }
+
+    public void requestFocus(@Nullable final Content content, final boolean forced) {
+    }
 
     public void dispose() {}
 

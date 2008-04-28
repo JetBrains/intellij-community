@@ -1,5 +1,6 @@
 package com.intellij.execution.ui.layout.impl;
 
+import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.LayoutStateDefaults;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
@@ -139,9 +140,10 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     return myViewsContentManager;
   }
 
-  public void selectAndFocus(@Nullable final Content content) {
+  public void selectAndFocus(@Nullable final Content content, final boolean forced) {
     if (content == null) return;
-    getContentManager().setSelectedContent(content, true);
+
+    getContentManager().setSelectedContent(content, true, forced);
   }
 
   public boolean removeContent(final Content content, final boolean dispose) {
@@ -159,10 +161,10 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     return this;
   }
 
-  public void focusStartupContent(@Nullable final Content defaultContent) {
+  public void focusStartupContent() {
     final String toFocus = getLayout().getToFocusOnStartup();
     if (toFocus != null) {
-      selectAndFocus(findContent(toFocus));
+      selectAndFocus(findContent(toFocus), true);
     }
   }
 
@@ -184,16 +186,7 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
 
   @Nullable
   public Content findContent(@NotNull final String key) {
-    if (myViewsContentManager != null) {
-      Content[] contents = myViewsContentManager.getContents();
-      for (Content content : contents) {
-        String kind = content.getUserData(View.ID);
-        if (key.equals(kind)) {
-          return content;
-        }
-      }
-    }
-    return null;
+    return myContentUI.findContent(key);
   }
 
   public RunnerLayoutUi addListener(@NotNull final ContentManagerListener listener, @NotNull final Disposable parent) {
@@ -211,6 +204,14 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     getContentManager().removeContentManagerListener(listener);
   }
 
+  public void bounce(@NotNull final Content content) {
+    myContentUI.bounce(content);
+  }
+
+  public void attract(@Nullable final Content content) {
+    myContentUI.attract(content);
+  }
+
   public boolean isDisposed() {
     return getContentManager().isDisposed();
   }
@@ -224,6 +225,12 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
   @NotNull
   public LayoutViewOptions setMoveToGridActionEnabled(final boolean enabled) {
     myContentUI.setMovetoGridActionEnabled(enabled);
+    return this;
+  }
+
+  @NotNull
+  public LayoutViewOptions setAttractionPolicy(@NotNull final String contentId, final LayoutAttractionPolicy policy) {
+    myContentUI.setPolicy(contentId, policy);
     return this;
   }
 

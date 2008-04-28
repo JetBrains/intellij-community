@@ -1,6 +1,7 @@
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.actions.RestoreViewAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -70,6 +71,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private boolean myMinimizeActionEnabled = true;
   private boolean myMoveToGridActionEnabled = true;
   private RunnerLayoutUi myRunnerUi;
+
+  private Map<String, LayoutAttractionPolicy> myAttractions = new HashMap<String, LayoutAttractionPolicy>();
 
   public RunnerContentUi(Project project,
                          RunnerLayoutUi ui,
@@ -152,21 +155,34 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     final String property = evt.getPropertyName();
     if (Content.PROP_ALERT.equals(property)) {
-      if (grid.getContents().size() == 1) {
-        TabInfo info = myTabs.findInfo(grid);
-        if (myTabs.getSelectedInfo() != info) {
-          info.fireAlert();
-        }
-      }
-      else {
-        grid.alert(content);
-      }
+      attract(content);
     } else if (Content.PROP_DISPLAY_NAME.equals(property)
                || Content.PROP_ICON.equals(property)
                || Content.PROP_ACTIONS.equals(property)
                || Content.PROP_DESCRIPTION.equals(property)) {
       cell.updateTabPresentation(content);
       updateTabsUI(false);
+    }
+  }
+
+
+  public void bounce(Content content) {
+    final Grid grid = getGridFor(content, false);
+    if (grid == null) return;
+
+    final GridCell cell = grid.findCell(content);
+    if (cell == null) return;
+
+
+    final TabInfo tab = myTabs.findInfo(grid);
+    if (tab == null) return;
+
+
+    if (getSelectedGrid() != grid) {
+      tab.setAlertIcon(content.getAlertIcon());
+      tab.fireAlert();
+    } else {
+      grid.alert(content);
     }
   }
 
@@ -571,6 +587,39 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return myMoveToGridActionEnabled;
   }
 
+  public void setPolicy(String contentId, final LayoutAttractionPolicy policy) {
+    myAttractions.put(contentId, policy);
+  }
+
+  private LayoutAttractionPolicy getOrCreatePolicyFor(Content content) {
+    final String id = content.getUserData(View.ID);
+    LayoutAttractionPolicy policy = myAttractions.get(id);
+    if (policy == null) {
+      policy = new LayoutAttractionPolicy.Bounce();
+      myAttractions.put(id, policy);
+    }
+    return policy;
+  }
+
+  public Content findContent(final String key) {
+    final ContentManager manager = getContentManager();
+    if (manager == null) return null;
+
+    Content[] contents = manager.getContents();
+    for (Content content : contents) {
+      String kind = content.getUserData(View.ID);
+      if (key.equals(kind)) {
+        return content;
+      }
+    }
+
+    return null;
+  }
+
+  public void attract(final Content content) {
+    getOrCreatePolicyFor(content).attract(content, myRunnerUi);
+  }
+
   private class MyComponent extends Wrapper.FocusHolder implements DataProvider {
 
     private boolean myWasEverAdded;
@@ -602,7 +651,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
               public void run() {
                 if (!myWasEverAdded) {
                   myWasEverAdded = true;
-                  ((RunnerLayoutUiImpl)myRunnerUi).focusStartupContent(null);
+                  ((RunnerLayoutUiImpl)myRunnerUi).focusStartupContent();
                 }
               }
             });

@@ -104,11 +104,11 @@ public class JBTabsTest {
         .setIcon(IconLoader.getIcon("/debugger/frame.png"));
 
     final TabInfo toAnimate1 = new TabInfo(new JTree());
-    toAnimate1.setIcon(IconLoader.getIcon("/debugger/console.png"));
+    //toAnimate1.setIcon(IconLoader.getIcon("/debugger/console.png"));
     final JCheckBox attract1 = new JCheckBox("Attract 1");
     attract1.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        toAnimate1.setText("Should be animated");
+        //toAnimate1.setText("Should be animated");
 
         if (attract1.isSelected()) {
           toAnimate1.fireAlert();

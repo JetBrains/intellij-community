@@ -35,11 +35,13 @@ public interface RunnerLayoutUi  {
   @Nullable
   Content findContent(@NotNull String contentId);
 
-  void selectAndFocus(@Nullable Content content);
+  void selectAndFocus(@Nullable Content content, final boolean forced);
 
   RunnerLayoutUi addListener(@NotNull ContentManagerListener listener, @NotNull Disposable parent);
 
   void removeListener(@NotNull final ContentManagerListener listener);
+
+  void bounce(@NotNull Content content);
 
   @NotNull
   JComponent getComponent();

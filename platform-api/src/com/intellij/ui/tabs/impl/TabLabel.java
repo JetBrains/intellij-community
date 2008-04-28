@@ -23,6 +23,8 @@ import java.awt.event.MouseEvent;
 public class TabLabel extends JPanel {
   private SimpleColoredComponent myLabel = new SimpleColoredComponent();
   private LayeredIcon myIcon;
+  private Icon myOverlayedIcon;
+
   private TabInfo myInfo;
   private ActionPanel myActionPanel;
   private boolean myCentered;
@@ -217,11 +219,22 @@ public class TabLabel extends JPanel {
 
   }
 
+  private void setAttractionIcon(Icon icon) {
+    if (myIcon.getIcon(0) == null) {
+      getLayeredIcon().setIcon(null, 1);
+      myOverlayedIcon = icon;
+    } else {
+      getLayeredIcon().setIcon(icon, 1);
+      myOverlayedIcon = null;
+    }
+  }
+
   public boolean repaintAttraction() {
     if (!myTabs.myAttractions.contains(myInfo)) {
       if (getLayeredIcon().isLayerEnabled(1)) {
         getLayeredIcon().setLayerEnabled(1, false);
-        getLayeredIcon().setIcon(null, 1);
+        setAttractionIcon(null);
+        invalidateIfNeeded();
         return true;
       }
       return false;
@@ -230,7 +243,7 @@ public class TabLabel extends JPanel {
     boolean needsUpdate = false;
 
     if (getLayeredIcon().getIcon(1) != myInfo.getAlertIcon()) {
-      getLayeredIcon().setIcon(myInfo.getAlertIcon(), 1);
+      setAttractionIcon(myInfo.getAlertIcon());
       needsUpdate = true;
     }
 
@@ -267,6 +280,22 @@ public class TabLabel extends JPanel {
       }
     }
 
+    invalidateIfNeeded();
+
     return needsUpdate;
+  }
+
+  protected void paintChildren(final Graphics g) {
+    super.paintChildren(g);
+
+    if (myOverlayedIcon == null || myLabel.getParent() == null) return;
+
+    final Rectangle textBounds = SwingUtilities.convertRectangle(myLabel.getParent(), myLabel.getBounds(), this);
+    if (getLayeredIcon().isLayerEnabled(1)) {
+
+      final int top = (getSize().height - myOverlayedIcon.getIconHeight()) / 2;
+
+      myOverlayedIcon.paintIcon(this, g, textBounds.x - myOverlayedIcon.getIconWidth() / 2, top);
+    }
   }
 }

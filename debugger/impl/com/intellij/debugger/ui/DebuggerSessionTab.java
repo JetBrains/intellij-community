@@ -29,6 +29,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
@@ -44,10 +45,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.content.*;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -98,6 +96,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     myUi = RunnerLayoutUi.Factory.getInstance(project).create("JavaDebugger", DebuggerBundle.message("title.generic.debug.dialog"), sessionName, this);
 
     myUi.getDefaults().initTabDefaults(0, "Debugger", null).initStartupContent(DebuggerContentInfo.FRAME_CONTENT);
+    myUi.getOptions().setAttractionPolicy(DebuggerContentInfo.FRAME_CONTENT, new LayoutAttractionPolicy.FocusOnce());
 
     final DebuggerSettings debuggerSettings = DebuggerSettings.getInstance();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -151,6 +150,8 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, myFramesPanel, XDebuggerBundle.message("debugger.session.tab.frames.title"),
                                                XDebuggerUIConstants.FRAMES_TAB_ICON, null);
+    framesContent.setAlertIcon(new AlertIcon(IconLoader.getIcon("/debugger/breakpointAlert.png")));
+
     final DefaultActionGroup framesGroup = new DefaultActionGroup();
 
     addAction(framesGroup, DebuggerActions.POP_FRAME);
@@ -425,10 +426,21 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     session.getContextManager().addListener(new DebuggerContextListener() {
       public void changeEvent(DebuggerContextImpl newContext, int event) {
+        attractFramesOnPause(event);
+
         myStateManager.fireStateChanged(newContext, event);
       }
     });
     return initUI(getDebugProcess().getExecutionResult());
+  }
+
+  private void attractFramesOnPause(final int event) {
+    if (DebuggerSession.EVENT_PAUSE == event) {
+      final Content frames = myUi.findContent(DebuggerContentInfo.FRAME_CONTENT);
+      if (frames != null) {
+        frames.fireAlert();
+      }
+    }
   }
 
   public DebuggerSession getSession() {
@@ -462,7 +474,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   }
 
   public void showFramePanel() {
-    myUi.selectAndFocus(myUi.findContent(DebuggerContentInfo.FRAME_CONTENT));
+    myUi.selectAndFocus(myUi.findContent(DebuggerContentInfo.FRAME_CONTENT), false);
   }
 
   private class MyDebuggerStateManager extends DebuggerStateManager {

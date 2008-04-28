@@ -38,6 +38,7 @@ public interface ContentManager extends Disposable {
 
   void setSelectedContent(@NotNull Content content);
   void setSelectedContent(@NotNull Content content, boolean requestFocus);
+  void setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus);
 
   void addSelectedContent(@NotNull Content content);
 
@@ -88,7 +89,7 @@ public interface ContentManager extends Disposable {
 
   boolean isSelected(@NotNull Content content);
 
-  void requestFocus(@Nullable Content content);
+  void requestFocus(@Nullable Content content, boolean forced);
 
   void addDataProvider(@NotNull DataProvider provider);
   
