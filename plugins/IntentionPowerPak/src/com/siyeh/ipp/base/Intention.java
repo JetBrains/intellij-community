@@ -42,7 +42,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
         predicate = getElementPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
         if(isFileReadOnly(project, file)){
             return;
