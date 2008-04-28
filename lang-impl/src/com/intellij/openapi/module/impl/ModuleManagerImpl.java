@@ -1,6 +1,5 @@
 package com.intellij.openapi.module.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.Disposable;
@@ -190,6 +189,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
           myFailedModulePaths.clear();
           myFailedModulePaths.addAll(Arrays.asList(myModulePaths));
           final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
+          List<ModuleLoadingErrorDescription> errors = new ArrayList<ModuleLoadingErrorDescription>();
           for (final ModulePath modulePath : myModulePaths) {
             try {
               final Module module = myModuleModel.loadModuleInternal(modulePath.getPath());
@@ -204,21 +204,24 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
               myFailedModulePaths.remove(modulePath);
             }
             catch (final IOException e) {
-              fireError(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath);
+              errors.add(new ModuleLoadingErrorDescription(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath));
             }
             catch (JDOMException e) {
-              fireError(ProjectBundle.message("module.corrupted.file.error", modulePath.getPath(), e.getMessage()), modulePath);
+              errors.add(new ModuleLoadingErrorDescription(ProjectBundle.message("module.corrupted.file.error", modulePath.getPath(), e.getMessage()), modulePath));
             }
             catch (InvalidDataException e) {
-              fireError(ProjectBundle.message("module.corrupted.data.error", modulePath.getPath()), modulePath);
+              errors.add(new ModuleLoadingErrorDescription(ProjectBundle.message("module.corrupted.data.error", modulePath.getPath()), modulePath));
             }
             catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
-              fireError(moduleWithNameAlreadyExists.getMessage(), modulePath);
+              errors.add(new ModuleLoadingErrorDescription(moduleWithNameAlreadyExists.getMessage(), modulePath));
             }
             catch (StateStorage.StateStorageException e) {
-              fireError(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath);
+              errors.add(new ModuleLoadingErrorDescription(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath));
             }
           }
+
+          fireErrors(errors);
+
           if (!app.isHeadlessEnvironment() && !modulesWithUnknownTypes.isEmpty()) {
             String message;
             if (modulesWithUnknownTypes.size() == 1) {
@@ -246,29 +249,31 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
   }
 
-  private void fireError(final String message, final ModulePath modulePath) {
-    final Module module = myModuleModel.myPathToModule.remove(FileUtil.toSystemIndependentName(modulePath.getPath()));
-    if (module != null) {
-      Disposer.dispose(module);
+  private void fireErrors(final List<ModuleLoadingErrorDescription> errors) {
+    if (errors.isEmpty()) return;
+
+    for (ModuleLoadingErrorDescription error : errors) {
+      final Module module = myModuleModel.myPathToModule.remove(FileUtil.toSystemIndependentName(error.getModulePath().getPath()));
+      if (module != null) {
+        Disposer.dispose(module);
+      }
     }
+
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      throw new RuntimeException(message);
-    } else {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          final int answer = Messages.showDialog(
-            ProjectBundle.message("module.remove.from.project.confirmation", message),
-            ProjectBundle.message("module.remove.from.project.title"),
-            new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()},
-            1,
-            Messages.getErrorIcon()
-          );
-          if (answer == 0) { // yes
-            myFailedModulePaths.remove(modulePath);
-          }
-        }
-      }, ModalityState.NON_MODAL);
+      throw new RuntimeException(errors.get(0).getDescription());
     }
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        Collection<ModuleLoadingErrorDescription> selected =
+            RemoveInvalidElementsDialog.showDialog(myProject, ProjectBundle.message("module.remove.from.project.title"),
+                                                   ProjectBundle.message("error.message.cannot.load.modules"),
+                                                   ProjectBundle.message("module.remove.from.project.confirmation"), errors);
+        for (ModuleLoadingErrorDescription description : selected) {
+          myFailedModulePaths.remove(description.getModulePath());
+        }
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   @NotNull

@@ -4,10 +4,7 @@
 
 package com.intellij.facet;
 
-import com.intellij.facet.impl.FacetManagerState;
-import com.intellij.facet.impl.FacetModelBase;
-import com.intellij.facet.impl.FacetModelImpl;
-import com.intellij.facet.impl.FacetState;
+import com.intellij.facet.impl.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -15,6 +12,8 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.*;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
@@ -40,7 +39,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.FacetManagerImpl");
   @NonNls public static final String FACET_ELEMENT = "facet";
   @NonNls public static final String TYPE_ATTRIBUTE = "type";
-  @NonNls private static final String IMPLICIT_ATTRIBUTE = "implicit";
   @NonNls public static final String CONFIGURATION_ELEMENT = "configuration";
   @NonNls public static final String NAME_ATTRIBUTE = "name";
   @NonNls public static final String COMPONENT_NAME = "FacetManager";
@@ -48,6 +46,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   private final Module myModule;
   private final FacetTypeRegistry myFacetTypeRegistry;
   private final FacetManagerModel myModel = new FacetManagerModel();
+  private final MultiValuesMap<Facet, FacetState> myInvalidFacets = new MultiValuesMap<Facet, FacetState>(true);
   private boolean myInsideCommit = false;
   private final MessageBus myMessageBus;
   private boolean myModuleAdded;
@@ -136,21 +135,68 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     }
   }
 
+  public void removeInvalidFacet(@Nullable Facet underlyingFacet, @NotNull FacetState facetState) {
+    myInvalidFacets.remove(underlyingFacet, facetState);
+  }
+
+
   private void addFacets(final List<FacetState> facetStates, final Facet underlyingFacet, ModifiableFacetModel model) {
     for (FacetState child : facetStates) {
       final String typeId = child.getFacetType();
-      if (typeId != null) {
-        final FacetType<?,?> type = myFacetTypeRegistry.findFacetType(typeId);
-        if (type != null) {
-          try {
-            addFacet(type, child, underlyingFacet, model);
-          }
-          catch (InvalidDataException e) {
-            LOG.info(e);
-          }
+      if (typeId == null) {
+        registerLoadingError(underlyingFacet, child, ProjectBundle.message("error.message.facet.type.isn.t.specified"));
+        continue;
+      }
+
+      final FacetType<?,?> type = myFacetTypeRegistry.findFacetType(typeId);
+      if (type == null) {
+        registerLoadingError(underlyingFacet, child, ProjectBundle.message("error.message.unknown.facet.type.0", typeId));
+        continue;
+      }
+
+      ModuleType moduleType = myModule.getModuleType();
+      if (!type.isSuitableModuleType(moduleType)) {
+        registerLoadingError(underlyingFacet, child, ProjectBundle.message("error.message.0.facets.are.not.allowed.in.1",
+                                                                           type.getPresentableName(), moduleType.getName()));
+      }
+
+      FacetType<?,?> expectedUnderlyingType = null;
+      FacetTypeId<?> underlyingTypeId = type.getUnderlyingFacetType();
+      if (underlyingTypeId != null) {
+        expectedUnderlyingType = myFacetTypeRegistry.findFacetType(underlyingTypeId);
+        if (expectedUnderlyingType == null) {
+          registerLoadingError(underlyingFacet, child, ProjectBundle.message("error.message.cannot.find.underlying.facet.type.for.0", typeId));
+          continue;
         }
       }
+      FacetType actualUnderlyingType = underlyingFacet != null ? underlyingFacet.getType() : null;
+      if (expectedUnderlyingType != null) {
+        if (!expectedUnderlyingType.equals(actualUnderlyingType)) {
+          registerLoadingError(underlyingFacet, child, ProjectBundle.message("error.message.0.facet.must.be.placed.under.1.facet",
+                                                                             type.getPresentableName(), expectedUnderlyingType.getPresentableName()));
+          continue;
+        }
+      }
+      else if (actualUnderlyingType != null) {
+        registerLoadingError(underlyingFacet, child, ProjectBundle.message("error.message.0.cannot.be.placed.under.1",
+                                                                           type.getPresentableName(), actualUnderlyingType.getPresentableName()));
+        continue;
+      }
+
+      try {
+        addFacet(type, child, underlyingFacet, model);
+      }
+      catch (InvalidDataException e) {
+        LOG.info(e);
+        registerLoadingError(underlyingFacet, child, ProjectBundle.message("error.message.cannot.load.facet.condiguration.0", e.getMessage()));
+      }
     }
+  }
+
+  private void registerLoadingError(final Facet underlyingFacet, final FacetState child, final String errorMessage) {
+    myInvalidFacets.put(underlyingFacet, child);
+    FacetLoadingErrorDescription description = new FacetLoadingErrorDescription(myModule, errorMessage, underlyingFacet, child);
+    ProjectFacetManagerEx.getInstanceEx(myModule.getProject()).registerFacetLoadingError(description);
   }
 
   private <C extends FacetConfiguration> void addFacet(final FacetType<?, C> type, final FacetState state, final Facet underlyingFacet,
@@ -208,10 +254,20 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       facetState.setConfiguration(config);
 
       parent.add(facetState);
-      states.put(facet, facetState.getSubFacets());
+      List<FacetState> subFacets = facetState.getSubFacets();
+      addInvalidFacets(facet, subFacets);
+      states.put(facet, subFacets);
     }
+    addInvalidFacets(null, managerState.getFacets());
 
     return managerState;
+  }
+
+  private void addInvalidFacets(@Nullable Facet facet, final List<FacetState> subFacets) {
+    Collection<FacetState> invalidFacets = myInvalidFacets.get(facet);
+    if (invalidFacets != null) {
+      subFacets.addAll(invalidFacets);
+    }
   }
 
   public void commit(final ModifiableFacetModel model) {
@@ -263,6 +319,10 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
         for (FacetRenameInfo info : toRename) {
           publisher.beforeFacetRenamed(info.myFacet);
         }
+      }
+
+      for (Facet facet : toRemove) {
+        myInvalidFacets.removeAll(facet);
       }
 
       for (FacetRenameInfo info : toRename) {
@@ -350,5 +410,4 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       myNewName = newName;
     }
   }
-
 }

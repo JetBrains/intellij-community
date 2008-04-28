@@ -122,6 +122,12 @@
     </component>
 
     <component>
+      <interface-class>com.intellij.facet.ProjectFacetManager</interface-class>
+      <implementation-class>com.intellij.facet.impl.ProjectFacetManagerImpl</implementation-class>
+      <skipForDummyProject/>
+    </component>
+
+    <component>
       <implementation-class>com.intellij.javaee.PsiExternalResourceNotifier</implementation-class>
     </component>
 
