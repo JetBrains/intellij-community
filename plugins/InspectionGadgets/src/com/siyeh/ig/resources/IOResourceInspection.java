@@ -73,6 +73,9 @@ public class IOResourceInspection extends ResourceInspection {
             final PsiVariable boundVariable = getVariable(parent);
             final PsiElement containingBlock =
                     PsiTreeUtil.getParentOfType(expression, PsiCodeBlock.class);
+            if (containingBlock == null) {
+                return;
+            }
             if(isArgumentOfResourceCreation(boundVariable, containingBlock)){
                 return;
             }
