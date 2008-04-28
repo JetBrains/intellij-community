@@ -4,10 +4,7 @@ import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -65,15 +62,18 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   }
 
   public Collection<Key> getKeys() throws StorageException {
-    final Collection<Key> backendKeys = myBackendStorage.getKeys();
+    final Set<Key> keys = new HashSet<Key>(myBackendStorage.getKeys());
     if (myBufferingEnabled.get()) {
       for (Key key : myMap.keySet()) {
         if (myMap.get(key).size() == 0) {
-          backendKeys.remove(key);
+          keys.remove(key);
+        }
+        else {
+          keys.add(key);
         }
       }
     }
-    return backendKeys;
+    return keys;
   }
 
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
