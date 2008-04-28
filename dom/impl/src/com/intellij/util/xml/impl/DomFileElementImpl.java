@@ -261,7 +261,13 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   @NotNull
   public final T getRootElement() {
-    assert isValid();
+    if (!isValid()) {
+      if (!myFile.isValid()) {
+        assert false: myFile + " is not valid";
+      } else {
+        assert false: this + " does not equal to " + myManager.getFileElement(myFile);
+      }
+    }
     return (T)getRootHandler().getProxy();
   }
 
