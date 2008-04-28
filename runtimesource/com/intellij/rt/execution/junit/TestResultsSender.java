@@ -7,8 +7,8 @@ import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import junit.framework.*;
 
 public class TestResultsSender implements TestListener, TestSkippingListener {
-  private OutputObjectRegistryImpl myRegistry;
-  private PacketProcessor myErr;
+  private final OutputObjectRegistryImpl myRegistry;
+  private final PacketProcessor myErr;
   private final JUnit4API JUnit4API;
   private TestMeter myCurrentTestMeter;
   private Test myCurrentTest;
@@ -16,7 +16,7 @@ public class TestResultsSender implements TestListener, TestSkippingListener {
   public TestResultsSender(OutputObjectRegistryImpl packetFactory, PacketProcessor segmentedErr, final JUnit4API isJunit4) {
     myRegistry = packetFactory;
     myErr = segmentedErr;
-    this.JUnit4API = isJunit4;
+    JUnit4API = isJunit4;
   }
 
   public synchronized void addError(Test test, Throwable throwable) {
@@ -27,11 +27,11 @@ public class TestResultsSender implements TestListener, TestSkippingListener {
     else if (JUnit4API != null && JUnit4API.isTestIgnored(throwable)) {
       startTest(test);
       stopMeter(test);
-      prepareIgnoredPacket(test, PoolOfTestStates.IGNORED_INDEX).send();
+      prepareIgnoredPacket(test).send();
     }
     else {
       stopMeter(test);
-      prepareDefectPacket(test, PoolOfTestStates.ERROR_INDEX, throwable).send();
+      prepareDefectPacket(test, throwable).send();
     }
   }
 
@@ -52,13 +52,13 @@ public class TestResultsSender implements TestListener, TestSkippingListener {
     return new ExceptionPacketFactory(PoolOfTestStates.FAILED_INDEX, assertion);
   }
 
-  private Packet prepareDefectPacket(Test test, int state, Throwable assertion) {
+  private Packet prepareDefectPacket(Test test, Throwable assertion) {
     return myRegistry.createPacket().
-            setTestState(test, state).
+            setTestState(test, PoolOfTestStates.ERROR_INDEX).
             addThrowable(assertion);
   }
-  private Packet prepareIgnoredPacket(Test test, int state) {
-    return myRegistry.createPacket().setTestState(test, state).addObject(test);
+  private Packet prepareIgnoredPacket(Test test) {
+    return myRegistry.createPacket().setTestState(test, PoolOfTestStates.IGNORED_INDEX).addObject(test);
   }
 
   public synchronized void endTest(Test test) {
@@ -73,7 +73,7 @@ public class TestResultsSender implements TestListener, TestSkippingListener {
     if (!test.equals(myCurrentTest)) {
       myCurrentTestMeter = new TestMeter();
       //noinspection HardCodedStringLiteral
-      System.err.println("Wrong test finished. Last started: " + myCurrentTest+" stopped: " + test+test.getClass()+test.equals(myCurrentTest));
+      System.err.println("Wrong test finished. Last started: " + myCurrentTest+" stopped: " + test+"; "+test.getClass());
     }
     myCurrentTestMeter.stop();
   }
