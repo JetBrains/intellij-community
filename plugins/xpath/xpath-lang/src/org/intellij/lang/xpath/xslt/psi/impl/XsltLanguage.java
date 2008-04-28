@@ -46,9 +46,9 @@ public class XsltLanguage extends Language {
 
     XsltLanguage() {
         super(ID);
-        LanguageFindUsages.INSTANCE.addExpicitExtension(this, FIND_USAGES_PROVIDER);
-        LanguageNamesValidation.INSTANCE.addExpicitExtension(this, LanguageNamesValidation.INSTANCE.forLanguage(XPathFileType.XPATH.getLanguage()));
-        LanguageRefactoringSupport.INSTANCE.addExpicitExtension(this, new DefaultRefactoringSupportProvider() {
+        LanguageFindUsages.INSTANCE.addExplicitExtension(this, FIND_USAGES_PROVIDER);
+        LanguageNamesValidation.INSTANCE.addExplicitExtension(this, LanguageNamesValidation.INSTANCE.forLanguage(XPathFileType.XPATH.getLanguage()));
+        LanguageRefactoringSupport.INSTANCE.addExplicitExtension(this, new DefaultRefactoringSupportProvider() {
             @Override
             public boolean isSafeDeleteAvailable(PsiElement element) {
                 return element instanceof XPathVariable ||

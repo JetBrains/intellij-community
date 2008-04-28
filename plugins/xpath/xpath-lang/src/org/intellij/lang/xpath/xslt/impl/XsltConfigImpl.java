@@ -110,12 +110,12 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
             final Language xpathLang = XPathFileType.XPATH.getLanguage();
 
             final XsltAnnotator annotator = new XsltAnnotator();
-            LanguageAnnotators.INSTANCE.addExpicitExtension(xpathLang, annotator);
+            LanguageAnnotators.INSTANCE.addExplicitExtension(xpathLang, annotator);
 //            xmlLang.injectAnnotator(annotator);
 
             final XsltDocumentationProvider provider = new XsltDocumentationProvider();
-            LanguageDocumentation.INSTANCE.addExpicitExtension(xmlLang, provider);
-            LanguageDocumentation.INSTANCE.addExpicitExtension(xpathLang, provider);
+            LanguageDocumentation.INSTANCE.addExplicitExtension(xmlLang, provider);
+            LanguageDocumentation.INSTANCE.addExplicitExtension(xpathLang, provider);
 
             final IntentionManager intentionManager = IntentionManager.getInstance();
 //            intentionManager.addAction(new DeleteUnusedParameterFix());
@@ -127,7 +127,7 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
             intentionManager.registerIntentionAndMetaData(new InlineXslAttribute(), CATEGORY);
 
             final XsltFormattingModelBuilder builder = new XsltFormattingModelBuilder(LanguageFormatting.INSTANCE.forLanguage(xmlLang));
-            LanguageFormatting.INSTANCE.addExpicitExtension(xmlLang, builder);
+            LanguageFormatting.INSTANCE.addExplicitExtension(xmlLang, builder);
 
             final ExternalResourceManagerEx erm = ExternalResourceManagerEx.getInstanceEx();
             erm.addIgnoredResource(XsltSupport.PLUGIN_EXTENSIONS_NS);

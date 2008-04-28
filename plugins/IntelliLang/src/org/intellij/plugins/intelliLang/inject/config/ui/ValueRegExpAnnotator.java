@@ -36,7 +36,7 @@ public class ValueRegExpAnnotator implements Annotator {
 
     static {
         // inject annotator one the class is referenced
-        LanguageAnnotators.INSTANCE.addExpicitExtension(RegExpLanguage.INSTANCE, new ValueRegExpAnnotator());
+        LanguageAnnotators.INSTANCE.addExplicitExtension(RegExpLanguage.INSTANCE, new ValueRegExpAnnotator());
     }
 
     private ValueRegExpAnnotator() {

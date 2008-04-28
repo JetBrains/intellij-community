@@ -44,18 +44,18 @@ public class RegExpLanguage extends Language {
         super("RegExp");
         final RegExpParserDefinition parserDefinition = new RegExpParserDefinition();
 
-        LanguageAnnotators.INSTANCE.addExpicitExtension(this, new RegExpAnnotator());
-        LanguageParserDefinitions.INSTANCE.addExpicitExtension(this, parserDefinition);
-        LanguageBraceMatching.INSTANCE.addExpicitExtension(this, createPairedBraceMatcher());
-        LanguageSurrounders.INSTANCE.addExpicitExtension(this, new SimpleSurroundDescriptor());
-        SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExpicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
+        LanguageAnnotators.INSTANCE.addExplicitExtension(this, new RegExpAnnotator());
+        LanguageParserDefinitions.INSTANCE.addExplicitExtension(this, parserDefinition);
+        LanguageBraceMatching.INSTANCE.addExplicitExtension(this, createPairedBraceMatcher());
+        LanguageSurrounders.INSTANCE.addExplicitExtension(this, new SimpleSurroundDescriptor());
+        SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
             @NotNull
             protected SyntaxHighlighter createHighlighter() {
                 return new RegExpHighlighter(null, parserDefinition);
             }
         });
 
-        LanguageDocumentation.INSTANCE.addExpicitExtension(this, new QuickDocumentationProvider() {
+        LanguageDocumentation.INSTANCE.addExplicitExtension(this, new QuickDocumentationProvider() {
             @Nullable
             public String getQuickNavigateInfo(PsiElement element) {
                 if (element instanceof RegExpGroup) {
