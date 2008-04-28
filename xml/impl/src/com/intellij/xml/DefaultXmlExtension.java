@@ -1,16 +1,19 @@
 package com.intellij.xml;
 
-import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.index.XmlNamespaceIndex;
+import com.intellij.xml.index.XmlTagNamesIndex;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -102,10 +105,30 @@ public class DefaultXmlExtension extends XmlExtension {
       byTagName.removeAll(Arrays.asList(tag.knownNamespaces()));
       return byTagName;
     }
-    final String[] strings = CreateNSDeclarationIntentionFix.guessNamespace(file, name, false);
-    final List<String> list = Arrays.asList(strings);
-    final HashSet<String> set = new HashSet<String>(list);
+    final Set<String> set = guessNamespace(file, name);
     set.removeAll(Arrays.asList(tag.knownNamespaces()));
+
+    final XmlTag parentTag = tag.getParentTag();
+    ns: for (Iterator<String> i = set.iterator(); i.hasNext();) {
+      final String s = i.next();
+      final Collection<XmlFile> namespaces = XmlUtil.findNSFilesByURI(s, element.getProject());
+      for (XmlFile namespace : namespaces) {
+        final XmlDocument document = namespace.getDocument();
+        assert document != null;
+        final XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
+        assert nsDescriptor != null;
+        if (parentTag != null) {
+          continue ns;
+        }
+        final XmlElementDescriptor[] descriptors = nsDescriptor.getRootElementsDescriptors(document);
+        for (XmlElementDescriptor descriptor : descriptors) {
+          if (descriptor.getName().equals(name)) {
+            continue ns;
+          }
+        }
+      }
+      i.remove();
+    }
     return set;
   }
 
@@ -203,5 +226,19 @@ public class DefaultXmlExtension extends XmlExtension {
       }
     }
     return false;
+  }
+
+  public static Set<String> guessNamespace(final PsiFile file, String tagName) {
+    final Project project = file.getProject();
+    final Collection<VirtualFile> files = XmlTagNamesIndex.getFilesByTagName(tagName);
+//    final Set<String> strings = ExternalResourceManagerEx.getInstanceEx().getNamespacesByTagName(tagName, project);
+    final Set<String> possibleUris = new LinkedHashSet<String>(files.size());
+    for (VirtualFile virtualFile : files) {
+      final String namespace = XmlNamespaceIndex.getNamespace(virtualFile);
+      if (namespace != null) {
+        possibleUris.add(namespace);
+      }
+    }
+    return possibleUris;
   }
 }

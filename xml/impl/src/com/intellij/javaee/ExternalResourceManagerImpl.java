@@ -9,15 +9,25 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.containers.ConcurrentMultiMap;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.index.XsdNamespaceBuilder;
+import com.intellij.xml.index.XsdTagNameBuilder;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -79,7 +89,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     // Plugins DTDs // stathik
     addInternalResource("http://plugins.intellij.net/plugin.dtd", "plugin.dtd");
     addInternalResource("http://plugins.intellij.net/plugin-repository.dtd", "plugin-repository.dtd");
-    
+
     myPathMacros = pathMacros;
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -100,7 +110,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   private static String getFile(String name, Class klass) {
     final URL resource = klass.getResource(name);
     if (resource == null) return null;
-    
+
     String path = FileUtil.unquote(resource.toString());
     // this is done by FileUtil for windows
     path = path.replace('\\','/');
@@ -131,13 +141,16 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   public void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, Class klass) {
     final String file = getFile(fileName, klass);
     if (file != null) {
-      getMap(myStdResources, version,true).put(resource, file);
+      final Map<String, String> map = getMap(myStdResources, version, true);
+      assert map != null;
+      map.put(resource, file);
     }
     else {
       LOG.info("Cannot find standard resource. filename:" + fileName + " klass=" + klass);
     }
   }
 
+  @Nullable
   private static Map<String, String> getMap(@NotNull final Map<String, Map<String, String>> resources, @Nullable final String version,
                                             final boolean create) {
     Map<String, String> map = resources.get(version);
@@ -145,7 +158,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
       if (create) {
         map = new HashMap<String, String>();
         resources.put(version,map);
-      } else if (version != DEFAULT_VERSION) {
+      } else if (version == null || !version.equals(DEFAULT_VERSION)) {
         map = resources.get(DEFAULT_VERSION);
       }
     }
@@ -181,6 +194,92 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     }
     final String location = getResourceLocation(url, version);
     return XmlUtil.findXmlFile(baseFile, location);
+  }
+
+  private final UserDataCache<CachedValue<MultiMap<String, VirtualFile>>, Project, Project> myNamespaces = new UserDataCache<CachedValue<MultiMap<String, VirtualFile>>, Project, Project>("external namespaces") {
+    protected CachedValue<MultiMap<String, VirtualFile>> compute(final Project project, final Project p) {
+      return PsiManager.getInstance(project).getCachedValuesManager().createCachedValue(new CachedValueProvider<MultiMap<String, VirtualFile>>() {
+        public Result<MultiMap<String, VirtualFile>> compute() {
+          final MultiMap<String, VirtualFile> map = new ConcurrentMultiMap<String, VirtualFile>();
+          final Consumer<Map.Entry<String, String>> consumer = new Consumer<Map.Entry<String, String>>() {
+            public void consume(final Map.Entry<String, String> entry) {
+              @NonNls final String path = entry.getValue();
+              if (path.endsWith(".xsd")) {
+                final VirtualFile file = VfsUtil.findRelativeFile(path, null);
+                if (file == null) {
+                  return;
+                }
+                final String ns = XsdNamespaceBuilder.computeNamespace(file);
+                if (ns == null) {
+                  return;
+                }
+                map.putValue(ns, file);
+              }
+            }
+          };
+          processEntries(myStdResources, consumer);
+          processEntries(myResources, consumer);
+          return Result.createSingleDependency(map, ExternalResourceManagerImpl.this);
+        }
+      }, false);
+    }
+  };
+
+  private final UserDataCache<CachedValue<MultiMap<String, String>>, Project, Project> myNamespacesByTagName =
+      new UserDataCache<CachedValue<MultiMap<String, String>>, Project, Project>("external tag names") {
+    protected CachedValue<MultiMap<String, String>> compute(final Project project, final Project p) {
+      return PsiManager.getInstance(project).getCachedValuesManager().createCachedValue(new CachedValueProvider<MultiMap<String, String>>() {
+        public Result<MultiMap<String, String>> compute() {
+          final MultiMap<String, String> result = new ConcurrentMultiMap<String, String>();
+          final Consumer<Map.Entry<String, String>> consumer = new Consumer<Map.Entry<String, String>>() {
+            public void consume(final Map.Entry<String, String> entry) {
+              @NonNls final String path = entry.getValue();
+              if (path.endsWith(".xsd")) {
+                final VirtualFile file = VfsUtil.findRelativeFile(path, null);
+                if (file == null) {
+                  return;
+                }
+                final String ns = XsdNamespaceBuilder.computeNamespace(file);
+                if (ns == null) {
+                  return;
+                }
+                final Collection<String> tagNames = XsdTagNameBuilder.computeTagNames(file);
+                if (tagNames != null) {
+                  for (String tagName : tagNames) {
+                    result.putValue(tagName, ns);
+                  }
+                }
+              }
+
+            }
+          };
+          processEntries(myStdResources, consumer);
+          processEntries(myResources, consumer);
+          return Result.createSingleDependency(result, ExternalResourceManagerImpl.this);
+        }
+      }, false);
+    }
+  };
+
+  private static void processEntries(final Map<String, Map<String, String>> resources, Consumer<Map.Entry<String, String>> consumer) {
+    for (Map<String, String> map : resources.values()) {
+      for (Map.Entry<String, String> entry : map.entrySet()) {
+        consumer.consume(entry);
+      }
+    }
+  }
+
+  public Set<String> getNamespacesByTagName(String tagName, Project project) {
+    final MultiMap<String, String> value = myNamespacesByTagName.get(project, project).getValue();
+    assert value != null;
+    final Collection<String> strings = value.get(tagName);
+    return strings == null ? Collections.<String>emptySet() : new HashSet<String>(strings);
+  }
+
+  public Collection<VirtualFile> getSchemaFiles(String namespace, Project project) {
+    final MultiMap<String, VirtualFile> value = myNamespaces.get(project, project).getValue();
+    assert value != null;
+    return value.get(namespace);
   }
 
   public String[] getResourceUrls(FileType fileType, final boolean includeStandard) {
@@ -227,7 +326,9 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public void addResource(@NonNls String url, @NonNls String version, @NonNls String location) {
-    getMap(myResources, version, true).put(url, location);
+    final Map<String, String> map = getMap(myResources, version, true);
+    assert map != null;
+    map.put(url, location);
     myModificationCount++;
     fireExternalResourceChanged();
   }

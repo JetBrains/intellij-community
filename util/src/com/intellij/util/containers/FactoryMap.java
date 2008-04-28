@@ -79,7 +79,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   }
 
   public Collection<V> notNullValues() {
-    final Collection<V> values = myMap.values();
+    final Collection<V> values = new ArrayList<V>(myMap.values());
     for (Iterator<V> iterator = values.iterator(); iterator.hasNext();) {
       if (iterator.next() == NULL) {
         iterator.remove();

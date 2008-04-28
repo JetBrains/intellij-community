@@ -1,27 +1,37 @@
 package com.intellij.xml.index;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.PersistentEnumerator;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.io.DataExternalizer;
 
+import java.io.ByteArrayInputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.io.ByteArrayInputStream;
 
 /**
  * @author Dmitry Avdeev
  */
-public class XmlSchemaIndex extends ScalarIndexExtension<String> {
+public class XmlTagNamesIndex extends XmlIndex<Void> {
 
-  public static final ID<String,Void> INDEX_ID = ID.create("xmlIndex");
-  private static final EnumeratorStringDescriptor KEY_DESCRIPTOR = new EnumeratorStringDescriptor();
+  public static Collection<VirtualFile> getFilesByTagName(String tagName) {
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, tagName, VirtualFileFilter.ALL);
+  }
+
+  public static Collection<String> getAllTagNames() {
+    return FileBasedIndex.getInstance().getAllKeys(NAME);
+  }
+
+  static void requestRebuild() {
+    FileBasedIndex.getInstance().requestRebuild(NAME);
+  }
+
+  private static final ID<String,Void> NAME = ID.create("XmlTagNames");
 
   public ID<String, Void> getName() {
-    return INDEX_ID;
+    return NAME;
   }
 
   public DataIndexer<String, Void, FileContent> getIndexer() {
@@ -41,24 +51,8 @@ public class XmlSchemaIndex extends ScalarIndexExtension<String> {
     };
   }
 
-  public PersistentEnumerator.DataDescriptor<String> getKeyDescriptor() {
-    return KEY_DESCRIPTOR;
+  public DataExternalizer<Void> getValueExternalizer() {
+    return ScalarIndexExtension.VOID_DATA_EXTERNALIZER;
   }
 
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return new FileBasedIndex.InputFilter() {
-      public boolean acceptInput(final VirtualFile file) {
-        @NonNls final String extension = file.getExtension();
-        return extension != null && extension.equals("xsd");
-      }
-    };
-  }
-
-  public boolean dependsOnFileContent() {
-    return true;
-  }
-
-  public int getVersion() {
-    return 0;
-  }
 }

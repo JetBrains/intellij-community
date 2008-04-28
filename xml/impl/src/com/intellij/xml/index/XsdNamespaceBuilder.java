@@ -9,20 +9,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * @author Dmitry Avdeev
  */
-public class XsdTagNameBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
+public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
 
   @Nullable
-  public static Collection<String> computeTagNames(final InputStream is) {
+  public static String computeNamespace(final InputStream is) {
     try {
-      final XsdTagNameBuilder builder = new XsdTagNameBuilder();
+      final XsdNamespaceBuilder builder = new XsdNamespaceBuilder();
       NanoXmlUtil.parse(is, builder);
-      return builder.myTagNames;
+      return builder.myNamespace;
     }
     finally {
       try {
@@ -35,30 +33,35 @@ public class XsdTagNameBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
       }
     }
   }
-
+  
   @Nullable
-  public static Collection<String> computeTagNames(final VirtualFile file) {
-    return VfsUtil.processInputStream(file, new NullableFunction<InputStream, Collection<String>>() {
-      public Collection<String> fun(final InputStream inputStream) {
-        return computeTagNames(inputStream);
+  public static String computeNamespace(final VirtualFile file) {
+    return VfsUtil.processInputStream(file, new NullableFunction<InputStream, String>() {
+      public String fun(final InputStream inputStream) {
+        return computeNamespace(inputStream);
       }
     });
   }
 
-  private final Collection<String> myTagNames = new ArrayList<String>();
-  private boolean myElementStarted;
+  private String myNamespace;
 
   public void startElement(@NonNls final String name, @NonNls final String nsPrefix, @NonNls final String nsURI, final String systemID, final int lineNr)
       throws Exception {
 
-    myElementStarted = nsPrefix != null && nsURI.equals("http://www.w3.org/2001/XMLSchema") && name.equals("element");
+    if (nsPrefix == null || !nsURI.equals("http://www.w3.org/2001/XMLSchema") || !name.equals("schema")) {
+      stop();
+    }
   }
 
   public void addAttribute(@NonNls final String key, final String nsPrefix, final String nsURI, final String value, final String type)
       throws Exception {
-    if (myElementStarted && key.equals("name")) {
-      myTagNames.add(value);
-      myElementStarted = false;
+    if (key.equals("targetNamespace")) {
+      myNamespace = value;
+      stop();
     }
+  }
+
+  public void endElement(final String name, final String nsPrefix, final String nsURI) throws Exception {
+    stop();
   }
 }

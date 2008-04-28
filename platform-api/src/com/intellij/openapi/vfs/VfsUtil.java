@@ -664,7 +664,7 @@ public class VfsUtil {
   }
 
   @Nullable
-  public static <T> T processInputStream(final VirtualFile file, final Function<InputStream, T> function) {
+  public static <T> T processInputStream(final @NotNull VirtualFile file, final Function<InputStream, T> function) {
     InputStream stream = null;
     try {
       stream = file.getInputStream();

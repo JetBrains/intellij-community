@@ -164,7 +164,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
 
         final XmlFile xmlFile = documentIsSchemaThatDefinesNs
                                 ? containingFile
-                                : XmlUtil.findNamespace(containingFile, ExternalResourceManager.getInstance().getResourceLocation(namespace));
+                                : XmlUtil.findNamespace(containingFile, namespace);
         if (xmlFile != null) {
           return (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
         }

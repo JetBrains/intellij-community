@@ -41,7 +41,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -95,19 +98,6 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
-  }
-
-  public static String[] guessNamespace(final PsiFile file, String name, final boolean showProgress) {
-    final Set<String> possibleUris = new LinkedHashSet<String>();
-    final ExternalUriProcessor processor = new ExternalUriProcessor() {
-      public void process(@NotNull String ns, final String url) {
-        possibleUris.add(ns);
-      }
-    };
-
-    processExternalUris(new TagMetaHandler(name), file, processor, showProgress);
-
-    return possibleUris.toArray( new String[possibleUris.size()] );
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {

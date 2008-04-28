@@ -14,6 +14,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,13 +39,11 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.xml.*;
+import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
@@ -213,13 +212,22 @@ public class XmlUtil {
   }
 
   @Nullable
-  public static XmlFile findNamespace(PsiFile base, @NotNull String uri) {
-    final String location = ExternalResourceManager.getInstance().getResourceLocation(uri);
-    if (!location.equals(uri)) { // is mapped
-      return findXmlFile(base, location); 
+  public static XmlFile findNamespace(PsiFile base, @NotNull String nsLocation) {
+    final String location = ExternalResourceManager.getInstance().getResourceLocation(nsLocation);
+    if (!location.equals(nsLocation)) { // is mapped
+      return findXmlFile(base, location);
     }
-    final XmlFile xmlFile = XmlSchemaProvider.findSchema(uri, base);
-    return xmlFile == null ? findXmlFile(base, uri) : xmlFile;
+    final XmlFile xmlFile = XmlSchemaProvider.findSchema(location, base);
+    return xmlFile == null ? findXmlFile(base, location) : xmlFile;
+  }
+
+  public static Collection<XmlFile> findNSFilesByURI(String namespace, final Project project) {
+    final Collection<VirtualFile> files = XmlNamespaceIndex.getFilesByNamespace(namespace);
+    return ContainerUtil.map2List(files, new NullableFunction<VirtualFile, XmlFile>() {
+      public XmlFile fun(final VirtualFile file) {
+        return (XmlFile)PsiManager.getInstance(project).findFile(file);
+      }
+    });
   }
 
   @Nullable
