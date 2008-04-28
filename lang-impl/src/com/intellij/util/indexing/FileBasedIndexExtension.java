@@ -25,6 +25,9 @@ public interface FileBasedIndexExtension<K, V> {
   boolean dependsOnFileContent();
   
   int getVersion();
-  
+
+  /**
+   * @see FileBasedIndexExtension#DEFAULT_CACHE_SIZE
+   */
   int getCacheSize();
 }
