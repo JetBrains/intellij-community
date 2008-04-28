@@ -20,6 +20,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -270,9 +271,13 @@ public class HighlightControlFlowUtil {
       if (topBlock == null) return null;
     }
     else {
-      final PsiElement scope = variable instanceof PsiField
+      PsiElement scope = variable instanceof PsiField
                                ? variable.getContainingFile()
                                : variable.getParent() != null ? variable.getParent().getParent() : null;
+      if (scope instanceof PsiCodeBlock && scope.getParent() instanceof PsiSwitchStatement) {
+        scope = PsiTreeUtil.getParentOfType(scope, PsiCodeBlock.class);
+      }
+      
       topBlock = PsiUtil.isInJspFile(scope) && scope instanceof PsiFile ? scope : PsiUtil.getTopLevelEnclosingCodeBlock(expression, scope);
       if (variable instanceof PsiField) {
         // non final field already initalized with default value
