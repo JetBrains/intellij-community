@@ -1,6 +1,6 @@
 package com.jetbrains.python.codeInsight;
 
-import com.intellij.codeInsight.daemon.impl.GutterIconNavigationHandler;
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.psi.NavigatablePsiElement;

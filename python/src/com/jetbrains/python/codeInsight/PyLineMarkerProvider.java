@@ -1,8 +1,8 @@
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.impl.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.impl.LineMarkerProvider;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
