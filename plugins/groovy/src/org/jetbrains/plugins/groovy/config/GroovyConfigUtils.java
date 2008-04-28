@@ -64,6 +64,7 @@ public class GroovyConfigUtils {
   public static final String MANIFEST_PATH = "META-INF/MANIFEST.MF";
   public static final String GROOVY_JAR_PATTERN = "groovy-all-\\d.*\\.jar";
   public static final String GROOVY_LIB_PREFIX = "groovy-";
+  public static final String GRAILS_LIB_PREFIX = "grails-";
 
   public static boolean isGroovySdkHome(final VirtualFile file) {
     final Ref<Boolean> result = Ref.create(false);
@@ -104,7 +105,7 @@ public class GroovyConfigUtils {
    * @param manifestPath path to manifest file in jar file
    * @return value of Implementation-Version attribute, null if not found
    */
-  public static String getGroovyGrailsJarVersion(String jarPath, final String jarRegex, String manifestPath) {
+  private static String getGroovyGrailsJarVersion(String jarPath, final String jarRegex, String manifestPath) {
     try {
       File[] jars = GroovyUtils.getFilesInDirectoryByPattern(jarPath, jarRegex);
       if (jars.length != 1) {
@@ -258,7 +259,8 @@ public class GroovyConfigUtils {
     final Ref<Library> libRef = new Ref<Library>();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        libRef.set(createGroovyLibImmediately(path, name, project, inModuleSettings));
+        Library library = createGroovyLibImmediately(path, name, project, inModuleSettings);
+        libRef.set(library);
       }
     });
     return libRef.get();
@@ -449,4 +451,16 @@ public class GroovyConfigUtils {
     return path;
   }
 
+  public static String getGrailsVersion(String path) {
+    String grailsJarVersion = getGroovyGrailsJarVersion(path + "/dist", "grails-core-.*\\.jar", "META-INF/MANIFEST.MF");
+    if (grailsJarVersion == null) {
+      // check for versions <= 0.6
+      grailsJarVersion = getGroovyGrailsJarVersion(path + "/dist", "grails-core-.*\\.jar", "META-INF/GRAILS-MANIFEST.MF");
+    }
+    return grailsJarVersion;
+  }
+
+  public static String getGroovyGrailsVersion(String path) {
+    return getGroovyGrailsJarVersion(path + "/lib", "groovy-all-.*\\.jar", "META-INF/MANIFEST.MF");
+  }
 }

@@ -22,8 +22,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 
-import java.util.ArrayList;
-
 /**
  * @author ilyas
  */
@@ -44,8 +42,9 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
   public String EXTRACT_METHOD_VISIBILITY = null;
   public Boolean IS_DEBUG_ENABLED_IN_SCRIPT = null;
 
-  // Groovy configuration settings
+  // Groovy & Grails configuration settings
   public String DEFAULT_GROOVY_LIB_NAME = null;
+  public String DEFAULT_GRAILS_LIB_NAME = null;
 
   @Transient
   private boolean myJsSupportEnabled = false;
