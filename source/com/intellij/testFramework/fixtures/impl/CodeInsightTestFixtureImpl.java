@@ -371,6 +371,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE).execute(getEditor(), dataContext);
       return;
     }
+    if (c == '\n') {
+      actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(getEditor(), dataContext);
+      return;
+    }
 
     actionManager.getTypedAction().actionPerformed(getEditor(), c, dataContext);
   }
