@@ -7,6 +7,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.ReferenceImporter;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.concurrency.Job;

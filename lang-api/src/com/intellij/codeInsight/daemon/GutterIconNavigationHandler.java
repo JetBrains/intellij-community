@@ -1,7 +1,7 @@
 /*
  * @author max
  */
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInsight.daemon;
 
 import com.intellij.psi.PsiElement;
 

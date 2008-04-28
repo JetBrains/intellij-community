@@ -1,4 +1,4 @@
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

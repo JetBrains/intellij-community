@@ -1,4 +1,4 @@
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInsight.daemon;
 
 import com.intellij.lang.LanguageExtension;
 

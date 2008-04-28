@@ -4,7 +4,7 @@
  */
 package com.intellij.codeEditor.printing;
 
-import com.intellij.codeInsight.daemon.impl.LineMarkerInfo;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;

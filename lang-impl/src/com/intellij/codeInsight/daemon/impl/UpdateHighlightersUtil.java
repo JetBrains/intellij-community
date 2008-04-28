@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;

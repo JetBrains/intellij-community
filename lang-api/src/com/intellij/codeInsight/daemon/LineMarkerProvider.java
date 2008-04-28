@@ -1,10 +1,10 @@
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInsight.daemon;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author yole
