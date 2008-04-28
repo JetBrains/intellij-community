@@ -16,16 +16,21 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import com.intellij.patterns.XmlPatterns;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.util.AsyncConsumer;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +43,7 @@ import java.util.Set;
  * @author peter
  */
 public class JavaCompletionContributor extends CompletionContributor{
+  private static final Key<XmlAttributeValue> XML_ATTRIBUTE_VALUE = Key.create("XML_ATTRIBUTE_VALUE");
   @NonNls public static final String JAVA_LEGACY = "JAVA_LEGACY";
 
   public void registerCompletionProviders(final CompletionRegistrar registrar) {
@@ -154,6 +160,25 @@ public class JavaCompletionContributor extends CompletionContributor{
           }
         }
         return LangBundle.message("completion.no.suggestions") + suffix;
+      }
+    });
+
+    registrar.extend(CompletionType.BASIC, PlatformPatterns.psiElement().withParent(XmlPatterns.xmlAttributeValue().save(XML_ATTRIBUTE_VALUE)),
+                     new CompletionProvider<LookupElement, CompletionParameters>() {
+      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet<LookupElement> result) {
+        for (final PsiReference reference : context.get(XML_ATTRIBUTE_VALUE).getReferences()) {
+          if (reference instanceof JavaClassReference) {
+            result.setSuccessorFilter(new AsyncConsumer<LookupElement>() {
+              public void consume(final LookupElement lookupElement) {
+                if (lookupElement.getTailType() == TailType.UNKNOWN) {
+                  lookupElement.setTailType(TailType.NONE);
+                }
+                result.addElement(lookupElement);
+              }
+            });
+            return;
+          }
+        }
       }
     });
   }

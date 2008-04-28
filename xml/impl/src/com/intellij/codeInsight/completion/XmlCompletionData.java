@@ -29,11 +29,9 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -129,28 +127,28 @@ public class XmlCompletionData extends CompletionData {
                              boolean signatureSelected,
                              char completionChar) {
       super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
-      /*
-      final PsiElement current = context.file.findElementAt(context.getStartOffset());
-      final String text = current.getText();
-      final CaretModel caretModel = context.editor.getCaretModel();
-      int localOffset = caretModel.getOffset() - current.getTextRange().getStartOffset() - 1;
-      startOffset = localOffset;
-      while (localOffset > 0 && localOffset < text.length()) {
-        final char cur = text.charAt(localOffset--);
-        if (cur == '}') break;
-        if (cur == '{') {
-          if (localOffset >= 0 && text.charAt(localOffset) == '$') {
-            if (startOffset >= text.length() - 1 || text.charAt(startOffset + 1) != '}') {
-              context.editor.getDocument().insertString(caretModel.getOffset(), "}");
-            }
-            caretModel.moveToOffset(caretModel.getOffset() + 1);
-          }
-          break;
+
+      eatClosingQuote(item.getTailType(), context.editor);
+
+    }
+
+  }
+
+  public static int eatClosingQuote(TailType tailType, final Editor editor) {
+    final Document document = editor.getDocument();
+    int tailOffset = editor.getCaretModel().getOffset();
+    if (tailType == TailType.UNKNOWN) {
+      if (document.getTextLength() > tailOffset) {
+        final char c = document.getCharsSequence().charAt(tailOffset);
+        if (c == '\"' || c == '\'') {
+          editor.getCaretModel().moveToOffset(tailOffset + 1);
+          return tailOffset + 1;
         }
       }
-      */
     }
+    return tailOffset;
   }
+
 
   private static class XmlAttributeInsertHandler extends BasicInsertHandler {
     public XmlAttributeInsertHandler() {
@@ -212,10 +210,6 @@ public class XmlCompletionData extends CompletionData {
   }
 
   protected static class EntityRefGetter implements ContextGetter {
-
-    @NonNls
-    private static final List NAMES_LIST =
-        Arrays.asList("nbsp", "iexcl", "cent", "pound", "curren", "yen", "brvbar", "sect", "uml", "copy", "ordf", "laquo");
 
     @Nullable
     private static Object getLookupItem(@Nullable final XmlEntityDecl decl) {
@@ -313,6 +307,7 @@ public class XmlCompletionData extends CompletionData {
       final CaretModel caretModel = context.editor.getCaretModel();
       context.editor.getDocument().insertString(caretModel.getOffset(), ";");
       caretModel.moveToOffset(caretModel.getOffset() + 1);
+      eatClosingQuote(item.getTailType(), context.editor);
     }
   }
 }

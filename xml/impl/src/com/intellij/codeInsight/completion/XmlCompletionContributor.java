@@ -1,19 +1,25 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.AsyncConsumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
@@ -28,7 +34,48 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 public class XmlCompletionContributor extends CompletionContributor{
+  private static final Key<XmlAttributeValue> XML_ATTRIBUTE_VALUE = Key.create("XML_ATTRIBUTE_VALUE");
+  private static final TailType EAT_QUOTE_TAIL_TYPE = new TailType() {
+    public int processTail(final Editor editor, final int tailOffset) {
+      return XmlCompletionData.eatClosingQuote(UNKNOWN, editor);
+    }
+  };
+
   public void registerCompletionProviders(final CompletionRegistrar registrar) {
+    registrar.extend(CompletionType.BASIC, PlatformPatterns.psiElement().withParent(XmlPatterns.xmlAttributeValue().save(XML_ATTRIBUTE_VALUE)),
+                     new CompletionProvider<LookupElement, CompletionParameters>() {
+      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet<LookupElement> result) {
+        for (final PsiReference reference : context.get(XML_ATTRIBUTE_VALUE).getReferences()) {
+          if (reference instanceof FileReference) {
+            result.setSuccessorFilter(new AsyncConsumer<LookupElement>() {
+              public void consume(final LookupElement lookupElement) {
+                if (lookupElement.getTailType() == TailType.UNKNOWN) {
+                  lookupElement.setTailType(TailType.NONE);
+                }
+                result.addElement(lookupElement);
+              }
+            });
+            return;
+          }
+        }
+      }
+    });
+
+    registrar.extend(CompletionType.CLASS_NAME, PlatformPatterns.psiElement().withParent(XmlPatterns.xmlAttributeValue()),
+                     new CompletionProvider<LookupElement, CompletionParameters>() {
+      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet<LookupElement> result) {
+        result.setSuccessorFilter(new AsyncConsumer<LookupElement>() {
+          public void consume(final LookupElement lookupElement) {
+            if (lookupElement.getTailType() == TailType.UNKNOWN) {
+              lookupElement.setTailType(EAT_QUOTE_TAIL_TYPE);
+            }
+            result.addElement(lookupElement);
+          }
+        });
+
+      }
+    });
+
     registrar.extend(CompletionType.CLASS_NAME, PlatformPatterns.psiElement(XmlTokenType.XML_NAME), new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
         result.stopHere();
