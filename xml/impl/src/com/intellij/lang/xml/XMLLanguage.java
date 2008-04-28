@@ -58,7 +58,7 @@ public class XMLLanguage extends CompositeLanguage {
   private XMLLanguage() {
     this("XML", "text/xml");
 
-    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExpicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
+    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
       @NotNull
       protected SyntaxHighlighter createHighlighter() {
         return new XmlFileHighlighter();

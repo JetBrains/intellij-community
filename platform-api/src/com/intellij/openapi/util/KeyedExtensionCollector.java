@@ -40,7 +40,7 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
     }
   }
 
-  public void addExpicitExtension(KeyT key, T t) {
+  public void addExplicitExtension(KeyT key, T t) {
     synchronized (lock) {
       final String skey = keyToString(key);
       List<T> list = myExplicitExtensions.get(skey);
@@ -53,7 +53,7 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
     }
   }
 
-  public void removeExpicitExtension(KeyT key, T t) {
+  public void removeExplicitExtension(KeyT key, T t) {
     synchronized (lock) {
       final String skey = keyToString(key);
       List<T> list = myExplicitExtensions.get(skey);

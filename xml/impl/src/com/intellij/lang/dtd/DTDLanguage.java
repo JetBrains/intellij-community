@@ -20,7 +20,7 @@ public class DTDLanguage extends Language {
 
   protected DTDLanguage() {
     super("DTD", "text/dtd", "text/x-dtd");
-    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExpicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
+    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
       @NotNull
       protected SyntaxHighlighter createHighlighter() {
         return new XmlFileHighlighter(true);

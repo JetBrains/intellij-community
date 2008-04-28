@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavaLanguage extends Language {
   public JavaLanguage() {
     super("JAVA", "text/java", "application/x-java", "text/x-java");
-    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExpicitExtension(this, new SyntaxHighlighterFactory() {
+    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(this, new SyntaxHighlighterFactory() {
       @NotNull
       public SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
         LanguageLevel languageLevel;

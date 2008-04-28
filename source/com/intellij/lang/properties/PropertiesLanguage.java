@@ -14,7 +14,7 @@ public class PropertiesLanguage extends Language {
 
   public PropertiesLanguage() {
     super("Properties", "text/properties");
-    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExpicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
+    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
       @NotNull
       protected SyntaxHighlighter createHighlighter() {
         return new PropertiesHighlighter();

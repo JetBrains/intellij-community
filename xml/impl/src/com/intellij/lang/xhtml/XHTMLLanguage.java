@@ -21,7 +21,7 @@ public class XHTMLLanguage extends XMLLanguage {
   
   private XHTMLLanguage() {
     super("XHTML", "text/xhtml", "application/xhtml+xml");
-    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExpicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
+    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
       @NotNull
       protected SyntaxHighlighter createHighlighter() {
         return new XmlFileHighlighter(false, true);
