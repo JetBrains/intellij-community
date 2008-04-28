@@ -17,6 +17,7 @@ package org.intellij.lang.xpath.xslt.context;
 
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -80,7 +81,11 @@ public class XsltQuickFixFactory implements XPathQuickFixFactory {
             super(test);
         }
 
-        protected void invokeImpl(Project project, PsiFile file) throws IncorrectOperationException {
+        public boolean startInWriteAction() {
+            return false;
+        }
+
+        protected void invokeImpl(final Project project, final PsiFile file) throws IncorrectOperationException {
             FileAssociationsConfigurable.editAssociations(project, file);
         }
 
