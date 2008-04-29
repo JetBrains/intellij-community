@@ -16,6 +16,7 @@ return url
 5(6,9) WRITE url
 6(7) element: Catch clause
 7(8) READ e
-8(10) element: THROW statement
+8(11) element: THROW statement
 9(10) READ url
-10() element: null
+10(11) element: RETURN statement
+11() element: null

@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.codeInspection.validity.GroovyDuplicateSwitchBranchInspection;
 import org.jetbrains.plugins.groovy.codeInspection.validity.GroovyMethodWithInconsistentReturnsInspection;
 import org.jetbrains.plugins.groovy.codeInspection.validity.GroovyUnreachableStatementInspection;
+import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 
 /**
  * @author ilyas
@@ -44,6 +45,7 @@ public class GroovyInspectionProvider implements InspectionToolProvider, Applica
         SecondUnsafeCallInspection.class,
         UnusedDefInspection.class,
         UnassignedVariableAccessInspection.class,
+        MissingReturnInspection.class,
 
         GroovyResultOfAssignmentUsedInspection.class,
         GroovyAssignmentCanBeOperatorAssignmentInspection.class,

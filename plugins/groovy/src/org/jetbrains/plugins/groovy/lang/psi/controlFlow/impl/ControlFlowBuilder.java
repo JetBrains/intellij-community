@@ -180,10 +180,17 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   public void visitReturnStatement(GrReturnStatement returnStatement) {
+    boolean isNodeNeeded = myHead == null || myHead.getElement() != returnStatement;
     final GrExpression value = returnStatement.getReturnValue();
     if (value != null) value.accept(this);
 
-    addPendingEdge(null, myHead);
+    if (isNodeNeeded) {
+      InstructionImpl retInsn = startNode(returnStatement);
+      addPendingEdge(null, myHead);
+      finishNode(retInsn);
+    } else {
+      addPendingEdge(null, myHead);
+    }
     flowAbrupted();
   }
 

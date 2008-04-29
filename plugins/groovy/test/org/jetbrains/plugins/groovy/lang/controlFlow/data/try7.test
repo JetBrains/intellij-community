@@ -6,10 +6,11 @@ try {
 -----
 0(1) element: null
 1(2) element: Open block
-2(4) READ foo
-3(6) element: Finally clause
-4(3,5)  CALL 3
-5(8) AFTER CALL 4
-6(7) READ bar
-7(5)  RETURN
-8() element: null
+2(3) READ foo
+3(5) element: RETURN statement
+4(7) element: Finally clause
+5(4,6)  CALL 4
+6(9) AFTER CALL 5
+7(8) READ bar
+8(6)  RETURN
+9() element: null

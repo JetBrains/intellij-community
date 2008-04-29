@@ -20,6 +20,8 @@ import gnu.trove.TObjectIntHashMap;
 
 import java.util.*;
 
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+
 /**
  * @author ven
  */
@@ -139,5 +141,23 @@ public class ControlFlowUtil {
       }
 
     }
+  }
+
+  public static boolean alwaysReturns(Instruction[] flow) {
+    boolean[] visited = new boolean[flow.length];
+    return alwaysReturnsInner(flow[flow.length - 1], flow[0], visited);
+  }
+
+  private static boolean alwaysReturnsInner(Instruction last, Instruction first, boolean[] visited) {
+    if (first == last) return false;
+    if (last.getElement() instanceof GrReturnStatement) return true;
+
+    visited[last.num()] = true;
+    for (Instruction pred : last.allPred()) {
+      if (!visited[pred.num()]) {
+        if (!alwaysReturnsInner(pred, first, visited)) return false;
+      }
+    }
+    return true;
   }
 }
