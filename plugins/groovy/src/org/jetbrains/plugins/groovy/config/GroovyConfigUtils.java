@@ -135,7 +135,7 @@ public class GroovyConfigUtils {
   }
 
   public static boolean isGroovySdkLibrary(Library library) {
-    return library != null && library.getName().matches(GROOVY_LIB_PATTERN) ||
+    return library != null && library.getName() != null && library.getName().matches(GROOVY_LIB_PATTERN) ||
         GrailsConfigUtils.isGrailsSdkLibrary(library);
   }
 
