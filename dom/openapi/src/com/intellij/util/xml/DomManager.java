@@ -27,6 +27,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.reflect.DomGenericInfo;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,7 +84,7 @@ public abstract class DomManager implements ProjectComponent, ModificationTracke
    * @return DOM element for the given tag. If DOM isn't initialized for the containing file, it will be initialized
    */
   @Nullable
-  public abstract DomElement getDomElement(final XmlTag element);
+  public abstract DomElement getDomElement(@Nullable final XmlTag element);
 
   /**
    * @param element attribute
@@ -162,4 +163,6 @@ public abstract class DomManager implements ProjectComponent, ModificationTracke
    */
   public abstract TypeChooserManager getTypeChooserManager();
 
+  @Nullable
+  public abstract AbstractDomChildrenDescription findChildrenDescription(@NotNull XmlTag templateChildTag, @NotNull DomElement parent);
 }

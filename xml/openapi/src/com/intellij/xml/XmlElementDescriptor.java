@@ -48,7 +48,7 @@ public interface XmlElementDescriptor extends PsiMetaData {
   XmlElementDescriptor[] getElementsDescriptors(XmlTag context);
 
   @Nullable
-  XmlElementDescriptor getElementDescriptor(XmlTag childTag);
+  XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag);
 
   XmlAttributeDescriptor[] getAttributesDescriptors(final @Nullable XmlTag context);
   @Nullable

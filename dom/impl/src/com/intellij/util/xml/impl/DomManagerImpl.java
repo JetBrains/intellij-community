@@ -521,13 +521,22 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     DomInvocationHandler parent = getDomHandler(parentTag);
     if (parent == null) return null;
 
-    final DomGenericInfoEx info = parent.getGenericInfo();
-    final AbstractDomChildrenDescription childDescription = info.findChildrenDescription(parent, tag.getLocalName(), tag.getNamespace(), false, tag.getName());
+    final AbstractDomChildrenDescription childDescription = findChildrenDescription(tag, parent);
     if (childDescription == null) return null;
 
     childDescription.getValues(parent.getProxy());
     final DomInvocationHandler handler = getCachedHandler(tag);
     return handler != null && handler.getXmlTag() == tag ? handler : null;
+  }
+
+  @Nullable
+  public AbstractDomChildrenDescription findChildrenDescription(@NotNull final XmlTag tag, @NotNull final DomElement parent) {
+    return findChildrenDescription(tag, getDomInvocationHandler(parent));
+  }
+
+  private static AbstractDomChildrenDescription findChildrenDescription(final XmlTag tag, final DomInvocationHandler parent) {
+    final DomGenericInfoEx info = parent.getGenericInfo();
+    return info.findChildrenDescription(parent, tag.getLocalName(), tag.getNamespace(), false, tag.getName());
   }
 
   public final boolean isDomFile(@Nullable PsiFile file) {
