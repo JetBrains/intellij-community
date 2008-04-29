@@ -14,7 +14,8 @@ import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.layout.RunnerLayoutUi;
+import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
@@ -155,11 +156,11 @@ public class XDebugSessionTab implements Disposable {
     ExecutionResult executionResult = createExecutionResult(session);
     myConsole = executionResult.getExecutionConsole();
 
-    myUi.addContent(createFramesContent(session), 0, RunnerLayoutUi.PlaceInGrid.left, false);
-    myUi.addContent(createVariablesContent(session), 0, RunnerLayoutUi.PlaceInGrid.center, false);
-    myUi.addContent(createWatchesContent(session, sessionData), 0, RunnerLayoutUi.PlaceInGrid.right, false);
+    myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
+    myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
+    myUi.addContent(createWatchesContent(session, sessionData), 0, PlaceInGrid.right, false);
     // attach console here
-    myUi.addContent(createConsoleContent(), 1, RunnerLayoutUi.PlaceInGrid.bottom, false);
+    myUi.addContent(createConsoleContent(), 1, PlaceInGrid.bottom, false);
 
     myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName());
 

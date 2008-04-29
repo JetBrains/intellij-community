@@ -1,10 +1,13 @@
-package com.intellij.execution.ui.layout;
+package com.intellij.execution.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.execution.ui.layout.LayoutStateDefaults;
+import com.intellij.execution.ui.layout.LayoutViewOptions;
+import com.intellij.execution.ui.layout.PlaceInGrid;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,10 +52,6 @@ public interface RunnerLayoutUi  {
   boolean isDisposed();
 
   void updateActionsNow();
-
-  enum PlaceInGrid {
-    left, center, right, bottom
-  }
 
   abstract class Factory {
     protected Factory() {

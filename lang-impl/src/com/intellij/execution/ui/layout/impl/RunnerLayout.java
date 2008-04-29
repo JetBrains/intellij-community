@@ -1,6 +1,6 @@
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.execution.ui.layout.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.update.ComparableObjectCheck;
@@ -184,7 +184,7 @@ public class RunnerLayout  {
     if (myDefaultViews.containsKey(id)) {
       return myDefaultViews.get(id);
     } else {
-      return setDefault(id, Integer.MAX_VALUE, RunnerLayoutUi.PlaceInGrid.bottom, false);
+      return setDefault(id, Integer.MAX_VALUE, PlaceInGrid.bottom, false);
     }
   }
 
@@ -195,13 +195,13 @@ public class RunnerLayout  {
     return tab;
   }
 
-  public ViewImpl.Default setDefault(String id, int tabIndex, RunnerLayoutUi.PlaceInGrid placeInGrid, boolean isMinimized) {
+  public ViewImpl.Default setDefault(String id, int tabIndex, PlaceInGrid placeInGrid, boolean isMinimized) {
     final ViewImpl.Default view = new ViewImpl.Default(id, tabIndex, placeInGrid, isMinimized);
     myDefaultViews.put(id, view);
     return view;
   }
 
-  public RunnerLayoutUi.PlaceInGrid getDefaultGridPlace(final Content content) {
+  public PlaceInGrid getDefaultGridPlace(final Content content) {
     return getOrCreateDefault(getOrCreateContentId(content)).getPlaceInGrid();
   }
 

@@ -41,14 +41,14 @@ public class GridCellImpl implements GridCell, Disposable {
 
   private JBTabs myTabs;
   private GridImpl.Placeholder myPlaceholder;
-  private RunnerLayoutUi.PlaceInGrid myPlaceInGrid;
+  private PlaceInGrid myPlaceInGrid;
 
   private ViewContext myContext;
   private CellTransform.Restore.List myRestoreFromDetach;
   private JBPopup myPopup;
   private boolean myDisposed;
 
-  public GridCellImpl(ViewContext context, GridImpl container, GridImpl.Placeholder placeholder, RunnerLayoutUi.PlaceInGrid placeInGrid) {
+  public GridCellImpl(ViewContext context, GridImpl container, GridImpl.Placeholder placeholder, PlaceInGrid placeInGrid) {
     myContext = context;
     myContainer = container;
 
@@ -107,7 +107,7 @@ public class GridCellImpl implements GridCell, Disposable {
     });
   }
 
-  public RunnerLayoutUi.PlaceInGrid getPlaceInGrid() {
+  public PlaceInGrid getPlaceInGrid() {
     return myPlaceInGrid;
   }
 

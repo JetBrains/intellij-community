@@ -1,8 +1,8 @@
 package com.intellij.execution.ui.layout.impl;
 
-import com.intellij.execution.ui.layout.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.Tab;
 import com.intellij.execution.ui.layout.View;
+import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -16,11 +16,11 @@ public class ViewImpl implements View {
   private Tab myTab;
   private int myTabIndex;
 
-  private RunnerLayoutUi.PlaceInGrid myPlaceInGrid;
+  private PlaceInGrid myPlaceInGrid;
 
   private boolean myMinimizedInGrid;
 
-  public ViewImpl(String id, TabImpl tab, final RunnerLayoutUi.PlaceInGrid placeInGrid, boolean minimizedInGrid) {
+  public ViewImpl(String id, TabImpl tab, final PlaceInGrid placeInGrid, boolean minimizedInGrid) {
     myID = id;
     myTab = tab;
     myPlaceInGrid = placeInGrid;
@@ -40,7 +40,7 @@ public class ViewImpl implements View {
     return myTab;
   }
 
-  public RunnerLayoutUi.PlaceInGrid getPlaceInGrid() {
+  public PlaceInGrid getPlaceInGrid() {
     return myPlaceInGrid;
   }
 
@@ -62,7 +62,7 @@ public class ViewImpl implements View {
     myMinimizedInGrid = minimizedInGrid;
   }
 
-  public void setPlaceInGrid(RunnerLayoutUi.PlaceInGrid placeInGrid) {
+  public void setPlaceInGrid(PlaceInGrid placeInGrid) {
     myPlaceInGrid = placeInGrid;
   }
 
@@ -82,10 +82,10 @@ public class ViewImpl implements View {
 
     private String myID;
     private int myTabID;
-    private RunnerLayoutUi.PlaceInGrid myPlaceInGrid;
+    private PlaceInGrid myPlaceInGrid;
     private boolean myMinimizedInGrid;
 
-    public Default(final String ID, final int tabID, final RunnerLayoutUi.PlaceInGrid placeInGrid, final boolean minimizedInGrid) {
+    public Default(final String ID, final int tabID, final PlaceInGrid placeInGrid, final boolean minimizedInGrid) {
       myID = ID;
       myTabID = tabID;
       myPlaceInGrid = placeInGrid;
@@ -97,7 +97,7 @@ public class ViewImpl implements View {
       return new ViewImpl(myID, tab, myPlaceInGrid, myMinimizedInGrid);
     }
 
-    public RunnerLayoutUi.PlaceInGrid getPlaceInGrid() {
+    public PlaceInGrid getPlaceInGrid() {
       return myPlaceInGrid;
     }
   }

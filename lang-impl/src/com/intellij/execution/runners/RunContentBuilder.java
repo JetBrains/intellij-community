@@ -17,7 +17,8 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.layout.RunnerLayoutUi;
+import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -124,7 +125,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
                                                         console.getPreferredFocusableComponent());
 
       consoleContent.setActions(consoleActions, ActionPlaces.UNKNOWN, console.getComponent());
-      myUi.addContent(consoleContent, 0, RunnerLayoutUi.PlaceInGrid.bottom, false);
+      myUi.addContent(consoleContent, 0, PlaceInGrid.bottom, false);
       if (profile instanceof RunConfigurationBase){
         myManager.initLogConsoles((RunConfigurationBase)profile, myExecutionResult.getProcessHandler());
       }

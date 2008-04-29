@@ -3,7 +3,7 @@ package com.intellij.execution.ui.layout;
 public interface View {
   Tab getTab();
 
-  RunnerLayoutUi.PlaceInGrid getPlaceInGrid();
+  PlaceInGrid getPlaceInGrid();
 
   boolean isMinimizedInGrid();
 
@@ -11,7 +11,7 @@ public interface View {
 
   void setMinimizedInGrid(boolean minimizedInGrid);
 
-  void setPlaceInGrid(RunnerLayoutUi.PlaceInGrid placeInGrid);
+  void setPlaceInGrid(PlaceInGrid placeInGrid);
 
   void assignTab(Tab tab);
 

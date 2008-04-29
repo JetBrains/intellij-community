@@ -31,7 +31,8 @@ import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
-import com.intellij.execution.ui.layout.RunnerLayoutUi;
+import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
@@ -146,7 +147,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     addAction(watchesGroup, DebuggerActions.ADD_TO_WATCH);
     addAction(watchesGroup, DebuggerActions.REMOVE_WATCH);
     watches.setActions(watchesGroup, ActionPlaces.DEBUGGER_TOOLBAR, myWatchPanel.getTree());
-    myUi.addContent(watches, 0, RunnerLayoutUi.PlaceInGrid.right, false);
+    myUi.addContent(watches, 0, PlaceInGrid.right, false);
 
 
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, myFramesPanel, XDebuggerBundle.message("debugger.session.tab.frames.title"),
@@ -161,7 +162,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     framesGroup.add(actionsManager.createNextOccurenceAction(myFramesPanel.getOccurenceNavigator()));
 
     framesContent.setActions(framesGroup, ActionPlaces.DEBUGGER_TOOLBAR, myFramesPanel.getFramesList());
-    myUi.addContent(framesContent, 0, RunnerLayoutUi.PlaceInGrid.left, false);
+    myUi.addContent(framesContent, 0, PlaceInGrid.left, false);
 
     myVariablesPanel = new VariablesPanel(myProject, myStateManager, this);
     myVariablesPanel.getFrameTree().setAutoVariablesMode(debuggerSettings.AUTO_VARIABLES_MODE);
@@ -172,7 +173,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     varsGroup.add(new WatchLastMethodReturnValueAction());
     varsGroup.add(new AutoVarsSwitchAction());
     vars.setActions(varsGroup, ActionPlaces.DEBUGGER_TOOLBAR, myVariablesPanel.getTree());
-    myUi.addContent(vars, 0, RunnerLayoutUi.PlaceInGrid.center, false);
+    myUi.addContent(vars, 0, PlaceInGrid.center, false);
 
     myUi.addListener(new ContentManagerAdapter() {
       public void selectionChanged(ContentManagerEvent event) {
@@ -229,7 +230,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     console.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR, myConsole.getPreferredFocusableComponent());
 
-    myUi.addContent(console, 1, RunnerLayoutUi.PlaceInGrid.bottom, false);
+    myUi.addContent(console, 1, PlaceInGrid.bottom, false);
 
     if (myConfiguration instanceof RunConfigurationBase && ((RunConfigurationBase)myConfiguration).needAdditionalConsole()) {
       myManager.initLogConsoles((RunConfigurationBase)myConfiguration, myRunContentDescriptor.getProcessHandler());

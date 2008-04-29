@@ -2,6 +2,7 @@ package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.*;
 import com.intellij.execution.ui.layout.actions.RestoreViewAction;
+import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -758,7 +759,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     try {
       myManager.removeContent(content, false);
       getStateFor(content).assignTab(myLayoutSettings.createNewTab());
-      getStateFor(content).setPlaceInGrid(RunnerLayoutUi.PlaceInGrid.center);
+      getStateFor(content).setPlaceInGrid(PlaceInGrid.center);
       myManager.addContent(content);
     }
     finally {

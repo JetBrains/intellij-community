@@ -22,7 +22,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
   private ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter();
   private Splitter mySplitter = new Splitter(true);
 
-  private HashMap<RunnerLayoutUi.PlaceInGrid, GridCellImpl> myPlaceInGrid2Cell = new HashMap<RunnerLayoutUi.PlaceInGrid, GridCellImpl>();
+  private HashMap<PlaceInGrid, GridCellImpl> myPlaceInGrid2Cell = new HashMap<PlaceInGrid, GridCellImpl>();
 
   private Placeholder myLeft = new Placeholder();
   private Placeholder myCenter = new Placeholder();
@@ -49,10 +49,10 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
 
     Disposer.register(myViewContext, this);
 
-    myPlaceInGrid2Cell.put(RunnerLayoutUi.PlaceInGrid.left, new GridCellImpl(myViewContext, this, myLeft, RunnerLayoutUi.PlaceInGrid.left));
-    myPlaceInGrid2Cell.put(RunnerLayoutUi.PlaceInGrid.center, new GridCellImpl(myViewContext, this, myCenter, RunnerLayoutUi.PlaceInGrid.center));
-    myPlaceInGrid2Cell.put(RunnerLayoutUi.PlaceInGrid.right, new GridCellImpl(myViewContext, this, myRight, RunnerLayoutUi.PlaceInGrid.right));
-    myPlaceInGrid2Cell.put(RunnerLayoutUi.PlaceInGrid.bottom, new GridCellImpl(myViewContext, this, myBottom, RunnerLayoutUi.PlaceInGrid.bottom));
+    myPlaceInGrid2Cell.put(PlaceInGrid.left, new GridCellImpl(myViewContext, this, myLeft, PlaceInGrid.left));
+    myPlaceInGrid2Cell.put(PlaceInGrid.center, new GridCellImpl(myViewContext, this, myCenter, PlaceInGrid.center));
+    myPlaceInGrid2Cell.put(PlaceInGrid.right, new GridCellImpl(myViewContext, this, myRight, PlaceInGrid.right));
+    myPlaceInGrid2Cell.put(PlaceInGrid.bottom, new GridCellImpl(myViewContext, this, myBottom, PlaceInGrid.bottom));
 
     setContent(mySplitter);
     setOpaque(false);
@@ -218,7 +218,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
 
   }
 
-  void saveSplitterProportions(final RunnerLayoutUi.PlaceInGrid placeInGrid) {
+  void saveSplitterProportions(final PlaceInGrid placeInGrid) {
     if (!RunnerContentUi.ensureValid(this)) return;
 
     final TabImpl tab = (TabImpl)getTab();
@@ -241,7 +241,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
     return myViewContext.getTabFor(this);
   }
 
-  void restoreLastSplitterProportions(RunnerLayoutUi.PlaceInGrid placeInGrid) {
+  void restoreLastSplitterProportions(PlaceInGrid placeInGrid) {
     if (!RunnerContentUi.ensureValid(this)) return;
 
     final TabImpl tab = (TabImpl)getTab();
